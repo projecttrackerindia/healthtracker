@@ -36,6 +36,7 @@ def _url() -> str:
 
 DB_URL = _url()
 IS_SQLITE = DB_URL.startswith("sqlite")
+print(f"[db] backend={'sqlite (ephemeral!)' if IS_SQLITE else 'postgres'}", flush=True)
 engine = create_engine(
     DB_URL,
     pool_pre_ping=not IS_SQLITE,
