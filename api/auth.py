@@ -163,13 +163,11 @@ def send_code(request: Request, db: Session, target: str, kind: str, purpose: st
     """Create and deliver a code. Returns {'demo': code} only when OTP_DEMO=1."""
     hour = db.scalar(select(func.count(OtpCode.id)).where(OtpCode.target == target, OtpCode.created > now() - 3600)) or 0
     last = db.scalar(select(func.max(OtpCode.created)).where(OtpCode.target == target)) or 0
-    print(f"[trace] send_code target={target!r} kind={kind} hour_count={hour} secs_since_last={now() - last}", flush=True)
     if now() - last < 45:
         raise HTTPException(429, f"Please wait {45 - (now() - last)} seconds before asking for another code.")
     if hour >= 6:
         raise HTTPException(429, "Too many codes requested for this address. Try again in an hour.")
     ready = messaging.email_ready() if kind == "email" else messaging.sms_ready()
-    print(f"[trace] ready={ready} demo={messaging.demo()}", flush=True)
     if not ready and not messaging.demo():
         raise HTTPException(503, ("Email" if kind == "email" else "SMS") + " codes are not set up on this server yet. Use a passkey or password.")
     code = f"{secrets.randbelow(10 ** 6):06d}"
@@ -352,7 +350,6 @@ def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
     kind, target = norm_id(body.id)
     purpose = "reset" if body.purpose == "reset" else "signin"
     u = find_user(db, body.id)
-    print(f"[trace] otp_start id={body.id!r} kind={kind} target={target!r} user_found={bool(u)} disabled={u.disabled if u else None}", flush=True)
     f = new_flow(db, "otp", 10, user_id=u.id if u else "", data={"kind": kind, "target": target, "purpose": purpose})
     out = {}
     if u and not u.disabled:

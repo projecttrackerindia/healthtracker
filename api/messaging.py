@@ -18,6 +18,7 @@ import urllib.request
 from email.message import EmailMessage
 
 APP = "TheHealthTracker"
+UA = f"{APP}/1.0 (+https://thehealthtracker.com)"  # a default urllib User-Agent gets blocked by some providers' bot protection (e.g. Cloudflare)
 
 
 def email_ready() -> bool:
@@ -49,7 +50,7 @@ def send_email(to: str, code: str, purpose: str) -> None:
     if os.getenv("RESEND_API_KEY"):
         req = urllib.request.Request("https://api.resend.com/emails", method="POST",
                                      data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": _html(code, purpose)}).encode(),
-                                     headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json"})
+                                     headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
         try:
             body = urllib.request.urlopen(req, timeout=10).read()
             print(f"[messaging] Resend accepted, from={sender!r} to={to!r}: {body.decode('utf-8', 'ignore')[:200]}", flush=True)
@@ -77,11 +78,11 @@ def send_sms(to: str, code: str) -> None:
     if os.getenv("MSG91_AUTH_KEY") and os.getenv("MSG91_TEMPLATE_ID"):
         q = urllib.parse.urlencode({"template_id": os.getenv("MSG91_TEMPLATE_ID"), "mobile": to.lstrip("+"), "otp": code, "otp_expiry": 10})
         req = urllib.request.Request("https://control.msg91.com/api/v5/otp?" + q, method="POST", data=b"{}",
-                                     headers={"authkey": os.getenv("MSG91_AUTH_KEY"), "Content-Type": "application/json"})
+                                     headers={"authkey": os.getenv("MSG91_AUTH_KEY"), "Content-Type": "application/json", "User-Agent": UA})
         urllib.request.urlopen(req, timeout=10).read()
         return
     sid, tok = os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN")
     body = urllib.parse.urlencode({"To": to, "From": os.getenv("TWILIO_FROM", ""), "Body": f"{code} is your {APP} code. It expires in 10 min. Do not share it."}).encode()
     req = urllib.request.Request(f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json", data=body, method="POST",
-                                 headers={"Authorization": "Basic " + base64.b64encode(f"{sid}:{tok}".encode()).decode()})
+                                 headers={"Authorization": "Basic " + base64.b64encode(f"{sid}:{tok}".encode()).decode(), "User-Agent": UA})
     urllib.request.urlopen(req, timeout=10).read()
