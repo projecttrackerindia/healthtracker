@@ -1,20 +1,17 @@
-"""Sample partners, price lists, plans and advisories so the app works out of the box.
+"""Price lists, plans and advisories so the app works out of the box.
 
-Everything here is FICTIONAL demo data (store names, prices, ratings) except the seasonal guidance, which is general
-public-health information, and the first-aid videos, which are real public videos from official organisations.
-Admins replace or extend it from /admin.
+The seasonal guidance is general public-health information, and the first-aid videos are real public videos from
+official organisations. Pharmacy/lab/hospital partner listings are added by admins from /admin, not seeded here.
 """
 from __future__ import annotations
 
 import json
-import math
 import os
-import random
 from pathlib import Path
 
 from sqlalchemy import select
 
-from .models import Admin, LabTest, Plan, Seasonal, Store, StoreItem, Video
+from .models import Admin, Plan, Seasonal, Video
 from .security import hash_pw
 
 HERE = Path(__file__).resolve().parent
@@ -88,72 +85,6 @@ CITIES = {
     "Vijayawada": {"areas": [("Benz Circle", 16.498, 80.656), ("Governorpet", 16.512, 80.628)], "state": "AP"},
     "Warangal": {"areas": [("Hanamkonda", 18.011, 79.558), ("Kazipet", 17.978, 79.498)], "state": "TS"},
 }
-
-PHARM_BRANDS = [("GreenCross Pharmacy", 12, 30, 499, 45), ("CityCare Chemist", 8, 40, 499, 90), ("Wellnest Pharmacy", 18, 0, 0, 240),
-                ("Sanjeevani Medicals", 10, 25, 399, 60), ("Nirog 24×7 Pharmacy", 5, 49, 799, 35), ("Arogya Generic Store", 25, 35, 299, 120)]
-LAB_BRANDS = [("Pathlab Prime", 0.0, True, 100), ("Clearview Diagnostics", 10.0, True, 150), ("Nidaan Labs", 20.0, True, 0),
-              ("Suraksha Diagnostic Centre", 5.0, False, 0)]
-HOSP_BRANDS = ["Lotus Multispeciality Hospital", "Sunrise Care Hospital", "Sri Vani Hospital & Trauma Centre", "Harmony Children's Hospital"]
-
-
-def _rnd(seed: str) -> random.Random:
-    return random.Random(seed)
-
-
-def _jitter(r: random.Random, lat: float, lng: float, km: float = 1.2):
-    d = km / 111.0
-    return round(lat + r.uniform(-d, d), 5), round(lng + r.uniform(-d, d) / math.cos(math.radians(lat)), 5)
-
-
-def seed_partners(db):
-    if db.scalar(select(Store.id).limit(1)):
-        return
-    for city, c in CITIES.items():
-        r = _rnd(city)
-        areas = c["areas"]
-        # pharmacies: one brand per area, cycling
-        for i, (area, lat, lng) in enumerate(areas):
-            for j in range(2 if i % 2 == 0 else 1):
-                brand, disc, fee, free, eta = PHARM_BRANDS[(i + j * 3) % len(PHARM_BRANDS)]
-                la, lo = _jitter(r, lat, lng)
-                st = Store(kind="pharmacy", name=f"{brand} · {area}", brand=brand, area=area, city=city, lat=la, lng=lo,
-                           address=f"{r.randint(1, 120)}, Main Road, {area}, {city}", phone=f"0{r.randint(40, 99)} {r.randint(2000, 4999)} {r.randint(1000, 9999)}",
-                           hours="24 hours" if "24" in brand else "8 am – 10:30 pm", open_24h="24" in brand,
-                           rating=round(r.uniform(3.9, 4.8), 1), rating_n=r.randint(40, 900), discount_pct=disc,
-                           delivery=True, delivery_fee=fee, free_above=free, eta_min=eta + r.randint(-10, 20),
-                           verified=True, licence=f"{c['state']}/{r.randint(10000, 99999)}/20B-21B")
-                db.add(st)
-                db.flush()
-                for m in CATALOG:
-                    if r.random() < 0.08:  # a few items out of stock per store
-                        continue
-                    own = r.random() < 0.15  # some items priced individually
-                    price = m["mrp"] if own else round(m["mrp"] * (1 - disc / 100))
-                    db.add(StoreItem(store_id=st.id, sku=m["id"], name=m["name"], mrp=m["mrp"], price=max(1, price), stock=r.randint(3, 60)))
-        # labs
-        for i, (area, lat, lng) in enumerate(areas):
-            if i % 2:
-                continue
-            brand, off, home, cfee = LAB_BRANDS[i % len(LAB_BRANDS)]
-            la, lo = _jitter(r, lat, lng, .8)
-            st = Store(kind="lab", name=f"{brand} · {area}", brand=brand, area=area, city=city, lat=la, lng=lo,
-                       address=f"{r.randint(1, 80)}, {area}, {city}", phone=f"0{r.randint(40, 99)} {r.randint(2000, 4999)} {r.randint(1000, 9999)}",
-                       hours="6:30 am – 9 pm", rating=round(r.uniform(4.0, 4.9), 1), rating_n=r.randint(60, 1500), discount_pct=off,
-                       delivery=False, delivery_fee=0, free_above=0, eta_min=24 * 60, home_collection=home, collection_fee=cfee,
-                       verified=True, licence=f"NABL MC-{r.randint(1000, 9999)}" if r.random() < .7 else "")
-            db.add(st)
-            db.flush()
-            for code, (name, price, tat, fast) in TESTS.items():
-                p = round(price * (1 - off / 100) * r.uniform(.9, 1.15) / 10) * 10
-                db.add(LabTest(store_id=st.id, code=code, name=name, price=max(50, p), tat_hours=tat, fasting=fast))
-        # hospitals (for the nearest-hospital card; no price lists)
-        for i, (area, lat, lng) in enumerate(areas[: len(HOSP_BRANDS)]):
-            la, lo = _jitter(r, lat, lng, .6)
-            db.add(Store(kind="hospital", name=f"{HOSP_BRANDS[i]} · {area}", brand=HOSP_BRANDS[i], area=area, city=city, lat=la, lng=lo,
-                         address=f"{area}, {city}", phone=f"0{r.randint(40, 99)} {r.randint(2000, 4999)} {r.randint(1000, 9999)}",
-                         hours="24 hours", open_24h=True, rating=round(r.uniform(3.8, 4.7), 1), rating_n=r.randint(200, 5000),
-                         delivery=False, verified=True))
-
 
 PLANS = [
     ("free", "Free", 0, 0, 5, ["Family profiles and records on this device", "3D body, Heart Lab and Pregnancy", "SOS, first aid and Medical ID",
@@ -263,7 +194,6 @@ def seed_admin(db):
 
 
 def seed_all(db):
-    seed_partners(db)
     seed_plans(db)
     seed_seasonal(db)
     seed_videos(db)
