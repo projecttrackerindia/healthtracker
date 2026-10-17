@@ -1049,7 +1049,66 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .sx-meter{display:flex;gap:4px}.sx-meter i{flex:1;height:5px;border-radius:9px;background:var(--line)}.sx-meter[data-s="0"] i:nth-child(-n+1){background:var(--red)}.sx-meter[data-s="1"] i:nth-child(-n+2){background:#F2672E}.sx-meter[data-s="2"] i:nth-child(-n+3){background:#D98A00}.sx-meter[data-s="3"] i:nth-child(-n+4),.sx-meter[data-s="4"] i{background:var(--teal)}
 .sx-rules{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:var(--mute)}.sx-rules li::before{content:"○ "}.sx-rules li.ok{color:var(--ink)}.sx-rules li.ok::before{content:"✓ ";color:var(--teal);font-weight:700}
 @media (max-width:720px){.sx-acct:not(.in){padding:0 10px;font-size:12px}.sx-rules{grid-template-columns:1fr}}
-</style><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="icon" type="image/png" sizes="32x32" href="brand/png/user-icon-32.png"><link rel="apple-touch-icon" href="brand/png/user-icon-180.png"><meta name="theme-color" content="#2F5BFF"></head>
+</style><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="icon" type="image/png" sizes="32x32" href="brand/png/user-icon-32.png"><link rel="apple-touch-icon" href="brand/png/user-icon-180.png"><meta name="theme-color" content="#2F5BFF"><style id="live-css">/* live layer: health card, verified badge, vitals, coming-soon cards */
+.lv-wide .sx-sheet{max-width:620px}.lv-mid .sx-sheet{max-width:460px}
+.lv-ob-hd{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}.lv-ob-hd h2{margin:0 0 4px}.lv-ob-hd p{margin:0;font-size:13.5px}
+.lv-ob-ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),color-mix(in srgb,var(--blue) 55%,var(--teal)));box-shadow:0 8px 22px color-mix(in srgb,var(--blue) 35%,transparent)}
+.lv-ob-ic svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.lv-form label{font-size:12.5px;font-weight:600;color:var(--mute);display:flex;flex-direction:column;gap:6px}
+.lv-form input,.lv-form select{font-size:15px}
+.lv-sex{border:0;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}.lv-sex legend{font-size:12.5px;font-weight:600;color:var(--mute);margin-bottom:6px;padding:0}
+.lv-opt{flex-direction:row!important;align-items:center;gap:10px!important;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;cursor:pointer;transition:border-color .15s,background .15s}
+.lv-opt input{width:auto;margin:0;accent-color:var(--blue)}.lv-opt b{color:var(--ink);font-size:14.5px}
+.lv-opt:has(input:checked){border-color:var(--blue);background:color-mix(in srgb,var(--blue) 8%,transparent)}
+.lv-ph{display:flex;align-items:stretch}.lv-ph i{font-style:normal;display:grid;place-items:center;padding:0 12px;border:1px solid var(--line);border-right:0;border-radius:12px 0 0 12px;background:var(--soft);color:var(--ink);font-weight:600}
+.lv-ph input{border-radius:0 12px 12px 0!important;flex:1;min-width:0}
+.lv-err{color:var(--red);font-size:13px;font-weight:600;margin:0}
+.lv-ob-ft{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px}.lv-ob-ft a{color:var(--blue)}
+.lv-row-end{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+/* the card */
+.lv-card{position:relative;overflow:hidden;border-radius:20px;padding:18px 20px;color:#fff;margin:14px 0 6px;aspect-ratio:1.62;max-height:270px;display:grid;grid-template-rows:auto 1fr auto auto auto;gap:6px;
+ background:radial-gradient(120% 140% at 100% 0%,rgba(47,209,185,.55),transparent 55%),radial-gradient(90% 120% at 0% 100%,rgba(120,80,255,.45),transparent 60%),linear-gradient(135deg,#1b3bff,#0d1a5c);
+ box-shadow:0 18px 40px rgba(20,40,140,.35),inset 0 1px 0 rgba(255,255,255,.25)}
+.lv-card::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.18) 45%,transparent 60%);transform:translateX(-120%);pointer-events:none}
+.lv-reveal.fresh .lv-card{animation:lvCardIn .9s cubic-bezier(.2,.8,.2,1) both}.lv-reveal.fresh .lv-card::after{animation:lvShine 1.6s .6s ease both}
+@keyframes lvCardIn{0%{opacity:0;transform:perspective(900px) rotateX(28deg) translateY(30px) scale(.92)}100%{opacity:1;transform:none}}
+@keyframes lvShine{to{transform:translateX(120%)}}
+.lv-card-top{display:flex;justify-content:space-between;align-items:center}.lv-card-brand{display:flex;gap:6px;align-items:center;font-weight:700;letter-spacing:-.2px;font-size:13px}
+.lv-card-brand svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.lv-card-k{font-family:var(--mono,monospace);font-size:10px;letter-spacing:.14em;opacity:.8}
+.lv-card-name{font-size:22px;font-weight:700;letter-spacing:-.3px;align-self:end}
+.lv-card-grid{display:flex;gap:22px}.lv-card small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.72}.lv-card b{font-size:15px;font-weight:600}
+.lv-blood{display:inline-block;background:rgba(255,255,255,.18);padding:0 8px;border-radius:8px}
+.lv-card-ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.lv-card-ph small{width:100%}
+.lv-card-id b{font-family:var(--mono,monospace);font-size:13px;letter-spacing:.06em}
+.lv-ver{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px 2px 3px;border-radius:99px;background:rgba(34,195,166,.16);color:#0b8a7c}
+.lv-card .lv-ver{background:rgba(255,255,255,.2);color:#fff}
+.lv-ver svg{width:16px;height:16px}.lv-ver svg path:first-child{fill:#12b886}.lv-ver svg path:last-child{stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.lv-unver{font-size:11px;font-weight:600;opacity:.75}
+.sx-acct.lv-v{position:relative}.sx-acct.lv-v::after{content:"";position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;border-radius:50%;border:2px solid var(--card,#fff);
+ background:#12b886 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/9px no-repeat}
+.lv-vbox{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--soft);margin-top:10px}.lv-vbox small{display:block}.lv-vbox .btn{white-space:nowrap;flex:none}
+.lv-code{display:flex;gap:8px;margin:10px 0}.lv-code input{flex:1;font-size:22px;letter-spacing:.4em;text-align:center;font-family:var(--mono,monospace)}
+.lv-demo{font-size:12.5px;background:color-mix(in srgb,var(--amber) 16%,transparent);padding:6px 10px;border-radius:10px}
+/* home */
+.lv-h0{display:block;font-size:20px;font-weight:700;margin-top:6px;letter-spacing:-.2px}
+.lv-hero-a{padding:4px 0 10px}.lv-noecg{padding-bottom:6px!important}
+.lv-vlist .row{padding:8px 0;border-top:1px solid var(--line)}.lv-vlist .row:first-child{border-top:0}
+.lv-hc{cursor:pointer;text-align:left;width:100%}.lv-hc .lv-card{margin:6px 0 0;max-height:210px}
+.lv-visit{display:flex;gap:12px;align-items:center}
+.lv-vd{flex:none;width:48px;height:52px;border-radius:12px;background:color-mix(in srgb,var(--blue) 10%,transparent);display:grid;place-content:center;text-align:center;line-height:1.05}
+.lv-vd b{font-size:18px;color:var(--blue)}.lv-vd small{font-size:11px;color:var(--mute);text-transform:uppercase}
+.lv-vform{margin:6px 0 14px;padding:14px;border-radius:14px;background:var(--soft)}
+/* coming soon */
+.lv-soon{display:flex;gap:16px;align-items:flex-start;background:linear-gradient(135deg,color-mix(in srgb,var(--blue) 7%,var(--card)),var(--card))}
+.lv-soon h3{margin:0 0 6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.lv-soon p{margin:0;max-width:62ch}
+.lv-soon-ic{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px;background:color-mix(in srgb,var(--blue) 12%,transparent)}
+.lv-tag{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px;background:color-mix(in srgb,var(--teal) 18%,transparent);color:color-mix(in srgb,var(--teal) 60%,var(--ink))}
+.lv-review{border:1px solid color-mix(in srgb,var(--amber) 45%,transparent);background:color-mix(in srgb,var(--amber) 10%,var(--card))}
+@media (max-width:560px){.lv-sex{grid-template-columns:1fr 1fr}.lv-card{aspect-ratio:auto;min-height:200px}.lv-card-grid{gap:16px}.form.lv-form{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.lv-reveal.fresh .lv-card,.lv-reveal.fresh .lv-card::after{animation:none}}
+</style>
+</head>
 <body>
 <div class="shell">
   <aside class="side">
@@ -1060,13 +1119,13 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   <main>
     <div class="top">
       <div><h1 id="hh">Hello 👋</h1><p id="hp">Here's your health update for today.</p></div>
-      <div class="topb"><button class="tourb" id="tourBtn">▶ Demo tour</button><button class="theme" id="theme" aria-label="Toggle theme">◐</button><button class="pill" data-toast="Upgrade is a demo button">✦ Upgrade Now</button></div>
+      <div class="topb"><button class="tourb" id="tourBtn">▶ Take a tour</button><button class="theme" id="theme" aria-label="Toggle theme">◐</button><button class="pill" data-toast="Upgrade is a demo button">✦ Upgrade Now</button></div>
     </div>
     <div class="grid">
       <section class="stage" id="stage" aria-label="Interactive 3D body. Drag to rotate, scroll to zoom">
         <canvas id="c"></canvas><div class="scan"></div>
         <div id="ld" style="position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);pointer-events:none">Loading anatomy…</div>
-        <small class="cr">3D anatomy: Z-Anatomy CC BY-SA 4.0 (built on BodyParts3D © DBCLS) · HuBMAP Human Reference Atlas v1.5 female organs CC BY 4.0 · Sample patient data is fictional</small>
+        <small class="cr">3D anatomy: Z-Anatomy CC BY-SA 4.0 (built on BodyParts3D © DBCLS) · HuBMAP Human Reference Atlas v1.5 female organs CC BY 4.0</small>
         <svg id="lines" aria-hidden="true"></svg><div id="labels"></div>
         <div id="dots"></div>
         <div class="tip" id="tip"><div class="ic" id="tic"></div><div><small id="tn"></small><b id="tv"></b></div></div>
@@ -1655,7 +1714,7 @@ msgs:()=>`<div class="card"><div class="hd"><h3>Messages</h3><span class="demo">
 <div><div class="msgs" id="msgs">${TH[thread].map(([me,t])=>`<div class="bub ${me===1?'me':me===2?'sys':''}">${esc(t)}</div>`).join('')}</div><div class="send"><input id="mi" placeholder="Write a message…" aria-label="Message"><button class="btn p sm" data-act="send">Send</button></div><button class="btn s sm" style="margin-top:8px" data-act="share">📎 Share current 3D view</button></div></div></div>`,
 set:()=>`<div class="card"><h3>Anatomy model</h3>${sexSeg()}<p class="mute sm">${A.sex==='male'?'Male reference: BodyParts3D adult male with full muscle, skeleton, organ, vessel and nerve layers.':'Female body: HuBMAP Human Reference Atlas v1.5 skin, organs (including breast, uterus and ovaries), vessels and nerves. The full muscle layer and skeleton are the BodyParts3D male reference reshaped to her body (arms re-posed, torso, hips and limbs fitted to her skin): anatomically complete, but not sex-specific in every detail (e.g. the pelvis).'}</p><h4>Layers</h4>${layerBoxes()}</div>
 <div class="card"><h3>Display</h3><h4>Theme</h4><span class="seg" id="thm"><button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="">System</button></span><h4>3D view</h4><div class="tiles">${tile('rotate','🔄','Auto-rotate','Turntable rotation.',A.auto)}${tile('dots','📍','Vital hotspots','Heart rate, BP and more on the dashboard body.',A.showDots)}${tile('holo','💠','Hologram','Futuristic glow rendering.',A.holo)}${tile('labels','🏷️','Atlas labels','Leader-line labels.',A.labelsOn)}</div></div>
-<div class="card"><h3>About the data</h3><p class="mute sm" style="margin:0">3D anatomy from BodyParts3D © DBCLS and the HuBMAP Human Reference Atlas v1.5, both CC BY 4.0, simplified for the web. Patients, results, doctors and invoices are fictional sample data for this demo. This is not a diagnostic tool.</p></div>`};
+<div class="card"><h3>About the data</h3><p class="mute sm" style="margin:0">3D anatomy from BodyParts3D © DBCLS and the HuBMAP Human Reference Atlas v1.5, both CC BY 4.0, simplified for the web. TheHealthTracker gives information, not a diagnosis.</p></div>`};
 const specBtn=s=>{const n=A.ready?A.specIds(s.id).size:0;return `<button class="spb ${A.focus&&A.focus.key===s.id?'on':''} ${A.ready&&!n?'dim':''}" data-act="spec:${s.id}"><i>${s.e}</i><span><b>${s.n}</b><small>${A.ready?(n?n+' structures':'Not in '+A.sex+' model'):''}</small></span></button>`};
 const tile=(k,e,n,d,on)=>`<button class="tile ${on?'on':''}" data-act="tool:${k}"><i>${e}</i><b>${n}${on?' · On':''}</b><small>${d}</small></button>`;
 const sexSeg=()=>`<span class="seg"><button data-sex="male" class="${A.sex==='male'?'on':''}">♂ Male</button><button data-sex="female" class="${A.sex==='female'?'on':''}">♀ Female</button><button data-act="preg:on">🤰 Pregnant</button></span>`;
@@ -1924,11 +1983,12 @@ A.setSex=async function(s){A.sex=s;try{localStorage.setItem('dk-sex',s)}catch(e)
 // ---- scene extras ----
 const basePlate=new THREE.Mesh(new THREE.CircleGeometry(2.4,64),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35}));basePlate.rotation.x=-Math.PI/2;basePlate.position.y=-3.12;Sc.add(basePlate);
 const ring=new THREE.Mesh(new THREE.RingGeometry(2.3,2.42,96),new THREE.MeshBasicMaterial({color:0x7fe0ff,transparent:true,opacity:.7,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=-3.11;ring.visible=false;Sc.add(ring);
-const H=[{n:'Stress Level',ic:'🧠',v:()=>'28%'},{n:'Heart Rate',ic:'❤️',v:()=>hr+' bpm'},{n:'Blood Pressure',ic:'💉',v:()=>'120/80'},{n:'Blood Sugar',ic:'🩸',v:()=>'95 mg/dL'},{n:'Joint Health',ic:'🦵',v:()=>'92%'}];
-let hr=72,cur=1;
+const LV=k=>window.SX&&SX.latestVital?SX.latestVital(k):null;
+const H=[{n:'',ic:'',v:()=>null},{n:'Heart rate',ic:'❤️',v:()=>LV('hr')},{n:'Blood pressure',ic:'💉',v:()=>LV('bp')},{n:'Blood sugar',ic:'🩸',v:()=>LV('glu')},{n:'',ic:'',v:()=>null}];
+let hr=0,cur=1;
 H.forEach((h,i)=>{const d=document.createElement('button');d.className='dot';d.setAttribute('aria-label',h.n);d.onclick=e=>{e.stopPropagation();cur=i;tip()};h.el=d;$('#dots').append(d)});
-function tip(){const h=H[cur];$('#tic').textContent=h.ic;$('#tn').textContent=h.n;$('#tv').textContent=h.v();H.forEach((x,i)=>x.el.classList.toggle('act',i==cur))}
-setInterval(()=>{hr=68+Math.round(Math.random()*9);tip();const f=$('#fhr');if(f)f.textContent=hr+' bpm'},2500);
+function tip(){if(!H[cur].v()){const k=H.findIndex(x=>x.v());if(k>=0)cur=k}const h=H[cur];$('#tic').textContent=h.ic;$('#tn').textContent=h.n;$('#tv').textContent=h.v()||'';H.forEach((x,i)=>x.el.classList.toggle('act',i==cur))}
+setInterval(tip,3000);
 // ---- input ----
 const ui=e=>e.target.closest('button,input,.ui,.lbl');
 const ptrs=new Map();let pinch0=null,panning=false,ly=0;
@@ -1957,8 +2017,8 @@ function step(){body.rotation.x+=(goalRX-body.rotation.x)*.15;if(goalRY!==null){
  if(++fr%3===0&&marks.size){const t=performance.now();marks.forEach((m,i)=>{if(m.until&&t>m.until){marks.delete(i);paint(i);return}if(m.pulse){m.k=.55+.4*Math.sin(t/260);paint(i)}})}}
 (function loop(){if(stage.offsetParent===null){requestAnimationFrame(loop);return}step();const w=stage.clientWidth,h=stage.clientHeight;body.updateMatrixWorld(true);CP.copy(LP).applyMatrix4(body.matrixWorld);
  const dotsOn=A.showDots&&!A.focus&&!A.quiz&&!A.labelsOn;
- H.forEach(o=>{if(!o.p){o.el.style.display='none';o.x=o.y=-99;return}v.set(...o.p);body.localToWorld(v);const front=v.z>-.1;v.project(C);o.x=(v.x*.5+.5)*w;o.y=(-v.y*.5+.5)*h;o.el.style.cssText=`left:${o.x}px;top:${o.y}px;display:${dotsOn&&front?'block':'none'}`});
- const a=H[cur],t=$('#tip');t.style.display=dotsOn&&a.el.style.display!=='none'?'flex':'none';t.style.left=Math.min(a.x+18,w-t.offsetWidth-8)+'px';t.style.top=(a.y-t.offsetHeight/2-26)+'px';
+ H.forEach(o=>{if(!o.p){o.el.style.display='none';o.x=o.y=-99;return}v.set(...o.p);body.localToWorld(v);const front=v.z>-.1;v.project(C);o.x=(v.x*.5+.5)*w;o.y=(-v.y*.5+.5)*h;o.el.style.cssText=`left:${o.x}px;top:${o.y}px;display:${dotsOn&&front&&o.v()?'block':'none'}`});
+ const a=H[cur],t=$('#tip');t.style.display=dotsOn&&a.el.style.display!=='none'&&a.v()?'flex':'none';t.style.left=Math.min(a.x+18,w-t.offsetWidth-8)+'px';t.style.top=(a.y-t.offsetHeight/2-26)+'px';
  if(A.holo)ring.rotation.z+=.003;layoutLabels(w,h);R.render(Sc,C);requestAnimationFrame(loop)})();
 // ===================== Anatomy Lab tools: layer opacity, hide/unhide, pins, structure tree =====================
 (()=>{
@@ -2071,7 +2131,7 @@ const TOUR=[
 ['#pstage','Baby view','Switch to Baby for a detailed 3D embryo or fetus with its sac, placenta, cord and a scale bar. Here: week 7, with the beating heart and the tail.',async()=>{setPView('baby');setW(7)}],
 ['#ptabs','Food, water, music & more','Nine tabs: week guide, Indian diet plans, a water goal and tracker, generated music, symptoms and danger signs, a kick counter, a contraction timer, a birth plan and benefits.',async()=>{PS.tab='water';render()}],
 ['#hstage','Heart Lab','A living heart: chambers squeeze in sequence, valves open and close, blood flows red and blue, and the electrical signal travels from the SA node. Slow motion, cut-away views and the Wiggers diagram show every phase.',async()=>{go('heart');for(let k=0;k<40&&!HL.UI.ready;k++)await wait(150);HL.setCut('4ch');HL.cam('4ch')}],
-['#tourBtn','That\'s the tour','Everything you saw runs on sample data. Press Demo tour any time to replay it.',async()=>{if(typeof PS!=='undefined'&&PS.on)PG.exit();else go('dash');A.clearFocus()}]];
+['#tourBtn','That\'s the tour','Everything you saw runs on sample data. Press Take a tour any time to replay it.',async()=>{if(typeof PS!=='undefined'&&PS.on)PG.exit();else go('dash');A.clearFocus()}]];
 let tk=-1;
 async function showStep(k){tk=k;const[sel,t,b,act]=TOUR[k];$('#tst').textContent=`STEP ${k+1} OF ${TOUR.length}`;$('#tti').textContent=t;$('#ttx').textContent=b;$('#tback').disabled=k===0;$('#tnext').textContent=k===TOUR.length-1?'Finish':'Next';
  $('#tpop').hidden=false;$('#tring').hidden=false;$('#tnext').disabled=true;try{if(act)await act()}catch(e){console.error(e)}await wait(450);$('#tnext').disabled=false;if(tk!==k)return;const el=$(sel);if(el&&el.offsetParent!==null){el.scrollIntoView({block:'nearest'});await wait(120)}placeTour(el)}
@@ -3344,6 +3404,52 @@ const demo=()=>({v:1,lang:'en',active:'m1',created:Date.now(),
   {id:'m1',pid:null,name:'You',rel:'You',age:0,sex:'male',w:0,h:0,av:'YO',c:'',shared:true}]});
 let S;
 try{const j=JSON.parse(localStorage.getItem(LSK));if(j&&j.v===1&&Array.isArray(j.members)&&j.members.length)S=j}catch(e){}
+/*live-p0*/
+// One-time clean-up of the sample household that earlier versions saved into people's browsers.
+// Removes only items that match the old sample data exactly; anything a person added or changed is kept.
+// A full copy of the old state is kept on this device first (localStorage "dk6.backup").
+const SAMPLE_M={m1:['p1','Prasanna',34],m2:['p3','Ananya',29],m3:['p2','Ramesh',61],m4:['p4','Lakshmi',58],m5:['p5','Arjun',24]};
+const SAMPLE_LAB=new Set(['ldl|162|2026-10-12','tc|231|2026-10-12','hdl|38|2026-10-12','tg|168|2026-10-12','alt|58|2026-10-12','hba1c|5.6|2026-09-28','glu_f|95|2026-09-28','creat|0.9|2026-09-28','hb|14.6|2026-09-28','tsh|2.1|2026-09-28','vitd|18|2026-09-28','ldl|171|2026-04-09','vitd|22|2026-04-09',
+ 'hb|11.4|2026-10-02','tsh|4.6|2026-10-02','vitd|16|2026-10-02','glu_f|104|2026-10-02','hba1c|5.5|2026-10-02','b12|310|2026-10-02',
+ 'hba1c|6.8|2026-10-05','glu_f|138|2026-10-05','creat|1.4|2026-10-05','ldl|118|2026-10-05','tg|190|2026-10-05','uric|7.9|2026-10-05','hba1c|7.1|2026-06-20','creat|1.3|2026-06-20',
+ 'hb|12.6|2026-09-20','vitd|22|2026-09-20','alt|62|2026-09-20','tc|224|2026-09-20','b12|180|2026-09-20','ca|9.4|2026-09-20',
+ 'hb|15.2|2026-08-14','wbc|6.4|2026-08-14','vitd|24|2026-08-14','glu_f|88|2026-08-14']);
+const SAMPLE_FIND=new Set(['Ultrasound abdomen|2026-10-10','ECG|2026-10-12','Chest X-ray|2026-08-30','Blood test (CBC)|2026-10-18']);
+const SAMPLE_MED=new Set(['m1|Atorvastatin|10 mg tablet','m1|Ursodeoxycholic acid|300 mg tablet','m1|Vitamin D3|60,000 IU sachet','m2|Iron + folic acid|1 tablet','m2|Vitamin D3|1000 IU softgel',
+ 'm3|Atorvastatin|20 mg tablet','m3|Amlodipine|5 mg tablet','m4|Calcium + Vitamin D3|1 tablet','m4|Vitamin B12|1500 mcg tablet']);
+const SAMPLE_NAMES=new Set(['Prasanna','Ananya','Ramesh','Lakshmi','Arjun']);
+const SAMPLE_MID={m1:{blood:'B+',allergies:['Penicillin'],conditions:['High cholesterol','Gallstones'],donor:'yes',doctor:'Dr. Sarah Wilson'},m2:{blood:'O+',doctor:'Dr. Fatima Khan'},m3:{blood:'A+',allergies:['Sulfa drugs'],conditions:['Coronary artery disease','Enlarged prostate'],doctor:'Dr. Sarah Wilson'},m4:{},m5:{}};
+function purgeSample(s){try{
+ if(!s||s.mig>=2)return s;
+ const had=s.members.some(m=>/^p[1-5]$/.test(m.pid||''))||(s.vault||[]).some(v=>v.demo)||(s.orders||[]).length>0||Object.values(s.appts||{}).some(l=>(l||[]).some(a=>a&&a.doc));
+ if(!had){s.mig=2;return s}
+ try{if(!localStorage.getItem('dk6.backup'))localStorage.setItem('dk6.backup',JSON.stringify({t:Date.now(),s}))}catch(e){}
+ let n=0;const drop=(arr,f)=>{if(!Array.isArray(arr))return arr;const o=arr.filter(x=>!f(x));n+=arr.length-o.length;return o};
+ const isLab=r=>r&&r.k==='lab'&&SAMPLE_LAB.has(r.key+'|'+(+r.val)+'|'+r.date),isFind=r=>r&&r.k==='find'&&SAMPLE_FIND.has(r.n+'|'+r.date);
+ for(const id in (s.results||{}))s.results[id]=drop(s.results[id],r=>isLab(r)||isFind(r));
+ s.vault=drop(s.vault||[],v=>v&&v.demo);
+ for(const id in (s.meds||{}))s.meds[id]=drop(s.meds[id],x=>x&&SAMPLE_MED.has(id+'|'+x.n+'|'+x.dose));
+ for(const id in (s.appts||{}))s.appts[id]=drop(s.appts[id],a=>a&&a.doc);          // bookings with fictional doctors were never sent anywhere
+ for(const id in (s.contacts||{}))s.contacts[id]=drop(s.contacts[id],c=>c&&/^c[1-6]$/.test(c.id)&&!c.ph&&SAMPLE_NAMES.has(c.n));
+ n+=(s.orders||[]).length;s.orders=[];                                                 // simulated orders: nothing was ever sent to a pharmacy
+ for(const id in SAMPLE_MID){const a=(s.mid||{})[id],b=SAMPLE_MID[id];if(!a)continue;
+  const same=(k,d)=>JSON.stringify(a[k]==null?d:a[k])===JSON.stringify(b[k]==null?d:b[k]);
+  if(['blood','donor','doctor'].every(k=>same(k,''))&&['allergies','conditions'].every(k=>same(k,[]))&&!a.notes&&!a.policy){delete s.mid[id];n++}}
+ const keep=[];
+ for(const m of s.members){const d=SAMPLE_M[m.id];
+  if(d&&m.pid===d[0]){const own=(s.results&&s.results[m.id]||[]).length+(s.meds&&s.meds[m.id]||[]).length+(s.appts&&s.appts[m.id]||[]).length+(s.contacts&&s.contacts[m.id]||[]).length+(s.vault||[]).filter(v=>v.m===m.id).length+((s.mid||{})[m.id]?1:0)+(s.preg&&s.preg[m.id]?1:0);
+   if(m.name===d[1]&&m.age===d[2]&&!own){n++;['results','meds','appts','contacts','taken','mid','preg','vitals'].forEach(k=>{if(s[k])delete s[k][m.id]});continue}
+   m.pid=null;m.review=1}                                                              // the person changed or used it: keep, but unlink the sample findings
+  else if(m.pid&&/^p[1-5]$/.test(m.pid)){m.pid=null;m.review=1}
+  keep.push(m)}
+ s.members=keep;
+ if(Array.isArray(s.cart))s.cart=s.cart.filter(c=>keep.some(m=>m.id===c.m));
+ if(!s.members.some(m=>m.rel==='You'))s.members.unshift({id:'m'+Math.random().toString(36).slice(2,9),pid:null,name:'You',rel:'You',age:0,sex:'male',w:0,h:0,av:'YO',c:'',shared:true});
+ if(!s.members.some(m=>m.id===s.active))s.active=s.members[0].id;
+ try{const p=JSON.parse(localStorage.getItem('dk-preg-prof')||'null');if(p&&p.name==='Ananya'&&p.lmp==='2026-04-23')localStorage.removeItem('dk-preg-prof')}catch(e){}
+ s.mig=2;s.purged={t:Date.now(),n};return s}catch(e){console.warn('purge',e);return s}}
+
+if(S)S=purgeSample(S);
 if(!S)S=demo();
 SX.S=S;
 let svT=0;
@@ -3543,8 +3649,8 @@ const PAGES0={};SX.net_wrap=()=>{};
 function wrapPages(){for(const k of Object.keys(EXT)){if(PAGES0[k])continue;const d=Object.getOwnPropertyDescriptor(window,'PAGES');const Pg=typeof PAGES!=='undefined'?PAGES:null;if(!Pg||!Pg[k])continue;PAGES0[k]=Pg[k];Pg[k]=(...a)=>{const base=PAGES0[k](...a);let pre='',post='';EXT[k].forEach(x=>{if(x.before)pre+=x.before();if(x.after)post+=x.after()});return pre+base+post};
   const A0=typeof AFTER!=='undefined'?AFTER[k]:null;if(typeof AFTER!=='undefined')AFTER[k]=()=>{A0&&A0();EXT[k].forEach(x=>x.mounted&&x.mounted())}}}
 // ---------------------------------------------------------------- consent for AI analysis
-const aiConsent=()=>new Promise(res=>{if(S.consent.ai_analysis)return res(true);const eng=SX.cfg&&SX.cfg.ai&&SX.cfg.ai.engine==='claude';
- SX.modal(`<h2>${P('Analyse with AI?')}</h2><p>${P('The document is sent to the TheHealthTracker server to be read')}${eng?' '+P('and to the AI provider (Anthropic) for this one analysis'):''}. ${P('It is processed and discarded: only the summary comes back to this device, and the file itself is never stored on the server.')}</p>
+const aiConsent=()=>new Promise(res=>{if(S.consent.ai_analysis)return res(true);const eng=SX.cfg&&SX.cfg.ai&&SX.cfg.ai.engine==='ai';
+ SX.modal(`<h2>${P('Analyse with AI?')}</h2><p>${P('The document is sent to the TheHealthTracker server to be read')}${eng?' '+P('and to our AI processing partner for this one analysis (listed in the privacy policy)'):''}. ${P('It is processed and discarded: only the summary comes back to this device, and the file itself is never stored on the server.')}</p>
  <ul class="sx-ul"><li>${P('Nothing is diagnosed. Results are phrased for a conversation with your doctor.')}</li><li>${P('You can switch this off any time in Family & Privacy → Consent.')}</li></ul>
  <label class="sx-ck" style="display:flex;gap:8px;align-items:flex-start;margin:10px 0"><input type="checkbox" id="aiok" style="width:auto;margin-top:3px"><span>${P('I understand and allow TheHealthTracker to analyse my documents.')}</span></label>
  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn s" data-sx="closeModal">${P('Not now')}</button><button class="btn p" id="aigo">${P('Allow and analyse')}</button></div>`,{label:'Consent'});
@@ -3570,7 +3676,7 @@ const askText=v=>new Promise(res=>{SX.modal(`<h2>${P('Paste the text')}</h2><p c
  $('#aitgo').onclick=()=>{const t=$('#aitxt').value.trim();if(t.length<8){toast(P('Please paste the report text'));return}res(t)};document.querySelector('.sx-modal')._onclose=()=>res('')});
 const FL={low:['Low','b-warn'],high:['High','b-warn'],normal:['Normal','b-ok'],unknown:['—','']};
 const CODEMAP={hb:'hb',wbc:'wbc',plt:'plt',glu_f:'glu_f',hba1c:'hba1c',tc:'tc',ldl:'ldl',hdl:'hdl',tg:'tg',alt:'alt',ast:'ast',creat:'creat',uric:'uric',na:'na',k:'k',tsh:'tsh',vitd:'vitd',b12:'b12',ca:'ca'};
-function aiSheet(v,r){const m=SX.member(v.m)||SX.me(),f=r.findings||[],meds=r.medicines||[],tests=(r.tests_needed||[]).concat(r.followups||[]),eng=r.engine==='claude';
+function aiSheet(v,r){const m=SX.member(v.m)||SX.me(),f=r.findings||[],meds=r.medicines||[],tests=(r.tests_needed||[]).concat(r.followups||[]),eng=r.engine==='ai';
  const html=`<div class="sx-aih"><h2>${P('Analysis')} · ${E(v.name)}</h2><span class="sx-eng ${eng?'ai':''}">${eng?'✦ '+P('AI'):P('Basic reader')}</span></div>
  <p class="sx-aisum">${E(r.summary)}</p>${r.patient_match===false?`<div class="sx-warn"><p>⚠️ ${P('The name or age on the document does not seem to match')} ${E(m.name)}.</p></div>`:''}
  ${(r.warnings||[]).length?`<div class="sx-warn stop">${r.warnings.map(w=>`<p>⚠️ ${E(w)}</p>`).join('')}</div>`:''}
@@ -3608,9 +3714,9 @@ const cartLive=async keep=>{cart0(keep);const sheet=document.querySelector('.sx-
  box.querySelector('[data-net=geo]').onclick=async()=>{await SX.geo(true);loadLive(box)};
  loadLive(box)};
 async function loadLive(box){const g=await SX.geo(false);const items=S.cart.map(c=>({sku:c.id,qty:c.q}));
- try{LIVE=await SX.api('/quotes',{method:'POST',body:{items,lat:g?g.lat:null,lng:g?g.lng:null},silent:true})}catch(e){LIVE=null;box.querySelector('.sx-livel').innerHTML=`<p class="mute sm">${e.offline?P('No connection: the sample pharmacies below are used.'):P('Live prices are not available right now.')}</p>`;const ph=box.nextElementSibling;if(ph){ph.hidden=false;const h=box.previousElementSibling;if(h&&h.classList.contains('sx-h4'))h.hidden=false}return}
+ try{LIVE=await SX.api('/quotes',{method:'POST',body:{items,lat:g?g.lat:null,lng:g?g.lng:null},silent:true})}catch(e){LIVE=null;box.querySelector('.sx-livel').innerHTML=`<p class="mute sm">${e.offline?P('No connection right now. Your basket is saved.'):P('Online ordering is not available in your area yet. Your basket is saved; you can show it at any pharmacy.')}</p>`;return}
  if(!liveSel||!LIVE.stores.find(s=>s.id===liveSel))liveSel=LIVE.recommended||'';paintLive(box)}
-function paintLive(box){const L=LIVE;if(!L)return;const el=box.querySelector('.sx-livel');
+function paintLive(box){const L=LIVE;if(!L)return;const el=box.querySelector('.sx-livel');if(!L.stores||!L.stores.length){el.innerHTML=`<p class="mute sm">${P('Online ordering is not available in your area yet. Your basket is saved; you can show it at any pharmacy.')}</p>`;return}
  el.innerHTML=`<p class="mute sm" style="margin:0 0 8px">${L.approx?P('Showing')+' '+E(L.city)+' ('+P('tap “Use my location” for exact distances')+')':E(L.city)}</p><div class="sx-stores">${L.stores.slice(0,6).map(s=>`<label class="sx-store ${s.id===liveSel?'on':''} ${s.complete?'':'part'}"><input type="radio" name="live" ${s.id===liveSel?'checked':''} data-net="pick:${s.id}"><div class="grow"><b>${E(s.name)}</b><small>${s.km} km · ${E(s.eta)} · ★ ${s.rating}${s.discount?` · ${s.discount}% ${P('off MRP')}`:''}${s.verified?' · <img class="sx-pv" src="/brand/svg/partner-icon.svg" alt="" width="13" height="13"> '+P('verified partner'):''}</small>${s.tags.length?`<div class="sx-tags">${s.tags.map(t=>`<i class="${/Cheapest|Nearest|Fastest|Ordered/.test(t)?'hot':''}">${P(t)}</i>`).join('')}</div>`:''}${s.missing.length?`<small class="warn">${P('Not in stock')}: ${s.missing.map(E).join(', ')}</small>`:''}</div><div class="sx-storep"><b>${money(s.total)}</b><small>${s.fee?money(s.fee)+' '+P('delivery'):P('free delivery')}</small>${s.saving?`<small class="ok">${P('save')} ${money(s.saving)}</small>`:''}</div></label>`).join('')}</div>`;
  el.querySelectorAll('[data-net^="pick:"]').forEach(i=>i.onchange=()=>{liveSel=i.dataset.net.split(':')[1];paintLive(box);const s=L.stores.find(x=>x.id===liveSel);const tot=document.querySelector('.sx-modal .sx-tot');if(tot&&s){const b=tot.querySelectorAll(':scope > b');if(b.length>=3){b[0].textContent=money(s.subtotal);b[1].textContent=s.fee?money(s.fee):P('Free');b[b.length-1].textContent=money(s.total)}const pl=document.querySelector('.sx-modal [data-sx="place"]');if(pl)pl.textContent=`${P('Place order')} · ${money(s.total)}`}});
  const s=L.stores.find(x=>x.id===liveSel);if(s){const tot=document.querySelector('.sx-modal .sx-tot');if(tot){const b=tot.querySelectorAll(':scope > b');if(b.length>=3){b[0].textContent=money(s.subtotal);b[1].textContent=s.fee?money(s.fee):P('Free');b[b.length-1].textContent=money(s.total)}}const pl=document.querySelector('.sx-modal [data-sx="place"]');if(pl)pl.textContent=`${P('Place order')} · ${money(s.total)}`;const d=document.querySelector('.sx-modal .sx-disc');if(d)d.textContent=P('Pay on delivery. The pharmacist checks prescriptions before packing. You can rate the delivery afterwards.')}}
@@ -3712,7 +3818,7 @@ function razorpay(r,p){const open=()=>{const rz=new Razorpay({key:r.keyId,amount
   handler:async res=>{try{const j=await SX.api('/subscribe',{method:'POST',body:{plan:p.code,period:'month',paymentId:res.razorpay_payment_id,orderId:res.razorpay_order_id,signature:res.razorpay_signature}});PLANS=null;toast(`${P('Payment received')} · ${P('Invoice')} ${j.invoice}`);SX.acct=null;SX.hello();render()}catch(e){}}});rz.open()};
  if(window.Razorpay)return open();const s=document.createElement('script');s.src='https://checkout.razorpay.com/v1/checkout.js';s.onload=open;s.onerror=()=>toast(P('Could not load the payment page'));document.head.append(s)}
 // consent list gets the AI switch (rendered by family.js from CONSENTS; we add a row on mount)
-SX.extend('consent',{after(){return `<div class="card"><div class="row"><div class="grow"><b>${P('Analyse my documents with AI')}</b><small>${P('Reports and prescriptions are sent to the TheHealthTracker server (and the AI provider) only when you tap Analyse. They are read, summarised and discarded.')}</small></div><label class="sx-sw"><input type="checkbox" ${S.consent.ai_analysis?'checked':''} data-sxc="aiswitch"><i></i></label></div></div>`}});
+SX.extend('consent',{after(){return `<div class="card"><div class="row"><div class="grow"><b>${P('Analyse my documents with AI')}</b><small>${P('Reports and prescriptions are sent to the TheHealthTracker server (and our AI processing partner) only when you tap Analyse. They are read, summarised and discarded.')}</small></div><label class="sx-sw"><input type="checkbox" ${S.consent.ai_analysis?'checked':''} data-sxc="aiswitch"><i></i></label></div></div>`}});
 SX.chg.aiswitch=(a,el)=>{if(el.checked){S.consent.ai_analysis=true;SX.ledger('ai_analysis',true,'Allowed AI analysis of documents',SX.me().id);SX.save();toast(P('AI analysis is on'))}else SX.act.aioff()};
 // ---------------------------------------------------------------- account (sign-in lives on the landing page; this is the in-app side)
 SX.user=null;
@@ -4067,13 +4173,13 @@ SX.reg('family',{head:()=>['Family','Everyone whose health you look after.'],
    ${b?`<p class="mute sm" style="margin:8px 0 0">${E(SX.bmiCat(b))} (Asia-Pacific cut-offs). BMI is a rough guide only; talk to your doctor about what is right for you.</p>`:''}
    ${p&&p.f.length?`<h4>Findings on ${E(m.name)}'s body</h4>${p.f.map((f,k)=>`<button class="row" data-act="finding:${p.id}:${k}"><i class="sev" style="background:${SEV[f.sev][0]};width:14px;height:14px"></i><div class="grow"><b>${E(f.t)}</b><small>${E(f.note)}</small></div><span class="badge ${SEV[f.sev][1]}">${SEV[f.sev][2]}</span></button>`).join('')}<p class="mute sm" style="margin:6px 0 0">Sample findings. They are shared for your care team to review, not a diagnosis.</p>`:`<p class="mute sm" style="margin:12px 0 0">No findings recorded for ${E(m.name)} yet.</p>`}
    ${SX.canPreg(m)?`<h4>Pregnancy</h4>${SX.pregOn(m)?`<div class="row"><div style="font-size:22px">🤰</div><div class="grow"><b>Tracking is on</b><small>Week ${Math.max(0,weeksFrom(S.preg[m.id].lmp))} · opt-in, stored on this device</small></div><button class="btn s sm" data-sx="tab:preg">Open</button><button class="btn s sm" data-sx="pregoff">Turn off</button></div>`:`<div class="row"><div style="font-size:22px">🤰</div><div class="grow"><b>Pregnancy tracking is off</b><small>Optional. You choose.</small></div><button class="btn s sm" data-sx="pregon">Turn on…</button></div>`}`:''}</div>`;
-  return `<div class="card"><div class="hd"><h3>Household</h3><span class="demo">SAMPLE FAMILY</span></div>${S.members.map(memberRow).join('')}<button class="btn s w" data-sx="fedit:new">＋ Add a family member</button></div>${detail}${adding?memberForm(null):ed?memberForm(ed):''}`}});
+  return `<div class="card"><div class="hd"><h3>Household</h3></div>${S.members.map(memberRow).join('')}<button class="btn s w" data-sx="fedit:new">＋ Add a family member</button></div>${detail}${adding?memberForm(null):ed?memberForm(ed):''}`}});
 SX.act.fedit=([id])=>{famEdit=id||null;render();if(famEdit)setTimeout(()=>{const f=$('#page form');if(f)f.scrollIntoView({behavior:'smooth',block:'center'})},50)};
 SX.chg.fsave=([id],f)=>{const fd=new FormData(f),name=String(fd.get('name')||'').trim().slice(0,40),age=Math.round(+fd.get('age')),w=+fd.get('w')||0,h=+fd.get('h')||0;
  if(!name||!(age>=0&&age<=120)){toast('Please check the name and age');return}if(w&&(w<2||w>300)||h&&(h<30||h>250)){toast('Please check weight and height');return}
  const sex=fd.get('sex')==='male'?'male':'female',rel=String(fd.get('rel')||'Other');
- if(id){const m=SX.member(id);Object.assign(m,{name,age,sex,rel:m.rel==='You'?'You':rel,w,h,av:name.slice(0,2).toUpperCase()});const p=SX.pat(m);if(p){p.n=name;p.age=age}toast('Saved '+name);
-  if(sex!==m.sex)SX.pendingModel=true}
+ if(id){const m=SX.member(id),sex0=m.sex;Object.assign(m,{name,age,sex,sexOk:true,rel:m.rel==='You'?'You':rel,w,h,av:name.slice(0,2).toUpperCase()});if(m.dob&&m.rel!=='You'&&Math.abs(SX.ageFrom(m.dob)-age)>0)delete m.dob;delete m.review;const p=SX.pat(m);if(p){p.n=name;p.age=age}toast('Saved '+name);
+  if(sex!==sex0&&m.id===S.active){SX.pendingModel=true;SX.applyModel()}}
  else{const n={id:uid('m'),pid:null,name,rel,age,sex,w,h,av:name.slice(0,2).toUpperCase(),c:['','m','g','y'][S.members.length%4],shared:true};S.members.push(n);toast(name+' added')}
  SX.ledger('member',true,(id?'Updated ':'Added ')+name,id||'all');famEdit=null;SX.save();SX.syncPreg();render();SX.paintWho()};
 SX.act.fdel=([id])=>{const m=SX.member(id);if(!m||m.rel==='You')return;SX.modal(`<h2>Remove ${E(m.name)}?</h2><p class="mute">This deletes ${E(m.name)}'s documents, results, medicines, contacts and Medical ID from this device. It cannot be undone.</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn s" data-sx="closeModal">Keep</button><button class="btn red" data-sx="fdel2:${id}">Delete ${E(m.name)}'s data</button></div>`,{label:'Remove member'})};
@@ -4093,7 +4199,7 @@ SX.reg('consent',{head:()=>['Consent','You decide what is shared, and you can ch
  render:()=>{const others=S.members.filter(m=>m.rel!=='You');
   return `<div class="card wide"><h3>What TheHealthTracker may do</h3>${CONSENTS.map(([k,t,d,off])=>`<div class="row sx-cons"><div class="grow"><b>${E(t)}</b><small>${E(d)}</small><small style="color:var(--mute)"><em>${S.consent[k]?'':'Off now. '}${E(off)}</em></small></div><label class="sx-sw"><input type="checkbox" data-sxc="cons:${k}" ${S.consent[k]?'checked':''} aria-label="${E(t)}"><i></i></label></div>`).join('')}
    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn s sm" data-sx="consentoff">Turn all off</button></div></div>
-  <div class="card"><div class="hd"><h3>Family access</h3><span class="demo">DEMO</span></div><p class="mute sm" style="margin-top:-6px">In the full product each adult decides this from their own account. Switch a person off to see what happens when they have not shared.</p>
+  <div class="card"><div class="hd"><h3>Family access</h3></div><p class="mute sm" style="margin-top:-6px">When family sharing launches, each adult decides this from their own account. Switch a person off to see what happens when they have not shared.</p>
    ${others.map(m=>`<div class="row">${SX.avatar(m,38)}<div class="grow"><b>${E(m.name)}</b><small>${E(m.rel)} · ${m.shared!==false?'Records shared with you':'Not shared with you'}</small></div><label class="sx-sw"><input type="checkbox" data-sxc="share:${m.id}" ${m.shared!==false?'checked':''} aria-label="${E(m.name)} shares records"><i></i></label></div>`).join('')||'<p class="mute">No other members.</p>'}</div>
   <div class="card"><div class="hd"><h3>History</h3><button class="btn s sm" data-sx="ledgerdl">Download</button></div>${S.ledger.slice(0,14).map(l=>`<div class="sx-led"><i class="${l.on?'on':'off'}"></i><div><b>${E(l.x)}</b><small>${E(SX.fmtT(l.t))}</small></div></div>`).join('')}<p class="mute sm" style="margin:8px 0 0">A record of what you turned on or off, kept on this device.</p></div>`}});
 SX.chg.cons=([k],el)=>{S.consent[k]=el.checked;const c=CONSENTS.find(x=>x[0]===k);SX.ledger(k,el.checked,(el.checked?'Allowed: ':'Stopped: ')+(c?c[1]:k));SX.save();render()};
@@ -4113,7 +4219,7 @@ SX.reg('data',{head:()=>['My data','Take a copy, or delete it. Your choice, any 
    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" data-sx="export:0">⬇ Data only</button><button class="btn s" data-sx="export:1">⬇ With document files</button></div></div>
   <div class="card"><h3>Delete</h3><p class="mute sm" style="margin-top:-6px">Remove one family member and their data in Family → Edit → Remove. Or erase everything TheHealthTracker keeps in this browser.</p>
    <button class="btn red" data-sx="wipe">Delete everything on this device…</button></div>
-  <div class="card"><h3>Where your data goes</h3><ul class="sx-ul"><li>Stays in this browser (local storage and a private file store).</li><li>Pharmacy orders and doctor bookings in this demo are simulated; nothing is sent.</li><li>When accounts launch, data will be stored in India and you will be asked before anything moves off this device.</li></ul></div>`},
+  <div class="card"><h3>Where your data goes</h3><ul class="sx-ul"><li>Stays in this browser (local storage and a private file store).</li><li>A pharmacy receives an order only when you place it, and only what that order needs.</li><li>Health records stay on this device. You are asked before anything leaves it.</li></ul></div>`},
  after:()=>{if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(e=>{if(page==='data'&&e&&e.usage){const mb=e.usage/1048576;const u=mb<1?'under 1 MB':mb.toFixed(1)+' MB';if(u!==usage){usage=u;render()}}}).catch(()=>{})}});
 SX.act.export=async([withFiles])=>{const out={app:'TheHealthTracker',exportedAt:new Date().toISOString(),version:1,data:JSON.parse(JSON.stringify(S))};
  try{out.pregnancy={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('dk-preg-')){try{out.pregnancy[k.slice(8)]=JSON.parse(localStorage.getItem(k))}catch(e){}}}}catch(e){}
@@ -4130,7 +4236,7 @@ SX.chg.wipe2=async(a,f)=>{if(String(new FormData(f).get('c')).trim().toUpperCase
 const _set=PAGES.set;
 SX.reg('set',{head:()=>['Settings','Language, theme, body model and credits.'],
  render:()=>`<div class="card"><h3>Language</h3><div class="chips">${[['en','English'],['hi','हिन्दी'],['te','తెలుగు']].map(([k,n])=>`<button class="chip ${S.lang===k?'on':''}" data-sx="lang:${k}">${n}</button>`).join('')}</div><p class="mute sm" style="margin:10px 0 0">Menus, SOS and emergency alerts are translated. Medical guidance stays in English until a clinician has reviewed each translation.</p></div>`
-  +_set()+`<div class="card"><h3>Credits and licences</h3><p class="mute sm" style="margin:0">3D anatomy: Z-Anatomy (CC BY-SA 4.0, built on BodyParts3D © DBCLS) and the HuBMAP Human Reference Atlas v1.5 (CC BY 4.0). Three.js (MIT). Fonts: Geist and Noto Sans (SIL Open Font Licence). Sample people, results, doctors, pharmacies and prices are fictional. TheHealthTracker gives information, not a diagnosis or treatment.</p></div>`});
+  +_set()+`<div class="card"><h3>Credits and licences</h3><p class="mute sm" style="margin:0">3D anatomy: Z-Anatomy (CC BY-SA 4.0, built on BodyParts3D © DBCLS) and the HuBMAP Human Reference Atlas v1.5 (CC BY 4.0). Three.js (MIT). Fonts: Geist and Noto Sans (SIL Open Font Licence). TheHealthTracker gives information, not a diagnosis or treatment.</p></div>`});
 })();
 
 // ===================== six · Records & Labs: vault, results, insights, suggested checks =====================
@@ -4439,7 +4545,7 @@ SX.reg('rx',{head:()=>['My medicines','Doses for today, stock left, and reminder
    ${x.sp?`<button class="btn s sm" data-act="spec:${x.sp}">Target organ</button>`:''}<button class="btn ${low?'p':'s'} sm" data-sx="refill:${x.id}">${low?'Reorder':'Refill'}</button><button class="btn s sm" data-sx="mededit:${x.id}" aria-label="Edit ${E(x.n)}">Edit</button></div>`}).join(''):'<div class="sx-empty">No medicines yet. Add one to track doses.</div>'}
    <p class="sx-disc">Take medicines exactly as your doctor or the label says. TheHealthTracker tracks doses; it does not tell you what to take or change a dose.</p></div>
   <div class="card wide"><div class="hd"><h3>Reminders</h3><label class="sx-sw"><input type="checkbox" data-sxc="remtog" ${S.rem.on?'checked':''} aria-label="Remind me while TheHealthTracker is open"><i></i></label></div>
-   <p class="mute sm" style="margin:0">Morning 8 AM · Afternoon 2 PM · Evening 6 PM · Night 9 PM. Reminders appear while TheHealthTracker is open in a tab or installed app. Phone notifications when the app is closed need the push service, which is not part of this demo.</p></div>`},
+   <p class="mute sm" style="margin:0">Morning 8 AM · Afternoon 2 PM · Evening 6 PM · Night 9 PM. Reminders appear while TheHealthTracker is open in a tab or installed app. Phone notifications when the app is closed need the push service, which is coming soon.</p></div>`},
  after:()=>{}});
 SX.chg.dose=([id,j],el)=>{const m=SX.me(),t=takenSet(m),k=id+':'+j,x=meds(m).find(a=>a.id===id);if(!x)return;
  if(el.checked&&!t[k]){t[k]=1;if(x.left!=null&&x.left>0)x.left--}else if(!el.checked&&t[k]){delete t[k];if(x.left!=null)x.left++}
@@ -4482,7 +4588,7 @@ SX.reg('finder',{head:()=>['Find & order','Search medicines, check them against 
    <input id="fq" type="search" placeholder="Search by name or use, e.g. fever, acidity, vitamin D" value="${E(fQ)}" aria-label="Search medicines" autocomplete="off">
    <div class="chips" style="margin-top:10px">${[['all','All'],['otc','No prescription'],['rx','Prescription (℞)']].map(([k,t])=>`<button class="chip ${fRx===k?'on':''}" data-sx="frx:${k}">${t}</button>`).join('')}</div>
    <div class="chips" style="margin-top:8px">${['All',...CAT.map(c=>c[0])].map(k=>`<button class="chip ${fCat===k?'on':''}" data-sx="fcat:${E(k)}">${k==='All'?'All':catIc(k)+' '+k}</button>`).join('')}</div>
-   <p class="mute sm" style="margin:12px 0 0">Prescription (℞) medicines are supplied only against a valid prescription, checked by the pharmacist. Checks use ${E(m.name)}'s allergies${SX.pregOn(m)?', pregnancy':''}, age and current medicines. Sample catalogue and demo prices.</p></div>
+   <p class="mute sm" style="margin:12px 0 0">Prescription (℞) medicines are supplied only against a valid prescription, checked by the pharmacist. Checks use ${E(m.name)}'s allergies${SX.pregOn(m)?', pregnancy':''}, age and current medicines. Prices are approximate MRP; the pharmacy confirms the final price.</p></div>
   <div class="card wide" style="padding-top:12px"><div class="sx-grid" id="fgrid">${fgrid(list,m)}</div></div>
   <div class="card wide"><p class="sx-disc" style="margin:0"><b>If this is an emergency</b> (trouble breathing, chest pain, fainting, severe bleeding, suspected poisoning, a swallowed overdose), call 112 now instead of ordering. TheHealthTracker cannot diagnose illness or recommend a dose.</p></div>`},
  after:()=>{const q=$('#fq');if(q){q.oninput=()=>{fQ=q.value;const m=SX.me();$('#fgrid').innerHTML=fgrid(filt(),m)}}}});
@@ -4492,7 +4598,7 @@ SX.act.fcat=([k])=>{fCat=k;render()};SX.act.frx=([k])=>{fRx=k;render()};
 
 SX.act.mdet=([id])=>{const c=CI[id],m=SX.me();if(!c)return;const w=SX.medWarn(m,c),stop=hasStop(w);
  SX.modal(`<div class="sx-it1" style="margin-bottom:8px"><i style="width:44px;height:44px;font-size:22px">${catIc(c.cat)}</i><div class="grow"><h2 style="margin:0">${E(c.n)}</h2><small class="mute">${E(c.f)} · ${E(c.cat)}</small></div></div>
-  <p style="margin:8px 0"><span class="badge ${c.rx?'b-mid':'b-ok'}">${c.rx?'℞ Prescription required':'No prescription needed'}</span> <b style="margin-left:6px">${money(c.p)}</b> <small class="mute">(demo price)</small></p>
+  <p style="margin:8px 0"><span class="badge ${c.rx?'b-mid':'b-ok'}">${c.rx?'℞ Prescription required':'No prescription needed'}</span> <b style="margin-left:6px">${money(c.p)}</b> <small class="mute">(approx. MRP)</small></p>
   <p><b>Used for.</b> ${E(c.use)}</p>${c.note?`<p><b>Good to know.</b> ${E(c.note)}</p>`:''}
   ${w.length?`<div class="sx-warn ${stop?'stop':''}"><b style="display:block;margin-bottom:4px">For ${E(m.name)}</b>${w.map(x=>`<p>${x.lv==='stop'?'⛔':'⚠️'} ${E(x.t)}</p>`).join('')}</div>`:`<p class="mute sm">No conflict found with ${E(m.name)}'s allergies, age or current medicines. This check is limited. Tell your doctor or pharmacist about everything you take.</p>`}
   <p class="sx-disc">Use it exactly as the pack or your doctor says. TheHealthTracker does not give doses. In an emergency call 112.</p>
@@ -4521,7 +4627,7 @@ SX.act.cart=keep=>{
   <h4 class="sx-h4">Pharmacy <small class="mute">sample</small></h4><div class="sx-ph">${PHARM.map(p=>`<label class="${p.id===ph.id?'on':''}"><input type="radio" name="ph" ${p.id===ph.id?'checked':''} data-sxc="phsel:${p.id}"><span><b>${E(p.n)}</b><small>${p.d} · ${p.eta} · ${feeOf(p)?money(feeOf(p))+' delivery':'free delivery'}</small></span></label>`).join('')}</div>
   <label class="full sx-h4" style="display:block">Delivery address<input id="caddr" maxlength="160" placeholder="House, street, area, PIN" value="${E(S.addr)}" style="margin-top:6px;width:100%"></label>
   <div class="sx-tot"><span>Items</span><b>${money(sub)}</b><span>Delivery</span><b>${fee?money(fee):'Free'}</b><span><b>Total</b></span><b style="font-size:17px">${money(sub+fee)}</b></div>
-  <p class="sx-disc">Demo checkout. No real order is placed and no money is taken. Pay on delivery.</p>
+  <p class="sx-disc">Pay on delivery. The pharmacy confirms stock and the final price before dispatch.</p>
   <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap"><button class="btn s" data-sx="cartclr">Empty basket</button><span style="display:flex;gap:8px"><button class="btn s" data-sx="closeModal">Keep shopping</button><button class="btn p" data-sx="place" ${missing||consentOff?'disabled':''}>Place order · ${money(sub+fee)}</button></span></div>`;
  SX.modal(html,{label:'Basket',cls:'sx-wide'})};
 SX.chg.cartrx=([i],el)=>{chosen.rxsel[i]=el.value};
@@ -4539,7 +4645,7 @@ SX.act.place=()=>{const a=$('#caddr'),addr=a?a.value.trim():S.addr;if(addr.lengt
 // ---------------------------------------------------------------- Orders
 let ordOpen='',ordTimer=0;
 const stage=o=>{const steps=o.rx?STEPS:STEPS_OTC,el=(Date.now()-o.t)/1e3;if(o.cancel)return{i:-1,steps};const at=o.rx?DEMO_AT:[0,12,35,70];let i=0;at.forEach((s,k)=>{if(el>=s)i=k});return{i,steps}};
-SX.reg('orders',{head:()=>['Orders','Track what you ordered. Sample pharmacies.'],
+SX.reg('orders',{head:()=>['Orders','Track what you ordered.'],
  render:()=>{const list=S.orders.filter(o=>o.for.some(id=>SX.viewable(SX.member(id))));
   return `<div class="card wide"><div class="hd"><h3>Your orders</h3><button class="btn p sm" data-sx="tab:finder">＋ New order</button></div>${list.length?'':'<div class="sx-empty">No orders yet. Find a medicine and add it to your basket.</div>'}</div>
   ${list.map(o=>{const{i,steps}=stage(o),done=i===steps.length-1,names=o.for.map(id=>(SX.member(id)||{}).name).filter(Boolean).join(', ');
@@ -4578,13 +4684,15 @@ function attentionCard(m){const flags=SX.labFlags(m).slice(0,3),sug=SX.suggestio
  return `<div class="card"><div class="hd"><h3>Worth a conversation</h3><button class="btn s sm" data-sx="tab:insights">Insights</button></div>
   ${flags.length?flags.map(({x,st})=>{const L=st.L;return `<button class="row" data-act="${x.t!=null?'test:'+x.t:'spec:'+L.sp}" style="text-align:left"><div class="grow"><b>${E(L.n)}: ${E(String(x.val))} ${E(L.u)}</b><small>${st.s==='high'?'Above':'Below'} the usual range · tap to see where it is in the body</small></div><span class="badge ${badge(st)}">${st.s==='high'?'High':'Low'}</span></button>`}).join(''):'<p class="mute" style="margin:0">Your latest results are all in the usual range.</p>'}
   ${sug?`<div class="sx-hint"><b>Suggested check</b><span>${E(sug.t)}. <button class="sx-lnk" data-sx="tab:insights">Discuss with your doctor</button></span></div>`:''}</div>`}
-function visitCard(m){const a=appts(m)[0],d=a?DOC[a.doc]:null;
+function visitCard(m){return SX.lvVisitCard(m)}
+function visitCard0(m){const a=appts(m)[0],d=a?DOC[a.doc]:null;
  return `<div class="card"><div class="hd"><h3>Next visit</h3><button class="btn s sm" data-sx="tab:appts">All</button></div>${d?`<div class="up" style="display:flex;gap:12px;align-items:center;margin-bottom:10px">${docAv(d)}<div class="grow"><b>${E(d.n)}</b><small class="mute" style="display:block">${E(SPI[d.sp].n)} · ${E(a.when)}</small><small class="mute" style="display:block">${E(a.type)} · ${E(a.why)}</small></div></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">${a.type==='Video call'?'<button class="btn p sm" data-toast="Joining video call… (demo)">▶ Join video call</button>':''}<button class="btn s sm" data-sx="tab:appts">Reschedule</button><button class="btn s sm" data-act="spec:${d.sp}">On body</button></div>`:`<p class="mute" style="margin:0 0 10px">No visits booked for ${E(m.name)}.</p><button class="btn p sm" data-sx="tab:appts">Book a visit</button>`}</div>`}
 function bodyCard(m){const p=SX.pat(m);if(!p||!p.f.length)return '';
  return `<div class="card"><div class="hd"><h3>On the body</h3><button class="btn s sm" data-act="patient:${p.id}">Show all</button></div><p class="mute sm" style="margin:-6px 0 8px">Findings from ${E(m.name)}'s records, pinned where they are.</p>
   ${p.f.map((f,k)=>`<button class="row" data-act="finding:${p.id}:${k}" style="text-align:left">${sevDot(SEV[f.sev][0])}<div class="grow"><b>${E(f.t)}</b><small>${SPI[f.sp].e} ${E(SPI[f.sp].n)}</small></div><span class="badge ${SEV[f.sev][1]}">${SEV[f.sev][2]}</span></button>`).join('')}</div>`}
-function vitalsCard(m){const p=SX.pat(m),bmi=SX.bmi(m);
+function vitalsCard(m){return SX.lvVitalsCard(m)}
+function vitalsCard0(m){const p=SX.pat(m),bmi=SX.bmi(m);
  const v=(p?p.v:[]).slice(0,4);return `<div class="card"><h3>Vitals</h3><div class="stat sx-vst">${v.map(([a,b])=>vTile(a,b)).join('')}${bmi?vTile('BMI',bmi.toFixed(1)):''}</div>${bmi?`<p class="mute sm" style="margin:8px 0 0">${E(SX.bmiCat(m))}</p>`:''}</div>`}
 // Home hero: heart rate with a dotted ECG pulse (speed follows the rate), plus the next two vitals and BMI
 const ECGP='M0 40'+'h18q6 -9 12 0h14l5 5l7 -34l7 44l5 -15h12q10 -14 20 0h20'.repeat(8);
@@ -4599,7 +4707,8 @@ function vStatus(name,val){const n=String(name).toLowerCase(),t=String(val);cons
  if(/bmi/.test(n)){if(!num)return null;return num<18.5?['Low','warn']:num<23?['Good','ok']:num<25?['Watch','warn']:['High','bad']}
  return null}
 const vTile=(a,b)=>{const st=vStatus(a,b);return `<div><small>${E(a)}${st?` <i class="sx-st ${st[1]}">${E(SX.p(st[0]))}</i>`:''}</small><b>${E(b)}</b></div>`};
-function heroCard(m){const p=SX.pat(m),v=p?p.v:[],hr=v.find(x=>/heart|pulse/i.test(x[0])),bpm=hr?(parseInt(hr[1])||72):72,rest=v.filter(x=>x!==hr).slice(0,2),bmi=SX.bmi(m),beat=Math.max(.35,Math.min(1.6,60/bpm)).toFixed(2),hs=vStatus('heart',bpm);
+function heroCard(m){return SX.lvVitalsHero(m)}
+function heroCard0(m){const p=SX.pat(m),v=p?p.v:[],hr=v.find(x=>/heart|pulse/i.test(x[0])),bpm=hr?(parseInt(hr[1])||72):72,rest=v.filter(x=>x!==hr).slice(0,2),bmi=SX.bmi(m),beat=Math.max(.35,Math.min(1.6,60/bpm)).toFixed(2),hs=vStatus('heart',bpm);
  return `<div class="card sx-hero" style="--beat:${beat}s"><div class="sx-hero-t"><div><small>${E(m.name)} · ${E(SX.p('Health snapshot'))}${hs?` <i class="sx-st ${hs[1]}">${E(SX.p(hs[0]))}</i>`:''}</small><b class="sx-hero-hr"><i></i>${bpm}<span>bpm</span></b></div><div class="sx-hero-v">${rest.map(([a,b])=>vTile(a,b)).join('')}${bmi?vTile('BMI',bmi.toFixed(1)):''}</div></div><div class="sx-ecg" aria-hidden="true"><svg viewBox="0 0 960 64" preserveAspectRatio="none"><path d="${ECGP}"/></svg></div></div>`}
 function pregCard(m){if(!SX.pregOn(m))return '';const w=pregWeek(m);
  return `<div class="card"><div class="hd"><h3>Pregnancy</h3><span class="demo">WEEK ${w}</span></div><p class="mute sm" style="margin:0 0 10px">Week-by-week guide, tracker and 3D view.</p><button class="btn p sm" data-sx="tab:preg">Open Pregnancy</button></div>`}
@@ -4608,7 +4717,7 @@ function setupCard(m){if(m.rel!=='You'||!SX.safetySetup)return '';const st=SX.sa
 function quickCard(){const q=[['⬆','Add a report','tab:vault'],['💊','Order medicine','tab:finder'],['📅','Book a visit','tab:appts'],['🪪','Medical ID','tab:mid'],['🩹','First aid','tab:aid'],['🫀','Heart Lab','tab:heart']];
  return `<div class="card"><h3>Quick actions</h3><div class="sx-qa">${q.map(([i,t,a])=>`<button data-sx="${a}"><i>${i}</i><span>${t}</span></button>`).join('')}</div></div>`}
 SX.reg('dash',{head:()=>{const m=SX.me(),f=m.name.split(' ')[0];return [m.rel==='You'?`Hello, ${f} 👋`:`${f}'s health`,dayName()+(m.rel==='You'?'. Here is today at a glance.':'. '+m.rel+'. Here is today at a glance.')]},
- render:()=>{const m=SX.me();return heroCard(m)+setupCard(m)+dosesCard(m)+attentionCard(m)+visitCard(m)+pregCard(m)+bodyCard(m)+vitalsCard(m)+quickCard()},
+ render:()=>{const m=SX.me();return heroCard(m)+SX.lvCardTile(m)+setupCard(m)+dosesCard(m)+attentionCard(m)+visitCard(m)+pregCard(m)+bodyCard(m)+vitalsCard(m)+quickCard()},
  after:()=>{}});
 
 // ---------------------------------------------------------------- Care › Appointments
@@ -4652,7 +4761,7 @@ SX.act.dobook=()=>{const m=SX.me(),sp=bookPre.sp||'cardio',docs=DOCS.filter(d=>d
  a('#page','Insights and suggested checks','Results outside the usual range, trends, and checks that may be due for age, sex, BMI and pregnancy. Always framed as: discuss with your doctor.',async()=>{go('insights')}),
  a('#page','My medicines','Doses by time of day, stock left, a reorder button when it runs low, and optional reminders.',async()=>{go('rx')}),
  a('#page','Find and order, safely','Search by name or symptom word. Prescription medicines need a prescription from the Vault. Allergies from Medical ID, pregnancy and age are checked before anything goes in the basket, and a matching allergy blocks the item.',async()=>{SX.fsearch('amox')}),
- a('#page','Visits and sharing','Book by specialty. Reports go to the doctor only if you tick share for that visit, and each share is written to your consent history.',async()=>{bookPre={sp:'cardio'};go('appts')}),
+ a('#page','Visits','Keep every doctor visit for the family in one place. The next one shows on Home.',async()=>{bookPre={sp:'cardio'};go('appts')}),
  a('#page','SOS','One press to call 112. Hold the red button to message your emergency contacts with your location and Medical ID. Phone, SMS and your own contacts do the work.',async()=>{go('sos')}),
  a('#page','First aid, offline','Step-by-step guides for 19 emergencies, including CPR with a 110 beats-per-minute metronome.',async()=>{SX.act.aid(['cpr'])}),
  a('#page','Medical ID','Blood group, allergies, conditions and medicines. Save it as a lock-screen picture so responders can see it without unlocking your phone.',async()=>{go('mid')}),
@@ -4661,8 +4770,206 @@ SX.act.dobook=()=>{const m=SX.me(),sp=bookPre.sp||'cardio',docs=DOCS.filter(d=>d
  a('#stage','Anatomy Lab','18 specialty views for patient education and learning. Only the chosen system stays solid. Here: cardiology.',async()=>{go('lab');A.setSpec('cardio');render()}),
  a('#page','Pregnancy is opt-in','The Pregnancy tab appears only after someone turns it on. Then: weekly guide, tracker, and a 3D mother and baby. TheHealthTracker never shows or guesses the baby’s sex.',async()=>{if(SX.pregOn(SX.me())){go('preg');for(let k=0;k<40&&!PV.ready;k++)await wait(150);if(PS.view!=='mother')setPView('mother');setW(24)}else go('pregopt')}),
  a('#hstage','Heart Lab','A living heart: chambers squeeze in sequence, valves open and close, blood flows, and the electrical signal travels from the SA node.',async()=>{mem('m1');go('heart');for(let k=0;k<40&&!HL.UI.ready;k++)await wait(150);HL.setCut('4ch');HL.cam('4ch')}),
- a('#tourBtn','That is the tour','This walkthrough uses your own account. Add family members, reports and medicines whenever you are ready. Press Demo tour any time to replay it.',async()=>{if(typeof PS!=='undefined'&&PS.on)PG.exit();mem(window.__tm0||'m1');go('dash');A.clearFocus()})];
+ a('#tourBtn','That is the tour','This walkthrough uses your own account. Add family members, reports and medicines whenever you are ready. Press Take a tour any time to replay it.',async()=>{if(typeof PS!=='undefined'&&PS.on)PG.exit();mem(window.__tm0||'m1');go('dash');A.clearFocus()})];
  TOUR.length=0;T.forEach(x=>TOUR.push(x))}
+
+// ===================== live layer: health card, real vitals, honest Care pages, verified badges =====================
+// Inserted by tools/live/p0.py inside the last six IIFE, just before SX.boot(). Uses SX, S, E, uid, go, render, toast.
+{
+const P=SX.p;
+const AUTH_H={'content-type':'application/json','x-tht':'1'};
+const authApi=async(path,body)=>{const r=await fetch('/api/v1/auth'+path,{method:body===undefined?'GET':'POST',headers:AUTH_H,credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)});
+ let j={};try{j=await r.json()}catch(e){}if(!r.ok){const m=j&&j.detail;throw Object.assign(new Error(typeof m==='string'?m:'Something went wrong. Please try again.'),{status:r.status})}return j};
+
+// ---------------------------------------------------------------- small helpers
+const ageFrom=dob=>{if(!dob)return 0;const d=new Date(dob+'T00:00'),n=new Date();if(isNaN(d))return 0;let a=n.getFullYear()-d.getFullYear();const mm=n.getMonth()-d.getMonth();if(mm<0||(mm===0&&n.getDate()<d.getDate()))a--;return Math.max(0,Math.min(120,a))};
+SX.ageFrom=ageFrom;
+const poss=n=>n==='You'?'Your':n+"'s";
+SX.poss=poss;
+const phShow=p=>{if(!p)return '';const m=/^\+91(\d{5})(\d{5})$/.exec(p);return m?`+91 ${m[1]} ${m[2]}`:p};
+const BLOOD=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+const htid=()=>{const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';const r=new Uint32Array(12);try{crypto.getRandomValues(r)}catch(e){for(let i=0;i<12;i++)r[i]=Math.random()*1e9}for(let i=0;i<12;i++)s+=a[r[i]%a.length];return 'THT-'+s.slice(0,4)+'-'+s.slice(4,8)+'-'+s.slice(8)};
+const fmtDate=d=>{try{return new Date(d+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}catch(e){return d}};
+const you=()=>S.members.find(m=>m.rel==='You')||S.members[0];
+S.members.forEach(m=>{if(m.dob)m.age=ageFrom(m.dob);if(!m.htid)m.htid=htid()});
+S.vitals=S.vitals||{};
+
+// ---------------------------------------------------------------- account state (filled by SX.loadUser)
+let AUTHCFG=null;
+const userPhoneVerified=m=>!!(SX.user&&SX.user.phoneVerified&&SX.user.phone&&m&&m.rel==='You'&&m.ph===SX.user.phone);
+const userEmailVerified=()=>!!(SX.user&&SX.user.emailVerified&&SX.user.email);
+SX.verified={phone:userPhoneVerified,email:userEmailVerified};
+const vbadge=(on,label)=>on?`<span class="lv-ver" title="${E(label)} verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.4 2.1 3.2-.3.9 3.1 2.8 1.6-1.1 3 1.1 3-2.8 1.6-.9 3.1-3.2-.3L12 22l-2.4-2.1-3.2.3-.9-3.1L2.7 15.5l1.1-3-1.1-3 2.8-1.6.9-3.1 3.2.3z"/><path d="M8.3 12.2l2.5 2.5 5-5" fill="none"/></svg><span>${P('Verified')}</span></span>`:`<span class="lv-unver">${P('Not verified')}</span>`;
+
+// ---------------------------------------------------------------- health card: mandatory first step
+const cardDone=m=>!!(m&&m.name&&m.name!=='You'&&m.dob&&m.sexOk&&m.ph&&(SX.midOf(m.id).blood||m.bloodUnknown));
+SX.cardDone=cardDone;
+let cardOpen=false;
+function cardForm(){const m=you(),mid=SX.midOf(m.id),u=SX.user,tm=SX.today();
+ const name=m.name&&m.name!=='You'?m.name:(u&&u.name)||'';const ph=m.ph||(u&&u.phone)||'';
+ return `<div class="lv-ob"><div class="lv-ob-hd"><div class="lv-ob-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.7-1.6 1.9-2.4 3.2-2.4s2.5.8 3.2 2.4M14.5 10h4M14.5 13.5h3"/></svg></div>
+  <div><h2>${P('Create your health card')}</h2><p class="mute">${P('A few details so the app can show the right 3D body, use the right healthy ranges and help responders in an emergency. It takes about a minute.')}</p></div></div>
+  <form class="form lv-form" data-sxf="lvcard" novalidate>
+   <label class="full">${P('Full name')}<input name="name" required maxlength="60" autocomplete="name" value="${E(name)}" placeholder="${E(P('As on your ID'))}"></label>
+   <label>${P('Date of birth')}<input name="dob" type="date" required max="${tm}" min="1900-01-01" value="${E(m.dob||'')}"></label>
+   <label>${P('Blood group')}<select name="blood" required><option value="">${P('Choose')}</option>${BLOOD.map(b=>`<option ${mid.blood===b?'selected':''}>${b}</option>`).join('')}<option value="?" ${m.bloodUnknown?'selected':''}>${P("I don't know yet")}</option></select></label>
+   <fieldset class="full lv-sex"><legend>${P('Sex')} <small class="mute">${P('sets the 3D body and the healthy ranges for lab results')}</small></legend>
+    <label class="lv-opt"><input type="radio" name="sex" value="female" ${m.sexOk&&m.sex==='female'?'checked':''} required><span><b>♀ ${P('Female')}</b></span></label>
+    <label class="lv-opt"><input type="radio" name="sex" value="male" ${m.sexOk&&m.sex==='male'?'checked':''}><span><b>♂ ${P('Male')}</b></span></label></fieldset>
+   <label class="full">${P('Mobile number')}<span class="lv-ph"><i>+91</i><input name="ph" required inputmode="tel" autocomplete="tel-national" maxlength="16" value="${E(ph.replace(/^\+91/,''))}" placeholder="98765 43210"></span>
+    <small class="mute">${P('Used for SOS alerts and to verify your account. We never show it to anyone else.')}</small></label>
+   <p class="full lv-err" role="alert" hidden></p>
+   <div class="full lv-ob-ft"><small class="mute">🔒 ${P('Stored on this device.')} <a href="/privacy" target="_blank" rel="noopener">${P('Privacy policy')}</a></small><button class="btn p" type="submit">${P('Create health card')}</button></div>
+  </form></div>`}
+function openCard(){if(cardOpen)return;cardOpen=true;SX.modal(cardForm(),{label:P('Create your health card'),sticky:true,cls:'lv-wide',onclose:()=>{cardOpen=false;if(!cardDone(you()))setTimeout(openCard,400)}});
+ const w=document.querySelector('.sx-modal');if(w){w.addEventListener('keydown',e=>{if(e.key==='Escape')e.stopPropagation()},true)}}
+SX.openCard=openCard;
+SX.chg.lvcard=(a,f)=>{const fd=new FormData(f),err=f.querySelector('.lv-err'),say=t=>{err.textContent=t;err.hidden=false};
+ const name=String(fd.get('name')||'').replace(/\s+/g,' ').trim().slice(0,60),dob=String(fd.get('dob')||''),blood=String(fd.get('blood')||''),sex=String(fd.get('sex')||''),ph=SX.phoneNorm(String(fd.get('ph')||''));
+ if(name.length<2)return say(P('Please enter your full name.'));
+ if(!dob)return say(P('Please enter your date of birth.'));
+ if(new Date(dob+'T00:00')>new Date()||ageFrom(dob)>120)return say(P('Please check the date of birth.'));
+ if(!blood)return say(P('Please choose your blood group, or "I don\'t know yet".'));
+ if(sex!=='female'&&sex!=='male')return say(P('Please choose the body model.'));
+ if(!ph||!/^\+\d{10,15}$/.test(ph))return say(P('Please enter a valid mobile number.'));
+ const m=you(),oldSex=m.sex,mid=SX.midOf(m.id);
+ Object.assign(m,{name,dob,age:ageFrom(dob),sex,sexOk:true,ph,av:name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase(),htid:m.htid||htid()});
+ if(blood==='?'){m.bloodUnknown=true;mid.blood=''}else{m.bloodUnknown=false;mid.blood=blood}
+ S.cardAt=S.cardAt||Date.now();SX.ledger('member',true,'Health card created',m.id);SX.save(true);
+ if(oldSex!==sex||A.sex!==sex)SX.pendingModel=true;
+ cardOpen=false;SX.closeModal(true);if(SX.pendingModel)SX.applyModel();go(page==='dash'?'dash':page,{keep:true});SX.paintWho();
+ // keep the account name in step with the card (signed-in users)
+ if(SX.user&&SX.user.name!==name)authApi('/profile',{name}).then(r=>{SX.user=r.user}).catch(()=>{});
+ showCard(m,true)};
+// the card itself (also opened from Home and Family)
+function cardHTML(m){const mid=SX.midOf(m.id),blood=mid.blood||(m.bloodUnknown?P('Not known'):'—'),pv=userPhoneVerified(m);
+ return `<div class="lv-card" role="group" aria-label="${E(P('Health card'))}"><div class="lv-card-top"><span class="lv-card-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-5 3 10 2-5h7"/></svg>thehealthtracker</span><span class="lv-card-k">${P('HEALTH CARD')}</span></div>
+  <div class="lv-card-name">${E(m.name)}</div>
+  <div class="lv-card-grid"><div><small>${P('Age')}</small><b>${m.age||'—'}</b></div><div><small>${P('Sex')}</small><b>${m.sex==='female'?P('Female'):P('Male')}</b></div><div><small>${P('Blood')}</small><b class="lv-blood">${E(blood)}</b></div></div>
+  <div class="lv-card-ph"><small>${P('Mobile')}</small><b>${E(phShow(m.ph)||'—')}</b>${m.ph?vbadge(pv,'Mobile'):''}</div>
+  <div class="lv-card-id"><small>${P('Health tracker ID')}</small><b>${E(m.htid||'')}</b></div></div>`}
+SX.cardHTML=cardHTML;
+function showCard(m,fresh){const canVerify=m.rel==='You'&&m.ph&&!userPhoneVerified(m);
+ SX.modal(`<div class="lv-reveal ${fresh?'fresh':''}">${fresh?`<h2>${P('Your health card is ready')}</h2><p class="mute">${P('You can change these details any time in Family & Privacy.')}</p>`:`<h2>${P('Health card')}</h2>`}${cardHTML(m)}
+  ${canVerify?`<div class="lv-vbox"><div><b>${P('Verify your mobile number')}</b><small class="mute">${SX.user?P('Get the verified badge and receive SOS confirmations.'):P('Sign in to verify your number and keep your card on every device.')}</small></div>${SX.user?`<button class="btn p sm" data-sx="lvverify:phone">${P('Verify now')}</button>`:`<a class="btn p sm" href="/signin?next=/app">${P('Sign in')}</a>`}</div>`:''}
+  <div class="lv-row-end"><button class="btn s" data-sx="closeModal">${fresh?P('Continue'):P('Close')}</button></div></div>`,{label:P('Health card'),cls:'lv-mid'})}
+SX.act.lvcardshow=([id])=>showCard(SX.member(id)||SX.me(),false);
+SX.act.lvcardedit=()=>{SX.closeModal(true);cardOpen=false;openCard()};
+
+// ---------------------------------------------------------------- verify mobile or email (badge)
+let vflow=null;
+SX.act.lvverify=async([kind])=>{const m=you();if(!SX.user){location.href='/signin?next=/app';return}
+ const value=kind==='email'?SX.user.email:m.ph;if(!value){toast(P('Add the number to your health card first'));return}
+ if(AUTHCFG&&kind==='phone'&&!AUTHCFG.sms&&!AUTHCFG.demo){SX.modal(`<h2>${P('Verify your mobile number')}</h2><p class="mute">${P('Text-message codes are being switched on. Your number is saved; we will ask you to verify it as soon as they are ready.')}</p><div class="lv-row-end"><button class="btn p" data-sx="closeModal">${P('OK')}</button></div>`,{label:'Verify'});return}
+ try{const r=await authApi('/contact/start',{value});vflow={flow:r.flow,kind};
+  SX.modal(`<h2>${P('Enter the 6-digit code')}</h2><p class="mute">${P('We sent it to')} ${E(r.sentTo)}.</p>${r.demo?`<p class="lv-demo">${P('Test code')}: <b>${E(r.demo)}</b></p>`:''}
+   <form data-sxf="lvcode" class="lv-code"><input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="\\d{6}" required autofocus aria-label="${E(P('Code'))}"><button class="btn p" type="submit">${P('Verify')}</button></form><p class="lv-err" role="alert" hidden></p>`,{label:'Verify'})}
+ catch(e){toast(e.message)}};
+SX.chg.lvcode=async(a,f)=>{const code=String(new FormData(f).get('code')||'').trim(),err=f.parentElement.querySelector('.lv-err');if(!vflow)return;
+ try{const r=await authApi('/contact/verify',{flow:vflow.flow,code});SX.user=r.user;vflow=null;SX.closeModal(true);paintBadge();toast(P('Verified'));render();showCard(you(),false)}
+ catch(e){err.textContent=e.message;err.hidden=false}};
+
+// ---------------------------------------------------------------- account: name sync, badge, re-check when the tab comes back
+function paintBadge(){const a=document.getElementById('sxAcct');if(!a||!SX.user)return;const v=SX.user.phoneVerified||SX.user.emailVerified;a.classList.toggle('lv-v',!!v);a.title=P('Account & security')+(v?' · '+P('Verified'):'')}
+const lu0=SX.loadUser;
+SX.loadUser=async()=>{await lu0();if(!AUTHCFG)authApi('/config').then(c=>{AUTHCFG=c}).catch(()=>{});
+ const m=you();
+ if(SX.user){if((!m.name||m.name==='You')&&SX.user.name){m.name=SX.user.name;m.av=SX.user.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();SX.save();SX.paintWho();if(page==='dash')render()}
+  if(!m.ph&&SX.user.phone){m.ph=SX.user.phone;SX.save()}}
+ paintBadge();
+ if(!cardDone(m))openCard()};
+let lastCheck=0;
+const recheck=()=>{if(Date.now()-lastCheck<4000)return;lastCheck=Date.now();SX.loadUser()};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')recheck()});
+addEventListener('pageshow',e=>{if(e.persisted)recheck()});
+addEventListener('focus',recheck);
+
+// ---------------------------------------------------------------- 3D body follows the person (wait for the engine instead of dropping the request)
+SX.applyModel=async()=>{const m=SX.me();if(typeof A==='undefined'||!A.ready){SX.pendingModel=true;clearTimeout(SX._amT);SX._amT=setTimeout(SX.applyModel,400);return}
+ SX.pendingModel=false;try{if(A.focus||A.patient)A.clearFocus();if(A.sex!==m.sex)await A.setSex(m.sex)}catch(e){console.warn(e)}if(page==='dash'||page==='lab')render()};
+
+// ---------------------------------------------------------------- vitals the person enters (no made-up numbers anywhere)
+const vit=m=>(S.vitals[m.id]=S.vitals[m.id]||[]);
+const latest=(m,k)=>{const l=vit(m);for(let i=l.length-1;i>=0;i--)if(l[i][k]!=null)return l[i];return null};
+SX.latest=latest;
+SX.latestVital=k=>{const m=SX.me();if(!m)return null;if(k==='hr'){const r=latest(m,'hr');return r?r.hr+' bpm':null}
+ if(k==='bp'){const r=latest(m,'sys');return r?r.sys+'/'+r.dia:null}if(k==='glu'){const r=latest(m,'glu');return r?r.glu+' mg/dL':null}return null};
+const ago=t=>{const d=Math.round((Date.now()-t)/864e5);return d<1?P('today'):d===1?P('yesterday'):d+' '+P('days ago')};
+const alarm=r=>{const o=[];if(r.sys>=180||r.dia>=120)o.push(P('Blood pressure this high needs medical attention now.'));if(r.sys&&r.sys<90&&r.dia<60)o.push(P('Blood pressure is low. If you feel faint, dizzy or confused, get medical help.'));
+ if(r.hr>=130||(r.hr&&r.hr<45))o.push(P('This heart rate is outside the usual resting range.'));if(r.glu&&r.glu<70)o.push(P('Blood sugar is low. Take sugar or juice now if you can swallow safely.'));if(r.glu>=300)o.push(P('Blood sugar is very high.'));return o};
+SX.lvVitalsHero=m=>{const h=latest(m,'hr'),b=latest(m,'sys'),g=latest(m,'glu'),bmi=SX.bmi(m);
+ if(!h&&!b&&!g)return `<div class="card sx-hero lv-hero0"><div class="sx-hero-t"><div><small>${E(m.name)} · ${E(P('Health snapshot'))}</small><b class="lv-h0">${P('No readings yet')}</b><p class="mute sm" style="margin:4px 0 0">${P('Add a heart rate, blood pressure or sugar reading to see it here and on the body.')}</p></div>
+  <div class="sx-hero-v">${bmi?vTile('BMI',bmi.toFixed(1)):''}</div></div><div style="padding:6px 0 12px"><button class="btn p sm" data-sx="vlog">＋ ${P('Add a reading')}</button></div></div>`;
+ const bpm=h?h.hr:null,beat=bpm?Math.max(.35,Math.min(1.6,60/bpm)).toFixed(2):'1',when=Math.max(h?h.t:0,b?b.t:0,g?g.t:0);
+ return `<div class="card sx-hero ${bpm?'':'lv-noecg'}" style="--beat:${beat}s"><div class="sx-hero-t"><div><small>${E(m.name)} · ${E(P('Health snapshot'))} · ${E(ago(when))}</small>${bpm?`<b class="sx-hero-hr"><i></i>${bpm}<span>bpm</span></b>`:`<b class="lv-h0">${P('Heart rate not added')}</b>`}</div>
+  <div class="sx-hero-v">${b?vTile('BP',b.sys+'/'+b.dia):''}${g?vTile('Sugar',g.glu+' mg/dL'):''}${bmi?vTile('BMI',bmi.toFixed(1)):''}</div></div>
+  ${bpm?`<div class="sx-ecg" aria-hidden="true"><svg viewBox="0 0 960 64" preserveAspectRatio="none"><path d="${ECGP}"/></svg></div>`:''}<div class="lv-hero-a"><button class="btn s sm" data-sx="vlog">＋ ${P('Add a reading')}</button></div></div>`};
+SX.lvVitalsCard=m=>{const l=vit(m).slice(-5).reverse(),bmi=SX.bmi(m);
+ return `<div class="card"><div class="hd"><h3>${P('Vitals')}</h3><button class="btn s sm" data-sx="vlog">＋ ${P('Add')}</button></div>${l.length?`<div class="lv-vlist">${l.map(r=>`<div class="row"><div class="grow"><b>${[r.hr!=null?r.hr+' bpm':'',r.sys!=null?r.sys+'/'+r.dia+' mmHg':'',r.glu!=null?r.glu+' mg/dL '+(r.gt==='fasting'?P('fasting'):r.gt==='pp'?P('after food'):''):''].filter(Boolean).join(' · ')}</b><small>${E(SX.fmtT(r.t))}</small></div><button class="btn g sm" data-sx="vdel:${r.id}" aria-label="${E(P('Delete reading'))}">✕</button></div>`).join('')}</div>`:`<p class="mute sm" style="margin:0">${P('No readings yet.')}</p>`}
+  ${bmi?`<p class="mute sm" style="margin:10px 0 0">BMI ${bmi.toFixed(1)} · ${E(SX.bmiCat(bmi))}</p>`:''}</div>`};
+SX.act.vlog=()=>{const m=SX.me();SX.modal(`<h2>${P('Add a reading for')} ${E(m.name)}</h2><p class="mute">${P('Fill in what you measured. Leave the rest empty.')}</p>
+ <form class="form" data-sxf="vsave"><label>${P('Heart rate')} <small>bpm</small><input name="hr" type="number" min="25" max="250" inputmode="numeric"></label><label>${P('Weight')} <small>kg</small><input name="w" type="number" min="2" max="300" step="0.1" inputmode="decimal" value="${E(m.w||'')}"></label>
+  <label>${P('Blood pressure')} <small>${P('upper')}</small><input name="sys" type="number" min="50" max="280" inputmode="numeric"></label><label>${P('Blood pressure')} <small>${P('lower')}</small><input name="dia" type="number" min="30" max="180" inputmode="numeric"></label>
+  <label>${P('Blood sugar')} <small>mg/dL</small><input name="glu" type="number" min="20" max="700" inputmode="numeric"></label><label>${P('When')}<select name="gt"><option value="fasting">${P('Fasting')}</option><option value="pp">${P('After food')}</option><option value="random" selected>${P('Any time')}</option></select></label>
+  <p class="full lv-err" role="alert" hidden></p><div class="full lv-row-end"><button class="btn s" type="button" data-sx="closeModal">${P('Cancel')}</button><button class="btn p" type="submit">${P('Save')}</button></div></form>`,{label:P('Add a reading')})};
+SX.chg.vsave=(a,f)=>{const m=SX.me(),fd=new FormData(f),n=k=>{const v=String(fd.get(k)||'').trim();return v===''?null:+v},err=f.querySelector('.lv-err'),say=t=>{err.textContent=t;err.hidden=false};
+ const r={id:uid('v'),t:Date.now()},hr=n('hr'),sys=n('sys'),dia=n('dia'),glu=n('glu'),w=n('w');
+ if(hr!=null){if(!(hr>=25&&hr<=250))return say(P('Heart rate should be between 25 and 250.'));r.hr=Math.round(hr)}
+ if(sys!=null||dia!=null){if(sys==null||dia==null)return say(P('Enter both blood pressure numbers.'));if(!(sys>=50&&sys<=280&&dia>=30&&dia<=180&&sys>dia))return say(P('Please check the blood pressure numbers.'));r.sys=Math.round(sys);r.dia=Math.round(dia)}
+ if(glu!=null){if(!(glu>=20&&glu<=700))return say(P('Please check the blood sugar value.'));r.glu=Math.round(glu);r.gt=String(fd.get('gt')||'random')}
+ const wChanged=w!=null&&w!==m.w;if(w!=null&&!(w>=2&&w<=300))return say(P('Please check the weight.'));
+ if(r.hr==null&&r.sys==null&&r.glu==null&&!wChanged)return say(P('Enter at least one value.'));
+ if(wChanged)m.w=w;if(r.hr!=null||r.sys!=null||r.glu!=null)vit(m).push(r);SX.save();SX.closeModal();render();
+ const al=alarm(r);if(al.length)SX.modal(`<h2>⚠️ ${P('Please check this reading')}</h2>${al.map(x=>`<p>${E(x)}</p>`).join('')}<p class="mute">${P('If you feel unwell — chest pain, breathlessness, fainting, confusion — call 112 now. Otherwise, measure again after resting for 5 minutes and talk to your doctor.')}</p><div class="lv-row-end"><a class="btn red" href="tel:112">${P('Call 112')}</a><button class="btn s" data-sx="closeModal">${P('OK')}</button></div>`,{label:'Check reading'});
+ else toast(P('Reading saved'))};
+SX.act.vdel=([id])=>{const m=SX.me();S.vitals[m.id]=vit(m).filter(r=>r.id!==id);SX.save();render()};
+
+// ---------------------------------------------------------------- Care: honest pages until verified doctors are live
+const visits=m=>SX.apptsOf(m);
+const upcoming=m=>visits(m).filter(v=>v.date&&v.date>=SX.today()).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+SX.lvVisitCard=m=>{const a=upcoming(m)[0];
+ return `<div class="card"><div class="hd"><h3>${P('Next visit')}</h3><button class="btn s sm" data-sx="tab:appts">${P('All')}</button></div>${a?`<div class="lv-visit"><div class="lv-vd"><b>${E(new Date(a.date+'T00:00').getDate())}</b><small>${E(new Date(a.date+'T00:00').toLocaleDateString('en-IN',{month:'short'}))}</small></div><div class="grow"><b>${E(a.dn||P('Doctor visit'))}</b><small class="mute">${E([a.dh,a.time,a.why].filter(Boolean).join(' · '))}</small></div></div>`:`<p class="mute" style="margin:0 0 10px">${P('No upcoming visits for')} ${E(m.name)}.</p><button class="btn p sm" data-sx="tab:appts">＋ ${P('Add a visit')}</button>`}</div>`};
+let vEdit=false;
+SX.reg('appts',{head:()=>[P('Visits'),P('Keep track of doctor visits for the whole family.')],after:()=>{},
+ render:()=>{const m=SX.me(),up=upcoming(m),past=visits(m).filter(v=>!up.includes(v)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')),tm=SX.today();
+  const row=a=>`<div class="row"><div class="lv-vd"><b>${E(a.date?new Date(a.date+'T00:00').getDate():'—')}</b><small>${E(a.date?new Date(a.date+'T00:00').toLocaleDateString('en-IN',{month:'short'}):'')}</small></div><div class="grow"><b>${E(a.dn||P('Doctor visit'))}</b><small>${E([a.dh,a.date?fmtDate(a.date):'',a.time,a.type,a.why].filter(Boolean).join(' · '))}</small></div><button class="btn g sm" data-sx="vrm:${a.id}" aria-label="${E(P('Remove visit'))}">✕</button></div>`;
+  return `<div class="card wide"><div class="hd"><h3>${E(poss(m.name))} ${P('visits')}</h3><button class="btn p sm" data-sx="vadd">＋ ${P('Add a visit')}</button></div>
+   ${vEdit?`<form class="form lv-vform" data-sxf="vsavev"><label>${P('Doctor')}<input name="dn" required maxlength="60" placeholder="${E(P('e.g. Dr. Rao'))}"></label><label>${P('Hospital or clinic')}<input name="dh" maxlength="80"></label>
+    <label>${P('Date')}<input name="date" type="date" required value="${tm}"></label><label>${P('Time')}<input name="time" type="time"></label>
+    <label>${P('Type')}<select name="type"><option>${P('In person')}</option><option>${P('Video call')}</option></select></label><label>${P('Reason')}<input name="why" maxlength="120"></label>
+    <div class="full lv-row-end"><button class="btn s" type="button" data-sx="vadd">${P('Cancel')}</button><button class="btn p" type="submit">${P('Save visit')}</button></div></form>`:''}
+   ${up.length?`<h4 class="sx-h4">${P('Upcoming')}</h4>${up.map(row).join('')}`:''}${past.length?`<h4 class="sx-h4">${P('Earlier')}</h4>${past.map(row).join('')}`:''}${!up.length&&!past.length&&!vEdit?`<div class="sx-empty">${P('No visits yet. Add one to get it on Home.')}</div>`:''}</div>
+   ${soon(P('Online booking'),P('Booking with verified doctors and hospitals is on the way. When it opens, you will choose what to share for each visit, and every share is recorded in your consent history.'))}`}});
+SX.act.vadd=()=>{vEdit=!vEdit;render()};
+SX.chg.vsavev=(a,f)=>{const fd=new FormData(f),g=k=>String(fd.get(k)||'').trim();if(!g('dn')||!g('date')){toast(P('Add the doctor and date'));return}
+ visits(SX.me()).push({id:uid('a'),dn:g('dn').slice(0,60),dh:g('dh').slice(0,80),date:g('date'),time:g('time'),type:g('type'),why:g('why').slice(0,120)});vEdit=false;SX.save();render();toast(P('Visit saved'))};
+SX.act.vrm=([id])=>{const m=SX.me();S.appts[m.id]=visits(m).filter(v=>v.id!==id);SX.save();render()};
+function soon(t,b,ic){return `<div class="card wide lv-soon"><div class="lv-soon-ic" aria-hidden="true">${ic||'✦'}</div><div><h3>${E(t)} <span class="lv-tag">${P('Coming soon')}</span></h3><p class="mute">${E(b)}</p></div></div>`}
+SX.lvSoon=soon;
+SX.reg('docs',{head:()=>[P('Doctors'),P('Verified doctors you can talk to.')],after:()=>{},
+ render:()=>soon(P('Verified doctors'),P('Doctors join after we check their registration with the National Medical Commission. Once your doctor is verified, you will find them here and can share reports with them for a visit.'),'🩺')+
+  `<div class="card wide"><h3>${P('Your doctors so far')}</h3>${[...new Set(S.members.flatMap(m=>visits(m).map(v=>v.dn)).filter(Boolean))].map(n=>`<div class="row"><div class="grow"><b>${E(n)}</b><small>${P('From your visits')}</small></div></div>`).join('')||`<p class="mute sm">${P('Doctors you add to visits appear here.')}</p>`}</div>`});
+SX.reg('msgs',{head:()=>[P('Messages'),P('Secure messages with your doctor.')],after:()=>{},
+ render:()=>soon(P('Secure messages'),P('Messaging opens only between verified members and verified doctors. Conversations will be private to you and your doctor, and you can share a report or a 3D view in a message.'),'💬')});
+SX.reg('bill',{head:()=>[P('Bills'),P('Medical bills and receipts.')],after:()=>{},
+ render:()=>soon(P('Bills and claims'),P('Keep hospital bills and pharmacy receipts together and see what your insurance covers. Until then, save bills in Records & Labs → Vault under "Other".'),'🧾')});
+
+// ---------------------------------------------------------------- medicine ordering: no simulated orders for real people
+SX.act.place=()=>{SX.modal(`<h2>${P('Online ordering is not available yet')}</h2><p class="mute">${P('We are onboarding licensed pharmacies. Your basket is saved: you can show it at any pharmacy, or order here as soon as a pharmacy near you joins.')}</p><div class="lv-row-end"><button class="btn p" data-sx="closeModal">${P('OK')}</button></div>`,{label:'Ordering'})};
+
+// ---------------------------------------------------------------- Home tile + Family notices
+SX.lvCardTile=m=>{if(m.rel!=='You')return '';if(!cardDone(m))return `<div class="card lv-review"><div class="hd"><h3>${P('Finish your health card')}</h3></div><p class="mute sm" style="margin:0 0 10px">${P('Name, date of birth, sex, blood group and mobile number.')}</p><button class="btn p sm" data-sx="lvcardedit">${P('Complete now')}</button></div>`;
+ return `<button class="card lv-hc" data-sx="lvcardshow:${m.id}" aria-label="${E(P('Open health card'))}"><div class="hd"><h3>${P('Health card')}</h3><span class="mute sm">${P('Tap to open')}</span></div>${cardHTML(m)}</button>`};
+SX.extend('family',{before(){const r=S.members.filter(m=>m.review);return r.length?`<div class="card wide lv-review"><h3>${P('Please check these profiles')}</h3><p class="mute sm" style="margin:0">${P('An earlier version added sample people. We removed the sample data and kept what you entered for')} ${r.map(m=>'<b>'+E(m.name)+'</b>').join(', ')}. ${P('Check the name and details, or remove the profile if it is not someone in your family.')}</p></div>`:''}});
+
+// ---------------------------------------------------------------- delete account (right to erasure)
+SX.extend('set',{after(){if(!SX.user)return '';return `<div class="card wide"><div class="hd"><h3>${P('Delete account')}</h3></div><p class="mute sm" style="margin:-4px 0 12px">${P('Removes your account, sign-in methods and contact details from our servers. Health records on this device are separate: delete them in My data.')}</p><button class="btn s" data-sx="acctdel" style="color:var(--red)">${P('Delete my account…')}</button></div>`}});
+SX.act.acctdel=()=>{SX.modal(`<h2>${P('Delete your account?')}</h2><p class="mute">${P('This cannot be undone. Your plan ends and you are signed out on every device.')}</p><form data-sxf="acctdel2" class="form"><label class="full">${P('Type DELETE to confirm')}<input name="c" autocomplete="off" required></label><p class="full lv-err" role="alert" hidden></p><div class="full lv-row-end"><button class="btn s" type="button" data-sx="closeModal">${P('Keep my account')}</button><button class="btn red" type="submit">${P('Delete account')}</button></div></form>`,{label:'Delete account'})};
+SX.chg.acctdel2=async(a,f)=>{const c=String(new FormData(f).get('c')||''),err=f.querySelector('.lv-err');try{await authApi('/account/delete',{confirm:c});SX.user=null;location.href='/?deleted=1'}catch(e){err.textContent=e.message;err.hidden=false}};
+
+// ---------------------------------------------------------------- one-time notice after old sample data was removed
+if(S.purged&&!S.purged.seen){setTimeout(()=>{if(cardDone(you())){toast(P('We removed sample data from an earlier version. Anything you added yourself is kept.'));S.purged.seen=1;SX.save()}},2500)}
+}
 
 SX.boot();
 })();
