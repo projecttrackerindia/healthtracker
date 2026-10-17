@@ -1059,7 +1059,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   </aside>
   <main>
     <div class="top">
-      <div><h1 id="hh">Hello, Prasanna 👋</h1><p id="hp">Here's your health update for today.</p></div>
+      <div><h1 id="hh">Hello 👋</h1><p id="hp">Here's your health update for today.</p></div>
       <div class="topb"><button class="tourb" id="tourBtn">▶ Demo tour</button><button class="theme" id="theme" aria-label="Toggle theme">◐</button><button class="pill" data-toast="Upgrade is a demo button">✦ Upgrade Now</button></div>
     </div>
     <div class="grid">
@@ -1610,7 +1610,7 @@ let thread='sw';
 const NAV=[['dash','dash','Dashboard'],['lab','lab','Anatomy Lab','NEW'],['heart','heart','Heart Lab','LIVE'],['preg','baby','Pregnancy','🤰'],['patients','pat','Patients'],['appts','cal','Appointments'],['tests','test','Test Results'],['docs','doc','My Doctors'],['rx','rx','Prescriptions'],['bill','bill','Billing'],['msgs','msg','Messages'],['set','gear','Settings']];
 let page='dash';
 NAV.forEach(([k,i,n,badge])=>{const b=document.createElement('button');b.dataset.p=k;b.innerHTML=ic(i)+n+(badge?`<em>${badge}</em>`:'');b.onclick=()=>go(k);$('#nav').append(b)});
-const HEAD={dash:['Hello, Prasanna 👋',"Here's your health update for today."],lab:['Anatomy Lab','Specialty views, atlas labels, cross-sections and quizzes for teaching and patient education.'],patients:['Patients','Sample cases: each patient\'s findings are pinned onto their own body.'],appts:['Appointments','Book by specialty, doctor and time slot.'],tests:['Test Results','Every result links to the organ it measures.'],docs:['My Doctors','Each specialist can open the body the way they see it.'],rx:['Prescriptions','Today\'s doses, adherence and refills.'],bill:['Billing','Invoices, payments and insurance (demo).'],msgs:['Messages','Chat with your care team and share 3D views.'],set:['Settings','Anatomy model, layers and display.']};
+const HEAD={dash:['Hello 👋',"Here's your health update for today."],lab:['Anatomy Lab','Specialty views, atlas labels, cross-sections and quizzes for teaching and patient education.'],patients:['Patients','Sample cases: each patient\'s findings are pinned onto their own body.'],appts:['Appointments','Book by specialty, doctor and time slot.'],tests:['Test Results','Every result links to the organ it measures.'],docs:['My Doctors','Sample directory: each specialist can open the body the way they see it (demo).'],rx:['Prescriptions','Today\'s doses, adherence and refills.'],bill:['Billing','Invoices, payments and insurance (demo).'],msgs:['Messages','Chat with your care team and share 3D views (sample conversation, demo).'],set:['Settings','Anatomy model, layers and display.']};
 function go(p,opt={}){page=p;{const pg=p==='preg',hl=p==='heart',nb=!(pg||hl||p==='dash'||p==='lab');$('#stage').hidden=pg||hl||nb;document.querySelector('.grid').classList.toggle('nobody',nb);$('#pstage').hidden=!pg;$('#hstage').hidden=!hl;if(pg&&typeof PG!=='undefined')PG.enter();if(hl&&typeof HL!=='undefined')HL.enter()}$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));$('#hh').textContent=HEAD[p][0];$('#hp').textContent=HEAD[p][1];
  if(p==='dash'&&!opt.keep&&A.ready)A.clearFocus();render(opt);if(innerWidth<1150&&opt.scroll)$('#page').scrollIntoView({behavior:'smooth'})}
 let bookPre={};
@@ -1645,13 +1645,13 @@ appts:()=>{const sp=bookPre.sp||'cardio',docs=DOCS.filter(d=>d.sp===sp),doc=docs
 <p class="mute sm">${esc(doc.n)} · ${esc(doc.h)} · ${doc.x} yrs experience</p><button class="btn p" data-act="dobook">Confirm booking</button> <button class="btn s" data-act="spec:${sp}">See ${SPI[sp].n} on the body</button></div>`},
 tests:()=>`<div class="card"><h3>Results</h3>${TESTS.map((t,k)=>`<div class="row"><div class="grow"><b>${t.n}</b><small>${t.d} · ${SPI[t.sp].e} ${SPI[t.sp].n}</small></div><div style="min-width:150px"><b style="font-size:13.5px">${t.v}</b><small>Ref ${t.ref}</small>${t.pos!=null?`<div class="rbar"><i style="left:${t.pos*100}%"></i></div>`:''}</div><span class="badge ${ST[t.st]}">${t.st}</span><button class="btn s sm" data-act="test:${k}">View on body</button></div>`).join('')}</div>
 <div class="card"><h3>Upload a report</h3><p class="mute sm" style="margin-top:-6px">In a live system this would read PDFs and lab files and map each value to an organ.</p><button class="btn s" data-toast="Upload is a demo in this prototype">⬆ Upload PDF / image</button></div>`,
-docs:()=>`<div class="card"><h3>Care team & specialists</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">${DOCS.map(d=>`<div class="row" style="flex-wrap:wrap;margin:0">${docAv(d,50)}<div class="grow"><b>${esc(d.n)}</b><small>${SPI[d.sp].e} ${SPI[d.sp].n}<br>${esc(d.h)} · ${d.r}★ · ${d.x} yrs</small><small style="color:var(--blue);font-weight:600">Next: ${d.slot}</small></div><div style="display:flex;gap:6px;width:100%"><button class="btn p sm" data-act="docview:${d.id}">Open their view</button><button class="btn s sm" data-act="book:${d.id}">Book</button><button class="btn s sm" data-act="msg:${d.id}">Message</button></div></div>`).join('')}</div></div>`,
+docs:()=>`<div class="card"><div class="hd"><h3>Care team & specialists</h3><span class="demo">SAMPLE</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">${DOCS.map(d=>`<div class="row" style="flex-wrap:wrap;margin:0">${docAv(d,50)}<div class="grow"><b>${esc(d.n)}</b><small>${SPI[d.sp].e} ${SPI[d.sp].n}<br>${esc(d.h)} · ${d.r}★ · ${d.x} yrs</small><small style="color:var(--blue);font-weight:600">Next: ${d.slot}</small></div><div style="display:flex;gap:6px;width:100%"><button class="btn p sm" data-act="docview:${d.id}">Open their view</button><button class="btn s sm" data-act="book:${d.id}">Book</button><button class="btn s sm" data-act="msg:${d.id}">Message</button></div></div>`).join('')}</div></div>`,
 rx:()=>{const tot=RX.reduce((a,r)=>a+r.when.length,0),p=Math.round(TAKEN.size/tot*100);return `<div class="card"><div class="hd"><h3>Today's medicines</h3><div class="ring" style="--p:${p}"><b>${p}%</b></div></div>${RX.map((r,k)=>`<div class="row"><div style="font-size:24px">💊</div><div class="grow"><b>${r.n} <small>${r.dose}</small></b><small>For ${r.for} · prescribed by ${esc(DOC[r.by].n)} · ${r.left} left</small><div class="dose">${r.when.map((w,j)=>`<label><input type="checkbox" data-dose="${k}-${j}" ${TAKEN.has(k+'-'+j)?'checked':''}>${w}</label>`).join('')}</div></div><button class="btn s sm" data-act="spec:${r.sp}">Target organ</button><button class="btn s sm" data-act="refill:${k}">Refill</button></div>`).join('')}</div>
 <div class="card"><h3>Reminders</h3><p class="mute sm" style="margin-top:-6px">Night dose reminder at 9:30 PM · refill alert at 5 tablets left (demo).</p></div>`},
 bill:()=>{const due=INV.filter(i=>i.st==='Due').reduce((a,i)=>a+i.a,0),paid=INV.filter(i=>i.st==='Paid').reduce((a,i)=>a+i.a,0);return `<div class="card"><div class="stat"><div><small>Amount due</small><b>₹${due.toLocaleString('en-IN')}</b></div><div><small>Paid this year</small><b>₹${paid.toLocaleString('en-IN')}</b></div><div><small>Insurance cover</small><b>80%</b></div></div></div>
 <div class="card"><h3>Invoices <span class="demo">DEMO</span></h3>${INV.map((v,k)=>`<div class="row"><div class="grow"><b>${v.it}</b><small>${v.id} · ${v.d}</small></div><b>₹${v.a.toLocaleString('en-IN')}</b><span class="badge ${v.st==='Paid'?'b-ok':'b-due'}">${v.st}</span>${v.st==='Due'?`<button class="btn p sm" data-act="pay:${k}">Pay</button>`:`<button class="btn s sm" data-toast="Receipt ${v.id} (demo)">Receipt</button>`}</div>`).join('')}</div>
 <div class="card"><h3>Insurance</h3><div class="row"><div style="font-size:24px">🛡️</div><div class="grow"><b>Sample Health Cover</b><small>Policy ending 4821 · cashless at 3 partner hospitals · claims settle in about 7 days</small></div><button class="btn s sm" data-toast="Claim form opened (demo)">New claim</button></div></div>`},
-msgs:()=>`<div class="card"><h3>Messages</h3><div class="chat"><div class="threads">${Object.keys(TH).map(id=>`<button data-act="thread:${id}" class="${id===thread?'on':''}">${docAv(DOC[id],36)}<span><b style="font-size:13px">${esc(DOC[id].n)}</b><br><small class="mute">${SPI[DOC[id].sp].n}</small></span></button>`).join('')}</div>
+msgs:()=>`<div class="card"><div class="hd"><h3>Messages</h3><span class="demo">SAMPLE</span></div><div class="chat"><div class="threads">${Object.keys(TH).map(id=>`<button data-act="thread:${id}" class="${id===thread?'on':''}">${docAv(DOC[id],36)}<span><b style="font-size:13px">${esc(DOC[id].n)}</b><br><small class="mute">${SPI[DOC[id].sp].n}</small></span></button>`).join('')}</div>
 <div><div class="msgs" id="msgs">${TH[thread].map(([me,t])=>`<div class="bub ${me===1?'me':me===2?'sys':''}">${esc(t)}</div>`).join('')}</div><div class="send"><input id="mi" placeholder="Write a message…" aria-label="Message"><button class="btn p sm" data-act="send">Send</button></div><button class="btn s sm" style="margin-top:8px" data-act="share">📎 Share current 3D view</button></div></div></div>`,
 set:()=>`<div class="card"><h3>Anatomy model</h3>${sexSeg()}<p class="mute sm">${A.sex==='male'?'Male reference: BodyParts3D adult male with full muscle, skeleton, organ, vessel and nerve layers.':'Female body: HuBMAP Human Reference Atlas v1.5 skin, organs (including breast, uterus and ovaries), vessels and nerves. The full muscle layer and skeleton are the BodyParts3D male reference reshaped to her body (arms re-posed, torso, hips and limbs fitted to her skin): anatomically complete, but not sex-specific in every detail (e.g. the pelvis).'}</p><h4>Layers</h4>${layerBoxes()}</div>
 <div class="card"><h3>Display</h3><h4>Theme</h4><span class="seg" id="thm"><button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="">System</button></span><h4>3D view</h4><div class="tiles">${tile('rotate','🔄','Auto-rotate','Turntable rotation.',A.auto)}${tile('dots','📍','Vital hotspots','Heart rate, BP and more on the dashboard body.',A.showDots)}${tile('holo','💠','Hologram','Futuristic glow rendering.',A.holo)}${tile('labels','🏷️','Atlas labels','Leader-line labels.',A.labelsOn)}</div></div>
@@ -2352,7 +2352,7 @@ function orgInfo(k,w){const b=fetBio(w)||[];const T={
 // ===================== Pregnancy mode: state, pages, tools =====================
 const st={get(k,d){try{const v=localStorage.getItem('dk-preg-'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('dk-preg-'+k,JSON.stringify(v))}catch(e){}}};
 const PS={on:false,view:'mother',week:20,tab:'week',diet:'veg',cut:true,labels:true,skin:1,auto:false,beat:false,panMode:false,layers:{bone:true,org:true},camK:'side',sym:null,trk:'bp',symAll:false};
-let PROF=st.get('prof',{name:'Ananya',lmp:'2026-04-23',wt:58,ht:160,asian:true,cycle:28});
+let PROF=st.get('prof',{name:'',lmp:new Date().toISOString().slice(0,10),wt:0,ht:0,asian:true,cycle:28});
 const LOG=Object.assign({water:{},caf:{},bp:[],glu:[],wt:[],hb:[],kicks:[],bag:[],plan:[],planNote:'',plate:{},ctr:[]},st.get('log',{}));PS.ctrOn=LOG.ctr.length>0&&!LOG.ctr[LOG.ctr.length-1].e;
 const saveLog=()=>st.set('log',LOG),saveProf=()=>st.set('prof',PROF);
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
@@ -3341,11 +3341,7 @@ const LSK='dk6',uid=p=>p+Math.random().toString(36).slice(2,9);
 SX.uid=uid;
 const demo=()=>({v:1,lang:'en',active:'m1',created:Date.now(),
  members:[
-  {id:'m1',pid:'p1',name:'Prasanna',rel:'You',age:34,sex:'male',w:72,h:175,av:'PR',c:'m',shared:true},
-  {id:'m2',pid:'p3',name:'Ananya',rel:'Spouse',age:29,sex:'female',w:60,h:162,av:'AN',c:'',shared:true},
-  {id:'m3',pid:'p2',name:'Ramesh',rel:'Father',age:61,sex:'male',w:78,h:170,av:'RA',c:'y',shared:true},
-  {id:'m4',pid:'p4',name:'Lakshmi',rel:'Mother',age:58,sex:'female',w:68,h:158,av:'LA',c:'g',shared:true},
-  {id:'m5',pid:'p5',name:'Arjun',rel:'Brother',age:24,sex:'male',w:70,h:178,av:'AR',c:'m',shared:true}]});
+  {id:'m1',pid:null,name:'You',rel:'You',age:0,sex:'male',w:0,h:0,av:'YO',c:'',shared:true}]});
 let S;
 try{const j=JSON.parse(localStorage.getItem(LSK));if(j&&j.v===1&&Array.isArray(j.members)&&j.members.length)S=j}catch(e){}
 if(!S)S=demo();
@@ -3355,9 +3351,6 @@ SX.save=(now)=>{if(SX.wiped)return;clearTimeout(svT);const go_=()=>{try{localSto
 addEventListener('pagehide',()=>SX.save(true));
 SX.init=f=>{SX.seeds.push(f)};      // modules register default data
 SX.runSeeds=()=>{SX.seeds.forEach(f=>{try{f(S)}catch(e){console.warn('seed',e)}});SX.save()};
-
-// Family display names for the demo patients (same fictional people, shown as one household)
-{const N={p1:['Prasanna',34],p2:['Ramesh',61],p3:['Ananya',29],p4:['Lakshmi',58],p5:['Arjun',24]};PATS.forEach(p=>{const n=N[p.id];if(n){p.n=n[0];p.age=n[1];p.av=n[0].slice(0,2).toUpperCase()}})}
 
 // ---------------------------------------------------------------- members
 SX.me=()=>S.members.find(m=>m.id===S.active)||S.members[0];
@@ -3785,11 +3778,8 @@ SX.addStrings({
 });
 
 SX.init(s=>{
- s.contacts=s.contacts||{m1:[{id:'c1',n:'Ananya',rel:'Spouse',ph:'',notify:true},{id:'c2',n:'Lakshmi',rel:'Mother',ph:'',notify:true}],m2:[{id:'c3',n:'Prasanna',rel:'Spouse',ph:'',notify:true}],m3:[{id:'c4',n:'Prasanna',rel:'Son',ph:'',notify:true}],m4:[{id:'c5',n:'Prasanna',rel:'Son',ph:'',notify:true}],m5:[{id:'c6',n:'Prasanna',rel:'Brother',ph:'',notify:true}]};
- s.mid=s.mid||{m1:{blood:'B+',allergies:['Penicillin'],conditions:['High cholesterol','Gallstones'],donor:'yes',doctor:'Dr. Sarah Wilson',notes:'',policy:''},
-  m2:{blood:'O+',allergies:[],conditions:[],donor:'',doctor:'Dr. Fatima Khan',notes:'',policy:''},
-  m3:{blood:'A+',allergies:['Sulfa drugs'],conditions:['Coronary artery disease','Enlarged prostate'],donor:'',doctor:'Dr. Sarah Wilson',notes:'',policy:''},
-  m4:{blood:'',allergies:[],conditions:[],donor:'',doctor:'',notes:'',policy:''},m5:{blood:'',allergies:[],conditions:[],donor:'',doctor:'',notes:'',policy:''}};
+ s.contacts=s.contacts||{};
+ s.mid=s.mid||{};
  s.consent=s.consent||{sos_location:true,sos_medid:true,doctor_share:false,pharmacy_rx:true};
  s.ledger=s.ledger||[{t:s.created||Date.now(),m:'all',k:'defaults',on:true,x:'Defaults set at first launch. Location and Medical ID are shared only when you press SOS.'}];
  s.sos=s.sos||[];
@@ -4188,21 +4178,8 @@ SX.init(s=>{
  const L=(key,val,date,extra)=>Object.assign({id:uid('r'),k:'lab',key,val,date},extra||{});
  const F=(n,v,st,date,sp,t)=>({id:uid('r'),k:'find',n,v,st,date,sp,t});
  s.checks=s.checks||{};
- s.results=s.results||{
-  m1:[L('ldl',162,d(2026,10,12),{t:0}),L('tc',231,d(2026,10,12)),L('hdl',38,d(2026,10,12)),L('tg',168,d(2026,10,12)),F('Ultrasound abdomen','2 small gallstones','Finding',d(2026,10,10),'hepato',1),L('alt',58,d(2026,10,12),{t:2}),F('ECG','Sinus rhythm, 72 bpm','Normal',d(2026,10,12),'cardio',3),
-   L('hba1c',5.6,d(2026,9,28),{t:4}),L('glu_f',95,d(2026,9,28)),L('creat',.9,d(2026,9,28),{t:5}),L('hb',14.6,d(2026,9,28)),L('tsh',2.1,d(2026,9,28)),L('vitd',18,d(2026,9,28)),F('Chest X-ray','Clear lung fields','Normal',d(2026,8,30),'pulmo',6),F('Blood test (CBC)','Scheduled for tomorrow, 10:00 AM. Fasting 10 to 12 hours.','Scheduled',d(2026,10,18),'hemato',7),
-   L('ldl',171,d(2026,4,9)),L('vitd',22,d(2026,4,9))],
-  m2:[L('hb',11.4,d(2026,10,2)),L('tsh',4.6,d(2026,10,2)),L('vitd',16,d(2026,10,2)),L('glu_f',104,d(2026,10,2)),L('hba1c',5.5,d(2026,10,2)),L('b12',310,d(2026,10,2))],
-  m3:[L('hba1c',6.8,d(2026,10,5)),L('glu_f',138,d(2026,10,5)),L('creat',1.4,d(2026,10,5)),L('ldl',118,d(2026,10,5)),L('tg',190,d(2026,10,5)),L('uric',7.9,d(2026,10,5)),L('hba1c',7.1,d(2026,6,20)),L('creat',1.3,d(2026,6,20))],
-  m4:[L('hb',12.6,d(2026,9,20)),L('vitd',22,d(2026,9,20)),L('alt',62,d(2026,9,20)),L('tc',224,d(2026,9,20)),L('b12',180,d(2026,9,20)),L('ca',9.4,d(2026,9,20))],
-  m5:[L('hb',15.2,d(2026,8,14)),L('wbc',6.4,d(2026,8,14)),L('vitd',24,d(2026,8,14)),L('glu_f',88,d(2026,8,14))]};
- s.vault=s.vault||[
-  {id:'v1',m:'m1',name:'Lipid profile and LFT',kind:'Lab report',date:d(2026,10,12),size:0,mime:'application/pdf',file:false,demo:true},
-  {id:'v2',m:'m1',name:'Ultrasound abdomen report',kind:'Scan / imaging',date:d(2026,10,10),size:0,mime:'application/pdf',file:false,demo:true},
-  {id:'v3',m:'m1',name:'Prescription: Dr. Sarah Wilson',kind:'Prescription',date:d(2026,10,12),size:0,mime:'application/pdf',file:false,demo:true,rx:'sw'},
-  {id:'v4',m:'m1',name:'Prescription: Dr. Kiran Rao',kind:'Prescription',date:d(2026,10,10),size:0,mime:'application/pdf',file:false,demo:true,rx:'kr'},
-  {id:'v5',m:'m2',name:'Blood tests, October',kind:'Lab report',date:d(2026,10,2),size:0,mime:'application/pdf',file:false,demo:true},
-  {id:'v6',m:'m3',name:'Diabetes and kidney check',kind:'Lab report',date:d(2026,10,5),size:0,mime:'application/pdf',file:false,demo:true}];
+ s.results=s.results||{};
+ s.vault=s.vault||[];
 });
 
 // ---------------------------------------------------------------- lab logic
@@ -4419,13 +4396,9 @@ const DEMO_AT=[0,12,30,55,85]; // seconds; demo-speed, so you can watch the trac
 // ---------------------------------------------------------------- store
 SX.init(s=>{
  const mk=(n,dose,when,why,sp,by,left,extra)=>Object.assign({id:uid('md'),n,dose,when,for:why,sp,by:by||'',left,src:by?'rx':'self',gen:(C.find(c=>c.n.toLowerCase()===n.toLowerCase())||{}).gen||n.toLowerCase()},extra||{});
- s.meds=s.meds||{m1:[mk('Atorvastatin','10 mg tablet',['Night'],'Cholesterol','cardio','Dr. Sarah Wilson',18),mk('Ursodeoxycholic acid','300 mg tablet',['Morning','Night'],'Gallstones','hepato','Dr. Kiran Rao',24),mk('Vitamin D3','60,000 IU sachet',['Sunday'],'Low vitamin D','ortho','Dr. Arjun Mehta',3)],
-  m2:[mk('Iron + folic acid','1 tablet',['Morning'],'Low haemoglobin','hemato','',20),mk('Vitamin D3','1000 IU softgel',['Morning'],'Low vitamin D','ortho','',24)],
-  m3:[mk('Atorvastatin','20 mg tablet',['Night'],'Heart health','cardio','Dr. Sarah Wilson',26),mk('Amlodipine','5 mg tablet',['Morning'],'Blood pressure','cardio','Dr. Sarah Wilson',9)],
-  m4:[mk('Calcium + Vitamin D3','1 tablet',['Morning'],'Bone health','ortho','',12),mk('Vitamin B12','1500 mcg tablet',['Morning'],'Low B12','hemato','',8)],m5:[]};
+ s.meds=s.meds||{};
  s.taken=s.taken||{};s.cart=s.cart||[];s.orders=s.orders||[];s.addr=s.addr||'';s.rem=s.rem||{on:false,sent:{}};
- s.vault=s.vault||[];if(!s.vault.some(v=>v.id==='v7'))s.vault.push({id:'v7',m:'m1',name:'Prescription: Dr. Arjun Mehta',kind:'Prescription',date:'2026-10-08',size:0,mime:'application/pdf',file:false,demo:true,rx:'am'});
- if(!s.vault.some(v=>v.id==='v8'))s.vault.push({id:'v8',m:'m3',name:'Prescription: Dr. Sarah Wilson',kind:'Prescription',date:'2026-09-30',size:0,mime:'application/pdf',file:false,demo:true,rx:'sw'});
+ s.vault=s.vault||[];
 });
 
 const meds=m=>(S.meds[m.id]=S.meds[m.id]||[]);
@@ -4587,9 +4560,7 @@ const SX=window.SX,S=SX.S,E=SX.E,uid=SX.uid;
 
 // ---------------------------------------------------------------- appointments are per person
 SX.init(s=>{
- s.appts=s.appts||{m1:APPTS.map(a=>Object.assign({id:uid('a')},a)),
-  m2:[{id:uid('a'),doc:'fk',when:'Wed · 2:30 PM',type:'In person',why:'Routine check-up'}],
-  m3:[{id:uid('a'),doc:'sw',when:'Oct 21 · 11:00 AM',type:'In person',why:'Heart review'}],m4:[],m5:[]};
+ s.appts=s.appts||{};
 });
 const appts=m=>(S.appts[m.id]=S.appts[m.id]||[]);
 SX.apptsOf=appts;
@@ -4680,7 +4651,7 @@ SX.act.dobook=()=>{const m=SX.me(),sp=bookPre.sp||'cardio',docs=DOCS.filter(d=>d
  a('#page','Results in plain words','Each result shows where it sits against the usual range, what it can mean, and questions to ask your doctor. It never diagnoses.',async()=>{go('tests');const d=document.querySelector('.sx-res.high summary,.sx-res.low summary');if(d)d.click()}),
  a('#page','Insights and suggested checks','Results outside the usual range, trends, and checks that may be due for age, sex, BMI and pregnancy. Always framed as: discuss with your doctor.',async()=>{go('insights')}),
  a('#page','My medicines','Doses by time of day, stock left, a reorder button when it runs low, and optional reminders.',async()=>{go('rx')}),
- a('#page','Find and order, safely','Search by name or symptom word. Prescription medicines need a prescription from the Vault. Allergies from Medical ID, pregnancy and age are checked before anything goes in the basket. Here: amoxicillin is blocked because of a recorded penicillin allergy.',async()=>{SX.fsearch('amox')}),
+ a('#page','Find and order, safely','Search by name or symptom word. Prescription medicines need a prescription from the Vault. Allergies from Medical ID, pregnancy and age are checked before anything goes in the basket, and a matching allergy blocks the item.',async()=>{SX.fsearch('amox')}),
  a('#page','Visits and sharing','Book by specialty. Reports go to the doctor only if you tick share for that visit, and each share is written to your consent history.',async()=>{bookPre={sp:'cardio'};go('appts')}),
  a('#page','SOS','One press to call 112. Hold the red button to message your emergency contacts with your location and Medical ID. Phone, SMS and your own contacts do the work.',async()=>{go('sos')}),
  a('#page','First aid, offline','Step-by-step guides for 19 emergencies, including CPR with a 110 beats-per-minute metronome.',async()=>{SX.act.aid(['cpr'])}),
@@ -4688,9 +4659,9 @@ SX.act.dobook=()=>{const m=SX.me(),sp=bookPre.sp||'cardio',docs=DOCS.filter(d=>d
  a('#page','Consent, always visible','Four switches control location in SOS, Medical ID in SOS, sharing with doctors and sharing prescriptions with pharmacies. Every change is logged.',async()=>{go('consent')}),
  a('#page','Export or delete everything','Download all your data as a file, or erase it from this device with one typed confirmation.',async()=>{go('data')}),
  a('#stage','Anatomy Lab','18 specialty views for patient education and learning. Only the chosen system stays solid. Here: cardiology.',async()=>{go('lab');A.setSpec('cardio');render()}),
- a('#page','Pregnancy is opt-in','The Pregnancy tab appears only after someone turns it on. Then: weekly guide, tracker, and a 3D mother and baby. TheHealthTracker never shows or guesses the baby’s sex.',async()=>{mem('m2');if(SX.pregOn(SX.me())){go('preg');for(let k=0;k<40&&!PV.ready;k++)await wait(150);if(PS.view!=='mother')setPView('mother');setW(24)}else go('pregopt')}),
+ a('#page','Pregnancy is opt-in','The Pregnancy tab appears only after someone turns it on. Then: weekly guide, tracker, and a 3D mother and baby. TheHealthTracker never shows or guesses the baby’s sex.',async()=>{if(SX.pregOn(SX.me())){go('preg');for(let k=0;k<40&&!PV.ready;k++)await wait(150);if(PS.view!=='mother')setPView('mother');setW(24)}else go('pregopt')}),
  a('#hstage','Heart Lab','A living heart: chambers squeeze in sequence, valves open and close, blood flows, and the electrical signal travels from the SA node.',async()=>{mem('m1');go('heart');for(let k=0;k<40&&!HL.UI.ready;k++)await wait(150);HL.setCut('4ch');HL.cam('4ch')}),
- a('#tourBtn','That is the tour','Everything here runs on sample data for a fictional family. Press Demo tour any time to replay it.',async()=>{if(typeof PS!=='undefined'&&PS.on)PG.exit();mem(window.__tm0||'m1');go('dash');A.clearFocus()})];
+ a('#tourBtn','That is the tour','This walkthrough uses your own account. Add family members, reports and medicines whenever you are ready. Press Demo tour any time to replay it.',async()=>{if(typeof PS!=='undefined'&&PS.on)PG.exit();mem(window.__tm0||'m1');go('dash');A.clearFocus()})];
  TOUR.length=0;T.forEach(x=>TOUR.push(x))}
 
 SX.boot();
