@@ -9,6 +9,7 @@ On Railway:    the Procfile / railway.json start command uses $PORT.
 """
 from __future__ import annotations
 
+import gzip
 import os
 import time
 from pathlib import Path
@@ -30,6 +31,51 @@ VERSION = os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8]
 STARTED = time.time()
 
 app = FastAPI(title="TheHealthTracker", version=VERSION, docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json")
+
+# --------------------------------------------------------------------------------------------------
+# Pre-compressed copies are only served when they match their source byte for byte. An index.html edited
+# without re-running tools/compress.py would otherwise keep sending the OLD page to every browser.
+# --------------------------------------------------------------------------------------------------
+try:
+    import brotli as _brotli  # type: ignore
+except ImportError:  # without the module we cannot verify .br files, so we never serve them
+    _brotli = None
+
+
+def _verified_variants() -> set[Path]:
+    ok: set[Path] = set()
+    for base in (WEB, SITE):
+        for alt in list(base.rglob("*.br")) + list(base.rglob("*.gz")):
+            src = alt.with_suffix("")
+            if not src.is_file():
+                continue
+            try:
+                raw = alt.read_bytes()
+                if alt.suffix == ".br":
+                    if _brotli is None or _brotli.decompress(raw) != src.read_bytes():
+                        continue
+                elif gzip.decompress(raw) != src.read_bytes():
+                    continue
+            except Exception:
+                continue
+            ok.add(alt)
+    return ok
+
+
+VARIANTS = _verified_variants()
+_skipped = [str(a.relative_to(ROOT)) for b in (WEB, SITE) for a in list(b.rglob("*.br")) + list(b.rglob("*.gz")) if a not in VARIANTS]
+if _skipped:
+    print(f"[TheHealthTracker] WARNING: {len(_skipped)} stale compressed file(s) ignored; run tools/compress.py: {', '.join(_skipped[:5])}", flush=True)
+
+
+def _variant(p: Path, request: Request) -> tuple[Path, str | None]:
+    ae = request.headers.get("accept-encoding", "")
+    for enc, suf in (("br", ".br"), ("gzip", ".gz")):
+        alt = p.with_name(p.name + suf)
+        if enc in ae and alt in VARIANTS:
+            return alt, enc
+    return p, None
+
 
 
 @app.on_event("startup")
@@ -73,8 +119,17 @@ SECURITY = {
 }
 
 
+# One address for the whole site. The sign-in cookie belongs to the exact host that set it, so someone who signs in on
+# www.thehealthtracker.com and opens thehealthtracker.com/app (or the other way round) would look signed out.
+CANONICAL = (os.getenv("CANONICAL_HOST") or "").strip().lower()  # e.g. thehealthtracker.com; set it only after both addresses resolve
+
+
 @app.middleware("http")
 async def headers(request: Request, call_next):
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(":")[0].lower()
+    if CANONICAL and host == "www." + CANONICAL and request.method in ("GET", "HEAD") and request.url.path != "/healthz":
+        q = ("?" + request.url.query) if request.url.query else ""
+        return Response(status_code=308, headers={"Location": f"https://{CANONICAL}{request.url.path}{q}"})
     resp: Response = await call_next(request)
     for k, v in SECURITY.items():
         resp.headers.setdefault(k, v)
@@ -129,12 +184,9 @@ def _send(p: Path, request: Request, cache: str):
     headers = {"Vary": "Accept-Encoding", "Cache-Control": cache}
     path = p
     if ext in COMPRESSIBLE:
-        ae = request.headers.get("accept-encoding", "")
-        for enc, suf in (("br", ".br"), ("gzip", ".gz")):
-            alt = p.with_name(p.name + suf)
-            if enc in ae and alt.is_file():
-                path, headers["Content-Encoding"] = alt, enc
-                break
+        path, enc = _variant(p, request)
+        if enc:
+            headers["Content-Encoding"] = enc
     return FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"), headers=headers)
 
 
@@ -145,6 +197,27 @@ def _send(p: Path, request: Request, cache: str):
 @app.api_route("/reset", methods=["GET", "HEAD"], include_in_schema=False)
 def landing(request: Request):
     return _send(SITE / "index.html", request, "no-cache")
+
+
+# privacy policy and terms: legal details come from Railway variables so they can change without a code change
+LEGAL = {
+    "ENTITY": os.getenv("LEGAL_ENTITY", "TheHealthTracker"),
+    "ADDRESS": os.getenv("LEGAL_ADDRESS", "Hyderabad, Telangana, India"),
+    "GRIEVANCE_NAME": os.getenv("GRIEVANCE_NAME", "Grievance Officer, TheHealthTracker"),
+    "GRIEVANCE_EMAIL": os.getenv("GRIEVANCE_EMAIL") or os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
+    "SUPPORT_EMAIL": os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
+    "UPDATED": os.getenv("POLICY_UPDATED", "18 October 2026"),
+}
+
+
+@app.api_route("/privacy", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/terms", methods=["GET", "HEAD"], include_in_schema=False)
+def legal_page(request: Request):
+    import html as _html
+    s = (SITE / (request.url.path.strip("/") + ".html")).read_text(encoding="utf-8")
+    for k, v in LEGAL.items():
+        s = s.replace("{{" + k + "}}", _html.escape(v))
+    return Response(s, media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache"})
 
 
 @app.api_route("/app", methods=["GET", "HEAD"], include_in_schema=False)
@@ -184,11 +257,7 @@ def static(full_path: str, request: Request):
         headers["Cache-Control"] = "public, max-age=3600"
     path = p
     if ext in COMPRESSIBLE:
-        ae = request.headers.get("accept-encoding", "")
-        for enc, suf in (("br", ".br"), ("gzip", ".gz")):
-            alt = p.with_name(p.name + suf)
-            if enc in ae and alt.is_file():
-                path = alt
-                headers["Content-Encoding"] = enc
-                break
+        path, enc = _variant(p, request)
+        if enc:
+            headers["Content-Encoding"] = enc
     return FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"), headers=headers)

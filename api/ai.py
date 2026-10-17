@@ -281,12 +281,12 @@ def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, forc
     if out is None:
         txt = text or (text_from(data, mime) if data else "")
         if not txt and data and mime.startswith("image/"):
-            out = {"summary": "Photos need the AI engine, which is not configured on this server (ANTHROPIC_API_KEY). Upload a PDF with selectable text, or type the values.",
+            out = {"summary": "Reading photos is not available right now. Upload a PDF with selectable text, or type the values.",
                    "findings": [], "medicines": [], "tests_needed": [], "followups": [], "questions_for_doctor": [], "warnings": []}
         else:
             out = local_prescription(txt, ctx) if kind == "prescription" else local_report(txt, ctx)
         if "err" in locals():
-            out["warnings"] = list(out.get("warnings", [])) + ["AI engine unavailable right now; this is the basic reader."]
+            out["warnings"] = list(out.get("warnings", [])) + ["Smart reading is unavailable right now; this is the basic reader."]
     out.update({"engine": engine, "kind": kind, "model": MODEL if engine == "claude" else "rules-v1", "ms": int((time.time() - t0) * 1000), "disclaimer": DISCLAIMER})
     out.setdefault("findings", [])
     out.setdefault("medicines", [])

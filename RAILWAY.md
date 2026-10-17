@@ -52,7 +52,19 @@ OTP_DEMO=0
 | `PWNED_CHECK` | no | `1` (default) rejects passwords found in known breaches using Have I Been Pwned's k-anonymity API. |
 | `OTP_DEMO` | no | `1` shows codes on screen instead of sending them. Testing only. |
 | `DOKKO_REGION` | no | `IN`. |
+| `LEGAL_ENTITY`, `LEGAL_ADDRESS` | yes before launch | Shown on /privacy and /terms (registered name and address of the business). Defaults: `TheHealthTracker`, `Hyderabad, Telangana, India`. |
+| `GRIEVANCE_NAME`, `GRIEVANCE_EMAIL` | yes before launch | Grievance Officer shown in the privacy policy (DPDP Act). `GRIEVANCE_EMAIL` falls back to `SUPPORT_EMAIL`, then `ADMIN_EMAIL`. |
+| `SUPPORT_EMAIL` | recommended | Contact address on /terms. |
+| `POLICY_UPDATED` | no | Date shown on the policy pages, e.g. `18 October 2026`. |
+| `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
+
+### After editing any page
+
+The server sends the compressed copy of a page (`index.html.br` / `.gz`) when the browser accepts it. After changing
+`web/index.html` or anything in `site/`, run `python tools/compress.py` and commit the refreshed copies.
+`python tools/compress.py --check` fails if any copy is stale. The server also refuses to send a stale copy (it falls back
+to the uncompressed file and prints a warning in the deploy log), so a forgotten step costs speed, not correctness.
 
 5. **Domain.** Service → Settings → Networking → Custom Domain → `thehealthtracker.com` (and `www`). Add the CNAME record Railway
    shows at your domain registrar. HTTPS is issued automatically.

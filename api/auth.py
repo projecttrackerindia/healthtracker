@@ -259,8 +259,8 @@ def signup_start(body: Signup, request: Request, db: Session = Depends(get_db)):
     phone = norm_id(body.phone)[1] if body.phone.strip() else None
     if email and "@" not in email or phone and "@" in phone:
         raise HTTPException(400, "Check the email and mobile fields")
-    if not email and not phone:
-        raise HTTPException(400, "Enter an email address or a mobile number")
+    if not phone:
+        raise HTTPException(400, "Please enter your mobile number")
     if email and db.scalar(select(User.id).where(User.email == email)) or phone and db.scalar(select(User.id).where(User.phone == phone)):
         raise HTTPException(409, "An account with this email or mobile already exists. Sign in instead.")
     issues = passwords.check(body.password, name, email or "", phone or "")
@@ -589,3 +589,66 @@ def profile(body: Profile, u: User = Depends(need_user)):
     if len(n) >= 2:
         u.name = n
     return me_json(u)
+
+
+# ---- add or verify an email / mobile on the signed-in account (verified badge) --------------------------------------
+class ContactStart(BaseModel):
+    value: str
+
+
+@r.post("/contact/start", dependencies=[Depends(csrf)])
+def contact_start(body: ContactStart, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    limit(request, "contact", 8, 600)
+    kind, target = norm_id(body.value)
+    if (kind == "email" and u.email == target and u.email_verified) or (kind == "phone" and u.phone == target and u.phone_verified):
+        raise HTTPException(400, "This is already verified on your account.")
+    other = db.scalar(select(User.id).where((User.email if kind == "email" else User.phone) == target, User.id != u.id))
+    if other:
+        raise HTTPException(409, "This " + ("email" if kind == "email" else "mobile number") + " is linked to another account.")
+    f = new_flow(db, "contact", 10, user_id=u.id, data={"kind": kind, "target": target})
+    out = send_code(request, db, target, kind, "contact")
+    return {"flow": f.id, "sentTo": masked(kind, target), "channel": kind, **out}
+
+
+@r.post("/contact/verify", dependencies=[Depends(csrf)])
+def contact_verify(body: FlowCode, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    limit(request, "verify", 20, 600)
+    f = get_flow(db, body.flow, "contact")
+    if f.user_id != u.id:
+        raise HTTPException(400, "This step has expired. Please start again.")
+    d = f.data
+    check_code(db, d["target"], "contact", body.code)
+    col = User.email if d["kind"] == "email" else User.phone
+    if db.scalar(select(User.id).where(col == d["target"], User.id != u.id)):
+        raise HTTPException(409, "This is now linked to another account.")
+    if d["kind"] == "email":
+        u.email, u.email_verified = d["target"], True
+    else:
+        u.phone, u.phone_verified = d["target"], True
+    db.delete(f)
+    return me_json(u)
+
+
+# ---- delete the account (DPDP right to erasure). Health records live on the device and are deleted there. -------
+class DeleteAccount(BaseModel):
+    confirm: str
+
+
+@r.post("/account/delete", dependencies=[Depends(csrf)])
+def account_delete(body: DeleteAccount, request: Request, response: Response, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    limit(request, "delete", 5, 3600)
+    if body.confirm.strip().upper() != "DELETE":
+        raise HTTPException(400, 'Type DELETE to confirm.')
+    from .models import Household
+    if u.household_id:
+        h = db.get(Household, u.household_id)
+        if h:  # orders and invoices stay for pharmacy and tax law, without personal details
+            h.name, h.phone, h.email, h.lat, h.lng = "", "", "", None, None
+    db.query(AuthSession).filter(AuthSession.user_id == u.id).delete()
+    db.query(AuthFlow).filter(AuthFlow.user_id == u.id).delete()
+    targets = [t for t in (u.email, u.phone) if t]
+    if targets:
+        db.query(OtpCode).filter(OtpCode.target.in_(targets)).delete(synchronize_session=False)
+    db.delete(u)
+    response.delete_cookie(COOKIE, path="/")
+    return {"deleted": True}

@@ -93,7 +93,8 @@ def resolve_loc(db: Session, loc: Loc, h: Household | None):
 def config():
     return {"version": os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8], "region": os.getenv("DOKKO_REGION", "IN"),
             "emergency": {"national": "112", "ambulance": "108"}, "languages": ["en", "hi", "te"],
-            "ai": {"engine": "claude" if os.getenv("ANTHROPIC_API_KEY") else "local", "model": AI.MODEL if os.getenv("ANTHROPIC_API_KEY") else "rules-v1"},
+            # public: only whether smart reading is available. The provider and model stay server-side (named in the privacy policy).
+            "ai": {"engine": "ai" if os.getenv("ANTHROPIC_API_KEY") else "local"},
             "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else "demo", "cities": list(CITIES)}
 
 
@@ -436,9 +437,13 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
             out["warnings"] = list(out.get("warnings", [])) + [f"Monthly AI limit for the {h.plan} plan reached ({cap}); the basic reader was used. Upgrade in Family & Privacy → Plan."]
     except Exception as e:
         db.add(AiJob(household_id=h.id, kind=kind, engine="error", ok=False))
-        raise HTTPException(500, f"analysis failed: {str(e)[:120]}")
+        print("[ai] analysis failed:", str(e)[:300], flush=True)  # details stay in the server log
+        raise HTTPException(500, "We could not read this document right now. Please try again in a few minutes.")
     db.add(AiJob(household_id=h.id, kind=kind, engine=out["engine"], ms=out["ms"], findings=len(out["findings"]) + len(out["medicines"])))
     out["quota"] = {"used": used + (1 if out["engine"] == "claude" else 0), "cap": cap, "plan": h.plan}
+    # what the browser sees: no provider or model names
+    out["engine"] = "ai" if out["engine"] == "claude" else "local"
+    out.pop("model", None)
     return out
 
 
