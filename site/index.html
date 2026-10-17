@@ -380,6 +380,11 @@ THT.api('/me').then(r=>{ME=r.user;if(ME){$('#acts').innerHTML=`<span class="who 
 // ---------- auth sheet ----------
 let CFG={passkeys:true,email:false,sms:false,demo:false};THT.api('/config').then(c=>CFG=c).catch(()=>{});
 const ov=$('#ov'),msg=$('#am'),demoBox=$('#ad');let view='',ac=null,flow=null,codeKind='',lastId='';
+// a page reload between requesting a code and entering it must not lose which flow (signup/signin/reset/step) it belongs to
+const AS_KEY='dk-auth-flow';
+function saveAuthState(h,sub){try{sessionStorage.setItem(AS_KEY,JSON.stringify({flow,codeKind,lastId,h,sub,t:Date.now()}))}catch(e){}}
+function clearAuthState(){try{sessionStorage.removeItem(AS_KEY)}catch(e){}}
+function restoreAuthState(){try{const s=JSON.parse(sessionStorage.getItem(AS_KEY));if(s&&s.flow&&s.codeKind&&Date.now()-s.t<10*60*1000){flow=s.flow;codeKind=s.codeKind;lastId=s.lastId;open(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin');codeView(s.h,s.sub);return true}}catch(e){}return false}
 function say(t,kind='err'){msg.className='msg on '+kind;msg.textContent=t}
 function hush(){msg.className='msg';demoBox.className='msg demo'}
 function demo(r){if(r&&r.demo){demoBox.className='msg demo on';demoBox.textContent='Demo mode — code: '+r.demo}}
@@ -388,12 +393,12 @@ function show(v,{keepMsg}={}){view=v;if(!keepMsg)hush();$$('.v').forEach(e=>e.hi
  if(v==='signin')conditional();const f=$(`.v[data-v="${v}"] input:not([hidden]):not([type=checkbox])`);setTimeout(()=>f&&f.focus({preventScroll:true}),60);
  const path={signin:'/signin',signup:'/signup',reset:'/reset'}[v];if(path&&location.pathname!==path)history.replaceState(null,'',path+location.search)}
 function open(v){ov.classList.add('on');ov.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';show(v)}
-function close(){ov.classList.remove('on');ov.setAttribute('aria-hidden','true');document.body.style.overflow='';if(ac){ac.abort();ac=null}if(/^\/(signin|signup|reset)$/.test(location.pathname))history.replaceState(null,'','/')}
+function close(){ov.classList.remove('on');ov.setAttribute('aria-hidden','true');document.body.style.overflow='';if(ac){ac.abort();ac=null}if(view==='code')clearAuthState();if(/^\/(signin|signup|reset)$/.test(location.pathname))history.replaceState(null,'','/')}
 $$('[data-auth]').forEach(a=>a.addEventListener('click',e=>{if(!a.dataset.auth)return;e.preventDefault();if(ME&&a.dataset.auth!=='reset'){location.href='/app';return}open(a.dataset.auth)}));
 $('#ax').onclick=close;ov.addEventListener('mousedown',e=>{if(e.target===ov)close()});addEventListener('keydown',e=>{if(e.key==='Escape'&&ov.classList.contains('on'))close()});
 $$('[data-v-go]').forEach(a=>a.addEventListener('click',()=>show(a.dataset.vGo)));
 $$('[data-eye]').forEach(b=>b.onclick=()=>{const i=document.getElementById(b.dataset.eye);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'});
-const finish=async(r,offer=true)=>{ME=r.user;if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
+const finish=async(r,offer=true)=>{clearAuthState();ME=r.user;if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
 // passkey: explicit button + autofill (conditional UI) on the identifier field
 $('#pkBtn').onclick=async()=>{hush();if(!THT.passkey.supported()){say('This browser does not support passkeys. Use a password or a code.');return}const b=$('#pkBtn');if(ac){ac.abort();ac=null}busy(b,true);
  try{finish(await THT.passkey.signin({id:$('#sid').value.trim()}),false)}catch(e){if(e.message!=='aborted')say(e.message)}finally{busy(b,false)}};
@@ -404,9 +409,9 @@ $('[data-go=otp]').onclick=()=>sendCode('signin');
 function idOk(){const v=$('#sid').value.trim();if(v.length<5){say('Enter your email or mobile number.');$('#sid').focus();return null}lastId=v;return v}
 function goPw(){const id=idOk();if(!id)return;$('#pwFor').textContent=id;$('#pwUser').value=id;show('password')}
 $('#fPw').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter||$('#fPw .btn.b');hush();busy(b,true);
- try{const r=await THT.api('/password/login',{id:lastId,password:$('#spw').value});if(r.step){flow=r.step;codeKind='step';codeView('Two-step verification','Enter the code we sent to '+r.sentTo+'.');demo(r);return}finish(r)}catch(err){say(err.message);$('#spw').select()}finally{busy(b,false)}});
+ try{const r=await THT.api('/password/login',{id:lastId,password:$('#spw').value});if(r.step){flow=r.step;codeKind='step';const h='Two-step verification',sub='Enter the code we sent to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub);demo(r);return}finish(r)}catch(err){say(err.message);$('#spw').select()}finally{busy(b,false)}});
 async function sendCode(purpose,btn){const id=purpose==='reset'?$('#rid').value.trim():idOk();if(!id){if(purpose==='reset')say('Enter your email or mobile number.');return}lastId=id;hush();busy(btn,true);
- try{const r=await THT.api('/otp/start',{id,purpose});flow=r.flow;codeKind=purpose;codeView(r.channel==='email'?'Check your inbox':'Check your messages',`We sent a 6-digit code to ${r.sentTo} if it belongs to an account. It expires in 10 minutes.`);demo(r)}catch(err){say(err.message)}finally{busy(btn,false)}}
+ try{const r=await THT.api('/otp/start',{id,purpose});flow=r.flow;codeKind=purpose;const h=r.channel==='email'?'Check your inbox':'Check your messages',sub=`We sent a 6-digit code to ${r.sentTo} if it belongs to an account. It expires in 10 minutes.`;codeView(h,sub);saveAuthState(h,sub);demo(r)}catch(err){say(err.message)}finally{busy(btn,false)}}
 $('#fReset').addEventListener('submit',e=>{e.preventDefault();sendCode('reset',$('#fReset .btn'))});
 // 6-box OTP input with paste and autofill
 const boxes=$$('#otp input');boxes.forEach((b,i)=>{b.addEventListener('input',()=>{b.value=b.value.replace(/\D/g,'').slice(-1);if(b.value&&i<5)boxes[i+1].focus();if(code().length===6)$('#fCode').requestSubmit()});
@@ -417,8 +422,8 @@ function fill(t){t=t.replace(/\D/g,'').slice(0,6);boxes.forEach((b,i)=>b.value=t
 const code=()=>boxes.map(b=>b.value).join('');
 let rsT=0;function codeView(h,sub){$('#codeH').textContent=h;$('#codeSub').textContent=sub;boxes.forEach(b=>b.value='');show('code',{keepMsg:true});setTimeout(()=>boxes[0].focus(),80);
  let n=45;clearInterval(rsT);const rs=$('#rs');const tick=()=>{rs.innerHTML=n>0?`Resend in ${n}s`:`<a class="lnk" id="rsGo">Resend code</a>`;const g=$('#rsGo');if(g)g.onclick=resend;n--};tick();rsT=setInterval(()=>{tick();if(n<-1)clearInterval(rsT)},1000)}
-async function resend(){hush();try{if(codeKind==='signup'){const r=await THT.api('/signup/start',signupBody());flow=r.flow;demo(r);codeView('Check your inbox','We sent a new code to '+r.sentTo+'.')}else if(codeKind==='step'){$('#fPw').requestSubmit()}else{const r=await THT.api('/otp/start',{id:lastId,purpose:codeKind});flow=r.flow;demo(r);codeView($('#codeH').textContent,'We sent a new code to '+r.sentTo+'.')}}catch(e){say(e.message)}}
-$('#codeBack').onclick=()=>show(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin');
+async function resend(){hush();try{if(codeKind==='signup'){const r=await THT.api('/signup/start',signupBody());flow=r.flow;demo(r);const h='Check your inbox',sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}else if(codeKind==='step'){$('#fPw').requestSubmit()}else{const r=await THT.api('/otp/start',{id:lastId,purpose:codeKind});flow=r.flow;demo(r);const h=$('#codeH').textContent,sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}}catch(e){say(e.message)}}
+$('#codeBack').onclick=()=>{clearAuthState();show(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin')};
 $('#fCode').addEventListener('submit',async e=>{e.preventDefault();const c=code();if(c.length!==6){say('Enter all 6 digits.');return}const b=$('#fCode .btn.b');hush();busy(b,true);
  try{if(codeKind==='signup'){finish(await THT.api('/signup/verify',{flow,code:c}))}
   else if(codeKind==='step'){finish(await THT.api('/step/verify',{flow,code:c}))}
@@ -442,15 +447,15 @@ $('#fUp').addEventListener('submit',async e=>{e.preventDefault();hush();const B=
  if(B.password!==$('#upw2').value){say('The two passwords do not match.');$('#upw2').focus();return}
  if(!B.terms){say('Please accept the terms to continue.');return}
  const b=$('#upGo');busy(b,true);
- try{const r=await THT.api('/signup/start',B);flow=r.flow;codeKind='signup';codeView(r.channel==='email'?'Verify your email':'Verify your mobile',`Enter the 6-digit code we sent to ${r.sentTo}.`);demo(r)}
+ try{const r=await THT.api('/signup/start',B);flow=r.flow;codeKind='signup';const h=r.channel==='email'?'Verify your email':'Verify your mobile',sub=`Enter the 6-digit code we sent to ${r.sentTo}.`;codeView(h,sub);saveAuthState(h,sub);demo(r)}
  catch(err){say(err.message);if(err.status===409){const a=document.createElement('a');a.className='lnk';a.textContent=' Sign in';a.onclick=()=>{$('#sid').value=B.email||B.phone;show('signin')};msg.append(a)}}finally{busy(b,false)}});
 $('#fNew').addEventListener('submit',async e=>{e.preventDefault();hush();const pw=$('#npw').value;const R=THT.pw.rules(pw,{}).filter(r=>!r.ok);if(R.length){say('Password: '+R[0].label.toLowerCase()+'.');return}
  const b=$('#fNew .btn');busy(b,true);try{finish(await THT.api('/password/reset',{flow,password:pw}))}catch(err){say(err.message)}finally{busy(b,false)}});
 // ---------- passkey offer ----------
 $('#mkPk').onclick=async()=>{const b=$('#mkPk');hush();busy(b,true);try{await THT.passkey.register();say('Passkey created. Next time, just tap “Sign in with a passkey”.','ok');setTimeout(()=>location.href=NEXT,900)}catch(e){say(e.message)}finally{busy(b,false)}};
 $('#skipPk').onclick=()=>location.href=NEXT;
-// deep links: /signin, /signup, /reset
-const route={'/signin':'signin','/signup':'signup','/reset':'reset'}[location.pathname];if(route)open(route);
+// deep links: /signin, /signup, /reset — a pending code (survives reload) takes priority over the plain form
+if(!restoreAuthState()){const route={'/signin':'signin','/signup':'signup','/reset':'reset'}[location.pathname];if(route)open(route)}
 })();
 </script>
 </body>
