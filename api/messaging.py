@@ -12,6 +12,7 @@ import json
 import os
 import smtplib
 import ssl
+import urllib.error
 import urllib.parse
 import urllib.request
 from email.message import EmailMessage
@@ -49,7 +50,10 @@ def send_email(to: str, code: str, purpose: str) -> None:
         req = urllib.request.Request("https://api.resend.com/emails", method="POST",
                                      data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": _html(code, purpose)}).encode(),
                                      headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json"})
-        urllib.request.urlopen(req, timeout=10).read()
+        try:
+            urllib.request.urlopen(req, timeout=10).read()
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"Resend {e.code}: {e.read().decode('utf-8', 'ignore')[:300]}") from e
         return
     m = EmailMessage()
     m["From"], m["To"], m["Subject"] = sender, to, subject
