@@ -51,7 +51,8 @@ def send_email(to: str, code: str, purpose: str) -> None:
                                      data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": _html(code, purpose)}).encode(),
                                      headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json"})
         try:
-            urllib.request.urlopen(req, timeout=10).read()
+            body = urllib.request.urlopen(req, timeout=10).read()
+            print(f"[messaging] Resend accepted, from={sender!r} to={to!r}: {body.decode('utf-8', 'ignore')[:200]}", flush=True)
         except urllib.error.HTTPError as e:
             raise RuntimeError(f"Resend {e.code}: {e.read().decode('utf-8', 'ignore')[:300]}") from e
         return
