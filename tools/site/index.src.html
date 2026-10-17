@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TheHealthTracker · Your family's health, in one living view</title>
+<meta name="description" content="Track your family's health in one place: a 3D body that shows your reports, medicines and reminders, nearby pharmacies and labs compared, pregnancy week by week, and one-tap SOS. Sign in with a passkey.">
+<meta name="theme-color" content="#F4F5F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0C12" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/icon.svg"><link rel="apple-touch-icon" href="/brand/png/user-icon-180.png"><link rel="manifest" href="/manifest.webmanifest">
+<meta property="og:title" content="TheHealthTracker"><meta property="og:description" content="Your family's health, in one living view."><meta property="og:image" content="/s/img/app-desktop.webp">
+<link rel="preload" href="/s/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:Geist;src:url(/s/fonts/geist.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Geist Mono";src:url(/s/fonts/geist-mono.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{--bg:#F4F5F8;--bg2:#ECEEF3;--card:#fff;--ink:#0F1220;--ink2:#2B2F3D;--mute:#646B7E;--line:rgba(15,18,32,.08);--line2:rgba(15,18,32,.14);--blue:#2F5BFF;--blue2:#1E46E6;--teal:#0B8A7C;--red:#EF3B4F;--amber:#D98A00;--glass:rgba(255,255,255,.72);--sh:0 1px 2px rgba(15,18,32,.06),0 20px 50px -24px rgba(15,18,32,.28);--r:22px;--font:Geist,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;--ease:cubic-bezier(.2,.8,.2,1)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0A0C12;--bg2:#10131C;--card:#141824;--ink:#EEF1FA;--ink2:#C9CFDE;--mute:#8A92A8;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);--glass:rgba(20,24,36,.72);--sh:0 1px 0 rgba(255,255,255,.04) inset,0 24px 60px -24px rgba(0,0,0,.7);--blue:#5B7CFF}}
+*{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}button,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}
+img{display:block;max-width:100%;height:auto}
+.wrap{width:min(1200px,100% - 40px);margin:0 auto}
+.mono{font-family:var(--mono)}
+.eyebrow{font:600 11.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+h1,h2,h3{letter-spacing:-.035em;line-height:1.02;margin:0;font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:48px;padding:0 22px;border-radius:99px;font-weight:600;font-size:15px;white-space:nowrap;transition:transform .2s var(--ease),box-shadow .2s,background .2s}
+.btn.p{background:var(--ink);color:var(--bg)}.btn.p:hover{transform:translateY(-1px);box-shadow:0 12px 26px -12px var(--ink)}
+.btn.b{background:var(--blue);color:#fff}.btn.b:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:0 14px 28px -12px var(--blue)}
+.btn.s{background:var(--card);border:1px solid var(--line2)}.btn.s:hover{border-color:var(--ink)}
+.btn.sm{height:40px;padding:0 16px;font-size:14px}
+.btn:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.btn .arr{transition:transform .2s}.btn:hover .arr{transform:translateX(3px)}
+/* ---------- nav ---------- */
+header.nav{position:fixed;inset:12px 0 auto;z-index:40;pointer-events:none}
+.navin{pointer-events:auto;display:flex;align-items:center;gap:8px;height:60px;padding:0 8px 0 18px;border-radius:99px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--line);box-shadow:var(--sh)}
+.navin .logo svg{height:28px;width:auto;display:block}
+.navin nav{display:flex;gap:2px;margin:0 auto}.navin nav a{padding:9px 14px;border-radius:99px;font-size:14px;color:var(--ink2);font-weight:500}.navin nav a:hover{background:var(--line)}
+.navin .acts{display:flex;gap:6px;align-items:center}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}.who i{width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-style:normal;font-size:13px}
+@media (max-width:900px){.navin nav{display:none}.navin .acts{margin-left:auto}}
+@media (max-width:520px){.navin .logo svg{height:22px}.navin .hide-s{display:none}.navin .btn.sm{height:36px;padding:0 12px;font-size:13px}.navin{padding:0 6px 0 14px}}
+/* ---------- hero ---------- */
+.hero{position:relative;padding:150px 0 40px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(color-mix(in srgb,var(--ink) 14%,transparent) 1px,transparent 1.3px);background-size:26px 26px;-webkit-mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);opacity:.5;pointer-events:none}
+.glow{position:absolute;width:760px;height:760px;border-radius:50%;left:50%;top:-260px;transform:translateX(-50%);background:radial-gradient(circle,color-mix(in srgb,var(--blue) 26%,transparent),transparent 62%);filter:blur(20px);pointer-events:none;opacity:.8}
+.hero .wrap{position:relative}
+.htop{text-align:center;max-width:920px;margin:0 auto}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:13px;color:var(--ink2);box-shadow:var(--sh)}
+.pill b{background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);font:600 11px var(--mono);letter-spacing:.06em;padding:4px 9px;border-radius:99px}
+.hero h1{font-size:clamp(44px,8.2vw,104px);margin:22px 0 18px;font-weight:550;letter-spacing:-.055em}
+.hero h1 em{font-style:normal;background:linear-gradient(100deg,var(--blue),#7A5CFF 55%,var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:clamp(17px,2vw,20px);color:var(--mute);max-width:640px;margin:0 auto 30px}
+.ctas{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.trust{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-top:24px;font-size:13px;color:var(--mute)}.trust span{display:flex;gap:7px;align-items:center}.trust svg{width:16px;height:16px;color:var(--teal)}
+.stage{position:relative;margin:64px auto 0;max-width:1120px;perspective:1600px}
+.frame{border-radius:20px;overflow:hidden;background:var(--card);border:1px solid var(--line2);box-shadow:0 40px 120px -40px rgba(20,30,80,.45),0 0 0 8px color-mix(in srgb,var(--card) 50%,transparent);transform:rotateX(9deg) translateY(10px);transform-origin:50% 0;transition:transform 1.2s var(--ease)}
+.frame.in{transform:none}
+.bar{display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--bg2)}.bar i{width:10px;height:10px;border-radius:50%;background:var(--line2)}.bar span{margin:0 auto;font:500 11.5px var(--mono);color:var(--mute);background:var(--card);padding:3px 14px;border-radius:99px;border:1px solid var(--line)}
+.phone{position:absolute;right:-28px;bottom:-56px;width:24%;min-width:170px;border-radius:34px;padding:7px;background:#111;box-shadow:0 30px 80px -24px rgba(0,0,0,.6);transform:rotate(3deg)}.phone img{border-radius:28px}
+.chip{position:absolute;display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:16px;background:var(--glass);backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5);border:1px solid var(--line);box-shadow:var(--sh);font-size:13px;animation:float 7s ease-in-out infinite}
+.chip b{display:block;font-size:14px}.chip small{color:var(--mute);display:block}.chip .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:17px}
+.c1{left:-34px;top:18%}.c2{left:-20px;bottom:14%;animation-delay:-2.5s}.c3{right:20%;top:-26px;animation-delay:-4.5s}
+@keyframes float{50%{transform:translateY(-10px)}}
+.ecg{width:120px;height:30px}.ecg path{fill:none;stroke:var(--blue);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:220;animation:ecg 2.4s linear infinite}
+@keyframes ecg{from{stroke-dashoffset:220}to{stroke-dashoffset:-220}}
+@media (max-width:900px){.chip{display:none}.phone{right:-6px;bottom:-40px;width:30%}}
+@media (max-width:560px){.hero{padding-top:118px}.phone{width:38%;bottom:-30px}.frame{transform:none}}
+/* ---------- bands ---------- */
+section{position:relative}
+.band{padding:120px 0}
+.shead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:end;margin-bottom:46px}
+.shead h2{font-size:clamp(36px,5.2vw,64px);font-weight:550;letter-spacing:-.05em}.shead p{color:var(--mute);font-size:17px;margin:0;max-width:520px;justify-self:end}
+@media (max-width:820px){.shead{grid-template-columns:1fr;gap:16px}.shead p{justify-self:start}.band{padding:84px 0}}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:110px}
+.facts div{padding:26px 22px;border-left:1px solid var(--line)}.facts div:first-child{border-left:0}.facts b{display:block;font-size:clamp(28px,3.4vw,42px);letter-spacing:-.04em;font-weight:550}.facts span{color:var(--mute);font-size:14px}
+@media (max-width:720px){.facts{grid-template-columns:1fr 1fr}.facts div:nth-child(3){border-left:0}.facts div:nth-child(n+3){border-top:1px solid var(--line)}}
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.tile{position:relative;overflow:hidden;border-radius:var(--r);background:var(--card);border:1px solid var(--line);box-shadow:var(--sh);padding:26px;display:flex;flex-direction:column;min-height:300px;transition:transform .35s var(--ease),box-shadow .35s}
+.tile:hover{transform:translateY(-3px)}
+.tile h3{font-size:24px;letter-spacing:-.03em;margin:8px 0 8px}.tile p{color:var(--mute);margin:0;font-size:15px;max-width:440px}
+.tile .tag{font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.tile .shot{margin-top:auto;padding-top:20px}.tile .shot img{border-radius:14px;border:1px solid var(--line);width:100%;height:auto}
+.t-body{grid-column:span 5;grid-row:span 2;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--blue) 6%,var(--card)))}
+.t-body .shot img{border:0;max-height:560px;object-fit:cover;object-position:top;margin:0 auto;border-radius:16px}
+.t-heart{grid-column:span 7;background:#140A10;color:#FDEBEF}.t-heart p{color:#d8b6bf}.t-heart .tag{color:#f7a9bc}
+.t-heart .split{display:grid;grid-template-columns:1fr 46%;gap:18px;height:100%}.t-heart .split img{border-radius:14px;height:100%;max-height:330px;width:100%;object-fit:cover;object-position:center 30%}
+.t-ai{grid-column:span 7}.t-ai .split{display:grid;grid-template-columns:1fr 50%;gap:18px;height:100%}.t-ai .split img{border-radius:14px;border:1px solid var(--line);max-height:300px;width:100%;object-fit:cover;object-position:top}
+.t-med{grid-column:span 6}.t-lab{grid-column:span 6}
+.t-med .shot img,.t-lab .shot img{max-height:260px;object-fit:cover;object-position:top}
+.t-preg{grid-column:span 8;background:linear-gradient(135deg,#1A0D16,#2A1020);color:#FFE9F1}.t-preg p{color:#e2bccb}.t-preg .tag{color:#ff9cc0}
+.t-preg .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:auto;padding-top:20px}.t-preg .duo img{border-radius:14px;height:260px;width:100%;object-fit:cover;object-position:center 35%}
+.t-sos{grid-column:span 4;background:linear-gradient(160deg,#FF4E62,#D91F3A);color:#fff;border:0}.t-sos p{color:rgba(255,255,255,.85)}.t-sos .tag{color:rgba(255,255,255,.75)}
+.t-sos .sosb{margin-top:auto;display:flex;gap:10px;padding-top:20px}.t-sos .sosb span{flex:1;text-align:center;padding:14px 0;border-radius:16px;background:rgba(255,255,255,.18);font-weight:700;font-size:22px;letter-spacing:-.02em}
+.t-sos ul{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:14px}.t-sos li::before{content:"✓  ";opacity:.8}
+.t-fam{grid-column:span 12;min-height:auto;display:grid;grid-template-columns:1fr auto;align-items:center;gap:20px}
+.avs{display:flex}.avs i{width:52px;height:52px;border-radius:50%;margin-left:-12px;border:3px solid var(--card);display:grid;place-items:center;font:600 15px var(--font);font-style:normal;color:#fff}
+@media (max-width:980px){.t-body,.t-heart,.t-ai,.t-med,.t-lab,.t-preg,.t-sos{grid-column:span 12;grid-row:auto}.t-heart .split,.t-ai .split{grid-template-columns:1fr}.t-fam{grid-template-columns:1fr}}
+@media (max-width:560px){.t-preg .duo img{height:190px}.tile{padding:20px}}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s}
+.step{padding:28px;border-radius:var(--r);border:1px solid var(--line);background:var(--card)}.step::before{counter-increment:s;content:"0" counter(s);font:600 13px var(--mono);color:var(--blue)}.step h3{font-size:22px;margin:14px 0 8px}.step p{margin:0;color:var(--mute);font-size:15px}
+@media (max-width:820px){.steps{grid-template-columns:1fr}}
+/* security */
+.sec{background:var(--ink);color:var(--bg);border-radius:36px;padding:80px 56px;overflow:hidden;position:relative}
+.sec::after{content:"";position:absolute;right:-120px;top:-120px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--blue) 45%,transparent),transparent 65%);opacity:.55}
+.sec h2{font-size:clamp(34px,4.8vw,58px);font-weight:550;letter-spacing:-.05em;max-width:760px;position:relative;z-index:1}
+.sec .lead{color:color-mix(in srgb,var(--bg) 70%,transparent);max-width:620px;font-size:17px;margin:16px 0 42px;position:relative;z-index:1}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:color-mix(in srgb,var(--bg) 12%,transparent);border-radius:20px;overflow:hidden;position:relative;z-index:1}
+.sgrid div{background:var(--ink);padding:26px}.sgrid b{display:block;font-size:17px;margin:10px 0 6px}.sgrid p{margin:0;font-size:14px;color:color-mix(in srgb,var(--bg) 62%,transparent)}.sgrid svg{width:26px;height:26px;color:#8FA6FF}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .sec{background:#EEF1FA;color:#0F1220}:root:not([data-theme=light]) .sec .lead,:root:not([data-theme=light]) .sgrid p{color:#4b5266}:root:not([data-theme=light]) .sgrid div{background:#EEF1FA}:root:not([data-theme=light]) .sgrid{background:rgba(15,18,32,.1)}:root:not([data-theme=light]) .sgrid svg{color:#2F5BFF}}
+@media (max-width:820px){.sec{padding:56px 24px;border-radius:26px}.sgrid{grid-template-columns:1fr}}
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.plan{padding:30px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);box-shadow:var(--sh);display:flex;flex-direction:column}
+.plan.hot{border:1.5px solid var(--blue);position:relative}.plan.hot::before{content:"Most families";position:absolute;top:-12px;left:28px;background:var(--blue);color:#fff;font:600 11px var(--mono);letter-spacing:.06em;padding:5px 10px;border-radius:99px}
+.plan h3{font-size:20px}.plan .price{font-size:52px;letter-spacing:-.05em;font-weight:550;margin:14px 0 2px}.plan .price span{font-size:15px;color:var(--mute);letter-spacing:0;font-weight:500}.plan .yr{color:var(--mute);font-size:13px;min-height:20px}
+.plan ul{list-style:none;margin:22px 0 26px;padding:0;display:grid;gap:10px;font-size:14.5px}.plan li{display:flex;gap:10px}.plan li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:color-mix(in srgb,var(--teal) 16%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230B8A7C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12l4 4 8-8'/%3E%3C/svg%3E") center/12px no-repeat}
+.plan .btn{margin-top:auto}
+@media (max-width:900px){.plans{grid-template-columns:1fr}}
+/* faq */
+.faq{max-width:860px;margin:0 auto}
+.faq details{border-bottom:1px solid var(--line);padding:4px 0}.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;padding:20px 0;font-size:18px;font-weight:550;letter-spacing:-.01em}.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-weight:400;font-size:24px;line-height:1;color:var(--mute);transition:transform .25s}.faq details[open] summary::after{transform:rotate(45deg)}.faq p{margin:0 0 20px;color:var(--mute);max-width:720px}
+/* final cta + footer */
+.final{text-align:center;padding:120px 0 90px}.final h2{font-size:clamp(40px,6.5vw,84px);font-weight:550;letter-spacing:-.055em;margin-bottom:24px}
+footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--mute);font-size:13.5px}
+.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px}.fgrid b{display:block;color:var(--ink);margin-bottom:10px;font-size:13px}.fgrid a{display:block;padding:3px 0}.fgrid a:hover{color:var(--ink)}
+.fine{margin-top:34px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.6}
+@media (max-width:720px){.fgrid{grid-template-columns:1fr 1fr}}
+/* reveal */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .9s var(--ease),transform .9s var(--ease)}.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.frame{transform:none}}
+/* ================= auth sheet ================= */
+.ov{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(8,10,20,.42);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .25s}
+.ov.on{opacity:1;pointer-events:auto}
+.sheet{width:min(460px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--card);border-radius:28px;border:1px solid var(--line);box-shadow:0 40px 120px -30px rgba(0,0,0,.55);padding:30px 30px 26px;transform:translateY(16px) scale(.98);transition:transform .35s var(--ease);position:relative}
+.ov.on .sheet{transform:none}
+.sheet .x{position:absolute;right:14px;top:14px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--mute)}.sheet .x:hover{background:var(--line)}
+.sheet .mk{width:44px;height:44px;margin-bottom:18px}
+.sheet h2{font-size:28px;letter-spacing:-.04em;margin:0 0 6px}.sheet .sub{color:var(--mute);margin:0 0 22px;font-size:14.5px}
+.fld{display:grid;gap:6px;margin-bottom:14px}.fld label{font-size:13px;font-weight:600;color:var(--ink2);display:flex;justify-content:space-between}
+.fld label a,.lnk{color:var(--blue);font-weight:600;cursor:pointer}
+.inp{position:relative}.inp input{width:100%;height:50px;border-radius:14px;border:1.5px solid var(--line2);background:var(--bg);padding:0 16px;font-size:16px;outline:none;transition:border-color .2s,box-shadow .2s}
+.inp input:focus{border-color:var(--blue);box-shadow:0 0 0 4px color-mix(in srgb,var(--blue) 16%,transparent);background:var(--card)}
+.inp input[aria-invalid=true]{border-color:var(--red)}
+.inp .eye{position:absolute;right:6px;top:7px;height:36px;padding:0 10px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--mute)}.inp .eye:hover{background:var(--line)}
+.inp.pfx input{padding-left:58px}.inp.pfx::before{content:"+91";position:absolute;left:16px;top:14px;color:var(--mute);font-weight:500}
+.full{width:100%}
+.or{display:flex;align-items:center;gap:12px;color:var(--mute);font-size:12px;margin:18px 0;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.pk{height:56px;border-radius:16px;font-size:16px}.pk svg{width:22px;height:22px}
+.alt{display:grid;grid-template-columns:1fr 1fr;gap:8px}.alt .btn{height:46px;border-radius:14px;font-size:14px}
+.msg{display:none;margin:0 0 14px;padding:11px 14px;border-radius:12px;font-size:14px}.msg.on{display:block}.msg.err{background:color-mix(in srgb,var(--red) 10%,transparent);color:var(--red)}.msg.ok{background:color-mix(in srgb,var(--teal) 12%,transparent);color:var(--teal)}.msg.demo{background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber);font-family:var(--mono);font-size:13px}
+.foot{margin:18px 0 0;text-align:center;font-size:14px;color:var(--mute)}
+.meter{display:flex;gap:5px;margin:2px 0 6px}.meter i{flex:1;height:5px;border-radius:9px;background:var(--line2);transition:background .3s}
+.meter[data-s="0"] i:nth-child(-n+1){background:var(--red)}.meter[data-s="1"] i:nth-child(-n+2){background:#F2672E}.meter[data-s="2"] i:nth-child(-n+3){background:var(--amber)}.meter[data-s="3"] i:nth-child(-n+4){background:var(--teal)}.meter[data-s="4"] i{background:var(--teal)}
+.mlab{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mute);margin-bottom:8px}.mlab b{color:var(--ink)}
+.rules{list-style:none;padding:0;margin:0 0 14px;display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;font-size:12.5px;color:var(--mute)}
+.rules li{display:flex;gap:7px;align-items:flex-start;line-height:1.35}.rules li::before{content:"";flex:none;width:14px;height:14px;margin-top:1px;border-radius:50%;border:1.5px solid var(--line2);transition:all .2s}
+.rules li.ok{color:var(--ink)}.rules li.ok::before{background:var(--teal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12l4 4 8-8'/%3E%3C/svg%3E") center/9px no-repeat;border-color:var(--teal)}
+@media (max-width:420px){.rules{grid-template-columns:1fr}}
+.gen{font-size:12.5px}
+.ck{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--ink2);margin:6px 0 16px}.ck input{width:18px;height:18px;margin-top:2px;accent-color:var(--blue);flex:none}
+.otp{display:flex;gap:8px;justify-content:space-between;margin:6px 0 16px}.otp input{width:100%;max-width:54px;height:62px;text-align:center;font:600 24px var(--mono);border-radius:14px;border:1.5px solid var(--line2);background:var(--bg);outline:none}.otp input:focus{border-color:var(--blue);box-shadow:0 0 0 4px color-mix(in srgb,var(--blue) 16%,transparent)}
+.resend{display:flex;justify-content:space-between;font-size:13.5px;color:var(--mute)}
+.done{text-align:center}.done .big{width:76px;height:76px;margin:6px auto 18px;border-radius:24px;display:grid;place-items:center;background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue)}.done .big svg{width:38px;height:38px}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:sp .8s linear infinite}.btn.s .spin{border-color:var(--line2);border-top-color:var(--ink)}@keyframes sp{to{transform:rotate(360deg)}}
+.v[hidden]{display:none}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap navin">
+  <a class="logo" href="/" aria-label="TheHealthTracker home">{{LOGO}}</a>
+  <nav aria-label="Main"><a href="#features">Features</a><a href="#how">How it works</a><a href="#security">Security</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></nav>
+  <div class="acts" id="acts"><a class="btn sm s" href="/signin" data-auth="signin">Sign in</a><a class="btn sm p" href="/signup" data-auth="signup">Get started</a></div>
+</div></header>
+
+<main>
+<section class="hero">
+  <div class="glow"></div>
+  <div class="wrap">
+    <div class="htop">
+      <span class="pill rv"><b>NEW</b> AI reads your lab reports and prescriptions</span>
+      <h1 class="rv">Your family's health,<br><em>in one living view.</em></h1>
+      <p class="lead rv">A 3D body that shows your reports, medicines and reminders. Nearby pharmacies and labs compared on price. Pregnancy week by week. And one-tap SOS when it matters.</p>
+      <div class="ctas rv"><a class="btn b" href="/signup" data-auth="signup">Create your free account <span class="arr">→</span></a><a class="btn s" href="/app">Try the demo</a></div>
+      <div class="trust rv">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Sign in with a passkey</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Health records stay on your device</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>English · हिंदी · తెలుగు</span>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="frame" id="frame"><div class="bar"><i></i><i></i><i></i><span>thehealthtracker.com/app</span></div>
+        <img src="/s/img/app-desktop.webp" width="1600" height="1000" alt="TheHealthTracker home: a 3D anatomy body with health findings pinned on it, a heart-rate card with a live ECG, safety setup and today's medicines" fetchpriority="high"></div>
+      <div class="phone"><img src="/s/img/app-phone.webp" width="640" height="1385" alt="The app on a phone in dark mode with the bottom tab bar and SOS button" loading="lazy"></div>
+      <div class="chip c1"><span class="ic" style="background:color-mix(in srgb,var(--red) 14%,transparent)">❤️</span><div><b>72 bpm</b><svg class="ecg" viewBox="0 0 120 30"><path d="M0 18h26l5-9 6 18 5-14 4 5h22l5-9 6 18 5-14 4 5h32"/></svg></div></div>
+      <div class="chip c2"><span class="ic" style="background:color-mix(in srgb,var(--blue) 14%,transparent)">✦</span><div><b>Lipid report read</b><small>6 values explained · 3 questions for your doctor</small></div></div>
+      <div class="chip c3"><span class="ic" style="background:color-mix(in srgb,var(--teal) 14%,transparent)">🧪</span><div><b>HbA1c + Lipid at home</b><small>Nearest lab ₹1,120 · tomorrow 7 AM</small></div></div>
+    </div>
+    <div class="facts rv">
+      <div><b>₹0</b><span>to start, for the whole family</span></div>
+      <div><b>40+</b><span>lab tests priced at nearby labs</span></div>
+      <div><b>25</b><span>first-aid videos from St John Ambulance & AHA</span></div>
+      <div><b>3</b><span>languages: English, Hindi, Telugu</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="features"><div class="wrap">
+  <div class="shead rv"><div><span class="eyebrow">What it does</span><h2 style="margin-top:14px">Everything your family's health needs. Nothing it doesn't.</h2></div><p>Built around how Indian families actually manage health: one phone, several people, paper reports, pharmacy runs and the occasional emergency.</p></div>
+  <div class="bento">
+    <article class="tile t-body rv"><span class="tag">3D body</span><h3>See your health, not just numbers</h3><p>Findings from your reports are pinned on a detailed 3D body: muscles, organs, bones and vessels. Male, female and pregnancy models.</p><div class="shot"><img src="/s/img/body.webp" width="900" height="1367" alt="3D muscular body with health findings pinned" loading="lazy"></div></article>
+    <article class="tile t-heart rv"><div class="split"><div style="display:flex;flex-direction:column"><span class="tag">Heart Lab</span><h3>Watch one heartbeat, slowly</h3><p>Chambers squeeze, valves open and close, and the electrical signal travels. Slow motion, cut-away views and the Wiggers diagram explain every phase.</p></div><img src="/s/img/heart.webp" width="900" height="1367" alt="Anatomical 3D heart with labels and phase controls" loading="lazy"></div></article>
+    <article class="tile t-ai rv"><div class="split"><div style="display:flex;flex-direction:column"><span class="tag">AI analysis</span><h3>Reports and prescriptions, in plain words</h3><p>Upload a PDF or photo. Every value is explained and flagged, follow-up tests are suggested, and you get the right questions for your doctor. A prescription becomes a medicine list and an order in one tap.</p></div><img src="/s/img/ai.webp" width="900" height="1389" alt="AI analysis of a lipid profile with flagged values" loading="lazy"></div></article>
+    <article class="tile t-med rv"><span class="tag">Medicines</span><h3>Compare pharmacies before you order</h3><p>Nearby stores side by side on price, discount, delivery time and rating, with prescriptions checked by a pharmacist. Track the order and rate the delivery.</p><div class="shot"><img src="/s/img/cart.webp" width="900" height="1389" alt="Basket comparing nearby pharmacies by price and delivery" loading="lazy"></div></article>
+    <article class="tile t-lab rv"><span class="tag">Labs</span><h3>Know the price before the needle</h3><p>Estimates for each test at labs near you, fasting needs, report time, NABL accreditation and home-collection slots.</p><div class="shot"><img src="/s/img/labs.webp" width="900" height="1389" alt="Nearby labs with price estimates and home collection" loading="lazy"></div></article>
+    <article class="tile t-preg rv"><span class="tag">Pregnancy</span><h3>Week 3 to delivery, in 3D</h3><p>A baby built from real ultrasound measurements for each week, and a mother whose body changes with it. Food, water, kicks, contractions and danger signs — opt-in only, and never guessing the baby's sex.</p><div class="duo"><img src="/s/img/baby.webp" width="900" height="1367" alt="3D baby at week 30 inside the amniotic sac" loading="lazy"><img src="/s/img/mother.webp" width="900" height="1367" alt="3D mother at week 28 with the uterus and baby" loading="lazy"></div></article>
+    <article class="tile t-sos rv"><span class="tag">Safety</span><h3>One tap when it matters</h3><p>Call first, then alert family with your location and Medical ID.</p><ul><li>Nearest hospitals with directions</li><li>Offline first-aid steps and CPR beat</li><li>Lock-screen Medical ID</li></ul><div class="sosb"><span>112</span><span>108</span></div></article>
+    <article class="tile t-fam rv"><div><span class="tag">Family</span><h3>One account, the whole household</h3><p style="max-width:640px">Profiles for parents, children and grandparents, with consent switches for what each person shares. Plans cover up to 12 members.</p></div><div class="avs"><i style="background:#2F5BFF">PR</i><i style="background:#E0457F">AN</i><i style="background:#D98A00">RA</i><i style="background:#0B8A7C">LA</i><i style="background:#7A5CFF">AR</i></div></article>
+  </div>
+</div></section>
+
+<section class="band" id="how" style="padding-top:20px"><div class="wrap">
+  <div class="shead rv"><div><span class="eyebrow">How it works</span><h2 style="margin-top:14px">Set up in two minutes.</h2></div><p>No hospital login, no paperwork. Start with yourself and add the family when you're ready.</p></div>
+  <div class="steps">
+    <div class="step rv"><h3>Create your account</h3><p>Email or mobile, a strong password, a one-time code — then a passkey so you never type the password again.</p></div>
+    <div class="step rv"><h3>Add your family and reports</h3><p>Profiles, medicines and the reports you already have. Photos and PDFs stay in your browser, not on our servers.</p></div>
+    <div class="step rv"><h3>Let it work for you</h3><p>Dose reminders, results explained, prices compared, seasonal health alerts for your city and SOS one tap away.</p></div>
+  </div>
+</div></section>
+
+<section class="band" id="security" style="padding-top:20px"><div class="wrap"><div class="sec rv">
+  <span class="eyebrow" style="color:#8FA6FF">Security & privacy</span>
+  <h2 style="margin-top:14px">Health data deserves better than a password.</h2>
+  <p class="lead">Sign in with a passkey — your fingerprint, face or screen lock — so there's nothing to steal or phish. Passwords, when you use them, must meet strict rules and are checked against known breaches.</p>
+  <div class="sgrid">
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 11c0 3-1 6-3 8M8 7.5A5 5 0 0 1 17 11c0 2.5-.4 4.6-1.2 6.5M5 11a7 7 0 0 1 2-5M12 15c0 1.5-.3 3-1 4.5M19.5 15c.3-1.3.5-2.6.5-4a8 8 0 0 0-14-5.3"/></svg><b>Passkeys (FIDO2)</b><p>Phishing-resistant sign-in that works with your phone's fingerprint, face or PIN and syncs across your devices.</p></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h8"/></svg><b>One-time codes</b><p>Six-digit codes by email or SMS for new devices, recovery and optional two-step sign-in. Ten-minute expiry, five tries.</p></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>Strong passwords only</b><p>12+ characters with every character type, no personal details, no common or breached passwords. Stored with scrypt.</p></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg><b>Records stay with you</b><p>Reports, results and Medical ID live on your device. The server sees only what a feature needs, when you use it.</p></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><b>Consent you can see</b><p>Every share — with a doctor, a pharmacy or the AI — is switched on by you and written to a history you can review.</p></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg><b>Locked down</b><p>Lockout after repeated failures, rate limits on codes, HttpOnly sessions you can end from any device.</p></div>
+  </div>
+</div></div></section>
+
+<section class="band" id="pricing" style="padding-top:20px"><div class="wrap">
+  <div class="shead rv"><div><span class="eyebrow">Pricing</span><h2 style="margin-top:14px">Free for every family. Upgrade for AI.</h2></div><p>Prices in Indian rupees, including GST. Cancel any time; your records stay on your device either way.</p></div>
+  <div class="plans" id="plans">
+    <div class="plan rv"><h3>Free</h3><div class="price">₹0</div><div class="yr">Forever</div><ul><li>Family profiles and records on your device</li><li>3D body, Heart Lab and Pregnancy</li><li>SOS, first aid and Medical ID</li><li>Medicine and lab price comparison</li><li>AI report analysis: 3 a month</li></ul><a class="btn s" href="/signup" data-auth="signup">Start free</a></div>
+    <div class="plan hot rv"><h3>Family</h3><div class="price">₹39<span>/month</span></div><div class="yr">or ₹390 a year — 2 months free</div><ul><li>Everything in Free</li><li>AI report and prescription analysis: 30 a month</li><li>Order tracking and delivery ratings</li><li>Home sample collection booking</li><li>Seasonal alerts for your city</li><li>Up to 8 family members</li></ul><a class="btn b" href="/signup" data-auth="signup">Choose Family</a></div>
+    <div class="plan rv"><h3>Plus</h3><div class="price">₹99<span>/month</span></div><div class="yr">or ₹990 a year — 2 months free</div><ul><li>Everything in Family</li><li>Unlimited AI analysis</li><li>Priority partner pharmacies and labs</li><li>Shareable doctor summaries</li><li>Up to 12 family members</li><li>Phone support</li></ul><a class="btn s" href="/signup" data-auth="signup">Choose Plus</a></div>
+  </div>
+</div></section>
+
+<section class="band" id="faq" style="padding-top:20px"><div class="wrap">
+  <div class="shead rv" style="grid-template-columns:1fr"><div><span class="eyebrow">Questions</span><h2 style="margin-top:14px">Good to know</h2></div></div>
+  <div class="faq rv">
+    <details><summary>What is a passkey, and why should I use one?</summary><p>A passkey replaces your password with the fingerprint, face or screen lock you already use on your phone or computer. It can't be guessed, reused or phished, and it syncs through iCloud Keychain or Google Password Manager. You can still keep a password and one-time codes as backups.</p></details>
+    <details><summary>Where are my health records stored?</summary><p>Reports, photos, results and your Medical ID are stored in your browser on your device. Our server stores your account, orders, plan and ratings. When you choose to analyse a document with AI, it is sent for that one analysis and not kept.</p></details>
+    <details><summary>Does TheHealthTracker diagnose illness?</summary><p>No. It explains results in plain language and suggests questions and checks to discuss with your doctor. It is not a medical device and does not replace professional care. In an emergency call 112 or 108.</p></details>
+    <details><summary>What makes a password acceptable here?</summary><p>At least 12 characters with upper- and lower-case letters, a number and a symbol; no three identical characters in a row; no runs like 1234 or qwer; nothing from your name, email or phone; and nothing that appears in common-password lists or known data breaches. The form checks each rule as you type, or can suggest a strong one.</p></details>
+    <details><summary>Can my whole family use one account?</summary><p>Yes. One account holds profiles for everyone you care for, each with their own records, medicines and consent settings. The Free plan covers 5 people, Family 8 and Plus 12.</p></details>
+    <details><summary>Which pharmacies and labs are listed?</summary><p>Partners are verified by our team before they appear, with their licence or NABL number. Prices come from their own price lists and are confirmed when you order or book.</p></details>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap rv">
+  <h2>Start with your own health.<br>Bring the family when you're ready.</h2>
+  <div class="ctas"><a class="btn b" href="/signup" data-auth="signup">Create your free account <span class="arr">→</span></a><a class="btn s" href="/app">Explore the demo</a></div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <div class="fgrid">
+    <div><a href="/" style="display:inline-block;margin-bottom:12px">{{LOGO}}</a><p style="max-width:340px;margin:0">Family health companion with a living 3D body. Made in Hyderabad, India.</p></div>
+    <div><b>Product</b><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="/app">Demo</a><a href="#security">Security</a></div>
+    <div><b>Account</b><a href="/signin" data-auth="signin">Sign in</a><a href="/signup" data-auth="signup">Create account</a><a href="/reset" data-auth="reset">Reset password</a></div>
+    <div><b>Emergency</b><a href="tel:112">Call 112</a><a href="tel:108">Ambulance 108</a></div>
+  </div>
+  <p class="fine">TheHealthTracker™ gives general health information and is not a medical device; it does not diagnose or treat any condition. Always seek the advice of a qualified doctor. In an emergency call 112 or 108. © <span id="yr">2026</span> TheHealthTracker. All rights reserved.</p>
+</div></footer>
+
+<!-- ================= auth ================= -->
+<div class="ov" id="ov" aria-hidden="true">
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ah">
+  <button class="x" id="ax" aria-label="Close">✕</button>
+  <div class="mk">{{MARK}}</div>
+  <div class="msg" id="am" role="alert"></div>
+  <div class="msg demo" id="ad"></div>
+
+  <!-- sign in -->
+  <div class="v" data-v="signin">
+    <h2 id="ah">Welcome back</h2><p class="sub">Sign in to your family's health.</p>
+    <button class="btn p full pk" id="pkBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 11c0 3-1 6-3 8M8 7.5A5 5 0 0 1 17 11c0 2.5-.4 4.6-1.2 6.5M5 11a7 7 0 0 1 2-5M12 15c0 1.5-.3 3-1 4.5M19.5 15c.3-1.3.5-2.6.5-4a8 8 0 0 0-14-5.3"/></svg>Sign in with a passkey</button>
+    <div class="or">or</div>
+    <form id="fId" novalidate>
+      <div class="fld"><label for="sid">Email or mobile number</label><div class="inp"><input id="sid" name="username" autocomplete="username webauthn" inputmode="email" placeholder="you@example.com or 98765 43210" required></div></div>
+      <div class="alt"><button class="btn s" type="submit" data-go="password">Use password</button><button class="btn s" type="button" data-go="otp">Get a code</button></div>
+    </form>
+    <p class="foot">New here? <a class="lnk" data-v-go="signup">Create an account</a></p>
+  </div>
+
+  <!-- password -->
+  <form class="v" data-v="password" id="fPw" novalidate hidden>
+    <h2>Enter your password</h2><p class="sub" id="pwFor"></p>
+    <input type="text" name="username" autocomplete="username" id="pwUser" hidden>
+    <div class="fld"><label for="spw">Password <a data-v-go="reset">Forgot?</a></label><div class="inp"><input id="spw" type="password" autocomplete="current-password" required><button class="eye" type="button" data-eye="spw">Show</button></div></div>
+    <button class="btn b full" type="submit">Sign in</button>
+    <p class="foot"><a class="lnk" data-v-go="signin">← Other ways to sign in</a></p>
+  </form>
+
+  <!-- code -->
+  <form class="v" data-v="code" id="fCode" novalidate hidden>
+    <h2 id="codeH">Check your inbox</h2><p class="sub" id="codeSub"></p>
+    <div class="otp" id="otp">${'<input inputmode="numeric" maxlength="1" aria-label="Digit">'.repeat(6)}</div>
+    <input type="text" id="otpAuto" autocomplete="one-time-code" inputmode="numeric" style="position:absolute;opacity:0;pointer-events:none;height:0;width:0" tabindex="-1">
+    <button class="btn b full" type="submit">Verify</button>
+    <div class="resend" style="margin-top:14px"><a class="lnk" id="codeBack">← Back</a><span id="rs"></span></div>
+  </form>
+
+  <!-- sign up -->
+  <form class="v" data-v="signup" id="fUp" novalidate hidden>
+    <h2>Create your account</h2><p class="sub">Free for your whole family. Takes a minute.</p>
+    <div class="fld"><label for="un">Full name</label><div class="inp"><input id="un" autocomplete="name" required maxlength="80"></div></div>
+    <div class="fld"><label for="ue">Email</label><div class="inp"><input id="ue" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div></div>
+    <div class="fld"><label for="up">Mobile <span style="font-weight:400;color:var(--mute)">optional</span></label><div class="inp pfx"><input id="up" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="98765 43210" maxlength="14"></div></div>
+    <div class="fld"><label for="upw">Password <a class="gen" id="genPw">Suggest a strong one</a></label><div class="inp"><input id="upw" type="password" autocomplete="new-password" required maxlength="128" aria-describedby="rules"><button class="eye" type="button" data-eye="upw">Show</button></div></div>
+    <div class="meter" id="meter" data-s=""><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="mlab"><span id="mlab">Password strength</span><b id="mbits"></b></div>
+    <ul class="rules" id="rules"></ul>
+    <div class="fld"><label for="upw2">Confirm password</label><div class="inp"><input id="upw2" type="password" autocomplete="new-password" required maxlength="128"></div></div>
+    <label class="ck"><input type="checkbox" id="ut"> <span>I agree to the Terms and Privacy Policy, and I understand TheHealthTracker gives information, not a diagnosis.</span></label>
+    <button class="btn b full" type="submit" id="upGo">Create account</button>
+    <p class="foot">Already have an account? <a class="lnk" data-v-go="signin">Sign in</a></p>
+  </form>
+
+  <!-- reset -->
+  <form class="v" data-v="reset" id="fReset" novalidate hidden>
+    <h2>Reset your password</h2><p class="sub">We'll send a code to your email or mobile.</p>
+    <div class="fld"><label for="rid">Email or mobile number</label><div class="inp"><input id="rid" autocomplete="username" required></div></div>
+    <button class="btn b full" type="submit">Send code</button>
+    <p class="foot"><a class="lnk" data-v-go="signin">← Back to sign in</a></p>
+  </form>
+
+  <!-- new password -->
+  <form class="v" data-v="newpw" id="fNew" novalidate hidden>
+    <h2>Choose a new password</h2><p class="sub">You'll be signed out of other devices.</p>
+    <div class="fld"><label for="npw">New password <a class="gen" id="genPw2">Suggest a strong one</a></label><div class="inp"><input id="npw" type="password" autocomplete="new-password" required><button class="eye" type="button" data-eye="npw">Show</button></div></div>
+    <div class="meter" id="meter2" data-s=""><i></i><i></i><i></i><i></i><i></i></div>
+    <ul class="rules" id="rules2"></ul>
+    <button class="btn b full" type="submit">Save and sign in</button>
+  </form>
+
+  <!-- passkey offer -->
+  <div class="v done" data-v="offer" hidden>
+    <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 11c0 3-1 6-3 8M8 7.5A5 5 0 0 1 17 11c0 2.5-.4 4.6-1.2 6.5M5 11a7 7 0 0 1 2-5M12 15c0 1.5-.3 3-1 4.5M19.5 15c.3-1.3.5-2.6.5-4a8 8 0 0 0-14-5.3"/></svg></div>
+    <h2 id="offH">You're in. Skip the password next time.</h2>
+    <p class="sub">Create a passkey and sign in with your fingerprint, face or screen lock. It works on this device and syncs to your others.</p>
+    <button class="btn b full pk" id="mkPk">Create a passkey</button>
+    <button class="btn s full" style="margin-top:8px" id="skipPk">Not now — open the app</button>
+  </div>
+</div></div>
+
+<script src="/s/auth.js"></script>
+<script>
+(()=>{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+document.getElementById('yr').textContent=new Date().getFullYear();
+// ---------- reveal on scroll ----------
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12,rootMargin:'0px 0px -40px'});
+$$('.rv').forEach((el,i)=>{el.style.transitionDelay=(el.closest('.bento,.steps,.plans')?(i%4)*70:0)+'ms';io.observe(el)});
+setTimeout(()=>$('#frame').classList.add('in'),200);
+// ---------- live plan prices ----------
+fetch('/api/v1/plans').then(r=>r.json()).then(d=>{const cards=$$('#plans .plan');d.plans.forEach((p,i)=>{const c=cards[i];if(!c)return;c.querySelector('h3').textContent=p.name;c.querySelector('.price').innerHTML=p.month?`₹${p.month}<span>/month</span>`:'₹0';c.querySelector('.yr').textContent=p.year?`or ₹${p.year} a year`:'Forever';c.querySelector('ul').innerHTML=p.features.map(f=>`<li>${f.replace(/[<>&]/g,'')}</li>`).join('')})}).catch(()=>{});
+// ---------- account state in the nav ----------
+let ME=null;const next=new URLSearchParams(location.search).get('next');const NEXT=next&&next.startsWith('/')&&!next.startsWith('//')?next:'/app';
+THT.api('/me').then(r=>{ME=r.user;if(ME){$('#acts').innerHTML=`<span class="who hide-s"><i>${(ME.name||'?').trim()[0].toUpperCase()}</i>${ME.name.split(' ')[0].replace(/[<>&]/g,'')}</span><a class="btn sm p" href="/app">Open app →</a>`;$$('[data-auth=signup]').forEach(a=>{a.href='/app';a.removeAttribute('data-auth');a.firstChild.textContent='Open your dashboard '})}}).catch(()=>{});
+// ---------- auth sheet ----------
+let CFG={passkeys:true,email:false,sms:false,demo:false};THT.api('/config').then(c=>CFG=c).catch(()=>{});
+const ov=$('#ov'),msg=$('#am'),demoBox=$('#ad');let view='',ac=null,flow=null,codeKind='',lastId='';
+function say(t,kind='err'){msg.className='msg on '+kind;msg.textContent=t}
+function hush(){msg.className='msg';demoBox.className='msg demo'}
+function demo(r){if(r&&r.demo){demoBox.className='msg demo on';demoBox.textContent='Demo mode — code: '+r.demo}}
+function busy(btn,on){if(!btn)return;if(on){btn.dataset.t=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="spin"></span>'}else if(btn.dataset.t){btn.disabled=false;btn.innerHTML=btn.dataset.t}}
+function show(v,{keepMsg}={}){view=v;if(!keepMsg)hush();$$('.v').forEach(e=>e.hidden=e.dataset.v!==v);if(ac){ac.abort();ac=null}
+ if(v==='signin')conditional();const f=$(`.v[data-v="${v}"] input:not([hidden]):not([type=checkbox])`);setTimeout(()=>f&&f.focus({preventScroll:true}),60);
+ const path={signin:'/signin',signup:'/signup',reset:'/reset'}[v];if(path&&location.pathname!==path)history.replaceState(null,'',path+location.search)}
+function open(v){ov.classList.add('on');ov.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';show(v)}
+function close(){ov.classList.remove('on');ov.setAttribute('aria-hidden','true');document.body.style.overflow='';if(ac){ac.abort();ac=null}if(/^\/(signin|signup|reset)$/.test(location.pathname))history.replaceState(null,'','/')}
+$$('[data-auth]').forEach(a=>a.addEventListener('click',e=>{if(!a.dataset.auth)return;e.preventDefault();if(ME&&a.dataset.auth!=='reset'){location.href='/app';return}open(a.dataset.auth)}));
+$('#ax').onclick=close;ov.addEventListener('mousedown',e=>{if(e.target===ov)close()});addEventListener('keydown',e=>{if(e.key==='Escape'&&ov.classList.contains('on'))close()});
+$$('[data-v-go]').forEach(a=>a.addEventListener('click',()=>show(a.dataset.vGo)));
+$$('[data-eye]').forEach(b=>b.onclick=()=>{const i=document.getElementById(b.dataset.eye);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'});
+const finish=async(r,offer=true)=>{ME=r.user;if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
+// passkey: explicit button + autofill (conditional UI) on the identifier field
+$('#pkBtn').onclick=async()=>{hush();if(!THT.passkey.supported()){say('This browser does not support passkeys. Use a password or a code.');return}const b=$('#pkBtn');if(ac){ac.abort();ac=null}busy(b,true);
+ try{finish(await THT.passkey.signin({id:$('#sid').value.trim()}),false)}catch(e){if(e.message!=='aborted')say(e.message)}finally{busy(b,false)}};
+async function conditional(){if(!(await THT.passkey.conditional()))return;ac=new AbortController();try{const r=await THT.passkey.signin({conditional:true,signal:ac.signal});finish(r,false)}catch(e){/* autofill is opportunistic: stay quiet */}}
+// identifier → password or code
+$('#fId').addEventListener('submit',e=>{e.preventDefault();goPw()});
+$('[data-go=otp]').onclick=()=>sendCode('signin');
+function idOk(){const v=$('#sid').value.trim();if(v.length<5){say('Enter your email or mobile number.');$('#sid').focus();return null}lastId=v;return v}
+function goPw(){const id=idOk();if(!id)return;$('#pwFor').textContent=id;$('#pwUser').value=id;show('password')}
+$('#fPw').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter||$('#fPw .btn.b');hush();busy(b,true);
+ try{const r=await THT.api('/password/login',{id:lastId,password:$('#spw').value});if(r.step){flow=r.step;codeKind='step';codeView('Two-step verification','Enter the code we sent to '+r.sentTo+'.');demo(r);return}finish(r)}catch(err){say(err.message);$('#spw').select()}finally{busy(b,false)}});
+async function sendCode(purpose,btn){const id=purpose==='reset'?$('#rid').value.trim():idOk();if(!id){if(purpose==='reset')say('Enter your email or mobile number.');return}lastId=id;hush();busy(btn,true);
+ try{const r=await THT.api('/otp/start',{id,purpose});flow=r.flow;codeKind=purpose;codeView(r.channel==='email'?'Check your inbox':'Check your messages',`We sent a 6-digit code to ${r.sentTo} if it belongs to an account. It expires in 10 minutes.`);demo(r)}catch(err){say(err.message)}finally{busy(btn,false)}}
+$('#fReset').addEventListener('submit',e=>{e.preventDefault();sendCode('reset',$('#fReset .btn'))});
+// 6-box OTP input with paste and autofill
+const boxes=$$('#otp input');boxes.forEach((b,i)=>{b.addEventListener('input',()=>{b.value=b.value.replace(/\D/g,'').slice(-1);if(b.value&&i<5)boxes[i+1].focus();if(code().length===6)$('#fCode').requestSubmit()});
+ b.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!b.value&&i)boxes[i-1].focus();if(e.key==='ArrowLeft'&&i)boxes[i-1].focus();if(e.key==='ArrowRight'&&i<5)boxes[i+1].focus()});
+ b.addEventListener('paste',e=>{const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);if(t.length>1){e.preventDefault();fill(t)}})});
+$('#otpAuto').addEventListener('input',e=>fill(e.target.value));
+function fill(t){t=t.replace(/\D/g,'').slice(0,6);boxes.forEach((b,i)=>b.value=t[i]||'');boxes[Math.min(t.length,5)].focus();if(t.length===6)$('#fCode').requestSubmit()}
+const code=()=>boxes.map(b=>b.value).join('');
+let rsT=0;function codeView(h,sub){$('#codeH').textContent=h;$('#codeSub').textContent=sub;boxes.forEach(b=>b.value='');show('code',{keepMsg:true});setTimeout(()=>boxes[0].focus(),80);
+ let n=45;clearInterval(rsT);const rs=$('#rs');const tick=()=>{rs.innerHTML=n>0?`Resend in ${n}s`:`<a class="lnk" id="rsGo">Resend code</a>`;const g=$('#rsGo');if(g)g.onclick=resend;n--};tick();rsT=setInterval(()=>{tick();if(n<-1)clearInterval(rsT)},1000)}
+async function resend(){hush();try{if(codeKind==='signup'){const r=await THT.api('/signup/start',signupBody());flow=r.flow;demo(r);codeView('Check your inbox','We sent a new code to '+r.sentTo+'.')}else if(codeKind==='step'){$('#fPw').requestSubmit()}else{const r=await THT.api('/otp/start',{id:lastId,purpose:codeKind});flow=r.flow;demo(r);codeView($('#codeH').textContent,'We sent a new code to '+r.sentTo+'.')}}catch(e){say(e.message)}}
+$('#codeBack').onclick=()=>show(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin');
+$('#fCode').addEventListener('submit',async e=>{e.preventDefault();const c=code();if(c.length!==6){say('Enter all 6 digits.');return}const b=$('#fCode .btn.b');hush();busy(b,true);
+ try{if(codeKind==='signup'){finish(await THT.api('/signup/verify',{flow,code:c}))}
+  else if(codeKind==='step'){finish(await THT.api('/step/verify',{flow,code:c}))}
+  else{const r=await THT.api('/otp/verify',{flow,code:c});if(r.reset){flow=r.reset;show('newpw');return}finish(r)}}
+ catch(err){say(err.message);boxes.forEach(x=>x.value='');boxes[0].focus()}finally{busy(b,false)}});
+// ---------- password rules, meter, generator ----------
+function ctx(){return{name:$('#un').value,email:$('#ue').value,phone:$('#up').value}}
+function paintRules(pw,ul,meter,c){const R=THT.pw.rules(pw,c),S=THT.pw.score(pw,c);document.getElementById(ul).innerHTML=R.map(r=>`<li class="${r.ok?'ok':''}">${r.label}</li>`).join('');const m=document.getElementById(meter);m.dataset.s=pw?S.score:'';return{ok:R.every(r=>r.ok),S}}
+function upPaint(){const {S}=paintRules($('#upw').value,'rules','meter',ctx());$('#mlab').textContent=$('#upw').value?S.label:'Password strength';$('#mbits').textContent=$('#upw').value?`≈ ${S.bits} bits`:''}
+['upw','un','ue','up'].forEach(id=>document.getElementById(id).addEventListener('input',upPaint));upPaint();
+$('#npw').addEventListener('input',()=>paintRules($('#npw').value,'rules2','meter2',{}));paintRules('','rules2','meter2',{});
+function gen(a,b){const p=THT.pw.generate();[a,b].forEach(id=>{if(!id)return;const i=document.getElementById(id);i.value=p;i.type='text';const e=document.querySelector(`[data-eye="${id}"]`);if(e)e.textContent='Hide'});return p}
+$('#genPw').onclick=()=>{gen('upw','upw2');upPaint();say('A strong password was filled in. Save it in your password manager — or create a passkey next and you will rarely need it.','ok')};
+$('#genPw2').onclick=()=>{gen('npw');paintRules($('#npw').value,'rules2','meter2',{})};
+function signupBody(){const ph=$('#up').value.replace(/\D/g,'');return{name:$('#un').value.trim(),email:$('#ue').value.trim(),phone:ph?(ph.length===10?'+91'+ph:'+'+ph):'',password:$('#upw').value,terms:$('#ut').checked}}
+$('#fUp').addEventListener('submit',async e=>{e.preventDefault();hush();const B=signupBody();
+ if(B.name.length<2){say('Please enter your full name.');$('#un').focus();return}
+ if(!B.email&&!B.phone){say('Enter an email address or a mobile number.');$('#ue').focus();return}
+ if(B.email&&!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(B.email)){say('That email address does not look right.');$('#ue').focus();return}
+ const R=THT.pw.rules(B.password,ctx()).filter(r=>!r.ok);if(R.length){say('Password: '+R[0].label.toLowerCase()+'.');$('#upw').focus();return}
+ if(B.password!==$('#upw2').value){say('The two passwords do not match.');$('#upw2').focus();return}
+ if(!B.terms){say('Please accept the terms to continue.');return}
+ const b=$('#upGo');busy(b,true);
+ try{const r=await THT.api('/signup/start',B);flow=r.flow;codeKind='signup';codeView(r.channel==='email'?'Verify your email':'Verify your mobile',`Enter the 6-digit code we sent to ${r.sentTo}.`);demo(r)}
+ catch(err){say(err.message);if(err.status===409){const a=document.createElement('a');a.className='lnk';a.textContent=' Sign in';a.onclick=()=>{$('#sid').value=B.email||B.phone;show('signin')};msg.append(a)}}finally{busy(b,false)}});
+$('#fNew').addEventListener('submit',async e=>{e.preventDefault();hush();const pw=$('#npw').value;const R=THT.pw.rules(pw,{}).filter(r=>!r.ok);if(R.length){say('Password: '+R[0].label.toLowerCase()+'.');return}
+ const b=$('#fNew .btn');busy(b,true);try{finish(await THT.api('/password/reset',{flow,password:pw}))}catch(err){say(err.message)}finally{busy(b,false)}});
+// ---------- passkey offer ----------
+$('#mkPk').onclick=async()=>{const b=$('#mkPk');hush();busy(b,true);try{await THT.passkey.register();say('Passkey created. Next time, just tap “Sign in with a passkey”.','ok');setTimeout(()=>location.href=NEXT,900)}catch(e){say(e.message)}finally{busy(b,false)}};
+$('#skipPk').onclick=()=>location.href=NEXT;
+// deep links: /signin, /signup, /reset
+const route={'/signin':'signin','/signup':'signup','/reset':'reset'}[location.pathname];if(route)open(route);
+})();
+</script>
+</body>
+</html>
