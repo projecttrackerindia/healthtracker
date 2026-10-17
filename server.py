@@ -16,6 +16,8 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 
+from sqlalchemy.exc import OperationalError
+
 from api.db import Base, engine, session
 from api import admin as admin_api, auth as auth_api, routes as public_api
 from api.seed import seed_all
@@ -32,7 +34,11 @@ app = FastAPI(title="TheHealthTracker", version=VERSION, docs_url=None, redoc_ur
 
 @app.on_event("startup")
 def _init_db():
-    Base.metadata.create_all(engine)
+    try:
+        Base.metadata.create_all(engine)
+    except OperationalError as e:
+        if "already exists" not in str(e):
+            raise
     with session() as db:
         seed_all(db)
 
