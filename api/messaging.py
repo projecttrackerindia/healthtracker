@@ -86,3 +86,41 @@ def send_sms(to: str, code: str) -> None:
     req = urllib.request.Request(f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json", data=body, method="POST",
                                  headers={"Authorization": "Basic " + base64.b64encode(f"{sid}:{tok}".encode()).decode(), "User-Agent": UA})
     urllib.request.urlopen(req, timeout=10).read()
+
+
+def send_invite_email(to: str, by: str, name: str, link: str) -> None:
+    """Invitation to create an account for an existing family profile (email only; SMS in India needs a DLT template)."""
+    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
+    subject = f"{by} added you to the family on {APP}"
+    text = (f"{by} has set up a profile for {name or 'you'} on {APP}, the family health app.\n\n"
+            f"Create your account with this link to see your own records and your family's: {link}\n\n"
+            f"The link works for 7 days. If you were not expecting this, you can ignore it.")
+    html = f"""<div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:auto;padding:24px;color:#0f1220">
+<p style="font-size:18px;margin:0 0 12px"><b>{by}</b> added you to the family on {APP}</p>
+<p>A profile for <b>{name or 'you'}</b> is ready. Create your account to see your own records and your family's, on your own phone.</p>
+<p style="margin:20px 0"><a href="{link}" style="background:#2F5BFF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px;font-weight:600">Create my account</a></p>
+<p style="color:#5f6577;font-size:13px">The link works for 7 days. If you were not expecting this, ignore this email.</p></div>"""
+    if os.getenv("RESEND_API_KEY"):
+        req = urllib.request.Request("https://api.resend.com/emails", method="POST",
+                                     data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": html}).encode(),
+                                     headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
+        try:
+            urllib.request.urlopen(req, timeout=10).read()
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"Resend {e.code}: {e.read().decode('utf-8', 'ignore')[:300]}") from e
+        return
+    m = EmailMessage()
+    m["From"], m["To"], m["Subject"] = sender, to, subject
+    m.set_content(text)
+    m.add_alternative(html, subtype="html")
+    host, port = os.getenv("SMTP_HOST"), int(os.getenv("SMTP_PORT", "587"))
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=10) as s:
+            s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+            s.send_message(m)
+    else:
+        with smtplib.SMTP(host, port, timeout=10) as s:
+            s.starttls(context=ssl.create_default_context())
+            if os.getenv("SMTP_USER"):
+                s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+            s.send_message(m)

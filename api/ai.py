@@ -20,6 +20,34 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CATALOG = json.loads((HERE / "data" / "catalog.json").read_text(encoding="utf-8"))
 MODEL = os.getenv("DOKKO_AI_MODEL", "claude-sonnet-5-5")
+LAST_ERROR: dict = {}   # admins see this on the dashboard; users never do
+
+
+def _fail(where: str, e: Exception) -> None:
+    LAST_ERROR.update({"t": int(time.time()), "where": where, "error": f"{type(e).__name__}: {str(e)[:300]}"})
+    print(f"[ai] {where} failed: {type(e).__name__}: {str(e)[:300]}", flush=True)
+
+
+def pdf_pages_as_images(data: bytes, max_pages: int = 4) -> list[bytes]:
+    """Render PDF pages to JPEG so scanned reports can be read as images when the document route is unavailable."""
+    try:
+        import pymupdf  # type: ignore
+    except ImportError:
+        try:
+            import fitz as pymupdf  # type: ignore
+        except ImportError:
+            return []
+    out = []
+    try:
+        doc = pymupdf.open(stream=data, filetype="pdf")
+        for i, page in enumerate(doc):
+            if i >= max_pages:
+                break
+            pix = page.get_pixmap(dpi=110)
+            out.append(pix.tobytes("jpeg"))
+    except Exception as e:
+        _fail("pdf render", e)
+    return out
 DISCLAIMER = ("This is an educational summary, not a diagnosis or treatment advice. Reference ranges vary by lab, age and pregnancy. "
               "Please discuss these results with your doctor before changing any medicine.")
 
@@ -248,7 +276,15 @@ def claude_analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dic
     if text:
         content.append({"type": "text", "text": "Document text:\n" + text[:12000]})
     content.append({"type": "text", "text": f"Document kind: {kind}. Patient context (from the app, may be incomplete): {json.dumps(ctx)[:1500]}. Return the JSON now."})
-    r = client.messages.create(model=MODEL, max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
+    try:
+        r = client.messages.create(model=MODEL, max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
+    except Exception as e:
+        imgs = pdf_pages_as_images(data) if data and (mime == "application/pdf" or data[:4] == b"%PDF") else []
+        if not imgs:
+            raise
+        _fail("pdf document block (retrying as images)", e)
+        content = [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(b).decode()}} for b in imgs] + content[1:]
+        r = client.messages.create(model=MODEL, max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
     raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
     raw = raw[raw.find("{"): raw.rfind("}") + 1]
     out = json.loads(raw)
@@ -300,7 +336,7 @@ def analyze_card(data: bytes | None, mime: str) -> dict:
     try:
         out = claude_card(data, mime)
     except Exception as e:
-        print("[ai] card read failed:", type(e).__name__, str(e)[:300], flush=True)
+        _fail("card reading", e)
         return {"engine": "local", "kind": "card", "readable": False, "fields": {}, "warnings": ["Smart reading could not read this card right now. Fill in the details yourself; the photo is kept with the card."], "ms": int((time.time() - t0) * 1000)}
     out.update({"engine": "claude", "kind": "card", "ms": int((time.time() - t0) * 1000)})
     out.setdefault("warnings", [])
@@ -320,6 +356,7 @@ def test_connection() -> dict:
         r = anthropic.Anthropic().messages.create(model=MODEL, max_tokens=5, messages=[{"role": "user", "content": "Reply with OK"}])
         return {"ok": True, "model": MODEL, "ms": int((time.time() - t0) * 1000), "reply": "".join(b.text for b in r.content if getattr(b, "type", "") == "text")[:20]}
     except Exception as e:
+        _fail("test connection", e)
         return {"ok": False, "model": MODEL, "error": f"{type(e).__name__}: {str(e)[:400]}"}
 
 
@@ -334,7 +371,7 @@ def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, forc
             out = None
             engine = "local"
             err = str(e)[:160]
-            print("[ai] smart reading failed, basic reader used:", type(e).__name__, str(e)[:300], flush=True)
+            _fail("smart reading (basic reader used)", e)
     if out is None:
         txt = text or (text_from(data, mime) if data else "")
         if not txt and data and mime.startswith("image/"):

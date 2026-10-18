@@ -83,3 +83,20 @@ def get_db():
         raise
     finally:
         s.close()
+
+
+def ensure_columns() -> None:
+    """create_all() only creates missing tables. New columns on old tables are added here, idempotently."""
+    from sqlalchemy import inspect, text
+
+    wanted = {"users": [("member_id", "VARCHAR(32)")]}
+    insp = inspect(engine)
+    with engine.begin() as conn:
+        for table, cols in wanted.items():
+            if table not in insp.get_table_names():
+                continue
+            have = {c["name"] for c in insp.get_columns(table)}
+            for name, typ in cols:
+                if name not in have:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {typ}"))
+                    print(f"[db] added column {table}.{name}", flush=True)

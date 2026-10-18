@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 import uuid
 
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Index, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -245,6 +245,7 @@ class User(Base):
     two_step: Mapped[bool] = mapped_column(Boolean, default=False)  # password sign-in also needs a one-time code
     webauthn_id: Mapped[str] = mapped_column(String(64), default=lambda: uuid.uuid4().hex)  # opaque user handle
     household_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    member_id: Mapped[str | None] = mapped_column(String(32), nullable=True)  # which family profile is 'me' for this account
     failed: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[int | None] = mapped_column(Integer, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -302,3 +303,33 @@ class AuthFlow(Base):
     user_id: Mapped[str] = mapped_column(String(32), default="")
     data: Mapped[dict] = mapped_column(JSON, default=dict)
     expires: Mapped[int] = mapped_column(Integer)
+
+
+class HouseholdState(Base):
+    """The family's app data (profiles, results, medicines, cards...) as one encrypted JSON blob per household, so every
+    signed-in family member sees the same records on every device. Files (photos, PDFs) are not included."""
+
+    __tablename__ = "household_state"
+    household_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, default=0)
+    blob: Mapped[bytes] = mapped_column(LargeBinary)          # AES-GCM(zlib(JSON))
+    sect: Mapped[dict] = mapped_column(JSON, default=dict)   # section -> last-changed timestamp (ms), for merging
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    updated: Mapped[int] = mapped_column(Integer, default=now, onupdate=now)
+    updated_by: Mapped[str] = mapped_column(String(32), default="")
+
+
+class Invite(Base):
+    """A family member's invitation to create their own account for an existing profile."""
+
+    __tablename__ = "invites"
+    token: Mapped[str] = mapped_column(String(48), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32))
+    name: Mapped[str] = mapped_column(String(80), default="")
+    contact: Mapped[str] = mapped_column(String(160), default="")
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    expires: Mapped[int] = mapped_column(Integer)
+    used_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    used: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -57,17 +57,19 @@ def page(title, desc, eyebrow, h1, lead, cards, sections, current):
 PRIVACY = [
     ("summary", "In short", """
 <p>TheHealthTracker helps you keep your family's health information in one place. We built it so that <b>your health records stay on your own device</b> and leave it only when you choose to share them.</p>
-<ul><li>Your health card, family profiles, reports, results, medicines, readings, pregnancy logs and Medical ID are stored in your browser on your device. We cannot see them.</li>
-<li>Our servers keep what is needed to run your account: your name, email, mobile number, sign-in details, plan and payments, and orders when ordering is available in your area.</li>
+<ul><li>Without an account, your health card, family profiles, reports, results, medicines, readings, pregnancy logs and Medical ID stay in your browser on your device.</li>
+<li>When you sign in, your family's profiles, results, medicines, readings, cards and settings are encrypted and stored on our servers in India, so each family member you invite sees the same records on their own phone. Photos and PDFs stay on the device where they were added.</li>
+<li>Our servers also keep what is needed to run your account: your name, email, mobile number, sign-in details, plan and payments, and orders when ordering is available in your area.</li>
 <li>A report or prescription is read by our servers only when you tap <b>Analyse</b> and agree. It is processed for that one reading and not stored by us.</li>
 <li>We do not sell your data, we do not show ads, and we do not use your health information for marketing.</li></ul>
 <p class="note">This policy explains how we handle personal data under India's Digital Personal Data Protection Act, 2023 (DPDP Act) and the Information Technology Act, 2000.</p>"""),
-    ("device", "What stays on your device", """
-<p>The app saves these in your browser's private storage on the device you use:</p>
+    ("device", "On your device and in your family's encrypted store", """
+<p>The app saves these in your browser's private storage on the device you use, and, once you sign in, in your family's encrypted store on our servers (AES-256-GCM, keys held separately from the data, India region):</p>
 <ul><li>Health card: name, date of birth, sex, blood group and mobile number for you and each family member you add.</li>
 <li>Reports, prescriptions, scans and photos you upload to the Vault, and the results read from them.</li>
 <li>Medicines, dose history, readings (heart rate, blood pressure, sugar, weight), visits, emergency contacts, Medical ID, consent history and pregnancy logs.</li></ul>
-<p>Because they are stored on your device, they are not copied to other devices, and clearing your browser's site data removes them. Use <b>Family &amp; Privacy → My data</b> to download a copy or delete everything.</p>"""),
+<p>Photos and PDFs are not copied to other devices or to our servers; clearing your browser's site data removes them. Use <b>Family &amp; Privacy → My data</b> to download a copy or delete everything, which also deletes the family's store on our servers when you are its owner.</p>
+<p>Family members you invite can see the shared records. A profile switched to <b>Private</b> in Consent is hidden from other accounts.</p>"""),
     ("server", "What our servers keep", """
 <table><thead><tr><th>Data</th><th>Why</th><th>How long</th></tr></thead><tbody>
 <tr><td>Name, email, mobile number and whether each is verified</td><td>To create and secure your account and to send sign-in codes</td><td>Until you delete your account</td></tr>
@@ -75,6 +77,8 @@ PRIVACY = [
 <tr><td>Sign-in sessions: device and browser type, IP address, times</td><td>To protect your account and let you sign out other devices</td><td>Up to 30 days per session</td></tr>
 <tr><td>One-time codes</td><td>To verify your email or mobile</td><td>Expire after 10 minutes</td></tr>
 <tr><td>An anonymous household key, the first name shown in the app, number of profiles, and the area you choose to share</td><td>To keep your plan and orders together and show services near you</td><td>Until you delete your account</td></tr>
+<tr><td>Your family's encrypted health store (profiles, results, medicines, readings, cards, settings)</td><td>So your records follow you to every device and to the family members you invite</td><td>Until you delete it in My data or delete your account</td></tr>
+<tr><td>Invitations: the invited person's name and contact</td><td>To let them join the family</td><td>7 days, or until used</td></tr>
 <tr><td>Plan, invoices and payment references</td><td>To provide paid plans and meet tax law</td><td>As long as tax law requires (usually 8 years)</td></tr>
 <tr><td>Orders and ratings, with the prescription you attach</td><td>To fulfil the order through the pharmacy you choose</td><td>As long as pharmacy and tax law require</td></tr>
 </tbody></table>
