@@ -49,7 +49,7 @@ def _json(raw: str) -> dict:
 
 def ask(question: str, ctx: dict) -> dict:
     q = question.strip()[:600]
-    r = AI.create(max_tokens=700, system=ASK_SYSTEM,
+    r = AI.create(max_tokens=2000, system=ASK_SYSTEM,
                   messages=[{"role": "user", "content": f"Family context (JSON): {json.dumps(ctx, ensure_ascii=False)[:9000]}\n\nQuestion: {q}\n\nReturn the JSON now."}])
     out = _json("".join(b.text for b in r.content if getattr(b, "type", "") == "text"))
     return {"answer": str(out.get("answer", ""))[:1600], "sources": [str(x)[:120] for x in (out.get("sources") or [])][:6],
@@ -57,7 +57,7 @@ def ask(question: str, ctx: dict) -> dict:
 
 
 def insight(ctx: dict) -> dict:
-    r = AI.create(max_tokens=500, system=INSIGHT_SYSTEM,
+    r = AI.create(max_tokens=1500, system=INSIGHT_SYSTEM,
                   messages=[{"role": "user", "content": f"Context (JSON): {json.dumps(ctx, ensure_ascii=False)[:9000]}\n\nReturn the JSON now."}])
     out = _json("".join(b.text for b in r.content if getattr(b, "type", "") == "text"))
     return {"headline": str(out.get("headline", ""))[:120], "points": [str(x)[:240] for x in (out.get("points") or [])][:4],
