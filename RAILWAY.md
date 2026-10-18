@@ -42,12 +42,12 @@ OTP_DEMO=0
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | yes | First admin, created on first start. If the password is empty a random one is generated and printed once in the deploy logs. Setting a new `ADMIN_PASSWORD` later resets that admin's password on the next restart. |
 | `DATABASE_URL` | yes for production | `${{Postgres.DATABASE_URL}}` references the plugin (use the plugin's real name if you renamed it). Without it the app uses SQLite, which is wiped on every redeploy. |
 | `ANTHROPIC_API_KEY` | yes for photos | Smart reading of reports, prescriptions, photos and cards. Without it a basic reader handles PDFs with text and typed text. After setting it, open `/admin` → Dashboard → **Test connection** to confirm the server can reach the model; the exact error is shown there, never to users. |
-| `DOKKO_AI_MODEL` | no | Default `claude-sonnet-5-5`. |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | no | Live subscription payments (UPI, cards, net banking). Use test keys first. Without them billing is demo-only. |
+| `DOKKO_AI_MODEL` | no | Default `claude-sonnet-5-5`. If the key cannot use it, the server falls back to the next available model automatically and logs `[ai] using model …`. |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | before selling plans | Live subscription payments (UPI, cards, net banking). **In production nothing but a verified Razorpay payment can activate a paid plan**: without these keys every family stays on Free and the plan page says "Opening soon". Demo activation only happens when `APP_ENV` is not `production`. |
 | `RP_ID`, `APP_ORIGIN` | yes for passkeys | Domain the passkeys belong to, and the exact https address of the site. If empty they are taken from the request. |
 | `RESEND_API_KEY` + `MAIL_FROM` | one email option | Sends sign-up, sign-in and reset codes by email. Verify the sending domain in Resend (DNS records). |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | other email option | Any SMTP service (Zoho, Gmail app password, Amazon SES). Port 465 uses SSL, others STARTTLS. |
-| `MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID` | SMS option (India) | MSG91 OTP API. Requires a DLT-registered sender and OTP template with `##OTP##`. |
+| `MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID` | yes, for verified mobiles | MSG91 OTP API. Requires a DLT-registered sender and OTP template with `##OTP##`. Sign-up verifies the email first and then the mobile in the same flow; without an SMS provider the mobile stays "verification pending" and the account badge is not shown. |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` | SMS option | Twilio SMS (international; India needs DLT too). |
 | `PWNED_CHECK` | no | `1` (default) rejects passwords found in known breaches using Have I Been Pwned's k-anonymity API. |
 | `OTP_DEMO` | no | `1` shows codes on screen instead of sending them. Testing only. |
@@ -82,6 +82,12 @@ to the uncompressed file and prints a warning in the deploy log), so a forgotten
 2. Variables: copy from production, then set `APP_ENV=staging`, `OTP_DEMO=1` (codes on screen; never on production), a different `SECRET_KEY` and `DATA_KEY`, and **no** Razorpay live keys. Leave `S3_BUCKET` empty or use a separate bucket.
 3. Generate a domain for it (for example `staging-thehealthtracker.up.railway.app`) and set `RP_ID` / `APP_ORIGIN` to that address.
 4. Workflow: merge pull requests into `staging` first, click through, then into `main`. The orange STAGING ribbon tells you which one you are looking at.
+
+## Identity and the health assistant (round 5)
+
+* **One identity.** Sign-up needs a full name as on Aadhaar, an email and a mobile; both contacts are verified in the sign-up flow. The account name, the health card, Medical ID, doctor summary and shares all read the same member record. Identity details (name, date of birth, sex, blood group) change at most once a week, on the server (`/auth/profile`, HTTP 423) and in the app.
+* **Health assistant.** `/api/v1/ai/ask` answers questions about a person's own records from a structured summary the app builds (readings, results with dates, medicines, trackers) — never documents. `/api/v1/ai/insight` prepares a daily insight per person, cached for the day. Monthly caps per plan: questions 20 / 300 / unlimited, insights 10 / 200 / unlimited. Users consent once (recorded in the consent log).
+* **Device readings.** The app reads Bluetooth devices that use the standard health profiles (blood pressure, pulse oximeter, weight scale, thermometer, heart rate) in Chrome/Edge on Android, Windows and Mac. Apple Health and Health Connect need the phone app (next milestone).
 
 ## Operations checklist
 
