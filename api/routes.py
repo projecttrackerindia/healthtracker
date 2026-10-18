@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from . import ai as AI
 from .db import get_db
-from .models import AiJob, Household, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
+from .models import AiCache, AiJob, Household, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
 from .security import valid_key
 from .seed import CITIES, TESTS
 
@@ -453,6 +453,74 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
     return out
 
 
+class AskIn(BaseModel):
+    question: str = ""
+    context: dict = {}
+    member: str = ""
+
+
+def _ai_quota(db, h, kind: str, caps: dict) -> tuple[int, int]:
+    cap = caps.get(h.plan, list(caps.values())[0])
+    used = db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t > now() - 30 * 86400, AiJob.kind == kind, AiJob.engine == "claude")) or 0
+    return used, cap
+
+
+@r.post("/ai/ask")
+def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    """A question about the family's own records. The app sends structured context, never documents."""
+    from . import agent
+    h = household(db, x_dokko_key)
+    if not h:
+        raise HTTPException(400, "missing household key")
+    if not agent.enabled():
+        raise HTTPException(503, "The health assistant is not available right now.")
+    q = body.question.strip()
+    if len(q) < 3:
+        raise HTTPException(400, "Ask a question first.")
+    used, cap = _ai_quota(db, h, "ask", agent.ASK_CAP)
+    if used >= cap:
+        raise HTTPException(429, f"You have used this month's {cap} questions on the {h.plan} plan. Upgrade in Family & Privacy → Plan for more.")
+    t0 = time.time()
+    try:
+        out = agent.ask(q, body.context)
+    except Exception as e:
+        AI._fail("health assistant", e)
+        db.add(AiJob(household_id=h.id, kind="ask", engine="error", ok=False))
+        raise HTTPException(502, "The health assistant could not answer right now. Please try again in a minute.")
+    db.add(AiJob(household_id=h.id, kind="ask", engine="claude", ms=int((time.time() - t0) * 1000)))
+    out["quota"] = {"used": used + 1, "cap": cap, "plan": h.plan}
+    return out
+
+
+@r.post("/ai/insight")
+def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    """Daily insight for one person; cached by day and by the records it was made from."""
+    from . import agent
+    h = household(db, x_dokko_key)
+    if not h:
+        raise HTTPException(400, "missing household key")
+    if not agent.enabled():
+        raise HTTPException(503, "Insights are not available right now.")
+    key = f"{h.id}:{body.member[:32]}:{agent.ctx_key(body.context)}"
+    hit = db.get(AiCache, key)
+    if hit:
+        return {**hit.value, "cached": True}
+    used, cap = _ai_quota(db, h, "insight", agent.INSIGHT_CAP)
+    if used >= cap:
+        raise HTTPException(429, f"This month's insights on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
+    t0 = time.time()
+    try:
+        out = agent.insight(body.context)
+    except Exception as e:
+        AI._fail("daily insight", e)
+        db.add(AiJob(household_id=h.id, kind="insight", engine="error", ok=False))
+        raise HTTPException(502, "Insights could not be prepared right now.")
+    db.add(AiJob(household_id=h.id, kind="insight", engine="claude", ms=int((time.time() - t0) * 1000)))
+    db.merge(AiCache(key=key, household_id=h.id, value=out))
+    db.query(AiCache).filter(AiCache.t < now() - 2 * 86400).delete()
+    return {**out, "cached": False}
+
+
 # ---- seasonal, videos, plans ----------------------------------------------------------------------------------------
 @r.get("/seasonal")
 def seasonal(month: int | None = None, region: str = "IN", db: Session = Depends(get_db)):
@@ -476,7 +544,7 @@ def plans(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None))
     rows = db.scalars(select(Plan).where(Plan.active == True).order_by(Plan.sort)).all()  # noqa: E712
     subs = db.scalars(select(Subscription).where(Subscription.household_id == h.id).order_by(Subscription.started.desc()).limit(12)).all() if h else []
     return {"plans": [{"code": p.code, "name": p.name, "month": p.price_month, "year": p.price_year, "members": p.members, "features": p.features} for p in rows],
-            "current": h.plan if h else "free", "until": h.plan_until if h else None, "provider": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else "demo",
+            "current": h.plan if h else "free", "until": h.plan_until if h else None, "provider": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("soon" if os.getenv("APP_ENV", "production") == "production" else "demo"),
             "keyId": os.getenv("RAZORPAY_KEY_ID", ""),
             "history": [{"id": s.id, "plan": s.plan, "period": s.period, "amount": s.amount, "status": s.status, "started": s.started, "renews": s.renews, "invoice": s.invoice_no, "provider": s.provider} for s in subs]}
 
@@ -501,6 +569,9 @@ def subscribe(body: SubReq, db: Session = Depends(get_db), x_dokko_key: str | No
     amount = p.price_year if body.period == "year" else p.price_month
     provider = "demo"
     ref = ""
+    if amount > 0 and not os.getenv("RAZORPAY_KEY_ID") and os.getenv("APP_ENV", "production") == "production":
+        # a paid plan can only be activated by a verified payment; without a payment provider nothing is switched
+        raise HTTPException(503, "Paid plans open soon. You stay on the Free plan until online payment is live.")
     if os.getenv("RAZORPAY_KEY_ID") and amount > 0:
         from .payments import create_order, verify_payment
         if not body.paymentId:

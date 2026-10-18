@@ -20,7 +20,40 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CATALOG = json.loads((HERE / "data" / "catalog.json").read_text(encoding="utf-8"))
 MODEL = os.getenv("DOKKO_AI_MODEL", "claude-sonnet-5-5")
+# if the configured model is not available to this API key, the next one is tried and remembered for the process
+FALLBACK_MODELS = [m for m in [MODEL, "claude-sonnet-5-5", "claude-haiku-5-5", "claude-sonnet-4-5", "claude-3-5-sonnet-latest"] if m]
 LAST_ERROR: dict = {}   # admins see this on the dashboard; users never do
+_WORKING: dict = {"model": None}
+
+
+def create(**kw):
+    """messages.create with model fallback: a 404 'model not found' moves to the next candidate instead of failing the user."""
+    import anthropic
+
+    client = anthropic.Anthropic()
+    tried = []
+    order = ([_WORKING["model"]] if _WORKING["model"] else []) + [m for m in FALLBACK_MODELS if m != _WORKING["model"]]
+    last = None
+    for m in dict.fromkeys(order):
+        try:
+            r = client.messages.create(model=m, **kw)
+            if _WORKING["model"] != m:
+                _WORKING["model"] = m
+                print(f"[ai] using model {m}", flush=True)
+            return r
+        except anthropic.NotFoundError as e:
+            tried.append(m); last = e
+            continue
+        except anthropic.BadRequestError as e:
+            if "model" in str(e).lower():
+                tried.append(m); last = e
+                continue
+            raise
+    raise RuntimeError(f"No usable model for this API key (tried {', '.join(tried)}): {last}")
+
+
+def current_model() -> str:
+    return _WORKING["model"] or MODEL
 
 
 def _fail(where: str, e: Exception) -> None:
@@ -264,9 +297,6 @@ Rules: never diagnose; say "suggests" and "discuss with your doctor". Use the do
 
 
 def claude_analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict) -> dict:
-    import anthropic  # imported lazily so the server runs without the SDK installed
-
-    client = anthropic.Anthropic()
     content = []
     if data:
         if mime == "application/pdf" or data[:4] == b"%PDF":
@@ -277,14 +307,14 @@ def claude_analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dic
         content.append({"type": "text", "text": "Document text:\n" + text[:12000]})
     content.append({"type": "text", "text": f"Document kind: {kind}. Patient context (from the app, may be incomplete): {json.dumps(ctx)[:1500]}. Return the JSON now."})
     try:
-        r = client.messages.create(model=MODEL, max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
+        r = create(max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
     except Exception as e:
         imgs = pdf_pages_as_images(data) if data and (mime == "application/pdf" or data[:4] == b"%PDF") else []
         if not imgs:
             raise
         _fail("pdf document block (retrying as images)", e)
         content = [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(b).decode()}} for b in imgs] + content[1:]
-        r = client.messages.create(model=MODEL, max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
+        r = create(max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
     raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
     raw = raw[raw.find("{"): raw.rfind("}") + 1]
     out = json.loads(raw)
@@ -317,7 +347,7 @@ def claude_card(data: bytes, mime: str) -> dict:
         src = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": base64.b64encode(data).decode()}}
     else:
         src = {"type": "image", "source": {"type": "base64", "media_type": mime, "data": base64.b64encode(data).decode()}}
-    r = client.messages.create(model=MODEL, max_tokens=1500, temperature=0, system=CARD_SYSTEM,
+    r = create(max_tokens=1500, temperature=0, system=CARD_SYSTEM,
                                messages=[{"role": "user", "content": [src, {"type": "text", "text": "Read this card and return the JSON now."}]}])
     raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
     out = json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
@@ -353,8 +383,8 @@ def test_connection() -> dict:
         return {"ok": False, "error": "The anthropic package is not installed (requirements.txt)."}
     t0 = time.time()
     try:
-        r = anthropic.Anthropic().messages.create(model=MODEL, max_tokens=5, messages=[{"role": "user", "content": "Reply with OK"}])
-        return {"ok": True, "model": MODEL, "ms": int((time.time() - t0) * 1000), "reply": "".join(b.text for b in r.content if getattr(b, "type", "") == "text")[:20]}
+        r = create(max_tokens=5, messages=[{"role": "user", "content": "Reply with OK"}])
+        return {"ok": True, "model": current_model(), "ms": int((time.time() - t0) * 1000), "reply": "".join(b.text for b in r.content if getattr(b, "type", "") == "text")[:20]}
     except Exception as e:
         _fail("test connection", e)
         return {"ok": False, "model": MODEL, "error": f"{type(e).__name__}: {str(e)[:400]}"}
@@ -381,7 +411,7 @@ def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, forc
             out = local_prescription(txt, ctx) if kind == "prescription" else local_report(txt, ctx)
         if "err" in locals():
             out["warnings"] = list(out.get("warnings", [])) + ["Smart reading is unavailable right now; this is the basic reader."]
-    out.update({"engine": engine, "kind": kind, "model": MODEL if engine == "claude" else "rules-v1", "ms": int((time.time() - t0) * 1000), "disclaimer": DISCLAIMER})
+    out.update({"engine": engine, "kind": kind, "model": current_model() if engine == "claude" else "rules-v1", "ms": int((time.time() - t0) * 1000), "disclaimer": DISCLAIMER})
     out.setdefault("findings", [])
     out.setdefault("medicines", [])
     out.setdefault("tests_needed", [])

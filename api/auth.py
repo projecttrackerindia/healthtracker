@@ -142,7 +142,8 @@ def start_session(request: Request, response: Response, db: Session, u: User, me
 
 def me_json(u: User) -> dict:
     return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "emailVerified": u.email_verified, "phoneVerified": u.phone_verified,
-                     "hasPassword": bool(u.pw_hash), "twoStep": u.two_step, "passkeys": len(u.passkeys), "created": u.created}}
+                     "hasPassword": bool(u.pw_hash), "twoStep": u.two_step, "passkeys": len(u.passkeys), "created": u.created,
+                     "verified": bool(u.email_verified and u.phone_verified), "nameNext": name_next(u)}}
 
 
 def new_flow(db: Session, kind: str, minutes: int = 10, **kw) -> AuthFlow:
@@ -261,6 +262,8 @@ def signup_start(body: Signup, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(400, "Check the email and mobile fields")
     if not phone:
         raise HTTPException(400, "Please enter your mobile number")
+    if not email:
+        raise HTTPException(400, "Please enter your email address")
     if email and db.scalar(select(User.id).where(User.email == email)) or phone and db.scalar(select(User.id).where(User.phone == phone)):
         raise HTTPException(409, "An account with this email or mobile already exists. Sign in instead.")
     issues = passwords.check(body.password, name, email or "", phone or "")
@@ -294,7 +297,18 @@ def signup_verify(body: FlowCode, request: Request, response: Response, db: Sess
     db.add(u)
     db.delete(f)
     db.flush()
-    return start_session(request, response, db, u, "otp")
+    out = start_session(request, response, db, u, "otp")
+    # both contacts are verified at sign-up: the second one follows at once when that channel can send codes
+    other_kind = "phone" if d["kind"] == "email" else "email"
+    other = d[other_kind]
+    if other and (messaging.demo() or (messaging.sms_ready() if other_kind == "phone" else messaging.email_ready())):
+        try:
+            cf = new_flow(db, "contact", 10, user_id=u.id, data={"kind": other_kind, "target": other})
+            sent = send_code(request, db, other, other_kind, "contact")
+            out["verifyNext"] = {"flow": cf.id, "channel": other_kind, "sentTo": masked(other_kind, other), **sent}
+        except HTTPException:
+            pass  # rate-limited or provider down: the app offers verification from the account page instead
+    return out
 
 
 # ---- password sign-in (+ optional two-step) --------------------------------------------------------------------------
@@ -584,11 +598,28 @@ class Profile(BaseModel):
     name: str
 
 
+NAME_LOCK_DAYS = 7
+
+
+def name_next(u: User) -> int | None:
+    """When the account name may be changed next (epoch seconds), or None if it may be changed now."""
+    if not u.name_changed:
+        return None
+    nxt = u.name_changed + NAME_LOCK_DAYS * 86400
+    return nxt if nxt > now() else None
+
+
 @r.post("/profile", dependencies=[Depends(csrf)])
 def profile(body: Profile, u: User = Depends(need_user)):
     n = re.sub(r"\s+", " ", body.name).strip()[:80]
-    if len(n) >= 2:
+    if len(n) >= 2 and n != u.name:
+        nxt = name_next(u)
+        if nxt:
+            raise HTTPException(423, f"Your name (as on Aadhaar) can be changed once a week. Next change: {time.strftime('%d %b', time.localtime(nxt))}.")
         u.name = n
+        # completing the health card right after sign-up is not a "change": the weekly rule starts after the first day
+        if u.name_changed or now() - (u.created or 0) > 86400:
+            u.name_changed = now()
     return me_json(u)
 
 

@@ -324,8 +324,8 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--mute);fo
   <!-- sign up -->
   <form class="v" data-v="signup" id="fUp" novalidate hidden>
     <h2>Create your account</h2><p class="sub">Free for your whole family. Takes a minute.</p>
-    <div class="fld"><label for="un">Full name</label><div class="inp"><input id="un" autocomplete="name" required maxlength="80"></div></div>
-    <div class="fld"><label for="ue">Email</label><div class="inp"><input id="ue" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div></div>
+    <div class="fld"><label for="un">Full name <small class="mute">as on Aadhaar</small></label><div class="inp"><input id="un" autocomplete="name" required maxlength="80" placeholder="Exactly as printed on your Aadhaar"></div></div>
+    <div class="fld"><label for="ue">Email</label><div class="inp"><input id="ue" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required></div></div>
     <div class="fld"><label for="up">Mobile number</label><div class="inp pfx"><input id="up" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="98765 43210" maxlength="14"></div></div>
     <div class="fld"><label for="upw">Password <a class="gen" id="genPw">Suggest a strong one</a></label><div class="inp"><input id="upw" type="password" autocomplete="new-password" required maxlength="128" aria-describedby="rules"><button class="eye" type="button" data-eye="upw">Show</button></div></div>
     <div class="meter" id="meter" data-s=""><i></i><i></i><i></i><i></i><i></i></div>
@@ -387,7 +387,7 @@ const ov=$('#ov'),msg=$('#am'),demoBox=$('#ad');let view='',ac=null,flow=null,co
 const AS_KEY='dk-auth-flow';
 function saveAuthState(h,sub){try{sessionStorage.setItem(AS_KEY,JSON.stringify({flow,codeKind,lastId,h,sub,t:Date.now()}))}catch(e){}}
 function clearAuthState(){try{sessionStorage.removeItem(AS_KEY)}catch(e){}}
-function restoreAuthState(){try{const s=JSON.parse(sessionStorage.getItem(AS_KEY));if(s&&s.flow&&s.codeKind&&Date.now()-s.t<10*60*1000){flow=s.flow;codeKind=s.codeKind;lastId=s.lastId;open(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin');codeView(s.h,s.sub);return true}}catch(e){}return false}
+function restoreAuthState(){try{const s=JSON.parse(sessionStorage.getItem(AS_KEY));if(s&&s.flow&&s.codeKind&&Date.now()-s.t<10*60*1000){flow=s.flow;codeKind=s.codeKind;lastId=s.lastId;open(codeKind==='signup'||codeKind==='second'?'signup':codeKind==='reset'?'reset':'signin');codeView(s.h,s.sub);return true}}catch(e){}return false}
 function say(t,kind='err'){msg.className='msg on '+kind;msg.textContent=t}
 function hush(){msg.className='msg';demoBox.className='msg demo'}
 function demo(r){if(r&&r.demo){demoBox.className='msg demo on';demoBox.textContent='Demo mode — code: '+r.demo}}
@@ -401,7 +401,7 @@ $$('[data-auth]').forEach(a=>a.addEventListener('click',e=>{if(!a.dataset.auth)r
 $('#ax').onclick=close;ov.addEventListener('mousedown',e=>{if(e.target===ov)close()});addEventListener('keydown',e=>{if(e.key==='Escape'&&ov.classList.contains('on'))close()});
 $$('[data-v-go]').forEach(a=>a.addEventListener('click',()=>show(a.dataset.vGo)));
 $$('[data-eye]').forEach(b=>b.onclick=()=>{const i=document.getElementById(b.dataset.eye);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'});
-const finish=async(r,offer=true)=>{clearAuthState();ME=r.user;if(INVITE){await joinFamily();location.href='/app';return}if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
+const finish=async(r,offer=true)=>{clearAuthState();ME=r.user;if(r.verifyNext&&r.verifyNext.flow){flow=r.verifyNext.flow;codeKind='second';lastId=r.verifyNext.channel;const h=r.verifyNext.channel==='phone'?'Verify your mobile':'Verify your email',sub=`One more step. Enter the 6-digit code we sent to ${r.verifyNext.sentTo}.`;codeView(h,sub);saveAuthState(h,sub);demo(r.verifyNext);return}if(INVITE){await joinFamily();location.href='/app';return}if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
 // passkey: explicit button + autofill (conditional UI) on the identifier field
 $('#pkBtn').onclick=async()=>{hush();if(!THT.passkey.supported()){say('This browser does not support passkeys. Use a password or a code.');return}const b=$('#pkBtn');if(ac){ac.abort();ac=null}busy(b,true);
  try{finish(await THT.passkey.signin({id:$('#sid').value.trim()}),false)}catch(e){if(e.message!=='aborted')say(e.message)}finally{busy(b,false)}};
@@ -425,10 +425,11 @@ function fill(t){t=t.replace(/\D/g,'').slice(0,6);boxes.forEach((b,i)=>b.value=t
 const code=()=>boxes.map(b=>b.value).join('');
 let rsT=0;function codeView(h,sub){$('#codeH').textContent=h;$('#codeSub').textContent=sub;boxes.forEach(b=>b.value='');show('code',{keepMsg:true});setTimeout(()=>boxes[0].focus(),80);
  let n=45;clearInterval(rsT);const rs=$('#rs');const tick=()=>{rs.innerHTML=n>0?`Resend in ${n}s`:`<a class="lnk" id="rsGo">Resend code</a>`;const g=$('#rsGo');if(g)g.onclick=resend;n--};tick();rsT=setInterval(()=>{tick();if(n<-1)clearInterval(rsT)},1000)}
-async function resend(){hush();try{if(codeKind==='signup'){const r=await THT.api('/signup/start',signupBody());flow=r.flow;demo(r);const h='Check your inbox',sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}else if(codeKind==='step'){$('#fPw').requestSubmit()}else{const r=await THT.api('/otp/start',{id:lastId,purpose:codeKind});flow=r.flow;demo(r);const h=$('#codeH').textContent,sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}}catch(e){say(e.message)}}
-$('#codeBack').onclick=()=>{clearAuthState();show(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin')};
+async function resend(){hush();try{if(codeKind==='second'){const me=ME||(await THT.api('/me')).user;const r=await THT.api('/contact/start',{value:lastId==='phone'?me.phone:me.email});flow=r.flow;demo(r);const h=$('#codeH').textContent,sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}else if(codeKind==='signup'){const r=await THT.api('/signup/start',signupBody());flow=r.flow;demo(r);const h='Check your inbox',sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}else if(codeKind==='step'){$('#fPw').requestSubmit()}else{const r=await THT.api('/otp/start',{id:lastId,purpose:codeKind});flow=r.flow;demo(r);const h=$('#codeH').textContent,sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}}catch(e){say(e.message)}}
+$('#codeBack').onclick=()=>{clearAuthState();if(codeKind==='second'){location.href=NEXT;return}show(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin')};
 $('#fCode').addEventListener('submit',async e=>{e.preventDefault();const c=code();if(c.length!==6){say('Enter all 6 digits.');return}const b=$('#fCode .btn.b');hush();busy(b,true);
  try{if(codeKind==='signup'){finish(await THT.api('/signup/verify',{flow,code:c}))}
+  else if(codeKind==='second'){await THT.api('/contact/verify',{flow,code:c});finish({user:ME||(await THT.api('/me')).user})}
   else if(codeKind==='step'){finish(await THT.api('/step/verify',{flow,code:c}))}
   else{const r=await THT.api('/otp/verify',{flow,code:c});if(r.reset){flow=r.reset;show('newpw');return}finish(r)}}
  catch(err){say(err.message);boxes.forEach(x=>x.value='');boxes[0].focus()}finally{busy(b,false)}});
@@ -445,7 +446,7 @@ function signupBody(){const ph=$('#up').value.replace(/\D/g,'');return{name:$('#
 $('#fUp').addEventListener('submit',async e=>{e.preventDefault();hush();const B=signupBody();
  if(B.name.length<2){say('Please enter your full name.');$('#un').focus();return}
  if(!/^\+91[6-9]\d{9}$|^\+(?!91)\d{10,15}$/.test(B.phone)){say('Please enter a valid mobile number.');$('#up').focus();return}
- if(B.email&&!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(B.email)){say('That email address does not look right.');$('#ue').focus();return}
+ if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(B.email)){say(B.email?'That email address does not look right.':'Please enter your email address.');$('#ue').focus();return}
  const R=THT.pw.rules(B.password,ctx()).filter(r=>!r.ok);if(R.length){say('Password: '+R[0].label.toLowerCase()+'.');$('#upw').focus();return}
  if(B.password!==$('#upw2').value){say('The two passwords do not match.');$('#upw2').focus();return}
  if(!B.terms){say('Please accept the terms to continue.');return}
@@ -464,5 +465,6 @@ if(JOINM){fetch('/api/v1/family/invite/'+INVITE).then(r=>r.json().then(j=>({ok:r
 </script>
 <!--live-p0-->
 <!--live-p2-->
+<!--live-p3-->
 </body>
 </html>

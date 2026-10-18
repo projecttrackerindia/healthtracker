@@ -216,6 +216,16 @@ class Audit(Base):
     detail: Mapped[str] = mapped_column(Text, default="")
 
 
+class AiCache(Base):
+    """A day's insight for one person, keyed by the records it was made from. Expires after two days."""
+
+    __tablename__ = "ai_cache"
+    key: Mapped[str] = mapped_column(String(96), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    t: Mapped[int] = mapped_column(Integer, default=now)
+    value: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
 class AiJob(Base):
     """What was analysed (never the document itself): kind, source engine, timing, token cost. For the admin dashboard."""
 
@@ -246,6 +256,7 @@ class User(Base):
     webauthn_id: Mapped[str] = mapped_column(String(64), default=lambda: uuid.uuid4().hex)  # opaque user handle
     household_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     member_id: Mapped[str | None] = mapped_column(String(32), nullable=True)  # which family profile is 'me' for this account
+    name_changed: Mapped[int | None] = mapped_column(Integer, nullable=True)  # the account name (as on Aadhaar) changes at most once a week
     failed: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[int | None] = mapped_column(Integer, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
