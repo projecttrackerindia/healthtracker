@@ -307,14 +307,14 @@ def claude_analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dic
         content.append({"type": "text", "text": "Document text:\n" + text[:12000]})
     content.append({"type": "text", "text": f"Document kind: {kind}. Patient context (from the app, may be incomplete): {json.dumps(ctx)[:1500]}. Return the JSON now."})
     try:
-        r = create(max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
+        r = create(max_tokens=2500, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
     except Exception as e:
         imgs = pdf_pages_as_images(data) if data and (mime == "application/pdf" or data[:4] == b"%PDF") else []
         if not imgs:
             raise
         _fail("pdf document block (retrying as images)", e)
         content = [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(b).decode()}} for b in imgs] + content[1:]
-        r = create(max_tokens=2500, temperature=0, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
+        r = create(max_tokens=2500, system=CLAUDE_SYSTEM, messages=[{"role": "user", "content": content}])
     raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
     raw = raw[raw.find("{"): raw.rfind("}") + 1]
     out = json.loads(raw)
@@ -347,7 +347,7 @@ def claude_card(data: bytes, mime: str) -> dict:
         src = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": base64.b64encode(data).decode()}}
     else:
         src = {"type": "image", "source": {"type": "base64", "media_type": mime, "data": base64.b64encode(data).decode()}}
-    r = create(max_tokens=1500, temperature=0, system=CARD_SYSTEM,
+    r = create(max_tokens=1500, system=CARD_SYSTEM,
                                messages=[{"role": "user", "content": [src, {"type": "text", "text": "Read this card and return the JSON now."}]}])
     raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
     out = json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
