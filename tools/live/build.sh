@@ -5,4 +5,5 @@ cd "$(dirname "$0")/../.."
 git show 40871ca:web/index.html > web/index.html
 python3 tools/live/p1.py >/dev/null
 python3 tools/live/p2.py >/dev/null
+python3 tools/live/p3.py >/dev/null
 python3 tools/compress.py --check && echo "web/index.html rebuilt"

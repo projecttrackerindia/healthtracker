@@ -76,6 +76,51 @@ def whoami(a: Admin = Depends(me)):
     return {"email": a.email, "role": a.role}
 
 
+# ---- settings and client errors -------------------------------------------------------------------------------------
+class ReviewerIn(BaseModel):
+    name: str = ""
+    qualification: str = ""
+    registration: str = ""
+    date: str = ""
+    scope: str = ""
+
+
+@r.get("/settings")
+def settings_get(a: Admin = Depends(me), db: Session = Depends(get_db)):
+    from .models import Setting
+    rv = db.get(Setting, "reviewer")
+    return {"reviewer": rv.value if rv else {}}
+
+
+@r.post("/settings/reviewer")
+def settings_reviewer(body: ReviewerIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    from .models import Setting
+    val = {k: v.strip()[:120] for k, v in body.model_dump().items()}
+    if not val["name"]:
+        val = {}
+    rv = db.get(Setting, "reviewer")
+    if rv:
+        rv.value = val
+    else:
+        db.add(Setting(key="reviewer", value=val))
+    log(db, a.email, "reviewer", str(val)[:200])
+    return {"reviewer": val}
+
+
+@r.get("/client-errors")
+def client_errors(a: Admin = Depends(me), db: Session = Depends(get_db)):
+    from .models import ClientError
+    rows = db.scalars(select(ClientError).order_by(ClientError.t.desc()).limit(100)).all()
+    return [{"id": e.id, "t": e.t, "message": e.message, "stack": e.stack[:600], "page": e.page, "ua": e.ua, "version": e.version, "count": e.count} for e in rows]
+
+
+@r.delete("/client-errors")
+def client_errors_clear(a: Admin = Depends(me), db: Session = Depends(get_db)):
+    from .models import ClientError
+    n = db.query(ClientError).delete()
+    return {"cleared": n}
+
+
 # ---- dashboard ------------------------------------------------------------------------------------------------------
 @r.post("/ai/test")
 def ai_test(a: Admin = Depends(me)):

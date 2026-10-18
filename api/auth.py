@@ -289,7 +289,8 @@ def signup_verify(body: FlowCode, request: Request, response: Response, db: Sess
     if d["email"] and db.scalar(select(User.id).where(User.email == d["email"])) or d["phone"] and db.scalar(select(User.id).where(User.phone == d["phone"])):
         raise HTTPException(409, "This account already exists. Sign in instead.")
     u = User(name=d["name"], email=d["email"], phone=d["phone"], pw_hash=d["pw"], pw_changed=now(),
-             email_verified=d["kind"] == "email", phone_verified=d["kind"] == "phone")
+             email_verified=d["kind"] == "email", phone_verified=d["kind"] == "phone",
+             two_step=bool(messaging.email_ready() or messaging.sms_ready()))  # an account unlocks the family's health data: password alone is not enough
     db.add(u)
     db.delete(f)
     db.flush()
@@ -645,11 +646,15 @@ def account_delete(body: DeleteAccount, request: Request, response: Response, db
         if h:  # orders and invoices stay for pharmacy and tax law, without personal details
             h.name, h.phone, h.email, h.lat, h.lng = "", "", "", None, None
         others = db.scalar(select(func.count(User.id)).where(User.household_id == u.household_id, User.id != u.id)) or 0
-        if not others:  # last account in the family: the encrypted store goes too
+        if not others:  # last account in the family: the encrypted store and documents go too
             st = db.get(HouseholdState, u.household_id)
             if st:
                 db.delete(st)
             db.query(Invite).filter(Invite.household_id == u.household_id).delete()
+            from . import storage
+            storage.delete_household(db, u.household_id)
+        from .models import PushSub
+        db.query(PushSub).filter(PushSub.user_id == u.id).delete()
     db.query(AuthSession).filter(AuthSession.user_id == u.id).delete()
     db.query(AuthFlow).filter(AuthFlow.user_id == u.id).delete()
     targets = [t for t in (u.email, u.phone) if t]
