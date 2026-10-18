@@ -4408,7 +4408,7 @@ SX.chg.fsave=([id],f)=>{const fd=new FormData(f),err=f.querySelector('.lv-err'),
   if(sex!==sex0&&m.id===S.active){SX.pendingModel=true;SX.applyModel()}toast('Saved '+name)}
  else{m={id:uid('m'),pid:null,name,rel,age,dob,sex,sexOk:true,w,h,av,ph,c:['','m','g','y'][S.members.length%4],shared:true,htid:SX.newHtid()};S.members.push(m);toast(name+' added')}
  const mid=SX.midOf(m.id);mid.blood=blood;m.bloodUnknown=!blood;
- SX.ledger('member',true,(id?'Updated ':'Added ')+name,m.id);famEdit=null;SX.save();SX.syncPreg();render();SX.paintWho();if(!id)SX.act.lvcardshow([m.id])};
+ SX.ledger('member',true,(id?'Updated ':'Added ')+name,m.id);famEdit=null;SX.save();SX.syncPreg();render();SX.paintWho();if(!id){walletSel='hc:'+m.id;go('wallet')}};
 SX.act.fdel=([id])=>{const m=SX.member(id);if(!m||m.rel==='You')return;SX.modal(`<h2>Remove ${E(m.name)}?</h2><p class="mute">This deletes ${E(m.name)}'s documents, results, medicines, contacts and Medical ID from this device. It cannot be undone.</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn s" data-sx="closeModal">Keep</button><button class="btn red" data-sx="fdel2:${id}">Delete ${E(m.name)}'s data</button></div>`,{label:'Remove member'})};
 SX.act.fdel2=async([id])=>{const m=SX.member(id);if(!m)return;
  try{const files=(S.vault||[]).filter(v=>v.m===id&&v.file);if(SX.files)for(const v of files)await SX.files.del(v.id)}catch(e){}
@@ -4946,7 +4946,7 @@ function setupCard(m){if(m.rel!=='You'||!SX.safetySetup)return '';const st=SX.sa
 function quickCard(){const q=[['⬆','Add a report','tab:vault'],['💊','Order medicine','tab:finder'],['📅','Book a visit','tab:appts'],['🪪','Medical ID','tab:mid'],['🩹','First aid','tab:aid'],['🫀','Heart Lab','tab:heart']];
  return `<div class="card"><h3>Quick actions</h3><div class="sx-qa">${q.map(([i,t,a])=>`<button data-sx="${a}"><i>${i}</i><span>${t}</span></button>`).join('')}</div></div>`}
 SX.reg('dash',{head:()=>{const m=SX.me(),f=m.name.split(' ')[0];return [m.rel==='You'?`Hello, ${f} 👋`:`${f}'s health`,dayName()+(m.rel==='You'?'. Here is today at a glance.':'. '+m.rel+'. Here is today at a glance.')]},
- render:()=>{const m=SX.me();return heroCard(m)+SX.lvCardTile(m)+setupCard(m)+dosesCard(m)+attentionCard(m)+visitCard(m)+pregCard(m)+bodyCard(m)+vitalsCard(m)+quickCard()},
+ render:()=>{const m=SX.me();return heroCard(m)+setupCard(m)+dosesCard(m)+attentionCard(m)+visitCard(m)+pregCard(m)+bodyCard(m)+vitalsCard(m)+quickCard()},
  after:()=>{}});
 
 // ---------------------------------------------------------------- Care › Appointments
@@ -5082,7 +5082,6 @@ function showCard(m,fresh){const canVerify=m.rel==='You'&&m.ph&&!userPhoneVerifi
  SX.modal(`<div class="lv-reveal ${fresh?'fresh':''}">${fresh?`<h2>${P('Your health card is ready')}</h2><p class="mute">${P('You can change these details any time in Family & Privacy.')}</p>`:`<h2>${P('Health card')}</h2>`}${cardHTML(m)}
   ${canVerify?`<div class="lv-vbox"><div><b>${P('Verify your mobile number')}</b><small class="mute">${SX.user?P('Get the verified badge and receive SOS confirmations.'):P('Sign in to verify your number and keep your card on every device.')}</small></div>${SX.user?`<button class="btn p sm" data-sx="lvverify:phone">${P('Verify now')}</button>`:`<a class="btn p sm" href="/signin?next=/app">${P('Sign in')}</a>`}</div>`:''}
   <div class="lv-row-end"><button class="btn s" data-sx="closeModal">${fresh?P('Continue'):P('Close')}</button></div></div>`,{label:P('Health card'),cls:'lv-mid'})}
-SX.act.lvcardshow=([id])=>showCard(SX.member(id)||SX.me(),false);
 SX.act.lvcardedit=()=>{SX.closeModal(true);cardOpen=false;openCard()};
 
 // ---------------------------------------------------------------- verify mobile or email (badge)
@@ -5186,9 +5185,7 @@ SX.reg('bill',{head:()=>[P('Bills'),P('Medical bills and receipts.')],after:()=>
 // ---------------------------------------------------------------- medicine ordering: no simulated orders for real people
 SX.act.place=()=>{SX.modal(`<h2>${P('Online ordering is not available yet')}</h2><p class="mute">${P('We are onboarding licensed pharmacies. Your basket is saved: you can show it at any pharmacy, or order here as soon as a pharmacy near you joins.')}</p><div class="lv-row-end"><button class="btn p" data-sx="closeModal">${P('OK')}</button></div>`,{label:'Ordering'})};
 
-// ---------------------------------------------------------------- Home tile + Family notices
-SX.lvCardTile=m=>{if(m.rel!=='You')return '';if(!cardDone(m))return `<div class="card lv-review"><div class="hd"><h3>${P('Finish your health card')}</h3></div><p class="mute sm" style="margin:0 0 10px">${P('Name, date of birth, sex, blood group and mobile number.')}</p><button class="btn p sm" data-sx="lvcardedit">${P('Complete now')}</button></div>`;
- return `<button class="card lv-hc" data-sx="lvcardshow:${m.id}" aria-label="${E(P('Open health card'))}"><div class="hd"><h3>${P('Health card')}</h3><span class="mute sm">${P('Tap to open')}</span></div>${cardHTML(m)}</button>`};
+// ---------------------------------------------------------------- Family notices
 SX.extend('family',{before(){const r=S.members.filter(m=>m.review);return r.length?`<div class="card wide lv-review"><h3>${P('Please check these profiles')}</h3><p class="mute sm" style="margin:0">${P('An earlier version added sample people. We removed the sample data and kept what you entered for')} ${r.map(m=>'<b>'+E(m.name)+'</b>').join(', ')}. ${P('Check the name and details, or remove the profile if it is not someone in your family.')}</p></div>`:''}});
 
 // ---------------------------------------------------------------- delete account (right to erasure)
@@ -5284,13 +5281,6 @@ SX.cardHTML=m=>{const pv=SX.verified.phone(m);
   <div class="lv-card-ph">${m.ph?`<small>${P('Mobile')}</small><b>${E(phShow(m.ph))}</b>${m.rel==='You'?vb(pv,'Mobile'):''}`:`<small>${P('Mobile')}</small><b class="mute">${P('Not added')}</b>`}</div>
   <div class="lv-card-id"><small>${P('Health tracker ID')}</small><b>${E(m.htid||'')}</b></div></div>`};
 const cardReady=m=>!!(m&&m.name&&m.name!=='You'&&m.dob&&m.sexOk);
-SX.lvCardTile=m=>{if(m.rel==='You'&&!SX.cardDone(m))return `<div class="card lv-review"><div class="hd"><h3>${P('Finish your health card')}</h3></div><p class="mute sm" style="margin:0 0 10px">${P('Name, date of birth, sex, blood group and mobile number.')}</p><button class="btn p sm" data-sx="lvcardedit">${P('Complete now')}</button></div>`;
- if(m.rel!=='You'&&!cardReady(m))return `<div class="card lv-review"><div class="hd"><h3>${P('Complete')} ${E(SX.poss(m.name))} ${P('health card')}</h3></div><p class="mute sm" style="margin:0 0 10px">${P('Date of birth, sex and blood group give the right body and ranges.')}</p><button class="btn p sm" data-sx="fedit2:${m.id}">${P('Complete now')}</button></div>`;
- return `<button class="card lv-hc" data-sx="lvcardshow:${m.id}" aria-label="${E(P('Open health card'))}"><div class="hd"><h3>${P('Health card')}</h3><span class="mute sm">${P('Tap to open')}</span></div>${SX.cardHTML(m)}</button>`};
-SX.act.lvcardshow=([id])=>{const m=SX.member(id)||SX.me(),canVerify=m.rel==='You'&&m.ph&&!SX.verified.phone(m);
- SX.modal(`<div class="lv-reveal"><h2>${P('Health card')}</h2>${SX.cardHTML(m)}
-  ${canVerify?`<div class="lv-vbox"><div><b>${P('Verify your mobile number')}</b><small class="mute">${SX.user?P('Get the verified badge and receive SOS confirmations.'):P('Sign in to verify your number and keep your card on every device.')}</small></div>${SX.user?`<button class="btn p sm" data-sx="lvverify:phone">${P('Verify now')}</button>`:`<a class="btn p sm" href="/signin?next=/app">${P('Sign in')}</a>`}</div>`:''}
-  <div class="lv-row-end" style="justify-content:space-between"><button class="btn s sm" data-sx="${m.rel==='You'?'lvcardedit':'fedit2:'+m.id}">${P('Edit details')}</button><span style="display:flex;gap:8px"><button class="btn s sm" data-sx="lvcardfull:${m.id}">${P('Show full screen')}</button><button class="btn s" data-sx="closeModal">${P('Close')}</button></span></div></div>`,{label:P('Health card'),cls:'lv-mid'})};
 SX.act.lvcardfull=([id])=>{const m=SX.member(id)||SX.me();SX.closeModal(true);const o=document.createElement('div');o.className='lv2-full';o.innerHTML=`<div class="lv2-full-in">${SX.cardHTML(m)}<p class="mute sm">${P('Show this at a hospital or lab desk.')}</p><button class="btn s" type="button">${P('Close')}</button></div>`;o.querySelector('button').onclick=()=>o.remove();o.addEventListener('click',e=>{if(e.target===o)o.remove()});document.body.append(o)};
 SX.act.fedit2=([id])=>{go('family');setTimeout(()=>SX.act.fedit([id]),0)};
 
