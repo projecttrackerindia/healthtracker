@@ -205,7 +205,7 @@ def test_model_fallback_on_not_found(monkeypatch):
     class FakeClient:
         messages = FakeMessages()
 
-    monkeypatch.setattr(anthropic, "Anthropic", lambda: FakeClient())
+    monkeypatch.setattr(anthropic, "Anthropic", lambda **kw: FakeClient())
     assert AI.create(max_tokens=5, messages=[]) == "ok"
     assert seen[0] == AI.FALLBACK_MODELS[0] and AI.current_model() == seen[1] != seen[0]
     assert AI.create(max_tokens=5, messages=[]) == "ok" and seen[-1] == AI.current_model()   # remembered: no retry next time

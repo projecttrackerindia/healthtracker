@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from . import ai as AI
+CATALOG_RX = {x["id"]: bool(x.get("rx")) for x in AI.CATALOG}
 from .db import get_db
 from .models import AiCache, AiJob, Household, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
 from .security import valid_key
@@ -243,10 +244,13 @@ def _status(o: Order):
     if o.status == "cancelled":
         return steps, -1
     live = max(i for i, (k, _) in enumerate(steps) if any(t["s"] == k for t in (o.timeline or [])) or i == 0)
-    # demo progression (partners advance orders from the admin panel; otherwise the clock does)
-    el = now() - o.created
-    demo = max(i for i, s in enumerate(DEMO_SECONDS) if el >= s)
-    i = max(live, demo)
+    i = live
+    if os.getenv("APP_ENV", "production") != "production":
+        # demo progression on staging only: in production, only the partner (or admin) advances an order
+        el = now() - o.created
+        i = max(live, max(i for i, s in enumerate(DEMO_SECONDS) if el >= s))
+    if o.status in ("return_requested", "returned", "refunded"):
+        return steps, i
     return steps, i
 
 
@@ -254,7 +258,7 @@ def order_json(o: Order):
     steps, i = _status(o)
     return {"id": o.id, "kind": o.kind, "store": store_json(o.store) if o.store else None, "items": o.items, "subtotal": o.subtotal, "fee": o.fee,
             "discount": o.discount, "total": o.total, "address": o.address, "member": o.member, "rxShared": o.rx_shared, "slot": o.slot,
-            "status": "cancelled" if i < 0 else steps[i][0], "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
+            "status": "cancelled" if i < 0 else (o.status if o.status in ("return_requested", "returned", "refunded") else steps[i][0]), "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
             "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline}
 
 
@@ -281,13 +285,16 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
             if not it:
                 continue
             q = max(1, min(20, int(i.get("qty", 1))))
-            lines.append({"sku": it.sku, "name": it.name, "qty": q, "price": it.price, "mrp": it.mrp, "rx": bool(i.get("rx")), "member": str(i.get("member", ""))[:40]})
+            rx = bool(i.get("rx")) or bool(CATALOG_RX.get(it.sku))  # the catalogue decides, not the browser
+            lines.append({"sku": it.sku, "name": it.name, "qty": q, "price": it.price, "mrp": it.mrp, "rx": rx, "member": str(i.get("member", ""))[:40]})
             sub += it.price * q
             disc += (it.mrp - it.price) * q
             it.stock = max(0, it.stock - q)
         fee = 0 if (s.free_above and sub >= s.free_above) or not s.delivery else s.delivery_fee
     if not lines:
         raise HTTPException(400, "nothing available at this store")
+    if body.kind != "lab" and any(l.get("rx") for l in lines) and not body.rxShared:
+        raise HTTPException(400, "This order has prescription-only medicines. Upload or choose the prescription first; the pharmacist must see it before dispensing.")
     o = Order(household_id=h.id, store_id=s.id, kind=body.kind, items=lines, subtotal=sub, fee=fee, discount=disc, total=sub + fee,
               address=body.address[:240], member=body.member[:80], rx_shared=body.rxShared, slot=body.slot[:40], payment=body.payment[:24],
               timeline=[{"s": "placed", "t": now()}], eta=now() + s.eta_min * 60)
