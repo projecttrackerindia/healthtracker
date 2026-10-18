@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from .ai import LAST_ERROR as AI_LAST_ERROR
 from .db import get_db
-from .models import Admin, AiJob, Audit, Household, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
+from .models import Admin, AiJob, Audit, Household, HouseholdState, HouseholdStateHistory, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
 from .security import check_pw, hash_pw, sign, verify
 from .seed import CATALOG, TESTS
 
@@ -339,6 +339,28 @@ def households(q: str = "", a: Admin = Depends(me), db: Session = Depends(get_db
     ac = dict(db.execute(select(AiJob.household_id, func.count(AiJob.id)).group_by(AiJob.household_id)).all())
     return {"households": [{"id": h.id, "key": h.key[:6] + "…", "name": h.name, "city": h.city, "plan": h.plan, "planUntil": h.plan_until, "members": h.members, "blocked": h.blocked,
                             "created": h.created, "lastSeen": h.last_seen, "orders": oc.get(h.id, 0), "ai": ac.get(h.id, 0), "phone": h.phone, "email": h.email, "notes": h.notes} for h in rows]}
+
+
+@r.get("/households/{hid}/history")
+def household_history(hid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Previous versions of the family's record (contents stay encrypted; only sizes, times and who saved are shown)."""
+    cur = db.get(HouseholdState, hid)
+    rows = db.scalars(select(HouseholdStateHistory).where(HouseholdStateHistory.household_id == hid).order_by(HouseholdStateHistory.version.desc()).limit(60)).all()
+    return {"current": {"version": cur.version, "size": cur.size, "updatedBy": cur.updated_by} if cur else None,
+            "history": [{"id": x.id, "version": x.version, "size": x.size, "t": x.t, "updatedBy": x.updated_by, "sections": len(x.sect or {})} for x in rows]}
+
+
+@r.post("/households/{hid}/restore/{hist_id}")
+def household_restore(hid: str, hist_id: int, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Put an earlier version back as the live record. The replaced one is itself kept in history, so a restore can be undone."""
+    x = db.get(HouseholdStateHistory, hist_id)
+    cur = db.get(HouseholdState, hid)
+    if not x or x.household_id != hid or not cur:
+        raise HTTPException(404)
+    db.add(HouseholdStateHistory(household_id=hid, version=cur.version, blob=cur.blob, sect=cur.sect or {}, size=cur.size, updated_by=cur.updated_by or ""))
+    cur.version, cur.blob, cur.sect, cur.size, cur.updated_by = cur.version + 1, x.blob, x.sect or {}, x.size, "restore:" + a.email
+    log(db, a.email, f"household.restore {hid}", f"from version {x.version}")
+    return {"ok": True, "version": cur.version}
 
 
 @r.put("/households/{hid}")

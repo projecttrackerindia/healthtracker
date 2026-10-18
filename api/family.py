@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from . import messaging
 from .auth import COOKIE, csrf, current_user, limit, need_user, norm_id  # noqa: F401
 from .db import get_db
-from .models import Household, HouseholdState, Invite, User, now
+from .models import Household, HouseholdState, HouseholdStateHistory, Invite, User, now
 from .security import SECRET
 
 r = APIRouter(prefix="/api/v1")
@@ -118,6 +118,9 @@ def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db), u: U
         raise HTTPException(413, "Your family's data is too large to sync (3 MB). Remove old items or contact support.")
     sect = {k: int(v) for k, v in (body.sect or {}).items() if isinstance(v, (int, float))}
     if st:
+        # never lose data: the version being replaced is kept for 30 days and can be restored by support
+        db.add(HouseholdStateHistory(household_id=h.id, version=st.version, blob=st.blob, sect=st.sect or {}, size=st.size or len(st.blob), updated_by=st.updated_by or ""))
+        db.query(HouseholdStateHistory).filter(HouseholdStateHistory.household_id == h.id, HouseholdStateHistory.t < now() - 30 * 86400).delete()
         st.version, st.blob, st.sect, st.size, st.updated_by = cur + 1, blob, sect, len(blob), u.id
     else:
         db.add(HouseholdState(household_id=h.id, version=1, blob=blob, sect=sect, size=len(blob), updated_by=u.id))

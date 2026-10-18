@@ -89,3 +89,17 @@ def test_cannot_join_second_family_with_data():
     signup(joiner)
     assert joiner.post("/api/v1/family/join", headers=H, json={"token": ta}).status_code == 200
     assert joiner.post("/api/v1/family/join", headers=H, json={"token": tb}).status_code == 409
+
+
+def test_every_sync_keeps_the_previous_version():
+    from api import db as DB
+    from api.models import HouseholdStateHistory
+    from sqlalchemy import select as sel
+    c = client(); signup(c)
+    base = {"members": [{"id": "m1", "name": "A", "rel": "You"}]}
+    v1 = c.put("/api/v1/sync", headers=H, json={"base": 0, "state": base}).json()["version"]
+    c.put("/api/v1/sync", headers=H, json={"base": v1, "state": {**base, "vitals": {"m1": [{"hr": 70}]}}})
+    c.put("/api/v1/sync", headers=H, json={"base": v1 + 1, "state": base})          # a device wiped the vitals by mistake
+    with DB.session() as db:
+        rows = db.scalars(sel(HouseholdStateHistory).order_by(HouseholdStateHistory.version)).all()
+        assert [r.version for r in rows][-2:] == [1, 2] and all(r.blob for r in rows)

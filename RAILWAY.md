@@ -89,6 +89,17 @@ to the uncompressed file and prints a warning in the deploy log), so a forgotten
 * **Health assistant.** `/api/v1/ai/ask` answers questions about a person's own records from a structured summary the app builds (readings, results with dates, medicines, trackers) — never documents. `/api/v1/ai/insight` prepares a daily insight per person, cached for the day. Monthly caps per plan: questions 20 / 300 / unlimited, insights 10 / 200 / unlimited. Users consent once (recorded in the consent log).
 * **Device readings.** The app reads Bluetooth devices that use the standard health profiles (blood pressure, pulse oximeter, weight scale, thermometer, heart rate) in Chrome/Edge on Android, Windows and Mac. Apple Health and Health Connect need the phone app (next milestone).
 
+## Where every byte lives (round 6)
+
+* **Family record** (profiles, readings, results, medicines, cards, care plans, chat with the assistant): one AES-GCM-encrypted JSON per family in Postgres (`household_state`). **Every previous version is kept for 30 days** in `household_state_history`; an admin can list and restore them (`GET /api/v1/admin/households/{id}/history`, `POST .../restore/{history_id}`). A bad sync from one phone can always be undone.
+* **Documents** (reports, prescriptions, card scans — including anything attached in the assistant chat): encrypted with `DATA_KEY` and stored in the S3 bucket (`S3_*`), with the index in Postgres (`stored_files`). Uploads queue on the device while offline and backfill on sign-in.
+* **Accounts, orders, bookings, share links, push subscriptions, AI usage, client errors**: ordinary Postgres tables.
+* Nothing health-related is kept only in the browser once the person is signed in; the browser copy is a cache.
+
+## Nearby places and location
+
+`/api/v1/geo/where` (reverse geocoding) and `/api/v1/places` (hospitals, clinics, labs, pharmacies, blood banks) use OpenStreetMap's Nominatim and Overpass services from the server, cached per ~1 km cell, at most one call a second, with a real User-Agent, per their usage policy. Partner stores from the admin panel are merged in and marked `partner`. Map tiles come from tile.openstreetmap.org (allowed in the CSP). For heavier traffic later, set `NOMINATIM_URL` / `OVERPASS_URL` to a paid or self-hosted mirror; nothing else changes.
+
 ## Operations checklist
 
 * `/admin` → **System** shows the clinical reviewer, which services are on (smart reading, documents, push) and the last 100 app errors reported by phones.

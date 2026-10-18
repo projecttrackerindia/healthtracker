@@ -316,6 +316,20 @@ class AuthFlow(Base):
     expires: Mapped[int] = mapped_column(Integer)
 
 
+class HouseholdStateHistory(Base):
+    """Every previous version of a family's record, kept for 30 days, so a bad sync from one device can always be undone."""
+
+    __tablename__ = "household_state_history"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    blob: Mapped[bytes] = mapped_column(LargeBinary)
+    sect: Mapped[dict] = mapped_column(JSON, default=dict)
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    updated_by: Mapped[str] = mapped_column(String(32), default="")
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
 class HouseholdState(Base):
     """The family's app data (profiles, results, medicines, cards...) as one encrypted JSON blob per household, so every
     signed-in family member sees the same records on every device. Files (photos, PDFs) are not included."""

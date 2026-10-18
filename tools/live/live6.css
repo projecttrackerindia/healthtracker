@@ -1,0 +1,52 @@
+/* live layer 6: setup, today, location, map, care mode, donors, bills */
+.lv6-loc{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;max-width:180px}
+.lv6-loc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lv6-loc i{font-style:normal}
+@media (max-width:720px){.lv6-loc{max-width:120px;padding:0 9px;font-size:12px}}
+.lv6-ring{--p:0;width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--blue) calc(var(--p)*1%),color-mix(in srgb,var(--ink) 10%,transparent) 0);display:grid;place-items:center;flex:none}
+.lv6-ring::before{content:"";position:absolute;width:50px;height:50px;border-radius:50%;background:var(--card)}.lv6-ring{position:relative}.lv6-ring b{position:relative;font-size:13px}
+.lv6-ring.sm{width:48px;height:48px}.lv6-ring.sm::before{width:36px;height:36px}.lv6-ring.sm b{font-size:11px}
+.lv6-setup{display:flex;gap:16px;align-items:center}.lv6-setupcard{display:flex;gap:12px;align-items:center}.lv6-setupcard .grow b{display:block;font-size:14px}.lv6-setupcard .grow small{display:block}
+.lv6-steps{display:grid;gap:8px;margin-top:14px}.lv6-step{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card)}
+.lv6-step i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:12px;background:color-mix(in srgb,var(--ink) 8%,transparent);flex:none}
+.lv6-step>div{flex:1;min-width:0}.lv6-step.done{opacity:.72}.lv6-step.done i{background:#12b886;color:#fff}.lv6-step b{display:block;font-size:14px}.lv6-step small{color:var(--mute);line-height:1.4}
+.lv6-today .lv6-tl{display:grid;gap:6px}.lv6-ti{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.lv6-ti i{font-style:normal;font-size:18px;width:26px;text-align:center}.lv6-ti div{flex:1;min-width:0}.lv6-ti b{display:block;font-size:13.5px}.lv6-ti small{color:var(--mute);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lv6-ti span{color:var(--mute)}
+.lv6-ti.ok{border-color:color-mix(in srgb,#12b886 45%,transparent)}.lv6-ti.care{border-color:color-mix(in srgb,var(--amber) 70%,transparent);background:color-mix(in srgb,var(--amber) 8%,var(--card))}
+.lv6-season{margin-top:12px;display:grid;gap:6px}.lv6-season>small{color:var(--mute);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.lv6-season button{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.lv6-season button small{grid-column:1/-1;color:var(--mute);font-size:12px}.lv6-risk{font-size:10.5px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 8%,transparent);align-self:start}
+.lv6-risk.high{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}.lv6-risk.medium{background:color-mix(in srgb,var(--amber) 18%,transparent)}
+.lv6-map{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--line);background:#e9eef3;margin-bottom:10px}
+.lv6-map-in{position:absolute;left:50%;top:0}
+.lv6-tiles img{position:absolute;width:256px;height:256px;max-width:none;pointer-events:none;user-select:none}
+.lv6-pin{position:absolute;transform:translate(-50%,-100%);border:0;background:transparent;padding:0;cursor:pointer}
+.lv6-pin b{display:grid;place-items:center;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--ink);color:var(--bg);font-size:10px;box-shadow:0 2px 6px rgba(0,0,0,.3)}.lv6-pin b{font-style:normal}
+.lv6-pin b span{display:block;transform:rotate(45deg)}.lv6-pin.partner b{background:var(--blue);color:#fff}.lv6-pin.on b{background:var(--red);color:#fff;width:30px;height:30px}
+.lv6-me{position:absolute;width:14px;height:14px;border-radius:50%;background:#1f6feb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(31,111,235,.25);transform:translate(-50%,-50%)}
+.lv6-osm{position:absolute;right:6px;bottom:4px;font-size:10px;color:#333;background:rgba(255,255,255,.8);padding:1px 5px;border-radius:4px;text-decoration:none}
+.lv6-pls{display:grid;gap:6px;max-height:420px;overflow:auto}.lv6-pl{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--line);cursor:pointer}
+.lv6-pl i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:10.5px;font-weight:700;flex:none}.lv6-pl.partner i{background:var(--blue);color:#fff}.lv6-pl.on{border-color:var(--red);background:color-mix(in srgb,var(--red) 5%,var(--card))}
+.lv6-pl b{font-size:13.5px}.lv6-pl small{display:block;color:var(--mute);line-height:1.4}.lv6-pla{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.lv-tag.red{background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red)}
+.lv6-note{margin-top:12px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.lv6-att{padding:0 12px!important;flex:none}.lv6-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.lv6-hist small{line-height:1.45}.lv6-vn{color:var(--ink);font-style:italic}
+.lv6-bill .lv6-bk{font-size:20px;width:30px;text-align:center}.lv6-pol summary{cursor:pointer;font-weight:600;font-size:13px;margin-top:6px}.lv6-pol b{display:block;margin-top:10px;font-size:13px}
+/* care mode */
+.lv6-cp{border:1px solid color-mix(in srgb,var(--amber) 55%,transparent);background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 12%,var(--card)),var(--card))}
+.lv6-cph{display:flex;gap:14px;align-items:center}.lv6-cpi{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:color-mix(in srgb,var(--amber) 22%,transparent)}
+.lv6-cph h3{margin:0;font-size:20px}.lv6-cph small{color:var(--mute);letter-spacing:.04em;text-transform:uppercase;font-size:11px;font-weight:600}
+.lv6-cpa{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.lv6-cprev{margin:12px 0 0;font-size:13px;color:var(--mute)}.lv6-cprev.soon{color:var(--amber);font-weight:600}.lv6-cprev.late{color:var(--red);font-weight:600}
+.lv6-cpg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;grid-column:1/-1}.lv6-cpg .card{margin:0}
+.lv6-sig{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.lv6-sig>div{padding:10px 12px;border-radius:12px;border:1px solid var(--line)}.lv6-sig b{display:block;font-size:18px}.lv6-sig b i{font-style:normal;font-size:11px;color:var(--mute)}.lv6-sig small{display:block;color:var(--mute);font-size:11.5px}
+.lv6-sig>div.high,.lv6-sig>div.low{border-color:color-mix(in srgb,var(--amber) 70%,transparent);background:color-mix(in srgb,var(--amber) 8%,var(--card))}
+.lv6-red li{margin:4px 0}
+body[data-caremode=on] .nx-ind,body[data-caremode=on] .sx-tabs button.on,body[data-caremode=on] .sx-tabs [aria-selected=true]{background:var(--amber)!important;color:#1b1b1b!important}
+body[data-caremode=on] #page .btn.p{background:#b45309;border-color:#b45309}
+body[data-caremode=on] .hdr h1::before,body[data-caremode=on] .sx-head h1::before{content:"● ";color:var(--amber);font-size:14px;vertical-align:middle}
+.lnk{background:none;border:0;padding:0;color:var(--blue);font:inherit;cursor:pointer;text-decoration:underline}
+/* donors */
+.lv6-dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:stretch}
+.lv6-sw{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--line)}.lv6-sw b{display:block;font-size:14px}.lv6-sw small{color:var(--mute)}
+.lv6-elig{padding:10px 12px;border-radius:12px;border:1px solid var(--line)}.lv6-elig b{display:block;font-size:15px}.lv6-elig small{color:var(--mute)}.lv6-elig.ok{border-color:color-mix(in srgb,#12b886 50%,transparent);background:color-mix(in srgb,#12b886 8%,var(--card))}.lv6-elig.wait{border-color:color-mix(in srgb,var(--amber) 60%,transparent)}
+.lv6-cardd{margin-top:6px;font-size:11px;opacity:.85;letter-spacing:.02em}

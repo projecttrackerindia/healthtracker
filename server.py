@@ -96,6 +96,9 @@ app.include_router(auth_api.r)
 app.include_router(family_api.r)
 app.include_router(more_api.r)
 app.include_router(admin_api.r)
+from api import places as places_api, billing as billing_api  # noqa: E402
+app.include_router(places_api.r)
+app.include_router(billing_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)
@@ -106,7 +109,7 @@ CSP = (
     "script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com; "
     "worker-src 'self' blob:; "
     "style-src 'self' 'unsafe-inline'; "
-    "img-src 'self' data: blob: https://i.ytimg.com; "
+    "img-src 'self' data: blob: https://i.ytimg.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org; "
     "font-src 'self' data:; "
     "connect-src 'self' blob: data: https://api.razorpay.com https://lumberjack.razorpay.com; "
     "media-src 'self' blob:; "
