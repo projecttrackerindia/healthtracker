@@ -41,7 +41,7 @@ OTP_DEMO=0
 | `SECRET_KEY` | yes | Signs admin sessions. Generate: `python -c "import secrets;print(secrets.token_hex(32))"`. Changing it signs everyone out. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | yes | First admin, created on first start. If the password is empty a random one is generated and printed once in the deploy logs. Setting a new `ADMIN_PASSWORD` later resets that admin's password on the next restart. |
 | `DATABASE_URL` | yes for production | `${{Postgres.DATABASE_URL}}` references the plugin (use the plugin's real name if you renamed it). Without it the app uses SQLite, which is wiped on every redeploy. |
-| `ANTHROPIC_API_KEY` | no | AI analysis of reports, prescriptions and photos. Without it a basic reader handles PDFs with text and typed text. |
+| `ANTHROPIC_API_KEY` | yes for photos | Smart reading of reports, prescriptions, photos and cards. Without it a basic reader handles PDFs with text and typed text. After setting it, open `/admin` → Dashboard → **Test connection** to confirm the server can reach the model; the exact error is shown there, never to users. |
 | `DOKKO_AI_MODEL` | no | Default `claude-sonnet-5-5`. |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | no | Live subscription payments (UPI, cards, net banking). Use test keys first. Without them billing is demo-only. |
 | `RP_ID`, `APP_ORIGIN` | yes for passkeys | Domain the passkeys belong to, and the exact https address of the site. If empty they are taken from the request. |

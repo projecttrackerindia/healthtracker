@@ -76,6 +76,13 @@ def whoami(a: Admin = Depends(me)):
 
 
 # ---- dashboard ------------------------------------------------------------------------------------------------------
+@r.post("/ai/test")
+def ai_test(a: Admin = Depends(me)):
+    """Why is smart reading off? Calls the model once and returns the exact error (admins only)."""
+    from . import ai as AI
+    return AI.test_connection()
+
+
 @r.get("/stats")
 def stats(a: Admin = Depends(me), db: Session = Depends(get_db)):
     t = now()
