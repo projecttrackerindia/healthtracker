@@ -5513,8 +5513,11 @@ function rehash(stamp){const st=pick(),t=Date.now();let changed=false;for(const 
 let pushT=0,applying=false,pushing=false;
 const sv0=SX.save;SX.save=(now)=>{sv0(now);if(applying)return;if(rehash(true)){meta.dirty=true;saveMeta();schedulePush()}};
 function schedulePush(){if(!SX.user||!meta.dirty)return;clearTimeout(pushT);pushT=setTimeout(push,2500)}
-async function push(){if(!SX.user||pushing||!navigator.onLine)return;pushing=true;try{const r=await J('/sync','PUT',{base:meta.v,state:pick(),sect:meta.sect});meta.v=r.version;meta.dirty=false;saveMeta();paintSync('ok')}
- catch(e){if(e.status===409&&e.detail&&e.detail.state){merge(e.detail);pushing=false;return push()}if(e.status===401){SX.user=null}else if(e.status===413){toast(e.message)}paintSync(navigator.onLine?'err':'off')}finally{pushing=false}}
+async function push(tries){tries=tries||0;if(!SX.user||pushing||!navigator.onLine)return;pushing=true;
+ try{const r=await J('/sync','PUT',{base:meta.v,state:pick(),sect:meta.sect});meta.v=r.version;meta.dirty=false;saveMeta();paintSync('ok');pushing=false}
+ catch(e){pushing=false;
+  if(e.status===409&&e.detail&&e.detail.state&&tries<5){merge(e.detail);push(tries+1);return}
+  if(e.status===401){SX.user=null}else if(e.status===413){toast(e.message)}paintSync(navigator.onLine?'err':'off')}}
 function apply(state,version,sect){applying=true;try{for(const k of Object.keys(S))if(!EXCL.has(k))delete S[k];for(const k of Object.keys(state||{}))if(!EXCL.has(k))S[k]=state[k];if(!Array.isArray(S.members)||!S.members.length)S.members=[{id:'m1',pid:null,name:'You',rel:'You',age:0,sex:'male',w:0,h:0,av:'YO',c:'',shared:true}];
   SX.runSeeds();S.members.forEach(m=>{if(m.dob&&SX.ageFrom)m.age=SX.ageFrom(m.dob);if(!m.htid&&SX.newHtid)m.htid=SX.newHtid()});
   const me=SX.user&&SX.user.memberId;if(meta.first&&me&&S.members.some(m=>m.id===me))S.active=me;if(!S.members.some(m=>m.id===S.active))S.active=S.members[0].id;
