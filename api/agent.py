@@ -14,6 +14,7 @@ import time
 
 from . import ai as AI
 
+FOCUS = {"heart", "lungs", "liver", "kidneys", "pancreas", "thyroid", "stomach", "intestines", "brain", "spleen", "bones", "spine", "uterus", "prostate", "bladder", "breast", "skin", "eyes", "blood", "whole_body"}
 ASK_CAP = {"free": 20, "family": 300, "plus": 100000}
 INSIGHT_CAP = {"free": 10, "family": 200, "plus": 100000}
 
@@ -31,7 +32,8 @@ Rules you never break:
 - Do not mention AI vendors, model names or that you are an AI model. Refer to yourself as "the health assistant".
 - Answer in the language of the question (English, Hindi or Telugu); keep medical terms in English.
 Output ONLY a JSON object: {"answer": string, "sources": [short strings naming the records used, e.g. "HbA1c 6.8% · 12 Jun 2026"],
-"actions": [0-3 short strings: things to record, ask or do], "urgent": boolean}"""
+"actions": [0-3 short strings: things to record, ask or do], "urgent": boolean,
+"focus": [0-3 body areas the answer is about, for the 3D body, from exactly this list: heart, lungs, liver, kidneys, pancreas, thyroid, stomach, intestines, brain, spleen, bones, spine, uterus, prostate, bladder, breast, skin, eyes, blood, whole_body]}"""
 
 INSIGHT_SYSTEM = """You write a short daily insight for one person inside TheHealthTracker, an Indian family health app, from the JSON
 context the app sends (profile, readings with dates, lab results with flags, medicines and adherence, trackers, vaccines).
@@ -53,7 +55,8 @@ def ask(question: str, ctx: dict) -> dict:
                   messages=[{"role": "user", "content": f"Family context (JSON): {json.dumps(ctx, ensure_ascii=False)[:9000]}\n\nQuestion: {q}\n\nReturn the JSON now."}])
     out = _json("".join(b.text for b in r.content if getattr(b, "type", "") == "text"))
     return {"answer": str(out.get("answer", ""))[:1600], "sources": [str(x)[:120] for x in (out.get("sources") or [])][:6],
-            "actions": [str(x)[:160] for x in (out.get("actions") or [])][:3], "urgent": bool(out.get("urgent"))}
+            "actions": [str(x)[:160] for x in (out.get("actions") or [])][:3], "urgent": bool(out.get("urgent")),
+            "focus": [str(x) for x in (out.get("focus") or []) if str(x) in FOCUS][:3]}
 
 
 def insight(ctx: dict) -> dict:

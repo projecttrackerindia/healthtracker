@@ -1393,6 +1393,52 @@ body[data-page=assist] .lv5-agent{min-height:70vh;display:flex;flex-direction:co
 @media (max-width:720px){.lv6-loc{max-width:40px;width:40px;padding:0;justify-content:center}.lv6-loc span{display:none}.topb{flex-wrap:wrap;row-gap:6px;justify-content:flex-end}.top{overflow:hidden}}
 @media (max-width:720px){nav#nav{overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}nav#nav::-webkit-scrollbar{display:none}nav#nav button{scroll-snap-align:center}}
 </style>
+<style id="live8-css">/* live layer 8: assistant design, uniform cards, pregnancy tabs */
+body[data-page=assist] .lv5-agent{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px 16px 12px;box-shadow:0 18px 50px -30px rgba(15,18,33,.35)}
+body[data-page=assist] .lv5-agent .hd h3{font-size:17px}body[data-page=assist] .lv5-agent .hd small{display:block;margin-top:2px}
+.lv5-chat{gap:10px!important;padding:8px 2px 14px!important}
+.lv5-chat .bub{position:relative;max-width:88%;padding:11px 14px 9px 14px;border-radius:16px 16px 16px 4px;background:color-mix(in srgb,var(--ink) 5%,var(--card));border:1px solid var(--line);align-self:flex-start;margin-left:30px}
+.lv5-chat .bub::before{content:"✦";position:absolute;left:-30px;top:6px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:linear-gradient(135deg,var(--blue),#7c3aed);color:#fff}
+.lv5-chat .bub.me{align-self:flex-end;margin-left:0;margin-right:0;border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,var(--blue),#4f46e5);color:#fff;border:0;max-width:78%}.lv5-chat .bub.me::before{display:none}.lv5-chat .bub.me small{color:rgba(255,255,255,.75)}
+.lv5-chat .bub p{font-size:14px!important;line-height:1.55!important}
+.lv5-chat .bub .lv5-src{margin-top:8px!important}.lv5-chat .bub .lv5-src span{background:color-mix(in srgb,var(--blue) 8%,transparent)!important;border-color:color-mix(in srgb,var(--blue) 25%,transparent)!important;color:var(--blue)!important}
+.lv5-chat .bub ul{margin:8px 0 0!important;padding-left:18px!important;font-size:13px!important;line-height:1.5}
+.lv8-focus{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}.lv8-focus small{color:var(--mute);font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;margin-right:2px}
+.lv8-fc{border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);background:color-mix(in srgb,var(--blue) 8%,var(--card));color:var(--ink);border-radius:99px;padding:5px 11px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}.lv8-fc:hover{background:var(--blue);color:#fff}
+.lv6-acts .btn{border-radius:99px}
+.lv8-typing{display:flex;gap:5px;align-items:center;min-height:38px}.lv8-typing span{width:7px;height:7px;border-radius:50%;background:var(--mute);animation:lv8dot 1.1s infinite}.lv8-typing span:nth-child(2){animation-delay:.18s}.lv8-typing span:nth-child(3){animation-delay:.36s}
+@keyframes lv8dot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.lv5-ask{position:sticky;bottom:0;background:var(--card);padding:8px 0 2px;border-top:1px solid var(--line);margin-top:4px}
+.lv5-ask input{height:46px!important;border-radius:99px!important;padding:0 18px!important;box-shadow:inset 0 1px 2px rgba(0,0,0,.04)}.lv5-ask .btn.p{border-radius:99px;height:46px;padding:0 20px}.lv5-ask .lv6-att{border-radius:99px!important;height:46px;width:46px}
+.lv5-sugg{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.lv5-sugg::-webkit-scrollbar{display:none}.lv5-sugg button{white-space:nowrap}
+/* wallet: every card the same size, only what matters until opened */
+.lv2-slot>.lv-card,.lv2-slot>.lv2-card{height:190px;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column}
+.lv2-slot .lv-card .lv-card-grid,.lv2-slot .lv-card .lv-card-ph{display:none!important}.lv2-slot .lv-card .lv-card-name{margin-top:auto;font-size:21px}.lv2-slot .lv-card .lv-card-id{margin-top:6px}
+.lv2-min .lv2-card-name{font-size:19px;font-weight:700;margin-bottom:2px}
+/* pregnancy tabs */
+.lv8-ph{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.lv8-phi{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:color-mix(in srgb,var(--blue) 12%,transparent)}
+.lv8-ph h3{margin:0;font-size:19px}.lv8-ph p{margin:2px 0 0}.lv8-wk{margin-left:auto;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px;border-radius:99px;background:color-mix(in srgb,var(--blue) 10%,transparent);color:var(--blue)}
+.lv8-kickg{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}@media (max-width:720px){.lv8-kickg{grid-template-columns:1fr;justify-items:center}}
+.lv8-ring{--p:0;width:230px;height:230px;border-radius:50%;padding:12px;background:conic-gradient(#12b886 calc(var(--p)*1%),color-mix(in srgb,var(--ink) 8%,transparent) 0);transition:background .4s}
+.lv8-tap{position:relative;width:100%;height:100%;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#8fb0ff,var(--blue) 70%);color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 18px 40px -16px color-mix(in srgb,var(--blue) 70%,transparent),inset 0 -6px 18px rgba(0,0,0,.18);overflow:hidden;transition:transform .08s}
+.lv8-tap:active{transform:scale(.96)}.lv8-tap b{font-size:64px;line-height:1;letter-spacing:-.04em}.lv8-tap small{font-size:12px;opacity:.9;text-align:center;padding:0 18px}
+.lv8-tap:not(.on){background:radial-gradient(circle at 35% 30%,#5ee3c3,#12b886 70%);box-shadow:0 18px 40px -16px rgba(18,184,134,.7)}.lv8-tap:not(.on) b{font-size:44px}
+.lv8-rip{position:absolute;inset:0;border-radius:50%;pointer-events:none}.lv8-rip.go{animation:lv8rip .7s ease-out}
+@keyframes lv8rip{0%{box-shadow:0 0 0 0 rgba(255,255,255,.75) inset,0 0 0 0 rgba(255,255,255,.55)}100%{box-shadow:0 0 0 40px rgba(255,255,255,0) inset,0 0 0 28px rgba(255,255,255,0)}}
+.lv8-kstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}.lv8-kstats>div{padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card)}.lv8-kstats small{display:block;color:var(--mute);font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}.lv8-kstats b{display:block;font-size:22px;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+.lv8-kact{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;border:0!important;padding:0!important;background:transparent!important}
+.lv8-ok{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,#12b886 12%,var(--card));border:1px solid color-mix(in srgb,#12b886 40%,transparent);font-weight:600}
+.lv8-warn{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--red) 8%,var(--card));border:1px solid color-mix(in srgb,var(--red) 40%,transparent);font-weight:600}
+.lv8-hist .row{align-items:center}.lv8-hn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:color-mix(in srgb,var(--ink) 8%,transparent)}.lv8-hn.ok{background:#12b886;color:#fff}.lv8-hn.warn{background:color-mix(in srgb,var(--amber) 35%,transparent)}
+.lv8-ctrg{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}@media (max-width:720px){.lv8-ctrg{grid-template-columns:1fr;justify-items:center}}
+.lv8-big{width:210px;height:210px;border-radius:50%;border:0;cursor:pointer;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle at 35% 30%,#ffb199,#f97316 70%);box-shadow:0 18px 40px -16px rgba(249,115,22,.7)}
+.lv8-big b{font-size:46px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}.lv8-big small{font-size:12px;opacity:.9}
+.lv8-big.on{background:radial-gradient(circle at 35% 30%,#fda4af,var(--red) 70%);animation:lv8pulse 1.6s infinite}
+@keyframes lv8pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--red) 45%,transparent)}70%{box-shadow:0 0 0 22px rgba(0,0,0,0)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
+.lv8-rule{margin-top:14px;padding:12px 14px;border-radius:14px;border:1px dashed var(--line)}.lv8-rule b{display:block}.lv8-rule small{color:var(--mute);line-height:1.45}.lv8-rule.go{border:1px solid var(--red);background:color-mix(in srgb,var(--red) 8%,var(--card))}.lv8-rule.go b{color:var(--red)}
+.lv8-bars{display:flex;gap:8px;align-items:flex-end;height:140px;padding:6px 2px 0;overflow-x:auto}.lv8-bar{--h:20%;flex:0 0 42px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}.lv8-bar::before{content:"";width:100%;height:var(--h);min-height:6px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#fb923c,#f97316)}.lv8-bar span{font-size:11px;font-weight:700}.lv8-bar small{font-size:10px;color:var(--mute)}
+.lv8-pwrap .lv8-pin>.note:first-child{margin-top:0}.lv8-pin h4{margin-top:18px}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -2696,11 +2742,11 @@ function orgInfo(k,w){const b=fetBio(w)||[];const T={
  ua:['Umbilical arteries','Two arteries carry blood low in oxygen back to the placenta.'],
  aorta:['Aorta','The main artery, carrying blood from the heart down the body.']};return T[k]||[k,'']}
 // ===================== Pregnancy mode: state, pages, tools =====================
-const st={get(k,d){try{const v=localStorage.getItem('dk-preg-'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('dk-preg-'+k,JSON.stringify(v))}catch(e){}}};
+const st={get(k,d){try{try{const p=window.SX&&SX.S&&SX.S.pregst;if(p&&p[k]!==undefined)return p[k]}catch(_){}const v=localStorage.getItem('dk-preg-'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('dk-preg-'+k,JSON.stringify(v))}catch(e){}try{if(window.SX&&SX.S){SX.S.pregst=SX.S.pregst||{};SX.S.pregst[k]=v;if(SX.save)SX.save()}}catch(e){}}};
 const PS={on:false,view:'mother',week:20,tab:'week',diet:'veg',cut:true,labels:true,skin:1,auto:false,beat:false,panMode:false,layers:{bone:true,org:true},camK:'side',sym:null,trk:'bp',symAll:false};
 let PROF=st.get('prof',{name:'',lmp:new Date().toISOString().slice(0,10),wt:0,ht:0,asian:true,cycle:28});
 const LOG=Object.assign({water:{},caf:{},bp:[],glu:[],wt:[],hb:[],kicks:[],bag:[],plan:[],planNote:'',plate:{},ctr:[]},st.get('log',{}));PS.ctrOn=LOG.ctr.length>0&&!LOG.ctr[LOG.ctr.length-1].e;
-const saveLog=()=>st.set('log',LOG),saveProf=()=>st.set('prof',PROF);
+const saveLog=()=>st.set('log',LOG),saveProf=()=>st.set('prof',PROF);window.__preg={PS,LOG,PROF,ga,save:()=>saveLog(),T:null,AT:null};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const fmtD=d=>d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
 function ga(){const l=new Date(PROF.lmp+'T00:00'),days=Math.floor((Date.now()-l)/864e5)-((PROF.cycle||28)-28),w=Math.floor(days/7),d=days-w*7,edd=new Date(l.getTime()+(280+((PROF.cycle||28)-28))*864e5);return{days,w,d,edd,left:Math.max(0,Math.ceil((edd-Date.now())/864e5))}}
@@ -2709,7 +2755,7 @@ function bmiCat(){const b=bmi(),a=PROF.asian;if(b<18.5)return 0;if(b<(a?23:25))r
 const BMIC=[['Underweight',12.5,18,.44,.58],['Healthy weight',11.5,16,.35,.5],['Overweight',7,11.5,.23,.33],['Obese',5,9,.17,.27]];
 function gainRange(w){const c=BMIC[bmiCat()];if(w<=13){const f=w/13;return[.5*f,2*f]}return[Math.min(c[1],.5+(w-13)*c[3]),Math.min(c[2],2+(w-13)*c[4])]}
 const pa=(k,a='')=>`data-pa="${k}${a!==''?':'+a:''}"`;
-const TABS=[['week','🗓️','Week'],['food','🥗','Food'],['water','💧','Water'],['music','🎵','Music'],['health','🩺','Health'],['tools','🧰','Tools'],['well','🧘','Wellbeing'],['birth','👶','Birth'],['ben','🎁','Benefits']];
+const TABS=[['week','🗓️','Week'],['music','🎵','Music'],['well','🧘','Wellbeing'],['ben','🎁','Benefits']];
 // ---------- entering / leaving pregnancy mode ----------
 const PG={async enter(){if(!PS.on){PS.on=true;document.documentElement.dataset.mode='preg';const g=ga();PS.week=Math.min(40,Math.max(3,g.w));$('#prange').value=PS.week}
   $('#pvSeg2')&&0;PV.init();syncPg()},
@@ -2729,7 +2775,7 @@ PAGES.preg=()=>{const g=ga(),w=PS.week,cw=Math.min(40,Math.max(0,g.w)),tri=triOf
  <div class="card"><div class="ptabs" id="ptabs" role="tablist">${TABS.map(([k,e,n])=>`<button role="tab" class="${PS.tab===k?'on':''}" ${pa('tab',k)}>${e} ${n}</button>`).join('')}</div><div id="ptab">${(T[PS.tab]||T.week)()}</div></div>`};
 AFTER.preg=()=>{const f=AT[PS.tab];if(f)f();const t=$('#ptabs .on');if(t)t.scrollIntoView({block:'nearest',inline:'center'})};
 const row=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
-const T={};const AT={};
+const T={};const AT={};window.__preg.T=T;window.__preg.AT=AT;
 // ---------- week ----------
 T.week=()=>{const w=PS.week,d=WK[w],b=PS.view==='baby',lab=w>40?'Delivery':'Week '+w;
  if(b)return `<h3 class="pt">Baby · ${lab}</h3><p class="lead">${w>40?'Your baby is born!':`Your baby is about the size of <b>${d[2]}</b> ${d[3]}.`} ${d[4][0]}</p>
@@ -2874,6 +2920,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-pa]');if(!
  case'mood':{const y=$('#mq1').checked||$('#mq2').checked;$('#mres').innerHTML=y?'<div class="note warn">Thank you for checking in. A "yes" to either question is a good reason to talk to your doctor or midwife: perinatal depression and anxiety are common and treatable. Free 24×7 support: <a href="tel:14416"><b>Tele-MANAS 14416</b></a>. If you ever have thoughts of harming yourself or your baby, call 112 or go to the nearest hospital now.</div>':'<div class="note">💚 Good to hear. Keep resting, moving and talking to people you trust, and check in again any time.</div>';return}
  case'saveDue':{const m=$('#ddm').value,d=$('#ddd').value,cy=+$('#ddc').value||28;if(!d){toast('Pick a date');return}let l=new Date(d+'T00:00');if(m==='conc')l=new Date(l.getTime()-14*864e5);if(m==='ivf')l=new Date(l.getTime()-19*864e5);PROF.lmp=l.toISOString().slice(0,10);PROF.cycle=m==='lmp'?cy:28;PROF.name=$('#ddn').value||PROF.name;saveProf();setW(Math.min(40,Math.max(3,ga().w)));toast('Saved: due '+fmtD(ga().edd));break}
  case'kickStart':PS.kick={n:0,s:Date.now()};break;
+ case'kickReset':PS.kick=null;break;
  case'kick':PS.kick.n++;if(navigator.vibrate)try{navigator.vibrate(30)}catch(x){}if(PS.kick.n===10)toast('10 movements in '+fmtT((Date.now()-PS.kick.s)/1000));break;
  case'kickEnd':LOG.kicks.push({n:PS.kick.n,sec:Math.round((Date.now()-PS.kick.s)/1000),t:new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})});saveLog();PS.kick=null;break;
  case'ctr':if(PS.ctrOn){LOG.ctr[LOG.ctr.length-1].e=Date.now();PS.ctrOn=false}else{LOG.ctr.push({s:Date.now()});PS.ctrOn=true}saveLog();break;
@@ -2886,7 +2933,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-pa]');if(!
  case'share':{const g=ga(),bp=LOG.bp.slice(-1)[0],gl=LOG.glu.slice(-1)[0],wt=LOG.wt.slice(-1)[0],k=LOG.kicks.slice(-1)[0];const t=`📋 Pregnancy summary: ${PROF.name}, ${g.w}w ${g.d}d, due ${fmtD(g.edd)}. BP: ${bp?bp.s+'/'+bp.d:'—'} · Sugar: ${gl?gl.v+' mg/dL':'—'} · Weight: ${wt?wt.kg+' kg':'—'} · Last kick count: ${k?k.n+' in '+fmtT(k.sec):'—'} · Water today: ${((LOG.water[dk]||[]).reduce((a,x)=>a+x.ml,0)/1000).toFixed(1)} L.`;(TH.fk||(TH.fk=[[0,'Hello! How can I help you today?']])).push([1,t]);thread='fk';go('msgs');toast('Summary shared with Dr. Fatima Khan');return}
  case'kegel':PS.kg=!PS.kg;clearInterval(PS.kgt);if(PS.kg){let r=0,ph=0,tt=5;const tick=()=>{const c=$('#kc');if(!c){clearInterval(PS.kgt);PS.kg=false;return}tt--;if(tt<=0){ph^=1;tt=5;if(ph===0)r++}if(r>=10){clearInterval(PS.kgt);PS.kg=false;render();toast('Great: 10 reps done 💪');return}c.classList.toggle('sq',ph===0);$('#kgt').textContent=(ph===0?'Squeeze ':'Relax ')+tt;$('#kgs').textContent='Rep '+(r+1)+' of 10'};render();PS.kgt=setInterval(tick,1000);setTimeout(()=>{const c=$('#kc');if(c){c.classList.add('sq');$('#kgt').textContent='Squeeze 5';$('#kgs').textContent='Rep 1 of 10'}},30);return}break;
  default:return}
- if(page==='preg'){render();if(toolsFocus){const fid=toolsFocus==='kick'?'pt-kick':toolsFocus==='ctr'?'pt-ctr':null;toolsFocus=null;if(fid)requestAnimationFrame(()=>{const el=document.getElementById(fid);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('nx-glow');setTimeout(()=>el.classList.remove('nx-glow'),1200)}})}}});
+ if(window.__pregPages&&__pregPages.has(page)){render();return}if(page==='preg'){render();if(toolsFocus){const fid=toolsFocus==='kick'?'pt-kick':toolsFocus==='ctr'?'pt-ctr':null;toolsFocus=null;if(fid)requestAnimationFrame(()=>{const el=document.getElementById(fid);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('nx-glow');setTimeout(()=>el.classList.remove('nx-glow'),1200)}})}}});
 const planText=()=>`📝 Birth plan for ${PROF.name} (due ${fmtD(ga().edd)}):\n`+Object.entries(PLANOPT).map(([c,o])=>{const s=o.filter(x=>LOG.plan.includes(x));return s.length?`• ${c}: ${s.join('; ')}`:''}).filter(Boolean).join('\n')+(LOG.planNote?`\n• Notes: ${LOG.planNote}`:'');
 function breathUI(){const c=$('#bcirc');if(!c)return;clearInterval(PS.bt);const run=()=>{if(!PS.breathing||!$('#bcirc')){clearInterval(PS.bt);return}const t=((Date.now()-PS.bs)/1000)%10,inh=t<4,el=$('#bcirc');el.classList.toggle('in',inh);$('#btx').textContent=inh?'Breathe in… '+Math.ceil(4-t):'Breathe out… '+Math.ceil(10-t);if(Date.now()-PS.bs>180000){PS.breathing=false;render()}};run();PS.bt=setInterval(run,250)}
 // ---------- 3D-stage controls ----------
@@ -5379,7 +5426,7 @@ function cardFace(c,opt={}){const T=CT[c.type]||CT.other,f=c.f,ex=expiry(c),num=
  const title=c.type==='abha'?'ABHA':c.type==='scheme'?(f.scheme_name||P('Government scheme')):c.type==='corporate'?(f.insurer||f.employer||P('Corporate cover')):c.type==='hospital'?(f.hospital||P('Hospital')):(f.insurer||f.title||T.n);
  const sub=c.type==='corporate'?[f.employer,f.plan_name].filter(Boolean).join(' · '):c.type==='abha'?(f.abha_address||''):[f.plan_name,f.tpa?'TPA: '+f.tpa:''].filter(Boolean).join(' · ');
  const holder=f.holder||c.holder||'';
- if(!shown&&opt.flat&&c.type!=='abha'){const vt=f.valid_to?(window.SX&&SX.mmyy?SX.mmyy(f.valid_to):f.valid_to):'';return `<div class="lv2-card ${T.cls} lv2-min ${opt.cls||''}" data-cid="${c.id}"><div class="lv2-card-top"><span class="lv2-card-t"><i aria-hidden="true">${T.ic}</i><b>${E(title)}</b></span><span class="lv2-card-k">${E(T.k)}</span></div><div class="lv2-min-b">${sub?`<small>${E(sub)}</small>`:''}${vt?`<b>${P('Valid till')} ${E(vt)}</b>`:''}</div></div>`}
+ if(!shown&&opt.flat&&c.type!=='abha'){const vt=f.valid_to?(window.SX&&SX.mmyy?SX.mmyy(f.valid_to):f.valid_to):'';return `<div class="lv2-card ${T.cls} lv2-min ${opt.cls||''}" data-cid="${c.id}"><div class="lv2-card-top"><span class="lv2-card-t"><i aria-hidden="true">${T.ic}</i><b>${E(title)}</b></span><span class="lv2-card-k">${E(T.k)}</span></div><div class="lv2-min-b">${holder?`<div class="lv2-card-name">${E(holder)}</div>`:''}${sub?`<small>${E(sub)}</small>`:''}${vt?`<b>${P('Valid till')} ${E(vt)}</b>`:''}</div></div>`}
  return `<div class="lv2-card ${T.cls} ${opt.cls||''}" data-cid="${c.id}"><div class="lv2-card-top"><span class="lv2-card-t"><i aria-hidden="true">${T.ic}</i><b>${E(title)}</b></span><span class="lv2-card-k">${E(T.k)}</span></div>
   ${sub?`<div class="lv2-card-sub">${E(sub)}</div>`:''}
   <div class="lv2-card-name">${E(shown?holder:holder.split(' ')[0])}</div>
@@ -5996,7 +6043,7 @@ SX.surfaceAgent=(hint)=>{tab='ask';if(page!=='assist')go('assist');else render()
 SX.act.agtab=([t])=>{tab=t;render();if(t==='today')maybeInsight()};
 SX.act.agq=([q])=>{const i=document.querySelector('.lv5-ask input');if(i){i.value=decodeURIComponent(q);i.form.requestSubmit()}};
 SX.chg.agask=async(a,f)=>{const m=SX.me(),q=String(new FormData(f).get('q')||'').trim();if(q.length<3){toast(P('Type a question first'));return}if(!(await assistConsent()))return;busy=true;render();
- try{const r=await J('/ai/ask','POST',{question:q,context:SX.agentCtx(m),member:m.id});(S.ask[m.id]=S.ask[m.id]||[]).push({q,a:r.answer,src:r.sources,act:r.actions,urgent:r.urgent,t:Date.now()});S.ask[m.id]=S.ask[m.id].slice(-200);SX.save();
+ try{const r=await J('/ai/ask','POST',{question:q,context:SX.agentCtx(m),member:m.id});(S.ask[m.id]=S.ask[m.id]||[]).push({q,a:r.answer,src:r.sources,act:r.actions,urgent:r.urgent,focus:r.focus||[],t:Date.now()});S.ask[m.id]=S.ask[m.id].slice(-200);SX.save();
   if(r.urgent)SX.modal(`<h2>⚠️ ${P('Please act now')}</h2><p>${E(r.answer)}</p><div class="lv-row-end"><a class="btn red" href="tel:112">${P('Call 112')}</a><button class="btn s" data-sx="closeModal">${P('OK')}</button></div>`,{label:'Urgent'})}
  catch(e){toast(e.message)}finally{busy=false;render()}};
 async function maybeInsight(force){const m=SX.me(),ins=S.insight[m.id];if(!engineOn()||busy)return;if(!force&&ins&&ins.day===SX.today())return;if(!force&&!ins)return;if(!(await assistConsent()))return;busy=true;render();
@@ -6151,7 +6198,7 @@ async function attach(f){const m=SX.me();if(!/^(image\/|application\/pdf)/.test(
  const v=S.vault.find(x=>x.id===id),ai=v&&v.ai,entry=S.ask[m.id].find(x=>x.doc===id);if(!entry)return;delete entry.pending;
  if(!ai){entry.a=P('The document is saved in Lab records, but it could not be read right now. Open it later and tap Analyse.');SX.save();render();return}
  const codes=(ai.findings||[]).filter(x=>x.code&&x.flag&&x.flag!=='normal').map(x=>x.code).map(c=>({glu_f:'glu_f',glu_pp:'glu_pp',glu_r:'glu_r'}[c]||c));
- entry.a=(ai.summary||'')+(ai.warnings&&ai.warnings.length?' ⚠️ '+ai.warnings[0]:'');entry.src=(ai.findings||[]).slice(0,6).map(x=>`${x.test} ${x.value}${x.unit?' '+x.unit:''}${x.flag&&x.flag!=='normal'?' · '+x.flag:''}`);entry.act=(ai.questions_for_doctor||[]).slice(0,3);entry.codes=codes;entry.tests=(ai.tests_needed||[]).map(x=>x.name).filter(Boolean).slice(0,4);entry.doctor=!!(ai.tests_needed&&ai.tests_needed.length)||(ai.warnings||[]).length>0;entry.urgent=false;
+ entry.a=(ai.summary||'')+(ai.warnings&&ai.warnings.length?' ⚠️ '+ai.warnings[0]:'');entry.src=(ai.findings||[]).slice(0,6).map(x=>`${x.test} ${x.value}${x.unit?' '+x.unit:''}${x.flag&&x.flag!=='normal'?' · '+x.flag:''}`);entry.act=(ai.questions_for_doctor||[]).slice(0,3);entry.codes=codes;entry.tests=(ai.tests_needed||[]).map(x=>x.name).filter(Boolean).slice(0,4);entry.doctor=!!(ai.tests_needed&&ai.tests_needed.length)||(ai.warnings||[]).length>0;entry.urgent=false;entry.focus=(ai.focus||[]).slice(0,3);
  SX.ledger('document',true,'Read in the assistant: '+f.name,m.id);SX.save();render();SX.closeModal(true);SX.surfaceAgent&&SX.surfaceAgent('')}
 // Lab records show date and time (DD/MM/YYYY HH:MM) and where a file came from
 SX.extend('vault',{mounted(){document.querySelectorAll('.sx-doc').forEach(row=>{const b=row.querySelector('[data-sx^="vdl:"],[data-sx^="vedit:"]');if(!b)return;const id=b.dataset.sx.split(':')[1],v=(S.vault||[]).find(x=>x.id===id);if(!v||!v.t)return;const s=row.querySelector('small');if(s&&!/\d\d:\d\d/.test(s.textContent))s.textContent=s.textContent.replace(/·\s*\d{1,2} \w{3} \d{4}/,'· '+dmyhm(v.t))+(v.via==='chat'?' · '+P('via assistant'):'')})}});
@@ -6384,6 +6431,73 @@ const cadd0=SX.act.cadd;SX.act.cadd=a=>{cadd0(a);if(a&&a[0])return;const f=docum
 
 // phone dock: eleven sections scroll; the active one is always in view
 new MutationObserver(()=>{if(innerWidth>720)return;const b=document.querySelector('#nav button.on');if(b)try{b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}catch(e){}}).observe(document.body,{attributes:true,attributeFilter:['data-page']});
+}
+
+/*live-p7*/
+// ===================== live layer 8: assistant ↔ 3D body, assistant design, uniform cards, pregnancy as tabs =====================
+{
+const P=SX.p;
+const two=n=>String(n).padStart(2,'0');
+const fmtT=s=>{s=Math.max(0,Math.round(s));return (s>=3600?Math.floor(s/3600)+':':'')+two(Math.floor(s%3600/60))+':'+two(s%60)};
+
+// ---------------------------------------------------------------- A. what the assistant talks about, the body shows
+const ORGAN={heart:{sp:'cardio',re:/heart|ventricle|atrium|coronary/,n:'Heart',ic:'🫀'},lungs:{sp:'pulmo',re:/lung|bronch|trachea/,n:'Lungs',ic:'🫁'},liver:{sp:'hepato',re:/liver/,n:'Liver',ic:'🟤'},kidneys:{sp:'nephro',re:/kidney/,n:'Kidneys',ic:'🫘'},pancreas:{sp:'endo',re:/pancrea/,n:'Pancreas',ic:'🩸'},thyroid:{sp:'endo',re:/thyroid/,n:'Thyroid',ic:'🦋'},stomach:{sp:'gastro',re:/^stomach$|stomach/,n:'Stomach',ic:'🍽️'},intestines:{sp:'gastro',re:/intestine|colon|ileum|jejunum|duodenum|rectum/,n:'Intestines',ic:'〰️'},brain:{sp:'neuro',re:/brain|cerebr|cerebell/,n:'Brain',ic:'🧠'},spleen:{sp:'hemato',re:/spleen/,n:'Spleen',ic:'🩸'},bones:{sp:'ortho',re:/femur|humerus|tibia|pelvis|hip bone/,n:'Bones',ic:'🦴'},spine:{sp:'ortho',re:/vertebra|spine|sacrum/,n:'Spine',ic:'🦴'},uterus:{sp:'obgyn',re:/uterus|ovary|fallopian/,n:'Uterus',ic:'🤰'},prostate:{sp:'uro',re:/prostate/,n:'Prostate',ic:'🔵'},bladder:{sp:'uro',re:/bladder/,n:'Bladder',ic:'💧'},breast:{sp:'obgyn',re:/breast|mammary/,n:'Breast',ic:'🎀'},skin:{sp:'derm',re:null,n:'Skin',ic:'🧴'},eyes:{sp:'neuro',re:/\beye|retina|optic/,n:'Eyes',ic:'👁️'},blood:{sp:'hemato',re:/spleen|sternum|marrow/,n:'Blood',ic:'🩸'},whole_body:{sp:'',re:null,n:'Whole body',ic:'🧍'}};
+SX.focusBody=(key,title)=>{const o=ORGAN[key];if(!o)return false;const show=()=>{try{if(!A.ready)return;if(!o.sp){A.clearFocus&&A.clearFocus();return}A.setSpec(o.sp);if(o.re)A.pickMatch(o.re,title||o.n,P('From the assistant'))}catch(e){console.warn(e)}};if(page!=='assist'&&page!=='dash'&&page!=='lab'){go('assist');setTimeout(show,400)}else show();return true};
+SX.act.focus=([k])=>{SX.focusBody(k)};
+// chips under every answer that has a focus; the newest one also moves the body by itself
+SX.extend('assist',{mounted(){const m=SX.me(),asks=(S.ask[m.id]||[]).slice(-200),bubs=[...document.querySelectorAll('#lv5chat .bub:not(.me)')];if(bubs.length!==asks.length)return;
+ asks.forEach((a,i)=>{const f=(a.focus||[]).filter(k=>ORGAN[k]&&k!=='whole_body');if(!f.length||bubs[i].querySelector('.lv8-focus'))return;const d=document.createElement('div');d.className='lv8-focus';d.innerHTML=`<small>${P('On the body')}</small>`+f.map(k=>`<button class="lv8-fc" data-sx="focus:${k}">${ORGAN[k].ic} ${E(P(ORGAN[k].n))}</button>`).join('');bubs[i].append(d)});
+ const last=asks[asks.length-1];if(last&&!last.pending&&(last.focus||[]).length&&!last.fshown){last.fshown=true;SX.save(true);const k=last.focus.find(x=>ORGAN[x]&&x!=='whole_body');if(k)setTimeout(()=>SX.focusBody(k,last.q&&last.q.length<60?last.q:ORGAN[k].n),350)}}});
+// a thinking bubble while the answer is on its way
+const ask0=SX.chg.agask;SX.chg.agask=(a,f)=>{const q=String(new FormData(f).get('q')||'').trim();const r=ask0(a,f);setTimeout(()=>{const c=document.getElementById('lv5chat');if(!c||!q||c.querySelector('.lv8-typing'))return;if(!document.querySelector('.lv5-ask button[disabled]'))return;c.insertAdjacentHTML('beforeend',`<div class="bub me"><p>${E(q)}</p></div><div class="bub lv8-typing"><span></span><span></span><span></span></div>`);c.scrollTop=c.scrollHeight},60);return r};
+
+// ---------------------------------------------------------------- B. pregnancy lives in tabs: Pregnancy · Kick counter · Contractions · Water · Symptoms · Food · Birth plan
+const PG8=()=>window.__preg||null;
+const PP=['pkick','pctr','pwater','psymp','pfood','pbirth'];window.__pregPages=new Set(PP);
+SX.addStrings({'tab.pkick':SX.D('Kick counter','किक काउंटर','కిక్ కౌంటర్'),'tab.pctr':SX.D('Contractions','संकुचन','సంకోచాలు'),'tab.pwater':SX.D('Water','पानी','నీరు'),'tab.psymp':SX.D('Symptoms & signs','लक्षण','లక్షణాలు'),'tab.pfood':SX.D('Food','भोजन','ఆహారం'),'tab.pbirth':SX.D('Birth plan','जन्म योजना','ప్రసవ ప్రణాళిక')});
+{const care=SX.G.find(g=>g.k==='care');const fix=()=>{if(!care)return;const preg=SX.pregOn(SX.me());care.tabs=preg?['preg',...PP,'child']:['careplan','cycle','child']};fix();const pn3=SX.pregNav;SX.pregNav=()=>{pn3();fix()}}
+const week=()=>{const g=PG8();if(!g)return 0;try{const w=g.ga().w;g.PS.week=Math.max(0,Math.min(42,w));return g.PS.week}catch(e){return g.PS.week||0}};
+const tri=w=>w<13?1:w<27?2:3;
+const gate=()=>{const m=SX.me();if(!SX.pregOn(m))return `<div class="card wide"><p class="mute" style="margin:0">${P('Pregnancy mode is off for this profile. Turn it on from Care to use the trackers.')}</p></div>`;if(!PG8())return `<div class="card wide"><p class="mute" style="margin:0">${P('Loading…')}</p></div>`;return ''};
+const head8=(ic,t,s)=>`<div class="lv8-ph"><div class="lv8-phi">${ic}</div><div><h3>${E(t)}</h3><p class="mute sm">${E(s)}</p></div><span class="lv8-wk">${P('Week')} ${week()} · ${['','1st','2nd','3rd'][tri(week())]} ${P('trimester')}</span></div>`;
+// trackers card on the Pregnancy page points at the tabs
+SX.pregTrackers=()=>`<div class="card lv3-trk"><div class="hd"><h3>${P('Today’s trackers')}</h3><small class="mute">${P('Each one has its own tab')}</small></div><div class="lv3-trkg">
+ <button data-sx="tab:pkick"><i>🦶</i><b>${P('Kick counter')}</b><small>${P('Count 10 movements')}</small></button><button data-sx="tab:pctr"><i>⏱️</i><b>${P('Contractions')}</b><small>${P('Time and spacing')}</small></button><button data-sx="tab:pwater"><i>💧</i><b>${P('Water')}</b><small>${P('Daily goal')}</small></button><button data-sx="tab:psymp"><i>🩺</i><b>${P('Symptoms & signs')}</b><small>${P('What to call about')}</small></button><button data-sx="tab:pfood"><i>🥗</i><b>${P('Food')}</b><small>${P('This trimester')}</small></button><button data-sx="tab:pbirth"><i>👶</i><b>${P('Birth plan')}</b><small>${P('Bag, plan, labour')}</small></button></div></div>`;
+// --- kick counter: one big tap, a ring to ten, the clock, the history
+let kt=null;
+SX.reg('pkick',{head:()=>[P('Kick counter'),P('Count 10 movements. From 28 weeks, 10 within 2 hours is reassuring.')],
+ render(){const g0=gate();if(g0)return g0;const g=PG8(),K=g.PS.kick,w=week(),hist=(g.LOG.kicks||[]).slice(-8).reverse(),n=K?K.n:0,pct=Math.min(100,n*10);
+  return `<div class="card wide lv8-kick">${head8('🦶',P('Kick counter'),w<28?P('Usually from 28 weeks; before that, movements are irregular and that is normal.'):P('Lie on your left side after a meal and count every kick, roll or flutter.'))}
+   <div class="lv8-kickg"><div class="lv8-ring" style="--p:${pct}"><button class="lv8-tap ${K?'on':''}" data-pa="${K?'kick':'kickStart'}" aria-label="${E(K?P('Count a movement'):P('Start counting'))}"><b>${K?n:'▶'}</b><small>${K?(n>=10?P('Done!'):P('tap for each movement')):P('Start')}</small><i class="lv8-rip"></i></button></div>
+    <div class="lv8-kstats"><div><small>${P('Elapsed')}</small><b id="lv8kt">${K?fmtT((Date.now()-K.s)/1000):'00:00'}</b></div><div><small>${P('Goal')}</small><b>10 ${P('moves')}</b></div><div><small>${P('Window')}</small><b>2 h</b></div>
+     ${K?`<div class="lv8-kact"><button class="btn p" data-pa="kickEnd">${n>=10?'✓ '+P('Save session'):P('Finish early')}</button><button class="btn s" data-pa="kickReset">${P('Reset')}</button></div>`:''}</div></div>
+   ${K&&n>=10?`<p class="lv8-ok">✅ ${P('10 movements in')} ${fmtT((Date.now()-K.s)/1000)} — ${P('that is reassuring. Save the session.')}</p>`:''}
+   ${K&&(Date.now()-K.s)>2*36e5&&n<10?`<p class="lv8-warn">⚠️ ${P('Fewer than 10 movements in 2 hours: have something sweet to eat or drink, rest on your left side and count again. If still fewer than 10, call your doctor or go to the hospital now.')}</p>`:''}</div>
+   <div class="card wide"><div class="hd"><h3>${P('Sessions')}</h3>${hist.length?`<small class="mute">${hist.length} ${P('recent')}</small>`:''}</div>${hist.length?`<div class="lv8-hist">${hist.map(k=>`<div class="row"><div class="lv8-hn ${k.n>=10&&k.sec<=7200?'ok':'warn'}">${k.n}</div><div class="grow"><b>${k.n} ${P('movements')} · ${fmtT(k.sec)}</b><small>${E(k.t)}</small></div><span class="badge ${k.n>=10&&k.sec<=7200?'b-ok':'b-hi'}">${k.n>=10&&k.sec<=7200?P('Normal'):P('Check with your doctor')}</span></div>`).join('')}</div>`:`<p class="mute sm" style="margin:0">${P('No sessions yet. Start one when the baby is usually active (after meals, evenings).')}</p>`}</div>`},
+ after(){clearInterval(kt);const g=PG8();if(g&&g.PS.kick)kt=setInterval(()=>{const b=document.getElementById('lv8kt');if(b&&g.PS.kick)b.textContent=fmtT((Date.now()-g.PS.kick.s)/1000);else clearInterval(kt)},1000)}});
+document.addEventListener('click',e=>{const b=e.target.closest('.lv8-tap');if(!b)return;const r=b.querySelector('.lv8-rip');if(r){r.classList.remove('go');void r.offsetWidth;r.classList.add('go')}},true);
+// --- contraction timer: start/stop, the 5-1-1 rule, the last hour at a glance
+let ct=null;
+SX.reg('pctr',{head:()=>[P('Contraction timer'),P('Time each contraction and the gap between them. Regular 5 minutes apart, lasting a minute, for an hour: go.')],
+ render(){const g0=gate();if(g0)return g0;const g=PG8(),C=g.LOG.ctr||[],on=g.PS.ctrOn,cur=on?C[C.length-1]:null,done=C.filter(c=>c.e),lastH=done.filter(c=>Date.now()-c.s<36e5),avgD=lastH.length?Math.round(lastH.reduce((a,c)=>a+(c.e-c.s),0)/lastH.length/1000):0;
+  const ints=lastH.slice(1).map((c,i)=>(c.s-lastH[i].s)/60000),avgI=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length:0,rule=lastH.length>=6&&avgI>0&&avgI<=5.5&&avgD>=55&&(lastH[lastH.length-1].s-lastH[0].s)>=55*60000;
+  const bars=done.slice(-12).map(c=>{const d=Math.round((c.e-c.s)/1000);return `<div class="lv8-bar" style="--h:${Math.min(100,d/90*100)}%" title="${d}s"><span>${d}s</span><small>${new Date(c.s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</small></div>`}).join('');
+  return `<div class="card wide lv8-ctr ${on?'on':''}">${head8('⏱️',P('Contraction timer'),P('Tap when a contraction starts, tap again when it ends.'))}
+   <div class="lv8-ctrg"><button class="lv8-big ${on?'on':''}" data-pa="ctr"><b id="lv8ct">${on?fmtT((Date.now()-cur.s)/1000):'▶'}</b><small>${on?P('Contraction ended'):P('Contraction started')}</small></button>
+    <div class="lv8-kstats"><div><small>${P('Last hour')}</small><b>${lastH.length}</b></div><div><small>${P('Avg length')}</small><b>${avgD?avgD+' s':'—'}</b></div><div><small>${P('Avg gap')}</small><b>${avgI?avgI.toFixed(1)+' min':'—'}</b></div></div></div>
+   <div class="lv8-rule ${rule?'go':''}"><b>${rule?'🚗 '+P('5-1-1 reached: time to go to the hospital'):P('5-1-1 rule')}</b><small>${P('Contractions every 5 minutes, each lasting 1 minute, for 1 hour. Water breaking, bleeding or reduced movements: go at once, whatever the timing.')}</small></div></div>
+   <div class="card wide"><div class="hd"><h3>${P('Recent contractions')}</h3>${done.length?`<button class="btn s sm" data-pa="ctrClear">${P('Clear')}</button>`:''}</div>${done.length?`<div class="lv8-bars">${bars}</div>`:`<p class="mute sm" style="margin:0">${P('Each contraction appears here as a bar; the gaps between them are what matter.')}</p>`}</div>`},
+ after(){clearInterval(ct);const g=PG8();if(g&&g.PS.ctrOn)ct=setInterval(()=>{const b=document.getElementById('lv8ct'),C=g.LOG.ctr;if(b&&g.PS.ctrOn&&C.length)b.textContent=fmtT((Date.now()-C[C.length-1].s)/1000);else clearInterval(ct)},1000)}});
+// --- water, symptoms, food, birth plan: the pregnancy module's own content, each in its own tab
+const wrap=(key,ic,t,s)=>({head:()=>[P(t),P(s)],render(){const g0=gate();if(g0)return g0;const g=PG8();week();let html='';try{html=g.T[key]?g.T[key]():''}catch(e){html=`<p class="mute">${E(e.message)}</p>`}return `<div class="card wide lv8-pwrap lv8-${key}">${head8(ic,P(t),P(s))}<div class="lv8-pin">${html}</div></div>`},after(){const g=PG8();try{if(g&&g.AT[key])g.AT[key]()}catch(e){}}});
+SX.reg('pwater',wrap('water','💧','Water','Your daily goal, what counts, and today’s glasses.'));
+SX.reg('psymp',wrap('health','🩺','Symptoms & signs','What is normal this week, what to call about today, and what means go now.'));
+SX.reg('pfood',wrap('food','🥗','Food','This trimester’s plate: Indian meals, iron, folate and calcium.'));
+SX.reg('pbirth',wrap('birth','👶','Birth plan','The hospital bag, your preferences, the stages of labour.'));
+// the module's own tab buttons inside these pages switch pages instead of its internal tabs
+document.addEventListener('click',e=>{const b=e.target.closest('.lv8-pin [data-pa^="tab:"]');if(!b)return;const t=b.dataset.pa.split(':')[1],map={tools:'pkick',water:'pwater',health:'psymp',food:'pfood',birth:'pbirth'};if(map[t]){e.preventDefault();e.stopPropagation();go(map[t])}},true);
+// pregnancy data moves into the family record once (it used to live only in this browser)
+setTimeout(()=>{try{const g=PG8();if(g&&(!S.pregst||!S.pregst.log)){S.pregst=S.pregst||{};g.save();if(S.pregst.log)SX.save()}}catch(e){}},2000);
 }
 
 SX.boot();
