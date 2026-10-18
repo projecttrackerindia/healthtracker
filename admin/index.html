@@ -82,7 +82,7 @@ const head=(t,s,extra='')=>`<div class="row" style="justify-content:space-betwee
 const VIEWS={};
 VIEWS.dash=async()=>{main(head('Dashboard','Last 30 days · '+new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})));const s=await api('/stats');DATA.pending=s.pending;
  const max=Math.max(1,...s.orders.byDay.map(x=>x[1]));
- main(head('Dashboard','Last 30 days',`<span class="chip">AI engine: <b>${s.engine==='claude'?'Claude':'basic reader (set ANTHROPIC_API_KEY)'}</b></span>`)+`
+ main(head('Dashboard','Last 30 days',`<span class="chip">Smart reading: <b>${s.engine==='claude'?'on':'off (set ANTHROPIC_API_KEY)'}</b></span> <button class="btn sm" id="aiTest" type="button">Test connection</button><span id="aiTestOut" class="sm mute"></span>`)+`
  <div class="cards">
   <div class="card kpi"><small>Households</small><b>${s.households.total}</b><span>+${s.households.new7} this week · ${s.households.active1} active today · ${s.households.paid} paid</span></div>
   <div class="card kpi"><small>Orders · 30 d</small><b>${s.orders.month}</b><span>${s.orders.open} open · ${money(s.orders.revenue)} value · ★ ${s.orders.avgRating??'—'}</span></div>
@@ -93,7 +93,8 @@ VIEWS.dash=async()=>{main(head('Dashboard','Last 30 days · '+new Date().toLocal
  <div class="two"><div class="card"><h3>Orders per day</h3>${s.orders.byDay.length?`<div class="bars">${s.orders.byDay.map(([d,n])=>`<i style="height:${n/max*100}%" title="${d}: ${n}" data-l="${d.split(' ')[0]}"></i>`).join('')}</div>`:'<div class="empty">No orders yet</div>'}</div>
  <div class="card"><h3>Quick actions</h3><div class="row"><button class="btn" data-v="partners">Verify partners</button><button class="btn" data-v="orders">Open orders</button><button class="btn" data-v="seasonal">Update seasonal advisories</button><button class="btn" data-v="videos">First-aid videos</button></div>
  <p class="sm mute">Deployment: Postgres via DATABASE_URL (SQLite otherwise, not persistent on Railway) · payments ${s.engine?'':''}via RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET (demo mode without them) · AI via ANTHROPIC_API_KEY · SECRET_KEY keeps admin sessions valid across restarts.</p></div></div>`);
- $('#main').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>go(b.dataset.v))};
+ $('#main').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>go(b.dataset.v));
+ const tb=$('#aiTest');if(tb)tb.onclick=async()=>{tb.disabled=true;$('#aiTestOut').textContent='Testing…';try{const r=await api('/ai/test',{method:'POST'});$('#aiTestOut').textContent=r.ok?`OK · ${r.model} · ${r.ms} ms`:`Not working: ${r.error}`;$('#aiTestOut').style.color=r.ok?'var(--green,#0a7)':'var(--red)'}catch(e){$('#aiTestOut').textContent='Could not run the test'}tb.disabled=false}};
 // ---------------------------------------------------------------- partners
 let PF={kind:'',q:'',pending:0};
 VIEWS.partners=async()=>{main(head('Partners','Pharmacies, diagnostic labs and hospitals. Verify, set discounts and delivery, edit price lists.',`<a class="btn" href="/brand/svg/partner-logo.svg" download title="Partner logo (teal) for onboarded doctors, pharmacies, labs and insurers"><img src="/brand/svg/partner-icon.svg" width="18" height="18" alt=""> Partner logo</a><button class="btn" id="imp">⬆ Import CSV</button><button class="btn p" id="add">＋ Add partner</button>`));

@@ -54,7 +54,8 @@ Six sections, each with its own tabs:
 | Home | Today, Body, Heart Lab | Today: doses, results worth discussing, next visit, findings pinned on the 3D body |
 | Records & Labs | Vault, Lab results, Insights | Upload PDF/photos (kept in this browser's IndexedDB), results explained in plain language, suggested checks (always "discuss with your doctor") |
 | Medicines | My medicines, Find & order, Orders | Dose tracking, ~45-item sample catalogue, prescription gating, allergy / pregnancy / age checks, demo checkout and tracker |
-| Care | Appointments, Doctors, Messages, Pregnancy (opt-in), Bills | Visit booking with per-visit record sharing |
+| Care (shown as Pregnancy when tracking is on) | Visits, Doctors, Messages, Pregnancy (opt-in), Bills | Visit booking with per-visit record sharing |
+| Cards & Insurance | Wallet, Insurance, Schemes | Health card for every member, insurance / corporate / scheme / ABHA cards (photo read by smart reading, checked by the person), who is covered, renewal reminders |
 | Safety | SOS, First aid, Medical ID, Contacts | 112 / 108, hold-to-alert with location and SMS fallback, CPR metronome, lock-screen Medical ID |
 | Family & Privacy | Family, Consent, Your data, Settings | Household switcher, consent switches with a history log, export JSON, delete everything |
 

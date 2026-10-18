@@ -429,17 +429,23 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
         ctx = json.loads(context or "{}")
     except Exception:
         ctx = {}
-    kind = kind if kind in ("report", "prescription") else "report"
+    kind = kind if kind in ("report", "prescription", "card") else "report"
     capped = bool(os.getenv("ANTHROPIC_API_KEY")) and used >= cap
     try:
-        out = AI.analyze(kind, data, mime, text, ctx, force_local=capped)
+        if kind == "card":
+            out = AI.analyze_card(data, mime)
+            if capped:
+                out = {"engine": "local", "kind": "card", "readable": False, "fields": {}, "ms": 0,
+                       "warnings": [f"Monthly smart-reading limit for the {h.plan} plan reached ({cap}). Fill in the details yourself, or upgrade in Family & Privacy → Plan."]}
+        else:
+            out = AI.analyze(kind, data, mime, text, ctx, force_local=capped)
         if capped:
             out["warnings"] = list(out.get("warnings", [])) + [f"Monthly AI limit for the {h.plan} plan reached ({cap}); the basic reader was used. Upgrade in Family & Privacy → Plan."]
     except Exception as e:
         db.add(AiJob(household_id=h.id, kind=kind, engine="error", ok=False))
         print("[ai] analysis failed:", str(e)[:300], flush=True)  # details stay in the server log
         raise HTTPException(500, "We could not read this document right now. Please try again in a few minutes.")
-    db.add(AiJob(household_id=h.id, kind=kind, engine=out["engine"], ms=out["ms"], findings=len(out["findings"]) + len(out["medicines"])))
+    db.add(AiJob(household_id=h.id, kind=kind, engine=out["engine"], ms=out["ms"], findings=len(out.get("findings", [])) + len(out.get("medicines", [])) + len(out.get("fields", {}))))
     out["quota"] = {"used": used + (1 if out["engine"] == "claude" else 0), "cap": cap, "plan": h.plan}
     # what the browser sees: no provider or model names
     out["engine"] = "ai" if out["engine"] == "claude" else "local"

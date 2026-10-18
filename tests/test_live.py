@@ -91,3 +91,27 @@ def test_app_has_no_sample_people():
     six = html[html.index('<script id="six-js">'):]
     for n in ("name:'Prasanna'", "Demo checkout", "fictional sample data for this demo", "Math.random()*9);tip()"):
         assert n not in six
+
+
+def test_card_reader_without_key_offers_manual_entry(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    c = client()
+    r = c.post("/api/v1/auth/../hello".replace("/auth/../", "/"), json={"name": "T"}, headers={"X-DoKKo-Key": "k" * 32})
+    assert r.status_code == 200
+    r = c.post("/api/v1/ai/analyze", data={"kind": "card", "consent": "1"}, files={"file": ("card.png", b"\x89PNG\r\n\x1a\n" + b"0" * 100, "image/png")}, headers={"X-DoKKo-Key": "k" * 32})
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j["kind"] == "card" and j["readable"] is False and j["engine"] == "local" and "model" not in j
+    assert "warnings" in j and j["warnings"]
+
+
+def test_admin_ai_test_reports_missing_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    from api import ai as AI
+    r = AI.test_connection()
+    assert r["ok"] is False and "ANTHROPIC_API_KEY" in r["error"]
+
+
+def test_no_admin_wording_in_user_messages():
+    src = (server.ROOT / "api" / "ai.py").read_text(encoding="utf-8")
+    assert "set up by your administrator" not in src

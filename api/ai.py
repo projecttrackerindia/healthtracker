@@ -173,7 +173,7 @@ def local_report(text: str, ctx: dict) -> dict:
     if out:
         summary = f"{len(out)} results read. " + (f"{len(abn)} outside the usual adult range: " + ", ".join(f"{f['test']} ({f['flag']})" for f in abn) + "." if abn else "All within the usual adult ranges.")
     else:
-        summary = "No lab values could be read from this document. If it is a photo or a scanned PDF, AI analysis (set up by your administrator) can read it."
+        summary = "No lab values could be read from this document. Photos and scanned PDFs need smart reading, which is not available right now. You can type the values instead."
     return {"summary": summary, "findings": out, "medicines": [], "tests_needed": [], "followups": _followups(out),
             "questions_for_doctor": [f"My {f['test']} is {f['flag']} at {f['value']:g} {f['unit']}: what does it mean for me?" for f in abn[:4]], "warnings": []}
 
@@ -223,7 +223,7 @@ def local_prescription(text: str, ctx: dict) -> dict:
     from .seed import TESTS
     tests = [{"code": c, "name": TESTS.get(c, (c,))[0], "why": "written on the prescription"} for c, rx in TEST_WORDS.items() if re.search(rx, t)]
     summary = (f"{len(meds)} medicine{'s' if len(meds) != 1 else ''} and {len(tests)} test{'s' if len(tests) != 1 else ''} found on this prescription."
-               if meds or tests else "No medicines or tests could be read. If this is a photo of a handwritten prescription, AI analysis (set up by your administrator) can read it; you can also type the medicine names.")
+               if meds or tests else "No medicines or tests could be read. Photos of handwritten prescriptions need smart reading, which is not available right now; you can also type the medicine names.")
     return {"summary": summary, "findings": [], "medicines": meds, "tests_needed": tests, "followups": [], "questions_for_doctor": [], "warnings": []}
 
 
@@ -266,6 +266,62 @@ def claude_analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dic
     out["usage"] = {"in": r.usage.input_tokens, "out": r.usage.output_tokens}
     return out
 
+CARD_SYSTEM = """You read a photo or scan of an Indian health-related card for a family health app: a health insurance card (individual, family floater, corporate/employer group policy or TPA card), a government scheme card (Ayushman Bharat PM-JAY, state schemes such as Aarogyasri, CGHS, ECHS, ESIC, EHS), an ABHA (Ayushman Bharat Health Account) card, or a hospital membership card. Output ONLY a JSON object with keys:
+kind (one of: insurance, corporate, scheme, abha, hospital, other), readable (boolean), confidence (0-1),
+fields: {holder_name, insurer, plan_name, policy_number, member_id, employer, employee_id, tpa, tpa_phone, insurer_phone, sum_insured (string as printed, e.g. "5,00,000"), valid_from (YYYY-MM-DD or ""), valid_to (YYYY-MM-DD or ""), scheme_name, card_number, abha_number (14 digits, formatted 12-3456-7890-1234 if printed), abha_address, date_of_birth (YYYY-MM-DD or ""), sex, blood_group, members_covered (array of names), hospital, notes (anything else important, one line)},
+text (all legible text on the card, in reading order, max 1200 chars).
+Rules: copy numbers exactly; leave a field "" when not printed; never guess; dates in ISO form; do not include anything that is not on the card."""
+
+
+def claude_card(data: bytes, mime: str) -> dict:
+    import anthropic
+
+    client = anthropic.Anthropic()
+    if mime == "application/pdf" or data[:4] == b"%PDF":
+        src = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": base64.b64encode(data).decode()}}
+    else:
+        src = {"type": "image", "source": {"type": "base64", "media_type": mime, "data": base64.b64encode(data).decode()}}
+    r = client.messages.create(model=MODEL, max_tokens=1500, temperature=0, system=CARD_SYSTEM,
+                               messages=[{"role": "user", "content": [src, {"type": "text", "text": "Read this card and return the JSON now."}]}])
+    raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
+    out = json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    out.setdefault("fields", {})
+    out["usage"] = {"in": r.usage.input_tokens, "out": r.usage.output_tokens}
+    return out
+
+
+def analyze_card(data: bytes | None, mime: str) -> dict:
+    """Cards are read only by the smart reader; without it the app offers manual entry."""
+    t0 = time.time()
+    if not data:
+        return {"engine": "local", "kind": "card", "readable": False, "fields": {}, "warnings": ["No file was received."], "ms": 0}
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return {"engine": "local", "kind": "card", "readable": False, "fields": {}, "warnings": ["Smart reading is not available right now. Fill in the details yourself; the photo is kept with the card."], "ms": 0}
+    try:
+        out = claude_card(data, mime)
+    except Exception as e:
+        print("[ai] card read failed:", type(e).__name__, str(e)[:300], flush=True)
+        return {"engine": "local", "kind": "card", "readable": False, "fields": {}, "warnings": ["Smart reading could not read this card right now. Fill in the details yourself; the photo is kept with the card."], "ms": int((time.time() - t0) * 1000)}
+    out.update({"engine": "claude", "kind": "card", "ms": int((time.time() - t0) * 1000)})
+    out.setdefault("warnings", [])
+    return out
+
+
+def test_connection() -> dict:
+    """Admin check: can this server reach the smart reader? Returns ok or the exact error, never shown to users."""
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return {"ok": False, "error": "ANTHROPIC_API_KEY is not set on this server."}
+    try:
+        import anthropic
+    except ImportError:
+        return {"ok": False, "error": "The anthropic package is not installed (requirements.txt)."}
+    t0 = time.time()
+    try:
+        r = anthropic.Anthropic().messages.create(model=MODEL, max_tokens=5, messages=[{"role": "user", "content": "Reply with OK"}])
+        return {"ok": True, "model": MODEL, "ms": int((time.time() - t0) * 1000), "reply": "".join(b.text for b in r.content if getattr(b, "type", "") == "text")[:20]}
+    except Exception as e:
+        return {"ok": False, "model": MODEL, "error": f"{type(e).__name__}: {str(e)[:400]}"}
+
 
 def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, force_local: bool = False) -> dict:
     t0 = time.time()
@@ -278,6 +334,7 @@ def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, forc
             out = None
             engine = "local"
             err = str(e)[:160]
+            print("[ai] smart reading failed, basic reader used:", type(e).__name__, str(e)[:300], flush=True)
     if out is None:
         txt = text or (text_from(data, mime) if data else "")
         if not txt and data and mime.startswith("image/"):
