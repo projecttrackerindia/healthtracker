@@ -30,7 +30,8 @@ def sms_ready() -> bool:
 
 
 def demo() -> bool:
-    return os.getenv("OTP_DEMO", "0") == "1"
+    """One-time codes shown on screen instead of sent: local development and staging only, never in production."""
+    return os.getenv("OTP_DEMO", "0") == "1" and os.getenv("APP_ENV", "production") != "production"
 
 
 def _html(code: str, purpose: str) -> str:

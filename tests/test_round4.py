@@ -134,7 +134,7 @@ def test_client_error_dedupes_and_admin_reads():
     c = TestClient(server.app)
     for _ in range(3):
         assert c.post("/api/v1/client-error", json={"message": "TypeError: x is null", "stack": "at a", "page": "dash", "version": "dev"}).json() == {"ok": True}
-    assert c.get("/api/v1/settings").json()["env"] in ("production", "staging")
+    assert c.get("/api/v1/settings").json()["env"] in ("production", "staging", "test")
 
 
 def test_site_assets_still_served_next_to_share_pages():

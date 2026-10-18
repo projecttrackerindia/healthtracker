@@ -110,6 +110,13 @@ to the uncompressed file and prints a warning in the deploy log), so a forgotten
 * **Everyone**: messages with families who have an order, booking or visit with them (attachments from the family's vault open from the thread); price list / stock; store profile (hours, phone, collection or delivery terms). Name, address and licence are changed only by admin.
 * **Families** see all of it through `/api/v1/inbox`, polled every minute and on focus, merged into the notification centre, Lab results, Orders and Appointments. In production nothing advances an order except the partner or an admin.
 
+## Production hygiene (round 9)
+
+* `OTP_DEMO` is ignored when `APP_ENV=production`: one-time codes are never shown on screen in production, whatever the variable says.
+* `DATA_KEY` can be set after launch: records encrypted before it existed stay readable (the SECRET_KEY-derived key is tried after the current one) and are re-encrypted with the new key the next time they are saved. `DATA_KEY_PREV` allows a planned rotation the same way.
+* `/admin → Dashboard → Test storage` writes, reads and deletes one object with the live credentials and shows the exact error if the bucket is not reachable. The app backs off failed uploads (30 s, 1 min, 2 min … up to an hour) instead of retrying every few seconds.
+* On Railway the service references the bucket's credentials (`${{bucket.ENDPOINT}}`, `${{bucket.ACCESS_KEY_ID}}`, …) rather than copying them; a credential reset needs no edit.
+
 ## Operations checklist
 
 * `/admin` → **System** shows the clinical reviewer, which services are on (smart reading, documents, push) and the last 100 app errors reported by phones.
