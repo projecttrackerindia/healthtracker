@@ -5273,6 +5273,7 @@ function celebrate(m){const w=Math.max(0,Math.floor((Date.now()-new Date(S.preg[
 
 // ---------------------------------------------------------------- 5. health card for every member, with our mark
 const bloodOf=m=>{const mid=SX.midOf(m.id);return mid.blood||(m.bloodUnknown?P('Not known'):'—')};
+SX.bloodOf=bloodOf;
 const vb=(on,label)=>on?`<span class="lv-ver" title="${E(label)} verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.4 2.1 3.2-.3.9 3.1 2.8 1.6-1.1 3 1.1 3-2.8 1.6-.9 3.1-3.2-.3L12 22l-2.4-2.1-3.2.3-.9-3.1L2.7 15.5l1.1-3-1.1-3 2.8-1.6.9-3.1 3.2.3z"/><path d="M8.3 12.2l2.5 2.5 5-5" fill="none"/></svg><span>${P('Verified')}</span></span>`:`<span class="lv-unver">${P('Not verified')}</span>`;
 SX.cardHTML=m=>{const pv=SX.verified.phone(m);
  return `<div class="lv-card lv2-hc" role="group" aria-label="${E(P('Health card'))}"><div class="lv-card-top"><span class="lv-card-brand">${MARK}<b>the<i>health</i>tracker</b></span><span class="lv-card-k">${P('HEALTH CARD')}</span></div>
@@ -5509,7 +5510,7 @@ try{const m=JSON.parse(localStorage.getItem(SYK));if(m&&typeof m.v==='number')me
 const saveMeta=()=>{try{localStorage.setItem(SYK,JSON.stringify(meta))}catch(e){}};
 const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h};
 const pick=()=>{const o={};for(const k of Object.keys(S))if(!EXCL.has(k))o[k]=S[k];return o};
-function rehash(stamp){const st=pick(),t=Date.now();let changed=false;for(const k of Object.keys(st)){const h=hash(JSON.stringify(st[k]));if(meta.hash[k]!==h){if(stamp&&meta.hash[k]!==undefined)console.log('[sync-diag] key changed:',k,'old=',meta.hash[k],'new=',h);meta.hash[k]=h;if(stamp){meta.sect[k]=t;changed=true}}}for(const k of Object.keys(meta.hash))if(!(k in st)){delete meta.hash[k];if(stamp){meta.sect[k]=t;changed=true}}return changed}
+function rehash(stamp){const st=pick(),t=Date.now();let changed=false;for(const k of Object.keys(st)){const h=hash(JSON.stringify(st[k]));if(meta.hash[k]!==h){meta.hash[k]=h;if(stamp){meta.sect[k]=t;changed=true}}}for(const k of Object.keys(meta.hash))if(!(k in st)){delete meta.hash[k];if(stamp){meta.sect[k]=t;changed=true}}return changed}
 let pushT=0,applying=false,pushing=false;
 const sv0=SX.save;SX.save=(now)=>{sv0(now);if(applying)return;if(rehash(true)){meta.dirty=true;saveMeta();schedulePush()}};
 function schedulePush(){if(!SX.user||!meta.dirty)return;clearTimeout(pushT);pushT=setTimeout(push,2500)}
@@ -5574,7 +5575,7 @@ SX.act.fcopy=async([l])=>{try{await navigator.clipboard.writeText(decodeURICompo
 // ---------------------------------------------------------------- C. wallet: masked until opened
 const ch0=SX.cardHTML;SX.cardHTML=(m,opt)=>{const h=ch0(m);if(!(opt&&opt.mask))return h;const mp=m.ph?m.ph.replace(/^(\+\d\d)(\d{5})(\d{5})$/,'$1 ••••• $3'):'';const mid=(m.htid||'').replace(/^(THT-)\w{4}-\w{4}-(\w{4})$/,'$1••••-••••-$2');
  let out=h;if(m.ph)out=out.split(E(m.ph.replace(/^\+91(\d{5})(\d{5})$/,'+91 $1 $2'))).join(E(mp));if(m.htid)out=out.split(E(m.htid)).join(E(mid));
- const bl=bloodOf(m);if(bl&&bl!=='—')out=out.split(E(bl)).join('••');
+ const bl=SX.bloodOf(m);if(bl&&bl!=='—')out=out.split(E(bl)).join('••');
  if(m.dob){const dd=fmtD(m.dob);out=out.split(E(dd)).join('••/••/••••')}
  return out.replace(/<span class="lv-ver"[\s\S]*?<\/span><\/span>|<span class="lv-unver">[^<]*<\/span>/,'')};
 
