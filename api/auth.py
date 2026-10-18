@@ -639,11 +639,17 @@ def account_delete(body: DeleteAccount, request: Request, response: Response, db
     limit(request, "delete", 5, 3600)
     if body.confirm.strip().upper() != "DELETE":
         raise HTTPException(400, 'Type DELETE to confirm.')
-    from .models import Household
+    from .models import Household, HouseholdState, Invite
     if u.household_id:
         h = db.get(Household, u.household_id)
         if h:  # orders and invoices stay for pharmacy and tax law, without personal details
             h.name, h.phone, h.email, h.lat, h.lng = "", "", "", None, None
+        others = db.scalar(select(func.count(User.id)).where(User.household_id == u.household_id, User.id != u.id)) or 0
+        if not others:  # last account in the family: the encrypted store goes too
+            st = db.get(HouseholdState, u.household_id)
+            if st:
+                db.delete(st)
+            db.query(Invite).filter(Invite.household_id == u.household_id).delete()
     db.query(AuthSession).filter(AuthSession.user_id == u.id).delete()
     db.query(AuthFlow).filter(AuthFlow.user_id == u.id).delete()
     targets = [t for t in (u.email, u.phone) if t]

@@ -19,8 +19,8 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 
 from sqlalchemy.exc import OperationalError
 
-from api.db import Base, engine, session
-from api import admin as admin_api, auth as auth_api, routes as public_api
+from api.db import Base, engine, ensure_columns, session
+from api import admin as admin_api, auth as auth_api, family as family_api, routes as public_api
 from api.seed import seed_all
 
 ROOT = Path(__file__).resolve().parent
@@ -85,12 +85,14 @@ def _init_db():
     except OperationalError as e:
         if "already exists" not in str(e):
             raise
+    ensure_columns()
     with session() as db:
         seed_all(db)
 
 
 app.include_router(public_api.r)
 app.include_router(auth_api.r)
+app.include_router(family_api.r)
 app.include_router(admin_api.r)
 
 # --------------------------------------------------------------------------------------------------
@@ -195,7 +197,8 @@ def _send(p: Path, request: Request, cache: str):
 @app.api_route("/signin", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/signup", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/reset", methods=["GET", "HEAD"], include_in_schema=False)
-def landing(request: Request):
+@app.api_route("/join/{token}", methods=["GET", "HEAD"], include_in_schema=False)
+def landing(request: Request, token: str = ""):
     return _send(SITE / "index.html", request, "no-cache")
 
 

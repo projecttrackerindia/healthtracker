@@ -82,7 +82,7 @@ const head=(t,s,extra='')=>`<div class="row" style="justify-content:space-betwee
 const VIEWS={};
 VIEWS.dash=async()=>{main(head('Dashboard','Last 30 days · '+new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})));const s=await api('/stats');DATA.pending=s.pending;
  const max=Math.max(1,...s.orders.byDay.map(x=>x[1]));
- main(head('Dashboard','Last 30 days',`<span class="chip">Smart reading: <b>${s.engine==='claude'?'on':'off (set ANTHROPIC_API_KEY)'}</b></span> <button class="btn sm" id="aiTest" type="button">Test connection</button><span id="aiTestOut" class="sm mute"></span>`)+`
+ main(head('Dashboard','Last 30 days',`<span class="chip">Smart reading: <b>${s.engine==='claude'?'on':'off (set ANTHROPIC_API_KEY)'}</b></span> <button class="btn sm" id="aiTest" type="button">Test connection</button><span id="aiTestOut" class="sm mute">${s.aiLastError&&s.aiLastError.error?`Last failure (${new Date(s.aiLastError.t*1000).toLocaleString('en-IN')}, ${s.aiLastError.where}): ${s.aiLastError.error}`:''}</span>`)+`
  <div class="cards">
   <div class="card kpi"><small>Households</small><b>${s.households.total}</b><span>+${s.households.new7} this week · ${s.households.active1} active today · ${s.households.paid} paid</span></div>
   <div class="card kpi"><small>Orders · 30 d</small><b>${s.orders.month}</b><span>${s.orders.open} open · ${money(s.orders.revenue)} value · ★ ${s.orders.avgRating??'—'}</span></div>

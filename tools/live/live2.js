@@ -56,10 +56,10 @@ const CARE=SX.G.find(g=>g.k==='care');
 function pregNav(){const on=pregActive();CARE.ic=on?'preg':'doc';CARE.tabs=on?['preg','appts','docs','msgs','bill']:['appts','docs','msgs','preg','bill'];document.body.dataset.pregtheme=on?'on':'off';
  const b=$('#nav [data-g="care"]');if(b){const svg=b.querySelector('svg');if(svg)svg.innerHTML=I[CARE.ic];}SX.paintNav()}
 SX.pregNav=pregNav;
-const sa0=SX.setActive;SX.setActive=id=>{sa0(id);pregNav()};
+const sa0=SX.setActive;SX.setActive=id=>{sa0(id);SX.pregNav()};
 const pg0=SX.paintGates;SX.paintGates=()=>{pg0();document.body.dataset.pregtheme=pregActive()?'on':'off'};
-const ps0=SX.chg.pregsave;SX.chg.pregsave=(a,f)=>{const m=SX.me(),was=SX.pregOn(m);ps0(a,f);if(!was&&SX.pregOn(m)){pregNav();celebrate(m)}};
-const po0=SX.act.pregoff2;SX.act.pregoff2=()=>{po0();pregNav()};
+const ps0=SX.chg.pregsave;SX.chg.pregsave=(a,f)=>{const m=SX.me(),was=SX.pregOn(m);ps0(a,f);if(!was&&SX.pregOn(m)){SX.pregNav();celebrate(m)}};
+const po0=SX.act.pregoff2;SX.act.pregoff2=()=>{po0();SX.pregNav()};
 function celebrate(m){const w=Math.max(0,Math.floor((Date.now()-new Date(S.preg[m.id].lmp+'T00:00'))/864e5/7));
  const o=document.createElement('div');o.className='lv2-cel';o.setAttribute('role','dialog');o.setAttribute('aria-label',P('A new journey begins'));
  o.innerHTML=`<div class="lv2-cel-sky">${Array.from({length:26},(_,i)=>`<i style="--x:${(i*37)%100}%;--d:${(i%7)*.9}s;--s:${.6+(i%5)*.25}"></i>`).join('')}</div>
@@ -116,7 +116,7 @@ function cardFace(c,opt={}){const T=CT[c.type]||CT.other,f=c.f,ex=expiry(c),num=
 SX.act.creveal=([id])=>{reveal[id]=!reveal[id];render()};
 let walletSel='';
 function walletHTML(){const m=SX.me(),list=cards(),sel=cardOf(walletSel)||null,hc=S.members.filter(cardReady).concat(S.members.filter(x=>!cardReady(x)));
- const picker=`<div class="lv2-wallet" role="list">${S.members.map(x=>`<button class="lv2-slot ${walletSel==='hc:'+x.id?'on':''}" role="listitem" data-sx="wsel:hc:${x.id}">${cardReady(x)?SX.cardHTML(x):`<div class="lv-card lv2-hc lv2-hc-todo"><div class="lv-card-top"><span class="lv-card-brand">${MARK}<b>the<i>health</i>tracker</b></span></div><div class="lv-card-name">${E(x.name)}</div><p>${P('Health card not complete')}</p></div>`}</button>`).join('')}
+ const picker=`<div class="lv2-wallet" role="list">${S.members.map(x=>`<button class="lv2-slot ${walletSel==='hc:'+x.id?'on':''}" role="listitem" data-sx="wsel:hc:${x.id}">${cardReady(x)?SX.cardHTML(x,{mask:true}):`<div class="lv-card lv2-hc lv2-hc-todo"><div class="lv-card-top"><span class="lv-card-brand">${MARK}<b>the<i>health</i>tracker</b></span></div><div class="lv-card-name">${E(x.name)}</div><p>${P('Health card not complete')}</p></div>`}</button>`).join('')}
   ${list.map(c=>`<button class="lv2-slot ${walletSel===c.id?'on':''}" role="listitem" data-sx="wsel:${c.id}">${cardFace(c,{flat:true})}</button>`).join('')}
   <button class="lv2-slot lv2-add" data-sx="caddcard"><div class="lv2-card add"><b>＋</b><span>${P('Add a card')}</span><small>${P('Insurance, ABHA, corporate, scheme')}</small></div></button></div>`;
  let detail='';
@@ -266,6 +266,6 @@ function remTick2(){if(!S.rem.on)return;const t=SX.today(),nm=nowMin();
 setInterval(remTick2,30000);setTimeout(remTick2,3000);
 // replace the old reminders card on My medicines
 SX.extend('rx',{after(){return `<div class="card wide lv2-remcard"><div class="hd"><div><h3>${P('Reminders')}</h3><small class="mute">${S.rem.on?`${P('On')} · ${['Morning','Afternoon','Evening','Night'].map(sl=>P(sl)+' '+fmtSlot(sl)).join(' · ')}`:P('Off')}</small></div><button class="btn s sm" data-sx="remset">${P('Settings')}</button></div></div>`}});
-const b0=SX.boot;SX.boot=()=>{b0();bell();pregNav()};
+const b0=SX.boot;SX.boot=()=>{b0();bell();SX.pregNav()};
 const r0=render;render=function(...a){const r=r0.apply(this,a);bell();return r};
 }
