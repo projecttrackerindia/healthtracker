@@ -5358,7 +5358,7 @@ function cardsPwPrompt(uid){SX.modal(`<h2>${P('Unlock card details')}</h2><p cla
    else{err.textContent=P('Two-step sign-in needs a code. Finish signing in from Settings, then try again.');err.hidden=false}
   }catch(e2){err.textContent=e2.message;err.hidden=false}}}
 // re-lock the moment the user leaves the Cards & Insurance group (any of its tabs); arriving fresh is already locked by default
-const go0=go;go=(p,opt={})=>{if(grpOf(page)==='cards'&&grpOf(p)!=='cards')cardsUnlocked=false;return go0(p,opt)};
+const go0=go;go=(p,opt={})=>{if(SX.grpOf(page)==='cards'&&SX.grpOf(p)!=='cards')cardsUnlocked=false;return go0(p,opt)};
 // add / edit
 let cf={type:'insurance',file:null,fields:{},id:'',reading:false,read:null};
 SX.act.caddcard=()=>{cf={type:'insurance',file:null,fields:{},id:'',reading:false,read:null};addSheet()};
