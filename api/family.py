@@ -44,7 +44,7 @@ def _key() -> bytes:
         except ValueError:
             pass
         print("[family] DATA_KEY is not 64 hex characters; deriving a key from SECRET_KEY instead", flush=True)
-    return hashlib.sha256(("tht-data|" + SECRET).encode()).digest()
+    return _legacy_key()
 
 
 def encrypt(obj: dict) -> bytes:
@@ -55,12 +55,43 @@ def encrypt(obj: dict) -> bytes:
     return b"v1" + nonce + AESGCM(_key()).encrypt(nonce, raw, b"tht-state-v1")
 
 
-def decrypt(blob: bytes) -> dict:
+def _legacy_key() -> bytes:
+    return hashlib.sha256(("tht-data|" + SECRET).encode()).digest()
+
+
+def keys() -> list[bytes]:
+    """Current key first, then the SECRET_KEY-derived one (what was used before DATA_KEY was set) and DATA_KEY_PREV
+    (for a planned rotation). Reads try each; writes always use the current key, so data re-encrypts as it is saved."""
+    out = [_key()]
+    prev = os.getenv("DATA_KEY_PREV", "").strip()
+    if prev:
+        try:
+            b = bytes.fromhex(prev)
+            if len(b) == 32:
+                out.append(b)
+        except ValueError:
+            pass
+    if _legacy_key() not in out:
+        out.append(_legacy_key())
+    return out
+
+
+def open_with_keys(blob: bytes, nonce: bytes, aad: bytes) -> bytes:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+    last = None
+    for k in keys():
+        try:
+            return AESGCM(k).decrypt(nonce, blob, aad)
+        except Exception as e:  # wrong key: try the next
+            last = e
+    raise last or ValueError("cannot decrypt")
+
+
+def decrypt(blob: bytes) -> dict:
     if blob[:2] != b"v1":
         raise ValueError("unknown blob version")
-    raw = AESGCM(_key()).decrypt(blob[2:14], blob[14:], b"tht-state-v1")
+    raw = open_with_keys(blob[14:], blob[2:14], b"tht-state-v1")
     return json.loads(zlib.decompress(raw).decode())
 
 

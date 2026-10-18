@@ -1439,6 +1439,17 @@ body[data-page=assist] .lv5-agent .hd h3{font-size:17px}body[data-page=assist] .
 .lv8-bars{display:flex;gap:8px;align-items:flex-end;height:140px;padding:6px 2px 0;overflow-x:auto}.lv8-bar{--h:20%;flex:0 0 42px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}.lv8-bar::before{content:"";width:100%;height:var(--h);min-height:6px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#fb923c,#f97316)}.lv8-bar span{font-size:11px;font-weight:700}.lv8-bar small{font-size:10px;color:var(--mute)}
 .lv8-pwrap .lv8-pin>.note:first-child{margin-top:0}.lv8-pin h4{margin-top:18px}
 </style>
+<style id="live9-css">/* live layer 9: pregnancy page polish */
+.pghero{padding:18px 20px!important;border-radius:22px!important}
+.pghero .kicker{letter-spacing:.14em;font-size:10.5px;font-weight:700;opacity:.75}
+.pghero h3{font-size:24px!important}
+.pghero .ptrack{height:10px;border-radius:99px;margin-top:14px}
+.pghero .wgroups details{margin-top:8px}.pghero .wchips .wch{border-radius:10px}
+.pro-intro small{letter-spacing:.14em;font-size:10.5px;font-weight:700}
+.pro-intro h3{font-size:18px;margin:4px 0 6px}
+#ptabs{display:none!important}
+.card:has(> #ptabs){display:none!important}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -2755,7 +2766,7 @@ function bmiCat(){const b=bmi(),a=PROF.asian;if(b<18.5)return 0;if(b<(a?23:25))r
 const BMIC=[['Underweight',12.5,18,.44,.58],['Healthy weight',11.5,16,.35,.5],['Overweight',7,11.5,.23,.33],['Obese',5,9,.17,.27]];
 function gainRange(w){const c=BMIC[bmiCat()];if(w<=13){const f=w/13;return[.5*f,2*f]}return[Math.min(c[1],.5+(w-13)*c[3]),Math.min(c[2],2+(w-13)*c[4])]}
 const pa=(k,a='')=>`data-pa="${k}${a!==''?':'+a:''}"`;
-const TABS=[['week','🗓️','Week'],['music','🎵','Music'],['well','🧘','Wellbeing'],['ben','🎁','Benefits']];
+const TABS=[];
 // ---------- entering / leaving pregnancy mode ----------
 const PG={async enter(){if(!PS.on){PS.on=true;document.documentElement.dataset.mode='preg';const g=ga();PS.week=Math.min(40,Math.max(3,g.w));$('#prange').value=PS.week}
   $('#pvSeg2')&&0;PV.init();syncPg()},
@@ -2772,8 +2783,8 @@ PAGES.preg=()=>{const g=ga(),w=PS.week,cw=Math.min(40,Math.max(0,g.w)),tri=triOf
  <div class="wgroups">${grp.map(([t,n,a,b])=>`<details ${tri===t?'open':''}><summary><b>${n}</b><small>${t<4?'Weeks '+a+'–'+b:'Labour, birth & newborn'}</small></summary><div class="wchips">${Array.from({length:b-a+1},(_,i)=>a+i).map(x=>`<button class="wch ${x===w?'on':''} ${x===cw?'now':''}" ${pa('week',x)} title="${x>40?'Delivery':'Week '+x}">${x>40?'🍼 Birth':x}</button>`).join('')}</div></details>`).join('')}</div>
  <div class="hd" style="margin-top:12px;flex-wrap:wrap"><span class="seg"><button class="${PS.view==='baby'?'on':''}" ${pa('view','baby')}>👶 Baby</button><button class="${PS.view==='mother'?'on':''}" ${pa('view','mother')}>🤰 Mother</button></span><span class="chips"><button class="chip" ${pa('week',cw)}>📍 Today (wk ${cw})</button><button class="chip" ${pa('share')}>📤 Share with doctor</button><button class="chip" data-sx="tab:book">📅 Book a visit</button></span></div></div>
  ${window.SX&&SX.pregTrackers?SX.pregTrackers():''}
- <div class="card"><div class="ptabs" id="ptabs" role="tablist">${TABS.map(([k,e,n])=>`<button role="tab" class="${PS.tab===k?'on':''}" ${pa('tab',k)}>${e} ${n}</button>`).join('')}</div><div id="ptab">${(T[PS.tab]||T.week)()}</div></div>`};
-AFTER.preg=()=>{const f=AT[PS.tab];if(f)f();const t=$('#ptabs .on');if(t)t.scrollIntoView({block:'nearest',inline:'center'})};
+ <div class="card"><div class="ptabs" id="ptabs" hidden></div></div>`};
+AFTER.preg=()=>{};
 const row=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
 const T={};const AT={};window.__preg.T=T;window.__preg.AT=AT;
 // ---------- week ----------
@@ -3635,7 +3646,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-ha]');if(!
 const ADV={part:null};
 const PROINFO={head:['Fetal head','The head is proportionally large early in development. This control focuses the model’s head anchor; the model is an educational approximation.'],face:['Face','Inspect the face using drag, zoom and the camera presets. Small facial details in this procedural model are simplified and are not a validated scan reconstruction.'],hands:['Hands & arms','The arms are flexed near the body. The independent baby view retains its movement animation and pause control.'],feet:['Feet & legs','The late-stage pose uses flexed hips and knees. Leg flexion is different from presentation: a fetus can be curled in a head-down or breech position.'],placenta:['Placenta','This example attaches the placenta to the posterior uterine wall. Real placental location varies and is assessed using ultrasound.'],cord:['Umbilical cord','The cord joins the fetal abdomen and placenta. Its route is illustrative; the model cannot assess a real cord or blood flow.'],uterus:['Uterus and surrounding anatomy','Use Skin, Organs and Skeleton to inspect maternal context. The cut-away control opens the uterine view. Rotate to see how the structures relate in three dimensions.']};
 const savedPregnancyPage=PAGES.preg;
-PAGES.preg=()=>{const extra=`<section class="pro-intro"><small>INTERACTIVE 3D / PREGNANCY LAB</small><h3>Explore the anatomy in depth</h3><p>Rotate, zoom toward the cursor, or select a structure to bring it into focus. All original week, nutrition, hydration, wellbeing and birth tools remain below.</p><div class="pro-quick">${[['whole','Mother / baby overview'],['uterus','Uterus'],['head','Head'],['face','Face'],['hands','Hands'],['feet','Feet'],['placenta','Placenta'],['cord','Cord']].map(([k,n])=>`<button data-pro="focus:${k}" class="${ADV.part===k?'on':''}">${n}</button>`).join('')}</div><div class="pro-controls"><label>Teaching presentation · Mother view<select id="proPose"><option value="auto" ${!PS.presentation||PS.presentation==='auto'?'selected':''}>${PS.week>=28?'Head-down example':'Variable early pose'}</option><option value="breech" ${PS.presentation==='breech'?'selected':''}>Breech example</option><option value="transverse" ${PS.presentation==='transverse'?'selected':''}>Transverse example</option></select></label><label>View composition<select id="proComposition"><option value="current">Choose a view…</option><option value="context">Mother with anatomy layers</option><option value="uterus">Focused uterine cut-away</option><option value="baby">Isolated baby</option></select></label></div>${ADV.part&&PROINFO[ADV.part]?`<div class="pro-reading"><b>${PROINFO[ADV.part][0]}</b><p>${PROINFO[ADV.part][1]}</p></div>`:''}<details class="pro-review"><summary>Model accuracy & references</summary><p>The original adult models, Heart Lab and pregnancy system are retained. Fetal shape and maternal deformation are procedural approximations. Female muscle and bone layers include adapted adult male assets. These are not validated clinical atlases.</p><p>Presentation controls show teaching examples, not a prediction of your baby’s position. The selected week changes development; it does not determine the actual presentation or the start of labour.</p><a href="https://www.acog.org/womens-health/faqs/how-your-fetus-grows-during-pregnancy" target="_blank" rel="noopener">ACOG: fetal development</a> · <a href="https://www.nhs.uk/pregnancy/labour-and-birth/if-your-baby-is-breech/" target="_blank" rel="noopener">NHS: presentation</a></details></section>`;return savedPregnancyPage().replace('<div class="card"><div class="ptabs"',extra+'<div class="card"><div class="ptabs"')};
+PAGES.preg=()=>{const extra=`<section class="pro-intro"><small>INTERACTIVE 3D / PREGNANCY LAB</small><h3>Explore the anatomy in depth</h3><p>Rotate, zoom toward the cursor, or select a structure to bring it into focus.</p><div class="pro-quick">${[['whole','Mother / baby overview'],['uterus','Uterus'],['head','Head'],['face','Face'],['hands','Hands'],['feet','Feet'],['placenta','Placenta'],['cord','Cord']].map(([k,n])=>`<button data-pro="focus:${k}" class="${ADV.part===k?'on':''}">${n}</button>`).join('')}</div><div class="pro-controls"><label>Teaching presentation · Mother view<select id="proPose"><option value="auto" ${!PS.presentation||PS.presentation==='auto'?'selected':''}>${PS.week>=28?'Head-down example':'Variable early pose'}</option><option value="breech" ${PS.presentation==='breech'?'selected':''}>Breech example</option><option value="transverse" ${PS.presentation==='transverse'?'selected':''}>Transverse example</option></select></label><label>View composition<select id="proComposition"><option value="current">Choose a view…</option><option value="context">Mother with anatomy layers</option><option value="uterus">Focused uterine cut-away</option><option value="baby">Isolated baby</option></select></label></div>${ADV.part&&PROINFO[ADV.part]?`<div class="pro-reading"><b>${PROINFO[ADV.part][0]}</b><p>${PROINFO[ADV.part][1]}</p></div>`:''}<details class="pro-review"><summary>Model accuracy & references</summary><p>The original adult models, Heart Lab and pregnancy system are retained. Fetal shape and maternal deformation are procedural approximations. Female muscle and bone layers include adapted adult male assets. These are not validated clinical atlases.</p><p>Presentation controls show teaching examples, not a prediction of your baby’s position. The selected week changes development; it does not determine the actual presentation or the start of labour.</p><a href="https://www.acog.org/womens-health/faqs/how-your-fetus-grows-during-pregnancy" target="_blank" rel="noopener">ACOG: fetal development</a> · <a href="https://www.nhs.uk/pregnancy/labour-and-birth/if-your-baby-is-breech/" target="_blank" rel="noopener">NHS: presentation</a></details></section>`;return savedPregnancyPage().replace('<div class="card"><div class="ptabs"',extra+'<div class="card"><div class="ptabs"')};
 const savedAfterPregnancy=AFTER.preg;
 AFTER.preg=()=>{savedAfterPregnancy();const pose=$('#proPose');pose.disabled=PS.week<14;pose.onchange=()=>{PS.presentation=pose.value;if(PS.view!=='mother')setPView('mother');PV.setWeek(PS.week,true)};$('#proComposition').onchange=e=>{const v=e.target.value;if(v==='current')return;ADV.part=null;if(v==='baby'){setPView('baby');PV.cam('q')}else{if(PS.view!=='mother')setPView('mother');PS.layers={bone:v==='context',org:v==='context'};PS.cut=v!=='context';PS.skin=v==='context'?.2:1;PS.labels=v==='context';PS.camK=v==='context'?'q':'belly';PV.setWeek(PS.week,true);PV.cam(PS.camK);syncPg()}render()}};
 for(const id of ['stage','pstage','hstage']){const bar=document.createElement('div');bar.className='pro-stage-bar';bar.innerHTML=`<button data-pro="layout">Expand workspace</button><button data-pro="fullscreen:${id}">Full screen</button>${id==='pstage'?'<button data-pro="focus:whole">Fit model</button><button data-pro="quality">Performance mode</button>':''}`;$('#'+id).append(bar)}
@@ -5815,8 +5826,8 @@ let uploading=false;
 async function upload(id){if(!SX.user||!navigator.onLine)return false;let blob=null;try{blob=await f0.get(id)}catch(e){}if(!blob){delete upq[id];saveQ();return false}
  if(!/^(image\/|application\/pdf)/.test(blob.type)){delete upq[id];saveQ();return false}
  try{const name=(upq[id]&&upq[id].n)||'';await J('/files/'+encodeURIComponent(id),'PUT',undefined,{headers:{'content-type':blob.type,'x-tht':'1','x-file-name':name},body:blob});S.cloud[id]={size:blob.size,mime:blob.type,t:Date.now()};delete upq[id];saveQ();SX.save();return true}
- catch(e){if(e.status===413||e.status===415||e.status===507){delete upq[id];saveQ();if(e.status===507)toast(e.message)}return false}}
-async function drain(){if(uploading||!SX.user||!navigator.onLine)return;uploading=true;try{for(const id of Object.keys(upq)){if(S.cloud[id]){delete upq[id];continue}await upload(id)}saveQ()}finally{uploading=false}}
+ catch(e){if(e.status===413||e.status===415||e.status===507){delete upq[id];saveQ();if(e.status===507)toast(e.message)}else{const q=upq[id]||(upq[id]={n:'',t:Date.now()});q.f=(q.f||0)+1;q.next=Date.now()+Math.min(36e5,3e4*Math.pow(2,q.f-1));saveQ()}return false}}
+async function drain(){if(uploading||!SX.user||!navigator.onLine)return;uploading=true;try{for(const id of Object.keys(upq)){if(S.cloud[id]){delete upq[id];continue}if(upq[id]&&upq[id].next&&upq[id].next>Date.now())continue;await upload(id)}saveQ()}finally{uploading=false}}
 SX.files.put=async(id,blob,opt)=>{await f0.put(id,blob);if(opt&&opt.fromCloud)return;upq[id]={n:(blob&&blob.name)||'',t:Date.now()};saveQ();if(SX.user)setTimeout(()=>upload(id),300)};
 SX.files.get=async id=>{let b=null;try{b=await f0.get(id)}catch(e){}if(b)return b;if(!S.cloud[id]||!SX.user)return b;
  try{const blob=await J('/files/'+encodeURIComponent(id),'GET',undefined,{headers:{},blob:true});if(blob&&blob.size){await f0.put(id,blob);return blob}}catch(e){if(e.status===404){delete S.cloud[id];SX.save()}}return null};
@@ -6498,6 +6509,34 @@ SX.reg('pbirth',wrap('birth','👶','Birth plan','The hospital bag, your prefere
 document.addEventListener('click',e=>{const b=e.target.closest('.lv8-pin [data-pa^="tab:"]');if(!b)return;const t=b.dataset.pa.split(':')[1],map={tools:'pkick',water:'pwater',health:'psymp',food:'pfood',birth:'pbirth'};if(map[t]){e.preventDefault();e.stopPropagation();go(map[t])}},true);
 // pregnancy data moves into the family record once (it used to live only in this browser)
 setTimeout(()=>{try{const g=PG8();if(g&&(!S.pregst||!S.pregst.log)){S.pregst=S.pregst||{};g.save();if(S.pregst.log)SX.save()}}catch(e){}},2000);
+}
+
+/*live-p8*/
+// ===================== live layer 9: pregnancy tabs complete, care plan out of pregnancy, pregnancy page tidy =====================
+{
+const P=SX.p;
+const PP9=['pkick','pctr','pwater','psymp','pfood','pweek','pmusic','pwell','pben','pbirth'];window.__pregPages=new Set(PP9);
+SX.addStrings({'tab.pweek':SX.D('Week','सप्ताह','వారం'),'tab.pmusic':SX.D('Music','संगीत','సంగీతం'),'tab.pwell':SX.D('Wellbeing','सेहत','శ్రేయస్సు'),'tab.pben':SX.D('Benefits','लाभ','ప్రయోజనాలు')});
+{const care=SX.G.find(g=>g.k==='care');const fix=()=>{if(!care)return;const preg=SX.pregOn(SX.me());care.tabs=preg?['preg',...PP9,'careplan','child']:['careplan','cycle','child']};fix();const pn4=SX.pregNav;SX.pregNav=()=>{pn4();fix()}}
+// the care plan is not part of a pregnancy; pregnancy is the care
+const tv9=SX.tabVisible;SX.tabVisible=k=>{if(k==='careplan'&&SX.pregOn(SX.me()))return false;return tv9(k)};
+SX.extend('careplan',{mounted(){if(SX.pregOn(SX.me()))go('preg')}});
+const PG9=()=>window.__preg||null;
+const week9=()=>{const g=PG9();if(!g)return 0;try{g.PS.week=Math.max(0,Math.min(42,g.ga().w))}catch(e){}return g.PS.week||0};
+const gate9=()=>{const m=SX.me();if(!SX.pregOn(m))return `<div class="card wide"><p class="mute" style="margin:0">${P('Pregnancy mode is off for this profile.')}</p></div>`;if(!PG9())return `<div class="card wide"><p class="mute" style="margin:0">${P('Loading…')}</p></div>`;return ''};
+const head9=(ic,t,s)=>`<div class="lv8-ph"><div class="lv8-phi">${ic}</div><div><h3>${E(t)}</h3><p class="mute sm">${E(s)}</p></div><span class="lv8-wk">${P('Week')} ${week9()}</span></div>`;
+const wrap9=(key,ic,t,s)=>({head:()=>[P(t),P(s)],render(){const g0=gate9();if(g0)return g0;const g=PG9();week9();let html='';try{html=g.T[key]?g.T[key]():''}catch(e){html=`<p class="mute">${E(e.message)}</p>`}return `<div class="card wide lv8-pwrap lv8-${key}">${head9(ic,P(t),P(s))}<div class="lv8-pin">${html}</div></div>`},after(){const g=PG9();try{if(g&&g.AT[key])g.AT[key]()}catch(e){}}});
+SX.reg('pweek',wrap9('week','🗓️','This week','Baby and mother this week: size, changes, what is due.'));
+SX.reg('pmusic',wrap9('music','🎵','Music','Gentle sound for you and the baby; what the baby can hear now.'));
+SX.reg('pwell',wrap9('well','🧘','Wellbeing','Sleep, movement, mood and rest for this trimester.'));
+SX.reg('pben',wrap9('ben','🎁','Benefits','Maternity benefits and schemes you may be entitled to.'));
+// the Pregnancy page: journey + 3D lab only (trackers and guides are tabs)
+SX.pregTrackers=()=>'';
+
+// counting kicks must feel instant: update the ring and number in place, no page re-render per tap
+document.addEventListener('click',e=>{const b=e.target.closest('.lv8-tap');if(!b||b.dataset.pa!=='kick')return;const g=PG9();if(!g||!g.PS.kick)return;e.preventDefault();e.stopPropagation();const K=g.PS.kick;K.n++;if(navigator.vibrate)try{navigator.vibrate(30)}catch(x){}
+ const num=b.querySelector('b'),sm=b.querySelector('small'),ring=b.closest('.lv8-ring');if(num)num.textContent=K.n;if(ring)ring.style.setProperty('--p',Math.min(100,K.n*10));
+ if(K.n>=10){if(sm)sm.textContent=P('Done!');const save=document.querySelector('[data-pa=kickEnd]');if(save)save.textContent='✓ '+P('Save session');if(!document.querySelector('.lv8-ok')){const card=document.querySelector('.lv8-kick');if(card)card.insertAdjacentHTML('beforeend',`<p class="lv8-ok">✅ ${P('10 movements in')} ${Math.floor((Date.now()-K.s)/60000)}:${String(Math.round((Date.now()-K.s)/1000)%60).padStart(2,'0')} — ${P('that is reassuring. Save the session.')}</p>`)}}},true);
 }
 
 SX.boot();

@@ -1,0 +1,10 @@
+/* live layer 9: pregnancy page polish */
+.pghero{padding:18px 20px!important;border-radius:22px!important}
+.pghero .kicker{letter-spacing:.14em;font-size:10.5px;font-weight:700;opacity:.75}
+.pghero h3{font-size:24px!important}
+.pghero .ptrack{height:10px;border-radius:99px;margin-top:14px}
+.pghero .wgroups details{margin-top:8px}.pghero .wchips .wch{border-radius:10px}
+.pro-intro small{letter-spacing:.14em;font-size:10.5px;font-weight:700}
+.pro-intro h3{font-size:18px;margin:4px 0 6px}
+#ptabs{display:none!important}
+.card:has(> #ptabs){display:none!important}

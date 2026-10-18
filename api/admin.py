@@ -122,6 +122,24 @@ def client_errors_clear(a: Admin = Depends(me), db: Session = Depends(get_db)):
 
 
 # ---- dashboard ------------------------------------------------------------------------------------------------------
+@r.post("/storage/test")
+def storage_test(a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Can documents actually be stored? Writes, reads back and deletes one tiny object with the live credentials."""
+    import time as _t
+    from . import storage
+    t0 = _t.time()
+    try:
+        storage.put(db, "admin-selftest", "probe", b"ok", "image/png", "probe", "admin")
+        db.flush()
+        got = storage.get(db, "admin-selftest", "probe")
+        storage.delete(db, "admin-selftest", "probe")
+        if not got or got[1] != b"ok":
+            return {"ok": False, "backend": storage.backend(), "error": "stored object did not read back"}
+        return {"ok": True, "backend": storage.backend(), "ms": int((_t.time() - t0) * 1000)}
+    except Exception as e:
+        return {"ok": False, "backend": storage.backend(), "error": f"{type(e).__name__}: {str(e)[:300]}"}
+
+
 @r.post("/ai/test")
 def ai_test(a: Admin = Depends(me)):
     """Why is smart reading off? Calls the model once and returns the exact error (admins only)."""

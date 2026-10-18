@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import secrets
 
-from .family import _key
+from .family import _key, open_with_keys
 
 MAX_FILE = 15 * 1024 * 1024
 PREFIX = os.getenv("S3_PREFIX", "tht/")
@@ -45,7 +45,7 @@ def unseal(blob: bytes) -> bytes:
 
     if blob[:2] != b"f1":
         raise ValueError("unknown file blob")
-    return AESGCM(_key()).decrypt(blob[2:14], blob[14:], b"tht-file-v1")
+    return open_with_keys(blob[14:], blob[2:14], b"tht-file-v1")
 
 
 def put(db, household_id: str, file_id: str, data: bytes, mime: str, name: str, by: str) -> int:

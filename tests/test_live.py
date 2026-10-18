@@ -143,9 +143,9 @@ def test_account_name_changes_once_a_week():
 
 def test_paid_plan_needs_a_payment_provider(monkeypatch):
     monkeypatch.delenv("RAZORPAY_KEY_ID", raising=False)
-    monkeypatch.setenv("APP_ENV", "production")
     c = client()
     signup(c)
+    monkeypatch.setenv("APP_ENV", "production")
     c.headers["X-DoKKo-Key"] = uuid.uuid4().hex
     c.post("/api/v1/hello", json={"name": "T", "members": 1})
     plans = c.get("/api/v1/plans").json()
@@ -209,3 +209,30 @@ def test_model_fallback_on_not_found(monkeypatch):
     assert AI.create(max_tokens=5, messages=[]) == "ok"
     assert seen[0] == AI.FALLBACK_MODELS[0] and AI.current_model() == seen[1] != seen[0]
     assert AI.create(max_tokens=5, messages=[]) == "ok" and seen[-1] == AI.current_model()   # remembered: no retry next time
+
+
+def test_demo_codes_never_in_production(monkeypatch):
+    from api import messaging
+    monkeypatch.setenv("OTP_DEMO", "1")
+    monkeypatch.setenv("APP_ENV", "production")
+    assert messaging.demo() is False
+    monkeypatch.setenv("APP_ENV", "staging")
+    assert messaging.demo() is True
+
+
+def test_data_key_can_be_set_after_launch(monkeypatch):
+    """Records written before DATA_KEY existed stay readable, and are re-encrypted with the new key on the next save."""
+    import os
+    from api import family
+    monkeypatch.delenv("DATA_KEY", raising=False)
+    old = family.encrypt({"members": [{"id": "m1"}], "note": "before"})
+    monkeypatch.setenv("DATA_KEY", os.urandom(32).hex())
+    assert family.decrypt(old)["note"] == "before"           # legacy key still opens it
+    new = family.encrypt({"note": "after"})
+    assert family.decrypt(new)["note"] == "after"
+    monkeypatch.setenv("DATA_KEY", os.urandom(32).hex())
+    try:
+        family.decrypt(new)
+        assert False, "a blob under a lost key must not open"
+    except Exception:
+        pass

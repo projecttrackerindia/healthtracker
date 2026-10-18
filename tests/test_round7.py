@@ -159,3 +159,9 @@ def test_prices_profile_and_password():
     users = a.get(f"/api/admin/stores/{lab}/users").json()["users"]
     assert users and a.delete(f"/api/admin/stores/{lab}/users/{users[0]['id']}").json() == {"ok": True}
     assert p.get("/api/partner/me").status_code == 401
+
+
+def test_admin_storage_selftest():
+    a = admin()
+    r = a.post("/api/admin/storage/test").json()
+    assert r["ok"] is True and r["backend"] == "db"
