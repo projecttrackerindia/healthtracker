@@ -1,0 +1,18 @@
+/* ===== live layer 4 ===== */
+.lv4-years{margin:0 0 10px}.lv4-cloud{color:var(--blue);font-weight:700}
+.lv4-vax{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--soft);margin:6px 0;border-left:4px solid var(--line)}
+.lv4-vax.due{border-left-color:var(--blue)}.lv4-vax.overdue{border-left-color:var(--red)}.lv4-vax.done{border-left-color:var(--green,#2fb37a);opacity:.85}.lv4-vax b{display:block}.lv4-vax small{color:var(--mute)}
+.lv4-more summary{cursor:pointer;font-weight:600;padding:8px 0;color:var(--mute)}
+.lv4-chart{width:100%;height:auto;display:block;margin:4px 0 2px}
+.lv4-glist .row{padding:6px 0;border-top:1px solid var(--line)}
+.lv4-hint{display:flex;align-items:center;gap:12px;border:1px solid color-mix(in srgb,var(--blue) 30%,transparent);background:color-mix(in srgb,var(--blue) 6%,var(--card))}.lv4-hint b{display:block}
+.lv4-rev{margin:0 0 10px;padding:8px 12px;border-radius:12px;font-size:12.5px;background:color-mix(in srgb,var(--amber) 12%,transparent);color:color-mix(in srgb,var(--amber) 70%,var(--ink));grid-column:1/-1}
+.lv4-rev.ok{background:color-mix(in srgb,var(--teal) 12%,transparent);color:color-mix(in srgb,var(--teal) 70%,var(--ink))}
+#lv4env{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:999;font:700 10px/1 var(--mono,monospace);letter-spacing:.2em;padding:5px 10px;border-radius:99px;background:var(--amber);color:#1a1200;pointer-events:none}
+/* simple view: bigger, fewer */
+body[data-simple=on]{font-size:17px}
+body[data-simple=on] .btn{padding:14px 20px;font-size:16px}body[data-simple=on] .btn.sm{padding:10px 16px;font-size:15px}
+body[data-simple=on] .top h1{font-size:30px!important}body[data-simple=on] .card{padding:22px}body[data-simple=on] .sx-hero-hr{font-size:52px}
+body[data-simple=on] .sx-qa,body[data-simple=on] .lv3-ai,body[data-simple=on] .lv-hc .lv-card-id,body[data-simple=on] .mhint,body[data-simple=on] .pro-stage-bar{display:none!important}
+body[data-simple=on] nav#nav button{padding:14px 12px;font-size:16px}body[data-simple=on] .sx-dose{font-size:17px}body[data-simple=on] .sx-dose input{width:26px;height:26px}
+body[data-simple=on] .sx-sosbtn{font-size:22px;padding:18px}

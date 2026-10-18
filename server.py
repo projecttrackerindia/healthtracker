@@ -20,7 +20,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from sqlalchemy.exc import OperationalError
 
 from api.db import Base, engine, ensure_columns, session
-from api import admin as admin_api, auth as auth_api, family as family_api, routes as public_api
+from api import admin as admin_api, auth as auth_api, family as family_api, more as more_api, reminders, routes as public_api
 from api.seed import seed_all
 
 ROOT = Path(__file__).resolve().parent
@@ -88,11 +88,13 @@ def _init_db():
     ensure_columns()
     with session() as db:
         seed_all(db)
+    reminders.start()
 
 
 app.include_router(public_api.r)
 app.include_router(auth_api.r)
 app.include_router(family_api.r)
+app.include_router(more_api.r)
 app.include_router(admin_api.r)
 
 # --------------------------------------------------------------------------------------------------
@@ -135,6 +137,8 @@ async def headers(request: Request, call_next):
     resp: Response = await call_next(request)
     for k, v in SECURITY.items():
         resp.headers.setdefault(k, v)
+    if os.getenv("APP_ENV", "production") != "production":
+        resp.headers["X-Robots-Tag"] = "noindex, nofollow"
     if request.url.path.startswith("/api/"):
         resp.headers.setdefault("Cache-Control", "no-store")
     return resp
@@ -221,6 +225,30 @@ def legal_page(request: Request):
     for k, v in LEGAL.items():
         s = s.replace("{{" + k + "}}", _html.escape(v))
     return Response(s, media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache"})
+
+
+@app.api_route("/d/{token}", methods=["GET", "HEAD"], include_in_schema=False)
+def shared_doc(token: str, request: Request, raw: str = ""):
+    """A document shared with a doctor by link: a small viewer page, or the file itself with ?raw=1."""
+    import html as _html
+
+    from api.db import session as _session
+    from api.more import shared_file
+
+    with _session() as db:
+        s, got = shared_file(token, db)
+        if not s:
+            return Response("<!doctype html><meta charset=utf-8><title>Link expired</title><body style='font-family:system-ui;padding:40px;max-width:520px;margin:auto'><h2>This link has expired</h2><p>The person who shared it can send a new one from TheHealthTracker.</p>", status_code=404, media_type="text/html; charset=utf-8")
+        row, data = got
+        if raw == "1":
+            s.views += 1
+            return Response(data, media_type=row.mime, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Content-Disposition": f"inline; filename=\"{(row.name or 'document').replace(chr(34), '')}\""})
+        label = _html.escape(s.label or row.name or "Document")
+        exp = time.strftime("%d %b %Y, %H:%M", time.localtime(s.expires))
+        body = f"<iframe src='/d/{token}?raw=1' title='{label}' style='width:100%;height:80vh;border:0;border-radius:12px;background:#fff'></iframe>" if row.mime == "application/pdf" else f"<img src='/d/{token}?raw=1' alt='{label}' style='max-width:100%;border-radius:12px'>"
+        return Response(f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=robots content=noindex><title>{label} · shared via TheHealthTracker</title>"
+                        f"<body style='font-family:Inter,system-ui,sans-serif;background:#f4f5f8;margin:0;padding:20px'><div style='max-width:900px;margin:auto'><p style='color:#646b7e;font-size:13px;margin:0 0 8px'>Shared via TheHealthTracker · link valid until {exp}</p><h2 style='margin:0 0 14px'>{label}</h2>{body}"
+                        f"<p style='color:#646b7e;font-size:12px'>This document was shared by its owner for medical care. Please do not forward it.</p></div>", media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-store"})
 
 
 @app.api_route("/app", methods=["GET", "HEAD"], include_in_schema=False)

@@ -103,8 +103,8 @@ class SyncIn(BaseModel):
 
 @r.put("/sync", dependencies=[Depends(csrf)])
 def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
-    limit(request, "sync", 120, 600)
     h = my_household(db, u)
+    limit(request, f"sync:{h.id}", 240, 600)
     st = db.get(HouseholdState, h.id)
     cur = st.version if st else 0
     if body.base != cur:

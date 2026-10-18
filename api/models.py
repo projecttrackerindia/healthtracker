@@ -333,3 +333,79 @@ class Invite(Base):
     expires: Mapped[int] = mapped_column(Integer)
     used_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
     used: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class StoredFile(Base):
+    """A family's document (report, prescription, card scan), encrypted. Bytes live in the bucket or, without one, here."""
+
+    __tablename__ = "files"
+    household_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    file_id: Mapped[str] = mapped_column(String(48), primary_key=True)
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    mime: Mapped[str] = mapped_column(String(80), default="application/octet-stream")
+    name: Mapped[str] = mapped_column(String(160), default="")
+    where: Mapped[str] = mapped_column(String(8), default="db")      # db | s3
+    blob: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class ShareLink(Base):
+    """Time-limited link to one document, for a doctor who does not use the app."""
+
+    __tablename__ = "share_links"
+    token: Mapped[str] = mapped_column(String(48), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    file_id: Mapped[str] = mapped_column(String(48))
+    label: Mapped[str] = mapped_column(String(160), default="")
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    expires: Mapped[int] = mapped_column(Integer)
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class PushSub(Base):
+    """A browser's Web Push subscription for one account."""
+
+    __tablename__ = "push_subs"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ps"))
+    user_id: Mapped[str] = mapped_column(String(32), index=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    endpoint: Mapped[str] = mapped_column(Text)
+    sub: Mapped[dict] = mapped_column(JSON)
+    ua: Mapped[str] = mapped_column(String(200), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    failures: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ReminderSent(Base):
+    """Which reminder went out already (one per member, day, slot, kind)."""
+
+    __tablename__ = "reminders_sent"
+    key: Mapped[str] = mapped_column(String(120), primary_key=True)
+    t: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class ClientError(Base):
+    """JavaScript errors reported by the app, so problems are seen before people complain."""
+
+    __tablename__ = "client_errors"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ce"))
+    t: Mapped[int] = mapped_column(Integer, default=now)
+    message: Mapped[str] = mapped_column(String(400), default="")
+    stack: Mapped[str] = mapped_column(Text, default="")
+    page: Mapped[str] = mapped_column(String(80), default="")
+    ua: Mapped[str] = mapped_column(String(200), default="")
+    version: Mapped[str] = mapped_column(String(16), default="")
+    count: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class Setting(Base):
+    """Small admin-editable values (clinical reviewer, announcements)."""
+
+    __tablename__ = "settings"
+    key: Mapped[str] = mapped_column(String(48), primary_key=True)
+    value: Mapped[dict] = mapped_column(JSON, default=dict)
+    updated: Mapped[int] = mapped_column(Integer, default=now, onupdate=now)
