@@ -29,8 +29,12 @@ _WORKING: dict = {"model": None}
 def create(**kw):
     """messages.create with model fallback: a 404 'model not found' moves to the next candidate instead of failing the user."""
     import anthropic
+    from anthropic import DefaultHttpxClient
 
-    client = anthropic.Anthropic()
+    # the installed brotli package's C-extension API doesn't match what this SDK's HTTP client expects when
+    # decoding a brotli-encoded response ("process() takes no keyword arguments"); gzip is always available,
+    # so just don't advertise brotli support to the server instead of fighting the brotli package version.
+    client = anthropic.Anthropic(http_client=DefaultHttpxClient(headers={"Accept-Encoding": "gzip, identity"}))
     tried = []
     order = ([_WORKING["model"]] if _WORKING["model"] else []) + [m for m in FALLBACK_MODELS if m != _WORKING["model"]]
     last = None
