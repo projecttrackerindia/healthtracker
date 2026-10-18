@@ -23,6 +23,7 @@ MODEL = os.getenv("DOKKO_AI_MODEL", "claude-sonnet-5-5")
 # if the configured model is not available to this API key, the next one is tried and remembered for the process
 FALLBACK_MODELS = [m for m in [MODEL, "claude-sonnet-5-5", "claude-haiku-5-5", "claude-sonnet-4-5", "claude-3-5-sonnet-latest"] if m]
 LAST_ERROR: dict = {}   # admins see this on the dashboard; users never do
+FOCUS = {"heart", "lungs", "liver", "kidneys", "pancreas", "thyroid", "stomach", "intestines", "brain", "spleen", "bones", "spine", "uterus", "prostate", "bladder", "breast", "skin", "eyes", "blood", "whole_body"}
 _WORKING: dict = {"model": None}
 
 
@@ -297,7 +298,8 @@ def local_prescription(text: str, ctx: dict) -> dict:
 CLAUDE_SYSTEM = """You read Indian medical documents for a family health app. Output ONLY a JSON object, no prose, with keys:
 summary (string, 1-3 plain sentences), findings (array of {test, value (number or string), unit, ref (string, lab's own range if printed), flag (low|normal|high|unknown), plain (one friendly sentence explaining what it measures and what the value may mean), code (one of: hb,wbc,plt,glu_f,glu_pp,glu_r,hba1c,tc,ldl,hdl,tg,alt,ast,alp,bili,alb,creat,urea,uric,na,k,ca,tsh,t3,t4,vitd,b12,ferr,crp,esr,rbc,mcv,pcv,sbp,spo2,egfr,psa or "" )}),
 medicines (array of {name, generic, strength, form, frequency, duration, instructions, rx (true if prescription-only in India)}), tests_needed (array of {code (one of: cbc,lipid,lft,kft,hba1c,glu_f,glu_pp,thy,tsh,vitd,b12,urine,ecg,xray,usg,echo,dengue,malaria,typhoid,crp,esr,urea,creat,uric,iron,ogtt,psa,hpylori,pap or ""), name, why}),
-followups (array of {code,name,why}: tests worth repeating or adding, phrased as suggestions to discuss), questions_for_doctor (array of 2-5 strings in the patient's voice), warnings (array of strings: interactions with the patient's listed medicines/allergies/pregnancy, or urgent-looking values), doctor (string: prescriber name and date if printed, else ""), patient_match (boolean: does the name/age/sex on the document match the context?).
+followups (array of {code,name,why}: tests worth repeating or adding, phrased as suggestions to discuss), questions_for_doctor (array of 2-5 strings in the patient's voice), warnings (array of strings: interactions with the patient's listed medicines/allergies/pregnancy, or urgent-looking values), doctor (string: prescriber name and date if printed, else ""), patient_match (boolean: does the name/age/sex on the document match the context?),
+focus (array of 0-3 body areas this document is about, for the 3D body, from exactly: heart, lungs, liver, kidneys, pancreas, thyroid, stomach, intestines, brain, spleen, bones, spine, uterus, prostate, bladder, breast, skin, eyes, blood, whole_body).
 Rules: never diagnose; say "suggests" and "discuss with your doctor". Use the document's printed reference range when present. Mark HbA1c>=6.5, fasting glucose>=126, platelets<100000, potassium>5.5 or <3, sodium<130, creatinine>1.5, haemoglobin<8, SpO2<92 as warnings. Flag any medicine that is unsafe in pregnancy if the context says pregnant. If the document is unreadable, say so in summary and return empty arrays."""
 
 
@@ -423,4 +425,5 @@ def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, forc
     out.setdefault("followups", [])
     out.setdefault("questions_for_doctor", [])
     out.setdefault("warnings", [])
+    out["focus"] = [str(x) for x in (out.get("focus") or []) if str(x) in FOCUS][:3]
     return out

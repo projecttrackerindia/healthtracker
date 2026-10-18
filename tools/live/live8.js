@@ -1,0 +1,65 @@
+// ===================== live layer 8: assistant ↔ 3D body, assistant design, uniform cards, pregnancy as tabs =====================
+{
+const P=SX.p;
+const two=n=>String(n).padStart(2,'0');
+const fmtT=s=>{s=Math.max(0,Math.round(s));return (s>=3600?Math.floor(s/3600)+':':'')+two(Math.floor(s%3600/60))+':'+two(s%60)};
+
+// ---------------------------------------------------------------- A. what the assistant talks about, the body shows
+const ORGAN={heart:{sp:'cardio',re:/heart|ventricle|atrium|coronary/,n:'Heart',ic:'🫀'},lungs:{sp:'pulmo',re:/lung|bronch|trachea/,n:'Lungs',ic:'🫁'},liver:{sp:'hepato',re:/liver/,n:'Liver',ic:'🟤'},kidneys:{sp:'nephro',re:/kidney/,n:'Kidneys',ic:'🫘'},pancreas:{sp:'endo',re:/pancrea/,n:'Pancreas',ic:'🩸'},thyroid:{sp:'endo',re:/thyroid/,n:'Thyroid',ic:'🦋'},stomach:{sp:'gastro',re:/^stomach$|stomach/,n:'Stomach',ic:'🍽️'},intestines:{sp:'gastro',re:/intestine|colon|ileum|jejunum|duodenum|rectum/,n:'Intestines',ic:'〰️'},brain:{sp:'neuro',re:/brain|cerebr|cerebell/,n:'Brain',ic:'🧠'},spleen:{sp:'hemato',re:/spleen/,n:'Spleen',ic:'🩸'},bones:{sp:'ortho',re:/femur|humerus|tibia|pelvis|hip bone/,n:'Bones',ic:'🦴'},spine:{sp:'ortho',re:/vertebra|spine|sacrum/,n:'Spine',ic:'🦴'},uterus:{sp:'obgyn',re:/uterus|ovary|fallopian/,n:'Uterus',ic:'🤰'},prostate:{sp:'uro',re:/prostate/,n:'Prostate',ic:'🔵'},bladder:{sp:'uro',re:/bladder/,n:'Bladder',ic:'💧'},breast:{sp:'obgyn',re:/breast|mammary/,n:'Breast',ic:'🎀'},skin:{sp:'derm',re:null,n:'Skin',ic:'🧴'},eyes:{sp:'neuro',re:/\beye|retina|optic/,n:'Eyes',ic:'👁️'},blood:{sp:'hemato',re:/spleen|sternum|marrow/,n:'Blood',ic:'🩸'},whole_body:{sp:'',re:null,n:'Whole body',ic:'🧍'}};
+SX.focusBody=(key,title)=>{const o=ORGAN[key];if(!o)return false;const show=()=>{try{if(!A.ready)return;if(!o.sp){A.clearFocus&&A.clearFocus();return}A.setSpec(o.sp);if(o.re)A.pickMatch(o.re,title||o.n,P('From the assistant'))}catch(e){console.warn(e)}};if(page!=='assist'&&page!=='dash'&&page!=='lab'){go('assist');setTimeout(show,400)}else show();return true};
+SX.act.focus=([k])=>{SX.focusBody(k)};
+// chips under every answer that has a focus; the newest one also moves the body by itself
+SX.extend('assist',{mounted(){const m=SX.me(),asks=(S.ask[m.id]||[]).slice(-200),bubs=[...document.querySelectorAll('#lv5chat .bub:not(.me)')];if(bubs.length!==asks.length)return;
+ asks.forEach((a,i)=>{const f=(a.focus||[]).filter(k=>ORGAN[k]&&k!=='whole_body');if(!f.length||bubs[i].querySelector('.lv8-focus'))return;const d=document.createElement('div');d.className='lv8-focus';d.innerHTML=`<small>${P('On the body')}</small>`+f.map(k=>`<button class="lv8-fc" data-sx="focus:${k}">${ORGAN[k].ic} ${E(P(ORGAN[k].n))}</button>`).join('');bubs[i].append(d)});
+ const last=asks[asks.length-1];if(last&&!last.pending&&(last.focus||[]).length&&!last.fshown){last.fshown=true;SX.save(true);const k=last.focus.find(x=>ORGAN[x]&&x!=='whole_body');if(k)setTimeout(()=>SX.focusBody(k,last.q&&last.q.length<60?last.q:ORGAN[k].n),350)}}});
+// a thinking bubble while the answer is on its way
+const ask0=SX.chg.agask;SX.chg.agask=(a,f)=>{const q=String(new FormData(f).get('q')||'').trim();const r=ask0(a,f);setTimeout(()=>{const c=document.getElementById('lv5chat');if(!c||!q||c.querySelector('.lv8-typing'))return;if(!document.querySelector('.lv5-ask button[disabled]'))return;c.insertAdjacentHTML('beforeend',`<div class="bub me"><p>${E(q)}</p></div><div class="bub lv8-typing"><span></span><span></span><span></span></div>`);c.scrollTop=c.scrollHeight},60);return r};
+
+// ---------------------------------------------------------------- B. pregnancy lives in tabs: Pregnancy · Kick counter · Contractions · Water · Symptoms · Food · Birth plan
+const PG8=()=>window.__preg||null;
+const PP=['pkick','pctr','pwater','psymp','pfood','pbirth'];window.__pregPages=new Set(PP);
+SX.addStrings({'tab.pkick':SX.D('Kick counter','किक काउंटर','కిక్ కౌంటర్'),'tab.pctr':SX.D('Contractions','संकुचन','సంకోచాలు'),'tab.pwater':SX.D('Water','पानी','నీరు'),'tab.psymp':SX.D('Symptoms & signs','लक्षण','లక్షణాలు'),'tab.pfood':SX.D('Food','भोजन','ఆహారం'),'tab.pbirth':SX.D('Birth plan','जन्म योजना','ప్రసవ ప్రణాళిక')});
+{const care=SX.G.find(g=>g.k==='care');const fix=()=>{if(!care)return;const preg=SX.pregOn(SX.me());care.tabs=preg?['preg',...PP,'child']:['careplan','cycle','child']};fix();const pn3=SX.pregNav;SX.pregNav=()=>{pn3();fix()}}
+const week=()=>{const g=PG8();if(!g)return 0;try{const w=g.ga().w;g.PS.week=Math.max(0,Math.min(42,w));return g.PS.week}catch(e){return g.PS.week||0}};
+const tri=w=>w<13?1:w<27?2:3;
+const gate=()=>{const m=SX.me();if(!SX.pregOn(m))return `<div class="card wide"><p class="mute" style="margin:0">${P('Pregnancy mode is off for this profile. Turn it on from Care to use the trackers.')}</p></div>`;if(!PG8())return `<div class="card wide"><p class="mute" style="margin:0">${P('Loading…')}</p></div>`;return ''};
+const head8=(ic,t,s)=>`<div class="lv8-ph"><div class="lv8-phi">${ic}</div><div><h3>${E(t)}</h3><p class="mute sm">${E(s)}</p></div><span class="lv8-wk">${P('Week')} ${week()} · ${['','1st','2nd','3rd'][tri(week())]} ${P('trimester')}</span></div>`;
+// trackers card on the Pregnancy page points at the tabs
+SX.pregTrackers=()=>`<div class="card lv3-trk"><div class="hd"><h3>${P('Today’s trackers')}</h3><small class="mute">${P('Each one has its own tab')}</small></div><div class="lv3-trkg">
+ <button data-sx="tab:pkick"><i>🦶</i><b>${P('Kick counter')}</b><small>${P('Count 10 movements')}</small></button><button data-sx="tab:pctr"><i>⏱️</i><b>${P('Contractions')}</b><small>${P('Time and spacing')}</small></button><button data-sx="tab:pwater"><i>💧</i><b>${P('Water')}</b><small>${P('Daily goal')}</small></button><button data-sx="tab:psymp"><i>🩺</i><b>${P('Symptoms & signs')}</b><small>${P('What to call about')}</small></button><button data-sx="tab:pfood"><i>🥗</i><b>${P('Food')}</b><small>${P('This trimester')}</small></button><button data-sx="tab:pbirth"><i>👶</i><b>${P('Birth plan')}</b><small>${P('Bag, plan, labour')}</small></button></div></div>`;
+// --- kick counter: one big tap, a ring to ten, the clock, the history
+let kt=null;
+SX.reg('pkick',{head:()=>[P('Kick counter'),P('Count 10 movements. From 28 weeks, 10 within 2 hours is reassuring.')],
+ render(){const g0=gate();if(g0)return g0;const g=PG8(),K=g.PS.kick,w=week(),hist=(g.LOG.kicks||[]).slice(-8).reverse(),n=K?K.n:0,pct=Math.min(100,n*10);
+  return `<div class="card wide lv8-kick">${head8('🦶',P('Kick counter'),w<28?P('Usually from 28 weeks; before that, movements are irregular and that is normal.'):P('Lie on your left side after a meal and count every kick, roll or flutter.'))}
+   <div class="lv8-kickg"><div class="lv8-ring" style="--p:${pct}"><button class="lv8-tap ${K?'on':''}" data-pa="${K?'kick':'kickStart'}" aria-label="${E(K?P('Count a movement'):P('Start counting'))}"><b>${K?n:'▶'}</b><small>${K?(n>=10?P('Done!'):P('tap for each movement')):P('Start')}</small><i class="lv8-rip"></i></button></div>
+    <div class="lv8-kstats"><div><small>${P('Elapsed')}</small><b id="lv8kt">${K?fmtT((Date.now()-K.s)/1000):'00:00'}</b></div><div><small>${P('Goal')}</small><b>10 ${P('moves')}</b></div><div><small>${P('Window')}</small><b>2 h</b></div>
+     ${K?`<div class="lv8-kact"><button class="btn p" data-pa="kickEnd">${n>=10?'✓ '+P('Save session'):P('Finish early')}</button><button class="btn s" data-pa="kickReset">${P('Reset')}</button></div>`:''}</div></div>
+   ${K&&n>=10?`<p class="lv8-ok">✅ ${P('10 movements in')} ${fmtT((Date.now()-K.s)/1000)} — ${P('that is reassuring. Save the session.')}</p>`:''}
+   ${K&&(Date.now()-K.s)>2*36e5&&n<10?`<p class="lv8-warn">⚠️ ${P('Fewer than 10 movements in 2 hours: have something sweet to eat or drink, rest on your left side and count again. If still fewer than 10, call your doctor or go to the hospital now.')}</p>`:''}</div>
+   <div class="card wide"><div class="hd"><h3>${P('Sessions')}</h3>${hist.length?`<small class="mute">${hist.length} ${P('recent')}</small>`:''}</div>${hist.length?`<div class="lv8-hist">${hist.map(k=>`<div class="row"><div class="lv8-hn ${k.n>=10&&k.sec<=7200?'ok':'warn'}">${k.n}</div><div class="grow"><b>${k.n} ${P('movements')} · ${fmtT(k.sec)}</b><small>${E(k.t)}</small></div><span class="badge ${k.n>=10&&k.sec<=7200?'b-ok':'b-hi'}">${k.n>=10&&k.sec<=7200?P('Normal'):P('Check with your doctor')}</span></div>`).join('')}</div>`:`<p class="mute sm" style="margin:0">${P('No sessions yet. Start one when the baby is usually active (after meals, evenings).')}</p>`}</div>`},
+ after(){clearInterval(kt);const g=PG8();if(g&&g.PS.kick)kt=setInterval(()=>{const b=document.getElementById('lv8kt');if(b&&g.PS.kick)b.textContent=fmtT((Date.now()-g.PS.kick.s)/1000);else clearInterval(kt)},1000)}});
+document.addEventListener('click',e=>{const b=e.target.closest('.lv8-tap');if(!b)return;const r=b.querySelector('.lv8-rip');if(r){r.classList.remove('go');void r.offsetWidth;r.classList.add('go')}},true);
+// --- contraction timer: start/stop, the 5-1-1 rule, the last hour at a glance
+let ct=null;
+SX.reg('pctr',{head:()=>[P('Contraction timer'),P('Time each contraction and the gap between them. Regular 5 minutes apart, lasting a minute, for an hour: go.')],
+ render(){const g0=gate();if(g0)return g0;const g=PG8(),C=g.LOG.ctr||[],on=g.PS.ctrOn,cur=on?C[C.length-1]:null,done=C.filter(c=>c.e),lastH=done.filter(c=>Date.now()-c.s<36e5),avgD=lastH.length?Math.round(lastH.reduce((a,c)=>a+(c.e-c.s),0)/lastH.length/1000):0;
+  const ints=lastH.slice(1).map((c,i)=>(c.s-lastH[i].s)/60000),avgI=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length:0,rule=lastH.length>=6&&avgI>0&&avgI<=5.5&&avgD>=55&&(lastH[lastH.length-1].s-lastH[0].s)>=55*60000;
+  const bars=done.slice(-12).map(c=>{const d=Math.round((c.e-c.s)/1000);return `<div class="lv8-bar" style="--h:${Math.min(100,d/90*100)}%" title="${d}s"><span>${d}s</span><small>${new Date(c.s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</small></div>`}).join('');
+  return `<div class="card wide lv8-ctr ${on?'on':''}">${head8('⏱️',P('Contraction timer'),P('Tap when a contraction starts, tap again when it ends.'))}
+   <div class="lv8-ctrg"><button class="lv8-big ${on?'on':''}" data-pa="ctr"><b id="lv8ct">${on?fmtT((Date.now()-cur.s)/1000):'▶'}</b><small>${on?P('Contraction ended'):P('Contraction started')}</small></button>
+    <div class="lv8-kstats"><div><small>${P('Last hour')}</small><b>${lastH.length}</b></div><div><small>${P('Avg length')}</small><b>${avgD?avgD+' s':'—'}</b></div><div><small>${P('Avg gap')}</small><b>${avgI?avgI.toFixed(1)+' min':'—'}</b></div></div></div>
+   <div class="lv8-rule ${rule?'go':''}"><b>${rule?'🚗 '+P('5-1-1 reached: time to go to the hospital'):P('5-1-1 rule')}</b><small>${P('Contractions every 5 minutes, each lasting 1 minute, for 1 hour. Water breaking, bleeding or reduced movements: go at once, whatever the timing.')}</small></div></div>
+   <div class="card wide"><div class="hd"><h3>${P('Recent contractions')}</h3>${done.length?`<button class="btn s sm" data-pa="ctrClear">${P('Clear')}</button>`:''}</div>${done.length?`<div class="lv8-bars">${bars}</div>`:`<p class="mute sm" style="margin:0">${P('Each contraction appears here as a bar; the gaps between them are what matter.')}</p>`}</div>`},
+ after(){clearInterval(ct);const g=PG8();if(g&&g.PS.ctrOn)ct=setInterval(()=>{const b=document.getElementById('lv8ct'),C=g.LOG.ctr;if(b&&g.PS.ctrOn&&C.length)b.textContent=fmtT((Date.now()-C[C.length-1].s)/1000);else clearInterval(ct)},1000)}});
+// --- water, symptoms, food, birth plan: the pregnancy module's own content, each in its own tab
+const wrap=(key,ic,t,s)=>({head:()=>[P(t),P(s)],render(){const g0=gate();if(g0)return g0;const g=PG8();week();let html='';try{html=g.T[key]?g.T[key]():''}catch(e){html=`<p class="mute">${E(e.message)}</p>`}return `<div class="card wide lv8-pwrap lv8-${key}">${head8(ic,P(t),P(s))}<div class="lv8-pin">${html}</div></div>`},after(){const g=PG8();try{if(g&&g.AT[key])g.AT[key]()}catch(e){}}});
+SX.reg('pwater',wrap('water','💧','Water','Your daily goal, what counts, and today’s glasses.'));
+SX.reg('psymp',wrap('health','🩺','Symptoms & signs','What is normal this week, what to call about today, and what means go now.'));
+SX.reg('pfood',wrap('food','🥗','Food','This trimester’s plate: Indian meals, iron, folate and calcium.'));
+SX.reg('pbirth',wrap('birth','👶','Birth plan','The hospital bag, your preferences, the stages of labour.'));
+// the module's own tab buttons inside these pages switch pages instead of its internal tabs
+document.addEventListener('click',e=>{const b=e.target.closest('.lv8-pin [data-pa^="tab:"]');if(!b)return;const t=b.dataset.pa.split(':')[1],map={tools:'pkick',water:'pwater',health:'psymp',food:'pfood',birth:'pbirth'};if(map[t]){e.preventDefault();e.stopPropagation();go(map[t])}},true);
+// pregnancy data moves into the family record once (it used to live only in this browser)
+setTimeout(()=>{try{const g=PG8();if(g&&(!S.pregst||!S.pregst.log)){S.pregst=S.pregst||{};g.save();if(S.pregst.log)SX.save()}}catch(e){}},2000);
+}
