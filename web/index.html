@@ -559,6 +559,7 @@ details[open]>*:not(summary){animation:nx-fade-down .35s var(--ease) both}
 .tip{transition:opacity .25s,transform .3s var(--ease)}
 .pbadge.nx-tick b{display:inline-block;animation:nx-tick .5s var(--ease)}
 .ptime #pplay.nx-glow,.wch.on{animation:nx-glow .9s var(--ease)}
+.nx-glow{animation:nx-glow 1.1s var(--ease)}
 @keyframes nx-fadein{from{opacity:0}to{opacity:1}}
 
 .pro-stage-bar button{transition:transform .3s var(--ease),border-color .2s}
@@ -1298,6 +1299,12 @@ body[data-simple=on] .sx-sosbtn{font-size:22px;padding:18px}
 .lv5-qa{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
 .lv5-qa small{display:block;color:var(--mute);font-size:12px;margin-bottom:4px}.lv5-qa p{margin:0;line-height:1.5;font-size:14px}
 .lv5-qa ul{margin:8px 0 0;padding-left:18px;font-size:13px}.lv5-qa.urgent{border-color:var(--red)}
+.lv5-chat{display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;padding:4px 2px 12px;margin-bottom:10px;scroll-behavior:smooth}
+.lv5-chat .bub{margin:0}.lv5-chat .bub p{margin:0 0 4px;line-height:1.5;font-size:13.5px}.lv5-chat .bub small{display:block;margin-top:2px;font-size:10.5px;opacity:.65}
+.lv5-chat .bub ul{margin:6px 0 0;padding-left:16px;font-size:12.5px}.lv5-chat .bub .lv5-src{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.lv5-chat .bub .lv5-src span{font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:2px 8px}
+.lv5-chat .bub.urgent{border-color:var(--red)}
+.lv5-day{text-align:center;margin:6px 0 2px}.lv5-day span{display:inline-block;padding:3px 11px;border-radius:99px;background:var(--soft);color:var(--mute);font-size:11px;font-weight:600}
+.lv5-empty{text-align:center;padding:18px 8px;margin:0}
 .lv5-src{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.lv5-src span{font-size:11px;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--blue) 10%,transparent);color:var(--blue)}
 .lv5-ins{padding:14px 16px;border-radius:14px;background:var(--card);border:1px solid var(--line)}.lv5-ins b{font-size:16px;display:block}.lv5-ins ul{margin:8px 0 0;padding-left:18px;line-height:1.5;font-size:14px}
 .lv5-ins .lv5-act{margin:10px 0 4px;font-weight:600;color:var(--blue)}.lv5-ins.urgent{border-color:var(--red)}.lv5-ins small{display:block;margin-top:8px}
@@ -2113,7 +2120,8 @@ function choose(i,go){if(A.quiz&&i>=0&&!go)return quizClick(i);const o=sel;sel=i
  const specs=SP.filter(s=>A.specIds(s.id).has(i)).map(s=>s.id).slice(0,3);showInfo(p.region+' · '+p.side,p.name,p.desc,specs);
  let ex='';if(A.aud==='doctor'){const cs=[...new Set(specs.flatMap(id=>SPI[id].c.filter(c=>c[1]&&c[1].test(p.s)).map(c=>c[0])))].slice(0,4),ts=specs.length?SPI[specs[0]].t.slice(0,4):[];ex=`<b>Linked conditions</b> ${esc(cs.join(' · ')||'None listed')}${ts.length?`<br><b>Investigations</b> ${esc(ts.join(' · '))}`:''}`}
  else if(A.aud==='student'){const k=stem(p.name),n=PT.filter(q=>stem(q.name)===k).length;ex=`<b>📘 Study note</b> System: ${esc(p.region)} · Layer: ${LN[p.l]} · Side: ${p.side}${n>1?` · ${n} parts share this name`:''}`}
- $('#iex').innerHTML=ex;$('#iex').hidden=!ex;if(go){A.auto=false;syncChrome();focusOn(i)}}
+ $('#iex').innerHTML=ex;$('#iex').hidden=!ex;if(go){A.auto=false;syncChrome();focusOn(i)}
+ if(page==='dash')try{if(window.SX&&SX.surfaceAgent)SX.surfaceAgent('Tell me more about my '+p.name.toLowerCase()+'.')}catch(e){}}
 A.choose=choose;A.reinfo=()=>{if(sel>=0)choose(sel)};
 function focusOn(i){goalRX=0;const b=PT[i].box,c=b.getCenter(new THREE.Vector3()),back=c.z<-.02;goalRY=back?Math.PI:0;tx=back?-c.x:c.x;ty=c.y-.2;zoom=Math.min(11,Math.max(3.6,2.6+b.getSize(new THREE.Vector3()).length()*3.2))}
 $('#icl').onclick=()=>{choose(-1);unmark('cond');if(A.focus)A.focus.cond=null;if(A.pins&&A.focus&&A.focus.kind!=='patient'){A.pins=null;computeLabels()}};
@@ -2728,13 +2736,12 @@ AT.health=()=>{const a=$('#asian');if(a)a.onchange=()=>{PROF.asian=a.checked;sav
 T.tools=()=>{const g=ga(),K=PS.kick,C=LOG.ctr,lastH=C.filter(c=>c.e&&Date.now()-c.s<36e5),avgD=lastH.length?Math.round(lastH.reduce((a,c)=>a+(c.e-c.s),0)/lastH.length/1000):0,ints=lastH.slice(1).map((c,i)=>(c.s-lastH[i].s)/60000),avgI=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length:0,f511=lastH.length>=6&&avgI<=5.5&&avgD>=50;
  return `<h4 style="margin-top:0">📅 Due-date calculator</h4><div class="form"><label>Method<select id="ddm"><option value="lmp">First day of last period</option><option value="conc">Conception date</option><option value="ivf">IVF day-5 transfer</option></select></label><label>Date<input type="date" id="ddd" value="${PROF.lmp}"></label><label>Cycle length (days)<input type="number" id="ddc" value="${PROF.cycle||28}" min="20" max="45"></label><label>Name<input id="ddn" value="${esc(PROF.name)}"></label></div>
  <div class="stat" style="margin-top:8px"><div><small>Due date</small><b>${fmtD(g.edd)}</b></div><div><small>Today</small><b>${g.w}w ${g.d}d</b></div><div><small>Trimester</small><b>${triOf(Math.max(3,g.w))>3?'Due':triOf(Math.max(3,g.w))}</b></div><div><small>Days to go</small><b>${g.left}</b></div></div><button class="btn p sm" style="margin-top:8px" ${pa('saveDue')}>Save as my pregnancy</button>
- <h4>👣 Kick counter ${PS.week<28?'<small class="mute">(usually from 28 weeks)</small>':''}</h4><div class="kick">${K?`<button class="kbtn" ${pa('kick')}><b>${K.n}</b><small>tap for each movement</small></button><div><b class="big">${fmtT((Date.now()-K.s)/1000)}</b><p class="sm mute">${K.n>=10?'✅ 10 movements! Well done.':'Lie on your left side and count every kick, roll or flutter.'}</p><button class="btn s sm" ${pa('kickEnd')}>Finish</button></div>`:`<button class="btn p" ${pa('kickStart')}>Start counting</button><p class="sm mute">Most babies give 10 movements within 2 hours, often much sooner. <b>If movements slow down or change, do not wait: contact your maternity unit today.</b></p>`}</div>
- ${LOG.kicks.slice(-4).reverse().map(k=>`<div class="row"><b>${k.n} moves</b><small class="grow">${k.t} · ${fmtT(k.sec)}</small><span class="badge ${k.n>=10&&k.sec<=7200?'b-ok':'b-hi'}">${k.n>=10&&k.sec<=7200?'Normal':'Check with your doctor'}</span></div>`).join('')}
- <h4>⏱️ Contraction timer</h4><div class="ctr"><button class="btn ${PS.ctrOn?'':'p'}" ${pa('ctr')}>${PS.ctrOn?'⏹ Contraction ended':'▶ Contraction started'}</button><div class="stat"><div><small>Last hour</small><b>${lastH.length}</b></div><div><small>Avg length</small><b>${avgD?avgD+' s':'—'}</b></div><div><small>Avg interval</small><b>${avgI?avgI.toFixed(1)+' min':'—'}</b></div></div></div>
+ <div id="pt-kick"><h4>👣 Kick counter ${PS.week<28?'<small class="mute">(usually from 28 weeks)</small>':''}</h4><div class="kick">${K?`<button class="kbtn" ${pa('kick')}><b>${K.n}</b><small>tap for each movement</small></button><div><b class="big">${fmtT((Date.now()-K.s)/1000)}</b><p class="sm mute">${K.n>=10?'✅ 10 movements! Well done.':'Lie on your left side and count every kick, roll or flutter.'}</p><button class="btn s sm" ${pa('kickEnd')}>Finish</button></div>`:`<button class="btn p" ${pa('kickStart')}>Start counting</button><p class="sm mute">Most babies give 10 movements within 2 hours, often much sooner. <b>If movements slow down or change, do not wait: contact your maternity unit today.</b></p>`}</div>
+ ${LOG.kicks.slice(-4).reverse().map(k=>`<div class="row"><b>${k.n} moves</b><small class="grow">${k.t} · ${fmtT(k.sec)}</small><span class="badge ${k.n>=10&&k.sec<=7200?'b-ok':'b-hi'}">${k.n>=10&&k.sec<=7200?'Normal':'Check with your doctor'}</span></div>`).join('')}</div>
+ <div id="pt-ctr"><h4>⏱️ Contraction timer</h4><div class="ctr"><button class="btn ${PS.ctrOn?'':'p'}" ${pa('ctr')}>${PS.ctrOn?'⏹ Contraction ended':'▶ Contraction started'}</button><div class="stat"><div><small>Last hour</small><b>${lastH.length}</b></div><div><small>Avg length</small><b>${avgD?avgD+' s':'—'}</b></div><div><small>Avg interval</small><b>${avgI?avgI.toFixed(1)+' min':'—'}</b></div></div></div>
  <div class="note ${f511?'warn':''}">${f511?'⚠️ <b>5-1-1 reached</b>: contractions about every 5 minutes, lasting about 1 minute, for an hour. Time to go to hospital.':'<b>5-1-1 rule (first baby):</b> go in when contractions come every 5 min, last 1 min, for 1 hour. Go at once if your waters break, you bleed, the baby moves less, or you are under 37 weeks.'}</div>
- ${C.slice(-5).reverse().map(c=>`<div class="row"><small class="grow">${new Date(c.s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</small><b>${c.e?Math.round((c.e-c.s)/1000)+' s':'…'}</b></div>`).join('')}${C.length?`<button class="btn s sm" ${pa('ctrClear')}>Clear</button>`:''}
- <h4>🗓️ Scans, tests & vaccines</h4><div class="sched">${SCHED.map(s=>{const cur=Math.max(0,g.w),stt=cur>s[1]?'done':cur>=s[0]?'now':'up';return `<div class="si ${stt}"><span class="ico">${{scan:'🩻',test:'🧪',vax:'💉',visit:'🩺',med:'💊'}[s[4]]}</span><div class="grow"><b>${s[2]}</b><small>Weeks ${s[0]}–${Math.floor(s[1])} · ${s[3]}</small></div>${stt==='now'?'<span class="badge b-mid">Due now</span>':stt==='done'?'<span class="badge b-ok">Past</span>':`<button class="btn s sm" ${pa('addAppt',SCHED.indexOf(s))}>+ Remind</button>`}</div>`}).join('')}</div>
- <h4>🎒 Hospital bag <small class="mute">(${LOG.bag.length}/${Object.values(BAG).flat().length} packed)</small></h4><div class="bag">${Object.entries(BAG).map(([c,items])=>`<div><b>${c}</b>${items.map(it=>`<label><input type="checkbox" ${pa('bag',encodeURIComponent(it))} ${LOG.bag.includes(it)?'checked':''}> ${it}</label>`).join('')}</div>`).join('')}</div>`};
+ ${C.slice(-5).reverse().map(c=>`<div class="row"><small class="grow">${new Date(c.s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</small><b>${c.e?Math.round((c.e-c.s)/1000)+' s':'…'}</b></div>`).join('')}${C.length?`<button class="btn s sm" ${pa('ctrClear')}>Clear</button>`:''}</div>
+ <h4>🗓️ Scans, tests & vaccines</h4><div class="sched">${SCHED.map(s=>{const cur=Math.max(0,g.w),stt=cur>s[1]?'done':cur>=s[0]?'now':'up';return `<div class="si ${stt}"><span class="ico">${{scan:'🩻',test:'🧪',vax:'💉',visit:'🩺',med:'💊'}[s[4]]}</span><div class="grow"><b>${s[2]}</b><small>Weeks ${s[0]}–${Math.floor(s[1])} · ${s[3]}</small></div>${stt==='now'?'<span class="badge b-mid">Due now</span>':stt==='done'?'<span class="badge b-ok">Past</span>':`<button class="btn s sm" ${pa('addAppt',SCHED.indexOf(s))}>+ Remind</button>`}</div>`}).join('')}</div>`};
 const fmtT=s=>{s=Math.floor(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 AT.tools=()=>{clearInterval(PS.kt);if(PS.kick)PS.kt=setInterval(()=>{const b=$('.kick .big');if(b&&PS.kick)b.textContent=fmtT((Date.now()-PS.kick.s)/1000)},1000)};
 // ---------- wellbeing ----------
@@ -2747,6 +2754,7 @@ T.well=()=>{const t=Math.min(3,triOf(PS.week));return `<h4 style="margin-top:0">
  <h4>💊 Medicines & self-care</h4><ul class="tl"><li>Check with your doctor before any medicine, herbal product or supplement.</li><li>Paracetamol is generally preferred for pain or fever if your doctor approves; avoid ibuprofen and other NSAIDs, especially after 20 weeks.</li><li>Avoid retinoid creams, X-rays without shielding, saunas and hot tubs.</li><li>Keep up dental care; tell your dentist that you are pregnant.</li></ul>`};
 // ---------- birth ----------
 T.birth=()=>{const dl=PS.dil??4,D=DIL[dl],stg=dl<5?LABOUR[0]:LABOUR[1];return `<div class="note warn"><b>Go to hospital now if:</b> your waters break (note the colour) · there is bleeding · the baby moves less · you have a severe headache or vision changes · contractions are regular before 37 weeks · contractions reach 5-1-1. <a href="tel:108">📞 108</a> · <a href="tel:102">102</a></div>
+ <h4>🎒 Hospital bag <small class="mute">(${LOG.bag.length}/${Object.values(BAG).flat().length} packed)</small></h4><div class="bag">${Object.entries(BAG).map(([c,items])=>`<div><b>${c}</b>${items.map(it=>`<label><input type="checkbox" ${pa('bag',encodeURIComponent(it))} ${LOG.bag.includes(it)?'checked':''}> ${it}</label>`).join('')}</div>`).join('')}</div>
  <h4>🔔 Signs labour is starting</h4><ul class="tl"><li>Regular tightenings that get longer, stronger and closer together.</li><li>A "show": a pink or brown mucus plug.</li><li>Waters breaking: a gush or a steady trickle.</li><li>Low backache, period-like cramps, an urge to open your bowels.</li></ul>
  <h4>📏 Cervical dilation explorer</h4><div class="dil"><svg viewBox="0 0 240 240" aria-label="${D[1]} dilation"><circle cx="120" cy="120" r="110" class="cx"/><circle cx="120" cy="120" r="${Math.max(2,dl*10.5)}" class="op"/><text x="120" y="126" text-anchor="middle">${D[1]}</text></svg><div><input type="range" min="0" max="10" value="${dl}" id="dilr" aria-label="Dilation in cm"><b>${D[1]}: about the size of ${D[2]}</b><p class="sm mute">${dl===10?'Fully dilated: the second stage (pushing) begins.':stg[0]+': '+stg[2]}</p></div></div>
  <h4>🧭 Stages of labour</h4><div class="steps">${LABOUR.map((l,i)=>`<div><i>${i+1}</i><div><b>${l[0]}</b> <small class="mute">${l[1]}</small><p class="sm">${l[2]}</p></div></div>`).join('')}</div>
@@ -2760,12 +2768,13 @@ AT.birth=()=>{const r=$('#dilr');if(r)r.oninput=()=>{PS.dil=+r.value;render()};c
 T.ben=()=>`<p class="mute sm" style="margin-top:0">Benefits you may be eligible for in India. Amounts and rules change, so confirm with your ASHA or anganwadi worker, your hospital or your HR team.</p><div class="ben">${BEN.map(([e,a,b,c])=>`<div><i>${e}</i><div><small>${c}</small><b>${a}</b><p class="sm">${b}</p></div></div>`).join('')}</div>
  <h4>✨ TheHealthTracker pregnancy perks <span class="demo">DEMO</span></h4><div class="tiles">${[['🩺','24×7 nurse chat','Ask about any symptom, any time.'],['🥗','Dietitian consult','A personal Indian meal plan for GDM, anaemia or a vegan diet.'],['🔔','Smart reminders','Scans, vaccines, IFA and calcium, water and kick counts.'],['👨‍👩‍👧','Family sharing','Your partner sees the week, the to-dos and the danger signs.'],['🤱','Lactation support','Video help with latching and feeding after birth.'],['🧠','Mind care','Therapist sessions for perinatal anxiety and depression.']].map(([e,a,b])=>`<button class="tile" data-toast="${a}: demo feature"><i>${e}</i><b>${a}</b><small>${b}</small></button>`).join('')}</div>`;
 // ---------- actions ----------
+let toolsFocus=null;
 document.addEventListener('click',e=>{const b=e.target.closest('[data-pa]');if(!b)return;const[k,a,c]=b.dataset.pa.split(':');const dk=today();
  switch(k){
  case'exit':PG.exit();return;
  case'week':setW(+a);return;
  case'view':setPView(a);return;
- case'tab':PS.tab=a;break;
+ case'tab':PS.tab=a;toolsFocus=c||null;break;
  case'act':PV.act(a);return;
  case'inside':if(PS.view!=='baby')setPView('baby');PV.inside(!PS.inside);break;
  case'lay':PV.layers(a);break;
@@ -2801,7 +2810,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-pa]');if(!
  case'share':{const g=ga(),bp=LOG.bp.slice(-1)[0],gl=LOG.glu.slice(-1)[0],wt=LOG.wt.slice(-1)[0],k=LOG.kicks.slice(-1)[0];const t=`📋 Pregnancy summary: ${PROF.name}, ${g.w}w ${g.d}d, due ${fmtD(g.edd)}. BP: ${bp?bp.s+'/'+bp.d:'—'} · Sugar: ${gl?gl.v+' mg/dL':'—'} · Weight: ${wt?wt.kg+' kg':'—'} · Last kick count: ${k?k.n+' in '+fmtT(k.sec):'—'} · Water today: ${((LOG.water[dk]||[]).reduce((a,x)=>a+x.ml,0)/1000).toFixed(1)} L.`;(TH.fk||(TH.fk=[[0,'Hello! How can I help you today?']])).push([1,t]);thread='fk';go('msgs');toast('Summary shared with Dr. Fatima Khan');return}
  case'kegel':PS.kg=!PS.kg;clearInterval(PS.kgt);if(PS.kg){let r=0,ph=0,tt=5;const tick=()=>{const c=$('#kc');if(!c){clearInterval(PS.kgt);PS.kg=false;return}tt--;if(tt<=0){ph^=1;tt=5;if(ph===0)r++}if(r>=10){clearInterval(PS.kgt);PS.kg=false;render();toast('Great: 10 reps done 💪');return}c.classList.toggle('sq',ph===0);$('#kgt').textContent=(ph===0?'Squeeze ':'Relax ')+tt;$('#kgs').textContent='Rep '+(r+1)+' of 10'};render();PS.kgt=setInterval(tick,1000);setTimeout(()=>{const c=$('#kc');if(c){c.classList.add('sq');$('#kgt').textContent='Squeeze 5';$('#kgs').textContent='Rep 1 of 10'}},30);return}break;
  default:return}
- if(page==='preg')render()});
+ if(page==='preg'){render();if(toolsFocus){const fid=toolsFocus==='kick'?'pt-kick':toolsFocus==='ctr'?'pt-ctr':null;toolsFocus=null;if(fid)requestAnimationFrame(()=>{const el=document.getElementById(fid);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('nx-glow');setTimeout(()=>el.classList.remove('nx-glow'),1200)}})}}});
 const planText=()=>`📝 Birth plan for ${PROF.name} (due ${fmtD(ga().edd)}):\n`+Object.entries(PLANOPT).map(([c,o])=>{const s=o.filter(x=>LOG.plan.includes(x));return s.length?`• ${c}: ${s.join('; ')}`:''}).filter(Boolean).join('\n')+(LOG.planNote?`\n• Notes: ${LOG.planNote}`:'');
 function breathUI(){const c=$('#bcirc');if(!c)return;clearInterval(PS.bt);const run=()=>{if(!PS.breathing||!$('#bcirc')){clearInterval(PS.bt);return}const t=((Date.now()-PS.bs)/1000)%10,inh=t<4,el=$('#bcirc');el.classList.toggle('in',inh);$('#btx').textContent=inh?'Breathe in… '+Math.ceil(4-t):'Breathe out… '+Math.ceil(10-t);if(Date.now()-PS.bs>180000){PS.breathing=false;render()}};run();PS.bt=setInterval(run,250)}
 // ---------- 3D-stage controls ----------
@@ -3573,7 +3582,9 @@ SX.E=E;
 const D=(en,hi,te)=>({en,hi,te});
 const T={
  'nav.home':D('Home','होम','హోమ్'),'nav.records':D('Records & Labs','रिकॉर्ड और जाँच','రికార్డులు & ల్యాబ్‌లు'),'nav.meds':D('Medicines','दवाइयाँ','మందులు'),
+ 'nav.appts':D('Appointments','अपॉइंटमेंट','అపాయింట్‌మెంట్లు'),'nav.docs':D('Doctors','डॉक्टर','డాక్టర్లు'),'nav.msgs':D('Messages','संदेश','సందేశాలు'),'nav.bill':D('Bills','बिल','బిల్లులు'),
  'nav.s.home':D('Home','होम','హోమ్'),'nav.s.records':D('Records','रिकॉर्ड','రికార్డులు'),'nav.s.meds':D('Medicines','दवाइयाँ','మందులు'),'nav.s.care':D('Care','देखभाल','సంరక్షణ'),'nav.s.safety':D('Safety','सुरक्षा','భద్రత'),'nav.s.family':D('Family','परिवार','కుటుంబం'),
+ 'nav.s.appts':D('Visits','विज़िट','విజిట్‌లు'),'nav.s.docs':D('Doctors','डॉक्टर','డాక్టర్లు'),'nav.s.msgs':D('Messages','संदेश','సందేశాలు'),'nav.s.bill':D('Bills','बिल','బిల్లులు'),
  'nav.care':D('Care','देखभाल','సంరక్షణ'),'nav.safety':D('Safety','सुरक्षा','భద్రత'),'nav.family':D('Family & Privacy','परिवार और गोपनीयता','కుటుంబం & గోప్యత'),
  'tab.dash':D('Today','आज','ఈ రోజు'),'tab.lab':D('Body','शरीर','శరీరం'),'tab.heart':D('Heart Lab','हृदय लैब','గుండె ల్యాబ్'),
  'tab.vault':D('Vault','दस्तावेज़','పత్రాలు'),'tab.tests':D('Lab results','जाँच परिणाम','ల్యాబ్ ఫలితాలు'),'tab.insights':D('Insights','जानकारी','విశ్లేషణ'),
@@ -3680,7 +3691,11 @@ SX.G=[
  {k:'home',ic:'dash',tabs:['dash','lab','heart']},
  {k:'records',ic:'test',tabs:['vault','tests','insights']},
  {k:'meds',ic:'rx',tabs:['rx','finder','orders']},
- {k:'care',ic:'doc',tabs:['appts','docs','msgs','preg','bill']},
+ {k:'appts',ic:'cal',tabs:['appts']},
+ {k:'docs',ic:'doc',tabs:['docs']},
+ {k:'msgs',ic:'msg',tabs:['msgs']},
+ {k:'bill',ic:'bill',tabs:['bill']},
+ {k:'care',ic:'baby',tabs:['book','cycle','preg']},
  {k:'safety',ic:'shield',tabs:['sos','aid','mid','contacts']},
  {k:'family',ic:'pat',tabs:['family','consent','data','set']}];
 I.shield='<path d="M12 3l7.5 2.8v5.6c0 4.4-3 8.2-7.5 9.6-4.5-1.4-7.5-5.2-7.5-9.6V5.8z"/><path d="M12 8.2v4.6M12 15.8h.01"/>';
@@ -3719,8 +3734,8 @@ render=function(...a){
  const r=_render.apply(this,a);
  const pg=$('#page');if(g)pg.insertAdjacentHTML('afterbegin',tabsHTML(g));
  paintNav();SX.paintWho();return r};
-function tabsHTML(g){const cur=page==='pregopt'?'preg':page;
- return `<div class="sx-tabs wide" role="tablist" aria-label="${E(SX.t('nav.'+g.k))}">${g.tabs.filter(SX.tabVisible).map(k=>`<button role="tab" aria-selected="${k===cur}" class="${k===cur?'on':''}" data-sx="tab:${k}">${E(SX.t('tab.'+k))}</button>`).join('')}</div>`}
+function tabsHTML(g){const cur=page==='pregopt'?'preg':page,vt=g.tabs.filter(SX.tabVisible);if(vt.length<2)return '';
+ return `<div class="sx-tabs wide" role="tablist" aria-label="${E(SX.t('nav.'+g.k))}">${vt.map(k=>`<button role="tab" aria-selected="${k===cur}" class="${k===cur?'on':''}" data-sx="tab:${k}">${E(SX.t('tab.'+k))}</button>`).join('')}</div>`}
 SX.act.tab=([k])=>go(k);
 
 // ---------------------------------------------------------------- header: person switcher + language
@@ -3891,7 +3906,7 @@ function aiSheet(v,r){const m=SX.member(v.m)||SX.me(),f=r.findings||[],meds=r.me
  ${(r.questions_for_doctor||[]).length?`<h4 class="sx-h4">${P('Questions for your doctor')}</h4><ul class="sx-ul">${r.questions_for_doctor.map(q=>`<li>${E(q)}</li>`).join('')}</ul><div class="sx-row"><button class="btn s sm" data-sx="tab:appts">${P('Book a visit')}</button></div>`:''}
  <p class="sx-disc">${E(r.disclaimer||'')}${r.quota?` · ${P('AI analyses this month')}: ${r.quota.used}/${r.quota.cap>1000?'∞':r.quota.cap}`:''}</p>
  <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap"><button class="btn s sm" data-sx="aiagain:${v.id}">${P('Analyse again')}</button><button class="btn s" data-sx="closeModal">${P('Close')}</button></div>`;
- SX.modal(html,{label:'AI analysis',cls:'sx-wide'})}
+ SX.modal(html,{label:'AI analysis',cls:'sx-wide',onclose:()=>{if(SX.surfaceAgent)SX.surfaceAgent(P('Ask me about this report.'))}})}
 SX.act.aiagain=([id])=>{const v=S.vault.find(x=>x.id===id);if(v){v.ai&&(v.ai.stale=true);SX.act.ai([id])}};
 SX.act.aisave=([id])=>{const v=S.vault.find(x=>x.id===id);if(!v||!v.ai)return;const m=SX.member(v.m)||SX.me();S.results[m.id]=S.results[m.id]||[];let n=0;
  (v.ai.findings||[]).forEach(x=>{const key=CODEMAP[x.code];if(!key||typeof x.value!=='number')return;let val=x.value;if((key==='wbc'||key==='plt')&&val>500)val=val/1000;if(S.results[m.id].some(r=>r.key===key&&r.date===v.date))return;S.results[m.id].push({id:uid('r'),k:'lab',key,val:+val.toFixed(2),date:v.date,doc:v.id,src:'ai'});n++});
@@ -5238,7 +5253,7 @@ I.preg='<path d="M12 4a2 2 0 1 0 0 .1M9.5 8.5h3a3 3 0 0 1 3 3v1.2a4 4 0 0 1 1.3 
 const PT={en:'Pregnancy',hi:'गर्भावस्था',te:'గర్భధారణ'},PS2={en:'Pregnancy',hi:'गर्भ',te:'గర్భం'};
 const t1=SX.t;SX.t=k=>{if(k==='nav.care'&&pregActive())return PT[S.lang]||PT.en;if(k==='nav.s.care'&&pregActive())return PS2[S.lang]||PS2.en;return t1(k)};
 const CARE=SX.G.find(g=>g.k==='care');
-function pregNav(){const on=pregActive();CARE.ic=on?'preg':'doc';CARE.tabs=on?['preg','appts','docs','msgs','bill']:['appts','docs','msgs','preg','bill'];document.body.dataset.pregtheme=on?'on':'off';
+function pregNav(){const on=pregActive();CARE.ic=on?'preg':'baby';document.body.dataset.pregtheme=on?'on':'off';
  const b=$('#nav [data-g="care"]');if(b){const svg=b.querySelector('svg');if(svg)svg.innerHTML=I[CARE.ic];}SX.paintNav()}
 SX.pregNav=pregNav;
 const sa0=SX.setActive;SX.setActive=id=>{sa0(id);SX.pregNav()};
@@ -5551,8 +5566,8 @@ SX.chg.heartsw=(a,el)=>{S.heartLab[SX.me().id]=el.checked;SX.save();SX.paintNav(
 
 // ---------------------------------------------------------------- E. Appointments (your log) and Booking (find a place) as separate tabs
 SX.addStrings({'tab.book':D('Booking','बुकिंग','బుకింగ్'),'tab.cycle':D('Cycle','चक्र','సైకిల్'),'tab.appts':D('Appointments','अपॉइंटमेंट','అపాయింట్‌మెంట్లు')});
-const CARE=SX.G.find(g=>g.k==='care');CARE.tabs=['appts','book','cycle','docs','msgs','preg','bill'];
-const pn0=SX.pregNav;SX.pregNav=()=>{pn0();const on=SX.pregOn(SX.me());CARE.tabs=on?['preg','appts','book','docs','msgs','bill']:['appts','book','cycle','docs','msgs','preg','bill']};
+const CARE=SX.G.find(g=>g.k==='care');CARE.tabs=['book','cycle','child','preg'];
+const pn0=SX.pregNav;SX.pregNav=()=>{pn0();const on=SX.pregOn(SX.me());CARE.tabs=on?['preg','child','book']:['book','cycle','child','preg']};
 const visits=m=>SX.apptsOf(m);
 SX.reg('appts',{head:()=>[P('Appointments'),P('Your family\u2019s doctor visits, past and upcoming.')]});
 let HOSP=null,bookSp='';
@@ -5606,7 +5621,7 @@ const notes0=SX.notes;SX.notes=()=>{const out=notes0();S.members.forEach(m=>{if(
 // ---------------------------------------------------------------- G. pregnancy: trackers up front
 I.pregtrk=1;
 SX.pregTrackers=()=>`<div class="card lv3-trk"><div class="hd"><h3>${P('Today\u2019s trackers')}</h3><small class="mute">${P('Tap to open')}</small></div><div class="lv3-trkg">
- <button data-pa="tab:tools"><i>🦶</i><b>${P('Kick counter')}</b><small>${P('Count 10 movements')}</small></button><button data-pa="tab:tools"><i>⏱️</i><b>${P('Contractions')}</b><small>${P('Time and spacing')}</small></button><button data-pa="tab:water"><i>💧</i><b>${P('Water')}</b><small>${P('Daily goal')}</small></button><button data-pa="tab:health"><i>🩺</i><b>${P('Symptoms & signs')}</b><small>${P('What to call about')}</small></button><button data-pa="tab:food"><i>🥗</i><b>${P('Food')}</b><small>${P('This trimester')}</small></button><button data-pa="tab:birth"><i>👶</i><b>${P('Birth plan')}</b><small>${P('Bag, plan, labour')}</small></button></div></div>`;
+ <button data-pa="tab:tools:kick"><i>🦶</i><b>${P('Kick counter')}</b><small>${P('Count 10 movements')}</small></button><button data-pa="tab:tools:ctr"><i>⏱️</i><b>${P('Contractions')}</b><small>${P('Time and spacing')}</small></button><button data-pa="tab:water"><i>💧</i><b>${P('Water')}</b><small>${P('Daily goal')}</small></button><button data-pa="tab:health"><i>🩺</i><b>${P('Symptoms & signs')}</b><small>${P('What to call about')}</small></button><button data-pa="tab:food"><i>🥗</i><b>${P('Food')}</b><small>${P('This trimester')}</small></button><button data-pa="tab:birth"><i>👶</i><b>${P('Birth plan')}</b><small>${P('Bag, plan, labour')}</small></button></div></div>`;
 
 // ---------------------------------------------------------------- H. Home: read a document with AI, see it on the body
 const CODE_RE={ldl:/left coronary artery$|wall of ventricle/,tc:/left coronary artery$|wall of ventricle/,hdl:/left coronary artery$|wall of ventricle/,tg:/left coronary artery$|wall of ventricle/,alt:/surface of liver|caudate lobe of liver|quadrate lobe of liver/,ast:/surface of liver|caudate lobe of liver/,bili:/gallbladder|caudate lobe of liver/,alb:/caudate lobe of liver/,creat:/^(left|right) kidney$/,urea:/^(left|right) kidney$/,uric:/^(left|right) kidney$/,hba1c:/pancrea/,glu_f:/pancrea/,glu_pp:/pancrea/,glu_r:/pancrea/,tsh:/thyroid/,t3:/thyroid/,t4:/thyroid/,hb:/^spleen$|sternum/,wbc:/^spleen$/,plt:/^spleen$/,vitd:/femur|lumbar vertebra/,ca:/femur|lumbar vertebra/,b12:/^stomach$/,crp:/^spleen$/,esr:/^spleen$/,psa:/^prostate$/};
@@ -5790,6 +5805,8 @@ const P=SX.p;
 const J=(path,method,body)=>fetch('/api/v1'+path,{method:method||'GET',headers:{'content-type':'application/json','x-tht':'1','x-dokko-key':(S.key||'')},credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)}).then(async r=>{let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(typeof j.detail==='string'?j.detail:'Request failed'),{status:r.status});return j});
 const WEEK=7*864e5;
 const fmtDay=t=>new Date(t).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+const fmtTime=t=>new Date(t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+const dayLabel=t=>{const d=new Date(t),now=new Date();if(d.toDateString()===now.toDateString())return P('Today');const y=new Date(now);y.setDate(y.getDate()-1);if(d.toDateString()===y.toDateString())return P('Yesterday');return fmtDay(t)};
 S.ask=S.ask||{};S.insight=S.insight||{};S.consent=S.consent||{};
 
 // ---------------------------------------------------------------- A. one account indicator: a tick only when email AND mobile are verified
@@ -5854,25 +5871,29 @@ const assistConsent=()=>new Promise(res=>{if(S.consent.ai_assist)return res(true
  <label class="lv-opt" style="display:flex;gap:10px;align-items:center;margin:10px 0"><input type="checkbox" id="asok"><span>${P('I understand and allow this')}</span></label><div class="lv-row-end"><button class="btn s" data-sx="closeModal">${P('Not now')}</button><button class="btn p" id="asgo">${P('Continue')}</button></div>`,{label:'Consent'});
  $('#asgo').onclick=()=>{if(!$('#asok').checked){toast(P('Please tick the box first'));return}S.consent.ai_assist=true;SX.ledger('ai_assist',true,'Allowed the health assistant to use record summaries',SX.me().id);SX.save();SX.closeModal();res(true)};const w=document.querySelector('.sx-modal');w._onclose=()=>res(!!S.consent.ai_assist)});
 let tab='ask',busy=false;
-function agentHTML(m){const asks=(S.ask[m.id]||[]).slice(-3).reverse(),ins=S.insight[m.id],ch=changed(m),flags=SX.labFlags(m).slice(0,4);
+function agentHTML(m){const asks=(S.ask[m.id]||[]).slice(-200),ins=S.insight[m.id],ch=changed(m),flags=SX.labFlags(m).slice(0,4);
  const head=`<div class="hd"><div><h3>✦ ${P('Health assistant')}</h3><small class="mute">${P('Ask about')} ${E(m.name.split(' ')[0])}${P('’s records, read a report, or see today’s insight.')}</small></div></div>
   <div class="lv5-tabs" role="tablist"><button role="tab" aria-selected="${tab==='ask'}" data-sx="agtab:ask">${P('Ask')}</button><button role="tab" aria-selected="${tab==='today'}" data-sx="agtab:today">${P('Today')}</button><button role="tab" aria-selected="${tab==='read'}" data-sx="agtab:read">${P('Read a report')}</button></div>`;
  let body='';
  if(!engineOn())body=`<p class="lv5-off">${P('The health assistant is being switched on for this family. Reports are still read with the basic reader, and you can add readings as usual.')}</p>`;
- else if(tab==='ask')body=`<form class="lv5-ask" data-sxf="agask"><input name="q" maxlength="300" placeholder="${E(P('e.g. Is my sugar trend okay? What should I ask the doctor on Friday?'))}" autocomplete="off" ${busy?'disabled':''}><button class="btn p" ${busy?'disabled':''}>${busy?'<span class="sx-spin sm"></span>':P('Ask')}</button></form>
-   <div class="lv5-sugg">${[P('What changed since my last report?'),P('Are my medicines and results consistent?'),P('What should I track this week?')].map(s=>`<button data-sx="agq:${encodeURIComponent(s)}">${E(s)}</button>`).join('')}</div>
-   ${asks.map(a=>`<div class="lv5-qa ${a.urgent?'urgent':''}"><small>${E(a.q)} · ${E(fmtDay(a.t))}</small><p>${E(a.a)}</p>${a.src&&a.src.length?`<div class="lv5-src">${a.src.map(s=>`<span>${E(s)}</span>`).join('')}</div>`:''}${a.act&&a.act.length?`<ul>${a.act.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`:''}</div>`).join('')}`;
+ else if(tab==='ask'){const groups=[];asks.forEach(a=>{const lbl=dayLabel(a.t);let g=groups[groups.length-1];if(!g||g.lbl!==lbl){g={lbl,items:[]};groups.push(g)}g.items.push(a)});
+  body=`<div class="lv5-chat" id="lv5chat">${groups.length?groups.map(g=>`<div class="lv5-day"><span>${E(g.lbl)}</span></div>`+g.items.map(a=>`<div class="bub me"><p>${E(a.q)}</p><small>${E(fmtTime(a.t))}</small></div><div class="bub ${a.urgent?'urgent':''}"><p>${E(a.a)}</p>${a.src&&a.src.length?`<div class="lv5-src">${a.src.map(s=>`<span>${E(s)}</span>`).join('')}</div>`:''}${a.act&&a.act.length?`<ul>${a.act.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`:''}<small>${E(fmtTime(a.t))}</small></div>`).join('')).join(''):`<p class="mute sm lv5-empty">${P('Ask about')} ${E(m.name.split(' ')[0])}${P('’s records. Your conversation appears here.')}</p>`}</div>
+   <form class="lv5-ask" data-sxf="agask"><input name="q" maxlength="300" placeholder="${E(P('e.g. Is my sugar trend okay? What should I ask the doctor on Friday?'))}" autocomplete="off" ${busy?'disabled':''}><button class="btn p" ${busy?'disabled':''}>${busy?'<span class="sx-spin sm"></span>':P('Ask')}</button></form>
+   <div class="lv5-sugg">${[P('What changed since my last report?'),P('Are my medicines and results consistent?'),P('What should I track this week?')].map(s=>`<button data-sx="agq:${encodeURIComponent(s)}">${E(s)}</button>`).join('')}</div>`}
  else if(tab==='today')body=ins&&ins.data?`<div class="lv5-ins ${ins.data.urgent?'urgent':''}"><b>${ins.data.trend==='up'?'↗ ':ins.data.trend==='down'?'↘ ':ins.data.trend==='steady'?'→ ':''}${E(ins.data.headline)}</b><ul>${(ins.data.points||[]).map(p=>`<li>${E(p)}</li>`).join('')}</ul>${ins.data.action?`<p class="lv5-act">→ ${E(ins.data.action)}</p>`:''}<small class="mute">${P('From this person’s records on')} ${E(fmtDay(ins.t))} · ${P('for discussion with your doctor')}</small></div>`:
    `<div class="lv5-ins"><p class="mute sm" style="margin:0">${busy?'<span class="sx-spin sm"></span> '+P('Preparing today’s insight…'):P('A short daily read of this person’s records: what is going well, what changed, one thing to do this week.')}</p>${busy?'':`<div class="row" style="margin-top:8px"><button class="btn p sm" data-sx="aginsight">${P('Prepare today’s insight')}</button></div>`}</div>`;
  else body=`<p class="mute sm" style="margin:0 0 8px">${P('Upload a report or prescription. It is explained in plain words, the values are saved to results, and the findings are shown on the body.')}</p><div class="row"><button class="btn p sm" data-sx="aipick">📄 ${P('Upload & read')}</button><button class="btn s sm" data-sx="tab:vault">${P('Vault')}</button></div>
    ${flags.length?`<div class="lv3-flags" style="margin-top:10px">${flags.map(f=>`<button class="lv3-flag ${f.st.s}" data-sx="onbody:${f.x.key}"><b>${E(f.st.L.n)}</b><small>${E(String(f.x.val))} ${E(f.st.L.u)} · ${f.st.s==='high'?P('High'):P('Low')} · ${P('see on body')}</small></button>`).join('')}</div>`:''}`;
  const trend=ch.length&&tab!=='read'?`<div class="lv5-ch"><small>${P('What changed')}</small>${ch.map(c=>`<span class="${c.good?'ok':'off'}">${E(c.n)} ${E(String(c.from))} → <b>${E(String(c.to))}</b> ${E(c.u)}</span>`).join('')}</div>`:'';
  return `<div class="card lv5-agent">${head}${body}${trend}</div>`}
-SX.extend('dash',{before(){return agentHTML(SX.me())}});
+SX.extend('dash',{before(){return agentHTML(SX.me())},mounted(){const c=document.getElementById('lv5chat');if(c)c.scrollTop=c.scrollHeight}});
+SX.surfaceAgent=(hint)=>{tab='ask';if(page!=='dash')go('dash');else render();
+ requestAnimationFrame(()=>{const c=document.querySelector('.lv5-agent');if(!c)return;c.scrollIntoView({block:'center',behavior:'smooth'});c.classList.add('nx-glow');setTimeout(()=>c.classList.remove('nx-glow'),1200);
+  if(hint){const i=c.querySelector('.lv5-ask input');if(i&&!i.value)i.value=hint}})};
 SX.act.agtab=([t])=>{tab=t;render();if(t==='today')maybeInsight()};
 SX.act.agq=([q])=>{const i=document.querySelector('.lv5-ask input');if(i){i.value=decodeURIComponent(q);i.form.requestSubmit()}};
 SX.chg.agask=async(a,f)=>{const m=SX.me(),q=String(new FormData(f).get('q')||'').trim();if(q.length<3){toast(P('Type a question first'));return}if(!(await assistConsent()))return;busy=true;render();
- try{const r=await J('/ai/ask','POST',{question:q,context:SX.agentCtx(m),member:m.id});(S.ask[m.id]=S.ask[m.id]||[]).push({q,a:r.answer,src:r.sources,act:r.actions,urgent:r.urgent,t:Date.now()});S.ask[m.id]=S.ask[m.id].slice(-8);SX.save();
+ try{const r=await J('/ai/ask','POST',{question:q,context:SX.agentCtx(m),member:m.id});(S.ask[m.id]=S.ask[m.id]||[]).push({q,a:r.answer,src:r.sources,act:r.actions,urgent:r.urgent,t:Date.now()});S.ask[m.id]=S.ask[m.id].slice(-200);SX.save();
   if(r.urgent)SX.modal(`<h2>⚠️ ${P('Please act now')}</h2><p>${E(r.answer)}</p><div class="lv-row-end"><a class="btn red" href="tel:112">${P('Call 112')}</a><button class="btn s" data-sx="closeModal">${P('OK')}</button></div>`,{label:'Urgent'})}
  catch(e){toast(e.message)}finally{busy=false;render()}};
 async function maybeInsight(force){const m=SX.me(),ins=S.insight[m.id];if(!engineOn()||busy)return;if(!force&&ins&&ins.day===SX.today())return;if(!force&&!ins)return;if(!(await assistConsent()))return;busy=true;render();
