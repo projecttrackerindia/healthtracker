@@ -27,6 +27,7 @@ def signup(c):
     assert r.status_code == 200, r.text
     key = uuid.uuid4().hex
     c.headers["X-DoKKo-Key"] = key
+    c.owner_tag = u
     assert c.post("/api/v1/hello", json={"name": "T", "members": 1}).status_code == 200   # gives the account a household
     return r.json()["user"]
 
@@ -101,5 +102,8 @@ def test_every_sync_keeps_the_previous_version():
     c.put("/api/v1/sync", headers=H, json={"base": v1, "state": {**base, "vitals": {"m1": [{"hr": 70}]}}})
     c.put("/api/v1/sync", headers=H, json={"base": v1 + 1, "state": base})          # a device wiped the vitals by mistake
     with DB.session() as db:
-        rows = db.scalars(sel(HouseholdStateHistory).order_by(HouseholdStateHistory.version)).all()
-        assert [r.version for r in rows][-2:] == [1, 2] and all(r.blob for r in rows)
+        from api.models import User
+        hid = db.scalar(sel(User.household_id).where(User.name == "Owner " + c.owner_tag)) if getattr(c, "owner_tag", None) else None
+        rows = db.scalars(sel(HouseholdStateHistory).order_by(HouseholdStateHistory.id)).all()
+        mine = [r for r in rows if r.household_id == hid] if hid else rows[-2:]
+        assert [r.version for r in mine][-2:] == [1, 2] and all(r.blob for r in mine)

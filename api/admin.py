@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from .ai import LAST_ERROR as AI_LAST_ERROR
 from .db import get_db
-from .models import Admin, AiJob, Audit, Household, HouseholdState, HouseholdStateHistory, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
+from .models import Admin, AiJob, Audit, Household, HouseholdState, HouseholdStateHistory, LabTest, PartnerUser, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
 from .security import check_pw, hash_pw, sign, verify
 from .seed import CATALOG, TESTS
 
@@ -240,6 +240,60 @@ def del_store(sid: str, a: Admin = Depends(owner), db: Session = Depends(get_db)
         raise HTTPException(404)
     s.active = False
     log(db, a.email, f"store.deactivate {s.name}")
+    return {"ok": True}
+
+
+# ---- partner users: who can sign in to /partner for a store ----------------------------------------------------------
+class PartnerUserIn(BaseModel):
+    email: str
+    name: str = ""
+    phone: str = ""
+    role: str = "staff"
+
+
+@r.get("/stores/{sid}/users")
+def partner_users(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == sid).order_by(PartnerUser.created)).all()
+    return {"users": [{"id": u.id, "email": u.email, "name": u.name, "phone": u.phone, "role": u.role, "active": u.active, "lastLogin": u.last_login, "mustChange": u.must_change} for u in rows]}
+
+
+@r.post("/stores/{sid}/users")
+def partner_user_add(sid: str, body: PartnerUserIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Creates the sign-in and returns a one-time password to hand to the partner (shown once, never stored in clear)."""
+    import secrets
+    s = db.get(Store, sid)
+    if not s:
+        raise HTTPException(404)
+    email = body.email.strip().lower()
+    if "@" not in email or db.scalar(select(PartnerUser.id).where(PartnerUser.email == email)):
+        raise HTTPException(400, "A valid, unused email is needed.")
+    temp = secrets.token_urlsafe(9)
+    u = PartnerUser(store_id=sid, email=email, name=body.name[:80], phone=body.phone[:20], role="owner" if body.role == "owner" else "staff", pw_hash=hash_pw(temp))
+    db.add(u)
+    db.flush()
+    log(db, a.email, f"partner.user.add {sid} {email}")
+    return {"id": u.id, "email": email, "tempPassword": temp, "portal": "/partner"}
+
+
+@r.post("/stores/{sid}/users/{uid}/reset")
+def partner_user_reset(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    import secrets
+    u = db.get(PartnerUser, uid)
+    if not u or u.store_id != sid:
+        raise HTTPException(404)
+    temp = secrets.token_urlsafe(9)
+    u.pw_hash, u.must_change, u.active = hash_pw(temp), True, True
+    log(db, a.email, f"partner.user.reset {uid}")
+    return {"tempPassword": temp}
+
+
+@r.delete("/stores/{sid}/users/{uid}")
+def partner_user_off(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    u = db.get(PartnerUser, uid)
+    if not u or u.store_id != sid:
+        raise HTTPException(404)
+    u.active = False
+    log(db, a.email, f"partner.user.disable {uid}")
     return {"ok": True}
 
 

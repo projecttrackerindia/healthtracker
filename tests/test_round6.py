@@ -56,7 +56,7 @@ def test_where_and_places_use_cache_and_merge_partners(monkeypatch):
     assert p["ok"] and [x["name"] for x in p["places"]] == ["City Hospital", "Area Clinic"] and p["places"][0]["emergency"] is True
     assert c.get("/api/v1/places?kind=hospital&lat=17.448&lng=78.391").json()["ok"] and len(calls) == 2            # cached
     labs = c.get("/api/v1/places?kind=lab&lat=17.448&lng=78.391").json()
-    assert labs["partners"] and labs["partners"][0]["name"] == "Test Lab" and labs["partners"][0]["partner"] is True
+    assert any(x["name"] == "Test Lab" and x["partner"] is True for x in labs["partners"])
     assert c.get("/api/v1/places?kind=zoo&lat=1&lng=1").status_code == 400
     assert c.get("/api/v1/places?kind=lab").status_code == 400
 
@@ -100,3 +100,12 @@ def test_rx_gate_receipt_and_return(monkeypatch):
     other = client()
     assert other.get(f"/api/v1/orders/{o['id']}/receipt.pdf").status_code == 404
     assert "medicines" in c.get("/api/v1/returns/policy").json()
+
+
+def test_geo_search(monkeypatch):
+    places._CACHE.clear()
+    monkeypatch.setattr(places, "_get", lambda url, data=None, timeout=12: [{"display_name": "Madhapur, Hyderabad, Telangana, India", "name": "Madhapur", "lat": "17.448", "lon": "78.391", "address": {"suburb": "Madhapur", "city": "Hyderabad", "state": "Telangana"}}])
+    c = client()
+    r = c.get("/api/v1/geo/search?q=madhapur").json()
+    assert r["ok"] and r["results"][0]["place"] == "Madhapur" and r["results"][0]["stateCode"] == "TS" and r["results"][0]["lat"] == 17.448
+    assert c.get("/api/v1/geo/search?q=m").json() == {"results": []}

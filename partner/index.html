@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TheHealthTracker Partners</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/brand/svg/partner-icon.svg"><meta name="theme-color" content="#13b5a3">
+<style>
+:root{--bg:#f2f7f6;--card:#fff;--soft:#f3f8f7;--ink:#0f1221;--mute:#6b7285;--line:rgba(15,18,33,.08);--blue:#2f5bff;--teal:#13b5a3;--red:#ef3b4f;--amber:#f59e0b;--green:#16a34a;--r:18px;--sh:0 10px 30px -14px rgba(15,18,33,.18);--font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b0f0e;--card:#131a19;--soft:#182120;--ink:#eef1fb;--mute:#8f97ad;--line:rgba(255,255,255,.08);--sh:0 10px 30px -14px rgba(0,0,0,.6)}}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}a{color:var(--teal);text-decoration:none}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+aside{position:sticky;top:0;height:100vh;padding:18px 14px;border-right:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;gap:4px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;padding:4px 8px 16px}.logo img{height:26px}.logo small{display:block;font-weight:500;color:var(--mute);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+nav button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 12px;border-radius:12px;color:var(--mute);font-weight:500}
+nav button:hover{background:var(--soft);color:var(--ink)}nav button.on{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal);font-weight:600}
+nav button em{margin-left:auto;font-style:normal;font-size:11px;background:var(--red);color:#fff;border-radius:99px;padding:1px 7px}
+.who{margin-top:auto;padding:10px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--mute)}.who b{display:block;color:var(--ink);font-size:13px;overflow:hidden;text-overflow:ellipsis}
+main{padding:22px 26px 60px;max-width:1300px}
+h1{font-size:26px;letter-spacing:-.03em;margin:0 0 2px}.sub{color:var(--mute);margin:0 0 18px}h3{margin:0 0 10px;font-size:15px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--card);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);border:1px solid var(--line);margin-bottom:12px}
+.kpi small{display:block;font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}.kpi b{font-size:28px;letter-spacing:-.03em;line-height:1.1;display:block;margin-top:4px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.grow{flex:1 1 auto;min-width:0}
+input,select,textarea{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:9px 12px;outline:none;min-width:0;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 18%,transparent)}.row input,.row select{width:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:12px;font-weight:600;background:var(--soft);border:1px solid var(--line);white-space:nowrap}
+.btn.p{background:var(--teal);color:#fff;border-color:transparent}.btn.d{color:var(--red)}.btn.sm{padding:6px 10px;font-size:12.5px;border-radius:10px}.btn:disabled{opacity:.5;cursor:default}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border:0}
+.tag{display:inline-block;font:600 10.5px var(--mono);letter-spacing:.04em;text-transform:uppercase;padding:3px 7px;border-radius:99px;background:var(--soft);border:1px solid var(--line);color:var(--mute)}
+.tag.ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent)}.tag.warn{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 50%,transparent)}.tag.bad{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}.tag.go{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 50%,transparent)}
+.ord{display:grid;grid-template-columns:1fr auto;gap:8px 16px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;background:var(--card)}
+.ord b.id{font-family:var(--mono);font-size:13px}.ord .items{color:var(--mute);font-size:12.5px;margin-top:4px}.ord .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start}
+.empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}.login .card{width:min(420px,100%)}.login label{display:block;margin:10px 0 4px;font-size:12.5px;font-weight:600;color:var(--mute)}
+.msg{display:none;margin:10px 0 0;padding:9px 12px;border-radius:10px;font-size:13px}.msg.on{display:block}.msg.err{background:color-mix(in srgb,var(--red) 10%,transparent);color:var(--red)}.msg.ok{background:color-mix(in srgb,var(--green) 10%,transparent);color:var(--green)}
+.chat{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;padding:6px 0}.bub{max-width:70%;padding:9px 12px;border-radius:14px;background:var(--soft);font-size:13.5px}.bub.me{align-self:flex-end;background:color-mix(in srgb,var(--teal) 16%,transparent)}.bub small{display:block;color:var(--mute);font-size:10.5px;margin-top:2px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;opacity:0;transition:.2s;pointer-events:none;z-index:9}.toast.on{opacity:1;transform:translateX(-50%)}
+.pl{display:grid;grid-template-columns:1fr 110px 110px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.pl small{color:var(--mute);display:block}.pl.h{font:600 10.5px var(--mono);text-transform:uppercase;color:var(--mute)}
+@media (max-width:860px){.app{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}nav{display:flex;flex-wrap:wrap;gap:4px}nav button{width:auto}.who{margin:0 0 0 auto;border:0;padding:0}main{padding:16px}.ord{grid-template-columns:1fr}.ord .acts{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div id="root"></div><div class="toast" id="toast"></div>
+<script>
+const $=(s,r=document)=>r.querySelector(s),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api=async(p,o={})=>{const r=await fetch('/api/partner'+p,{method:o.method||'GET',headers:o.raw?o.headers:{'content-type':'application/json'},body:o.raw?o.body:(o.body===undefined?undefined:JSON.stringify(o.body)),credentials:'same-origin',cache:'no-store'});let j={};try{j=await r.json()}catch(e){}if(r.status===401&&!o.quiet){ME=null;render();throw new Error('Signed out')}if(!r.ok)throw new Error(j.detail||'Request failed');return j};
+const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('on'),2400)};
+const fmt=t=>new Date(t*1000).toLocaleString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+const money=n=>'₹'+Math.round(+n||0).toLocaleString('en-IN');
+let ME=null,view='orders',data={};
+const KINDN={lab:'Diagnostic lab',pharmacy:'Pharmacy',hospital:'Hospital / clinic'};
+function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="login"><div class="card"><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="TheHealthTracker"><small>Partner portal</small></div>
+  <form id="lf"><label>Email</label><input id="le" type="email" autocomplete="username" required><label>Password</label><input id="lp" type="password" autocomplete="current-password" required><p class="msg" id="lm"></p><button class="btn p" style="width:100%;justify-content:center;margin-top:14px">Sign in</button></form>
+  <p style="color:var(--mute);font-size:12px;margin:14px 0 0">Access is created by TheHealthTracker for verified labs, pharmacies and hospitals. To join: partner@thehealthtracker.com</p></div></div>`;
+  $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':'orders';render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
+ const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
+ const nav=[['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isHosp?['appts','Visit requests',c.pendingAppointments]:null,['msgs','Messages',c.unreadMessages],isHosp?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
+ root.innerHTML=`<div class="app"><aside><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="TheHealthTracker partners"></div><nav>${nav.map(([k,n,b])=>`<button class="${view===k?'on':''}" data-v="${k}">${n}${b?`<em>${b}</em>`:''}</button>`).join('')}</nav>
+  <div class="who"><b>${E(s.name)}</b>${E(KINDN[s.kind]||s.kind)} · ${s.verified?'<span class="tag ok">verified</span>':'<span class="tag warn">pending verification</span>'}<br>${E(ME.user.email)} · <a href="#" id="out">Sign out</a></div></aside><main id="main"></main></div>`;
+ root.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{view=b.dataset.v;render();load()});$('#out').onclick=async e=>{e.preventDefault();await api('/logout',{method:'POST'});ME=null;render()};
+ VIEWS[view]()}
+const head=(t,sub,right='')=>`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h1>${t}</h1><p class="sub">${sub}</p></div><div class="row" style="margin:0">${right}</div></div>`;
+const VIEWS={};
+async function load(){try{ME=await api('/me',{quiet:true})}catch(e){}if(ME)render()}
+// ---------------- orders / bookings
+VIEWS.orders=()=>{const isLab=ME.store.kind==='lab';const m=$('#main');m.innerHTML=head(isLab?'Bookings':'Orders',isLab?'Confirm, collect, process, upload the report. The family sees every step in their app.':'Check the prescription, pack, deliver. The family sees every step in their app.',`<select id="ost"><option value="open">Open</option><option value="closed">Closed</option><option value="all">All</option></select>`)+`<div id="ol"><div class="empty">Loading…</div></div>`;
+ $('#ost').onchange=()=>loadOrders();loadOrders()};
+async function loadOrders(){const st=$('#ost')?$('#ost').value:'open';let r;try{r=await api('/orders?status='+st)}catch(e){$('#ol').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ const isLab=ME.store.kind==='lab';if(!r.orders.length){$('#ol').innerHTML=`<div class="empty">${st==='open'?'No open '+(isLab?'bookings':'orders')+'. New ones appear here within a minute of being placed.':'Nothing here.'}</div>`;return}
+ $('#ol').innerHTML=r.orders.map(o=>`<div class="ord" data-id="${E(o.id)}"><div><b class="id">THT-${E(o.id)}</b> <span class="tag ${/cancel|refund/.test(o.status)?'bad':/deliver|ready/.test(o.status)?'ok':/return/.test(o.status)?'warn':'go'}">${E(o.status.replace(/_/g,' '))}</span> <span style="color:var(--mute);font-size:12px">${fmt(o.created)}</span>
+   <div><b>${E(o.member||o.family.name||'Family')}</b> · ${E(o.address||o.family.city||'')}${o.slot?` · <b>${E(o.slot)}</b>`:''}${o.payment?` · ${o.payment==='cod'?(isLab?'Pay at collection':'Pay on delivery'):E(o.payment)}`:''}</div>
+   <div class="items">${o.items.map(i=>`${E(i.name)}${i.qty>1?' × '+i.qty:''}${i.rx?' <span class="tag warn">Rx</span>':''}`).join(' · ')} · <b>${money(o.total)}</b></div>
+   ${o.rxShared?`<div class="items">Prescription: ${o.rxFiles.length?o.rxFiles.map((f,i)=>`<a href="/api/partner/orders/${E(o.id)}/rx/${encodeURIComponent(f)}" target="_blank" rel="noopener">open ${i+1} ↗</a>`).join(' · '):'<span class="tag warn">shared, syncing from the family’s phone</span>'}</div>`:o.items.some(i=>i.rx)?`<div class="items"><span class="tag bad">Rx items without a prescription</span> — do not dispense; message the family.</div>`:''}
+   ${(o.timeline||[]).filter(t=>t.note||t.reason).map(t=>`<div class="items">↳ ${E(t.s.replace(/_/g,' '))}: ${E(t.reason||'')} ${E(t.note||'')}</div>`).join('')}</div>
+  <div class="acts">${isLab&&!/cancel/.test(o.status)?`<label class="btn sm ${o.hasReport?'':'p'}">${o.hasReport?'Replace report':'⬆ Upload report'}<input type="file" accept="application/pdf,image/*" hidden data-rep="${E(o.id)}"></label>`:''}${o.next.map(n=>`<button class="btn sm ${n==='cancelled'?'d':''}" data-st="${E(o.id)}:${n}">${E(o.labels[n])}</button>`).join('')}<button class="btn sm" data-msg="${E(o.householdId)}" data-nm="${E(o.member||o.family.name||'Family')}">💬 Message</button></div></div>`).join('');
+ $('#ol').querySelectorAll('[data-msg]').forEach(b=>b.onclick=()=>{view='msgs';render();setTimeout(()=>openThreadNew(b.dataset.msg,b.dataset.nm),300)});
+ $('#ol').querySelectorAll('[data-st]').forEach(b=>b.onclick=async()=>{const[id,st]=b.dataset.st.split(':');let note='';if(st==='cancelled'||st==='declined')note=prompt('Reason the family will see:')||'';if(st==='cancelled'&&!note)return;try{await api(`/orders/${id}/status`,{method:'POST',body:{status:st,note}});toast('Updated · the family has been told');loadOrders();load()}catch(e){toast(e.message)}});
+ $('#ol').querySelectorAll('[data-rep]').forEach(i=>i.onchange=async()=>{const f=i.files[0];if(!f)return;if(f.size>15e6){toast('Up to 15 MB');return}try{await api(`/orders/${i.dataset.rep}/report`,{method:'PUT',raw:true,headers:{'content-type':f.type||'application/pdf','x-file-name':f.name},body:f});toast('Report delivered to the family');loadOrders();load()}catch(e){toast(e.message)}})}
+// ---------------- visit requests (hospitals)
+VIEWS.appts=()=>{$('#main').innerHTML=head('Visit requests','Confirm a slot, offer another time, or decline with a reason. The family is notified at once.',`<select id="ast"><option value="open">Open</option><option value="all">All</option></select>`)+`<div id="al"><div class="empty">Loading…</div></div>`;$('#ast').onchange=loadAppts;loadAppts()};
+async function loadAppts(){let r;try{r=await api('/appointments?status='+($('#ast')?$('#ast').value:'open'))}catch(e){$('#al').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ if(!r.appointments.length){$('#al').innerHTML='<div class="empty">No visit requests right now.</div>';return}
+ $('#al').innerHTML=r.appointments.map(a=>`<div class="ord"><div><b>${E(a.memberName||'Family member')}</b> <span class="tag ${a.status==='requested'?'warn':a.status==='declined'||a.status==='cancelled'?'bad':'ok'}">${E(a.status)}</span> <span style="color:var(--mute);font-size:12px">${fmt(a.created)}</span>
+   <div>Asked for <b>${E(a.date)} ${E(a.time||'')}</b> · ${E(a.kind)}${a.doctor?' · '+E(a.doctor):''}</div><div class="items">${E(a.why||'—')}</div>${a.slotDate?`<div class="items">Confirmed: <b>${E(a.slotDate)} ${E(a.slotTime||'')}</b></div>`:''}${a.note?`<div class="items">Note: ${E(a.note)}</div>`:''}</div>
+  <div class="acts">${['requested','rescheduled','confirmed'].includes(a.status)?`<input type="date" data-d="${E(a.id)}" value="${E(a.slotDate||a.date)}" style="width:auto"><input type="time" data-t="${E(a.id)}" value="${E(a.slotTime||a.time||'')}" style="width:auto"><input placeholder="Doctor" data-doc="${E(a.id)}" value="${E(a.doctor||'')}" style="width:130px"><button class="btn sm p" data-ap="${E(a.id)}:confirmed">Confirm</button><button class="btn sm" data-ap="${E(a.id)}:rescheduled">Offer this time</button><button class="btn sm d" data-ap="${E(a.id)}:declined">Decline</button>`:''}${a.status==='confirmed'?`<button class="btn sm" data-ap="${E(a.id)}:done">Mark done</button>`:''}</div></div>`).join('');
+ $('#al').querySelectorAll('[data-ap]').forEach(b=>b.onclick=async()=>{const[id,st]=b.dataset.ap.split(':');const d=$(`[data-d="${id}"]`),t=$(`[data-t="${id}"]`),doc=$(`[data-doc="${id}"]`);let note='';if(st==='declined')note=prompt('Reason the family will see:')||'';try{await api(`/appointments/${id}`,{method:'POST',body:{status:st,slotDate:d?d.value:'',slotTime:t?t.value:'',doctor:doc?doc.value:'',note}});toast('Updated · the family has been told');loadAppts();load()}catch(e){toast(e.message)}})}
+// ---------------- messages
+let thread=null;
+VIEWS.msgs=()=>{$('#main').innerHTML=head('Messages','Families who have an order, booking or visit with you. Keep it to logistics and clarifications; clinical advice stays with their doctor.')+`<div style="display:grid;grid-template-columns:280px 1fr;gap:12px" id="mg"><div id="tl" class="card">Loading…</div><div id="tv" class="card"><div class="empty">Choose a conversation</div></div></div>`;loadThreads()};
+async function loadThreads(){let r;try{r=await api('/threads')}catch(e){$('#tl').innerHTML=E(e.message);return}
+ $('#tl').innerHTML=r.threads.length?r.threads.map(t=>`<div class="ord" style="cursor:pointer;grid-template-columns:1fr" data-th="${E(t.household)}"><div><b>${E(t.family)}</b>${t.unread?` <em class="tag bad">${t.unread}</em>`:''}<div class="items">${E(t.last.text||'📎 document')} · ${fmt(t.last.t)}</div></div></div>`).join(''):'<div class="empty">No conversations yet.</div>';
+ $('#tl').querySelectorAll('[data-th]').forEach(d=>d.onclick=()=>openThread(d.dataset.th,d.querySelector('b').textContent))}
+function openThreadNew(hid,name){openThread(hid,name,true)}
+async function openThread(hid,name,fresh){thread=hid;let r={messages:[]};try{r=await api('/threads/'+hid)}catch(e){if(!fresh){toast(e.message);return}}
+ $('#tv').innerHTML=`<h3>${E(name)}</h3><div class="chat" id="ch">${r.messages.map(m=>`<div class="bub ${m.sender==='partner'?'me':''}">${E(m.text)}${m.fileId?` <a href="/api/partner/thread-file/${E(hid)}/${encodeURIComponent(m.fileId)}" target="_blank" rel="noopener">📎 document ↗</a>`:''}<small>${E(m.name||'')} · ${fmt(m.t)}</small></div>`).join('')}</div><form id="mf" class="row" style="margin:10px 0 0"><input class="grow" id="mt" placeholder="Reply…" maxlength="2000" autocomplete="off"><button class="btn p">Send</button></form>`;
+ const ch=$('#ch');ch.scrollTop=ch.scrollHeight;$('#mf').onsubmit=async e=>{e.preventDefault();const t=$('#mt').value.trim();if(!t)return;try{await api('/threads/'+hid,{method:'POST',body:{text:t}});openThread(hid,name);loadThreads();load()}catch(err){toast(err.message)}}}
+// ---------------- prices
+VIEWS.prices=()=>{const isLab=ME.store.kind==='lab';$('#main').innerHTML=head(isLab?'Price list':'Stock & prices',isLab?'Only tests with a price are offered to families. Prices are what the family pays; leave blank to not offer a test.':'Only items with a price and stock are offered. Price must not exceed MRP.',`<input id="pq" placeholder="Search…" style="width:200px"><button class="btn p" id="ps">Save</button>`)+`<div class="card" id="pl">Loading…</div>`;loadPrices()};
+let PR=null;
+async function loadPrices(){try{PR=await api('/prices')}catch(e){$('#pl').innerHTML=E(e.message);return}paintPrices();$('#pq').oninput=paintPrices;$('#ps').onclick=savePrices}
+function paintPrices(){const q=($('#pq').value||'').toLowerCase(),isLab=PR.kind==='lab',rows=(isLab?PR.tests:PR.items).filter(x=>!q||(x.name+' '+(x.form||'')+' '+(x.cat||'')).toLowerCase().includes(q));
+ $('#pl').innerHTML=`<div class="pl h"><span>${isLab?'Test':'Item'}</span><span>${isLab?'Price ₹':'Price ₹ (MRP)'}</span><span>${isLab?'Report hours':'Stock'}</span></div>`+rows.map(x=>isLab?`<div class="pl"><div><b>${E(x.name)}</b><small>typical ₹${x.typical}${x.fasting?' · fasting':''}</small></div><input type="number" min="0" data-k="${E(x.code)}" data-f="price" value="${x.price??''}" placeholder="—"><input type="number" min="1" data-k="${E(x.code)}" data-f="tat" value="${x.tat}"></div>`
+  :`<div class="pl"><div><b>${E(x.name)}</b>${x.rx?' <span class="tag warn">Rx</span>':''}<small>${E(x.form)} · ${E(x.cat)}</small></div><input type="number" min="0" max="${x.mrp}" data-k="${E(x.sku)}" data-f="price" value="${x.price??''}" placeholder="MRP ${x.mrp}"><input type="number" min="0" data-k="${E(x.sku)}" data-f="stock" value="${x.stock}"></div>`).join('')}
+async function savePrices(){const isLab=PR.kind==='lab',by={};$('#pl').querySelectorAll('input[data-k]').forEach(i=>{(by[i.dataset.k]=by[i.dataset.k]||{})[i.dataset.f]=i.value});
+ const body=isLab?{tests:Object.entries(by).map(([code,v])=>({code,price:v.price,tat:v.tat}))}:{items:Object.entries(by).map(([sku,v])=>({sku,price:v.price,stock:v.stock}))};
+ try{const r=await api('/prices',{method:'PUT',body});toast(`Saved · ${r.changed} ${isLab?'tests':'items'} offered`);loadPrices()}catch(e){toast(e.message)}}
+// ---------------- profile
+VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy';$('#main').innerHTML=head('Store profile','What families see: hours, phone, collection or delivery terms. Name, address and licence are changed by TheHealthTracker.')+
+ `<div class="card"><h3>${E(s.name)}</h3><p style="color:var(--mute);margin:0 0 12px">${E([s.address,s.area,s.city].filter(Boolean).join(', '))} · Licence ${E(s.licence||'—')} · ★ ${s.rating} (${s.ratingN})</p>
+  <form id="pf"><div class="row"><label>Phone <input name="phone" value="${E(s.phone||'')}"></label><label>Hours <input name="hours" value="${E(s.hours||'')}"></label><label><input type="checkbox" name="open24" ${s.open24?'checked':''}> Open 24 hours</label></div>
+  ${isLab?`<div class="row"><label><input type="checkbox" name="homeCollection" ${s.homeCollection?'checked':''}> Home collection</label><label>Collection fee ₹ <input type="number" name="collectionFee" value="${s.collectionFee}" style="width:100px"></label><label>Report time (minutes) <input type="number" name="etaMin" value="${s.etaMin}" style="width:110px"></label></div>`:''}
+  ${isPh?`<div class="row"><label><input type="checkbox" name="delivery" ${s.delivery?'checked':''}> Home delivery</label><label>Delivery fee ₹ <input type="number" name="deliveryFee" value="${s.deliveryFee}" style="width:100px"></label><label>Free above ₹ <input type="number" name="freeAbove" value="${s.freeAbove}" style="width:100px"></label><label>Typical delivery (minutes) <input type="number" name="etaMin" value="${s.etaMin}" style="width:110px"></label><label>Discount off MRP % <input type="number" name="discount" step="0.5" value="${s.discount}" style="width:90px"></label></div>`:''}
+  <button class="btn p">Save</button></form></div>
+  <div class="card"><h3>Your sign-in</h3>${ME.user.mustChange?'<p class="msg on err">Set your own password now; the one you received was temporary.</p>':''}<form id="pw" class="row"><input type="password" id="pc" placeholder="Current password" autocomplete="current-password" style="width:200px"><input type="password" id="pn" placeholder="New password (10+ characters)" autocomplete="new-password" style="width:240px"><button class="btn">Change password</button></form></div>`;
+ $('#pf').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),b={};['phone','hours'].forEach(k=>b[k]=fd.get(k)||'');['open24','homeCollection','delivery'].forEach(k=>{if(e.target[k])b[k]=!!fd.get(k)});['collectionFee','deliveryFee','freeAbove','etaMin','discount'].forEach(k=>{if(fd.get(k)!=null&&fd.get(k)!=='')b[k]=+fd.get(k)});try{await api('/profile',{method:'PUT',body:b});toast('Saved');load()}catch(err){toast(err.message)}};
+ $('#pw').onsubmit=async e=>{e.preventDefault();try{await api('/password',{method:'POST',body:{current:$('#pc').value,new:$('#pn').value}});toast('Password changed');load()}catch(err){toast(err.message)}}};
+render();load();setInterval(()=>{if(ME)load()},60000);
+</script>
+</body>
+</html>

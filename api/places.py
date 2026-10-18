@@ -104,6 +104,33 @@ def where(lat: float | None = None, lng: float | None = None):
     return _cached(key, 7 * 86400, make)
 
 
+@r.get("/geo/search")
+def search(q: str = ""):
+    """Type a locality, city or PIN and pick it: for people who deny GPS or are setting a family member's town."""
+    q = q.strip()[:80]
+    if len(q) < 2:
+        return {"results": []}
+    key = f"search:{q.lower()}"
+
+    def make():
+        try:
+            j = _get(f"https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=in&limit=6&q={urllib.parse.quote(q)}")
+        except Exception as e:
+            print("[geo] search failed:", type(e).__name__, str(e)[:120], flush=True)
+            return {"ok": False, "results": []}
+        out = []
+        for x in j if isinstance(j, list) else []:
+            a = x.get("address") or {}
+            place = a.get("suburb") or a.get("neighbourhood") or a.get("village") or a.get("town") or a.get("city") or x.get("name") or ""
+            city = a.get("city") or a.get("town") or a.get("village") or a.get("county") or a.get("state_district") or ""
+            state = a.get("state") or ""
+            out.append({"label": x.get("display_name", "")[:120], "place": place, "city": city, "state": state, "stateCode": STATE_CODES.get(state, ""),
+                        "lat": round(float(x["lat"]), 5), "lng": round(float(x["lon"]), 5)})
+        return {"ok": True, "results": out}
+
+    return _cached(key, 7 * 86400, make)
+
+
 def _store_json(s: Store, d: float) -> dict:
     return {"id": s.id, "name": s.name, "lat": s.lat, "lng": s.lng, "km": round(d, 1), "address": ", ".join(x for x in (s.address, s.area, s.city) if x),
             "phone": s.phone or "", "rating": s.rating, "partner": True, "kind": s.kind, "home": bool(getattr(s, "home_collection", False)),
