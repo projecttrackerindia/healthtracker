@@ -233,6 +233,8 @@ class OrderReq(BaseModel):
     address: str = ""
     member: str = ""
     rxShared: bool = False
+    rxDocs: list[str] = []
+    memberId: str = ""
     slot: str = ""
     payment: str = "cod"
     lat: float | None = None
@@ -295,8 +297,9 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
         raise HTTPException(400, "nothing available at this store")
     if body.kind != "lab" and any(l.get("rx") for l in lines) and not body.rxShared:
         raise HTTPException(400, "This order has prescription-only medicines. Upload or choose the prescription first; the pharmacist must see it before dispensing.")
+    rx_files = [str(x)[:48] for x in body.rxDocs[:6]] if body.rxShared else []
     o = Order(household_id=h.id, store_id=s.id, kind=body.kind, items=lines, subtotal=sub, fee=fee, discount=disc, total=sub + fee,
-              address=body.address[:240], member=body.member[:80], rx_shared=body.rxShared, slot=body.slot[:40], payment=body.payment[:24],
+              address=body.address[:240], member=body.member[:80], member_id=body.memberId[:32] or None, rx_files=rx_files, rx_shared=body.rxShared, slot=body.slot[:40], payment=body.payment[:24],
               timeline=[{"s": "placed", "t": now()}], eta=now() + s.eta_min * 60)
     db.add(o)
     db.flush()

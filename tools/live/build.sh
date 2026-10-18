@@ -5,4 +5,5 @@
 set -e
 cd "$(dirname "$0")/../.."
 python3 tools/live/p5.py >/dev/null || true
+python3 tools/live/p6.py >/dev/null || true
 python3 tools/compress.py --check && echo "web/index.html up to date"

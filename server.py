@@ -96,9 +96,11 @@ app.include_router(auth_api.r)
 app.include_router(family_api.r)
 app.include_router(more_api.r)
 app.include_router(admin_api.r)
-from api import places as places_api, billing as billing_api  # noqa: E402
+from api import places as places_api, billing as billing_api, inbox as inbox_api, partner as partner_api  # noqa: E402
 app.include_router(places_api.r)
 app.include_router(billing_api.r)
+app.include_router(inbox_api.r)
+app.include_router(partner_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)
@@ -180,6 +182,12 @@ def _safe(rel: str) -> Path:
     if WEB not in p.parents and p != WEB:
         raise HTTPException(404)
     return p
+
+
+@app.api_route("/partner", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/partner/{rest:path}", methods=["GET", "HEAD"], include_in_schema=False)
+def partner_page(rest: str = ""):
+    return FileResponse(ROOT / "partner" / "index.html", media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache", "X-Frame-Options": "DENY"})
 
 
 @app.api_route("/admin", methods=["GET", "HEAD"], include_in_schema=False)

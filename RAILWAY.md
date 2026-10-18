@@ -100,6 +100,16 @@ to the uncompressed file and prints a warning in the deploy log), so a forgotten
 
 `/api/v1/geo/where` (reverse geocoding) and `/api/v1/places` (hospitals, clinics, labs, pharmacies, blood banks) use OpenStreetMap's Nominatim and Overpass services from the server, cached per ~1 km cell, at most one call a second, with a real User-Agent, per their usage policy. Partner stores from the admin panel are merged in and marked `partner`. Map tiles come from tile.openstreetmap.org (allowed in the CSP). For heavier traffic later, set `NOMINATIM_URL` / `OVERPASS_URL` to a paid or self-hosted mirror; nothing else changes.
 
+## Partner portal (round 7)
+
+`/partner` is where labs, pharmacies and hospitals work. An admin creates the store in `/admin → Partners`, verifies it, and creates a portal sign-in from the store's edit drawer (one-time password, shown once; the partner sets their own on first sign-in).
+
+* **Labs**: bookings → confirm → sample collected → in the lab → upload the report (PDF) → the family gets a push and the report appears in their Lab records with **Analyse**. The report is stored encrypted in the family's document store (S3), never on the portal.
+* **Pharmacies**: orders → check (the shared prescription opens from the order; nothing else in the family's vault is reachable) → packed → out → delivered. Prescription-only items without a prescription are flagged red.
+* **Hospitals**: visit requests → confirm a slot / offer another time / decline; confirmed visits land in the family's Appointments and Today.
+* **Everyone**: messages with families who have an order, booking or visit with them (attachments from the family's vault open from the thread); price list / stock; store profile (hours, phone, collection or delivery terms). Name, address and licence are changed only by admin.
+* **Families** see all of it through `/api/v1/inbox`, polled every minute and on focus, merged into the notification centre, Lab results, Orders and Appointments. In production nothing advances an order except the partner or an admin.
+
 ## Operations checklist
 
 * `/admin` → **System** shows the clinical reviewer, which services are on (smart reading, documents, push) and the last 100 app errors reported by phones.

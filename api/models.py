@@ -121,6 +121,8 @@ class Order(Base):
     address: Mapped[str] = mapped_column(String(240), default="")
     member: Mapped[str] = mapped_column(String(80), default="")  # first name only, as the family typed it
     rx_shared: Mapped[bool] = mapped_column(Boolean, default=False)
+    member_id: Mapped[str | None] = mapped_column(String(32), nullable=True)   # which family profile the order is for
+    rx_files: Mapped[list | None] = mapped_column(JSON, nullable=True)         # prescription file ids the family chose to share
     slot: Mapped[str] = mapped_column(String(40), default="")  # lab home-collection slot
     status: Mapped[str] = mapped_column(String(24), default="placed", index=True)
     timeline: Mapped[list] = mapped_column(JSON, default=list)  # [{s,t}]
@@ -434,3 +436,74 @@ class Setting(Base):
     key: Mapped[str] = mapped_column(String(48), primary_key=True)
     value: Mapped[dict] = mapped_column(JSON, default=dict)
     updated: Mapped[int] = mapped_column(Integer, default=now, onupdate=now)
+
+
+# ---- partner network: the lab / pharmacy / hospital side -----------------------------------------------------------------
+class PartnerUser(Base):
+    """A person at a partner store who signs in to the partner portal. Created by an admin; the store must be verified."""
+
+    __tablename__ = "partner_users"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("pu"))
+    store_id: Mapped[str] = mapped_column(ForeignKey("stores.id", ondelete="CASCADE"), index=True)
+    email: Mapped[str] = mapped_column(String(160), unique=True)
+    name: Mapped[str] = mapped_column(String(80), default="")
+    phone: Mapped[str] = mapped_column(String(20), default="")
+    pw_hash: Mapped[str] = mapped_column(String(200), default="")
+    role: Mapped[str] = mapped_column(String(16), default="staff")  # owner | staff
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    must_change: Mapped[bool] = mapped_column(Boolean, default=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    last_login: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class Appointment(Base):
+    """A visit requested at a partner hospital or clinic; the partner confirms a slot, reschedules or declines."""
+
+    __tablename__ = "appointments"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ap"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    member_name: Mapped[str] = mapped_column(String(80), default="")
+    store_id: Mapped[str] = mapped_column(ForeignKey("stores.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(12), default="visit")  # visit | video
+    date: Mapped[str] = mapped_column(String(10), default="")
+    time: Mapped[str] = mapped_column(String(8), default="")
+    why: Mapped[str] = mapped_column(String(160), default="")
+    doctor: Mapped[str] = mapped_column(String(80), default="")
+    status: Mapped[str] = mapped_column(String(16), default="requested", index=True)  # requested | confirmed | rescheduled | declined | done | cancelled
+    slot_date: Mapped[str] = mapped_column(String(10), default="")
+    slot_time: Mapped[str] = mapped_column(String(8), default="")
+    note: Mapped[str] = mapped_column(String(300), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class Notice(Base):
+    """Something that happened on the server side that the family should see: order status, report ready, visit confirmed, message."""
+
+    __tablename__ = "notices"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    kind: Mapped[str] = mapped_column(String(24))
+    title: Mapped[str] = mapped_column(String(160))
+    body: Mapped[str] = mapped_column(String(400), default="")
+    ref: Mapped[dict] = mapped_column(JSON, default=dict)
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)
+    read: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class Message(Base):
+    """A message between a family and a partner store (about an order, a booking or a visit). Attachments are file ids."""
+
+    __tablename__ = "messages"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    store_id: Mapped[str] = mapped_column(ForeignKey("stores.id"), index=True)
+    sender: Mapped[str] = mapped_column(String(8))  # family | partner
+    sender_name: Mapped[str] = mapped_column(String(80), default="")
+    text: Mapped[str] = mapped_column(String(2000), default="")
+    file_id: Mapped[str] = mapped_column(String(48), default="")
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)
+    read_family: Mapped[bool] = mapped_column(Boolean, default=False)
+    read_partner: Mapped[bool] = mapped_column(Boolean, default=False)
