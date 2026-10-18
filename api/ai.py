@@ -57,8 +57,9 @@ def current_model() -> str:
 
 
 def _fail(where: str, e: Exception) -> None:
-    LAST_ERROR.update({"t": int(time.time()), "where": where, "error": f"{type(e).__name__}: {str(e)[:300]}"})
-    print(f"[ai] {where} failed: {type(e).__name__}: {str(e)[:300]}", flush=True)
+    cause = f" cause={type(e.__cause__).__name__}: {str(e.__cause__)[:300]}" if e.__cause__ else ""
+    LAST_ERROR.update({"t": int(time.time()), "where": where, "error": f"{type(e).__name__}: {str(e)[:300]}{cause}"})
+    print(f"[ai] {where} failed: {type(e).__name__}: {str(e)[:300]}{cause}", flush=True)
 
 
 def pdf_pages_as_images(data: bytes, max_pages: int = 4) -> list[bytes]:
