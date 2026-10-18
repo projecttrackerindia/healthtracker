@@ -5509,7 +5509,7 @@ try{const m=JSON.parse(localStorage.getItem(SYK));if(m&&typeof m.v==='number')me
 const saveMeta=()=>{try{localStorage.setItem(SYK,JSON.stringify(meta))}catch(e){}};
 const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h};
 const pick=()=>{const o={};for(const k of Object.keys(S))if(!EXCL.has(k))o[k]=S[k];return o};
-function rehash(stamp){const st=pick(),t=Date.now();let changed=false;for(const k of Object.keys(st)){const h=hash(JSON.stringify(st[k]));if(meta.hash[k]!==h){meta.hash[k]=h;if(stamp){meta.sect[k]=t;changed=true}}}for(const k of Object.keys(meta.hash))if(!(k in st)){delete meta.hash[k];if(stamp){meta.sect[k]=t;changed=true}}return changed}
+function rehash(stamp){const st=pick(),t=Date.now();let changed=false;for(const k of Object.keys(st)){const h=hash(JSON.stringify(st[k]));if(meta.hash[k]!==h){if(stamp&&meta.hash[k]!==undefined)console.log('[sync-diag] key changed:',k,'old=',meta.hash[k],'new=',h);meta.hash[k]=h;if(stamp){meta.sect[k]=t;changed=true}}}for(const k of Object.keys(meta.hash))if(!(k in st)){delete meta.hash[k];if(stamp){meta.sect[k]=t;changed=true}}return changed}
 let pushT=0,applying=false,pushing=false;
 const sv0=SX.save;SX.save=(now)=>{sv0(now);if(applying)return;if(rehash(true)){meta.dirty=true;saveMeta();schedulePush()}};
 function schedulePush(){if(!SX.user||!meta.dirty)return;clearTimeout(pushT);pushT=setTimeout(push,2500)}
