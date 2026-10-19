@@ -119,6 +119,9 @@ app.include_router(upipay_api.r)
 app.include_router(upipay_api.ar)
 from api import digilocker as digilocker_api  # noqa: E402
 app.include_router(digilocker_api.r)
+from api import apps as apps_api, fitbit as fitbit_api  # noqa: E402
+app.include_router(apps_api.r)
+app.include_router(fitbit_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)

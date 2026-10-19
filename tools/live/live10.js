@@ -22,7 +22,8 @@ function hcMerge(m,data){let n=0;const V=(S.vitals[m.id]=S.vitals[m.id]||[]),hav
  (data.glucose||[]).forEach(r=>{if(r.mgdl>10)add(r,{glu:Math.round(r.mgdl),gt:r.when||''})});
  (data.spo2||[]).forEach(r=>{if(r.pct>50)add(r,{spo2:Math.round(r.pct)})});
  const ws=(data.weight||[]).filter(r=>r.kg>2).sort((a,b)=>a.t-b.t);ws.forEach(r=>add(r,{w:+(+r.kg).toFixed(1)}));if(ws.length){m.w=+(+ws[ws.length-1].kg).toFixed(1)}
- V.sort((a,b)=>a.t-b.t);if(V.length>2000)S.vitals[m.id]=V.slice(-2000);return n}
+ V.sort((a,b)=>a.t-b.t);if(V.length>2000)S.vitals[m.id]=V.slice(-2000);if(SX.ecgImport&&(data.ecg||[]).length)n+=SX.ecgImport(m,data.ecg,'apple');return n}
+SX.hcMerge=(m,data,src)=>{const n=hcMerge(m,data);if(src){(S.vitals[m.id]||[]).forEach(v=>{if(v.src==='hc'&&v.hc&&!v._s){v.src=src;v.dev=src==='fitbit'?'Fitbit':v.dev;v._s=1}})}return n};
 SX.act.hcsync=async()=>{const hs=plug('HealthSync');const m=SX.me();if(!hs){SX.modal(`<h2>📱 ${P('Health Connect')}</h2><p>${P('Steps, sleep, heart rate, weight, blood pressure, sugar and SpO₂ from your watch or band arrive automatically with the TheHealthTracker Android app, through Health Connect.')}</p><p class="mute sm">${P('Open this page in the app to sync. Bluetooth devices can still be read directly here.')}</p><div class="lv-row-end"><button class="btn p" data-sx="closeModal">${P('OK')}</button></div>`,{label:'Health Connect'});return}
  SX.modal(`<h2>📱 ${P('Health Connect')}</h2><p class="mute sm" id="hcst">${P('Checking…')}</p><div class="lv10-hcgrid" id="hcgrid"></div><p class="full lv-err" hidden></p><div class="lv-row-end"><button class="btn s" data-sx="closeModal">${P('Close')}</button><button class="btn p" id="hcgo" disabled>${P('Sync now')}</button></div>`,{label:'Health Connect'});
  const st=document.getElementById('hcst'),err=document.querySelector('.sx-modal .lv-err'),go=document.getElementById('hcgo');

@@ -161,7 +161,14 @@ def stats(a: Admin = Depends(me), db: Session = Depends(get_db)):
         d = datetime.fromtimestamp(o.created).strftime("%d %b")
         byday[d] = byday.get(d, 0) + 1
     ai = db.scalars(select(AiJob).where(AiJob.t > month)).all()
-    return {
+    from .models import Appointment as _Ap, Payment as _Pay, PartnerApplication as _PA
+    attention = {"payments": db.scalar(select(func.count(_Pay.id)).where(_Pay.status == "claimed")) or 0,
+                 "applications": db.scalar(select(func.count(_PA.id)).where(_PA.status == "new")) or 0,
+                 "doctors": db.scalar(select(func.count(PartnerUser.id)).where(PartnerUser.role == "doctor", PartnerUser.verified == False, PartnerUser.active == True)) or 0,  # noqa: E712
+                 "stores": db.scalar(select(func.count(Store.id)).where(Store.verified == False, Store.active == True)) or 0,  # noqa: E712
+                 "visits": db.scalar(select(func.count(_Ap.id)).where(_Ap.status == "requested", _Ap.created < t - 86400)) or 0,
+                 "orders": db.scalar(select(func.count(Order.id)).where(Order.status == "placed", Order.created < t - 4 * 3600)) or 0}
+    return {"attention": attention, 
         "households": {"total": cnt(select(Household.id)), "new7": cnt(select(Household.id).where(Household.created > week)), "active1": cnt(select(Household.id).where(Household.last_seen > day)),
                        "paid": cnt(select(Household.id).where(Household.plan != "free"))},
         "partners": {k: cnt(select(Store.id).where(Store.kind == k, Store.active == True)) for k in ("pharmacy", "lab", "hospital")},  # noqa: E712
@@ -304,7 +311,11 @@ def partner_user_add(sid: str, body: PartnerUserIn, a: Admin = Depends(me), db: 
     db.add(u)
     db.flush()
     log(db, a.email, f"partner.user.add {sid} {email} {role}")
-    return {"id": u.id, "email": email, "tempPassword": temp, "portal": "/partner", "role": role}
+    from . import messaging
+    sent = messaging.mail(email, f"Your TheHealthTracker partner sign-in · {s.name}",
+                          f"Hello {body.name or ''},\n\nA sign-in was created for you at {s.name}{' as a doctor' if role == 'doctor' else ''}.\n\nPortal: https://thehealthtracker.com/partner\nEmail: {email}\nOne-time password: {temp}\n\n"
+                          f"You will set your own password on first sign-in.{' Video consults open once your registration number is verified by our team.' if role == 'doctor' else ''}")
+    return {"id": u.id, "email": email, "tempPassword": temp, "portal": "/partner", "role": role, "emailed": sent}
 
 
 class DoctorVerifyIn(BaseModel):

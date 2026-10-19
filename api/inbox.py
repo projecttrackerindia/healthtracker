@@ -96,6 +96,12 @@ def appt_request(body: ApptIn, request: Request, db: Session = Depends(get_db), 
                     date=body.date, time=body.time[:8], why=body.why[:160], doctor=body.doctor[:80])
     db.add(a)
     db.flush()
+    try:
+        from .partner import alert_store
+        alert_store(db, s.id, f"Visit request · {body.memberName or 'a family member'} · {body.date}",
+                    f"{body.memberName or 'A family member'} asked for a {'video' if body.kind == 'video' else 'in-person'} visit on {body.date} {body.time or ''}{' with ' + body.doctor if body.doctor else ''}.\nReason: {body.why or '—'}\nConfirm a slot or offer another time in the portal; the family is notified at once.")
+    except Exception as e:
+        print("[appts] store alert failed:", str(e)[:120], flush=True)
     return appt_json(db, a)
 
 

@@ -305,11 +305,36 @@ def weekly_report(lang: str = "en", db: Session = Depends(get_db), x_dokko_key: 
 
 
 # ---- the morning loop -------------------------------------------------------------------------------------------------------
+def housekeeping(db, today: date) -> int:
+    """Loops that must close on their own: plans end when they end, renewals are nudged, forgotten calls are closed."""
+    from .models import Appointment
+    n = 0
+    t = int(time.time())
+    for h in db.scalars(select(Household).where(Household.plan != "free", Household.plan_until != None)).all():  # noqa: E711
+        if h.plan_until < t:
+            old = h.plan
+            h.plan, h.plan_until = "free", None
+            notify(db, h.id, "plan", f"Your {old.title()} plan has ended", "You are on the Free plan now: records, reminders and partners continue; smart reading and the assistant return to the free monthly limits. Renew any time from Family & Privacy → Plan.",
+                   {"plan": old, "ended": True}, "", "/app#page=plan")
+            n += 1
+        elif 0 < h.plan_until - t <= 5 * 86400 and not db.get(ReminderSent, f"renew:{h.id}:{h.plan_until}"):
+            db.add(ReminderSent(key=f"renew:{h.id}:{h.plan_until}"))
+            notify(db, h.id, "plan", f"Your {h.plan.title()} plan renews in {max(1, (h.plan_until - t) // 86400)} days", "Pay by UPI from the plan page to continue without a break; nothing is charged automatically.",
+                   {"plan": h.plan, "until": h.plan_until}, "", "/app#page=plan")
+            n += 1
+    for a in db.scalars(select(Appointment).where(Appointment.call_started != None, Appointment.call_ended == None)).all():  # noqa: E711
+        if t - a.call_started > 3 * 3600:
+            a.call_ended, a.status, a.updated = t, "done", t
+            n += 1
+    return n
+
+
 def run_morning(today: date | None = None, force: bool = False) -> int:
-    """One pass over every family: nudges (and the weekly report on Mondays). Returns notices written."""
+    """One pass over every family: housekeeping, nudges (and the weekly report on Mondays). Returns notices written."""
     today = today or datetime.now(IST).date()
     written = 0
     with session() as db:
+        written += housekeeping(db, today)
         for st in db.scalars(select(HouseholdState)).all():
             h = db.get(Household, st.household_id)
             if not h or h.blocked:
@@ -349,6 +374,8 @@ def start() -> None:
         while True:
             try:
                 nowi = datetime.now(IST)
+                with session() as db:
+                    housekeeping(db, nowi.date())
                 if 8 <= nowi.hour < 9:
                     k = f"morning:{nowi.date().isoformat()}"
                     with session() as db:

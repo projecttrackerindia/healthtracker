@@ -591,3 +591,18 @@ class Payment(Base):
     decided_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
     admin_note: Mapped[str] = mapped_column(String(300), default="")
     created: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class DeviceLink(Base):
+    """A cloud wearable account (Fitbit today) linked to one family profile; tokens are sealed with the data key."""
+
+    __tablename__ = "device_links"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("dl"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    user_id: Mapped[str] = mapped_column(String(32), default="")
+    provider: Mapped[str] = mapped_column(String(16), default="fitbit")
+    external_id: Mapped[str] = mapped_column(String(64), default="")
+    blob: Mapped[bytes] = mapped_column(LargeBinary)              # sealed {access, refresh, expires, scope}
+    last_sync: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)

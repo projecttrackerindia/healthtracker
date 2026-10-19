@@ -342,6 +342,13 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
     db.add(o)
     db.flush()
     o.store = s
+    try:
+        from .partner import alert_store
+        what = ", ".join(f"{l.get('name', '')}" + (f" ×{l.get('qty')}" if l.get("qty") else "") for l in lines[:5])
+        alert_store(db, s.id, f"New {'lab booking' if body.kind == 'lab' else 'medicine order'} {o.id} · ₹{o.total}",
+                    f"{body.member or 'A family'} placed {o.id}: {what}.\n{'Slot: ' + body.slot if body.slot else ''}\nAddress: {o.address or '—'}\nPayment: {o.payment}.")
+    except Exception as e:
+        print("[orders] store alert failed:", str(e)[:120], flush=True)
     return order_json(o)
 
 

@@ -80,6 +80,12 @@ def apply(body: ApplyIn, request: Request, db: Session = Depends(get_db)):
                            ip=(request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else ""))[:48])
     db.add(a)
     db.flush()
+    from . import messaging
+    admin_to = os.getenv("ADMIN_ALERT_EMAIL") or os.getenv("LEGAL_EMAIL") or ""
+    if admin_to:
+        messaging.mail(admin_to, f"[Admin] New partner application · {a.name} ({a.kind}, {a.city})", f"{a.name} · {a.kind} · {a.city}\nContact {a.contact} · {a.phone} · {a.email}\nLicence {a.licence}\n\nReview: https://thehealthtracker.com/admin#applications")
+    messaging.mail(email, "We received your TheHealthTracker partner application", f"Thank you, {a.contact or a.name}.\n\nReference: {a.id}\nWe check the licence number ({a.licence}) with the regulator and write back within 2 working days. "
+                   "Meanwhile, keep your price list or test menu handy; you will enter it in the portal on first sign-in.")
     return {"ok": True, "id": a.id, "status": "new", "message": "Thank you. The partner team checks the licence and writes to you within 2 working days."}
 
 
@@ -124,7 +130,12 @@ def approve(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session 
     db.add(u)
     ap.status, ap.store_id, ap.decided_by, ap.decided_at = "approved", s.id, a.email, now()
     log(db, a.email, f"partner.application.approve {aid} → store {s.id}")
-    return {"ok": True, "storeId": s.id, "email": ap.email, "tempPassword": temp, "portal": "/partner", "verified": s.verified}
+    from . import messaging
+    sent = messaging.mail(ap.email, "Welcome to the TheHealthTracker partner network",
+                          f"Hello {ap.contact or ap.name},\n\n{ap.name} is now on TheHealthTracker{' as a verified partner' if s.verified else ' (verification of the licence is in progress)'}.\n\n"
+                          f"Sign in at https://thehealthtracker.com/partner\nEmail: {ap.email}\nOne-time password: {temp}\n\nYou will be asked to set your own password on first sign-in. "
+                          f"Then complete the store profile and price list so families near you can book.\n\nQuestions: partner@thehealthtracker.com")
+    return {"ok": True, "storeId": s.id, "email": ap.email, "tempPassword": temp, "portal": "/partner", "verified": s.verified, "emailed": sent}
 
 
 @ar.post("/applications/{aid}/decline")

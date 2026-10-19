@@ -158,6 +158,10 @@ def claim(pid: str, body: ClaimIn, request: Request, db: Session = Depends(get_d
     if db.scalar(select(Payment.id).where(Payment.utr == utr, Payment.id != p.id, Payment.status.in_(("claimed", "confirmed")))):
         raise HTTPException(400, "This UTR is already in use.")
     p.utr, p.payer, p.status, p.claimed_at = utr, body.payer.strip()[:80], "claimed", now()
+    from . import messaging
+    admin_to = os.getenv("ADMIN_ALERT_EMAIL") or os.getenv("LEGAL_EMAIL") or ""
+    if admin_to:
+        messaging.mail(admin_to, f"[Admin] UPI payment to confirm · ₹{p.amount} · {p.note}", f"UTR {utr} · ₹{p.amount} · {p.kind} {p.ref} · account {p.account}\nPayer: {p.payer or '—'}\n\nConfirm: https://thehealthtracker.com/admin#payments")
     return pay_json(p)
 
 

@@ -395,3 +395,54 @@ def test_signup_offers_aadhaar_route_only_when_digilocker_is_live(monkeypatch):
         x.aadhaar_verified, x.aadhaar_last4, x.aadhaar_dob = 1, "4321", "12-05-1990"
     me = c.get("/api/v1/auth/me").json()["user"]
     assert me["verified"] is True and me["dob"] == "1990-05-12"
+
+
+def test_loops_close_on_their_own_plan_expiry_stale_calls_and_alerts():
+    from api import messaging
+    f, a = family(), admin()
+    hid, uid, d = hospital_with_doctor(a)
+    # plan expiry: an ended plan drops to free with a notice; a plan ending in 3 days gets one renewal nudge
+    with DB.session() as db:
+        from api.models import Household
+        key = f.headers["X-DoKKo-Key"]
+        h = db.scalar(select_household(db, key))
+        h.plan, h.plan_until = "family", 1
+    assert proactive.run_morning(date(2026, 10, 19)) >= 1
+    inbox = f.get("/api/v1/inbox").json()
+    assert any(n["kind"] == "plan" and "ended" in n["title"] for n in inbox["notices"])
+    assert f.get("/api/v1/plans").json()["current"] == "free"
+    with DB.session() as db:
+        h = db.scalar(select_household(db, key))
+        h.plan, h.plan_until = "family", int(__import__("time").time()) + 3 * 86400
+    proactive.run_morning(date(2026, 10, 19)); proactive.run_morning(date(2026, 10, 19))
+    assert len([n for n in f.get("/api/v1/inbox").json()["notices"] if "renews in" in n["title"]]) == 1
+    # a call the doctor forgot to end closes after 3 hours
+    a.post(f"/api/admin/stores/{hid}/users/{uid}/verify", json={"verified": True})
+    ap = f.post("/api/v1/appointments", json={"store": hid, "member": "m1", "memberName": "P", "kind": "video", "date": "2026-10-20", "doctor": "Meera Rao"}).json()
+    d.post(f"/api/partner/appointments/{ap['id']}", json={"status": "confirmed", "slotDate": "2026-10-20", "slotTime": "10:00"})
+    d.post(f"/api/partner/consults/{ap['id']}/start")
+    with DB.session() as db:
+        x = db.get(Appointment, ap["id"]); x.call_started -= 4 * 3600
+    proactive.run_morning(date(2026, 10, 19))
+    assert f.get(f"/api/v1/consults/{ap['id']}").json()["status"] == "done"
+    # the hospital was emailed about the visit request (logged even without a transport), the admin sees attention counts
+    assert any(m["subject"].startswith("[TheHealthTracker] Visit request") for m in messaging.SENT_LOG)
+    st = a.get("/api/admin/stats").json()
+    assert set(st["attention"]) >= {"payments", "applications", "doctors", "stores", "visits", "orders"}
+
+
+def select_household(db, key):
+    from sqlalchemy import select
+    from api.models import Household
+    return select(Household).where(Household.key == key)
+
+
+def test_app_downloads_and_fitbit_off_by_default():
+    f = family()
+    a = f.get("/api/v1/app/android").json()
+    assert a["available"] is False and a["url"] == ""
+    assert f.get("/download/android").status_code == 404
+    assert f.get("/api/v1/app/ios").json()["pwa"] is True
+    s = f.get("/api/v1/fitbit/status").json()
+    assert s["enabled"] is False and s["links"] == []
+    assert f.post("/api/v1/fitbit/start").status_code == 503

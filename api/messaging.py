@@ -12,6 +12,7 @@ import json
 import os
 import smtplib
 import ssl
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -125,3 +126,52 @@ def send_invite_email(to: str, by: str, name: str, link: str) -> None:
             if os.getenv("SMTP_USER"):
                 s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
             s.send_message(m)
+
+
+def send_mail(to: str, subject: str, text: str, html: str = "") -> None:
+    """Any transactional email (partner alerts, welcome mails, admin attention). Same transport as the codes."""
+    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
+    html = html or "<div style=\"font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f1220;white-space:pre-line\">" + text.replace("&", "&amp;").replace("<", "&lt;") + "</div>"
+    if os.getenv("RESEND_API_KEY"):
+        req = urllib.request.Request("https://api.resend.com/emails", method="POST",
+                                     data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": html}).encode(),
+                                     headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
+        try:
+            urllib.request.urlopen(req, timeout=10).read()
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"Resend {e.code}: {e.read().decode('utf-8', 'ignore')[:300]}") from e
+        return
+    m = EmailMessage()
+    m["From"], m["To"], m["Subject"] = sender, to, subject
+    m.set_content(text)
+    m.add_alternative(html, subtype="html")
+    host, port = os.getenv("SMTP_HOST"), int(os.getenv("SMTP_PORT", "587"))
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=10) as s:
+            s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+            s.send_message(m)
+    else:
+        with smtplib.SMTP(host, port, timeout=10) as s:
+            s.starttls(context=ssl.create_default_context())
+            if os.getenv("SMTP_USER"):
+                s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+            s.send_message(m)
+
+
+SENT_LOG: list[dict] = []   # tests and the admin page look here when no transport is configured
+
+
+def mail(to: str, subject: str, text: str, html: str = "") -> bool:
+    """Best effort: never breaks the request that triggered it; returns whether it was handed to a transport."""
+    if not to or "@" not in to:
+        return False
+    SENT_LOG.append({"to": to, "subject": subject, "t": int(time.time())})
+    del SENT_LOG[:-200]
+    if not email_ready():
+        return False
+    try:
+        send_mail(to, subject, text, html)
+        return True
+    except Exception as e:
+        print("[messaging] mail failed:", type(e).__name__, str(e)[:200], flush=True)
+        return False
