@@ -606,3 +606,89 @@ class DeviceLink(Base):
     blob: Mapped[bytes] = mapped_column(LargeBinary)              # sealed {access, refresh, expires, scope}
     last_sync: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class ShopProduct(Base):
+    """A TheHealthTracker package or merchandise item (the hospital-bag package first). Price, MRP and stock live on the
+    shop store's StoreItem with the same sku, so orders flow through the normal order machinery."""
+
+    __tablename__ = "shop_products"
+    sku: Mapped[str] = mapped_column(String(40), primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    tagline: Mapped[str] = mapped_column(String(160), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    includes: Mapped[list] = mapped_column(JSON, default=list)      # [{group, name, qty}]
+    sizes: Mapped[list] = mapped_column(JSON, default=list)         # e.g. ["S","M","L","XL"] for the mother's wear
+    size_note: Mapped[str] = mapped_column(String(160), default="")
+    image_key: Mapped[str] = mapped_column(String(80), default="")  # bucket key shop/<sku>.jpg
+    badge: Mapped[str] = mapped_column(String(40), default="")
+    ships_in: Mapped[str] = mapped_column(String(40), default="3–5 days")
+    sort: Mapped[int] = mapped_column(Integer, default=0)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class Donor(Base):
+    """A family member who opted in to be called for blood: group, where they are, when they last gave.
+    Registered from Medical ID with explicit consent; hospitals see name, group and phone only after they respond."""
+
+    __tablename__ = "donors"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("dn"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), index=True)
+    name: Mapped[str] = mapped_column(String(80), default="")
+    group: Mapped[str] = mapped_column(String(4), index=True)
+    phone: Mapped[str] = mapped_column(String(20), default="")
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    city: Mapped[str] = mapped_column(String(80), default="")
+    last_donation: Mapped[str] = mapped_column(String(10), default="")
+    sex: Mapped[str] = mapped_column(String(8), default="")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    consent_t: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+    donations: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class BloodRequest(Base):
+    """Raised only by verified hospitals / blood banks (partner portal). Matching donors nearby are notified."""
+
+    __tablename__ = "blood_requests"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("br"))
+    store_id: Mapped[str] = mapped_column(ForeignKey("stores.id"), index=True)
+    created_by: Mapped[str] = mapped_column(String(32), default="")
+    patient: Mapped[str] = mapped_column(String(40), default="")     # first name or "patient"
+    group: Mapped[str] = mapped_column(String(4), index=True)
+    component: Mapped[str] = mapped_column(String(12), default="whole")  # whole | platelets | plasma | rbc
+    units: Mapped[int] = mapped_column(Integer, default=1)
+    urgency: Mapped[str] = mapped_column(String(10), default="24h")   # now | 24h | 72h
+    lat: Mapped[float] = mapped_column(Float)
+    lng: Mapped[float] = mapped_column(Float)
+    hospital: Mapped[str] = mapped_column(String(120), default="")
+    address: Mapped[str] = mapped_column(String(240), default="")
+    ward: Mapped[str] = mapped_column(String(80), default="")
+    phone: Mapped[str] = mapped_column(String(20), default="")
+    notes: Mapped[str] = mapped_column(String(300), default="")
+    radius_km: Mapped[int] = mapped_column(Integer, default=25)
+    status: Mapped[str] = mapped_column(String(12), default="open", index=True)  # open | fulfilled | closed | expired
+    notified: Mapped[int] = mapped_column(Integer, default=0)
+    expires: Mapped[int] = mapped_column(Integer)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class DonorResponse(Base):
+    """A donor's answer to a request and, once accepted, their live position on the way."""
+
+    __tablename__ = "donor_responses"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("dr"))
+    request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.id", ondelete="CASCADE"), index=True)
+    donor_id: Mapped[str] = mapped_column(String(32), index=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    status: Mapped[str] = mapped_column(String(12), default="offered")  # offered | accepted | declined | on_way | arrived | donated | withdrawn
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    eta_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    loc_t: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
