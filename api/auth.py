@@ -143,7 +143,13 @@ def start_session(request: Request, response: Response, db: Session, u: User, me
 def me_json(u: User) -> dict:
     return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "emailVerified": u.email_verified, "phoneVerified": u.phone_verified,
                      "hasPassword": bool(u.pw_hash), "twoStep": u.two_step, "passkeys": len(u.passkeys), "created": u.created,
-                     "verified": bool(u.email_verified and u.phone_verified), "nameNext": name_next(u)}}
+                     "verified": bool(u.email_verified and (u.phone_verified or u.aadhaar_verified)), "nameNext": name_next(u),
+                     "aadhaarVerified": u.aadhaar_verified, "aadhaarLast4": u.aadhaar_last4 or "", "dob": _iso_dob(u.aadhaar_dob)}}
+
+
+def _iso_dob(d: str) -> str:
+    m = re.match(r"^(\d{2})-(\d{2})-(\d{4})$", d or "")
+    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else (d or "")
 
 
 def new_flow(db: Session, kind: str, minutes: int = 10, **kw) -> AuthFlow:
@@ -246,6 +252,7 @@ class Signup(BaseModel):
     phone: str = ""
     password: str
     terms: bool = False
+    verify: str = "otp"   # otp: mobile one-time code · aadhaar: identity through DigiLocker (name and date of birth come from Aadhaar)
 
 
 @r.post("/signup/start", dependencies=[Depends(csrf)])
@@ -272,8 +279,13 @@ def signup_start(body: Signup, request: Request, db: Session = Depends(get_db)):
         issues.append(f"This password has appeared in {n:,} data breaches. Choose another.")
     if issues:
         raise HTTPException(400, issues[0])
+    verify = "aadhaar" if body.verify == "aadhaar" else "otp"
+    if verify == "aadhaar":
+        from .digilocker import enabled as dl_enabled
+        if not dl_enabled():
+            raise HTTPException(400, "Aadhaar verification through DigiLocker opens soon; please verify your mobile number by OTP for now.")
     kind, target = ("email", email) if email and (messaging.email_ready() or messaging.demo() or not phone) else ("phone", phone)
-    f = new_flow(db, "signup", 15, data={"name": name, "email": email, "phone": phone, "pw": passwords.hash_pw(body.password), "kind": kind, "target": target})
+    f = new_flow(db, "signup", 15, data={"name": name, "email": email, "phone": phone, "pw": passwords.hash_pw(body.password), "kind": kind, "target": target, "verify": verify})
     out = send_code(request, db, target, kind, "signup")
     return {"flow": f.id, "sentTo": masked(kind, target), "channel": kind, **out}
 
@@ -298,6 +310,10 @@ def signup_verify(body: FlowCode, request: Request, response: Response, db: Sess
     db.delete(f)
     db.flush()
     out = start_session(request, response, db, u, "otp")
+    if d.get("verify") == "aadhaar" and d["kind"] == "email":
+        # the person chose Aadhaar instead of a mobile code: the next step is DigiLocker; name and date of birth then come from Aadhaar
+        out["aadhaarNext"] = {"start": "/api/v1/digilocker/start", "provider": "DigiLocker"}
+        return out
     # both contacts are verified at sign-up: the second one follows at once when that channel can send codes
     other_kind = "phone" if d["kind"] == "email" else "email"
     other = d[other_kind]
@@ -613,6 +629,8 @@ def name_next(u: User) -> int | None:
 def profile(body: Profile, u: User = Depends(need_user)):
     n = re.sub(r"\s+", " ", body.name).strip()[:80]
     if len(n) >= 2 and n != u.name:
+        if u.aadhaar_verified:
+            raise HTTPException(423, "Your name is confirmed from Aadhaar through DigiLocker and cannot be edited here. If your Aadhaar name changed, verify again.")
         nxt = name_next(u)
         if nxt:
             raise HTTPException(423, f"Your name (as on Aadhaar) can be changed once a week. Next change: {time.strftime('%d %b', time.localtime(nxt))}.")

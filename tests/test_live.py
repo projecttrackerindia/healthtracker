@@ -149,11 +149,15 @@ def test_paid_plan_needs_a_payment_provider(monkeypatch):
     c.headers["X-DoKKo-Key"] = uuid.uuid4().hex
     c.post("/api/v1/hello", json={"name": "T", "members": 1})
     plans = c.get("/api/v1/plans").json()
-    assert plans["provider"] == "soon"
+    assert plans["provider"] == "upi"                       # the UPI QR route is on; the demo switch stays shut
     paid = next(p["code"] for p in plans["plans"] if p["month"] > 0)
     r = c.post("/api/v1/subscribe", json={"plan": paid, "period": "month"})
-    assert r.status_code == 503 and "Free" in r.json()["detail"]
+    assert r.status_code == 503 and "UPI" in r.json()["detail"]
     assert c.get("/api/v1/plans").json()["current"] == "free"
+    monkeypatch.setenv("UPI_PAY", "0")
+    assert c.get("/api/v1/plans").json()["provider"] == "soon"
+    r = c.post("/api/v1/subscribe", json={"plan": paid, "period": "month"})
+    assert r.status_code == 503 and "Free" in r.json()["detail"]
 
 
 def test_ai_ask_and_insight_without_key(monkeypatch):

@@ -266,13 +266,20 @@ class PartnerUserIn(BaseModel):
     email: str
     name: str = ""
     phone: str = ""
-    role: str = "staff"
+    role: str = "staff"       # owner | staff | doctor
+    regNo: str = ""           # doctors only: medical council registration number
+    specialty: str = ""
+
+
+def pu_json(u: PartnerUser) -> dict:
+    return {"id": u.id, "email": u.email, "name": u.name, "phone": u.phone, "role": u.role, "active": u.active, "lastLogin": u.last_login, "mustChange": u.must_change,
+            "regNo": u.reg_no or "", "specialty": u.specialty or "", "verified": bool(u.verified)}
 
 
 @r.get("/stores/{sid}/users")
 def partner_users(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == sid).order_by(PartnerUser.created)).all()
-    return {"users": [{"id": u.id, "email": u.email, "name": u.name, "phone": u.phone, "role": u.role, "active": u.active, "lastLogin": u.last_login, "mustChange": u.must_change} for u in rows]}
+    return {"users": [pu_json(u) for u in rows]}
 
 
 @r.post("/stores/{sid}/users")
@@ -285,12 +292,34 @@ def partner_user_add(sid: str, body: PartnerUserIn, a: Admin = Depends(me), db: 
     email = body.email.strip().lower()
     if "@" not in email or db.scalar(select(PartnerUser.id).where(PartnerUser.email == email)):
         raise HTTPException(400, "A valid, unused email is needed.")
+    role = body.role if body.role in ("owner", "staff", "doctor") else "staff"
+    if role == "doctor":
+        if s.kind != "hospital":
+            raise HTTPException(400, "Doctors sign in under a hospital or clinic.")
+        if len(body.regNo.strip()) < 4 or not body.name.strip():
+            raise HTTPException(400, "A doctor needs a name and a medical council registration number.")
     temp = secrets.token_urlsafe(9)
-    u = PartnerUser(store_id=sid, email=email, name=body.name[:80], phone=body.phone[:20], role="owner" if body.role == "owner" else "staff", pw_hash=hash_pw(temp))
+    u = PartnerUser(store_id=sid, email=email, name=body.name[:80], phone=body.phone[:20], role=role, pw_hash=hash_pw(temp),
+                    reg_no=body.regNo.strip()[:40], specialty=body.specialty.strip()[:60], verified=False)
     db.add(u)
     db.flush()
-    log(db, a.email, f"partner.user.add {sid} {email}")
-    return {"id": u.id, "email": email, "tempPassword": temp, "portal": "/partner"}
+    log(db, a.email, f"partner.user.add {sid} {email} {role}")
+    return {"id": u.id, "email": email, "tempPassword": temp, "portal": "/partner", "role": role}
+
+
+class DoctorVerifyIn(BaseModel):
+    verified: bool = True
+
+
+@r.post("/stores/{sid}/users/{uid}/verify")
+def partner_user_verify(sid: str, uid: str, body: DoctorVerifyIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """An admin confirms the doctor's registration against the NMC / state council register; only verified doctors can consult."""
+    u = db.get(PartnerUser, uid)
+    if not u or u.store_id != sid or u.role != "doctor":
+        raise HTTPException(404)
+    u.verified = bool(body.verified)
+    log(db, a.email, f"partner.doctor.{'verify' if u.verified else 'unverify'} {uid}")
+    return pu_json(u)
 
 
 @r.post("/stores/{sid}/users/{uid}/reset")

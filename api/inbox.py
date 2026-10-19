@@ -66,7 +66,8 @@ def appt_json(db: Session, a: Appointment) -> dict:
     s = db.get(Store, a.store_id)
     return {"id": a.id, "store": {"id": s.id, "name": s.name, "phone": s.phone, "address": ", ".join(x for x in (s.address, s.area, s.city) if x), "lat": s.lat, "lng": s.lng} if s else None,
             "member": a.member_id, "memberName": a.member_name, "kind": a.kind, "date": a.date, "time": a.time, "why": a.why, "doctor": a.doctor,
-            "status": a.status, "slotDate": a.slot_date, "slotTime": a.slot_time, "note": a.note, "created": a.created, "updated": a.updated}
+            "status": a.status, "slotDate": a.slot_date, "slotTime": a.slot_time, "note": a.note, "created": a.created, "updated": a.updated,
+            "live": bool(a.call_started and not a.call_ended), "hasRx": bool(a.rx), "hasSummary": bool(a.summary)}
 
 
 class ApptIn(BaseModel):

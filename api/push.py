@@ -43,7 +43,55 @@ def _priv():
 
 
 def ready() -> bool:
-    return bool(os.getenv("VAPID_PRIVATE_KEY"))
+    return bool(os.getenv("VAPID_PRIVATE_KEY")) or fcm_ready()
+
+
+# ---- native Android push through Firebase Cloud Messaging (HTTP v1, service-account JWT; no firebase SDK needed) ----
+_FCM: dict = {"token": None, "exp": 0}
+
+
+def fcm_ready() -> bool:
+    return bool(os.getenv("FCM_SERVICE_ACCOUNT_JSON"))
+
+
+def _fcm_token() -> tuple[str, str]:
+    """Returns (access_token, project_id). The service account signs a JWT (RS256) and exchanges it for a one-hour token."""
+    sa = json.loads(os.getenv("FCM_SERVICE_ACCOUNT_JSON", "{}"))
+    if _FCM["token"] and _FCM["exp"] > time.time() + 60:
+        return _FCM["token"], sa["project_id"]
+    from cryptography.hazmat.primitives.asymmetric import padding
+
+    key = serialization.load_pem_private_key(sa["private_key"].encode(), password=None)
+    now = int(time.time())
+    header = b64u(json.dumps({"alg": "RS256", "typ": "JWT"}).encode())
+    claims = b64u(json.dumps({"iss": sa["client_email"], "scope": "https://www.googleapis.com/auth/firebase.messaging", "aud": sa["token_uri"], "iat": now, "exp": now + 3600}).encode())
+    sig = b64u(key.sign(f"{header}.{claims}".encode(), padding.PKCS1v15(), hashes.SHA256()))
+    body = f"grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion={header}.{claims}.{sig}".encode()
+    req = urllib.request.Request(sa["token_uri"], data=body, method="POST", headers={"Content-Type": "application/x-www-form-urlencoded"})
+    with urllib.request.urlopen(req, timeout=10) as r:
+        j = json.loads(r.read().decode())
+    _FCM["token"], _FCM["exp"] = j["access_token"], time.time() + int(j.get("expires_in", 3600))
+    return _FCM["token"], sa["project_id"]
+
+
+def send_fcm(device_token: str, data: dict, ttl: int = 3600) -> tuple[bool, int, str]:
+    if not fcm_ready():
+        return False, 0, "fcm not configured"
+    try:
+        tok, project = _fcm_token()
+        msg = {"message": {"token": device_token, "notification": {"title": str(data.get("title", ""))[:100], "body": str(data.get("body", ""))[:240]},
+                           "data": {k: str(v) for k, v in data.items() if k in ("url", "tag")}, "android": {"ttl": f"{ttl}s", "priority": "high"}}}
+        req = urllib.request.Request(f"https://fcm.googleapis.com/v1/projects/{project}/messages:send", data=json.dumps(msg).encode(), method="POST",
+                                     headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return True, r.status, ""
+    except urllib.error.HTTPError as e:
+        code = e.code
+        body = e.read().decode("utf-8", "ignore")[:200]
+        # UNREGISTERED means the app was uninstalled: the caller deletes the subscription like a 410
+        return False, 410 if ("UNREGISTERED" in body or code == 404) else code, body
+    except Exception as e:
+        return False, 0, str(e)[:200]
 
 
 def public_key() -> str:
@@ -92,6 +140,10 @@ def send(sub: dict, data: dict, ttl: int = 3600) -> tuple[bool, int, str]:
     if not ready():
         return False, 0, "push not configured"
     endpoint = sub["endpoint"]
+    if endpoint.startswith("fcm:"):
+        return send_fcm(endpoint[4:], data, ttl)
+    if not os.getenv("VAPID_PRIVATE_KEY"):
+        return False, 0, "web push not configured"
     body = _encrypt(sub["keys"]["p256dh"], sub["keys"]["auth"], json.dumps(data, ensure_ascii=False).encode())
     req = urllib.request.Request(endpoint, data=body, method="POST", headers={
         "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", "TTL": str(ttl), "Urgency": "high",

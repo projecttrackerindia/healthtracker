@@ -89,7 +89,10 @@ def ensure_columns() -> None:
     """create_all() only creates missing tables. New columns on old tables are added here, idempotently."""
     from sqlalchemy import inspect, text
 
-    wanted = {"users": [("member_id", "VARCHAR(32)"), ("name_changed", "INTEGER")], "orders": [("member_id", "VARCHAR(32)"), ("rx_files", "JSON")]}
+    wanted = {"users": [("member_id", "VARCHAR(32)"), ("name_changed", "INTEGER"), ("role", "VARCHAR(12) DEFAULT 'member'"), ("aadhaar_verified", "INTEGER"), ("aadhaar_last4", "VARCHAR(4) DEFAULT ''"), ("aadhaar_dob", "VARCHAR(10) DEFAULT ''")], "orders": [("member_id", "VARCHAR(32)"), ("rx_files", "JSON"), ("addr", "JSON")],
+              "invites": [("role", "VARCHAR(12) DEFAULT 'member'"), ("aadhaar_verified", "INTEGER"), ("aadhaar_last4", "VARCHAR(4) DEFAULT ''"), ("aadhaar_dob", "VARCHAR(10) DEFAULT ''")],
+              "partner_users": [("reg_no", "VARCHAR(40) DEFAULT ''"), ("specialty", "VARCHAR(60) DEFAULT ''"), ("verified", "BOOLEAN DEFAULT FALSE")],
+              "appointments": [("transcript", "JSON"), ("rx", "JSON"), ("summary", "TEXT DEFAULT ''"), ("call_started", "INTEGER"), ("call_ended", "INTEGER")]}
     insp = inspect(engine)
     with engine.begin() as conn:
         for table, cols in wanted.items():

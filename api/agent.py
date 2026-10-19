@@ -33,7 +33,10 @@ Rules you never break:
 - Answer in the language of the question (English, Hindi or Telugu); keep medical terms in English.
 Output ONLY a JSON object: {"answer": string, "sources": [short strings naming the records used, e.g. "HbA1c 6.8% · 12 Jun 2026"],
 "actions": [0-3 short strings: things to record, ask or do], "urgent": boolean,
-"focus": [0-3 body areas the answer is about, for the 3D body, from exactly this list: heart, lungs, liver, kidneys, pancreas, thyroid, stomach, intestines, brain, spleen, bones, spine, uterus, prostate, bladder, breast, skin, eyes, blood, whole_body]}"""
+"focus": [0-3 body areas the answer is about, for the 3D body, from exactly this list: heart, lungs, liver, kidneys, pancreas, thyroid, stomach, intestines, brain, spleen, bones, spine, uterus, prostate, bladder, breast, skin, eyes, blood, whole_body],
+"commands": [0-2 things the app can do for the person right now, ONLY when the answer calls for them, each {"type": one of book_lab | request_visit | add_reminder | add_reading | open, "label": button text max 28 chars, "args": object}.
+  args by type — book_lab: {"tests": [test names]}; request_visit: {"kind": "visit"|"video", "why": short reason}; add_reminder: {"text": string, "days": integer days from today};
+  add_reading: {"field": "bp"|"glu"|"w"|"spo2"|"hr"|"temp"}; open: {"page": one of meds, vax, preg, careplan, nearlabs, cards, appts, vault}]}"""
 
 INSIGHT_SYSTEM = """You write a short daily insight for one person inside TheHealthTracker, an Indian family health app, from the JSON
 context the app sends (profile, readings with dates, lab results with flags, medicines and adherence, trackers, vaccines).
@@ -56,7 +59,44 @@ def ask(question: str, ctx: dict) -> dict:
     out = _json("".join(b.text for b in r.content if getattr(b, "type", "") == "text"))
     return {"answer": str(out.get("answer", ""))[:1600], "sources": [str(x)[:120] for x in (out.get("sources") or [])][:6],
             "actions": [str(x)[:160] for x in (out.get("actions") or [])][:3], "urgent": bool(out.get("urgent")),
-            "focus": [str(x) for x in (out.get("focus") or []) if str(x) in FOCUS][:3]}
+            "focus": [str(x) for x in (out.get("focus") or []) if str(x) in FOCUS][:3], "commands": _commands(out.get("commands"))}
+
+
+COMMANDS = {"book_lab", "request_visit", "add_reminder", "add_reading", "open"}
+PAGES = {"meds", "vax", "preg", "careplan", "nearlabs", "cards", "appts", "vault"}
+
+
+def _commands(raw) -> list[dict]:
+    out = []
+    for c in (raw or [])[:6]:
+        if not isinstance(c, dict) or c.get("type") not in COMMANDS:
+            continue
+        a = c.get("args") if isinstance(c.get("args"), dict) else {}
+        t = c["type"]
+        if t == "book_lab":
+            a = {"tests": [str(x)[:60] for x in (a.get("tests") or []) if str(x).strip()][:6]}
+            if not a["tests"]:
+                continue
+        elif t == "request_visit":
+            a = {"kind": "video" if a.get("kind") == "video" else "visit", "why": str(a.get("why", ""))[:120]}
+        elif t == "add_reminder":
+            try:
+                days = max(0, min(365, int(a.get("days", 7))))
+            except Exception:
+                days = 7
+            a = {"text": str(a.get("text", ""))[:120], "days": days}
+            if not a["text"]:
+                continue
+        elif t == "add_reading":
+            if a.get("field") not in ("bp", "glu", "w", "spo2", "hr", "temp"):
+                continue
+            a = {"field": a["field"]}
+        elif t == "open":
+            if a.get("page") not in PAGES:
+                continue
+            a = {"page": a["page"]}
+        out.append({"type": t, "label": str(c.get("label") or t.replace("_", " ").title())[:28], "args": a})
+    return out[:2]
 
 
 def insight(ctx: dict) -> dict:

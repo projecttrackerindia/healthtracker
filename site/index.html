@@ -167,6 +167,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--mute);fo
 .spin{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:sp .8s linear infinite}.btn.s .spin{border-color:var(--line2);border-top-color:var(--ink)}@keyframes sp{to{transform:rotate(360deg)}}
 .v[hidden]{display:none}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .logo svg path[transform],:root:not([data-theme=light]) footer svg path[transform]{fill:#E8EDFF}}
+.vsel{display:flex;flex-direction:column;gap:6px}.vsel .ck small{color:var(--mute,#6b7280)}
 </style>
 </head>
 <body>
@@ -332,6 +333,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--mute);fo
     <div class="mlab"><span id="mlab">Password strength</span><b id="mbits"></b></div>
     <ul class="rules" id="rules"></ul>
     <div class="fld"><label for="upw2">Confirm password</label><div class="inp"><input id="upw2" type="password" autocomplete="new-password" required maxlength="128"></div></div>
+    <div class="fld" id="uvWrap" hidden><label>Verify with</label><div class="vsel"><label class="ck"><input type="radio" name="uv" value="otp" checked> <span>Mobile OTP</span></label><label class="ck"><input type="radio" name="uv" value="aadhaar"> <span>Aadhaar via DigiLocker <small>— name and date of birth come from Aadhaar</small></span></label></div></div>
     <label class="ck"><input type="checkbox" id="ut"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>, and I understand TheHealthTracker gives information, not a diagnosis.</span></label>
     <button class="btn b full" type="submit" id="upGo">Create account</button>
     <p class="foot">Already have an account? <a class="lnk" data-v-go="signin">Sign in</a></p>
@@ -401,7 +403,7 @@ $$('[data-auth]').forEach(a=>a.addEventListener('click',e=>{if(!a.dataset.auth)r
 $('#ax').onclick=close;ov.addEventListener('mousedown',e=>{if(e.target===ov)close()});addEventListener('keydown',e=>{if(e.key==='Escape'&&ov.classList.contains('on'))close()});
 $$('[data-v-go]').forEach(a=>a.addEventListener('click',()=>show(a.dataset.vGo)));
 $$('[data-eye]').forEach(b=>b.onclick=()=>{const i=document.getElementById(b.dataset.eye);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'});
-const finish=async(r,offer=true)=>{clearAuthState();ME=r.user;if(r.verifyNext&&r.verifyNext.flow){flow=r.verifyNext.flow;codeKind='second';lastId=r.verifyNext.channel;const h=r.verifyNext.channel==='phone'?'Verify your mobile':'Verify your email',sub=`One more step. Enter the 6-digit code we sent to ${r.verifyNext.sentTo}.`;codeView(h,sub);saveAuthState(h,sub);demo(r.verifyNext);return}if(INVITE){await joinFamily();location.href='/app';return}if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
+const finish=async(r,offer=true)=>{clearAuthState();ME=r.user;if(r.aadhaarNext&&r.aadhaarNext.start){try{const j=await (await fetch('/api/v1/digilocker/start',{method:'POST',headers:{'X-THT':'1','Content-Type':'application/json'},credentials:'same-origin'})).json();if(j.url){location.href=j.url;return}say(j.detail||'DigiLocker is not available right now; verify your mobile from the app.')}catch(e){say(e.message)}}if(r.verifyNext&&r.verifyNext.flow){flow=r.verifyNext.flow;codeKind='second';lastId=r.verifyNext.channel;const h=r.verifyNext.channel==='phone'?'Verify your mobile':'Verify your email',sub=`One more step. Enter the 6-digit code we sent to ${r.verifyNext.sentTo}.`;codeView(h,sub);saveAuthState(h,sub);demo(r.verifyNext);return}if(INVITE){await joinFamily();location.href='/app';return}if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
 // passkey: explicit button + autofill (conditional UI) on the identifier field
 $('#pkBtn').onclick=async()=>{hush();if(!THT.passkey.supported()){say('This browser does not support passkeys. Use a password or a code.');return}const b=$('#pkBtn');if(ac){ac.abort();ac=null}busy(b,true);
  try{finish(await THT.passkey.signin({id:$('#sid').value.trim()}),false)}catch(e){if(e.message!=='aborted')say(e.message)}finally{busy(b,false)}};
@@ -442,7 +444,9 @@ $('#npw').addEventListener('input',()=>paintRules($('#npw').value,'rules2','mete
 function gen(a,b){const p=THT.pw.generate();[a,b].forEach(id=>{if(!id)return;const i=document.getElementById(id);i.value=p;i.type='text';const e=document.querySelector(`[data-eye="${id}"]`);if(e)e.textContent='Hide'});return p}
 $('#genPw').onclick=()=>{gen('upw','upw2');upPaint();say('A strong password was filled in. Save it in your password manager — or create a passkey next and you will rarely need it.','ok')};
 $('#genPw2').onclick=()=>{gen('npw');paintRules($('#npw').value,'rules2','meter2',{})};
-function signupBody(){const ph=$('#up').value.replace(/\D/g,'');return{name:$('#un').value.trim(),email:$('#ue').value.trim(),phone:ph?(ph.length===10?'+91'+ph:'+'+ph):'',password:$('#upw').value,terms:$('#ut').checked}}
+function signupBody(){const ph=$('#up').value.replace(/\D/g,'');const uv=document.querySelector('input[name=uv]:checked');return{name:$('#un').value.trim(),email:$('#ue').value.trim(),phone:ph?(ph.length===10?'+91'+ph:'+'+ph):'',password:$('#upw').value,terms:$('#ut').checked,verify:uv&&uv.value==='aadhaar'?'aadhaar':'otp'}}
+// Aadhaar through DigiLocker is offered at sign-up once our partner registration is live
+fetch('/api/v1/digilocker/status').then(r=>r.json()).then(j=>{if(j&&j.enabled){$('#uvWrap').hidden=false}}).catch(()=>{});
 $('#fUp').addEventListener('submit',async e=>{e.preventDefault();hush();const B=signupBody();
  if(B.name.length<2){say('Please enter your full name.');$('#un').focus();return}
  if(!/^\+91[6-9]\d{9}$|^\+(?!91)\d{10,15}$/.test(B.phone)){say('Please enter a valid mobile number.');$('#up').focus();return}

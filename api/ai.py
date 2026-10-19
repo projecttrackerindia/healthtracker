@@ -303,6 +303,69 @@ focus (array of 0-3 body areas this document is about, for the 3D body, from exa
 Rules: never diagnose; say "suggests" and "discuss with your doctor". Use the document's printed reference range when present. Mark HbA1c>=6.5, fasting glucose>=126, platelets<100000, potassium>5.5 or <3, sodium<130, creatinine>1.5, haemoglobin<8, SpO2<92 as warnings. Flag any medicine that is unsafe in pregnancy if the context says pregnant. If the document is unreadable, say so in summary and return empty arrays."""
 
 
+POLICY_SYSTEM = """You read an Indian health insurance policy document (schedule, policy wording, welcome kit or e-card with terms) for a family health app, so the family knows what they are covered for before a hospital visit. Output ONLY a JSON object:
+{"readable": boolean, "insurer": string, "plan_name": string, "policy_number": string, "policy_type": one of "individual"|"floater"|"corporate"|"top_up"|"critical_illness"|"other",
+"sum_insured": number in rupees or null, "valid_from": "YYYY-MM-DD" or "", "valid_to": "YYYY-MM-DD" or "", "members_covered": [names], "holder": string,
+"room_rent": string (limit or "no limit", as written), "icu_limit": string, "copay": string (e.g. "10% above age 60" or "none"), "deductible": string,
+"waiting_initial_days": integer or null, "waiting_specific_months": integer or null (specific diseases), "waiting_ped_months": integer or null (pre-existing diseases),
+"maternity": string (covered / not covered / limit and waiting), "daycare": boolean or null, "pre_post_hospitalisation": string (e.g. "30 / 60 days"), "ambulance": string,
+"restoration": string, "no_claim_bonus": string, "exclusions": [up to 10 short strings], "network_url": string, "claim_helpline": string, "tpa": string, "tpa_phone": string,
+"cashless_steps": [up to 5 short strings: how to get cashless admission under this policy], "plain_summary": string (3-5 sentences in plain English for the family: what is covered, the main limits, and the one thing to watch), "text": up to 800 chars of key legible text}.
+Rules: copy numbers exactly; "" or null when not printed; never guess; no advice beyond what the document says."""
+
+
+def claude_policy(data: bytes | None, mime: str, text: str) -> dict:
+    content = []
+    if data:
+        if mime == "application/pdf" or data[:4] == b"%PDF":
+            content.append({"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": base64.b64encode(data).decode()}})
+        elif mime.startswith("image/"):
+            content.append({"type": "image", "source": {"type": "base64", "media_type": mime, "data": base64.b64encode(data).decode()}})
+    if text:
+        content.append({"type": "text", "text": "Document text:\n" + text[:14000]})
+    content.append({"type": "text", "text": "Return the JSON now."})
+    r = create(max_tokens=3000, system=POLICY_SYSTEM, messages=[{"role": "user", "content": content}])
+    raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
+    out = json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    out["usage"] = {"in": r.usage.input_tokens, "out": r.usage.output_tokens}
+    return out
+
+
+def analyze_policy(data: bytes | None, mime: str, text: str) -> dict:
+    t0 = time.time()
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return {"engine": "local", "kind": "policy", "readable": False, "ms": 0, "warnings": ["Policy reading needs the smart reader, which is not available right now. Enter the key terms yourself."]}
+    try:
+        out = claude_policy(data, mime, text)
+    except Exception as e:
+        _fail("policy reading", e)
+        raise
+    out.update({"engine": "claude", "kind": "policy", "model": current_model(), "ms": int((time.time() - t0) * 1000), "warnings": []})
+    return out
+
+
+MEDCHECK_SYSTEM = """You are the medicine-safety check inside TheHealthTracker, an Indian family health app. Input: one person's current medicines (names, strengths, how often), allergies, conditions, age, sex, pregnancy/breastfeeding, and recent kidney/liver values when present. Output ONLY a JSON object:
+{"alerts": [0-8 of {"level": "stop"|"ask"|"note", "about": [medicine names involved], "title": max 10 words, "detail": 1-2 plain sentences on what the concern is and what to do (ask the doctor/pharmacist; never tell them to stop a prescribed medicine yourself unless it is an allergy to a listed allergen, then say stop and call the doctor)}],
+"duplicates": [{"ingredient": string, "medicines": [names]}] (same active ingredient under two brands, or two drugs of the same class doing the same job),
+"timing": [0-4 short strings: practical timing tips, e.g. "Take levothyroxine on an empty stomach, 30-60 min before breakfast; keep calcium and iron 4 hours away"],
+"ok": boolean (true when there is nothing above "note")}.
+Rules: Indian brand names are common — map them to generics (e.g. Dolo = paracetamol, Glycomet = metformin, Telma = telmisartan, Ecosprin = aspirin, Pan = pantoprazole). Flag: allergy matches, known serious interactions, duplicate ingredients (e.g. two paracetamol combinations), NSAIDs with reduced kidney function or with anticoagulants, metformin with creatinine > 1.5, pregnancy-unsafe medicines when pregnant, doses in children only as "ask". Never diagnose. No vendor or model names."""
+
+
+def medcheck(ctx: dict) -> dict:
+    r = create(max_tokens=1800, system=MEDCHECK_SYSTEM, messages=[{"role": "user", "content": json.dumps(ctx, ensure_ascii=False)[:8000] + "\n\nReturn the JSON now."}])
+    raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
+    out = json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    alerts = []
+    for a in (out.get("alerts") or [])[:8]:
+        if not isinstance(a, dict):
+            continue
+        alerts.append({"level": a.get("level") if a.get("level") in ("stop", "ask", "note") else "note", "about": [str(x)[:60] for x in (a.get("about") or [])][:4],
+                       "title": str(a.get("title", ""))[:80], "detail": str(a.get("detail", ""))[:400]})
+    return {"alerts": alerts, "duplicates": [{"ingredient": str(d.get("ingredient", ""))[:60], "medicines": [str(x)[:60] for x in (d.get("medicines") or [])][:4]} for d in (out.get("duplicates") or [])[:6] if isinstance(d, dict)],
+            "timing": [str(x)[:200] for x in (out.get("timing") or [])][:4], "ok": not any(a["level"] != "note" for a in alerts)}
+
+
 def claude_analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict) -> dict:
     content = []
     if data:

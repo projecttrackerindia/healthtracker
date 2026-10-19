@@ -52,7 +52,14 @@ async def file_put(file_id: str, request: Request, db: Session = Depends(get_db)
     cap = int(os.getenv("FILES_CAP_MB", "2048")) * 1024 * 1024
     if used + len(data) > cap:
         raise HTTPException(507, "Your family's document storage is full. Delete old documents or contact support.")
-    name = request.headers.get("x-file-name", "")[:160]
+    name = request.headers.get("x-file-name", "")
+    if request.headers.get("x-file-name-encoded") == "1" or ("%" in name and " " not in name):
+        from urllib.parse import unquote
+        try:
+            name = unquote(name)
+        except Exception:
+            pass
+    name = name[:160]
     try:
         n = storage.put(db, h.id, file_id, data, mime, name, u.id)
     except Exception as e:
@@ -72,7 +79,11 @@ def file_get(file_id: str, db: Session = Depends(get_db), u: User = Depends(need
     if not got:
         raise HTTPException(404, "not stored")
     row, data = got
-    return Response(data, media_type=row.mime, headers={"Cache-Control": "private, max-age=3600", "X-File-Name": row.name or file_id})
+    from urllib.parse import quote
+    # header values must be Latin-1: file names with other characters (·, Telugu, Hindi) travel percent-encoded (RFC 8187 style)
+    name = row.name or file_id
+    safe = name if name.isascii() else quote(name, safe="")
+    return Response(data, media_type=row.mime, headers={"Cache-Control": "private, max-age=3600", "X-File-Name": safe, "X-File-Name-Encoded": "0" if name.isascii() else "1"})
 
 
 @r.delete("/files/{file_id}", dependencies=[Depends(csrf)])
@@ -148,8 +159,10 @@ def push_subscribe(body: SubIn, request: Request, db: Session = Depends(get_db),
         raise HTTPException(503, "Push is not set up on this server yet.")
     h = my_household(db, u)
     sub = body.subscription
-    if not isinstance(sub, dict) or not sub.get("endpoint") or not isinstance(sub.get("keys"), dict):
+    if not isinstance(sub, dict) or not sub.get("endpoint") or (not str(sub["endpoint"]).startswith("fcm:") and not isinstance(sub.get("keys"), dict)):
         raise HTTPException(400, "bad subscription")
+    if str(sub["endpoint"]).startswith("fcm:") and not PUSH.fcm_ready():
+        raise HTTPException(503, "Native notifications are not set up on this server yet.")
     row = db.scalar(select(PushSub).where(PushSub.endpoint == sub["endpoint"]))
     if row:
         row.user_id, row.household_id, row.sub, row.failures = u.id, h.id, sub, 0
