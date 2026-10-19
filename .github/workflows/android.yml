@@ -6,6 +6,9 @@ on:
     paths: ["mobile/**", ".github/workflows/android.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -75,6 +78,16 @@ jobs:
           s3.put_object(Bucket=b, Key="releases/android.json", Body=json.dumps(meta).encode(), ContentType="application/json")
           print("published", meta)
           PY
+      - name: Attach the APK to the "android-latest" GitHub release (always, so the file is downloadable even before the bucket secrets exist)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: TheHealthTracker Android (latest build)
+          body: "Latest Android build from main. Debug-signed unless the keystore secrets are configured. Install: open the APK on the phone and allow installing from this source once."
+          files: |
+            mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            mobile/android/app/build/outputs/apk/release/app-release.apk
+          fail_on_unmatched_files: false
       - name: Release bundle (when a keystore is configured)
         if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         env:

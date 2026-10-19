@@ -1,0 +1,63 @@
+/* live layer 13: phone-first shell (≤720px). Desktop untouched. */
+@media (max-width:720px){
+ html{scroll-padding-bottom:96px}
+ body{padding:0!important;background:var(--bg)}
+ .shell{display:block!important;padding:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+ aside.side{display:none!important}
+ main{padding:0 12px calc(84px + env(safe-area-inset-bottom))!important}
+ /* app bar: one tight row */
+ .top{position:sticky;top:0;z-index:60;display:flex!important;flex-direction:column;gap:0;margin:0 -12px 8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+ .top>div:first-child{order:2;width:100%}
+ .top h1,h1#hh{font-size:22px!important;margin:6px 0 0!important;letter-spacing:-.02em;line-height:1.15}
+ #hp{display:none!important}
+ .topb{order:1;display:flex!important;align-items:center;gap:6px;width:100%;flex-wrap:nowrap!important;justify-content:flex-start}
+ .topb>*{display:none!important}
+ .topb #sxWho{display:flex!important;flex:1 1 auto;min-width:0;padding:4px 10px 4px 4px;border-radius:999px;background:var(--card);border:1px solid var(--line);height:40px}
+ .topb #sxWho .sx-wn b{font-size:13px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.topb #sxWho .sx-wn small{font-size:10.5px}
+ .topb #lv6Loc{display:flex!important;width:40px;height:40px;padding:0;justify-content:center;border-radius:50%;background:var(--card);border:1px solid var(--line)}.topb #lv6Loc span{display:none}
+ .topb #sxBell{display:flex!important;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);align-items:center;justify-content:center;position:relative}
+ .topb #sxAcct{display:flex!important;width:40px;height:40px;border-radius:50%;padding:0!important;align-items:center;justify-content:center;font-size:13px}
+ .sx-tabs{position:sticky;top:calc(98px + env(safe-area-inset-top));z-index:55;margin:0 0 10px;overflow-x:auto;scroll-snap-type:x proximity;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px)}
+ .sx-tabs button{flex:0 0 auto;padding:8px 14px;white-space:nowrap;scroll-snap-align:start;font-size:13.5px}
+ /* content density */
+ .page{gap:10px!important}
+ .card{padding:14px!important;border-radius:18px!important}
+ .card .hd{margin-bottom:8px}.card h3{font-size:16px}.card .hd small.mute{font-size:12.5px;line-height:1.35}
+ .btn{min-height:42px;border-radius:12px}.btn.sm{min-height:36px}.form input,.form select,input,select,textarea{font-size:16px!important}
+ .stage{height:min(58vh,520px)!important;min-height:320px!important;border-radius:18px!important}
+ body[data-page=dash] #stage,body[data-page=assist] #stage,body[data-page=devices] #stage{display:none!important}
+ .page{overflow-x:clip}.page>*{max-width:100%;min-width:0}.card{overflow-wrap:anywhere}
+ #lv4env{top:auto!important;bottom:calc(66px + env(safe-area-inset-bottom))!important;font-size:9px!important;opacity:.75;pointer-events:none}
+ .mhint,.stage .cr{display:none!important}
+ /* modals become bottom sheets */
+ .sx-modal{display:flex!important;align-items:flex-end;justify-content:center;padding:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(6,10,22,.5)!important}
+ .sx-modal .sx-sheet{width:100%!important;max-width:100%!important;max-height:92dvh!important;border-radius:22px 22px 0 0!important;padding:14px 16px calc(16px + env(safe-area-inset-bottom))!important;animation:lv13up .28s var(--ease,ease)!important}
+ .sx-modal .sx-sheet::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line2,#cbd5e1);margin:0 auto 10px}
+ .sx-modal .sx-sheet h2{font-size:18px;padding-right:36px}
+ .lv-row-end{position:sticky;bottom:-16px;background:var(--card);padding:10px 0 2px;margin-top:8px;border-top:1px solid var(--line)}
+ .lv-row-end .btn{flex:1;justify-content:center}
+ @keyframes lv13up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+ /* SOS: small, above the tab bar */
+ .sx-fab{width:50px!important;height:50px!important;right:12px!important;bottom:calc(74px + env(safe-area-inset-bottom))!important;font-size:10.5px!important}
+ /* the bottom tab bar */
+ #mtab{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;align-items:stretch;height:calc(62px + env(safe-area-inset-bottom));padding:4px 6px env(safe-area-inset-bottom);background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.06)}
+ #mtab button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;color:var(--mute);font:600 10.5px/1 Inter,system-ui,sans-serif;border-radius:14px;position:relative;letter-spacing:.01em}
+ #mtab button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ #mtab button.on{color:var(--blue,#2f5bff)}#mtab button.on::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:2px;background:var(--blue,#2f5bff)}
+ #mtab button em{position:absolute;top:4px;left:calc(50% + 6px);background:var(--red,#e11d48);color:#fff;font-size:9px;font-style:normal;border-radius:999px;padding:1px 5px;min-width:16px;text-align:center}
+ body[data-page=call] #mtab,body.lv13-nosheet #mtab{display:none}
+ /* the More sheet */
+ .lv13-more{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 12px}
+ .lv13-more button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border:1px solid var(--line);border-radius:16px;background:var(--bg2,var(--soft));font:600 11.5px Inter,system-ui,sans-serif;color:var(--ink)}
+ .lv13-more button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ .lv13-more button.on{border-color:var(--blue,#2f5bff);color:var(--blue,#2f5bff)}.lv13-more button em{position:absolute;display:none}
+ .lv13-quick{display:flex;gap:8px;flex-wrap:wrap}.lv13-quick .btn{flex:1 1 40%}
+ /* tables and wide things scroll instead of overflowing */
+ .card table{display:block;overflow-x:auto}
+}
+@media (min-width:721px){#mtab{display:none}}
+/* booking with partner hospitals is live: the old placeholder cards go */
+.lv-soon{display:none!important}
+@media (max-width:720px){.lv2-slot{flex:0 0 min(310px,calc(100vw - 56px))}.lv2-rail,.lv2-strip{max-width:100%}}
+
+.lv13-gmap{position:relative;overflow:hidden;border-radius:14px}.lv13-gmap-in{position:absolute;inset:0}

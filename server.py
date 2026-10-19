@@ -138,12 +138,12 @@ app.include_router(blood_api.pr)
 # --------------------------------------------------------------------------------------------------
 CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com; "
+    "script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com https://maps.googleapis.com; "
     "worker-src 'self' blob:; "
-    "style-src 'self' 'unsafe-inline'; "
-    "img-src 'self' data: blob: https://i.ytimg.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org; "
-    "font-src 'self' data:; "
-    "connect-src 'self' wss: ws: blob: data: https://api.razorpay.com https://lumberjack.razorpay.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "img-src 'self' data: blob: https://i.ytimg.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com; "
+    "font-src 'self' data: https://fonts.gstatic.com; "
+    "connect-src 'self' wss: ws: blob: data: https://api.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com; "
     "media-src 'self' blob:; "
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://api.razorpay.com https://checkout.razorpay.com; "
     "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"

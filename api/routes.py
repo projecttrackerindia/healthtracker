@@ -102,7 +102,8 @@ def config():
             "emergency": {"national": "112", "ambulance": "108"}, "languages": ["en", "hi", "te"],
             # public: only whether smart reading is available. The provider and model stay server-side (named in the privacy policy).
             "ai": {"engine": "ai" if os.getenv("ANTHROPIC_API_KEY") else "local"},
-            "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("upi" if _upi_on() else "demo"), "cities": list(CITIES)}
+            "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("upi" if _upi_on() else "demo"), "cities": list(CITIES),
+            "maps": {"provider": "google" if os.getenv("GOOGLE_MAPS_KEY") else "osm", "key": os.getenv("GOOGLE_MAPS_KEY", "")}}
 
 
 class Hello(BaseModel):

@@ -39,10 +39,16 @@ def android_meta(force: bool = False) -> dict | None:
     return meta
 
 
+GH_RELEASE = os.getenv("ANDROID_RELEASE_URL", "https://github.com/projecttrackerindia/healthtracker/releases/download/android-latest/app-debug.apk")
+
+
 @r.get("/api/v1/app/android")
 def android():
     m = android_meta()
-    return {"available": bool(m), "version": (m or {}).get("version", ""), "versionCode": (m or {}).get("versionCode"), "size": (m or {}).get("size"), "sha256": (m or {}).get("sha256", ""),
+    gh = bool(os.getenv("ANDROID_RELEASE_PUBLIC"))  # set to 1 once the repo (or its releases) is public, so the GitHub asset link works for everyone
+    if not m and gh:
+        return {"available": True, "version": os.getenv("ANDROID_VERSION", "latest"), "size": None, "sha256": "", "built": None, "commit": "", "url": GH_RELEASE, "play": os.getenv("PLAY_STORE_URL", ""), "minAndroid": "8.0 (API 26)", "healthConnect": True, "source": "github"}
+    return {"available": bool(m), "source": "bucket" if m else "", "version": (m or {}).get("version", ""), "versionCode": (m or {}).get("versionCode"), "size": (m or {}).get("size"), "sha256": (m or {}).get("sha256", ""),
             "built": (m or {}).get("built"), "commit": (m or {}).get("commit", ""), "url": "/download/android" if m else "", "play": os.getenv("PLAY_STORE_URL", ""),
             "minAndroid": "8.0 (API 26)", "healthConnect": True}
 
@@ -66,6 +72,18 @@ def download_android():
     name = f"TheHealthTracker-{m.get('version', '1.0')}.apk"
     return StreamingResponse(obj["Body"].iter_chunks(1024 * 256), media_type="application/vnd.android.package-archive",
                              headers={"Content-Disposition": f'attachment; filename="{name}"', "Content-Length": str(obj.get("ContentLength", m.get("size", 0))), "Cache-Control": "public, max-age=300"})
+
+
+@r.get("/api/admin/app/status")
+def admin_status(a: Admin = Depends(admin_me)):
+    """Why the website's download button is on or off, in one place."""
+    m = android_meta(force=True)
+    return {"bucket": bool(storage._s3()), "published": bool(m), "meta": m, "githubRelease": GH_RELEASE, "githubPublic": bool(os.getenv("ANDROID_RELEASE_PUBLIC")),
+            "play": os.getenv("PLAY_STORE_URL", ""), "appstore": os.getenv("APPSTORE_URL", ""), "testflight": os.getenv("TESTFLIGHT_URL", ""),
+            "howTo": ["Add S3_BUCKET, S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY, S3_SECRET_KEY as GitHub → Settings → Secrets → Actions (same values as Railway).",
+                      "Run the 'Android app' workflow (Actions → Run workflow). It publishes releases/thehealthtracker.apk to the bucket and attaches the APK to the android-latest release.",
+                      "Or upload an APK here (built elsewhere) — it goes live at once.",
+                      "Set ANDROID_RELEASE_PUBLIC=1 on Railway if the GitHub release is public and you want it as the fallback link."]}
 
 
 @r.put("/api/admin/app/android")

@@ -1527,6 +1527,70 @@ body[data-page=call] .grid{grid-template-columns:1fr}body[data-page=call] .sx-ta
 .lv12-inc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.lv12-inc details{border:1px solid var(--line,#e5e7eb);border-radius:10px;padding:4px 10px;font-size:13px}.lv12-inc summary{cursor:pointer;font-weight:600}.lv12-inc summary small{color:var(--mute);font-weight:400}.lv12-inc ul{margin:6px 0 4px;padding-left:16px}.lv12-inc li{font-size:12.5px;margin:2px 0}.lv12-inc li small{color:var(--mute)}
 .lv12-pay{display:flex;gap:8px;flex-wrap:wrap}.lv12-pay>b{width:100%}.lv12-payopt{flex:1;display:flex;gap:8px;align-items:center;border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:8px 10px;cursor:pointer}.lv12-payopt input{width:auto}.lv12-payopt small{display:block;color:var(--mute);font-size:11px}.lv12-total{display:flex;justify-content:space-between;font-size:16px;padding:8px 0;border-top:1px solid var(--line,#e5e7eb)}
 </style>
+<style id="live13-css">/* live layer 13: phone-first shell (≤720px). Desktop untouched. */
+@media (max-width:720px){
+ html{scroll-padding-bottom:96px}
+ body{padding:0!important;background:var(--bg)}
+ .shell{display:block!important;padding:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+ aside.side{display:none!important}
+ main{padding:0 12px calc(84px + env(safe-area-inset-bottom))!important}
+ /* app bar: one tight row */
+ .top{position:sticky;top:0;z-index:60;display:flex!important;flex-direction:column;gap:0;margin:0 -12px 8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+ .top>div:first-child{order:2;width:100%}
+ .top h1,h1#hh{font-size:22px!important;margin:6px 0 0!important;letter-spacing:-.02em;line-height:1.15}
+ #hp{display:none!important}
+ .topb{order:1;display:flex!important;align-items:center;gap:6px;width:100%;flex-wrap:nowrap!important;justify-content:flex-start}
+ .topb>*{display:none!important}
+ .topb #sxWho{display:flex!important;flex:1 1 auto;min-width:0;padding:4px 10px 4px 4px;border-radius:999px;background:var(--card);border:1px solid var(--line);height:40px}
+ .topb #sxWho .sx-wn b{font-size:13px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.topb #sxWho .sx-wn small{font-size:10.5px}
+ .topb #lv6Loc{display:flex!important;width:40px;height:40px;padding:0;justify-content:center;border-radius:50%;background:var(--card);border:1px solid var(--line)}.topb #lv6Loc span{display:none}
+ .topb #sxBell{display:flex!important;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);align-items:center;justify-content:center;position:relative}
+ .topb #sxAcct{display:flex!important;width:40px;height:40px;border-radius:50%;padding:0!important;align-items:center;justify-content:center;font-size:13px}
+ .sx-tabs{position:sticky;top:calc(98px + env(safe-area-inset-top));z-index:55;margin:0 0 10px;overflow-x:auto;scroll-snap-type:x proximity;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px)}
+ .sx-tabs button{flex:0 0 auto;padding:8px 14px;white-space:nowrap;scroll-snap-align:start;font-size:13.5px}
+ /* content density */
+ .page{gap:10px!important}
+ .card{padding:14px!important;border-radius:18px!important}
+ .card .hd{margin-bottom:8px}.card h3{font-size:16px}.card .hd small.mute{font-size:12.5px;line-height:1.35}
+ .btn{min-height:42px;border-radius:12px}.btn.sm{min-height:36px}.form input,.form select,input,select,textarea{font-size:16px!important}
+ .stage{height:min(58vh,520px)!important;min-height:320px!important;border-radius:18px!important}
+ body[data-page=dash] #stage,body[data-page=assist] #stage,body[data-page=devices] #stage{display:none!important}
+ .page{overflow-x:clip}.page>*{max-width:100%;min-width:0}.card{overflow-wrap:anywhere}
+ #lv4env{top:auto!important;bottom:calc(66px + env(safe-area-inset-bottom))!important;font-size:9px!important;opacity:.75;pointer-events:none}
+ .mhint,.stage .cr{display:none!important}
+ /* modals become bottom sheets */
+ .sx-modal{display:flex!important;align-items:flex-end;justify-content:center;padding:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(6,10,22,.5)!important}
+ .sx-modal .sx-sheet{width:100%!important;max-width:100%!important;max-height:92dvh!important;border-radius:22px 22px 0 0!important;padding:14px 16px calc(16px + env(safe-area-inset-bottom))!important;animation:lv13up .28s var(--ease,ease)!important}
+ .sx-modal .sx-sheet::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line2,#cbd5e1);margin:0 auto 10px}
+ .sx-modal .sx-sheet h2{font-size:18px;padding-right:36px}
+ .lv-row-end{position:sticky;bottom:-16px;background:var(--card);padding:10px 0 2px;margin-top:8px;border-top:1px solid var(--line)}
+ .lv-row-end .btn{flex:1;justify-content:center}
+ @keyframes lv13up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+ /* SOS: small, above the tab bar */
+ .sx-fab{width:50px!important;height:50px!important;right:12px!important;bottom:calc(74px + env(safe-area-inset-bottom))!important;font-size:10.5px!important}
+ /* the bottom tab bar */
+ #mtab{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;align-items:stretch;height:calc(62px + env(safe-area-inset-bottom));padding:4px 6px env(safe-area-inset-bottom);background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.06)}
+ #mtab button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;color:var(--mute);font:600 10.5px/1 Inter,system-ui,sans-serif;border-radius:14px;position:relative;letter-spacing:.01em}
+ #mtab button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ #mtab button.on{color:var(--blue,#2f5bff)}#mtab button.on::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:2px;background:var(--blue,#2f5bff)}
+ #mtab button em{position:absolute;top:4px;left:calc(50% + 6px);background:var(--red,#e11d48);color:#fff;font-size:9px;font-style:normal;border-radius:999px;padding:1px 5px;min-width:16px;text-align:center}
+ body[data-page=call] #mtab,body.lv13-nosheet #mtab{display:none}
+ /* the More sheet */
+ .lv13-more{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 12px}
+ .lv13-more button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border:1px solid var(--line);border-radius:16px;background:var(--bg2,var(--soft));font:600 11.5px Inter,system-ui,sans-serif;color:var(--ink)}
+ .lv13-more button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ .lv13-more button.on{border-color:var(--blue,#2f5bff);color:var(--blue,#2f5bff)}.lv13-more button em{position:absolute;display:none}
+ .lv13-quick{display:flex;gap:8px;flex-wrap:wrap}.lv13-quick .btn{flex:1 1 40%}
+ /* tables and wide things scroll instead of overflowing */
+ .card table{display:block;overflow-x:auto}
+}
+@media (min-width:721px){#mtab{display:none}}
+/* booking with partner hospitals is live: the old placeholder cards go */
+.lv-soon{display:none!important}
+@media (max-width:720px){.lv2-slot{flex:0 0 min(310px,calc(100vw - 56px))}.lv2-rail,.lv2-strip{max-width:100%}}
+
+.lv13-gmap{position:relative;overflow:hidden;border-radius:14px}.lv13-gmap-in{position:absolute;inset:0}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -6241,7 +6305,7 @@ SX.extend('dash',{before(){return todayHTML()},mounted(){seasonal();const sc=doc
 
 // ---------------------------------------------------------------- D. a map without a map library: OSM tiles + markers (no keys, no trackers)
 const MAPKEY='lv6map';
-function mapHTML(center,items,opt={}){const z=opt.zoom||13,W=opt.w||1200,H=opt.h||300,n=Math.pow(2,z);const tx=(lng)=>(lng+180)/360*n,ty=(lat)=>(1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*n;
+function mapHTML(center,items,opt={}){if(SX.gmapHTML&&SX.gmapsOn&&SX.gmapsOn())return SX.gmapHTML(center,items,opt);const z=opt.zoom||13,W=opt.w||1200,H=opt.h||300,n=Math.pow(2,z);const tx=(lng)=>(lng+180)/360*n,ty=(lat)=>(1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*n;
  const cx=tx(center.lng),cy=ty(center.lat),x0=cx-W/512,y0=cy-H/512,tiles=[];for(let x=Math.floor(x0);x<=Math.floor(x0+W/256);x++)for(let y=Math.floor(y0);y<=Math.floor(y0+H/256);y++){if(y<0||y>=n)continue;tiles.push(`<img src="https://tile.openstreetmap.org/${z}/${((x%n)+n)%n}/${y}.png" style="left:${(x-x0)*256}px;top:${(y-y0)*256}px" alt="" loading="lazy">`)}
  const pins=items.filter(p=>p.lat&&p.lng).map((p,i)=>{const px=(tx(p.lng)-x0)*256,py=(ty(p.lat)-y0)*256;if(px<-10||py<-10||px>W+10||py>H+10)return '';return `<button class="lv6-pin ${p.partner?'partner':''} ${opt.sel===p.id?'on':''}" style="left:${px}px;top:${py}px" data-sx="${opt.act||'mapsel'}:${encodeURIComponent(p.id)}" title="${E(p.name)}"><b><span>${i+1}</span></b></button>`}).join('');
  const me=`<span class="lv6-me" style="left:${(cx-x0)*256}px;top:${(cy-y0)*256}px" title="${E(P('You'))}"></span>`;
@@ -6887,7 +6951,7 @@ SX.act.addredit=([id])=>{const a=S.addresses.find(x=>x.id===id)||{id:'',label:S.
   <p class="full lv-err" hidden></p><div class="full lv-row-end"><button class="btn s" type="button" data-sx="closeModal">${P('Cancel')}</button><button class="btn p" type="submit">${P('Save')}</button></div></form>`,{label:'Address'});
  let geo=a.lat?{lat:a.lat,lng:a.lng}:null;
  document.getElementById('aduse').onclick=async()=>{const st=document.getElementById('adgeo');st.textContent=P('Finding you…');try{const g=await SX.geo(true);if(!g)throw new Error(P('Location not available'));geo={lat:g.lat,lng:g.lng};const w=await J(`/geo/where?lat=${g.lat}&lng=${g.lng}`);const F=document.getElementById('adf');if(w.ok){if(w.place&&!F.area.value)F.area.value=w.place;if(w.city)F.city.value=w.city;if(w.state)F.state.value=w.state;if(w.pin)F.pin.value=w.pin}st.textContent=P('Pinned')+(w.place?' · '+w.place:'')+'. '+P('Add the house and street.');F.line1.focus()}catch(e){st.textContent=e.message}};
- document.getElementById('adf').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),o={id:a.id||'ad'+Math.random().toString(36).slice(2,9),label:fd.get('label')||'other',t:Date.now()};['name','phone','line1','line2','landmark','area','city','state','pin'].forEach(k=>o[k]=String(fd.get(k)||'').trim());if(geo){o.lat=geo.lat;o.lng=geo.lng}
+ document.getElementById('adf').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),o={id:a.id||'ad'+Math.random().toString(36).slice(2,9),label:fd.get('label')||'other',t:Date.now()};['name','phone','line1','line2','landmark','area','city','state','pin'].forEach(k=>o[k]=String(fd.get(k)||'').trim());if(e.target.dataset.lat){geo={lat:+e.target.dataset.lat,lng:+e.target.dataset.lng}}if(geo){o.lat=geo.lat;o.lng=geo.lng}
   if(!/^\d{6}$/.test(o.pin)){const er=e.target.querySelector('.lv-err');er.textContent=P('PIN code has 6 digits');er.hidden=false;return}
   o.default=!!fd.get('default')||!S.addresses.length;if(o.default)S.addresses.forEach(x=>x.default=false);const i=S.addresses.findIndex(x=>x.id===o.id);if(i>=0)S.addresses[i]=o;else S.addresses.push(o);S.addr=SX.addrFmt(o);addrSel=o.id;SX.ledger('address',true,(i>=0?'Updated ':'Added ')+ALBL[o.label]+' address',SX.me().id);SX.save();SX.closeModal();render();const c=document.getElementById('caddr');if(c)c.value=S.addr;toast(P('Address saved'))}};
 SX.act.addrdef=([id])=>{S.addresses.forEach(x=>x.default=x.id===id);SX.save();render()};
@@ -7055,7 +7119,7 @@ function requestsHTML(m){const d=SX.midOf(m.id),g=grp(d.blood);const mine=BR.lis
   ${others.length?`<div class="lv12-rlist">${others.map(q=>`<div class="lv12-r ${q.urgency}"><div class="lv12-rg">${E(q.group)}</div><div class="grow"><b>${E(q.hospital)}</b><small>${q.units} ${P('unit')}${q.units>1?'s':''} · ${E(q.component)} · ${E(URG[q.urgency]||q.urgency)}${q.km!=null?' · '+q.km+' km':''}${q.patient?' · '+P('for')+' '+E(q.patient):''}</small></div>${d.bloodDonor&&g?`<button class="btn p sm" data-sx="brgo:${E(q.id)}">${P('I can donate')}</button>`:`<button class="btn s sm" data-sx="bropen:${E(q.id)}">${P('Details')}</button>`}</div>`).join('')}</div>`:`<p class="mute sm" style="margin:0">${BR.t?P('No open requests within 50 km right now.'):P('Checking…')}${geo?'':' '+P('Set your location to see distances.')}</p>`}</div>`}
 function journeyHTML(q){const s=q.mine.status;const st={offered:['⏳',P('Offered — waiting for the hospital to accept')],accepted:['✓',P('Accepted! Start when you leave; they will see you coming.')],on_way:['🚗',P('On the way')+(q.mine.eta?' · ~'+q.mine.eta+' '+P('min'):'')],arrived:['📍',P('Arrived — go to')+' '+E(q.ward||P('the blood bank'))],donated:['🩸',P('Donated — thank you')]}[s]||['•',s];
  return `<div class="lv12-journey ${s}"><div class="lv12-jh"><div class="lv12-rg">${E(q.group)}</div><div class="grow"><b>${E(q.hospital)}</b><small>${st[0]} ${st[1]}</small>${q.phone&&s!=='offered'?`<small>${E(q.ward||'')} · <a href="tel:${E(q.phone)}">${E(q.phone)}</a></small>`:''}</div></div>
-  ${S.net.geo?SX.mapHTML({lat:(S.net.geo.lat+q.lat)/2,lng:(S.net.geo.lng+q.lng)/2},[{id:q.id,lat:q.lat,lng:q.lng,name:q.hospital,partner:true},{id:'me',lat:S.net.geo.lat,lng:S.net.geo.lng,name:P('You')}],{h:200,zoom:Math.max(10,Math.min(14,Math.round(13-Math.log2(1+Math.hypot((S.net.geo.lat-q.lat)*111,(S.net.geo.lng-q.lng)*105))))),act:'bropen'}):''}
+  ${S.net.geo?SX.mapHTML({lat:(S.net.geo.lat+q.lat)/2,lng:(S.net.geo.lng+q.lng)/2},[{id:q.id,lat:q.lat,lng:q.lng,name:q.hospital,partner:true},{id:'me',lat:S.net.geo.lat,lng:S.net.geo.lng,name:P('You')}],{h:200,zoom:Math.max(10,Math.min(14,Math.round(13-Math.log2(1+Math.hypot((S.net.geo.lat-q.lat)*111,(S.net.geo.lng-q.lng)*105))))),act:'bropen',route:{from:{lat:S.net.geo.lat,lng:S.net.geo.lng},to:{lat:q.lat,lng:q.lng}}})+`<small class="mute lv13-eta"></small>`:''}
   <div class="row" style="margin-top:8px;flex-wrap:wrap">${s==='accepted'?`<button class="btn p sm" data-sx="brstart:${E(q.id)}">🚗 ${P('Start journey')}</button>`:''}${s==='on_way'?`<button class="btn p sm" data-sx="brarrived:${E(q.id)}">📍 ${P('I have arrived')}</button><span class="mute sm">${P('Sharing live location')} <i class="lv12-live"></i></span>`:''}${q.lat?`<a class="btn s sm" href="https://www.google.com/maps/dir/?api=1&destination=${q.lat},${q.lng}" target="_blank" rel="noopener">${P('Directions')}</a>`:''}${['offered','accepted','on_way'].includes(s)?`<button class="btn g sm" data-sx="brwithdraw:${E(q.id)}">${P('Withdraw')}</button>`:''}</div></div>`}
 async function bloodPoll(force){if(page!=='mid'&&!force)return;if(BR.busy)return;BR.busy=true;try{let g=S.net.geo;if(!g){try{g=await SX.geo(false)}catch(e){}}const m=SX.me(),d=SX.midOf(m.id);const q=new URLSearchParams();if(g){q.set('lat',g.lat);q.set('lng',g.lng)}const gg=grp(d.blood);if(gg&&d.bloodDonor)q.set('group',gg);
  const r=await J('/blood/requests?'+q.toString());BR.list=r.requests||[];BR.t=r.t;const active=BR.list.find(x=>x.mine&&x.mine.status==='on_way');if(active&&!journey)startJourney(active.id);}catch(e){}BR.busy=false;if(page==='mid')render()}
@@ -7096,6 +7160,61 @@ SX.act.shopbuy=([sku])=>{const p=SHOP&&SHOP.products.find(x=>x.sku===sku);if(!p)
 
 // ---------------------------------------------------------------- E. care icon, devices keeps the 3D body
 // (the care icon is swapped by the patch script, before the nav is built)
+}
+
+/*live-p12*/
+// ===================== live layer 13: phone shell — bottom tab bar, More sheet, compact app bar =====================
+{
+const P=SX.p,S=SX.S;
+const PRIMARY=['home','records','meds','care'];
+const phone=()=>matchMedia('(max-width:720px)').matches;
+const svg=k=>`<svg viewBox="0 0 24 24">${I[k]||''}</svg>`;const short=k=>{const t=SX.t('nav.'+k);return t.split(/ & | and /)[0]};
+I.more='<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>';
+function groupOf(){try{return SX.grpOf(page)}catch(e){return 'home'}}
+function tabBar(){let bar=document.getElementById('mtab');if(!bar){bar=document.createElement('nav');bar.id='mtab';bar.setAttribute('aria-label','Main');document.body.appendChild(bar)}
+ const cur=groupOf(),inMore=!PRIMARY.includes(cur);
+ bar.innerHTML=PRIMARY.map(k=>{const g=SX.G.find(x=>x.k===k);if(!g)return '';const f=SX.badge&&SX.badge[k],n=f?f():0;return `<button class="${cur===k?'on':''}" data-g="${k}" aria-label="${E(SX.t('nav.'+k))}">${svg(g.ic)}<span>${E(short(k))}</span>${n?`<em>${n}</em>`:''}</button>`}).join('')+`<button class="${inMore?'on':''}" data-g="more" aria-label="${E(P('More'))}">${svg('more')}<span>${P('More')}</span>${moreBadge()?`<em>${moreBadge()}</em>`:''}</button>`;
+ bar.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=b.dataset.g;if(k==='more'){moreSheet();return}const g=SX.G.find(x=>x.k===k);if(!g)return;const first=g.tabs.find(t=>!SX.tabVisible||SX.tabVisible(t))||g.tabs[0];go(first);window.scrollTo({top:0})})}
+function moreBadge(){let n=0;SX.G.forEach(g=>{if(PRIMARY.includes(g.k))return;const f=SX.badge&&SX.badge[g.k];n+=f?(f()||0):0});return n}
+function moreSheet(){const cur=groupOf();const rest=SX.G.filter(g=>!PRIMARY.includes(g.k));
+ SX.modal(`<h2>${P('Everything')}</h2><div class="lv13-more">${rest.map(g=>`<button class="${cur===g.k?'on':''}" data-mg="${g.k}">${svg(g.ic)}<span>${E(SX.t('nav.'+g.k))}</span></button>`).join('')}</div>
+  <div class="lv13-quick"><button class="btn s sm" id="m13lang">🌐 ${E(document.getElementById('sxLang')?document.getElementById('sxLang').textContent:'EN')} · ${P('Language')}</button><button class="btn s sm" id="m13theme">◐ ${P('Theme')}</button><button class="btn s sm" id="m13tour">▶ ${P('Tour')}</button><button class="btn s sm" id="m13dev">📱 ${P('Devices')}</button></div>
+  <p class="mute sm" style="margin:10px 0 0">${P('Safety: SOS is the red button; Medical ID and first aid are under Safety.')}</p>`,{label:'Menu'});
+ document.querySelectorAll('.lv13-more [data-mg]').forEach(b=>b.onclick=()=>{const g=SX.G.find(x=>x.k===b.dataset.mg);SX.closeModal();if(!g)return;const first=g.tabs.find(t=>!SX.tabVisible||SX.tabVisible(t))||g.tabs[0];go(first);window.scrollTo({top:0})});
+ const click=id=>{const el=document.getElementById(id);SX.closeModal();if(el)el.click()};
+ document.getElementById('m13lang').onclick=()=>click('sxLang');document.getElementById('m13theme').onclick=()=>click('theme');document.getElementById('m13tour').onclick=()=>click('tourBtn');document.getElementById('m13dev').onclick=()=>{SX.closeModal();go('devices')}}
+// keep the bar in step with navigation and badges
+new MutationObserver(()=>{try{tabBar()}catch(e){}}).observe(document.body,{attributes:true,attributeFilter:['data-page']});
+const paint13=SX.paintNav;if(paint13)SX.paintNav=function(){const r=paint13.apply(this,arguments);try{tabBar()}catch(e){}return r};
+setTimeout(tabBar,0);setInterval(tabBar,15000);addEventListener('resize',tabBar);
+// the sub-tab row scrolls the active tab into view on phones
+const tv13=SX.extend;document.addEventListener('click',()=>{if(!phone())return;setTimeout(()=>{const on=document.querySelector('.sx-tabs button.on');if(on)on.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})},50)});void tv13;
+}
+// ===================== Google Maps when GOOGLE_MAPS_KEY is set (roads, Places autocomplete, routes); OpenStreetMap otherwise =====================
+{
+const P=SX.p,S=SX.S;
+let G={loading:false,ready:false,key:''};
+const key=()=>{try{return (SX.cfg&&SX.cfg.maps&&SX.cfg.maps.key)||G.key}catch(e){return ''}};
+SX.gmapsOn=()=>!!key();
+function load(){if(G.ready||G.loading||!key())return;G.loading=true;const s=document.createElement('script');s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key())}&libraries=places,marker&loading=async&callback=__gmapsReady&region=IN&language=${S.lang==='hi'?'hi':S.lang==='te'?'te':'en'}`;s.async=true;s.onerror=()=>{G.loading=false;G.key='';toast(P('Maps could not load; using OpenStreetMap'))};document.head.appendChild(s)}
+window.__gmapsReady=()=>{G.ready=true;G.loading=false;boot()};
+const fetchCfg=()=>{if(SX.cfg)return Promise.resolve();return fetch('/api/v1/config').then(r=>r.json()).then(j=>{SX.cfg=SX.cfg||j}).catch(()=>{})};
+fetchCfg().then(()=>{if(key())load()});
+let seq=0;const PENDING={};
+SX.gmapHTML=(center,items,opt={})=>{const id='gm'+(++seq);PENDING[id]={center,items,opt};setTimeout(()=>mount(id),0);return `<div class="lv6-map lv13-gmap" id="${id}" style="height:${opt.h||300}px"><div class="lv13-gmap-in"></div>${opt.act?'':''}</div>`};
+function mount(id){const el=document.getElementById(id),job=PENDING[id];if(!el||!job)return;if(!G.ready){load();setTimeout(()=>mount(id),400);return}delete PENDING[id];const {center,items,opt}=job;
+ const map=new google.maps.Map(el.querySelector('.lv13-gmap-in'),{center:{lat:center.lat,lng:center.lng},zoom:opt.zoom||13,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false,mapId:'THT'});
+ const bounds=new google.maps.LatLngBounds();bounds.extend({lat:center.lat,lng:center.lng});
+ new google.maps.Marker({map,position:{lat:center.lat,lng:center.lng},title:P('You'),icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#2f5bff',fillOpacity:1,strokeColor:'#fff',strokeWeight:3}});
+ items.filter(p=>p.lat&&p.lng).forEach(p=>{const m=new google.maps.Marker({map,position:{lat:p.lat,lng:p.lng},title:p.name||'',icon:p.partner?undefined:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#dc2626',fillOpacity:.95,strokeColor:'#fff',strokeWeight:2}});bounds.extend({lat:p.lat,lng:p.lng});
+  if(opt.act)m.addListener('click',()=>{const f=SX.act[opt.act];if(f)f([p.id])})});
+ if(items.length)map.fitBounds(bounds,40);
+ if(opt.route&&opt.route.from&&opt.route.to){try{const ds=new google.maps.DirectionsService(),dr=new google.maps.DirectionsRenderer({map,suppressMarkers:true,polylineOptions:{strokeColor:'#2f5bff',strokeWeight:5}});ds.route({origin:opt.route.from,destination:opt.route.to,travelMode:'DRIVING'},(res,st)=>{if(st==='OK'){dr.setDirections(res);const leg=res.routes[0].legs[0];const et=el.parentElement&&el.parentElement.querySelector('.lv13-eta');if(et)et.textContent=leg.duration.text+' · '+leg.distance.text}})}catch(e){}}}
+function boot(){Object.keys(PENDING).forEach(mount)}
+// Places autocomplete on the address form when Google is on
+document.addEventListener('focusin',e=>{const inp=e.target;if(!G.ready||!inp||!inp.matches('#adf input[name=line1]')||inp.dataset.ac)return;inp.dataset.ac='1';try{const ac=new google.maps.places.Autocomplete(inp,{componentRestrictions:{country:'in'},fields:['address_components','geometry','name']});ac.addListener('place_changed',()=>{const p=ac.getPlace();if(!p||!p.address_components)return;const F=document.getElementById('adf');const get=t=>{const c=p.address_components.find(x=>x.types.includes(t));return c?c.long_name:''};
+ const street=[get('premise'),get('street_number'),get('route')].filter(Boolean).join(', ');F.line1.value=p.name&&!/^\d/.test(p.name)?p.name:(street||F.line1.value);if(street&&F.line1.value!==street)F.line2.value=street;F.area.value=get('sublocality_level_1')||get('sublocality')||get('neighborhood')||F.area.value;F.city.value=get('locality')||get('administrative_area_level_2')||F.city.value;F.state.value=get('administrative_area_level_1')||F.state.value;F.pin.value=get('postal_code')||F.pin.value;
+ if(p.geometry&&p.geometry.location){F.dataset.lat=p.geometry.location.lat();F.dataset.lng=p.geometry.location.lng();const st=document.getElementById('adgeo');if(st)st.textContent=P('Pinned from Google Maps')}})}catch(e){}});
 }
 
 SX.boot();
