@@ -8,4 +8,6 @@ python3 tools/live/p5.py >/dev/null || true
 python3 tools/live/p6.py >/dev/null || true
 python3 tools/live/p7.py >/dev/null || true
 python3 tools/live/p8.py >/dev/null || true
+python3 tools/live/p9.py >/dev/null || true
+python3 tools/live/p10.py >/dev/null || true
 python3 tools/compress.py --check && echo "web/index.html up to date"

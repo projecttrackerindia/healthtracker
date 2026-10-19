@@ -123,6 +123,7 @@ class Order(Base):
     rx_shared: Mapped[bool] = mapped_column(Boolean, default=False)
     member_id: Mapped[str | None] = mapped_column(String(32), nullable=True)   # which family profile the order is for
     rx_files: Mapped[list | None] = mapped_column(JSON, nullable=True)         # prescription file ids the family chose to share
+    addr: Mapped[dict | None] = mapped_column(JSON, nullable=True)             # structured delivery / collection address {label,name,phone,line1,line2,landmark,area,city,state,pin,lat,lng}
     slot: Mapped[str] = mapped_column(String(40), default="")  # lab home-collection slot
     status: Mapped[str] = mapped_column(String(24), default="placed", index=True)
     timeline: Mapped[list] = mapped_column(JSON, default=list)  # [{s,t}]
@@ -259,6 +260,10 @@ class User(Base):
     household_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     member_id: Mapped[str | None] = mapped_column(String(32), nullable=True)  # which family profile is 'me' for this account
     name_changed: Mapped[int | None] = mapped_column(Integer, nullable=True)  # the account name (as on Aadhaar) changes at most once a week
+    role: Mapped[str] = mapped_column(String(12), default="member")  # admin | member | caregiver — what this sign-in may change in the family record
+    aadhaar_verified: Mapped[int | None] = mapped_column(Integer, nullable=True)  # when identity was confirmed through DigiLocker (Aadhaar e-KYC)
+    aadhaar_last4: Mapped[str] = mapped_column(String(4), default="")
+    aadhaar_dob: Mapped[str] = mapped_column(String(10), default="")  # DD-MM-YYYY as printed on Aadhaar
     failed: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[int | None] = mapped_column(Integer, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -359,6 +364,7 @@ class Invite(Base):
     created: Mapped[int] = mapped_column(Integer, default=now)
     expires: Mapped[int] = mapped_column(Integer)
     used_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    role: Mapped[str] = mapped_column(String(12), default="member")  # what the joining sign-in becomes: member | caregiver
     used: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
@@ -449,7 +455,10 @@ class PartnerUser(Base):
     name: Mapped[str] = mapped_column(String(80), default="")
     phone: Mapped[str] = mapped_column(String(20), default="")
     pw_hash: Mapped[str] = mapped_column(String(200), default="")
-    role: Mapped[str] = mapped_column(String(16), default="staff")  # owner | staff
+    role: Mapped[str] = mapped_column(String(16), default="staff")  # owner | staff | doctor
+    reg_no: Mapped[str] = mapped_column(String(40), default="")     # doctors: NMC / state medical council registration
+    specialty: Mapped[str] = mapped_column(String(60), default="")
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)   # doctors: registration checked by an admin
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     must_change: Mapped[bool] = mapped_column(Boolean, default=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
@@ -474,6 +483,11 @@ class Appointment(Base):
     slot_date: Mapped[str] = mapped_column(String(10), default="")
     slot_time: Mapped[str] = mapped_column(String(8), default="")
     note: Mapped[str] = mapped_column(String(300), default="")
+    transcript: Mapped[list | None] = mapped_column(JSON, nullable=True)   # [{who, t, text}] from the video consult
+    rx: Mapped[dict | None] = mapped_column(JSON, nullable=True)           # {items:[{name,strength,form,frequency,duration,instructions,rx}], advice, doctor, t}
+    summary: Mapped[str] = mapped_column(Text, default="")                 # AI visit summary, for discussion with the doctor
+    call_started: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    call_ended: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
     updated: Mapped[int] = mapped_column(Integer, default=now)
 
@@ -507,3 +521,88 @@ class Message(Base):
     t: Mapped[int] = mapped_column(Integer, default=now, index=True)
     read_family: Mapped[bool] = mapped_column(Boolean, default=False)
     read_partner: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class MedicalId(Base):
+    """A member's lock-screen Medical ID: the few facts a first responder needs (blood group, allergies, conditions, medicines,
+    emergency contacts), published at /m/<token> and as a QR code. The family turns it on per person and can rotate or
+    switch it off any time; the payload is sealed with the data key at rest and only served while enabled."""
+
+    __tablename__ = "medical_ids"
+    token: Mapped[str] = mapped_column(String(40), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), index=True)
+    blob: Mapped[bytes] = mapped_column(LargeBinary)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    last_view: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class PartnerApplication(Base):
+    """A lab, pharmacy or hospital asking to join from /partner → Apply. An admin reviews it; approving creates the store and
+    the owner's sign-in."""
+
+    __tablename__ = "partner_applications"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("pa"))
+    kind: Mapped[str] = mapped_column(String(16))  # pharmacy | lab | hospital
+    name: Mapped[str] = mapped_column(String(120))
+    contact: Mapped[str] = mapped_column(String(80), default="")
+    email: Mapped[str] = mapped_column(String(160), index=True)
+    phone: Mapped[str] = mapped_column(String(24), default="")
+    address: Mapped[str] = mapped_column(String(240), default="")
+    area: Mapped[str] = mapped_column(String(80), default="")
+    city: Mapped[str] = mapped_column(String(80), default="")
+    pin: Mapped[str] = mapped_column(String(12), default="")
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    licence: Mapped[str] = mapped_column(String(64), default="")   # drug licence / NABL / clinical establishment registration
+    gstin: Mapped[str] = mapped_column(String(20), default="")
+    services: Mapped[str] = mapped_column(String(300), default="")
+    note: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(12), default="new", index=True)  # new | approved | declined
+    store_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    decided_by: Mapped[str] = mapped_column(String(120), default="")
+    decided_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    ip: Mapped[str] = mapped_column(String(48), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class Payment(Base):
+    """A UPI payment the family makes by scanning our QR (plan upgrade or an order), confirmed by an admin against the bank
+    statement. Razorpay payments go through the subscribe/webhook path instead; this is the manual UPI route."""
+
+    __tablename__ = "payments"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("pay"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    user_id: Mapped[str] = mapped_column(String(32), default="")
+    kind: Mapped[str] = mapped_column(String(12))                       # plan | order
+    ref: Mapped[str] = mapped_column(String(48), default="")            # "family:year" or an order id
+    amount: Mapped[int] = mapped_column(Integer, default=0)             # INR
+    account: Mapped[str] = mapped_column(String(16), default="")        # which UPI account was shown
+    vpa: Mapped[str] = mapped_column(String(80), default="")
+    note: Mapped[str] = mapped_column(String(40), default="")           # the reference the payer types / that is in the QR
+    status: Mapped[str] = mapped_column(String(12), default="pending", index=True)  # pending | claimed | confirmed | rejected | expired
+    utr: Mapped[str] = mapped_column(String(40), default="")
+    payer: Mapped[str] = mapped_column(String(80), default="")
+    claimed_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    decided_by: Mapped[str] = mapped_column(String(120), default="")
+    decided_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    admin_note: Mapped[str] = mapped_column(String(300), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class DeviceLink(Base):
+    """A cloud wearable account (Fitbit today) linked to one family profile; tokens are sealed with the data key."""
+
+    __tablename__ = "device_links"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("dl"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    user_id: Mapped[str] = mapped_column(String(32), default="")
+    provider: Mapped[str] = mapped_column(String(16), default="fitbit")
+    external_id: Mapped[str] = mapped_column(String(64), default="")
+    blob: Mapped[bytes] = mapped_column(LargeBinary)              # sealed {access, refresh, expires, scope}
+    last_sync: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)

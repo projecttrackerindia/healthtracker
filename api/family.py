@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from . import messaging
 from .auth import COOKIE, csrf, current_user, limit, need_user, norm_id  # noqa: F401
 from .db import get_db
-from .models import Household, HouseholdState, HouseholdStateHistory, Invite, User, now
+from .models import AuthSession, Household, HouseholdState, HouseholdStateHistory, Invite, User, now
 from .security import SECRET
 
 r = APIRouter(prefix="/api/v1")
@@ -132,6 +132,27 @@ class SyncIn(BaseModel):
     sect: dict = {}
 
 
+# what each role may change. Roles are per sign-in (not per profile): the first account in a family is its admin.
+ROLES = ("admin", "member", "caregiver")
+CAREGIVER_LOCKED = ("members", "mid", "cards", "consent", "results", "vault", "meds", "preg", "cycle", "claims", "perm", "contacts", "care", "growth", "vax")
+ROLE_LABEL = {"admin": "Family admin", "member": "Family member", "caregiver": "Caregiver"}
+
+
+def role_of(db: Session, u: User) -> str:
+    r = u.role if u.role in ROLES else "member"
+    if r != "admin" and u.household_id:
+        # a family with no admin yet (accounts created before roles existed): its first account is the admin
+        first = db.scalar(select(User).where(User.household_id == u.household_id).order_by(User.created).limit(1))
+        admins = db.scalar(select(User.id).where(User.household_id == u.household_id, User.role == "admin"))
+        if not admins and first and first.id == u.id:
+            u.role = r = "admin"
+    return r
+
+
+def _same(a, b) -> bool:
+    return json.dumps(a, sort_keys=True, ensure_ascii=False) == json.dumps(b, sort_keys=True, ensure_ascii=False)
+
+
 @r.put("/sync", dependencies=[Depends(csrf)])
 def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
     h = my_household(db, u)
@@ -144,6 +165,14 @@ def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db), u: U
     members = body.state.get("members")
     if not isinstance(members, list) or not members:
         raise HTTPException(400, "state must contain at least one member")
+    if role_of(db, u) == "caregiver" and st:
+        try:
+            before = decrypt(st.blob)
+        except Exception:
+            before = {}
+        changed = [k for k in CAREGIVER_LOCKED if not _same(before.get(k), body.state.get(k))]
+        if changed:
+            raise HTTPException(403, f"Caregivers can add readings, doses, visits and notes, but cannot change {', '.join(changed[:3])}. Ask the family admin.")
     blob = encrypt(body.state)
     if len(blob) > MAX_STATE:
         raise HTTPException(413, "Your family's data is too large to sync (3 MB). Remove old items or contact support.")
@@ -161,6 +190,8 @@ def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db), u: U
 
 @r.delete("/sync", dependencies=[Depends(csrf)])
 def sync_delete(db: Session = Depends(get_db), u: User = Depends(need_user)):
+    if role_of(db, u) != "admin":
+        raise HTTPException(403, "Only the family admin can delete the family's data.")
     """Right to erasure: remove the family's stored data from the server (the person also deletes it on each device)."""
     h = my_household(db, u)
     st = db.get(HouseholdState, h.id)
@@ -174,10 +205,11 @@ class InviteIn(BaseModel):
     member_id: str
     name: str = ""
     contact: str = ""
+    role: str = "member"   # member | caregiver (admin is granted later from Family → Accounts)
 
 
 def invite_json(i: Invite) -> dict:
-    return {"token": i.token, "memberId": i.member_id, "name": i.name, "contact": i.contact, "created": i.created, "expires": i.expires,
+    return {"token": i.token, "memberId": i.member_id, "name": i.name, "contact": i.contact, "created": i.created, "expires": i.expires, "role": getattr(i, "role", "member") or "member",
             "status": "joined" if i.used else ("expired" if i.expires < now() else "pending")}
 
 
@@ -204,8 +236,10 @@ def family_invite(body: InviteIn, request: Request, db: Session = Depends(get_db
     # one live invite per profile
     for old in db.scalars(select(Invite).where(Invite.household_id == h.id, Invite.member_id == body.member_id, Invite.used == None)).all():  # noqa: E711
         db.delete(old)
+    if body.role == "caregiver" and role_of(db, u) != "admin":
+        raise HTTPException(403, "Only the family admin can invite a caregiver.")
     inv = Invite(token=secrets.token_urlsafe(24), household_id=h.id, member_id=body.member_id[:32], name=body.name.strip()[:80], contact=contact[:160],
-                 by_user=u.id, expires=now() + INVITE_DAYS * 86400)
+                 by_user=u.id, expires=now() + INVITE_DAYS * 86400, role="caregiver" if body.role == "caregiver" else "member")
     db.add(inv)
     link = f"{_origin(request)}/join/{inv.token}"
     sent = False
@@ -223,8 +257,50 @@ def family_invites(db: Session = Depends(get_db), u: User = Depends(need_user)):
     h = my_household(db, u)
     rows = db.scalars(select(Invite).where(Invite.household_id == h.id)).all()
     members = db.scalars(select(User).where(User.household_id == h.id)).all()
-    return {"invites": [invite_json(i) for i in rows],
-            "accounts": [{"memberId": m.member_id, "name": m.name, "phone": m.phone, "email": m.email, "me": m.id == u.id} for m in members]}
+    role_of(db, u)
+    return {"invites": [invite_json(i) for i in rows], "myRole": u.role,
+            "accounts": [{"id": m.id, "memberId": m.member_id, "name": m.name, "phone": m.phone, "email": m.email, "me": m.id == u.id, "role": m.role if m.role in ROLES else "member",
+                          "roleLabel": ROLE_LABEL.get(m.role, "Family member"), "lastSeen": getattr(m, "last_login", None)} for m in members]}
+
+
+class RoleIn(BaseModel):
+    role: str
+
+
+@r.post("/family/accounts/{uid}/role", dependencies=[Depends(csrf)])
+def set_role(uid: str, body: RoleIn, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    """The family admin decides what each sign-in may change. There is always at least one admin."""
+    h = my_household(db, u)
+    if role_of(db, u) != "admin":
+        raise HTTPException(403, "Only the family admin can change roles.")
+    if body.role not in ROLES:
+        raise HTTPException(400, "role must be admin, member or caregiver")
+    t = db.get(User, uid)
+    if not t or t.household_id != h.id:
+        raise HTTPException(404)
+    if t.id == u.id and body.role != "admin":
+        others = db.scalar(select(User.id).where(User.household_id == h.id, User.role == "admin", User.id != u.id))
+        if not others:
+            raise HTTPException(400, "Make someone else the admin first.")
+    t.role = body.role
+    return {"id": t.id, "role": t.role}
+
+
+@r.delete("/family/accounts/{uid}", dependencies=[Depends(csrf)])
+def remove_account(uid: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    """Detach a sign-in from the family (a caregiver whose work is done, a lost phone). Their own account survives, empty."""
+    h = my_household(db, u)
+    if role_of(db, u) != "admin":
+        raise HTTPException(403, "Only the family admin can remove a sign-in.")
+    t = db.get(User, uid)
+    if not t or t.household_id != h.id:
+        raise HTTPException(404)
+    if t.id == u.id:
+        raise HTTPException(400, "You cannot remove yourself; make someone else admin and ask them.")
+    t.household_id, t.member_id = None, None
+    for s in db.scalars(select(AuthSession).where(AuthSession.user_id == t.id)).all():
+        db.delete(s)
+    return {"removed": True}
 
 
 @r.get("/family/invite/{token}")
@@ -250,6 +326,7 @@ def family_join(body: JoinIn, db: Session = Depends(get_db), u: User = Depends(n
         raise HTTPException(409, "This account already belongs to another family. Sign in with a different account to join this one.")
     u.household_id = inv.household_id
     u.member_id = inv.member_id
+    u.role = "caregiver" if getattr(inv, "role", "") == "caregiver" else "member"
     inv.used, inv.used_by = now(), u.id
     h = db.get(Household, inv.household_id)
     return {"joined": True, "memberId": inv.member_id, "householdKey": h.key if h else None}

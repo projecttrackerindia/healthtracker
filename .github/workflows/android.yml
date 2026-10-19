@@ -1,0 +1,95 @@
+name: Android app
+
+on:
+  push:
+    branches: [main]
+    paths: ["mobile/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Install Capacitor
+        run: npm ci --no-audit --no-fund
+      - name: Web shell
+        run: mkdir -p www && cp src/index.html www/index.html
+      - name: Firebase config (optional)
+        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+      - name: Sync native project
+        run: npx cap sync android
+      - name: Build debug APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TheHealthTracker-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Release APK (signed, when a keystore is configured)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          cd android && ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$PWD/app/release.keystore \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+      - name: Publish the APK to the bucket for the website's download button (when S3 secrets exist)
+        if: ${{ secrets.S3_BUCKET != '' }}
+        env:
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+          S3_REGION: ${{ secrets.S3_REGION }}
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+        run: |
+          pip install -q boto3
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then APK=android/app/build/outputs/apk/release/app-release.apk; fi
+          python3 - "$APK" <<'PY'
+          import boto3, hashlib, json, os, re, sys, time
+          apk = sys.argv[1]; data = open(apk, 'rb').read()
+          g = open('android/app/build.gradle').read()
+          ver = re.search(r'versionName "([^"]+)"', g).group(1); code = int(re.search(r'versionCode (\d+)', g).group(1))
+          kw = {"region_name": os.getenv("S3_REGION") or "auto", "aws_access_key_id": os.environ["S3_ACCESS_KEY"], "aws_secret_access_key": os.environ["S3_SECRET_KEY"]}
+          if os.getenv("S3_ENDPOINT"): kw["endpoint_url"] = os.environ["S3_ENDPOINT"]
+          s3 = boto3.client("s3", **kw); b = os.environ["S3_BUCKET"]
+          s3.put_object(Bucket=b, Key="releases/thehealthtracker.apk", Body=data, ContentType="application/vnd.android.package-archive")
+          meta = {"version": ver, "versionCode": code, "size": len(data), "sha256": hashlib.sha256(data).hexdigest(), "built": int(time.time()), "commit": os.getenv("GITHUB_SHA", "")[:12], "variant": "release" if "release" in apk else "debug"}
+          s3.put_object(Bucket=b, Key="releases/android.json", Body=json.dumps(meta).encode(), ContentType="application/json")
+          print("published", meta)
+          PY
+      - name: Release bundle (when a keystore is configured)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          cd android && ./gradlew bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$PWD/app/release.keystore \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+      - uses: actions/upload-artifact@v4
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        with:
+          name: TheHealthTracker-release-aab
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab

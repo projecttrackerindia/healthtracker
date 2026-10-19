@@ -1,0 +1,47 @@
+name: iOS app
+
+# Needs a macOS runner (10× minutes) and, for a signed build, an Apple Developer account:
+#   IOS_CERTIFICATE_P12_BASE64, IOS_CERTIFICATE_PASSWORD, IOS_PROVISIONING_PROFILE_BASE64, APPLE_TEAM_ID
+# Without them this job compiles the app (unsigned, simulator) to prove the project and the HealthKit plugin build.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["mobile/ios/**", ".github/workflows/ios.yml"]
+
+jobs:
+  build:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci --no-audit --no-fund
+      - run: mkdir -p www && cp src/index.html www/index.html
+      - run: npx cap sync ios
+      - name: Build for simulator (no signing)
+        run: |
+          cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -40
+      - name: Archive for App Store (when signing is configured)
+        if: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 != '' }}
+        env:
+          P12_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}" | base64 -d > cert.p12
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 -d > profile.mobileprovision
+          security create-keychain -p ci build.keychain && security default-keychain -s build.keychain && security unlock-keychain -p ci build.keychain
+          security import cert.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign && security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles && cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -archivePath $PWD/build/App.xcarchive DEVELOPMENT_TEAM="$TEAM_ID" archive
+          xcodebuild -exportArchive -archivePath $PWD/build/App.xcarchive -exportPath $PWD/build/ipa -exportOptionsPlist ExportOptions.plist
+      - uses: actions/upload-artifact@v4
+        if: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 != '' }}
+        with:
+          name: TheHealthTracker-ios-ipa
+          path: mobile/ios/App/build/ipa/*.ipa

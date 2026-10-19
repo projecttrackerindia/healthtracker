@@ -141,3 +141,28 @@ def test_site_assets_still_served_next_to_share_pages():
     c = TestClient(server.app)
     assert c.get("/s/auth.js").status_code == 200 and "THT" in c.get("/s/auth.js").text
     assert c.get("/d/not-a-token").status_code == 404
+
+
+def test_fcm_subscription_shape_and_send_path(monkeypatch):
+    from api import push as PUSH
+    monkeypatch.delenv("FCM_SERVICE_ACCOUNT_JSON", raising=False)
+    monkeypatch.setenv("VAPID_PRIVATE_KEY", PUSH.make_keys()["VAPID_PRIVATE_KEY"])
+    c = client(); signup(c)
+    assert c.post("/api/v1/push/subscribe", headers=H, json={"subscription": {"endpoint": "fcm:abc"}}).status_code == 503
+    assert PUSH.send({"endpoint": "fcm:abc"}, {"title": "x"})[2] == "fcm not configured"
+    monkeypatch.setenv("FCM_SERVICE_ACCOUNT_JSON", '{"project_id":"p","client_email":"e","token_uri":"https://x","private_key":"k"}')
+    assert c.post("/api/v1/push/subscribe", headers=H, json={"subscription": {"endpoint": "fcm:abc"}}).json() == {"ok": True}
+    monkeypatch.setattr(PUSH, "_fcm_token", lambda: ("tok", "p"))
+    sent = {}
+
+    class R:
+        status = 200
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return b"{}"
+
+    def fake_open(req, timeout=10):
+        sent["url"] = req.full_url; sent["body"] = json.loads(req.data); sent["auth"] = req.get_header("Authorization"); return R()
+    monkeypatch.setattr(PUSH.urllib.request, "urlopen", fake_open)
+    ok, status, _ = PUSH.send({"endpoint": "fcm:abc"}, {"title": "Hi", "body": "there", "url": "/app", "tag": "t"})
+    assert ok and sent["url"].endswith("/v1/projects/p/messages:send") and sent["body"]["message"]["token"] == "abc" and sent["auth"] == "Bearer tok"

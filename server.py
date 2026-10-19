@@ -89,6 +89,7 @@ def _init_db():
     with session() as db:
         seed_all(db)
     reminders.start()
+    proactive_api.start()
 
 
 app.include_router(public_api.r)
@@ -101,6 +102,26 @@ app.include_router(places_api.r)
 app.include_router(billing_api.r)
 app.include_router(inbox_api.r)
 app.include_router(partner_api.r)
+from api import consult as consult_api  # noqa: E402
+app.include_router(consult_api.r)
+app.include_router(consult_api.pr)
+app.include_router(consult_api.ws)
+from api import proactive as proactive_api  # noqa: E402
+app.include_router(proactive_api.r)
+from api import abdm as abdm_api, export as export_api, medid as medid_api, network as network_api  # noqa: E402
+app.include_router(medid_api.r)
+app.include_router(export_api.r)
+app.include_router(network_api.r)
+app.include_router(network_api.ar)
+app.include_router(abdm_api.r)
+from api import upipay as upipay_api  # noqa: E402
+app.include_router(upipay_api.r)
+app.include_router(upipay_api.ar)
+from api import digilocker as digilocker_api  # noqa: E402
+app.include_router(digilocker_api.r)
+from api import apps as apps_api, fitbit as fitbit_api  # noqa: E402
+app.include_router(apps_api.r)
+app.include_router(fitbit_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)
@@ -113,7 +134,7 @@ CSP = (
     "style-src 'self' 'unsafe-inline'; "
     "img-src 'self' data: blob: https://i.ytimg.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org; "
     "font-src 'self' data:; "
-    "connect-src 'self' blob: data: https://api.razorpay.com https://lumberjack.razorpay.com; "
+    "connect-src 'self' wss: ws: blob: data: https://api.razorpay.com https://lumberjack.razorpay.com; "
     "media-src 'self' blob:; "
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://api.razorpay.com https://checkout.razorpay.com; "
     "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
@@ -122,7 +143,7 @@ SECURITY = {
     "Content-Security-Policy": CSP,
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "geolocation=(self), camera=(self), microphone=(), payment=(self), publickey-credentials-create=(self), publickey-credentials-get=(self)",
+    "Permissions-Policy": "geolocation=(self), camera=(self), microphone=(self), display-capture=(), payment=(self), publickey-credentials-create=(self), publickey-credentials-get=(self)",
     "Cross-Origin-Opener-Policy": "same-origin",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 }

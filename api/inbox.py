@@ -66,7 +66,8 @@ def appt_json(db: Session, a: Appointment) -> dict:
     s = db.get(Store, a.store_id)
     return {"id": a.id, "store": {"id": s.id, "name": s.name, "phone": s.phone, "address": ", ".join(x for x in (s.address, s.area, s.city) if x), "lat": s.lat, "lng": s.lng} if s else None,
             "member": a.member_id, "memberName": a.member_name, "kind": a.kind, "date": a.date, "time": a.time, "why": a.why, "doctor": a.doctor,
-            "status": a.status, "slotDate": a.slot_date, "slotTime": a.slot_time, "note": a.note, "created": a.created, "updated": a.updated}
+            "status": a.status, "slotDate": a.slot_date, "slotTime": a.slot_time, "note": a.note, "created": a.created, "updated": a.updated,
+            "live": bool(a.call_started and not a.call_ended), "hasRx": bool(a.rx), "hasSummary": bool(a.summary)}
 
 
 class ApptIn(BaseModel):
@@ -95,6 +96,12 @@ def appt_request(body: ApptIn, request: Request, db: Session = Depends(get_db), 
                     date=body.date, time=body.time[:8], why=body.why[:160], doctor=body.doctor[:80])
     db.add(a)
     db.flush()
+    try:
+        from .partner import alert_store
+        alert_store(db, s.id, f"Visit request · {body.memberName or 'a family member'} · {body.date}",
+                    f"{body.memberName or 'A family member'} asked for a {'video' if body.kind == 'video' else 'in-person'} visit on {body.date} {body.time or ''}{' with ' + body.doctor if body.doctor else ''}.\nReason: {body.why or '—'}\nConfirm a slot or offer another time in the portal; the family is notified at once.")
+    except Exception as e:
+        print("[appts] store alert failed:", str(e)[:120], flush=True)
     return appt_json(db, a)
 
 

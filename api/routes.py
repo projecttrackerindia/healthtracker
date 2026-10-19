@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from . import ai as AI
 CATALOG_RX = {x["id"]: bool(x.get("rx")) for x in AI.CATALOG}
 from .db import get_db
-from .models import AiCache, AiJob, Household, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
+from .models import AiCache, AiJob, Household, User, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
 from .security import valid_key
 from .seed import CITIES, TESTS
 
@@ -46,9 +46,15 @@ def household(db: Session, key: str | None, create=True) -> Household | None:
         return None
     h = db.scalar(select(Household).where(Household.key == k))
     if h is None and create:
-        h = Household(key=k)
-        db.add(h)
-        db.flush()
+        # the app's first two requests can race to create the same household: let the loser pick up the winner's row
+        from sqlalchemy.exc import IntegrityError
+        try:
+            with db.begin_nested():
+                h = Household(key=k)
+                db.add(h)
+                db.flush()
+        except IntegrityError:
+            h = db.scalar(select(Household).where(Household.key == k))
     if h:
         h.last_seen = now()
         if h.blocked:
@@ -96,7 +102,7 @@ def config():
             "emergency": {"national": "112", "ambulance": "108"}, "languages": ["en", "hi", "te"],
             # public: only whether smart reading is available. The provider and model stay server-side (named in the privacy policy).
             "ai": {"engine": "ai" if os.getenv("ANTHROPIC_API_KEY") else "local"},
-            "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else "demo", "cities": list(CITIES)}
+            "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("upi" if _upi_on() else "demo"), "cities": list(CITIES)}
 
 
 class Hello(BaseModel):
@@ -121,6 +127,10 @@ def hello(body: Hello, request: Request, db: Session = Depends(get_db), x_dokko_
             own = db.get(Household, u.household_id)
             if own:
                 return {"adoptKey": own.key}
+        if not u.household_id:
+            # the first sign-in that claims a family is its admin; people who join by invitation come in as members or caregivers
+            others = db.scalar(select(User.id).where(User.household_id == h.id, User.id != u.id))
+            u.role = u.role if others else "admin"
         u.household_id = h.id
     if body.name:
         h.name = body.name[:80]
@@ -239,6 +249,34 @@ class OrderReq(BaseModel):
     payment: str = "cod"
     lat: float | None = None
     lng: float | None = None
+    addr: dict | None = None   # a saved address from the profile (home / work / other)
+
+
+ADDR_KEYS = ("label", "name", "phone", "line1", "line2", "landmark", "area", "city", "state", "pin")
+
+
+def clean_addr(a: dict | None) -> dict | None:
+    if not isinstance(a, dict):
+        return None
+    out = {k: str(a.get(k, "")).strip()[:120] for k in ADDR_KEYS if a.get(k)}
+    for k in ("lat", "lng"):
+        try:
+            if a.get(k) is not None:
+                out[k] = round(float(a[k]), 6)
+        except (TypeError, ValueError):
+            pass
+    return out or None
+
+
+def addr_line(a: dict | None) -> str:
+    if not a:
+        return ""
+    parts = [a.get("line1"), a.get("line2"), a.get("landmark"), a.get("area"), a.get("city")]
+    s = ", ".join(x for x in parts if x)
+    if a.get("pin"):
+        s += f" - {a['pin']}"
+    who = " · ".join(x for x in (a.get("name"), a.get("phone")) if x)
+    return (who + " · " if who else "") + s
 
 
 def _status(o: Order):
@@ -261,7 +299,7 @@ def order_json(o: Order):
     return {"id": o.id, "kind": o.kind, "store": store_json(o.store) if o.store else None, "items": o.items, "subtotal": o.subtotal, "fee": o.fee,
             "discount": o.discount, "total": o.total, "address": o.address, "member": o.member, "rxShared": o.rx_shared, "slot": o.slot,
             "status": "cancelled" if i < 0 else (o.status if o.status in ("return_requested", "returned", "refunded") else steps[i][0]), "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
-            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline}
+            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr}
 
 
 @r.post("/orders")
@@ -299,11 +337,18 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
         raise HTTPException(400, "This order has prescription-only medicines. Upload or choose the prescription first; the pharmacist must see it before dispensing.")
     rx_files = [str(x)[:48] for x in body.rxDocs[:6]] if body.rxShared else []
     o = Order(household_id=h.id, store_id=s.id, kind=body.kind, items=lines, subtotal=sub, fee=fee, discount=disc, total=sub + fee,
-              address=body.address[:240], member=body.member[:80], member_id=body.memberId[:32] or None, rx_files=rx_files, rx_shared=body.rxShared, slot=body.slot[:40], payment=body.payment[:24],
+              address=(body.address or addr_line(clean_addr(body.addr)))[:240], addr=clean_addr(body.addr), member=body.member[:80], member_id=body.memberId[:32] or None, rx_files=rx_files, rx_shared=body.rxShared, slot=body.slot[:40], payment=body.payment[:24],
               timeline=[{"s": "placed", "t": now()}], eta=now() + s.eta_min * 60)
     db.add(o)
     db.flush()
     o.store = s
+    try:
+        from .partner import alert_store
+        what = ", ".join(f"{l.get('name', '')}" + (f" ×{l.get('qty')}" if l.get("qty") else "") for l in lines[:5])
+        alert_store(db, s.id, f"New {'lab booking' if body.kind == 'lab' else 'medicine order'} {o.id} · ₹{o.total}",
+                    f"{body.member or 'A family'} placed {o.id}: {what}.\n{'Slot: ' + body.slot if body.slot else ''}\nAddress: {o.address or '—'}\nPayment: {o.payment}.")
+    except Exception as e:
+        print("[orders] store alert failed:", str(e)[:120], flush=True)
     return order_json(o)
 
 
@@ -439,10 +484,18 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
         ctx = json.loads(context or "{}")
     except Exception:
         ctx = {}
-    kind = kind if kind in ("report", "prescription", "card") else "report"
+    kind = kind if kind in ("report", "prescription", "card", "policy") else "report"
     capped = bool(os.getenv("ANTHROPIC_API_KEY")) and used >= cap
     try:
-        if kind == "card":
+        if kind == "policy":
+            if capped:
+                out = {"engine": "local", "kind": "policy", "readable": False, "ms": 0, "warnings": [f"Monthly smart-reading limit for the {h.plan} plan reached ({cap}). Enter the key terms yourself, or upgrade in Family & Privacy → Plan."]}
+            else:
+                txt = text or ""
+                if data and (mime.startswith("text/")):
+                    txt = data.decode("utf-8", "ignore")
+                out = AI.analyze_policy(None if mime.startswith("text/") else data, mime, txt)
+        elif kind == "card":
             out = AI.analyze_card(data, mime)
             if capped:
                 out = {"engine": "local", "kind": "card", "readable": False, "fields": {}, "ms": 0,
@@ -531,6 +584,50 @@ def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db), x_d
     return {**out, "cached": False}
 
 
+class MedCheckIn(BaseModel):
+    context: dict = {}
+    member: str = ""
+
+
+@r.post("/ai/medcheck")
+def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    """Medicine-safety check for one person: interactions, duplicates, allergy clashes, timing. Cached per medicine list per day."""
+    from . import agent
+    h = household(db, x_dokko_key)
+    if not h:
+        raise HTTPException(400, "missing household key")
+    if not agent.enabled():
+        raise HTTPException(503, "The medicine check is not available right now.")
+    meds = body.context.get("medicines") or []
+    if not meds:
+        return {"alerts": [], "duplicates": [], "timing": [], "ok": True, "cached": False}
+    # local checks first: an allergy named in a medicine's name is never allowed to wait for the model
+    allergies = [str(a).lower() for a in (body.context.get("allergies") or [])]
+    local = [{"level": "stop", "about": [m.get("name", "")], "title": "Listed allergy", "detail": f"{m.get('name', '')} matches an allergy on this profile ({a}). Do not take it; call the doctor or pharmacist."}
+             for m in meds for a in allergies if a and len(a) > 3 and a in str(m.get("name", "") + " " + m.get("generic", "")).lower()]
+    key = f"{h.id}:medcheck:{body.member[:32]}:{agent.ctx_key(body.context)}"
+    hit = db.get(AiCache, key)
+    if hit:
+        out = dict(hit.value)
+        out["alerts"] = local + [a for a in out.get("alerts", []) if a.get("title") != "Listed allergy"]
+        return {**out, "cached": True}
+    used, cap = _ai_quota(db, h, "insight", agent.INSIGHT_CAP)
+    if used >= cap:
+        raise HTTPException(429, f"This month's checks on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
+    t0 = time.time()
+    try:
+        out = AI.medcheck(body.context)
+    except Exception as e:
+        AI._fail("medicine check", e)
+        db.add(AiJob(household_id=h.id, kind="insight", engine="error", ok=False))
+        raise HTTPException(502, "The medicine check could not run right now.")
+    db.add(AiJob(household_id=h.id, kind="insight", engine="claude", ms=int((time.time() - t0) * 1000)))
+    out["alerts"] = local + out.get("alerts", [])
+    out["ok"] = not any(a["level"] != "note" for a in out["alerts"])
+    db.merge(AiCache(key=key, household_id=h.id, value=out))
+    return {**out, "cached": False}
+
+
 # ---- seasonal, videos, plans ----------------------------------------------------------------------------------------
 @r.get("/seasonal")
 def seasonal(month: int | None = None, region: str = "IN", db: Session = Depends(get_db)):
@@ -548,13 +645,18 @@ def videos(db: Session = Depends(get_db)):
     return {"videos": [{"id": v.id, "topic": v.topic, "title": v.title, "channel": v.channel, "yt": v.yt, "lang": v.lang, "minutes": v.minutes, "source": v.source} for v in rows]}
 
 
+def _upi_on() -> bool:
+    from .upipay import enabled
+    return enabled()
+
+
 @r.get("/plans")
 def plans(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     rows = db.scalars(select(Plan).where(Plan.active == True).order_by(Plan.sort)).all()  # noqa: E712
     subs = db.scalars(select(Subscription).where(Subscription.household_id == h.id).order_by(Subscription.started.desc()).limit(12)).all() if h else []
     return {"plans": [{"code": p.code, "name": p.name, "month": p.price_month, "year": p.price_year, "members": p.members, "features": p.features} for p in rows],
-            "current": h.plan if h else "free", "until": h.plan_until if h else None, "provider": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("soon" if os.getenv("APP_ENV", "production") == "production" else "demo"),
+            "current": h.plan if h else "free", "until": h.plan_until if h else None, "provider": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else (_upi_on() and "upi") or ("soon" if os.getenv("APP_ENV", "production") == "production" else "demo"),
             "keyId": os.getenv("RAZORPAY_KEY_ID", ""),
             "history": [{"id": s.id, "plan": s.plan, "period": s.period, "amount": s.amount, "status": s.status, "started": s.started, "renews": s.renews, "invoice": s.invoice_no, "provider": s.provider} for s in subs]}
 
@@ -581,7 +683,7 @@ def subscribe(body: SubReq, db: Session = Depends(get_db), x_dokko_key: str | No
     ref = ""
     if amount > 0 and not os.getenv("RAZORPAY_KEY_ID") and os.getenv("APP_ENV", "production") == "production":
         # a paid plan can only be activated by a verified payment; without a payment provider nothing is switched
-        raise HTTPException(503, "Paid plans open soon. You stay on the Free plan until online payment is live.")
+        raise HTTPException(503, "Pay by UPI from the plan page; the plan switches as soon as the payment is confirmed." if _upi_on() else "Paid plans open soon. You stay on the Free plan until online payment is live.")
     if os.getenv("RAZORPAY_KEY_ID") and amount > 0:
         from .payments import create_order, verify_payment
         if not body.paymentId:

@@ -36,6 +36,22 @@ ACTION = {"checking": "Start checking", "packing": "Packed", "out": "Out for del
           "processing": "In the lab", "ready": "Report ready", "cancelled": "Cancel", "returned": "Return received", "refunded": "Refund done"}
 
 
+def alert_store(db: Session, store_id: str, subject: str, text: str) -> int:
+    """Tell the store by email (owner address + every active sign-in) — they are not in the portal all day."""
+    from . import messaging
+    s = db.get(Store, store_id)
+    if not s:
+        return 0
+    tos = {u.email for u in db.scalars(select(PartnerUser).where(PartnerUser.store_id == store_id, PartnerUser.active == True)).all()}  # noqa: E712
+    if s.owner_email:
+        tos.add(s.owner_email.strip().lower())
+    n = 0
+    for t in tos:
+        if messaging.mail(t, f"[TheHealthTracker] {subject}", text + "\n\nOpen the partner portal: https://thehealthtracker.com/partner"):
+            n += 1
+    return n
+
+
 def me(request: Request, db: Session = Depends(get_db)) -> PartnerUser:
     p = verify(request.cookies.get(COOKIE))
     if not p or p.get("k") != "partner":
