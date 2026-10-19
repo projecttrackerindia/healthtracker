@@ -446,3 +446,73 @@ def test_app_downloads_and_fitbit_off_by_default():
     s = f.get("/api/v1/fitbit/status").json()
     assert s["enabled"] is False and s["links"] == []
     assert f.post("/api/v1/fitbit/start").status_code == 503
+
+
+def test_shop_package_order_upi_and_cod():
+    f, a = family(), admin()
+    sp = f.get("/api/v1/shop/products").json()
+    assert sp["store"] == "s_tht_shop" and sp["products"][0]["sku"] == "bag-complete" and sp["products"][0]["price"] > 0 and "S" in sp["products"][0]["sizes"]
+    p = sp["products"][0]
+    o = f.post("/api/v1/orders", json={"store": p["store"], "kind": "medicine", "items": [{"sku": p["sku"], "qty": 1, "size": "L"}], "address": "12 Road, Hyderabad - 500033", "member": "Prasanna", "memberId": "m1", "payment": "upi"}).json()
+    assert o["kind"] == "shop" and o["items"][0]["size"] == "L" and o["total"] == p["price"] and o["fee"] == 0 and o["steps"][3] == "Shipped"
+    pay = f.post("/api/v1/pay/upi/start", json={"kind": "order", "orderId": o["id"]}).json()
+    assert pay["amount"] == p["price"]
+    cod = f.post("/api/v1/orders", json={"store": p["store"], "kind": "medicine", "items": [{"sku": p["sku"], "qty": 2}], "address": "12 Road", "member": "P", "payment": "cod"}).json()
+    assert cod["total"] == 2 * p["price"]
+    assert f.post("/api/v1/orders", json={"store": p["store"], "kind": "medicine", "items": [{"sku": p["sku"]}], "address": "x", "member": "P", "payment": "bitcoin"}).status_code == 400
+    assert f.get(f"/api/v1/orders/{o['id']}/receipt.pdf").status_code == 200
+    # admin edits the product
+    r = a.put("/api/admin/products/bag-complete", json={"sku": "bag-complete", "name": "Hospital Bag · Complete", "price": 3499, "mrp": 4299, "stock": 10, "sizes": ["M", "L"], "includes": [{"group": "Mother", "name": "Nighties", "qty": 3}]})
+    assert r.status_code == 200 and r.json()["price"] == 3499 and r.json()["includes"][0]["qty"] == 3
+    assert f.get("/api/v1/shop/products").json()["products"][0]["price"] == 3499
+
+
+def test_blood_network_request_offer_accept_track():
+    f, a = family(), admin()
+    with DB.session() as db:
+        bb = Store(kind="bloodbank", name="Red Cross Blood Bank", city="Hyderabad", area="Vidyanagar", lat=17.405, lng=78.52, verified=True, phone="04027633087")
+        db.add(bb); db.flush(); bid = bb.id
+    r = a.post(f"/api/admin/stores/{bid}/users", json={"email": f"bb{uuid.uuid4().hex[:5]}@rc.in", "name": "Desk", "role": "owner"}).json()
+    pb = TestClient(server.app); pb.post("/api/partner/login", json={"email": r["email"], "password": r["tempPassword"]})
+    # a donor registers (O-, 6 km away, eligible)
+    d = f.put("/api/v1/donor", json={"member": "m1", "name": "Prasanna Daddala", "group": "O-", "phone": "+919876543210", "lat": 17.44, "lng": 78.49, "city": "Hyderabad", "sex": "male", "consent": True})
+    assert d.status_code == 200 and d.json()["group"] == "O-" and d.json()["located"]
+    assert f.put("/api/v1/donor", json={"member": "m1", "group": "O-", "consent": False}).status_code == 400
+    # the blood bank raises a request for A+ within 25 km → the O- donor is notified
+    q = pb.post("/api/partner/blood", json={"group": "A+", "component": "whole", "units": 2, "urgency": "now", "patient": "Ravi", "ward": "Blood bank, ground floor", "notes": "bring ID"})
+    assert q.status_code == 200, q.text
+    q = q.json(); assert q["notified"] == 1 and q["status"] == "open"
+    n = f.get("/api/v1/inbox").json()["notices"][0]
+    assert n["kind"] == "blood" and n["ref"]["request"] == q["id"] and "A+" in n["title"]
+    near = f.get("/api/v1/blood/requests?lat=17.44&lng=78.49&group=O-").json()["requests"]
+    assert near[0]["id"] == q["id"] and near[0]["km"] < 10 and "phone" not in near[0]
+    # a family without a donor profile cannot respond; the donor can
+    g2 = family()
+    assert g2.post(f"/api/v1/blood/{q['id']}/respond", json={"member": "m1"}).status_code == 400
+    assert f.post(f"/api/v1/blood/{q['id']}/respond", json={"member": "m1", "lat": 17.44, "lng": 78.49}).json()["response"] == "offered"
+    # location is not shared before the hospital accepts; the hospital sees a masked name
+    assert f.post(f"/api/v1/blood/{q['id']}/location", json={"lat": 17.43, "lng": 78.5}).status_code == 400
+    view = pb.get("/api/partner/blood").json()["requests"][0]
+    assert view["responses"][0]["status"] == "offered" and view["responses"][0]["phone"] == "" and view["responses"][0]["name"].endswith("…")
+    xid = view["responses"][0]["id"]
+    acc = pb.post(f"/api/partner/blood/{q['id']}/responses/{xid}", json={"action": "accept"}).json()
+    assert acc["responses"][0]["status"] == "accepted" and acc["responses"][0]["phone"] == "+919876543210" and acc["responses"][0]["name"] == "Prasanna"
+    mine = f.get(f"/api/v1/blood/{q['id']}").json()
+    assert mine["mine"]["status"] == "accepted" and mine["ward"].startswith("Blood bank") and mine["phone"]
+    loc = f.post(f"/api/v1/blood/{q['id']}/location", json={"lat": 17.42, "lng": 78.51, "status": "on_way"}).json()
+    assert loc["status"] == "on_way" and loc["eta"] >= 1
+    live = pb.get(f"/api/partner/blood/{q['id']}").json()["responses"][0]
+    assert live["status"] == "on_way" and live["lat"] == 17.42 and live["eta"]
+    arr = f.post(f"/api/v1/blood/{q['id']}/location", json={"lat": 17.4051, "lng": 78.5201}).json()
+    assert arr["status"] == "arrived"
+    done = pb.post(f"/api/partner/blood/{q['id']}/responses/{xid}", json={"action": "donated"}).json()
+    assert done["responses"][0]["status"] == "donated"
+    assert f.get("/api/v1/donor").json()["donors"][0]["donations"] == 1
+    assert f.post(f"/api/v1/blood/{q['id']}/respond", json={"member": "m1"}).status_code == 400  # too soon now
+    assert pb.post(f"/api/partner/blood/{q['id']}/status", json={"status": "fulfilled"}).json()["status"] == "fulfilled"
+    # a pharmacy cannot raise requests
+    with DB.session() as db:
+        ph = Store(kind="pharmacy", name="Apollo", city="Hyderabad", area="x", lat=17.4, lng=78.5, verified=True); db.add(ph); db.flush(); pid = ph.id
+    r2 = a.post(f"/api/admin/stores/{pid}/users", json={"email": f"ph{uuid.uuid4().hex[:5]}@ap.in", "name": "Desk", "role": "owner"}).json()
+    pp = TestClient(server.app); pp.post("/api/partner/login", json={"email": r2["email"], "password": r2["tempPassword"]})
+    assert pp.post("/api/partner/blood", json={"group": "A+"}).status_code == 403

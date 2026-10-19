@@ -232,6 +232,7 @@ def _eta_text(m):
 
 # ---- orders ---------------------------------------------------------------------------------------------------------
 STEPS_MED = [("placed", "Order placed"), ("checking", "Pharmacist checking"), ("packing", "Packing"), ("out", "Out for delivery"), ("delivered", "Delivered")]
+STEPS_SHOP = [("placed", "Order placed"), ("checking", "Confirmed"), ("packing", "Packed"), ("out", "Shipped"), ("delivered", "Delivered")]
 STEPS_LAB = [("placed", "Booked"), ("confirmed", "Phlebotomist assigned"), ("collected", "Sample collected"), ("processing", "In the lab"), ("ready", "Report ready")]
 DEMO_SECONDS = [0, 20, 60, 120, 240]  # demo clock: how the status advances when no partner app is connected
 
@@ -280,7 +281,7 @@ def addr_line(a: dict | None) -> str:
 
 
 def _status(o: Order):
-    steps = STEPS_LAB if o.kind == "lab" else STEPS_MED
+    steps = STEPS_LAB if o.kind == "lab" else STEPS_SHOP if o.kind == "shop" else STEPS_MED
     if o.status == "cancelled":
         return steps, -1
     live = max(i for i, (k, _) in enumerate(steps) if any(t["s"] == k for t in (o.timeline or [])) or i == 0)
@@ -326,7 +327,10 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
                 continue
             q = max(1, min(20, int(i.get("qty", 1))))
             rx = bool(i.get("rx")) or bool(CATALOG_RX.get(it.sku))  # the catalogue decides, not the browser
-            lines.append({"sku": it.sku, "name": it.name, "qty": q, "price": it.price, "mrp": it.mrp, "rx": rx, "member": str(i.get("member", ""))[:40]})
+            line = {"sku": it.sku, "name": it.name, "qty": q, "price": it.price, "mrp": it.mrp, "rx": rx, "member": str(i.get("member", ""))[:40]}
+            if i.get("size"):
+                line["size"] = str(i.get("size"))[:12]
+            lines.append(line)
             sub += it.price * q
             disc += (it.mrp - it.price) * q
             it.stock = max(0, it.stock - q)
@@ -336,7 +340,10 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
     if body.kind != "lab" and any(l.get("rx") for l in lines) and not body.rxShared:
         raise HTTPException(400, "This order has prescription-only medicines. Upload or choose the prescription first; the pharmacist must see it before dispensing.")
     rx_files = [str(x)[:48] for x in body.rxDocs[:6]] if body.rxShared else []
-    o = Order(household_id=h.id, store_id=s.id, kind=body.kind, items=lines, subtotal=sub, fee=fee, discount=disc, total=sub + fee,
+    kind = "lab" if body.kind == "lab" else "shop" if s.kind == "shop" else "medicine"
+    if body.kind != "lab" and body.payment not in ("cod", "upi", "online"):
+        raise HTTPException(400, "payment must be cod or upi")
+    o = Order(household_id=h.id, store_id=s.id, kind=kind, items=lines, subtotal=sub, fee=fee, discount=disc, total=sub + fee,
               address=(body.address or addr_line(clean_addr(body.addr)))[:240], addr=clean_addr(body.addr), member=body.member[:80], member_id=body.memberId[:32] or None, rx_files=rx_files, rx_shared=body.rxShared, slot=body.slot[:40], payment=body.payment[:24],
               timeline=[{"s": "placed", "t": now()}], eta=now() + s.eta_min * 60)
     db.add(o)

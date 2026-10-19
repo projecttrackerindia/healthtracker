@@ -88,6 +88,10 @@ def _init_db():
     ensure_columns()
     with session() as db:
         seed_all(db)
+        try:
+            shop_api.ensure_shop(db)
+        except Exception as e:
+            print("[shop] seed failed:", str(e)[:160], flush=True)
     reminders.start()
     proactive_api.start()
 
@@ -119,9 +123,14 @@ app.include_router(upipay_api.r)
 app.include_router(upipay_api.ar)
 from api import digilocker as digilocker_api  # noqa: E402
 app.include_router(digilocker_api.r)
-from api import apps as apps_api, fitbit as fitbit_api  # noqa: E402
+from api import apps as apps_api, fitbit as fitbit_api, shop as shop_api  # noqa: E402
 app.include_router(apps_api.r)
 app.include_router(fitbit_api.r)
+app.include_router(shop_api.r)
+app.include_router(shop_api.ar)
+from api import blood as blood_api  # noqa: E402
+app.include_router(blood_api.r)
+app.include_router(blood_api.pr)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)
