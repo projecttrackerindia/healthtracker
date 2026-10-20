@@ -36,8 +36,46 @@ def _use_resend() -> bool:
     return bool(os.getenv("RESEND_API_KEY"))
 
 
+def sms_mode() -> str:
+    """Who delivers mobile codes: msg91 / twilio send our own 6-digit code; firebase = Firebase Phone Authentication sends and
+    checks the SMS itself (Google handles the Indian DLT registration) and the browser hands us an ID token to verify."""
+    if os.getenv("MSG91_AUTH_KEY") and os.getenv("MSG91_TEMPLATE_ID"):
+        return "msg91"
+    if os.getenv("TWILIO_ACCOUNT_SID") and os.getenv("TWILIO_AUTH_TOKEN"):
+        return "twilio"
+    if os.getenv("FIREBASE_WEB_API_KEY"):
+        return "firebase"
+    return ""
+
+
 def sms_ready() -> bool:
-    return bool((os.getenv("MSG91_AUTH_KEY") and os.getenv("MSG91_TEMPLATE_ID")) or (os.getenv("TWILIO_ACCOUNT_SID") and os.getenv("TWILIO_AUTH_TOKEN")))
+    return bool(sms_mode())
+
+
+def firebase_web_config() -> dict | None:
+    """What the browser needs to start a phone verification; empty unless Firebase is the SMS channel."""
+    if sms_mode() != "firebase":
+        return None
+    return {"apiKey": os.getenv("FIREBASE_WEB_API_KEY"), "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN") or f"{os.getenv('FIREBASE_PROJECT_ID', '')}.firebaseapp.com",
+            "projectId": os.getenv("FIREBASE_PROJECT_ID", ""), "appId": os.getenv("FIREBASE_APP_ID", "")}
+
+
+def firebase_phone(id_token: str) -> str:
+    """Verify a Firebase ID token with Google and return the phone number it certifies (E.164), or '' when it is not valid.
+    accounts:lookup checks signature, expiry and project server-side, so no key material lives here."""
+    if not id_token or sms_mode() != "firebase":
+        return ""
+    body = json.dumps({"idToken": id_token}).encode()
+    req = urllib.request.Request("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + urllib.parse.quote(os.getenv("FIREBASE_WEB_API_KEY", "")),
+                                 data=body, headers={"Content-Type": "application/json", "User-Agent": UA}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            j = json.loads(r.read().decode())
+    except Exception as e:
+        print("[auth] firebase lookup failed:", str(e)[:160], flush=True)
+        return ""
+    users = j.get("users") or []
+    return str(users[0].get("phoneNumber") or "") if users else ""
 
 
 def demo() -> bool:

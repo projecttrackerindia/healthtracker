@@ -384,7 +384,7 @@ b.addEventListener('click',function(){set(!document.body.classList.contains('men
   </div>
 </div></div>
 
-<script src="/s/auth.js"></script>
+<script src="/s/auth.js?v=20"></script>
 <script>
 (()=>{
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -410,7 +410,8 @@ function clearAuthState(){try{sessionStorage.removeItem(AS_KEY)}catch(e){}}
 function restoreAuthState(){try{const s=JSON.parse(sessionStorage.getItem(AS_KEY));if(s&&s.flow&&s.codeKind&&Date.now()-s.t<10*60*1000){flow=s.flow;codeKind=s.codeKind;lastId=s.lastId;open(codeKind==='signup'||codeKind==='second'?'signup':codeKind==='reset'?'reset':'signin');codeView(s.h,s.sub);return true}}catch(e){}return false}
 function say(t,kind='err'){msg.className='msg on '+kind;msg.textContent=t}
 function hush(){msg.className='msg';demoBox.className='msg demo'}
-function demo(r){if(r&&r.demo){demoBox.className='msg demo on';demoBox.textContent='Demo mode — code: '+r.demo}}
+function demo(r){if(r&&r.demo){demoBox.className='msg demo on';demoBox.textContent='Demo mode — code: '+r.demo}if(r&&r.firebase&&r.phone){THT.phone.send(r.phone).catch(err=>say(err.message))}}
+const codeBody=async c=>({flow,code:c,firebaseToken:THT.phone.pending()?await THT.phone.token(c):undefined});
 function busy(btn,on){if(!btn)return;if(on){btn.dataset.t=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="spin"></span>'}else if(btn.dataset.t){btn.disabled=false;btn.innerHTML=btn.dataset.t}}
 function show(v,{keepMsg}={}){view=v;if(!keepMsg)hush();$$('.v').forEach(e=>e.hidden=e.dataset.v!==v);if(ac){ac.abort();ac=null}
  if(v==='signin')conditional();const f=$(`.v[data-v="${v}"] input:not([hidden]):not([type=checkbox])`);setTimeout(()=>f&&f.focus({preventScroll:true}),60);
@@ -448,10 +449,10 @@ let rsT=0;function codeView(h,sub){$('#codeH').textContent=h;$('#codeSub').textC
 async function resend(){hush();try{if(codeKind==='second'){const me=ME||(await THT.api('/me')).user;const r=await THT.api('/contact/start',{value:lastId==='phone'?me.phone:me.email});flow=r.flow;demo(r);const h=$('#codeH').textContent,sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}else if(codeKind==='signup'){const r=await THT.api('/signup/start',signupBody());flow=r.flow;demo(r);const h='Check your inbox',sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}else if(codeKind==='step'){$('#fPw').requestSubmit()}else{const r=await THT.api('/otp/start',{id:lastId,purpose:codeKind});flow=r.flow;demo(r);const h=$('#codeH').textContent,sub='We sent a new code to '+r.sentTo+'.';codeView(h,sub);saveAuthState(h,sub)}}catch(e){say(e.message)}}
 $('#codeBack').onclick=()=>{clearAuthState();if(codeKind==='second'){location.href=NEXT;return}show(codeKind==='signup'?'signup':codeKind==='reset'?'reset':'signin')};
 $('#fCode').addEventListener('submit',async e=>{e.preventDefault();const c=code();if(c.length!==6){say('Enter all 6 digits.');return}const b=$('#fCode .btn.b');hush();busy(b,true);
- try{if(codeKind==='signup'){finish(await THT.api('/signup/verify',{flow,code:c}))}
-  else if(codeKind==='second'){await THT.api('/contact/verify',{flow,code:c});finish({user:ME||(await THT.api('/me')).user})}
-  else if(codeKind==='step'){finish(await THT.api('/step/verify',{flow,code:c}))}
-  else{const r=await THT.api('/otp/verify',{flow,code:c});if(r.reset){flow=r.reset;show('newpw');return}finish(r)}}
+ try{if(codeKind==='signup'){finish(await THT.api('/signup/verify',await codeBody(c)))}
+  else if(codeKind==='second'){await THT.api('/contact/verify',await codeBody(c));finish({user:ME||(await THT.api('/me')).user})}
+  else if(codeKind==='step'){finish(await THT.api('/step/verify',await codeBody(c)))}
+  else{const r=await THT.api('/otp/verify',await codeBody(c));if(r.reset){flow=r.reset;show('newpw');return}finish(r)}}
  catch(err){say(err.message);boxes.forEach(x=>x.value='');boxes[0].focus()}finally{busy(b,false)}});
 // ---------- password rules, meter, generator ----------
 function ctx(){return{name:$('#un').value,email:$('#ue').value,phone:$('#up').value}}

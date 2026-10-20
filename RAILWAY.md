@@ -63,7 +63,15 @@ OTP_DEMO=0
 | `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
-### Round 19 — watches and devices (2026-10-20)
+### Round 20 — mobile codes through Firebase Phone Authentication (2026-10-20)
+
+* `MAIL`/SMS channels: `messaging.sms_mode()` = msg91 | twilio | **firebase** (`FIREBASE_WEB_API_KEY` + `FIREBASE_PROJECT_ID` + `FIREBASE_APP_ID`). With Firebase, a start answer carries `{firebase:true, phone}`; the browser runs `THT.phone.send/token` (Firebase JS, invisible reCAPTCHA) and verifies with `{flow, firebaseToken}`; the server checks the token with `accounts:lookup` and matches the number (`auth.verify_code`). Unknown numbers get the same answer as known ones.
+* `/auth/config` → `firebase` web config. CSP allows gstatic / identitytoolkit / recaptcha.
+* Fixed: the in-app two-step verify sent `{step}` instead of `{flow}`.
+* Fitbit card announces the 30 Oct 2026 shutdown; `docs/wearables.md` covers the Google Health API.
+* Service worker `dk-r20`.
+
+## Round 19 — watches and devices (2026-10-20)
 
 * Bluetooth inside the phone apps: `@capacitor-community/bluetooth-le` wrapped as `navigator.bluetooth` (layer 19), so "Read from a device" (BP monitors, oximeters, scales, thermometers, HR straps) and the Polar H10 live ECG work in the Android/iOS WebView, not only in Chrome. Android manifest gains `BLUETOOTH_SCAN` (neverForLocation) and `BLUETOOTH_CONNECT`.
 * Withings and Oura clouds beside Fitbit (`api/wearables.py`, `/api/v1/wear/*`); Withings brings ScanWatch ECG strips with their AFib classification. Each switches on when its developer keys exist (`deploy/gcp/secrets.txt`). See `docs/wearables.md` for the full map of which watch takes which road.
