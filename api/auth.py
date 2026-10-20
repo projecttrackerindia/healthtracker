@@ -109,6 +109,9 @@ def secure(request: Request) -> bool:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+IDLE_SECONDS = int(os.getenv("SESSION_IDLE_MINUTES", "30")) * 60
+
+
 def current_user(request: Request, db: Session) -> User | None:
     t = request.cookies.get(COOKIE)
     if not t:
@@ -119,7 +122,10 @@ def current_user(request: Request, db: Session) -> User | None:
     u = db.get(User, s.user_id)
     if not u or u.disabled:
         return None
-    if now() - s.last_seen > 600:
+    if now() - s.last_seen > IDLE_SECONDS:  # signed out after 30 minutes without a request (health data on a shared or lost phone)
+        db.delete(s)
+        return None
+    if now() - s.last_seen > 60:
         s.last_seen = now()
     return u
 
