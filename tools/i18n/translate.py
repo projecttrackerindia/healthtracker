@@ -77,12 +77,42 @@ def main() -> None:
     OUT.write_text(json.dumps(merged, ensure_ascii=False, indent=0), encoding="utf-8")
     print("wrote", OUT, len(merged), "phrases")
     if "--upload" in sys.argv:
-        import boto3
-        kw = {"region_name": os.getenv("S3_REGION") or "auto", "aws_access_key_id": os.environ["S3_ACCESS_KEY"], "aws_secret_access_key": os.environ["S3_SECRET_KEY"]}
-        if os.getenv("S3_ENDPOINT"):
-            kw["endpoint_url"] = os.environ["S3_ENDPOINT"]
-        boto3.client("s3", **kw).put_object(Bucket=os.environ["S3_BUCKET"], Key="i18n/phrases.json", Body=OUT.read_bytes(), ContentType="application/json")
-        print("uploaded to the bucket: live now at /api/v1/i18n")
+        upload()
+
+
+def bucket() -> str:
+    """S3_BUCKET from the environment, or the one the deploy settings name (so --upload works from a clean shell)."""
+    if os.getenv("S3_BUCKET"):
+        return os.environ["S3_BUCKET"]
+    env = ROOT / "deploy" / "gcp" / "env.yaml"
+    if env.exists():
+        m = re.search(r'^S3_BUCKET:\s*"?([^"\n]+)"?', env.read_text(encoding="utf-8"), re.M)
+        if m:
+            return m.group(1).strip()
+    return ""
+
+
+def upload() -> None:
+    """Put the table in the bucket, where /api/v1/i18n picks it up within the hour — no release needed.
+
+    Needs S3_ACCESS_KEY / S3_SECRET_KEY (the HMAC pair the app uses). On Google Cloud, `gsutil cp site/i18n/phrases.json
+    gs://<bucket>/i18n/phrases.json` does the same job with your own login and no keys.
+    """
+    b = bucket()
+    if not (b and os.getenv("S3_ACCESS_KEY") and os.getenv("S3_SECRET_KEY")):
+        print("not uploaded: set S3_BUCKET, S3_ACCESS_KEY and S3_SECRET_KEY (or copy the file up with gsutil)", flush=True)
+        return
+    import boto3
+    kw = {"region_name": os.getenv("S3_REGION") or "auto", "aws_access_key_id": os.environ["S3_ACCESS_KEY"], "aws_secret_access_key": os.environ["S3_SECRET_KEY"]}
+    if os.getenv("S3_ENDPOINT"):
+        kw["endpoint_url"] = os.environ["S3_ENDPOINT"]
+    try:
+        boto3.client("s3", **kw).put_object(Bucket=b, Key="i18n/phrases.json", Body=OUT.read_bytes(), ContentType="application/json")
+    except Exception as e:  # noqa: BLE001  — the translations are already on disk; say what to do instead
+        print(f"not uploaded ({type(e).__name__}: {str(e)[:140]}).", flush=True)
+        print(f"  try: gsutil -h 'Content-Type:application/json' cp {OUT.relative_to(ROOT)} gs://{b}/i18n/phrases.json", flush=True)
+        return
+    print("uploaded to the bucket: live now at /api/v1/i18n")
 
 
 if __name__ == "__main__":
