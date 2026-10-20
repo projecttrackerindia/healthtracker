@@ -20,12 +20,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "i18n"))
-sys.path.insert(0, str(ROOT))
 from core import CORE  # noqa: E402
 
 OUT = ROOT / "site" / "i18n" / "phrases.json"
 MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
-from api.i18n import RULES  # noqa: E402  (one set of rules for the build-time pass and the server's background translator)
+from core import RULES  # noqa: E402
 
 
 def phrases() -> list[str]:
