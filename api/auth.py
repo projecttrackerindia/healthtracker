@@ -516,7 +516,10 @@ def pk_login_options(body: PkStart, request: Request, db: Session = Depends(get_
             allow = [PublicKeyCredentialDescriptor(id=base64url_to_bytes(p.id)) for p in u.passkeys]
     opts = generate_authentication_options(rp_id=host, allow_credentials=allow, user_verification=UserVerificationRequirement.REQUIRED, timeout=120000)
     f = new_flow(db, "auth", 5, challenge=bytes_to_base64url(opts.challenge))
-    return {"flow": f.id, "options": json.loads(options_to_json(opts))}
+    # "known": the account named has at least one passkey. Without it the browser would show its own "scan a QR code / use a
+    # security key" sheet (no passkey on this phone yet), which reads as if Face ID or fingerprint were missing. The app asks
+    # for a password or code instead and offers to create the passkey right after.
+    return {"flow": f.id, "options": json.loads(options_to_json(opts)), "known": bool(allow) if body.id.strip() else None}
 
 
 @r.post("/passkey/login/verify", dependencies=[Depends(csrf)])
