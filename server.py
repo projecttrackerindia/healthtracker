@@ -206,6 +206,9 @@ TYPES = {
     ".png": "image/png",
     ".ico": "image/x-icon",
     ".txt": "text/plain; charset=utf-8",
+    ".webp": "image/webp",    # with X-Content-Type-Options: nosniff, Safari shows a broken image for a wrong type
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".avif": "image/avif",
+    ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".woff": "font/woff", ".ttf": "font/ttf", ".pdf": "application/pdf", ".apk": "application/vnd.android.package-archive",
 }
 COMPRESSIBLE = {".html", ".js", ".css", ".json", ".svg", ".webmanifest", ".txt"}
 NO_CACHE = {"index.html", "sw.js", "manifest.webmanifest"}

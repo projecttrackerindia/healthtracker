@@ -156,6 +156,8 @@ Variables: none required (Google STUN is used). For calls across strict mobile n
 
 **Signed-out lock (round 16a).** Nothing of a family's record is painted while nobody is signed in — on the website, in the installed web app and in the native shells. An expired or idle session shows the full-screen sign-in with the record hidden; a device that has ever seen an account stays locked offline too. The only way to see sample data is to ask for the demo (the "See a demo with a sample family" link on the sign-in screen, or `/app?demo=1` from the website): a fictional family in memory only, never saved to the device, and the server refuses every write from a `demo-…` key (403) except `/hello` and `/beacon`; housekeeping deletes demo households after an hour.
 
+**Passkeys and the domain.** Passkeys are bound to the domain the app is opened on. `RP_ID` names the canonical domain; when the app is opened on any other host that serves it (the `*.up.railway.app` address before the custom domain is attached, a staging host), that host is used as the relying party automatically — otherwise every passkey call fails with a browser SecurityError. A passkey made on one domain does not work on another, so attach the custom domain (Railway → service → Settings → Networking → Custom domain) before asking families to create passkeys, and keep `RP_ID=thehealthtracker.com`. The in-app sign-in offers "Sign in with a passkey" and the automatic (autofill) prompt; after a sign-in on a device with a platform authenticator the app offers to create one (once per 30 days if declined).
+
 ## Operations checklist
 
 * `/admin` → **System** shows the clinical reviewer, which services are on (smart reading, documents, push) and the last 100 app errors reported by phones.

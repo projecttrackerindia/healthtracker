@@ -60,4 +60,25 @@ const hello0=SX.hello;SX.hello=function(){if(S.demo)return Promise.resolve();ret
 const sync0=SX.sync;if(sync0&&sync0.push){const push0=sync0.push,pull0=sync0.pull;sync0.push=function(){if(S.demo)return;return push0.apply(this,arguments)};sync0.pull=function(){if(S.demo)return;return pull0.apply(this,arguments)}}
 // opened on purpose: /app?demo=1 from the website, the "See a demo" link on the sign-in screen, or a reload inside the demo
 if(qs.get('demo')==='1'||ss('tht.demo')==='1'||S.demo){try{history.replaceState(null,'',location.pathname)}catch(e){}setTimeout(enterDemo,50)}
+
+// ---------------------------------------------------------------- C. passkeys on the in-app sign-in, and an offer to make one after signing in
+const loadAuthJs=()=>window.THT?Promise.resolve():new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='/s/auth.js';sc.onload=res;sc.onerror=rej;document.head.append(sc)});
+const pkErr=(f,m)=>{const e=f&&f.querySelector('.lv15-err');if(e){e.textContent=m;e.hidden=false}else toast(m)};
+let pkAbort=null;
+async function pkSignin(conditional){const f=document.getElementById('lv15f');try{await loadAuthJs();if(!THT.passkey.supported()){if(!conditional)pkErr(f,P('This browser has no passkey support; use your password or a one-time code.'));return}
+ if(conditional){if(!(await THT.passkey.conditional()))return;pkAbort=new AbortController();try{await THT.passkey.signin({conditional:true,signal:pkAbort.signal})}catch(e){if(String(e.message)!=='aborted'&&!/cancel/i.test(e.message))return;return}}
+ else{if(pkAbort){pkAbort.abort();pkAbort=null}const id=f&&f.id?f.id.value.trim():'';await THT.passkey.signin({id})}
+ try{sessionStorage.removeItem('tht.skipauth')}catch(e){}location.reload()}catch(e){if(!conditional)pkErr(f,e.message)}}
+document.addEventListener('click',e=>{const b=e.target.closest('#lv15pk');if(b){e.preventDefault();pkSignin(false)}});
+// the autofill (conditional) passkey prompt as soon as the sign-in form is on screen
+new MutationObserver(()=>{const f=document.getElementById('lv15f');if(f&&f.id&&!f.dataset.pk){f.dataset.pk='1';pkSignin(true)}}).observe(document.body,{childList:true,subtree:true});
+// after a sign-in on a device that can hold a passkey: offer once (again after 30 days if declined)
+SX.pkOffer=()=>pkOffer();
+async function pkOffer(){if(S.demo||!SX.user||SX.user.passkeys>0)return;const last=+(ls('tht.pkoffer')||0);if(Date.now()-last<30*864e5)return;
+ try{await loadAuthJs();if(!THT.passkey.supported()||!(await THT.passkey.platform()))return}catch(e){return}
+ ls('tht.pkoffer',String(Date.now()));
+ SX.modal(`<h2>${P('Sign in faster next time')}</h2><p class="mute">${P('Create a passkey and sign in with your fingerprint, face or screen lock — no password to type. It stays on this device and syncs through your platform account.')}</p><div class="lv-row-end"><button class="btn s" id="pkno">${P('Not now')}</button><button class="btn p" id="pkyes">${P('Create a passkey')}</button></div>`,{label:'Passkey'});
+ document.getElementById('pkno').onclick=()=>SX.closeModal();
+ document.getElementById('pkyes').onclick=async()=>{const b=document.getElementById('pkyes');b.disabled=true;try{const r=await THT.passkey.register('');SX.user=r.user||SX.user;if(SX.user)SX.user.passkeys=(SX.user.passkeys||0)+1;SX.closeModal();toast(P('Passkey created — next time, just your fingerprint or face'))}catch(e){b.disabled=false;toast(e.message)}}}
+(async()=>{for(let i=0;i<60&&!SX.user;i++)await new Promise(r=>setTimeout(r,500));if(!SX.user)return;for(let i=0;i<120&&document.querySelector('.sx-modal');i++)await new Promise(r=>setTimeout(r,1000));setTimeout(pkOffer,1500)})();
 }

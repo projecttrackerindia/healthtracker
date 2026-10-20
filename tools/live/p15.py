@@ -36,6 +36,9 @@ one("function closeAuth(){const el=document.getElementById('lv15auth');if(el)el.
 one('if(sessionStorage.getItem("tht.splashed")==="1"||!matchMedia("(max-width:720px)").matches)s.style.display="none"',
     'if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"')
 one("if(splash){if(!wantsAppFlow()||splashed){splash.remove();splash=null}", "if(splash){if(splashed){splash.remove();splash=null}")
+# a passkey button on the in-app sign-in (the screen had password and one-time code only)
+one("<button class=\"btn p lv15-main\">${P('Sign in')}</button><div class=\"lv15-alt\">",
+    "<button class=\"btn p lv15-main\">${P('Sign in')}</button><button type=\"button\" class=\"btn s lv15-pk\" id=\"lv15pk\">${P('Sign in with a passkey')}</button><div class=\"lv15-alt\">")
 HEAD = "</head>\n<body>"
 if s.count(HEAD) != 1:
     sys.exit("head anchor")

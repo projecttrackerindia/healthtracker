@@ -1631,6 +1631,7 @@ body.lv16-lock{overflow:hidden}
 @media(min-width:721px){.lv16-demo{bottom:22px}}
 @media(min-width:721px){.lv15-auth{display:flex;align-items:center;justify-content:center}.lv15-auth .lv15-ain{min-height:0;background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:24px;padding:28px 28px 20px;box-shadow:0 30px 80px rgba(16,24,40,.12)}}
 .lv15-skip{margin-top:14px}
+.lv15-pk{width:100%;margin-top:10px}
 </style>
 </head>
 <body>
@@ -7346,7 +7347,7 @@ function paint(m){mode=m;const el=document.getElementById('lv15auth');if(!el)ret
  const seg=`<div class="lv15-seg"><button class="${mode==='in'?'on':''}" data-m="in">${P('Sign in')}</button><button class="${mode==='up'?'on':''}" data-m="up">${P('Create account')}</button></div>`;
  let body='';
  if(mode==='code')body=`<h2>${E(pending.title)}</h2><p class="mute">${E(pending.sub)}</p><form id="lv15f"><input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" class="lv15-code" required autofocus>${pending.demo?`<p class="lv15-demo">${P('Demo code')}: <b>${E(pending.demo)}</b></p>`:''}<p class="lv15-err" hidden></p><button class="btn p lv15-main">${P('Verify')}</button><button type="button" class="lv15-link" data-m="${pending.back||'in'}">${P('Back')}</button></form>`;
- else if(mode==='in')body=`<h2>${P('Welcome back')}</h2><p class="mute">${P('Sign in to see your family’s records.')}</p><form id="lv15f"><label>${P('Email or mobile')}<input name="id" autocomplete="username" required inputmode="email"></label><label>${P('Password')}<input name="pw" type="password" autocomplete="current-password" required></label><p class="lv15-err" hidden></p><button class="btn p lv15-main">${P('Sign in')}</button><div class="lv15-alt"><button type="button" class="lv15-link" id="lv15otp">${P('Use a one-time code instead')}</button><a class="lv15-link" href="/reset">${P('Forgot password?')}</a></div></form>`;
+ else if(mode==='in')body=`<h2>${P('Welcome back')}</h2><p class="mute">${P('Sign in to see your family’s records.')}</p><form id="lv15f"><label>${P('Email or mobile')}<input name="id" autocomplete="username" required inputmode="email"></label><label>${P('Password')}<input name="pw" type="password" autocomplete="current-password" required></label><p class="lv15-err" hidden></p><button class="btn p lv15-main">${P('Sign in')}</button><button type="button" class="btn s lv15-pk" id="lv15pk">${P('Sign in with a passkey')}</button><div class="lv15-alt"><button type="button" class="lv15-link" id="lv15otp">${P('Use a one-time code instead')}</button><a class="lv15-link" href="/reset">${P('Forgot password?')}</a></div></form>`;
  else if(mode==='up')body=`<h2>${P('Create your family’s account')}</h2><p class="mute">${P('Name as on Aadhaar; mobile and email are verified once.')}</p><form id="lv15f"><label>${P('Full name')}<input name="name" autocomplete="name" required maxlength="80"></label><label>${P('Mobile')}<input name="phone" inputmode="tel" autocomplete="tel" required maxlength="14" placeholder="98765 43210"></label><label>${P('Email')}<input name="email" type="email" autocomplete="email" required></label><label>${P('Password')}<input name="pw" type="password" autocomplete="new-password" required minlength="12" placeholder="${E(P('12+ characters, letters, a number, a symbol'))}"></label><label class="lv15-ck"><input type="checkbox" name="terms" required><span>${P('I agree to the')} <a href="/terms" target="_blank" rel="noopener">${P('Terms')}</a> ${P('and')} <a href="/privacy" target="_blank" rel="noopener">${P('Privacy Policy')}</a>.</span></label><p class="lv15-err" hidden></p><button class="btn p lv15-main">${P('Create account')}</button></form>`;
  el.innerHTML=`<div class="lv15-ain">${head}${mode==='code'?'':seg}${body}<button class="lv15-skip" id="lv15skip">${P('See a demo with a sample family')}</button><small class="lv15-foot">🔒 ${P('Encrypted, stored in India')} · ${P('passkeys after sign-in')}</small></div>`;
  el.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>paint(b.dataset.m));const sk=document.getElementById('lv15skip');if(sk)sk.onclick=()=>{if(SX.demo)SX.demo.enter()};
@@ -7463,6 +7464,27 @@ const hello0=SX.hello;SX.hello=function(){if(S.demo)return Promise.resolve();ret
 const sync0=SX.sync;if(sync0&&sync0.push){const push0=sync0.push,pull0=sync0.pull;sync0.push=function(){if(S.demo)return;return push0.apply(this,arguments)};sync0.pull=function(){if(S.demo)return;return pull0.apply(this,arguments)}}
 // opened on purpose: /app?demo=1 from the website, the "See a demo" link on the sign-in screen, or a reload inside the demo
 if(qs.get('demo')==='1'||ss('tht.demo')==='1'||S.demo){try{history.replaceState(null,'',location.pathname)}catch(e){}setTimeout(enterDemo,50)}
+
+// ---------------------------------------------------------------- C. passkeys on the in-app sign-in, and an offer to make one after signing in
+const loadAuthJs=()=>window.THT?Promise.resolve():new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='/s/auth.js';sc.onload=res;sc.onerror=rej;document.head.append(sc)});
+const pkErr=(f,m)=>{const e=f&&f.querySelector('.lv15-err');if(e){e.textContent=m;e.hidden=false}else toast(m)};
+let pkAbort=null;
+async function pkSignin(conditional){const f=document.getElementById('lv15f');try{await loadAuthJs();if(!THT.passkey.supported()){if(!conditional)pkErr(f,P('This browser has no passkey support; use your password or a one-time code.'));return}
+ if(conditional){if(!(await THT.passkey.conditional()))return;pkAbort=new AbortController();try{await THT.passkey.signin({conditional:true,signal:pkAbort.signal})}catch(e){if(String(e.message)!=='aborted'&&!/cancel/i.test(e.message))return;return}}
+ else{if(pkAbort){pkAbort.abort();pkAbort=null}const id=f&&f.id?f.id.value.trim():'';await THT.passkey.signin({id})}
+ try{sessionStorage.removeItem('tht.skipauth')}catch(e){}location.reload()}catch(e){if(!conditional)pkErr(f,e.message)}}
+document.addEventListener('click',e=>{const b=e.target.closest('#lv15pk');if(b){e.preventDefault();pkSignin(false)}});
+// the autofill (conditional) passkey prompt as soon as the sign-in form is on screen
+new MutationObserver(()=>{const f=document.getElementById('lv15f');if(f&&f.id&&!f.dataset.pk){f.dataset.pk='1';pkSignin(true)}}).observe(document.body,{childList:true,subtree:true});
+// after a sign-in on a device that can hold a passkey: offer once (again after 30 days if declined)
+SX.pkOffer=()=>pkOffer();
+async function pkOffer(){if(S.demo||!SX.user||SX.user.passkeys>0)return;const last=+(ls('tht.pkoffer')||0);if(Date.now()-last<30*864e5)return;
+ try{await loadAuthJs();if(!THT.passkey.supported()||!(await THT.passkey.platform()))return}catch(e){return}
+ ls('tht.pkoffer',String(Date.now()));
+ SX.modal(`<h2>${P('Sign in faster next time')}</h2><p class="mute">${P('Create a passkey and sign in with your fingerprint, face or screen lock — no password to type. It stays on this device and syncs through your platform account.')}</p><div class="lv-row-end"><button class="btn s" id="pkno">${P('Not now')}</button><button class="btn p" id="pkyes">${P('Create a passkey')}</button></div>`,{label:'Passkey'});
+ document.getElementById('pkno').onclick=()=>SX.closeModal();
+ document.getElementById('pkyes').onclick=async()=>{const b=document.getElementById('pkyes');b.disabled=true;try{const r=await THT.passkey.register('');SX.user=r.user||SX.user;if(SX.user)SX.user.passkeys=(SX.user.passkeys||0)+1;SX.closeModal();toast(P('Passkey created — next time, just your fingerprint or face'))}catch(e){b.disabled=false;toast(e.message)}}}
+(async()=>{for(let i=0;i<60&&!SX.user;i++)await new Promise(r=>setTimeout(r,500));if(!SX.user)return;for(let i=0;i<120&&document.querySelector('.sx-modal');i++)await new Promise(r=>setTimeout(r,1000));setTimeout(pkOffer,1500)})();
 }
 
 SX.boot();
