@@ -63,7 +63,13 @@ OTP_DEMO=0
 | `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
-### Round 22 — the phone design system, light first (2026-10-20)
+### Round 23 — lab trends (2026-10-20)
+
+* Lab results page: a **Trends** card — one tile per test with ≥2 results (latest value, change vs previous, sparkline with the healthy band), tapping opens the full chart (SVG, no library): values over the years with the range band, colour-coded points, year chips, the list of every result, "Discuss with your doctor". `SX.labTrendChart(m,key)` for other pages.
+* Demo fixes found on the way: the sample family now keeps every section's *structure* (notes.seen, rem.off…) so the bell no longer crashes; "You" has a complete health card so the mandatory first-step form does not open in the demo; the demo banner no longer shares its class with `<body>` (it had painted the whole page white in light mode).
+* Service worker `dk-r23`.
+
+## Round 22 — the phone design system, light first (2026-10-20)
 
 * `tools/live/live22.{js,css}` (p22): light theme by default, dark only when chosen (`tht.theme`, set before first paint); Plus Jakarta Sans display type; one 24-px stroke icon set (`SX.ico`) replacing emoji in the tab bar, quick actions and Devices; app bar (avatar ring · centred title · glass bell · pulsing SOS), scrolling pill sub-tabs that never clip; floating dark tab bar with labels; Home top block (greeting, family strip to switch members, 2×2 stat tiles — steps/sleep/heart rate/BP — and a "this week" strip), Home cards ordered and duplicates hidden on phones; "+" quick-add sheet; assistant orb hero in every state; Medical ID, SOS, sign-in and More-sheet polish.
 * Service worker `dk-r22`.

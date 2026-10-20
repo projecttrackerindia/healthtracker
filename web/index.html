@@ -1626,9 +1626,9 @@ body[data-page=call] .grid{grid-template-columns:1fr}body[data-page=call] .sx-ta
 <style id="live16-css">/* live16: nothing paints while locked; demo banner */
 body.lv16-lock > :not(#lv15auth):not(#lv15s):not(#lv16demo):not(.sx-toast):not(script):not(style){visibility:hidden!important}
 body.lv16-lock{overflow:hidden}
-.lv16-demo{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:950;display:flex;gap:12px;align-items:center;padding:8px 10px 8px 14px;border-radius:999px;background:#111827;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.28);font-size:13px;max-width:calc(100vw - 24px);white-space:nowrap}
-.lv16-demo b{font-weight:800}.lv16-demo .btn{margin:0;white-space:nowrap}
-@media(min-width:721px){.lv16-demo{bottom:22px}}
+.lv16-demobar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:950;display:flex;gap:12px;align-items:center;padding:8px 10px 8px 14px;border-radius:999px;background:#111827;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.28);font-size:13px;max-width:calc(100vw - 24px);white-space:nowrap}
+.lv16-demobar b{font-weight:800}.lv16-demobar .btn{margin:0;white-space:nowrap}
+@media(min-width:721px){.lv16-demobar{bottom:22px}}
 @media(min-width:721px){.lv15-auth{display:flex;align-items:center;justify-content:center}.lv15-auth .lv15-ain{min-height:0;background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:24px;padding:28px 28px 20px;box-shadow:0 30px 80px rgba(16,24,40,.12)}}
 .lv15-skip{margin-top:14px}
 .lv15-pk{width:100%;margin-top:10px}
@@ -2012,6 +2012,24 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
  /* ---- SOS bar sits under the app bar */
  #lv21bar{top:calc(env(safe-area-inset-top) + 64px)}
 }
+</style>
+<style id="live23-css">/* live layer 23: lab trends */
+.lv23-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.lv23-tile{display:flex;flex-direction:column;gap:8px;text-align:left;padding:14px;border-radius:18px;background:var(--soft);border:1px solid var(--line);color:var(--ink);cursor:pointer}
+.lv23-tile .t b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lv23-tile .t small{display:block;color:var(--mute);font-size:11.5px}
+.lv23-tile .v b{font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.lv23-tile .v b small{font-size:12px;font-weight:600;color:var(--mute);margin-left:4px}
+.lv23-tile .v em{display:block;font-style:normal;font-size:12px;color:var(--mute)}.lv23-tile .v em.high,.lv23-tile .v em.low{color:var(--amber)}
+.lv23-tile svg{width:100%;height:40px}
+.lv23-tile.high,.lv23-tile.low{border-color:color-mix(in srgb,var(--amber) 45%,transparent)}
+.lv23-mh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.lv23-mh h2{margin:0 0 4px}.lv23-mh p{margin:0}
+.lv23-badge{flex:none;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;background:#dcf8e6;color:#0f5132}.lv23-badge.high,.lv23-badge.low{background:#fff1d6;color:#8a4b00}
+.lv23-years{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.lv23-chart{border-radius:16px;background:var(--soft);border:1px solid var(--line);padding:8px 4px 2px;overflow:hidden}.lv23-chart svg{display:block;width:100%!important;height:230px!important;max-width:none}
+.lv23-list{display:flex;flex-direction:column;margin:12px 0}
+.lv23-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--line)}.lv23-row:first-child{border-top:0}.lv23-row b{font-size:15px;flex:1}.lv23-row b small{font-weight:500;color:var(--mute)}
+.lv23-dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none;display:inline-block}.lv23-dot.high,.lv23-dot.low{background:var(--amber)}
+@media (max-width:720px){.lv23-grid{grid-template-columns:1fr 1fr}.lv23-tile{border-radius:20px;background:var(--card);box-shadow:var(--shadow)}}
+@media (max-width:720px){.sx-sheet{box-sizing:border-box;max-width:calc(100vw - 12px)}.lv16-demobar{bottom:calc(env(safe-area-inset-bottom) + 86px);font-size:12.5px}}
 </style>
 </head>
 <body>
@@ -7814,7 +7832,7 @@ setTimeout(decide,300);
 // ---------------------------------------------------------------- B. demo: a fictional family, in memory only, opened only by asking for it
 const DEMO_KEY='demo-'+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);
 function sample(){const t=Date.now(),d=864e5,day=n=>new Date(t-n*d).toISOString().slice(0,10);
- const M=[{id:'d1',pid:null,name:'Meera Raghavan',rel:'You',age:36,sex:'female',w:61,h:162,av:'MR',c:'',shared:true},
+ const M=[{id:'d1',pid:null,name:'Meera Raghavan',rel:'You',age:36,sex:'female',w:61,h:162,av:'MR',c:'',shared:true,dob:'1990-04-12',sexOk:true,ph:'+919876500000'},
   {id:'d2',pid:null,name:'Vikram Raghavan',rel:'Husband',age:39,sex:'male',w:78,h:175,av:'VR',c:'',shared:true},
   {id:'d3',pid:null,name:'Kamala Devi',rel:'Mother',age:64,sex:'female',w:66,h:155,av:'KD',c:'',shared:true},
   {id:'d4',pid:'d1',name:'Aarav',rel:'Son',age:7,sex:'male',w:22,h:118,av:'AA',c:'',shared:true}];
@@ -7826,20 +7844,20 @@ function sample(){const t=Date.now(),d=864e5,day=n=>new Date(t-n*d).toISOString(
   d1:[{id:'r9',k:'lab',key:'hb',val:11.9,date:day(30)},{id:'r10',k:'lab',key:'vitd',val:21,date:day(30)},{id:'r11',k:'lab',key:'tsh',val:2.4,date:day(30)}]};
  const MD={d3:[{id:'md1',n:'Metformin 500 mg',s:'500 mg',when:['Morning','Night'],dur:'',note:'After food',by:'Dr Sample',t:t-40*d}],
   d2:[{id:'md2',n:'Amlodipine 5 mg',s:'5 mg',when:['Morning'],dur:'',note:'',by:'Dr Sample',t:t-60*d}]};
- return {v:1,lang:S.lang||'en',active:'d1',created:t-90*d,members:M,vitals:V,results:R,meds:MD,key:DEMO_KEY,demo:true,consent:{},net:{}}}
+ return {v:1,lang:S.lang||'en',active:'d1',created:t-90*d,members:M,vitals:V,results:R,meds:MD,key:DEMO_KEY,demo:true,consent:{sos_location:true,sos_medid:true,doctor_share:false,pharmacy_rx:true},net:{},mid:{d1:{blood:'O+',allergies:['Penicillin'],conditions:[],donor:'',doctor:'',notes:'',policy:''},d2:{blood:'B+',allergies:[],conditions:['High blood pressure'],donor:'',doctor:'',notes:'',policy:''},d3:{blood:'A+',allergies:[],conditions:['Type 2 diabetes'],donor:'',doctor:'',notes:'',policy:''},d4:{blood:'O+',allergies:[],conditions:[],donor:'',doctor:'',notes:'',policy:''}}}}
 function enterDemo(){
  if(!S.demo)SX.save(true);                        // the real record is flushed first (a pending save must never carry demo data)
  SX.wiped=true;                                   // nothing the demo does is written to this device
  const keep={};['lang','net'].forEach(k=>{if(S[k]!==undefined)keep[k]=S[k]});
- const shape={};Object.keys(S).forEach(k=>{const v=S[k];shape[k]=Array.isArray(v)?[]:(v&&typeof v==='object')?{}:v});   // every section the app expects exists, empty
- Object.keys(S).forEach(k=>{delete S[k]});Object.assign(S,shape,sample(),{net:keep.net||{},lang:keep.lang||'en'});
+ const blank=(v,d)=>Array.isArray(v)?[]:(v&&typeof v==='object')?(d>4?{}:Object.fromEntries(Object.keys(v).map(k=>[k,blank(v[k],d+1)]))):typeof v==='string'?'':typeof v==='number'?0:typeof v==='boolean'?false:v;const shape={};Object.keys(S).forEach(k=>{shape[k]=blank(S[k],0)});   // every section the app expects exists, empty
+ Object.keys(S).forEach(k=>{delete S[k]});Object.assign(S,shape,sample(),{net:keep.net||{},lang:keep.lang||'en'});(SX.seeds||[]).forEach(f=>{try{f(S)}catch(e){}});
  SX.user=null;ss('tht.demo','1');unlock();document.body.classList.add('lv16-demo');
  const el=document.getElementById('lv15auth');if(el)el.remove();document.body.classList.remove('lv15-locked');
  banner();try{go('dash')}catch(e){}try{render()}catch(e){}try{if(SX.pregNav)SX.pregNav()}catch(e){}try{if(SX.paintNav)SX.paintNav()}catch(e){}
  toast(P('Demo family loaded — nothing here is saved'))}
 function exitDemo(){ss('tht.demo',null);location.replace('/app')}
 SX.demo={enter:enterDemo,exit:exitDemo};
-function banner(){if(document.getElementById('lv16demo'))return;const b=document.createElement('div');b.id='lv16demo';b.className='lv16-demo';
+function banner(){if(document.getElementById('lv16demo'))return;const b=document.createElement('div');b.id='lv16demo';b.className='lv16-demobar';
  b.innerHTML=`<span>🧪 <b>${P('Demo')}</b> · ${P('a sample family — nothing is saved')}</span><button class="btn p sm">${P('Exit demo & sign in')}</button>`;b.querySelector('button').onclick=exitDemo;document.body.appendChild(b)}
 // the server never hears from a demo
 const hello0=SX.hello;SX.hello=function(){if(S.demo)return Promise.resolve();return hello0.apply(this,arguments)};
@@ -8207,6 +8225,55 @@ new MutationObserver(()=>setTimeout(refresh,0)).observe(document.getElementById(
 new MutationObserver(()=>setTimeout(refresh,0)).observe(document.body,{attributes:true,attributeFilter:['data-page']});
 setTimeout(refresh,300);
 SX.lv22={ico:SX.ico,tiles,week};
+}
+
+/*live-p23*/
+// ===================== live layer 23: lab trends — every test over the years, with its healthy band =====================
+{
+const P=SX.p,S=SX.S;
+const LABS=SX.LABS;
+const fmtD=d=>new Date(d+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const fmtN=(v,d)=>(+v).toLocaleString('en-IN',{maximumFractionDigits:d==null?1:d,minimumFractionDigits:0});
+const series=(m,key)=>(S.results[m.id]||[]).filter(x=>x.k==='lab'&&x.key===key&&x.val!=null&&x.date).slice().sort((a,b)=>a.date.localeCompare(b.date));
+const keysWithHistory=m=>{const c={};(S.results[m.id]||[]).forEach(x=>{if(x.k==='lab'&&LABS[x.key])c[x.key]=(c[x.key]||0)+1});return Object.keys(c).filter(k=>c[k]>=2).sort((a,b)=>{const sa=SX.labStatus(series(m,a).slice(-1)[0],m),sb=SX.labStatus(series(m,b).slice(-1)[0],m);return (sb.s!=='in')-(sa.s!=='in')||c[b]-c[a]})};
+SX.labTrendKeys=keysWithHistory;
+
+// ---------------------------------------------------------------- the drawing (pure SVG; works offline, prints, copies)
+function scale(vals,r,top,bottom){const all=vals.concat(r.filter(x=>x!=null));const lo=Math.min(...all),hi=Math.max(...all);const span=(hi-lo)||Math.abs(hi)*.2||1;const mn=lo-span*.18,mx=hi+span*.18;return v=>top+(bottom-top)*(1-(v-mn)/(mx-mn))}
+function spark(pts,r,w,h){if(pts.length<2)return '';const y=scale(pts.map(p=>+p.val),r,4,h-4);const x=i=>4+(w-8)*i/(pts.length-1);
+ const band=r[0]!=null||r[1]!=null?`<rect x="0" y="${r[1]!=null?y(r[1]):0}" width="${w}" height="${Math.max(0,(r[0]!=null?y(r[0]):h)-(r[1]!=null?y(r[1]):0))}" rx="3" fill="var(--green)" opacity=".12"/>`:'';
+ const d=pts.map((p,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(+p.val).toFixed(1)).join(' ');const last=pts[pts.length-1];
+ return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">${band}<path d="${d}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${x(pts.length-1).toFixed(1)}" cy="${y(+last.val).toFixed(1)}" r="3.2" fill="var(--blue)"/></svg>`}
+function chart(pts,r,L,w,h){const padL=40,padR=14,padT=18,padB=28;const y=scale(pts.map(p=>+p.val),r,padT,h-padB);const t0=new Date(pts[0].date+'T00:00').getTime(),t1=new Date(pts[pts.length-1].date+'T00:00').getTime(),span=Math.max(t1-t0,864e5*30);const x=p=>padL+(w-padL-padR)*((new Date(p.date+'T00:00').getTime()-t0)/span);
+ const y0=r[1]!=null?y(r[1]):padT,y1=r[0]!=null?y(r[0]):h-padB;
+ const band=r[0]!=null||r[1]!=null?`<rect x="${padL}" y="${y0}" width="${w-padL-padR}" height="${Math.max(0,y1-y0)}" fill="var(--green)" opacity=".12"/>${r[1]!=null?`<text x="${w-padR}" y="${y0-4}" text-anchor="end" font-size="10" fill="var(--mute)">${P('upper')} ${fmtN(r[1],L.d)}</text>`:''}${r[0]!=null?`<text x="${w-padR}" y="${y1+12}" text-anchor="end" font-size="10" fill="var(--mute)">${P('lower')} ${fmtN(r[0],L.d)}</text>`:''}`:'';
+ const d=pts.map((p,i)=>(i?'L':'M')+x(p).toFixed(1)+' '+y(+p.val).toFixed(1)).join(' ');
+ const dots=pts.map(p=>{const st=SX.labStatus(p,SX.me());return `<circle cx="${x(p).toFixed(1)}" cy="${y(+p.val).toFixed(1)}" r="4.5" fill="${st.s==='in'?'var(--green)':st.mild?'var(--amber)':'var(--red)'}" stroke="var(--card)" stroke-width="2"/><text x="${x(p).toFixed(1)}" y="${(y(+p.val)-9).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">${fmtN(p.val,L.d)}</text>`}).join('');
+ const years=[...new Set(pts.map(p=>p.date.slice(0,4)))];const ticks=years.map(yr=>{const first=pts.find(p=>p.date.startsWith(yr));return `<text x="${x(first).toFixed(1)}" y="${h-8}" text-anchor="${years.length===1?'middle':'start'}" font-size="10.5" fill="var(--mute)">${yr}</text>`}).join('');
+ const ax=`<line x1="${padL}" y1="${h-padB}" x2="${w-padR}" y2="${h-padB}" stroke="var(--line2)"/><text x="${padL-6}" y="${padT+4}" text-anchor="end" font-size="10" fill="var(--mute)">${L.u}</text>`;
+ return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" role="img" aria-label="${E(L.n)} ${P('over time')}">${band}${ax}<path d="${d}" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>${dots}${ticks}</svg>`}
+
+// ---------------------------------------------------------------- the Trends card on Lab results
+function tile(m,key){const pts=series(m,key),L=LABS[key],last=pts[pts.length-1],prev=pts[pts.length-2],st=SX.labStatus(last,m),r=SX.labRange(key,m);
+ const d=+last.val-+prev.val,arrow=Math.abs(d)<1e-9?'→':d>0?'↑':'↓';
+ return `<button class="lv23-tile ${st.s}" data-sx="labtrend:${E(key)}"><div class="t"><b>${E(L.n)}</b><small>${pts.length} ${P('results')} · ${P('since')} ${pts[0].date.slice(0,4)}</small></div><div class="v"><b>${fmtN(last.val,L.d)}<small>${E(L.u)}</small></b><em class="${st.s}">${arrow} ${fmtN(Math.abs(d),L.d)} ${P('vs')} ${fmtD(prev.date).replace(/ \d{4}$/,'')}</em></div>${spark(pts,r,150,40)}</button>`}
+SX.extend('tests',{before(){const m=SX.me(),keys=keysWithHistory(m);if(!keys.length)return '';
+ return `<div class="card wide lv23-card"><div class="hd"><div><h3>${P('Trends')}</h3><small class="mute">${P('Each test over the years, with its healthy band. Tap one to see every value.')}</small></div></div><div class="lv23-grid">${keys.map(k=>tile(m,k)).join('')}</div></div>`}});
+
+// ---------------------------------------------------------------- the full chart
+let yearSel='all';
+function open(key){const m=SX.me(),L=LABS[key];if(!L)return;const all=series(m,key);const years=[...new Set(all.map(p=>p.date.slice(0,4)))].reverse();if(yearSel!=='all'&&!years.includes(yearSel))yearSel='all';
+ const pts=yearSel==='all'?all:all.filter(p=>p.date.startsWith(yearSel));const r=SX.labRange(key,m),last=all[all.length-1],st=SX.labStatus(last,m);
+ const w=Math.min(560,Math.max(300,(document.documentElement.clientWidth||360)-56));
+ SX.modal(`<div class="lv23-m"><div class="lv23-mh"><div><h2>${E(L.n)}</h2><p class="mute sm">${E(L.what||'')}</p></div><span class="lv23-badge ${st.s}">${st.s==='in'?P('In range'):st.s==='high'?P('Above range'):P('Below range')}</span></div>
+  <div class="lv23-years">${[['all',P('All years')],...years.map(y=>[y,y])].map(([k,t])=>`<button class="chip ${yearSel===k?'on':''}" data-sx="labyear:${k}:${E(key)}">${t}</button>`).join('')}</div>
+  <div class="lv23-chart">${pts.length>=2?chart(pts,r,L,w,230):`<p class="mute sm">${P('Only one result in this year.')}</p>`}</div>
+  <div class="lv23-list">${pts.slice().reverse().map(p=>{const s=SX.labStatus(p,m);return `<div class="lv23-row"><span class="lv23-dot ${s.s}"></span><b>${fmtN(p.val,L.d)} <small>${E(L.u)}</small></b><small class="mute">${fmtD(p.date)}</small></div>`}).join('')}</div>
+  <p class="mute sm">${st.s==='high'?E(L.hi||''):st.s==='low'?E(L.lo||''):P('Within the usual range. A normal result does not rule out a problem if you feel unwell.')}</p>
+  <div class="lv-row-end"><button class="btn s" data-sx="askdoc:${E(last.id)}">${P('Discuss with your doctor')}</button><button class="btn p" data-sx="closeModal">${P('Close')}</button></div></div>`,{label:L.n,cls:'lv-wide'})}
+SX.act.labtrend=([key])=>{yearSel='all';open(key)};
+SX.act.labyear=([y,key])=>{yearSel=y;open(key)};
+SX.labTrendChart=(m,key)=>{const pts=series(m,key);return pts.length>=2?chart(pts,SX.labRange(key,m),LABS[key],560,230):''};
 }
 
 SX.boot();

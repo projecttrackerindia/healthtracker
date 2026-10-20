@@ -1,0 +1,17 @@
+/* live layer 23: lab trends */
+.lv23-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.lv23-tile{display:flex;flex-direction:column;gap:8px;text-align:left;padding:14px;border-radius:18px;background:var(--soft);border:1px solid var(--line);color:var(--ink);cursor:pointer}
+.lv23-tile .t b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lv23-tile .t small{display:block;color:var(--mute);font-size:11.5px}
+.lv23-tile .v b{font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.lv23-tile .v b small{font-size:12px;font-weight:600;color:var(--mute);margin-left:4px}
+.lv23-tile .v em{display:block;font-style:normal;font-size:12px;color:var(--mute)}.lv23-tile .v em.high,.lv23-tile .v em.low{color:var(--amber)}
+.lv23-tile svg{width:100%;height:40px}
+.lv23-tile.high,.lv23-tile.low{border-color:color-mix(in srgb,var(--amber) 45%,transparent)}
+.lv23-mh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.lv23-mh h2{margin:0 0 4px}.lv23-mh p{margin:0}
+.lv23-badge{flex:none;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;background:#dcf8e6;color:#0f5132}.lv23-badge.high,.lv23-badge.low{background:#fff1d6;color:#8a4b00}
+.lv23-years{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.lv23-chart{border-radius:16px;background:var(--soft);border:1px solid var(--line);padding:8px 4px 2px;overflow:hidden}.lv23-chart svg{display:block;width:100%!important;height:230px!important;max-width:none}
+.lv23-list{display:flex;flex-direction:column;margin:12px 0}
+.lv23-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--line)}.lv23-row:first-child{border-top:0}.lv23-row b{font-size:15px;flex:1}.lv23-row b small{font-weight:500;color:var(--mute)}
+.lv23-dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none;display:inline-block}.lv23-dot.high,.lv23-dot.low{background:var(--amber)}
+@media (max-width:720px){.lv23-grid{grid-template-columns:1fr 1fr}.lv23-tile{border-radius:20px;background:var(--card);box-shadow:var(--shadow)}}
+@media (max-width:720px){.sx-sheet{box-sizing:border-box;max-width:calc(100vw - 12px)}.lv16-demobar{bottom:calc(env(safe-area-inset-bottom) + 86px);font-size:12.5px}}
