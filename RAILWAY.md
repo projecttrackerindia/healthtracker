@@ -63,7 +63,11 @@ OTP_DEMO=0
 | `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
-### Round 28 — Hindi and Telugu (2026-10-20)
+### Round 16 (part 1) — merged late (2026-10-20)
+
+* Rebased onto the provider-agnostic AI code: per-family and service-wide **daily token budgets** (`ai_budget`, 429/503 with the basic reader as fallback), token accounting on every AiJob, admin **AI spend** and device-speed beacon, GST/referral columns on sellers and orders. Conflicts resolved in favour of `AI.available()` / `provider_order()`.
+
+## Round 28 — Hindi and Telugu (2026-10-20)
 
 * 347 hand-written core phrases (`tools/i18n/core.py`: shell, Home, sign-in, SOS, Medical ID, medicines, sharing, backups, buttons) ship inside the page; the long tail comes from `/api/v1/i18n` (repo `site/i18n/phrases.json`, or the bucket's `i18n/phrases.json` when present — `python tools/i18n/translate.py --upload` with `GEMINI_API_KEY` + `S3_*` fills it with Gemini and goes live without a release). Cached on the device for offline.
 * Language card on Settings (English / हिन्दी / తెలుగు); switching loads the table first. Medical guidance stays English until reviewed.

@@ -60,6 +60,8 @@ class Store(Base):
     hours: Mapped[str] = mapped_column(String(80), default="8 am – 10 pm")
     open_24h: Mapped[bool] = mapped_column(Boolean, default=False)
     licence: Mapped[str] = mapped_column(String(64), default="")  # drug licence / NABL number (admin-entered)
+    gstin: Mapped[str] = mapped_column(String(20), default="")    # printed on receipts when present
+    gst_pct: Mapped[int] = mapped_column(Integer, default=0)      # GST included in this seller's prices (0 = not shown separately)
     rating: Mapped[float] = mapped_column(Float, default=4.3)
     rating_n: Mapped[int] = mapped_column(Integer, default=0)
     discount_pct: Mapped[float] = mapped_column(Float, default=0)  # off MRP on medicines
@@ -243,6 +245,26 @@ class AiJob(Base):
     ms: Mapped[int] = mapped_column(Integer, default=0)
     ok: Mapped[bool] = mapped_column(Boolean, default=True)
     findings: Mapped[int] = mapped_column(Integer, default=0)
+    tin: Mapped[int] = mapped_column(Integer, default=0)   # input tokens
+    tout: Mapped[int] = mapped_column(Integer, default=0)  # output tokens
+
+
+class PerfSample(Base):
+    """Anonymous page-speed beacons from the app (no identity, no content): how fast it opens on real phones."""
+
+    __tablename__ = "perf_samples"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)
+    kind: Mapped[str] = mapped_column(String(12), default="web")      # web | android | ios
+    phone: Mapped[bool] = mapped_column(Boolean, default=False)
+    ttfb: Mapped[int] = mapped_column(Integer, default=0)
+    dcl: Mapped[int] = mapped_column(Integer, default=0)      # DOMContentLoaded (ms)
+    load: Mapped[int] = mapped_column(Integer, default=0)     # window load (ms)
+    ready: Mapped[int] = mapped_column(Integer, default=0)    # app booted (ms)
+    lcp: Mapped[int] = mapped_column(Integer, default=0)
+    cls: Mapped[int] = mapped_column(Integer, default=0)      # ×1000
+    conn: Mapped[str] = mapped_column(String(12), default="")  # 4g / 3g / wifi hint
+    sw: Mapped[bool] = mapped_column(Boolean, default=False)   # served by the service worker
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -266,6 +288,9 @@ class User(Base):
     aadhaar_verified: Mapped[int | None] = mapped_column(Integer, nullable=True)  # when identity was confirmed through DigiLocker (Aadhaar e-KYC)
     aadhaar_last4: Mapped[str] = mapped_column(String(4), default="")
     aadhaar_dob: Mapped[str] = mapped_column(String(10), default="")  # DD-MM-YYYY as printed on Aadhaar
+    ref_code: Mapped[str] = mapped_column(String(12), default="", index=True)   # this person's invite code (THT-XXXXXX)
+    referred_by: Mapped[str] = mapped_column(String(32), default="")           # user id of whoever invited them
+    ref_rewarded: Mapped[int] = mapped_column(Integer, default=0)              # when the inviter's reward was granted
     failed: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[int | None] = mapped_column(Integer, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)

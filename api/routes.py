@@ -495,6 +495,12 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
         ctx = {}
     kind = kind if kind in ("report", "prescription", "card", "policy") else "report"
     capped = AI.available() and used >= cap
+    budget_note = ""
+    if not capped and AI.available():
+        try:
+            ai_budget(db, h)
+        except HTTPException as e:   # out of today's tokens: the basic reader still works, nothing is lost
+            capped, budget_note = True, str(e.detail)
     try:
         if kind == "policy":
             if capped:
@@ -512,12 +518,12 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
         else:
             out = AI.analyze(kind, data, mime, text, ctx, force_local=capped)
         if capped:
-            out["warnings"] = list(out.get("warnings", [])) + [f"Monthly AI limit for the {h.plan} plan reached ({cap}); the basic reader was used. Upgrade in Family & Privacy → Plan."]
+            out["warnings"] = list(out.get("warnings", [])) + [budget_note or f"Monthly AI limit for the {h.plan} plan reached ({cap}); the basic reader was used. Upgrade in Family & Privacy → Plan."]
     except Exception as e:
-        db.add(AiJob(household_id=h.id, kind=kind, engine="error", ok=False))
+        db.add(_job(h, kind, "error", ok=False))
         print("[ai] analysis failed:", str(e)[:300], flush=True)  # details stay in the server log
         raise HTTPException(500, "We could not read this document right now. Please try again in a few minutes.")
-    db.add(AiJob(household_id=h.id, kind=kind, engine=out["engine"], ms=out["ms"], findings=len(out.get("findings", [])) + len(out.get("medicines", [])) + len(out.get("fields", {}))))
+    db.add(_job(h, kind, out["engine"], ms=out["ms"], findings=len(out.get("findings", [])) + len(out.get("medicines", [])) + len(out.get("fields", {}))))
     out["quota"] = {"used": used + (1 if out["engine"] == "claude" else 0), "cap": cap, "plan": h.plan}
     # what the browser sees: no provider or model names
     out["engine"] = "ai" if out["engine"] == "claude" else "local"
@@ -529,6 +535,59 @@ class AskIn(BaseModel):
     question: str = ""
     context: dict = {}
     member: str = ""
+
+
+class Beacon(BaseModel):
+    kind: str = "web"
+    phone: bool = False
+    ttfb: int = 0
+    dcl: int = 0
+    load: int = 0
+    ready: int = 0
+    lcp: int = 0
+    cls: float = 0
+    conn: str = ""
+    sw: bool = False
+
+
+@r.post("/beacon", status_code=204)
+def beacon(body: Beacon, request: Request, db: Session = Depends(get_db)):
+    """Anonymous page-speed sample from the app. No key, no identity, no content — only timings, capped and clamped."""
+    from .auth import limit
+    from .models import PerfSample
+    limit(request, "beacon", 30, 600)
+    c = lambda v: max(0, min(int(v or 0), 120000))  # noqa: E731
+    db.add(PerfSample(kind=body.kind if body.kind in ("web", "android", "ios") else "web", phone=bool(body.phone), ttfb=c(body.ttfb), dcl=c(body.dcl), load=c(body.load),
+                      ready=c(body.ready), lcp=c(body.lcp), cls=max(0, min(int(float(body.cls or 0) * 1000), 10000)), conn=re.sub(r"[^a-z0-9-]", "", str(body.conn or "").lower())[:12], sw=bool(body.sw)))
+    db.query(PerfSample).filter(PerfSample.t < now() - 30 * 86400).delete()
+    return Response(status_code=204)
+
+
+# daily token budget per family (and a global one for the bill), on top of the monthly per-feature counts
+AI_DAY_TOKENS = {"free": int(os.getenv("AI_DAY_TOKENS_FREE", "80000")), "family": int(os.getenv("AI_DAY_TOKENS_FAMILY", "400000")), "plus": int(os.getenv("AI_DAY_TOKENS_PLUS", "1500000"))}
+AI_DAY_TOKENS_ALL = int(os.getenv("AI_DAY_TOKENS_ALL", "40000000"))
+
+
+def _ist_midnight() -> int:
+    from zoneinfo import ZoneInfo
+    return int(datetime.now(ZoneInfo("Asia/Kolkata")).replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+
+
+def ai_budget(db, h) -> None:
+    """429 when this family (or the whole service) has spent today's token allowance. Resets at midnight IST."""
+    t0 = _ist_midnight()
+    mine = db.scalar(select(func.coalesce(func.sum(AiJob.tin + AiJob.tout), 0)).where(AiJob.household_id == h.id, AiJob.t >= t0)) or 0
+    cap = AI_DAY_TOKENS.get(h.plan, AI_DAY_TOKENS["free"])
+    if mine >= cap:
+        raise HTTPException(429, "Today's smart-reading allowance for your family is used up; it resets at midnight. Everything you add is still saved and read tomorrow.")
+    total = db.scalar(select(func.coalesce(func.sum(AiJob.tin + AiJob.tout), 0)).where(AiJob.t >= t0)) or 0
+    if total >= AI_DAY_TOKENS_ALL:
+        raise HTTPException(503, "Smart reading is resting for today; your records are saved and will be read tomorrow.")
+
+
+def _job(h, kind: str, engine: str, ms: int = 0, ok: bool = True, findings: int = 0) -> AiJob:
+    tin, tout = AI.take_usage()
+    return AiJob(household_id=h.id, kind=kind, engine=engine, ms=ms, ok=ok, findings=findings, tin=tin, tout=tout)
 
 
 def _ai_quota(db, h, kind: str, caps: dict) -> tuple[int, int]:
@@ -549,6 +608,7 @@ def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko
     q = body.question.strip()
     if len(q) < 3:
         raise HTTPException(400, "Ask a question first.")
+    ai_budget(db, h)
     used, cap = _ai_quota(db, h, "ask", agent.ASK_CAP)
     if used >= cap:
         raise HTTPException(429, f"You have used this month's {cap} questions on the {h.plan} plan. Upgrade in Family & Privacy → Plan for more.")
@@ -557,9 +617,9 @@ def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko
         out = agent.ask(q, body.context)
     except Exception as e:
         AI._fail("health assistant", e)
-        db.add(AiJob(household_id=h.id, kind="ask", engine="error", ok=False))
+        db.add(_job(h, "ask", "error", ok=False))
         raise HTTPException(502, "The health assistant could not answer right now. Please try again in a minute.")
-    db.add(AiJob(household_id=h.id, kind="ask", engine="claude", ms=int((time.time() - t0) * 1000)))
+    db.add(_job(h, "ask", "claude", ms=int((time.time() - t0) * 1000)))
     out["quota"] = {"used": used + 1, "cap": cap, "plan": h.plan}
     return out
 
@@ -577,6 +637,7 @@ def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db), x_d
     hit = db.get(AiCache, key)
     if hit:
         return {**hit.value, "cached": True}
+    ai_budget(db, h)
     used, cap = _ai_quota(db, h, "insight", agent.INSIGHT_CAP)
     if used >= cap:
         raise HTTPException(429, f"This month's insights on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
@@ -585,9 +646,9 @@ def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db), x_d
         out = agent.insight(body.context)
     except Exception as e:
         AI._fail("daily insight", e)
-        db.add(AiJob(household_id=h.id, kind="insight", engine="error", ok=False))
+        db.add(_job(h, "insight", "error", ok=False))
         raise HTTPException(502, "Insights could not be prepared right now.")
-    db.add(AiJob(household_id=h.id, kind="insight", engine="claude", ms=int((time.time() - t0) * 1000)))
+    db.add(_job(h, "insight", "claude", ms=int((time.time() - t0) * 1000)))
     db.merge(AiCache(key=key, household_id=h.id, value=out))
     db.query(AiCache).filter(AiCache.t < now() - 2 * 86400).delete()
     return {**out, "cached": False}
@@ -620,6 +681,7 @@ def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db
         out = dict(hit.value)
         out["alerts"] = local + [a for a in out.get("alerts", []) if a.get("title") != "Listed allergy"]
         return {**out, "cached": True}
+    ai_budget(db, h)
     used, cap = _ai_quota(db, h, "insight", agent.INSIGHT_CAP)
     if used >= cap:
         raise HTTPException(429, f"This month's checks on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
@@ -628,9 +690,9 @@ def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db
         out = AI.medcheck(body.context)
     except Exception as e:
         AI._fail("medicine check", e)
-        db.add(AiJob(household_id=h.id, kind="insight", engine="error", ok=False))
+        db.add(_job(h, "insight", "error", ok=False))
         raise HTTPException(502, "The medicine check could not run right now.")
-    db.add(AiJob(household_id=h.id, kind="insight", engine="claude", ms=int((time.time() - t0) * 1000)))
+    db.add(_job(h, "insight", "claude", ms=int((time.time() - t0) * 1000)))
     out["alerts"] = local + out.get("alerts", [])
     out["ok"] = not any(a["level"] != "note" for a in out["alerts"])
     db.merge(AiCache(key=key, household_id=h.id, value=out))

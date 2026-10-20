@@ -343,7 +343,15 @@ def weekly_report(lang: str = "en", db: Session = Depends(get_db), x_dokko_key: 
     if hit:
         return {**hit.value, "cached": True}
     report = weekly(decrypt(st.blob), today)
-    report["narrative"] = narrate(report, lang[:2]) if any(p["readings"] or p["labs"] for p in report["people"]) else ""
+    report["narrative"] = ""
+    if any(p["readings"] or p["labs"] for p in report["people"]):
+        from .routes import ai_budget, _job
+        try:
+            ai_budget(db, h)
+            report["narrative"] = narrate(report, lang[:2])
+            db.add(_job(h, "report", "claude" if report["narrative"] else "error", ok=bool(report["narrative"])))
+        except HTTPException:
+            pass   # out of today's tokens: the numbers still stand, the narrative comes tomorrow
     db.merge(AiCache(key=key, household_id=h.id, value=report))
     return report
 
