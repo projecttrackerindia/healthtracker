@@ -692,3 +692,23 @@ class DonorResponse(Base):
     loc_t: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
     updated: Mapped[int] = mapped_column(Integer, default=now)
+
+class SosAlert(Base):
+    """One SOS press: who, where (updated while the alert is open), what was sent, and a public token for the live page."""
+
+    __tablename__ = "sos_alerts"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("sos"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    token: Mapped[str] = mapped_column(String(48), unique=True, index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    name: Mapped[str] = mapped_column(String(80), default="")
+    data: Mapped[dict] = mapped_column(JSON, default=dict)        # medical summary + contacts (names, channels), phone of the person
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    acc: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    trail: Mapped[list] = mapped_column(JSON, default=list)       # [[t, lat, lng]] last 50 positions
+    sent: Mapped[list] = mapped_column(JSON, default=list)        # [{n, channel, ok}]
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+    ended: Mapped[int | None] = mapped_column(Integer, nullable=True)
