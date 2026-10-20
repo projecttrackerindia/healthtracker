@@ -1,0 +1,98 @@
+/* live layer 17: phone shell v2 — one app bar, a pinned Health Card, sub-tabs in the bar, viewers first. Desktop untouched. */
+@media (max-width:720px){
+ /* ---- app bar: [person] [title] [bell] [account] ---- */
+ .top{padding:calc(4px + env(safe-area-inset-top)) 12px 0!important;gap:0!important;margin-bottom:10px!important;border-bottom:0!important}
+ .top>div:has(#hh),#lv14greet,#hp,h1#hh{display:none!important}
+ .topb{height:48px;gap:8px!important}
+ .topb #lv6Loc{display:none!important}
+ .topb #sxWho{flex:0 0 auto!important;width:44px;height:44px;padding:0!important;border-radius:50%!important;border:2px solid var(--line)!important;background:transparent!important;justify-content:center}
+ .topb #sxWho .sx-wn{display:none!important}.topb #sxWho .av{width:38px!important;height:38px!important;font-size:13px!important;margin:0!important}
+ .topb #sxWho{position:relative}
+ #lv17title{flex:1 1 auto;min-width:0;text-align:center;font-weight:700;font-size:16px;letter-spacing:-.01em;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block!important;order:2}
+ body[data-page=dash] #lv17title{visibility:hidden}
+ .topb #sxWho{order:1}.topb #sxBell{order:3;width:44px;height:44px;background:var(--card)!important}.topb #sxAcct{order:4;width:44px;height:44px;font-size:12px}
+ .topb #sxBell svg{width:20px;height:20px}
+ body.lv14-scrolled .top h1,body.lv14-scrolled h1#hh{display:none!important}
+ /* sync shows as a 2px line under the bar, never a pill */
+ .top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--blue,#2f5bff),transparent);opacity:0;transition:opacity .3s}
+ body[data-sync=busy] .top::after{opacity:1;animation:lv17sync 1.1s linear infinite}
+ @keyframes lv17sync{from{background-position:-200px 0}to{background-position:200px 0}}
+ .lv14-pull{display:none!important}
+ /* ---- sub-tabs live in the bar (one strip, never duplicated below the stage) ---- */
+ #lv17tabs{width:100%;order:5;display:none;margin:4px -12px 0;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ #lv17tabs::-webkit-scrollbar{display:none}
+ #lv17tabs.has{display:block}
+ #lv17tabs .sx-tabs{position:static!important;top:auto!important;margin:0!important;padding:3px!important;display:inline-flex!important;min-width:100%;background:var(--bg2,var(--soft))!important;border:0!important;border-radius:12px!important;backdrop-filter:none!important}
+ #lv17tabs .sx-tabs button{flex:1 0 auto;padding:7px 12px;border-radius:9px;font-size:13px}
+ #lv17tabs .sx-tabs button.on{background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+ /* ---- the Health Card: pinned under the bar on every screen ---- */
+ #lv17hc{width:100%;order:6;display:none;align-items:center;gap:10px;margin:0 -12px;padding:8px 12px calc(8px + 0px);border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--card) 92%,transparent)}
+ body.lv17-hc #lv17hc{display:flex}
+ #lv17hc .bg{flex:none;min-width:40px;height:30px;padding:0 8px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:800 13px Inter,system-ui,sans-serif;letter-spacing:.02em;background:color-mix(in srgb,var(--red,#e11d48) 14%,transparent);color:var(--red,#e11d48)}
+ #lv17hc .bg.none{background:var(--bg2,var(--soft));color:var(--mute);font-weight:700;font-size:11px}
+ #lv17hc .tx{flex:1;min-width:0;line-height:1.2}
+ #lv17hc .tx b{display:block;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #lv17hc .tx small{display:block;font-size:11.5px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #lv17hc .tx small i{font-style:normal;color:var(--red,#e11d48);font-weight:600}
+ #lv17hc .sos{flex:none;height:34px;padding:0 14px;border-radius:999px;border:0;background:var(--red,#e11d48);color:#fff;font:800 12px Inter,system-ui,sans-serif;letter-spacing:.08em;display:flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(225,29,72,.28)}
+ #lv17hc .sos i{width:7px;height:7px;border-radius:50%;background:#fff;animation:sxping 2s infinite}
+ body.lv17-hc .sx-fab{display:none!important}
+ /* the banner's setting card on the Medical ID page */
+ .lv17-hcset{display:flex;align-items:center;gap:12px}.lv17-hcset .grow{flex:1;min-width:0}.lv17-hcset h3{margin:0 0 2px;font-size:15px}.lv17-hcset p{margin:0;font-size:12.5px;color:var(--mute)}
+ .lv17-sw{position:relative;width:46px;height:28px;flex:none}.lv17-sw input{position:absolute;inset:0;opacity:0;margin:0;z-index:2}.lv17-sw span{position:absolute;inset:0;border-radius:999px;background:var(--line2,#cbd5e1);transition:.2s}.lv17-sw span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}.lv17-sw input:checked+span{background:var(--blue,#2f5bff)}.lv17-sw input:checked+span::after{transform:translateX(18px)}
+ /* ---- Today: greeting lives in the card, the setup ring is a slim row ---- */
+ #lv17greet{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:2px 0 8px;line-height:1.15}#lv17greet small{display:block;font-size:13px;font-weight:500;color:var(--mute);margin-top:2px}
+ /* ---- assistant: full height, input docked above the keyboard, chips above it ---- */
+ body[data-page=assist] main{padding-bottom:0!important}
+ body[data-page=assist] .lv5-agent{min-height:0!important;height:calc(100dvh - var(--lv17-top,150px) - 62px - env(safe-area-inset-bottom));display:flex;flex-direction:column}
+ body[data-page=assist] .lv5-chat{flex:1 1 auto;max-height:none!important;min-height:0}
+ body[data-page=assist] .lv5-ask{position:sticky;bottom:calc(62px + env(safe-area-inset-bottom));background:var(--bg);padding:8px 0 10px;margin:0;z-index:5}
+ body[data-page=assist] .lv5-sugg{order:-1;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;margin:0;flex-wrap:nowrap}
+ body[data-page=assist] .lv5-sugg button{flex:none;white-space:nowrap;font-size:12.5px}
+ body[data-page=assist] .lv5-agent{display:flex;flex-direction:column}body[data-page=assist] .lv5-chat{order:0}body[data-page=assist] .lv5-sugg{order:1}body[data-page=assist] .lv5-ask{order:2}
+ body.lv17-kb #mtab{display:none!important}
+ body.lv17-kb[data-page=assist] .lv5-ask{bottom:0}
+ body.lv17-kb[data-page=assist] .lv5-agent{height:auto}
+ /* ---- Body viewer: viewer first; tools as a bottom row; chips above them ---- */
+ #stage .tools{top:auto!important;right:8px!important;left:8px!important;bottom:8px!important;transform:none!important;display:flex!important;flex-direction:row;overflow-x:auto;scrollbar-width:none;padding:4px!important;border-radius:14px!important;max-width:none}
+ #stage .tools::-webkit-scrollbar{display:none}
+ #stage .tools button{flex:none;width:40px;height:40px}
+ .sx-org{bottom:64px!important;max-width:calc(100% - 24px)!important;left:12px!important;transform:none!important;overflow-x:auto;scrollbar-width:none}
+ .sp{width:min(260px,64%)!important}
+ .stage .cr{display:none!important}
+ /* ---- Heart Lab: one strip of views at the top, labels on demand, compact controls at the bottom ---- */
+ #hstage .pvtop{flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;right:12px!important;gap:6px!important}
+ #hstage .pvtop::-webkit-scrollbar{display:none}
+ #hstage .pvtop .seg{flex:none;white-space:nowrap}
+ #hstage #hwinw{top:auto!important;bottom:118px!important;left:12px!important;right:12px!important;max-width:none!important}
+ #hstage #hwinw small{display:none}
+ #hstage .hphase{top:auto!important;bottom:168px!important;left:12px!important;max-width:calc(100% - 24px)!important;padding:6px 10px;border-radius:10px}
+ #hstage .hphase b,#hstage .hphase .n{font-size:13px}#hstage .hphase .vs,#hstage .hphase .valves{display:none}
+ #hstage .tools{top:auto!important;right:8px!important;left:8px!important;bottom:62px!important;transform:none!important;display:flex!important;flex-direction:row;overflow-x:auto;scrollbar-width:none;padding:4px!important;border-radius:14px!important}
+ #hstage .tools button{flex:none;width:38px;height:38px}
+ #hstage .htime{bottom:8px!important;padding:6px 8px!important;gap:8px!important;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none}
+ #hstage .htime label{flex:1 1 auto;min-width:120px}#hstage .htime .seg button{padding:4px 6px;font-size:11px}
+ body:not(.lv17-labels) #hstage #hlabels,body:not(.lv17-labels) #hstage #hlines{display:none!important}
+ #lv17lbl{position:absolute;right:12px;top:52px;z-index:5;height:30px;padding:0 10px;border-radius:999px;border:1px solid rgba(255,190,205,.2);background:rgba(40,10,20,.6);color:#f2c3cf;font:600 11.5px Inter,system-ui,sans-serif}
+ body.lv17-labels #lv17lbl{background:#e0405e;color:#fff;border-color:transparent}
+ /* ---- bottom bar: a floating pill, icons only, the active one lit ---- */
+ #mtab{left:12px!important;right:12px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;height:62px!important;padding:6px!important;border-radius:24px!important;border:1px solid var(--line)!important;box-shadow:0 14px 40px rgba(0,0,0,.35)!important;background:color-mix(in srgb,var(--card) 94%,transparent)!important}
+ #mtab button{border-radius:18px;gap:0!important;flex-direction:row!important}
+ #mtab button span{display:none!important}
+ #mtab button svg{width:24px!important;height:24px!important}#mtab button.on svg{stroke:#fff!important}
+ #lv4env{display:none!important}
+ #mtab button.on{background:var(--blue,#2f5bff)!important;color:#fff!important}#mtab button.on::before{display:none}
+ #mtab button em{top:8px;left:calc(50% + 4px)}
+ main{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+ /* ---- type scale (from the reference boards): 26/17/14/12.5 ---- */
+ #lv17greet{font-size:14px;font-weight:500;color:var(--mute);letter-spacing:.01em;margin:4px 0 10px}#lv17greet b{display:block;font-size:27px;font-weight:700;color:var(--ink);letter-spacing:-.03em;line-height:1.1;margin-top:2px}#lv17greet small{display:none}
+ .card h3{font-size:17px;letter-spacing:-.015em}.card{border-radius:20px!important;border-color:transparent!important;background:var(--card)}
+ .card p,.card li,.card small.mute{font-size:14px;line-height:1.45}.mute{font-size:13px}
+ .lv15-parts span{background:var(--bg2,var(--soft))!important;color:var(--ink)!important}
+ .lv6-setup .btn{min-height:40px;padding:0 14px;font-size:14px}
+ /* ---- density: no card-in-card borders, calmer headings ---- */
+ .card .card{border:0!important;background:var(--bg2,var(--soft))!important;box-shadow:none!important}
+ .card h3{font-size:15.5px}
+ .lv11-src{flex-wrap:wrap}.lv11-src>.btn{flex:1 1 100%;margin-top:8px;margin-left:56px}
+ .lv10-weekly .hd .btn,.card .hd .btn.ic{position:relative;z-index:1}
+}
