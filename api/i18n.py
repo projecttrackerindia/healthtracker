@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import threading
 import time
 import urllib.request
@@ -32,11 +33,11 @@ _CACHE: dict = {"t": 0, "body": b"", "src": "", "v": 0}
 _BG = {"thread": None, "last": 0.0}
 MAX_LEN = 200
 MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
-RULES = ("You translate short UI strings for an Indian family health app (TheHealthTracker) from English into Hindi and Telugu. "
-         "Register: respectful spoken (आप / మీరు), simple words a parent or grandparent uses; keep medical abbreviations familiar in India as they are (BP, ECG, SpO₂, HbA1c, OTP, SMS, UPI, PIN). "
-         "Keep numbers, units, symbols, punctuation, ellipses, arrows and anything in braces or angle brackets exactly. Keep product names (TheHealthTracker, Health Connect, Apple Health, Fitbit, WhatsApp, Aadhaar, DigiLocker, ABHA, NOTTO) in English. "
-         "Strings that start or end mid-sentence (lower-case start, trailing ':' or '…', leading '’s') are fragments joined to other text: translate them as fragments. "
-         "Return ONLY a JSON object mapping each English string exactly as given to a two-element array [Hindi, Telugu]. No commentary.")
+try:                                                           # one wording for the build-time pass and this one
+    sys.path.insert(0, str(ROOT / "tools" / "i18n"))
+    from core import RULES
+except Exception:                                              # pragma: no cover - only if tools/ is not shipped
+    RULES = "Translate these short UI strings for an Indian family health app from English into Hindi and Telugu. Return ONLY a JSON object mapping each English string exactly as given to [Hindi, Telugu]."
 WORDS = re.compile(r"[A-Za-z]{2,}")
 
 
