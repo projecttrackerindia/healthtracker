@@ -1,0 +1,4 @@
+/* live layer 27: interactions */
+.lv27-w{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.45}.lv27-w:first-of-type{border-top:0}
+.lv27-w i{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px;background:#fff1d6;color:#8a4b00;margin-top:1px}
+.lv27-w.stop i{background:#fde2e7;color:#9f1239}

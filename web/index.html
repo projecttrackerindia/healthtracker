@@ -2048,6 +2048,11 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
 .lv26-ic{width:40px;height:40px;border-radius:13px;background:var(--soft);color:var(--mute);display:flex;align-items:center;justify-content:center;flex:none}.lv26-ic.ok{background:#dcf8e6;color:#0f5132}.lv26-ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .lv26-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 </style>
+<style id="live27-css">/* live layer 27: interactions */
+.lv27-w{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.45}.lv27-w:first-of-type{border-top:0}
+.lv27-w i{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px;background:#fff1d6;color:#8a4b00;margin-top:1px}
+.lv27-w.stop i{background:#fde2e7;color:#9f1239}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -5533,7 +5538,7 @@ SX.chg.medsave=([id],f)=>{const m=SX.me(),fd=new FormData(f),n=String(fd.get('n'
  const lf=fd.get('left'),cat=C.find(c=>c.n.toLowerCase()===n.toLowerCase()),o={n:n.slice(0,60),dose:String(fd.get('dose')||'').slice(0,50),for:String(fd.get('for')||'').slice(0,60),when,by:String(fd.get('by')||'').slice(0,60),left:lf===''||lf==null?null:Math.max(0,+lf),gen:cat?cat.gen:n.toLowerCase()};
  if(id){const x=meds(m).find(a=>a.id===id);if(x){Object.assign(x,o,{src:o.by?'rx':'self'})}}else meds(m).push(Object.assign({id:uid('md'),sp:cat?({'Heart & BP':'cardio','Diabetes':'endo','Thyroid':'endo','Stomach':'gastro'}[cat.cat]||''):'',src:o.by?'rx':'self'},o));
  SX.save();SX.closeModal();render();SX.paintNav();
- const w=cat?SX.medWarn(m,cat):[];if(w.length&&!id)toast('Saved. '+w[0].t.slice(0,110))};
+ const w=cat?SX.medWarn(m,cat):(SX.medInteract?SX.medInteract(m,o.n,id):[]);if(w.length)toast((id?'Saved. ':'Saved. ')+w[0].t.slice(0,140))};
 SX.act.meddel=([id])=>{const m=SX.me();S.meds[m.id]=meds(m).filter(a=>a.id!==id);SX.save();SX.closeModal();render();SX.paintNav();toast('Removed')};
 SX.act.refill=([id])=>{const x=meds(SX.me()).find(a=>a.id===id);if(!x)return;fQ=x.n;fCat='All';go('finder')};
 
@@ -8368,6 +8373,132 @@ SX.extend('data',{before(){return card(true)}});
 SX.extend('dash',{after(){return card(false)}});
 SX.act.bkpsend=async()=>{if(!SX.user){toast(P('Sign in first'));return}toast(P('Sending…'));try{const r=await J('/backup/send','POST',{});B=r;toast(P('Sent to')+' '+(r.to||[]).join(', '));render()}catch(e){toast(e.message)}};
 setTimeout(load,2000);
+}
+
+/*live-p27*/
+// ===================== live layer 27: medicine interactions — the pairs a pharmacist would stop you on, checked on this device =====================
+{
+const P=SX.p,S=SX.S;
+// classes by generic name (matched inside the medicine's name or generic, so "Telma 40", "telmisartan" and "Telmisartan + HCTZ" all count)
+const CLASS={
+ nsaid:['ibuprofen','diclofenac','naproxen','aceclofenac','etoricoxib','mefenamic','ketorolac','nimesulide','piroxicam','indomethacin','celecoxib'],
+ aspirin:['aspirin','ecosprin','acetylsalicylic'],
+ anticoag:['warfarin','acenocoumarol','acitrom','rivaroxaban','apixaban','dabigatran'],
+ antiplatelet:['clopidogrel','ticagrelor','prasugrel'],
+ acei_arb:['enalapril','ramipril','lisinopril','perindopril','captopril','telmisartan','losartan','olmesartan','valsartan','irbesartan','candesartan','azilsartan'],
+ potassium:['potassium chloride','spironolactone','eplerenone','amiloride','triamterene'],
+ metformin:['metformin'],
+ sulfonylurea:['glimepiride','gliclazide','glipizide','glibenclamide','glyburide'],
+ insulin:['insulin'],
+ statin:['atorvastatin','rosuvastatin','simvastatin','pravastatin','pitavastatin'],
+ simva:['simvastatin'],
+ macrolide:['clarithromycin','erythromycin'],
+ azith:['azithromycin'],
+ azole:['fluconazole','itraconazole','ketoconazole','voriconazole'],
+ ssri:['sertraline','escitalopram','fluoxetine','paroxetine','citalopram','fluvoxamine','venlafaxine','duloxetine'],
+ tramadol:['tramadol'],
+ triptan:['sumatriptan','rizatriptan','zolmitriptan'],
+ nitrate:['isosorbide','nitroglycerin','glyceryl trinitrate','sorbitrate'],
+ pde5:['sildenafil','tadalafil','vardenafil'],
+ levothyroxine:['levothyroxine','thyronorm','eltroxin','thyrox'],
+ minerals:['calcium','iron','ferrous','zinc','magnesium'],
+ antacid:['antacid','gelusil','digene','aluminium hydroxide','magnesium hydroxide'],
+ ppi:['pantoprazole','omeprazole','esomeprazole','rabeprazole','lansoprazole'],
+ ome:['omeprazole','esomeprazole'],
+ quinolone:['ciprofloxacin','levofloxacin','ofloxacin','moxifloxacin','norfloxacin'],
+ tetracycline:['doxycycline','minocycline','tetracycline'],
+ digoxin:['digoxin'],
+ diuretic:['furosemide','torsemide','hydrochlorothiazide','chlorthalidone','indapamide','hctz'],
+ methotrexate:['methotrexate'],
+ lithium:['lithium'],
+ benzo:['alprazolam','clonazepam','diazepam','lorazepam','zolpidem','etizolam'],
+ opioid:['tramadol','codeine','morphine','tapentadol'],
+ betablocker:['metoprolol','atenolol','propranolol','bisoprolol','carvedilol','nebivolol'],
+ ratecalcium:['verapamil','diltiazem'],
+ amlodipine:['amlodipine'],
+ theophylline:['theophylline','doxofylline'],
+ domperidone:['domperidone'],
+ ondansetron:['ondansetron'],
+ cotrimoxazole:['sulfamethoxazole','cotrimoxazole','co-trimoxazole','septran'],
+ paracetamol:['paracetamol','acetaminophen','dolo','crocin','calpol'],
+ sedating_ah:['chlorpheniramine','diphenhydramine','promethazine','hydroxyzine','cetirizine'],
+ steroid:['prednisolone','prednisone','dexamethasone','methylprednisolone','deflazacort'],
+ alpha:['tamsulosin','alfuzosin','prazosin'],
+};
+// the pairs. lv: stop = do not combine without the doctor; warn = can be combined with care (spacing, monitoring)
+const PAIRS=[
+ ['anticoag','nsaid','stop','Bleeding risk rises sharply. Use paracetamol for pain unless the doctor said otherwise.'],
+ ['anticoag','aspirin','stop','Both thin the blood: serious bleeding risk. Only ever together on a doctor’s instruction.'],
+ ['anticoag','antiplatelet','stop','Two blood thinners together: bleeding risk. Only on a cardiologist’s instruction.'],
+ ['anticoag','ssri','warn','This antidepressant adds to bleeding risk with a blood thinner. Mention it to the doctor.'],
+ ['anticoag','azole','stop','This antifungal can make the blood thinner far stronger (INR shoots up). The doctor must adjust the dose.'],
+ ['anticoag','macrolide','warn','This antibiotic can raise the blood thinner’s effect. An INR check during the course is wise.'],
+ ['anticoag','cotrimoxazole','stop','Co-trimoxazole can make warfarin much stronger. Ask for a different antibiotic or an INR check.'],
+ ['aspirin','nsaid','warn','Aspirin and another painkiller of the same family: stomach bleeding risk, and ibuprofen can block aspirin’s heart benefit. Take paracetamol instead.'],
+ ['antiplatelet','nsaid','warn','Clopidogrel-type medicines plus this painkiller: bleeding risk. Prefer paracetamol.'],
+ ['antiplatelet','ome','warn','Omeprazole / esomeprazole can weaken clopidogrel. Pantoprazole is the usual swap — ask the doctor.'],
+ ['acei_arb','potassium','stop','Both raise potassium; high potassium can stop the heart. Needs a doctor and blood tests, never self-started.'],
+ ['acei_arb','nsaid','warn','This painkiller can push up blood pressure and strain the kidneys with this BP medicine — more so with a diuretic. Short courses only, with water.'],
+ ['acei_arb','lithium','stop','This BP medicine can raise lithium to toxic levels. The doctor must check levels.'],
+ ['diuretic','nsaid','warn','Painkiller plus diuretic strains the kidneys. Keep courses short and drink enough water.'],
+ ['diuretic','lithium','stop','Diuretics can raise lithium to toxic levels. Needs the prescribing doctor.'],
+ ['diuretic','digoxin','warn','Diuretics lower potassium, which makes digoxin more toxic. Potassium checks are needed.'],
+ ['sulfonylurea','quinolone','warn','This antibiotic can swing blood sugar low or high with a sugar tablet. Check sugar more often during the course.'],
+ ['insulin','quinolone','warn','This antibiotic can swing blood sugar with insulin. Check sugar more often.'],
+ ['sulfonylurea','betablocker','warn','Beta-blockers can hide the warning signs of low sugar (racing heart). Know the other signs: sweating, confusion.'],
+ ['statin','macrolide','stop','This antibiotic raises statin levels; muscle damage risk. Pause the statin during the course — ask the doctor.'],
+ ['statin','azole','stop','This antifungal raises statin levels; muscle damage risk. Ask the doctor before taking both.'],
+ ['simva','amlodipine','warn','Simvastatin above 20 mg with amlodipine raises muscle-damage risk. Ask whether atorvastatin is better.'],
+ ['ssri','tramadol','stop','Serotonin syndrome risk (agitation, fever, fast heart). Use a different painkiller.'],
+ ['ssri','triptan','warn','Migraine medicine plus this antidepressant can cause serotonin syndrome. Use only as the doctor agreed.'],
+ ['ssri','nsaid','warn','Bleeding risk in the stomach rises with this combination. Prefer paracetamol or add stomach protection.'],
+ ['nitrate','pde5','stop','Dangerous blood-pressure drop. Never within 24–48 hours of each other.'],
+ ['levothyroxine','minerals','warn','Calcium, iron or zinc block thyroid absorption. Take levothyroxine on an empty stomach, 4 hours apart from these.'],
+ ['levothyroxine','antacid','warn','Antacids block thyroid absorption. Keep a 4-hour gap.'],
+ ['levothyroxine','ppi','warn','Acid-reducers can lower thyroid absorption over time. The doctor may need to check TSH.'],
+ ['quinolone','minerals','warn','Calcium, iron or zinc stop this antibiotic from being absorbed. Take them 2 hours apart.'],
+ ['quinolone','antacid','warn','Antacids stop this antibiotic from working. Take them 2 hours apart.'],
+ ['tetracycline','minerals','warn','Calcium, iron or zinc stop doxycycline being absorbed. Take them 2 hours apart.'],
+ ['tetracycline','antacid','warn','Antacids block doxycycline. Take them 2 hours apart.'],
+ ['digoxin','ratecalcium','stop','Verapamil / diltiazem raise digoxin levels and slow the heart too much. Doctor-only combination.'],
+ ['digoxin','macrolide','warn','This antibiotic can raise digoxin levels. Watch for nausea, vision changes, slow pulse.'],
+ ['methotrexate','nsaid','stop','Painkillers of this family can push methotrexate to toxic levels. Ask the prescribing doctor.'],
+ ['methotrexate','cotrimoxazole','stop','This antibiotic with methotrexate can suppress the bone marrow. Avoid.'],
+ ['lithium','nsaid','stop','Painkillers of this family raise lithium levels. Use paracetamol.'],
+ ['benzo','opioid','stop','Sedative plus opioid painkiller: breathing can slow dangerously, especially in older people.'],
+ ['benzo','sedating_ah','warn','Two sedating medicines: heavy drowsiness, falls in older people. Avoid driving.'],
+ ['opioid','sedating_ah','warn','Extra drowsiness and slowed breathing. Avoid driving; be careful in older people.'],
+ ['betablocker','ratecalcium','stop','Both slow the heart; together they can cause a dangerously slow rate or heart block. Specialist-only.'],
+ ['theophylline','quinolone','stop','This antibiotic raises theophylline to toxic levels (seizures, racing heart). Ask for another antibiotic.'],
+ ['theophylline','macrolide','warn','This antibiotic raises theophylline levels. Levels may need checking.'],
+ ['domperidone','azole','stop','Heart-rhythm risk (QT prolongation). Avoid together.'],
+ ['domperidone','macrolide','stop','Heart-rhythm risk (QT prolongation). Avoid together.'],
+ ['ondansetron','macrolide','warn','Both can affect heart rhythm. Fine for a short course in a healthy heart; ask if there is heart disease.'],
+ ['ondansetron','quinolone','warn','Both can affect heart rhythm. Ask if there is heart disease or other QT-prolonging medicine.'],
+ ['steroid','nsaid','warn','Steroid plus painkiller: stomach ulcer and bleeding risk. Take with food; ask about stomach protection.'],
+ ['metformin','steroid','warn','Steroids push sugar up; metformin may not cover it during the course. Check sugar more often.'],
+ ['alpha','pde5','warn','Both lower blood pressure; dizziness on standing. Take at different times of day, as the doctor agrees.'],
+ ['paracetamol','paracetamol','warn','Two medicines contain paracetamol. Keep the day’s total under 3 g (6 × 500 mg) — many cold remedies hide it.'],
+];
+const norm=s=>String(s||'').toLowerCase();
+function classesOf(x){const t=norm(x.n)+' '+norm(x.gen)+' '+norm(x.dose);const out=[];for(const k in CLASS)if(CLASS[k].some(g=>t.includes(g)))out.push(k);return out}
+SX.medClasses=classesOf;
+// every flagged pair among a person's medicines (+ one more being considered)
+function check(m,extra,skipId){const list=(S.meds[m.id]||[]).filter(x=>x.id!==skipId).map(x=>({x,c:classesOf(x)}));if(extra)list.push({x:extra,c:classesOf(extra),new:true});
+ const out=[],seen=new Set();
+ for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){const A=list[i],B=list[j];
+  for(const [a,b,lv,t] of PAIRS){const hit=(A.c.includes(a)&&B.c.includes(b))||(A.c.includes(b)&&B.c.includes(a));if(!hit)continue;if(a===b&&A.x.id===B.x.id)continue;
+   const key=[A.x.n,B.x.n,a,b].join('|');if(seen.has(key))continue;seen.add(key);
+   out.push({lv,t:`${A.x.n} + ${B.x.n}: ${t}`,a:A.x,b:B.x,involvesNew:!!(A.new||B.new)})}}
+ return out.sort((p,q)=>(q.lv==='stop')-(p.lv==='stop'))}
+SX.medInteract=(m,name,skipId)=>check(m,{n:name,gen:name},skipId).filter(w=>w.involvesNew);
+SX.medPairs=m=>check(m,null);
+// the finder and the medicine form already ask SX.medWarn about a catalogue item: add the pairs with what the person already takes
+const warn0=SX.medWarn;SX.medWarn=(m,it)=>warn0(m,it).concat(check(m,{n:it.n||it.gen||'',gen:it.gen||''}).filter(w=>w.involvesNew));
+// a card on the Medicines page: every pair in the current list
+SX.extend('rx',{before(){const m=SX.me(),w=check(m,null);if(!w.length)return '';
+ return `<div class="card lv27"><div class="hd"><div><h3>${P('Checks on this list')}</h3><small class="mute">${P('Pairs a pharmacist would ask about. Checked on this device, from the names alone — nothing is sent anywhere.')}</small></div></div>${w.map(x=>`<div class="lv27-w ${x.lv}"><i>${x.lv==='stop'?'!':'i'}</i><div>${E(x.t)}</div></div>`).join('')}<p class="mute sm" style="margin:8px 0 0">${P('This is a safety net, not a verdict: your doctor may have chosen a pair on purpose. Never stop a medicine without asking.')}</p></div>`}});
+SX.lv27={check,classesOf,PAIRS,CLASS};
 }
 
 SX.boot();
