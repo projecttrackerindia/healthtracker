@@ -18,7 +18,8 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: { launchShowDuration: 800, backgroundColor: '#1d4fff', showSpinner: false },
-    PushNotifications: { presentationOptions: ['badge', 'sound', 'alert'] }
+    PushNotifications: { presentationOptions: ['badge', 'sound', 'alert'] },
+    BluetoothLe: { displayStrings: { scanning: 'Looking for devices…', cancel: 'Cancel', availableDevices: 'Devices nearby', noDeviceFound: 'No device found — is it switched on and in pairing mode?' } }
   }
 };
 

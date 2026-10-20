@@ -63,7 +63,13 @@ OTP_DEMO=0
 | `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
-### After editing any page
+### Round 19 — watches and devices (2026-10-20)
+
+* Bluetooth inside the phone apps: `@capacitor-community/bluetooth-le` wrapped as `navigator.bluetooth` (layer 19), so "Read from a device" (BP monitors, oximeters, scales, thermometers, HR straps) and the Polar H10 live ECG work in the Android/iOS WebView, not only in Chrome. Android manifest gains `BLUETOOTH_SCAN` (neverForLocation) and `BLUETOOTH_CONNECT`.
+* Withings and Oura clouds beside Fitbit (`api/wearables.py`, `/api/v1/wear/*`); Withings brings ScanWatch ECG strips with their AFib classification. Each switches on when its developer keys exist (`deploy/gcp/secrets.txt`). See `docs/wearables.md` for the full map of which watch takes which road.
+* Service worker `dk-r19`.
+
+## After editing any page
 
 The server sends the compressed copy of a page (`index.html.br` / `.gz`) when the browser accepts it. After changing
 `web/index.html` or anything in `site/`, run `python tools/compress.py` and commit the refreshed copies.

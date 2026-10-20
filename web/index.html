@@ -1804,6 +1804,10 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
  .card .pill,.badge,.tag{border-radius:999px;font-size:11px;letter-spacing:.04em}
 }
 </style>
+<style id="live19-css">/* live layer 19: watch & ring accounts */
+.lv19-wear .lv11-src .btn+.btn{margin-left:6px}
+@media (max-width:720px){.lv19-wear .lv11-src{flex-wrap:wrap}.lv19-wear .lv11-src .btn{margin-top:6px}}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -6930,7 +6934,7 @@ SX.act.hcsync=async()=>{const hs=plug('HealthSync');const m=SX.me();if(!hs){SX.m
    document.getElementById('hcgrid').innerHTML=Object.keys(HC_FIELDS).map(k=>`<div><small>${P(HC_FIELDS[k])}</small><b>${(d[k]||[]).length}</b></div>`).join('');st.textContent=n?P('Added')+' '+n+' '+P('new readings for')+' '+E(m.name.split(' ')[0]):P('Nothing new since the last sync.');go.textContent=P('Done');go.onclick=()=>{SX.closeModal();render()}}catch(e){err.textContent=e.message||P('Could not read');err.hidden=false;go.disabled=false}}}
  catch(e){err.textContent=e.message||P('Health Connect is not available');err.hidden=false}};
 // on the phone, "Read from a device" means Health Connect (the app's WebView has no Web Bluetooth)
-if(SX.native){const ble0=SX.act.bledev;SX.act.bledev=()=>SX.act.hcsync();void ble0}
+if(SX.native){const ble0=SX.act.bledev;SX.act.bledev=(...a)=>(navigator.bluetooth&&navigator.bluetooth.requestDevice)?ble0(...a):SX.act.hcsync()}
 // steps and sleep from the phone on Today
 const stepsCard=m=>{const st=S.steps[m.id]||{},sl=S.sleep[m.id]||{},days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10)});
  const has=days.some(d=>st[d]||sl[d]);if(!has)return SX.native?`<div class="card lv10-hc"><div class="hd"><div><h3>📱 ${P('Phone & watch')}</h3><small class="mute">${P('Steps, sleep and heart rate from Health Connect.')}</small></div><button class="btn p sm" data-sx="hcsync">${P('Connect')}</button></div></div>`:'';
@@ -7189,7 +7193,7 @@ const isIOS=/iPhone|iPad/.test(navigator.userAgent),isAndroid=/Android/.test(nav
 let APPS={android:null,ios:null,fitbit:null};
 J('/app/android').then(r=>{APPS.android=r;if(page==='devices')render()}).catch(()=>{});J('/app/ios').then(r=>{APPS.ios=r}).catch(()=>{});
 const fbStatus=()=>J('/fitbit/status').then(r=>{APPS.fitbit=r;if(page==='devices')render()}).catch(()=>{});fbStatus();
-const SRC={dev:'Bluetooth',hc:'Phone (Health Connect)',apple:'Apple Health',fitbit:'Fitbit',polar:'Polar H10'};
+const SRC={dev:'Bluetooth',hc:'Phone (Health Connect)',apple:'Apple Health',fitbit:'Fitbit',polar:'Polar H10',withings:'Withings',oura:'Oura'};
 const fmtT=t=>new Date(t).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 const show=r=>[r.hr!=null?r.hr+' bpm':'',r.sys!=null?r.sys+'/'+r.dia+' mmHg':'',r.spo2!=null?'SpO₂ '+r.spo2+'%':'',r.temp!=null?r.temp+' °C':'',r.glu!=null?r.glu+' mg/dL':'',r.w!=null?r.w+' kg':''].filter(Boolean).join(' · ');
 
@@ -7741,6 +7745,71 @@ function orb(){if(!phone()||page!=='assist')return;const chat=document.getElemen
 new MutationObserver(()=>{sosBtn();orb()}).observe(document.getElementById('page'),{childList:true,subtree:false});
 new MutationObserver(()=>setTimeout(()=>{sosBtn();orb()},0)).observe(document.body,{attributes:true,attributeFilter:['data-page']});
 setTimeout(()=>{sosBtn();orb()},500);
+}
+
+/*live-p19*/
+// ===================== live layer 19: watches & devices — Bluetooth inside the phone app, Withings and Oura clouds =====================
+{
+const P=SX.p,S=SX.S;
+const J=(path,method,body)=>fetch('/api/v1'+path,{method:method||'GET',headers:{'content-type':'application/json','x-tht':'1','x-dokko-key':(S.key||'')},credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)}).then(async r=>{let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(typeof j.detail==='string'?j.detail:'Request failed'),{status:r.status});return j});
+
+// ---------------------------------------------------------------- A. Web Bluetooth inside the phone app
+// The WebView has no navigator.bluetooth. The native BluetoothLe plugin is wrapped in the same shape the web code
+// already uses (requestDevice → gatt.connect → getPrimaryService → getCharacteristic → notifications), so the
+// blood-pressure / oximeter / scale / thermometer reader and the Polar H10 ECG work unchanged in the Android and iOS apps.
+const SIG={heart_rate:0x180d,heart_rate_measurement:0x2a37,blood_pressure:0x1810,blood_pressure_measurement:0x2a35,health_thermometer:0x1809,temperature_measurement:0x2a1c,glucose:0x1808,glucose_measurement:0x2a18,
+ weight_scale:0x181d,weight_measurement:0x2a9d,pulse_oximeter:0x1822,plx_spot_check_measurement:0x2a5e,plx_continuous_measurement:0x2a5f,battery_service:0x180f,battery_level:0x2a19,device_information:0x180a};
+const uuid=u=>{if(typeof u==='number')return ('00000000'+u.toString(16)).slice(-8)+'-0000-1000-8000-00805f9b34fb';u=String(u).toLowerCase();if(SIG[u]!==undefined)return uuid(SIG[u]);if(/^0x[0-9a-f]{4}$/.test(u))return uuid(parseInt(u,16));if(/^[0-9a-f]{4}$/.test(u))return uuid(parseInt(u,16));return u};
+const short=u=>{const m=/^0000([0-9a-f]{4})-0000-1000-8000-00805f9b34fb$/.exec(u);return m?m[1]:u};
+const hex2dv=h=>{const parts=String(h||'').trim().split(/\s+/).filter(Boolean);const b=new Uint8Array(parts.length);parts.forEach((p,i)=>b[i]=parseInt(p,16));return new DataView(b.buffer)};
+const dv2hex=v=>{const b=v instanceof DataView?new Uint8Array(v.buffer,v.byteOffset,v.byteLength):new Uint8Array(v.buffer||v);return Array.from(b).map(x=>('0'+x.toString(16)).slice(-2)).join(' ')};
+function makeBluetooth(BLE){let ready=null;const init=()=>ready||(ready=BLE.initialize({androidNeverForLocation:true}).catch(e=>{ready=null;throw e}));
+ class Chr{constructor(dev,svc,id){this.dev=dev;this.svc=svc;this.uuid=id;this.value=null;this.ls=[];this.h=null}
+  addEventListener(n,f){if(n==='characteristicvaluechanged')this.ls.push(f)}
+  removeEventListener(n,f){this.ls=this.ls.filter(x=>x!==f)}
+  _fire(dv){this.value=dv;const ev={target:this,type:'characteristicvaluechanged'};this.ls.forEach(f=>{try{f(ev)}catch(e){}})}
+  async startNotifications(){const on=ev=>this._fire(hex2dv(ev&&ev.value));// iOS reports base-UUID services in their short form (180d), Android in full; listen to both spellings
+   this.h=[];for(const k of new Set(['notification|'+this.dev.id+'|'+this.svc+'|'+this.uuid,'notification|'+this.dev.id+'|'+short(this.svc)+'|'+short(this.uuid)]))this.h.push(await BLE.addListener(k,on));
+   await BLE.startNotifications({deviceId:this.dev.id,service:this.svc,characteristic:this.uuid});return this}
+  async stopNotifications(){try{await BLE.stopNotifications({deviceId:this.dev.id,service:this.svc,characteristic:this.uuid})}catch(e){}(this.h||[]).forEach(h=>{try{h.remove()}catch(e){}});this.h=null;return this}
+  async readValue(){const r=await BLE.read({deviceId:this.dev.id,service:this.svc,characteristic:this.uuid});this.value=hex2dv(r&&r.value);return this.value}
+  async writeValue(v){await BLE.write({deviceId:this.dev.id,service:this.svc,characteristic:this.uuid,value:dv2hex(v)})}
+  async writeValueWithResponse(v){return this.writeValue(v)}
+  async writeValueWithoutResponse(v){await BLE.writeWithoutResponse({deviceId:this.dev.id,service:this.svc,characteristic:this.uuid,value:dv2hex(v)})}}
+ class Svc{constructor(dev,id){this.dev=dev;this.uuid=id}async getCharacteristic(c){return new Chr(this.dev,this.uuid,uuid(c))}}
+ class Gatt{constructor(dev){this.device=dev;this.connected=false}
+  async connect(){await init();await BLE.connect({deviceId:this.device.id,timeout:15000});this.connected=true;try{BLE.addListener('disconnected|'+this.device.id,()=>{this.connected=false})}catch(e){}return this}
+  disconnect(){this.connected=false;BLE.disconnect({deviceId:this.device.id}).catch(()=>{})}
+  async getPrimaryService(s){const id=uuid(s);try{const r=await BLE.getServices({deviceId:this.device.id});const have=(r&&r.services||[]).map(x=>String(x.uuid).toLowerCase());if(have.length&&!have.includes(id))throw new Error('No service '+s)}catch(e){if(/No service/.test(e.message))throw e}return new Svc(this.device,id)}}
+ class Dev{constructor(d){this.id=d.deviceId;this.name=d.name||'';this.gatt=new Gatt(this)}}
+ return {_native:true,
+  async getAvailability(){try{await init();const r=await BLE.isEnabled();return !!(r&&r.value)}catch(e){return false}},
+  async requestDevice(o){await init();o=o||{};const f=o.filters||[];const svcs=[],prefixes=[];f.forEach(x=>{(x.services||[]).forEach(s=>svcs.push(uuid(s)));if(x.namePrefix)prefixes.push(x.namePrefix);if(x.name)prefixes.push(x.name)});
+   const q={optionalServices:Array.from(new Set(svcs.concat((o.optionalServices||[]).map(uuid))))};
+   if(prefixes.length){let p=prefixes[0];prefixes.forEach(x=>{let i=0;while(i<p.length&&i<x.length&&p[i]===x[i])i++;p=p.slice(0,i)});if(p.trim())q.namePrefix=p.trim()}
+   else if(svcs.length)q.services=Array.from(new Set(svcs));
+   try{const r=await BLE.isEnabled();if(r&&r.value===false){try{await BLE.requestEnable()}catch(e){}}}catch(e){}
+   let d;try{d=await BLE.requestDevice(q)}catch(e){throw new Error(/cancel/i.test(e.message||'')?'cancelled':(e.message||'No device chosen'))}
+   if(!d||!d.deviceId)throw new Error('cancelled');return new Dev(d)}}}
+SX.bleShim=makeBluetooth;
+try{const C=window.Capacitor;const BLE=C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.BluetoothLe;if(BLE&&!(navigator.bluetooth&&navigator.bluetooth.requestDevice)){Object.defineProperty(navigator,'bluetooth',{value:makeBluetooth(BLE),configurable:true});SX.nativeBle=true}}catch(e){}
+
+// ---------------------------------------------------------------- B. Withings and Oura (cloud) beside Fitbit on the Devices tab
+const WEAR={providers:[],links:[]};
+const fmtT=t=>new Date(t).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const ICON={withings:'⌚',oura:'💍'};
+const status=()=>J('/wear/status').then(r=>{WEAR.providers=r.providers||[];WEAR.links=r.links||[];if(page==='devices')render()}).catch(()=>{});
+status();
+function card(p,m){const link=WEAR.links.find(l=>l.member===m.id&&l.provider===p.id);
+ return `<div class="lv11-src ${link?'on':''}"><div class="lv11-ic">${ICON[p.id]||'⌚'}</div><div class="grow"><b>${E(p.label)}</b><small>${link?P('Linked')+(link.lastSync?' · '+P('last sync')+' '+fmtT(link.lastSync*1000):''):E(p.about)}</small>${!link&&!p.enabled?`<small>${P('Account linking opens once TheHealthTracker’s developer access is approved.')}</small>`:''}</div>${link?`<button class="btn p sm" data-sx="wearsync:${p.id}">${P('Sync')}</button><button class="btn s sm" data-sx="wearunlink:${p.id}">${P('Unlink')}</button>`:p.enabled?`<button class="btn p sm" data-sx="wearlink:${p.id}">${P('Link')}</button>`:''}</div>`}
+SX.extend('devices',{after(){const m=SX.me();if(!m||!WEAR.providers.length)return '';return `<div class="card wide lv11-dev lv19-wear"><div class="hd"><div><h3>${P('Watch and ring accounts')}</h3><small class="mute">${P('For watches that keep their readings in their own cloud. Most watches need none of this: their phone app shares with Health Connect or Apple Health, and the TheHealthTracker app reads it from there.')}</small></div></div>${WEAR.providers.map(p=>card(p,m)).join('')}</div>`}});
+const label=id=>{const p=WEAR.providers.find(x=>x.id===id);return p?p.label:id};
+SX.act.wearlink=async([p])=>{const m=SX.me();try{const r=await fetch('/api/v1/wear/'+encodeURIComponent(p)+'/start?member='+encodeURIComponent(m.id),{method:'POST',headers:{'x-tht':'1','x-dokko-key':S.key||''},credentials:'same-origin'});const j=await r.json();if(!r.ok)throw new Error(j.detail||'failed');location.href=j.url}catch(e){toast(e.message)}};
+SX.act.wearsync=async([p])=>{const m=SX.me();toast(P('Syncing')+' '+label(p)+'…');try{const r=await J('/wear/'+encodeURIComponent(p)+'/sync','POST',{member:m.id,days:7});const data=r.data||{};const ecg=data.ecg||[];delete data.ecg;
+  let n=SX.hcMerge(m,data,p);(S.vitals[m.id]||[]).forEach(v=>{if(v.src===p&&!v._w){v.dev=label(p);v._w=1}});if(ecg.length&&SX.ecgImport)n+=SX.ecgImport(m,ecg,p);
+  S.hc[m.id]={t:Date.now(),n,src:p};SX.ledger('reading',true,'Synced from '+label(p),m.id);SX.save();status();render();toast(n?P('Added')+' '+n+' '+P('new readings'):P('Nothing new since the last sync'))}catch(e){toast(e.message);if(e.status===401)status()}};
+SX.act.wearunlink=async([p])=>{const m=SX.me();if(!confirm(P('Unlink')+' '+label(p)+' '+P('from this profile?')))return;try{await J('/wear/'+encodeURIComponent(p)+'/'+encodeURIComponent(m.id),'DELETE');status();toast(label(p)+' '+P('unlinked'))}catch(e){toast(e.message)}};
+if(/#wear=/.test(location.hash)){const mm=/#wear=([a-z]+):([a-z]+)/.exec(location.hash);history.replaceState(null,'',location.pathname);if(mm)setTimeout(()=>{const p=mm[1],st=mm[2];if(st==='done'){toast(label(p)+' '+P('linked — syncing'));go('devices');SX.act.wearsync([p])}else toast(st==='cancelled'?P('Linking was cancelled'):P('Linking did not complete'))},1200)}
 }
 
 SX.boot();
