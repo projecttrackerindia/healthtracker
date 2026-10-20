@@ -1735,6 +1735,75 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
  .lv10-weekly .hd .btn,.card .hd .btn.ic{position:relative;z-index:1}
 }
 </style>
+<style id="live18-css">/* live layer 18: the phone theme from the reference boards — near-black navy, glass cards, blue-gradient hero, pill inputs, round icon buttons. Desktop untouched. */
+@media (max-width:720px){
+ @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#07080d;--card:#111420;--soft:#171b28;--bg2:#171b28;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.14);--mute:#8b93a7;--ink:#f2f4f8;--blue:#3b6cff}}
+ :root[data-theme=dark]{--bg:#07080d;--card:#111420;--soft:#171b28;--bg2:#171b28;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.14);--mute:#8b93a7;--ink:#f2f4f8;--blue:#3b6cff}
+ body{background:radial-gradient(900px 500px at 50% -10%,rgba(59,108,255,.16),transparent 60%),var(--bg)!important;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+ /* app bar: round glass buttons, SOS as a red circle */
+ .top{background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+ body.lv14-scrolled .top{background:color-mix(in srgb,var(--bg) 82%,transparent)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+ .topb #sxBell,.topb #sxAcct,.topb #sxWho{border:1px solid var(--line2)!important;background:color-mix(in srgb,var(--card) 80%,transparent)!important}
+ .topb #sxAcct{display:none!important}
+ .topb #lv18sos{display:flex!important;order:5;flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--red,#e5484d);color:#fff;font:800 10.5px Inter,system-ui,sans-serif;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(229,72,77,.35)}
+ .sx-fab{display:none!important}
+ /* cards: glass, 24px, hairline */
+ .card{border-radius:24px!important;background:linear-gradient(180deg,color-mix(in srgb,var(--card) 100%,#fff 3%),var(--card))!important;border:1px solid var(--line)!important;box-shadow:0 1px 0 rgba(255,255,255,.03) inset!important;padding:16px!important}
+ .card .card{background:var(--soft)!important;border:0!important;border-radius:18px!important}
+ .card h3{font-size:17px;font-weight:700;letter-spacing:-.02em}
+ .btn.p{border-radius:999px;background:var(--blue)!important;box-shadow:0 8px 24px -8px var(--blue)}
+ .btn.s{border-radius:999px;background:var(--soft)!important;border:1px solid var(--line2)!important}
+ .btn{font-weight:600}
+ input,select,textarea,.form input,.form select{border-radius:16px!important;background:var(--soft)!important;border:1px solid var(--line)!important;min-height:48px}
+ /* the hero card: today's "finish setting up" in a blue gradient like the boards */
+ .lv6-setupcard{background:linear-gradient(135deg,#2b5cff 0%,#4f7cff 55%,#7aa0ff 100%)!important;border:0!important;color:#fff;padding:18px!important;position:relative;overflow:hidden}
+ .lv6-setupcard::after{content:"";position:absolute;right:-60px;top:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.35),transparent)}
+ .lv6-setupcard .grow b{color:#fff;font-size:17px}.lv6-setupcard .grow small{color:rgba(255,255,255,.85)}
+ .lv6-setupcard .lv6-ring{--track:rgba(255,255,255,.3);background:conic-gradient(#fff calc(var(--p)*1%),rgba(255,255,255,.25) 0)!important}.lv6-setupcard .lv6-ring b{color:#fff;background:transparent}
+ .lv6-setupcard .btn{background:#fff!important;color:#1f4fff!important;border-radius:999px;box-shadow:none;font-weight:700;white-space:nowrap;flex:none}
+ .lv6-setupcard .grow small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ /* sub-tab strip and segmented controls */
+ #lv17tabs .sx-tabs{background:color-mix(in srgb,var(--card) 85%,transparent)!important;border:1px solid var(--line)!important;border-radius:999px!important;padding:4px!important}
+ #lv17tabs .sx-tabs button{border-radius:999px;padding:8px 14px}#lv17tabs .sx-tabs button.on{background:var(--blue)!important;color:#fff!important;box-shadow:none}
+ .seg,.sx-seg{border-radius:999px}
+ /* list rows (More sheet) like the "Beat Craft" rows: icon left, chevron circle right */
+ .lv13-more{grid-template-columns:1fr!important;gap:8px!important}
+ .lv13-more button{flex-direction:row!important;justify-content:flex-start;gap:14px!important;padding:14px 16px!important;border-radius:18px!important;background:var(--card)!important;border:1px solid var(--line)!important;font-size:15px!important;font-weight:600!important;position:relative}
+ .lv13-more button svg{width:22px!important;height:22px!important}
+ .lv13-more button::after{content:"›";position:absolute;right:12px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;color:var(--ink)}
+ .lv13-more button.on{border-color:var(--blue)!important}
+ /* assistant: the orb screen */
+ #lv18orb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;flex:1;min-height:46vh;text-align:center;padding:10px 0}
+ #lv18orb .orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#9bb8ff 0,#3b6cff 35%,#0b1a4d 72%,transparent 73%);box-shadow:0 0 60px 14px rgba(59,108,255,.35),0 0 120px 40px rgba(59,108,255,.15);animation:lv18orb 6s ease-in-out infinite;margin-bottom:16px}
+ @keyframes lv18orb{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.06) rotate(12deg)}}
+ #lv18orb small{font-size:15px;color:var(--mute)}#lv18orb b{font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1.15;max-width:280px}
+ body[data-page=assist] .lv5-agent>.hd,body[data-page=assist] .lv5-agent>h3,body[data-page=assist] .lv5-agent>p.mute{display:none}
+ body[data-page=assist] .lv5-ask{background:transparent}
+ body[data-page=assist] .lv5-ask input{border-radius:999px!important;height:56px!important;padding:0 18px!important;background:color-mix(in srgb,var(--card) 90%,transparent)!important;border:1px solid var(--line2)!important;font-size:15px}
+ body[data-page=assist] .lv5-ask .btn{border-radius:999px;height:56px;min-width:56px;padding:0 18px}
+ body[data-page=assist] .lv5-sugg button{border-radius:999px;background:var(--card);border:1px solid var(--line)}
+ .bub{border-radius:18px!important;padding:12px 14px!important;font-size:14.5px!important;line-height:1.45}.bub.me{background:var(--blue)!important}
+ /* sign-in: blue-gradient hero with a white pill button */
+ .lv15-auth{background:linear-gradient(180deg,#1c3fd6 0%,#3b6cff 32%,#07080d 62%)!important}
+ .lv15-auth .lv15-ah b,.lv15-auth h2{color:#fff}.lv15-auth p.mute{color:rgba(255,255,255,.8)}
+ .lv15-auth .lv15-seg{background:rgba(255,255,255,.14)}.lv15-auth .lv15-seg button{color:rgba(255,255,255,.75)}.lv15-auth .lv15-seg button.on{background:#fff;color:#1f4fff}
+ .lv15-auth label{color:rgba(255,255,255,.85)}.lv15-auth label input{background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.2)!important;color:#fff;border-radius:16px!important}
+ .lv15-auth .lv15-main{background:#fff!important;color:#1f4fff!important;border-radius:999px;box-shadow:none;font-weight:700}
+ .lv15-auth .lv15-pk{background:rgba(255,255,255,.12)!important;color:#fff!important;border-color:rgba(255,255,255,.25)!important;border-radius:999px}
+ .lv15-auth .lv15-link{color:#fff}.lv15-auth .lv15-skip{color:rgba(255,255,255,.8)}.lv15-foot{color:rgba(255,255,255,.6)!important}
+ /* splash on the same gradient */
+ .lv15-splash{background:linear-gradient(160deg,#1c3fd6,#3b6cff 50%,#0b1a4d)!important}.lv15-splash b,.lv15-splash small{color:#fff!important}.lv15-splash b span{color:#fff!important}
+ /* health card banner (optional now) */
+ #lv17hc{border-radius:18px;margin:0 0 4px;border:1px solid var(--line)!important;background:var(--card)!important}
+ /* bottom bar on the dark board */
+ #mtab{background:color-mix(in srgb,#0f1118 88%,transparent)!important;border-color:var(--line2)!important}
+ /* section headers inside cards: label + action on the right */
+ .card .hd{align-items:center}.card .hd .btn.sm{border-radius:999px}
+ /* type */
+ .card p,.card li{font-size:14px;line-height:1.5}.card small,.mute,.sm{font-size:13px}
+ .card .pill,.badge,.tag{border-radius:999px;font-size:11px;letter-spacing:.04em}
+}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -7636,7 +7705,9 @@ document.addEventListener('focusout',()=>setTimeout(()=>{if(!document.activeElem
 function hlBtn(){if(!phone())return;const st=document.getElementById('hstage');if(!st||document.getElementById('lv17lbl'))return;const b=document.createElement('button');b.id='lv17lbl';b.type='button';b.textContent=P('Labels');b.onclick=()=>document.body.classList.toggle('lv17-labels');st.appendChild(b)}
 
 // ---------------------------------------------------------------- G. the Android app: the Health Card as a notification that stays until switched off
-async function nativeCard(){try{const C=window.Capacitor,LN=C&&C.Plugins&&C.Plugins.LocalNotifications;if(!LN||!C.isNativePlatform||!C.isNativePlatform())return;
+async function nativeCard(){try{const C=window.Capacitor;if(!C||!C.isNativePlatform||!C.isNativePlatform())return;const HC=C.Plugins&&C.Plugins.HealthCard;
+ if(HC){const m=SX.me();const d=SX.midOf(m.id);if(S.hcBanner===false||S.demo){await HC.hide();return}await HC.show({name:m.name,memberId:m.id,blood:d.blood||'',allergies:(d.allergies||[]).filter(Boolean).join(', '),conditions:(d.conditions||[]).filter(Boolean).join(', ')});return}
+ const LN=C.Plugins&&C.Plugins.LocalNotifications;if(!LN)return;
  if(S.hcBanner===false||S.demo){await LN.cancel({notifications:[{id:7001}]});return}
  const perm=await LN.checkPermissions();if(perm.display!=='granted'){const r=await LN.requestPermissions();if(r.display!=='granted')return}
  const m=SX.me();const d=SX.midOf(m.id);const al=(d.allergies||[]).filter(Boolean);
@@ -7644,6 +7715,8 @@ async function nativeCard(){try{const C=window.Capacitor,LN=C&&C.Plugins&&C.Plug
  await LN.schedule({notifications:[{id:7001,title:`${d.blood?d.blood+' · ':''}${m.name}`,body:(al.length?P('Allergic')+': '+al.join(', '):P('No allergies on record'))+(d.conditions&&d.conditions.length?' · '+d.conditions.join(', '):''),ongoing:true,autoCancel:false,actionTypeId:'hc',iconColor:'#E11D48',extra:{kind:'hc'}}]});
  if(!window.__lv17ln){window.__lv17ln=1;LN.addListener('localNotificationActionPerformed',ev=>{if(ev.actionId==='sos')SX.openSOS();else go('mid')})}}catch(e){}}
 
+// lock-screen card taps arrive as thehealthtracker://sos or thehealthtracker://medical-id
+try{const C=window.Capacitor,AP=C&&C.Plugins&&C.Plugins.App;if(AP&&AP.addListener)AP.addListener('appUrlOpen',ev=>{const u=String(ev&&ev.url||'');if(u.startsWith('thehealthtracker://sos'))setTimeout(()=>SX.openSOS(),300);else if(u.startsWith('thehealthtracker://medical-id'))setTimeout(()=>go('mid'),300)})}catch(e){}
 // ---------------------------------------------------------------- wiring
 function refresh(){title();tabs();banner();greet()}
 new MutationObserver(()=>setTimeout(refresh,0)).observe(document.body,{attributes:true,attributeFilter:['data-page']});
@@ -7652,6 +7725,22 @@ const save17=SX.save;SX.save=function(){const r=save17.apply(this,arguments);cle
 addEventListener('resize',()=>{refresh()});
 setTimeout(()=>{refresh();hlBtn();nativeCard()},400);
 setInterval(measure,3000);
+}
+
+/*live-p18*/
+// ===================== live layer 18: reference-board theme — SOS in the app bar, the assistant's orb screen =====================
+{
+const P=SX.p,S=SX.S;
+const phone=()=>matchMedia('(max-width:720px)').matches;
+// the Health Card banner is optional now (the lock-screen card is the native app's job); SOS lives in the bar
+if(S.hcBannerDefaulted!==2){S.hcBanner=false;S.hcBannerDefaulted=2}
+function sosBtn(){if(!phone())return;const tb=document.querySelector('.topb');if(!tb||document.getElementById('lv18sos'))return;const b=document.createElement('button');b.id='lv18sos';b.type='button';b.dataset.sx='sos';b.setAttribute('aria-label',P('SOS: emergency help'));b.textContent='SOS';tb.appendChild(b)}
+// the assistant opens on an orb and a question, like the boards, until the first message
+function orb(){if(!phone()||page!=='assist')return;const chat=document.getElementById('lv5chat');if(!chat||chat.querySelector('.bub')||document.getElementById('lv18orb'))return;const m=SX.me();
+ chat.innerHTML=`<div id="lv18orb"><div class="orb"></div><small>${P('Hello')} ${E((m?m.name:'').split(' ')[0])}</small><b>${P('How can I help you today?')}</b></div>`}
+new MutationObserver(()=>{sosBtn();orb()}).observe(document.getElementById('page'),{childList:true,subtree:false});
+new MutationObserver(()=>setTimeout(()=>{sosBtn();orb()},0)).observe(document.body,{attributes:true,attributeFilter:['data-page']});
+setTimeout(()=>{sosBtn();orb()},500);
 }
 
 SX.boot();

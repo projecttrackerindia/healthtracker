@@ -43,7 +43,9 @@ document.addEventListener('focusout',()=>setTimeout(()=>{if(!document.activeElem
 function hlBtn(){if(!phone())return;const st=document.getElementById('hstage');if(!st||document.getElementById('lv17lbl'))return;const b=document.createElement('button');b.id='lv17lbl';b.type='button';b.textContent=P('Labels');b.onclick=()=>document.body.classList.toggle('lv17-labels');st.appendChild(b)}
 
 // ---------------------------------------------------------------- G. the Android app: the Health Card as a notification that stays until switched off
-async function nativeCard(){try{const C=window.Capacitor,LN=C&&C.Plugins&&C.Plugins.LocalNotifications;if(!LN||!C.isNativePlatform||!C.isNativePlatform())return;
+async function nativeCard(){try{const C=window.Capacitor;if(!C||!C.isNativePlatform||!C.isNativePlatform())return;const HC=C.Plugins&&C.Plugins.HealthCard;
+ if(HC){const m=SX.me();const d=SX.midOf(m.id);if(S.hcBanner===false||S.demo){await HC.hide();return}await HC.show({name:m.name,memberId:m.id,blood:d.blood||'',allergies:(d.allergies||[]).filter(Boolean).join(', '),conditions:(d.conditions||[]).filter(Boolean).join(', ')});return}
+ const LN=C.Plugins&&C.Plugins.LocalNotifications;if(!LN)return;
  if(S.hcBanner===false||S.demo){await LN.cancel({notifications:[{id:7001}]});return}
  const perm=await LN.checkPermissions();if(perm.display!=='granted'){const r=await LN.requestPermissions();if(r.display!=='granted')return}
  const m=SX.me();const d=SX.midOf(m.id);const al=(d.allergies||[]).filter(Boolean);
@@ -51,6 +53,8 @@ async function nativeCard(){try{const C=window.Capacitor,LN=C&&C.Plugins&&C.Plug
  await LN.schedule({notifications:[{id:7001,title:`${d.blood?d.blood+' · ':''}${m.name}`,body:(al.length?P('Allergic')+': '+al.join(', '):P('No allergies on record'))+(d.conditions&&d.conditions.length?' · '+d.conditions.join(', '):''),ongoing:true,autoCancel:false,actionTypeId:'hc',iconColor:'#E11D48',extra:{kind:'hc'}}]});
  if(!window.__lv17ln){window.__lv17ln=1;LN.addListener('localNotificationActionPerformed',ev=>{if(ev.actionId==='sos')SX.openSOS();else go('mid')})}}catch(e){}}
 
+// lock-screen card taps arrive as thehealthtracker://sos or thehealthtracker://medical-id
+try{const C=window.Capacitor,AP=C&&C.Plugins&&C.Plugins.App;if(AP&&AP.addListener)AP.addListener('appUrlOpen',ev=>{const u=String(ev&&ev.url||'');if(u.startsWith('thehealthtracker://sos'))setTimeout(()=>SX.openSOS(),300);else if(u.startsWith('thehealthtracker://medical-id'))setTimeout(()=>go('mid'),300)})}catch(e){}
 // ---------------------------------------------------------------- wiring
 function refresh(){title();tabs();banner();greet()}
 new MutationObserver(()=>setTimeout(refresh,0)).observe(document.body,{attributes:true,attributeFilter:['data-page']});
