@@ -1,0 +1,6 @@
+/* live layer 24: refills */
+.lv24-row{display:flex;align-items:center;gap:12px;padding:10px 0}.lv24-row+.lv24-row{border-top:1px solid var(--line)}
+.lv24-ic{width:40px;height:40px;border-radius:13px;background:var(--soft);color:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}.lv24-ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lv24-row b{display:block;font-size:14.5px}.lv24-row small{display:block;color:var(--mute);font-size:12.5px}
+.lv24-row.urgent .lv24-ic{background:#fff1d6;color:#b45309}.lv24-row.urgent small{color:#b45309}
+@media (max-width:720px){.lv24-home{order:0;grid-column:1/-1}}

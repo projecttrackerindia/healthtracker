@@ -63,7 +63,13 @@ OTP_DEMO=0
 | `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
-### Round 23 — lab trends (2026-10-20)
+### Round 24 — medicine refills (2026-10-20)
+
+* Stock counts (`left`, already decremented per ticked dose) now drive a countdown: `days left = left ÷ doses per day` (weekday-only doses count 1/7). Medicines page: a **Running low** card (≤7 days: left, days, run-out date, Reorder → the finder); Home: a **Refill soon** card at ≤3 days.
+* Reminders job: once a day at 09:00 IST a "Refill soon" push for anything at ≤3 days (deduped per member/day; to the person's own phone when they have an account), link `/app#refill=<id>` opens the finder on that medicine. The phone app also schedules a 09:00 local notification for the same list.
+* Service worker `dk-r24`.
+
+## Round 23 — lab trends (2026-10-20)
 
 * Lab results page: a **Trends** card — one tile per test with ≥2 results (latest value, change vs previous, sparkline with the healthy band), tapping opens the full chart (SVG, no library): values over the years with the range band, colour-coded points, year chips, the list of every result, "Discuss with your doctor". `SX.labTrendChart(m,key)` for other pages.
 * Demo fixes found on the way: the sample family now keeps every section's *structure* (notes.seen, rem.off…) so the bell no longer crashes; "You" has a complete health card so the mandatory first-step form does not open in the demo; the demo banner no longer shares its class with `<body>` (it had painted the whole page white in light mode).
