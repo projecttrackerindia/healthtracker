@@ -1,0 +1,4 @@
+/* live layer 25: doctor summary links */
+.lv25-row{display:flex;gap:8px;flex-wrap:wrap}
+.lv25-opts{display:flex;flex-direction:column;gap:8px;margin:12px 0}.lv25-opts .btn{justify-content:space-between}.lv25-opts .btn small{opacity:.8;font-weight:500}
+.lv25-links{margin-top:10px;border-top:1px solid var(--line)}.lv25-link{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.lv25-link b{display:block;font-size:14px}.lv25-link small{color:var(--mute);font-size:12px}

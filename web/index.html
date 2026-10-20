@@ -2038,6 +2038,11 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
 .lv24-row.urgent .lv24-ic{background:#fff1d6;color:#b45309}.lv24-row.urgent small{color:#b45309}
 @media (max-width:720px){.lv24-home{order:0;grid-column:1/-1}}
 </style>
+<style id="live25-css">/* live layer 25: doctor summary links */
+.lv25-row{display:flex;gap:8px;flex-wrap:wrap}
+.lv25-opts{display:flex;flex-direction:column;gap:8px;margin:12px 0}.lv25-opts .btn{justify-content:space-between}.lv25-opts .btn small{opacity:.8;font-weight:500}
+.lv25-links{margin-top:10px;border-top:1px solid var(--line)}.lv25-link{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.lv25-link b{display:block;font-size:14px}.lv25-link small{color:var(--mute);font-size:12px}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -6532,8 +6537,8 @@ SX.act.summary=([id])=>{const m=SX.member(id)||SX.me(),mid=SX.midOf(m.id),meds=(
  <h2>${P('Emergency contacts')}</h2>${cs.length?`<table>${cs.map(c=>row(esc(c.n)+' · '+esc(c.rel),esc(c.ph||''))).join('')}</table>`:`<p class="mute">${P('None recorded')}</p>`}
  <p class="foot">${P('Prepared by the family in TheHealthTracker for a doctor visit. Values are as entered or read from reports; please verify against originals. Not a medical record of any hospital.')}</p>
  <button onclick="print()" style="margin-top:10px;padding:10px 16px;border-radius:10px;border:0;background:#1f4fff;color:#fff;font-weight:600">${P('Print or save as PDF')}</button></body></html>`;
- const w=window.open('','_blank');if(!w){toast(P('Allow pop-ups to open the summary'));return}w.document.open();w.document.write(html);w.document.close();SX.ledger('summary',true,`${P('Doctor summary opened for')} ${m.name}`,m.id);SX.save()};
-SX.extend('dash',{after(){const m=SX.me();return `<div class="card"><div class="hd"><h3>${P('For the doctor')}</h3></div><p class="mute sm" style="margin:0 0 10px">${P('One clean page: allergies, medicines, latest results, readings, insurance and contacts.')}</p><button class="btn s sm" data-sx="summary:${m.id}">🖨️ ${P('Doctor summary')}</button></div>`}});
+ if(SX.__summaryGrab){SX.__summaryGrab(html);return}const w=window.open('','_blank');if(!w){toast(P('Allow pop-ups to open the summary'));return}w.document.open();w.document.write(html);w.document.close();SX.ledger('summary',true,`${P('Doctor summary opened for')} ${m.name}`,m.id);SX.save()};
+
 
 // ---------------------------------------------------------------- F. audit: who looked at whose profile
 const sa1=SX.setActive;SX.setActive=id=>{const before=S.active;sa1(id);const m=SX.member(id);if(!SX.user||!m||m.id===myId()||before===id)return;S.audit=S.audit||{};const k=SX.today()+':'+SX.user.id+':'+id;if(S.audit[k])return;Object.keys(S.audit).forEach(x=>{if(!x.startsWith(SX.today()))delete S.audit[x]});S.audit[k]=1;SX.ledger('view',true,`${(SX.user.name||P('A family member')).split(' ')[0]} ${P('viewed')} ${m.name}${P('’s records')}`,id);SX.save()};
@@ -8315,6 +8320,29 @@ async function schedule(){try{const C=window.Capacitor;if(!C||!C.isNativePlatfor
 setTimeout(schedule,3000);
 const save0=SX.save;SX.save=function(){const r=save0.apply(this,arguments);clearTimeout(window.__lv24t);window.__lv24t=setTimeout(schedule,2000);return r};
 SX.lv24={low,daysLeft,when};
+}
+
+/*live-p25*/
+// ===================== live layer 25: share the doctor summary by link (expires), see and revoke shared links =====================
+{
+const P=SX.p,S=SX.S;
+const J=(path,method,body)=>fetch('/api/v1'+path,{method:method||'GET',headers:{'content-type':'application/json','x-tht':'1','x-dokko-key':(S.key||'')},credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)}).then(async r=>{let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(typeof j.detail==='string'?j.detail:'Request failed'),{status:r.status});return j});
+const fmt=t=>new Date(t*1000).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+let links=[];
+const load=()=>{if(!SX.user)return;J('/summary/share').then(r=>{links=r||[];if(page==='dash')render()}).catch(()=>{})};
+// the app's own summary builder hands us its HTML when asked (p25 patches the print path)
+function grab(m){let html='';SX.__summaryGrab=h=>{html=h};try{SX.act.summary([m.id])}finally{SX.__summaryGrab=null}return html}
+SX.act.sumshare=async([hours])=>{const m=SX.me();if(!SX.user){toast(P('Sign in to share a link'));return}const html=grab(m);if(!html){toast(P('Could not build the summary'));return}
+ try{const r=await J('/summary/share','POST',{member:m.id,name:m.name,label:P('Doctor summary')+' · '+m.name,html,hours:+hours||48});SX.ledger('summary',true,P('Summary link shared for')+' '+m.name+' · '+P('expires')+' '+fmt(r.expires),m.id);SX.save();load();
+  SX.modal(`<h2>${P('Link ready')}</h2><p class="mute sm">${P('Anyone with this link can read')} ${E(m.name.split(' ')[0])}${P('’s summary until')} <b>${fmt(r.expires)}</b>. ${P('You can end it any time from Home → For the doctor.')}</p><input id="lv25url" readonly value="${E(r.url)}" style="width:100%"><div class="lv-row-end" style="margin-top:10px"><button class="btn s" data-sx="closeModal">${P('Close')}</button><a class="btn s" href="https://wa.me/?text=${encodeURIComponent(P('Health summary for')+' '+m.name+': '+r.url)}" target="_blank" rel="noopener">WhatsApp</a><button class="btn p" id="lv25copy">${P('Copy link')}</button></div>`,{label:P('Share')});
+  document.getElementById('lv25copy').onclick=async()=>{try{if(navigator.share)await navigator.share({title:P('Health summary'),url:r.url});else{await navigator.clipboard.writeText(r.url);toast(P('Link copied'))}}catch(e){try{await navigator.clipboard.writeText(r.url);toast(P('Link copied'))}catch(_){}}}}
+ catch(e){toast(e.message)}};
+SX.act.sumrevoke=async([tok])=>{try{await J('/summary/share/'+encodeURIComponent(tok),'DELETE');toast(P('Link ended'));load()}catch(e){toast(e.message)}};
+SX.act.sumpick=()=>{const m=SX.me();SX.modal(`<h2>${P('Share with a doctor')}</h2><p class="mute sm">${P('A link to')} ${E(m.name.split(' ')[0])}${P('’s one-page summary. It stops working by itself.')}</p><div class="lv25-opts"><button class="btn p" data-sx="sumshare:48">${P('48 hours')} <small>${P('for a visit')}</small></button><button class="btn s" data-sx="sumshare:168">${P('7 days')} <small>${P('for a second opinion')}</small></button><button class="btn s" data-sx="summary:${E(m.id)}">${P('Print instead')}</button></div><div class="lv-row-end"><button class="btn s" data-sx="closeModal">${P('Cancel')}</button></div>`,{label:P('Share')})};
+SX.extend('dash',{after(){const m=SX.me();const mine=links.filter(l=>l.member===m.id);
+ return `<div class="card lv25-card"><div class="hd"><div><h3>${P('Share with a doctor')}</h3><small class="mute">${P('A link to the one-page summary that expires by itself — nothing to download, nothing to print.')}</small></div></div><div class="lv25-row"><button class="btn p sm" data-sx="sumpick">${P('Share a link')}</button><button class="btn s sm" data-sx="summary:${E(m.id)}">${P('Print')}</button></div>
+  ${mine.length?`<div class="lv25-links">${mine.map(l=>`<div class="lv25-link"><div class="grow"><b>${P('Active link')}</b><small>${P('till')} ${fmt(l.expires)} · ${l.views} ${P('views')}</small></div><button class="btn s sm" data-sx="sumrevoke:${E(l.token)}">${P('End')}</button></div>`).join('')}</div>`:''}</div>`}});
+setTimeout(load,2500);
 }
 
 SX.boot();
