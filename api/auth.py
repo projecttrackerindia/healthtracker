@@ -85,14 +85,26 @@ def find_user(db: Session, ident: str) -> User | None:
     return db.scalar(select(User).where((User.email if kind == "email" else User.phone) == v))
 
 
-def rp(request: Request) -> tuple[str, str]:
-    host = os.getenv("RP_ID") or (request.headers.get("x-forwarded-host") or request.headers.get("host") or "localhost").split(":")[0]
-    if os.getenv("APP_ORIGIN"):  # comma-separated list allowed, e.g. https://thehealthtracker.com,https://www.thehealthtracker.com
-        return host, [o.strip() for o in os.getenv("APP_ORIGIN").split(",") if o.strip()]
-    origin = request.headers.get("origin") or ""
-    if not origin:
-        proto = request.headers.get("x-forwarded-proto", request.url.scheme)
-        origin = f"{proto}://{request.headers.get('host', host)}"
+def rp(request: Request) -> tuple[str, str | list[str]]:
+    """Relying-party id and expected origin(s) for passkeys.
+
+    Passkeys are bound to the domain they were made on. `RP_ID` names the canonical domain, but when the app is opened on another
+    host that serves it (the Railway domain before the custom domain is attached, a staging host), that host must be the RP — a
+    canonical RP_ID there makes every passkey call fail with a SecurityError. So: RP_ID applies only when the request host is it
+    or a subdomain of it; otherwise the request host is the RP and its own origin is the expected origin.
+    """
+    req_host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "localhost").split(":")[0].lower()
+    rp_id = (os.getenv("RP_ID") or "").strip().lower()
+    canonical = bool(rp_id) and (req_host == rp_id or req_host.endswith("." + rp_id))
+    host = rp_id if canonical else req_host
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    own = f"{proto}://{(request.headers.get('x-forwarded-host') or request.headers.get('host') or host)}"
+    if canonical and os.getenv("APP_ORIGIN"):  # comma-separated list allowed, e.g. https://thehealthtracker.com,https://www.thehealthtracker.com
+        allowed = [o.strip() for o in os.getenv("APP_ORIGIN").split(",") if o.strip()]
+        if own not in allowed:
+            allowed.append(own)
+        return host, allowed
+    origin = request.headers.get("origin") or own
     return host, origin
 
 

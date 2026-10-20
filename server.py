@@ -169,6 +169,10 @@ async def headers(request: Request, call_next):
     if CANONICAL and host == "www." + CANONICAL and request.method in ("GET", "HEAD") and request.url.path != "/healthz":
         q = ("?" + request.url.query) if request.url.query else ""
         return Response(status_code=308, headers={"Location": f"https://{CANONICAL}{request.url.path}{q}"})
+    # the website demo runs with a throw-away "demo-…" key: it may read, it may never order, book, pay, call or spend AI
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.url.path.startswith("/api/v1/") and (request.headers.get("x-dokko-key") or "").startswith("demo-"):
+        if request.url.path not in ("/api/v1/hello", "/api/v1/beacon"):
+            return JSONResponse({"detail": "This is the demo — sign in to do this for your own family."}, status_code=403)
     resp: Response = await call_next(request)
     for k, v in SECURITY.items():
         resp.headers.setdefault(k, v)
@@ -202,6 +206,9 @@ TYPES = {
     ".png": "image/png",
     ".ico": "image/x-icon",
     ".txt": "text/plain; charset=utf-8",
+    ".webp": "image/webp",    # with X-Content-Type-Options: nosniff, Safari shows a broken image for a wrong type
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".avif": "image/avif",
+    ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".woff": "font/woff", ".ttf": "font/ttf", ".pdf": "application/pdf", ".apk": "application/vnd.android.package-archive",
 }
 COMPRESSIBLE = {".html", ".js", ".css", ".json", ".svg", ".webmanifest", ".txt"}
 NO_CACHE = {"index.html", "sw.js", "manifest.webmanifest"}
