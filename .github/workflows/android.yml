@@ -33,6 +33,9 @@ jobs:
         if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
       - name: Sync native project
+        env:
+          # the shell loads the live web app from here; set the APP_URL repository variable once the custom domain is attached
+          APP_URL: ${{ vars.APP_URL || 'https://tht-88456779070.asia-south1.run.app/app' }}
         run: npx cap sync android
       - name: Build debug APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
