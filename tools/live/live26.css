@@ -1,0 +1,4 @@
+/* live layer 26: backed up */
+.lv26-row{display:flex;align-items:center;gap:12px}.lv26-row b{display:block;font-size:14.5px}.lv26-row small{display:block;color:var(--mute);font-size:12.5px;line-height:1.4}
+.lv26-ic{width:40px;height:40px;border-radius:13px;background:var(--soft);color:var(--mute);display:flex;align-items:center;justify-content:center;flex:none}.lv26-ic.ok{background:#dcf8e6;color:#0f5132}.lv26-ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lv26-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}

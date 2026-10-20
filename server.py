@@ -131,6 +131,8 @@ from api import sos as sos_api  # noqa: E402
 app.include_router(sos_api.r)
 from api import summary as summary_api  # noqa: E402
 app.include_router(summary_api.r)
+from api import backup as backup_api  # noqa: E402
+app.include_router(backup_api.r)
 app.include_router(shop_api.r)
 app.include_router(shop_api.ar)
 from api import blood as blood_api  # noqa: E402

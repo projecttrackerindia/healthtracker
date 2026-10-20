@@ -124,32 +124,30 @@ def send_email(to: str, code: str, purpose: str) -> None:
             s.send_message(m)
 
 
-def send_mail(to: str, subject: str, text: str, html: str | None = None) -> None:
-    """Any transactional email (SOS alerts, reports) through the same transport as the codes."""
+def send_mail_attachment(to: str, subject: str, text: str, filename: str, data: bytes, mime: str = "application/zip") -> None:
+    """A transactional email with one attachment (monthly backup). SMTP transport; with Resend the attachment goes base64 in the payload."""
     sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
     if _use_resend():
-        payload = {"from": sender, "to": [to], "subject": subject, "text": text}
-        if html:
-            payload["html"] = html
+        payload = {"from": sender, "to": [to], "subject": subject, "text": text, "attachments": [{"filename": filename, "content": base64.b64encode(data).decode()}]}
         req = urllib.request.Request("https://api.resend.com/emails", method="POST", data=json.dumps(payload).encode(),
                                      headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
         try:
-            urllib.request.urlopen(req, timeout=10).read()
+            urllib.request.urlopen(req, timeout=20).read()
         except urllib.error.HTTPError as e:
             raise RuntimeError(f"Resend {e.code}: {e.read().decode('utf-8', 'ignore')[:300]}") from e
         return
     m = EmailMessage()
     m["From"], m["To"], m["Subject"] = sender, to, subject
     m.set_content(text)
-    if html:
-        m.add_alternative(html, subtype="html")
+    main, _, sub = mime.partition("/")
+    m.add_attachment(data, maintype=main or "application", subtype=sub or "octet-stream", filename=filename)
     host, port = os.getenv("SMTP_HOST"), int(os.getenv("SMTP_PORT", "587"))
     if port == 465:
-        with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=10) as s:
+        with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=30) as s:
             s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
             s.send_message(m)
     else:
-        with smtplib.SMTP(host, port, timeout=10) as s:
+        with smtplib.SMTP(host, port, timeout=30) as s:
             s.starttls(context=ssl.create_default_context())
             if os.getenv("SMTP_USER"):
                 s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))

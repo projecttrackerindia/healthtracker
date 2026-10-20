@@ -2043,6 +2043,11 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
 .lv25-opts{display:flex;flex-direction:column;gap:8px;margin:12px 0}.lv25-opts .btn{justify-content:space-between}.lv25-opts .btn small{opacity:.8;font-weight:500}
 .lv25-links{margin-top:10px;border-top:1px solid var(--line)}.lv25-link{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.lv25-link b{display:block;font-size:14px}.lv25-link small{color:var(--mute);font-size:12px}
 </style>
+<style id="live26-css">/* live layer 26: backed up */
+.lv26-row{display:flex;align-items:center;gap:12px}.lv26-row b{display:block;font-size:14.5px}.lv26-row small{display:block;color:var(--mute);font-size:12.5px;line-height:1.4}
+.lv26-ic{width:40px;height:40px;border-radius:13px;background:var(--soft);color:var(--mute);display:flex;align-items:center;justify-content:center;flex:none}.lv26-ic.ok{background:#dcf8e6;color:#0f5132}.lv26-ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lv26-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -5171,7 +5176,7 @@ let usage='';
 SX.reg('data',{head:()=>['My data','Take a copy, or delete it. Your choice, any time.'],
  render:()=>{const c=counts();
   return `<div class="card"><h3>Stored on this device</h3><div class="stat">${Object.entries(c).map(([k,v])=>`<div><small>${k}</small><b>${v}</b></div>`).join('')}</div>
-   <p class="mute sm" style="margin:10px 0 0">${usage?E(usage)+' used by TheHealthTracker in this browser. ':''}There is no TheHealthTracker server account in this build: nothing here leaves your device unless you export or share it.</p></div>
+   <p class="mute sm" style="margin:10px 0 0">${usage?E(usage)+' used by TheHealthTracker in this browser. ':''}When you are signed in, the record is also kept encrypted on our servers (with 30 days of history) so every family member sees the same thing; documents live in the vault. Nothing is shared unless you share it.</p></div>
   <div class="card"><h3>Download a copy</h3><p class="mute sm" style="margin-top:-6px">A JSON file with everyone's profiles, results, medicines, contacts, consent history and pregnancy logs. Documents can be included too.</p>
    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" data-sx="export:0">⬇ Data only</button><button class="btn s" data-sx="export:1">⬇ With document files</button></div></div>
   <div class="card"><h3>Delete</h3><p class="mute sm" style="margin-top:-6px">Remove one family member and their data in Family → Edit → Remove. Or erase everything TheHealthTracker keeps in this browser.</p>
@@ -8343,6 +8348,26 @@ SX.extend('dash',{after(){const m=SX.me();const mine=links.filter(l=>l.member===
  return `<div class="card lv25-card"><div class="hd"><div><h3>${P('Share with a doctor')}</h3><small class="mute">${P('A link to the one-page summary that expires by itself — nothing to download, nothing to print.')}</small></div></div><div class="lv25-row"><button class="btn p sm" data-sx="sumpick">${P('Share a link')}</button><button class="btn s sm" data-sx="summary:${E(m.id)}">${P('Print')}</button></div>
   ${mine.length?`<div class="lv25-links">${mine.map(l=>`<div class="lv25-link"><div class="grow"><b>${P('Active link')}</b><small>${P('till')} ${fmt(l.expires)} · ${l.views} ${P('views')}</small></div><button class="btn s sm" data-sx="sumrevoke:${E(l.token)}">${P('End')}</button></div>`).join('')}</div>`:''}</div>`}});
 setTimeout(load,2500);
+}
+
+/*live-p26*/
+// ===================== live layer 26: "backed up" — the proof a family wants, and a copy by email =====================
+{
+const P=SX.p,S=SX.S;
+const J=(path,method,body)=>fetch('/api/v1'+path,{method:method||'GET',headers:{'content-type':'application/json','x-tht':'1','x-dokko-key':(S.key||'')},credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)}).then(async r=>{let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(typeof j.detail==='string'?j.detail:'Request failed'),{status:r.status});return j});
+let B=null;
+const load=()=>{if(S.demo||!S.key)return;J('/backup/status').then(r=>{B=r;if(page==='data'||page==='dash')render()}).catch(()=>{})};
+const fmt=t=>new Date(t*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const lastSync=()=>{try{const m=SX.sync&&SX.sync.meta&&SX.sync.meta();return m&&m.t?m.t:null}catch(e){return null}};
+function card(full){const docs=(S.vault||[]).length,ls=lastSync();
+ const l1=S.demo?P('Demo: nothing is saved'):ls?P('Record synced')+' · '+new Date(ls).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):SX.user?P('Record syncs when you are online'):P('Sign in so the record is kept on the server too');
+ const l2=B&&B.lastEmail?P('Copy emailed')+' '+fmt(B.lastEmail)+' · '+P('next on')+' '+fmt(new Date(B.nextEmail).getTime()/1000):B&&B.willEmail&&B.willEmail.length?P('A copy goes to')+' '+E(B.willEmail[0])+' '+P('on the 1st of every month'):B?P('Verify your email to get a monthly copy'):'';
+ return `<div class="card lv26"><div class="lv26-row"><div class="lv26-ic ${ls||S.demo?'ok':''}">${SX.ico?SX.ico('shield'):'🛡️'}</div><div class="grow"><b>${P('Backed up')}</b><small>${l1}</small>${l2?`<small>${l2}</small>`:''}<small>${docs} ${P('documents in the vault')}</small></div>${full?'':`<button class="btn s sm" data-sx="tab:data">${P('Details')}</button>`}</div>
+  ${full?`<div class="lv26-acts"><button class="btn p sm" data-sx="bkpsend">${P('Email me a copy now')}</button><button class="btn s sm" data-sx="export:1">${P('Download everything')}</button></div>`:''}</div>`}
+SX.extend('data',{before(){return card(true)}});
+SX.extend('dash',{after(){return card(false)}});
+SX.act.bkpsend=async()=>{if(!SX.user){toast(P('Sign in first'));return}toast(P('Sending…'));try{const r=await J('/backup/send','POST',{});B=r;toast(P('Sent to')+' '+(r.to||[]).join(', '));render()}catch(e){toast(e.message)}};
+setTimeout(load,2000);
 }
 
 SX.boot();

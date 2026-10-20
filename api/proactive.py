@@ -425,6 +425,12 @@ def run_morning(today: date | None = None, force: bool = False) -> int:
                                {"from": rep["from"], "to": rep["to"]}, "", "/app#page=today")
                         written += 1
         db.query(ReminderSent).filter(ReminderSent.key.like("nudge:%"), ReminderSent.t < int(time.time()) - 400 * 86400).delete(synchronize_session=False)
+    try:
+        from .backup import monthly
+        with session() as db:
+            written += monthly(db, today)
+    except Exception as e:
+        print("[backup] monthly failed:", str(e)[:160], flush=True)
     return written
 
 
