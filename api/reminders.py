@@ -38,6 +38,43 @@ def due_doses(state: dict, member: dict, slot: str, day: str) -> list[str]:
     return out
 
 
+REFILL_AT = 9 * 60          # 09:00 IST, once a day
+REFILL_DAYS = 3
+
+
+def doses_per_day(x: dict) -> float:
+    """Daily slots count 1 each; a weekday entry ("Monday") counts 1/7."""
+    n = 0.0
+    for w in x.get("when") or []:
+        n += 1 if w in SLOTS else (1 / 7 if w in WD else 0)
+    return n
+
+
+def days_left(x: dict) -> float | None:
+    left = x.get("left")
+    if left is None:
+        return None
+    per = doses_per_day(x)
+    return (float(left) / per) if per else None
+
+
+def low_meds(state: dict, member: dict) -> list[dict]:
+    """Medicines with a stock count that runs out within REFILL_DAYS (or already has)."""
+    out = []
+    for x in (state.get("meds") or {}).get(member["id"], []) or []:
+        d = days_left(x)
+        if d is not None and d <= REFILL_DAYS:
+            out.append({"id": x.get("id"), "n": x.get("n", "medicine"), "days": int(d), "left": x.get("left")})
+    return out
+
+
+def refill_text(items: list[dict]) -> str:
+    parts = []
+    for i in items:
+        parts.append(f"{i['n']} — {'none left' if not i['left'] else ('today' if i['days'] < 1 else f'about {i['days']} day{'s' if i['days'] != 1 else ''} left')}")
+    return "; ".join(parts)
+
+
 def tick(now_dt: datetime | None = None) -> int:
     if not PUSH.ready():
         return 0
@@ -60,6 +97,26 @@ def tick(now_dt: datetime | None = None) -> int:
             subs = db.scalars(select(PushSub).where(PushSub.household_id == hid)).all()
             users = {u.id: u for u in db.scalars(select(User).where(User.household_id == hid)).all()}
             for m in state.get("members") or []:
+                # refill: once a day, when a counted stock runs out within a few days
+                if REFILL_AT <= minute <= REFILL_AT + 45:
+                    key = f"{hid}:{m['id']}:{day}:refill"
+                    low = low_meds(state, m)
+                    if low and not db.get(ReminderSent, key):
+                        db.add(ReminderSent(key=key))
+                        first = (m.get("name") or "").split(" ")[0]
+                        owner_ids = {uid for uid, u in users.items() if u.member_id == m["id"]}
+                        for s in subs:
+                            mine = s.user_id in owner_ids
+                            if owner_ids and not mine:
+                                continue
+                            msg = {"title": "Refill soon" if mine else f"{first}: refill soon", "body": refill_text(low), "url": f"/app#refill={low[0]['id']}", "tag": f"refill-{m['id']}"}
+                            ok, status, _ = PUSH.send(s.sub, msg)
+                            if ok:
+                                sent += 1
+                            elif status in (404, 410):
+                                db.delete(s)
+                            else:
+                                s.failures += 1
                 for slot in SLOTS:
                     hh, mm = (times.get(slot) or DEFAULT_TIMES[slot]).split(":")
                     at = int(hh) * 60 + int(mm)
