@@ -178,10 +178,40 @@ def stats(a: Admin = Depends(me), db: Session = Depends(get_db)):
                    "byDay": sorted(byday.items(), key=lambda kv: datetime.strptime(kv[0] + " " + str(datetime.now().year), "%d %b %Y"))},
         "subscriptions": {"month": len(subs), "mrr": sum(s.amount if s.period == "month" else round(s.amount / 12) for s in subs if s.status == "active")},
         "ai": {"month": len(ai), "claude": sum(1 for j in ai if j.engine == "claude"), "local": sum(1 for j in ai if j.engine == "local"), "errors": sum(1 for j in ai if not j.ok),
-               "avgMs": round(sum(j.ms for j in ai) / len(ai)) if ai else 0},
+               "avgMs": round(sum(j.ms for j in ai) / len(ai)) if ai else 0, **_ai_spend(ai, day)},
+        "perf": _perf(db, week),
         "engine": ("ai:" + AI.provider_order()[0]) if AI.available() else "local",
         "aiLastError": AI_LAST_ERROR,
     }
+
+
+def _ai_spend(jobs, day: int) -> dict:
+    """Token totals and an estimated bill (list prices from env, so the dashboard never names a vendor or model)."""
+    import os
+    pin, pout = float(os.getenv("AI_USD_PER_MTOK_IN", "3")), float(os.getenv("AI_USD_PER_MTOK_OUT", "15"))
+    fx = float(os.getenv("USD_INR", "84"))
+    cost = lambda js: sum(j.tin for j in js) / 1e6 * pin + sum(j.tout for j in js) / 1e6 * pout  # noqa: E731
+    today = [j for j in jobs if j.t > day]
+    byh: dict[str, int] = {}
+    for j in today:
+        byh[j.household_id] = byh.get(j.household_id, 0) + j.tin + j.tout
+    top = sorted(byh.items(), key=lambda kv: -kv[1])[:5]
+    return {"tokensMonth": sum(j.tin + j.tout for j in jobs), "tokensToday": sum(j.tin + j.tout for j in today),
+            "inrMonth": round(cost(jobs) * fx), "inrToday": round(cost(today) * fx), "topToday": [{"household": h, "tokens": n} for h, n in top],
+            "dayCap": {k: v for k, v in __import__("api.routes", fromlist=["AI_DAY_TOKENS"]).AI_DAY_TOKENS.items()}}
+
+
+def _perf(db: Session, since: int) -> dict:
+    """Real-device speed over the last 7 days: medians and p90 for phones and desktops, separately."""
+    from .models import PerfSample
+    rows = db.scalars(select(PerfSample).where(PerfSample.t > since)).all()
+    def pct(xs, q):
+        xs = sorted(x for x in xs if x > 0)
+        return xs[min(len(xs) - 1, int(len(xs) * q))] if xs else 0
+    def block(rs):
+        return {"n": len(rs), "ready50": pct([r.ready for r in rs], .5), "ready90": pct([r.ready for r in rs], .9), "lcp50": pct([r.lcp for r in rs], .5), "lcp90": pct([r.lcp for r in rs], .9),
+                "ttfb50": pct([r.ttfb for r in rs], .5), "swHit": round(100 * sum(1 for r in rs if r.sw) / len(rs)) if rs else 0}
+    return {"phone": block([r for r in rows if r.phone]), "desktop": block([r for r in rows if not r.phone])}
 
 
 # ---- partners -------------------------------------------------------------------------------------------------------
