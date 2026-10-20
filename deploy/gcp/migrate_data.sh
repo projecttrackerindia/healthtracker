@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 # shellcheck source=config.sh
 source ./config.sh
 : "${RAILWAY_DATABASE_URL:?}" "${RAILWAY_S3_ENDPOINT:?}" "${RAILWAY_S3_BUCKET:?}" "${RAILWAY_S3_ACCESS_KEY:?}" "${RAILWAY_S3_SECRET_KEY:?}"
-command -v pg_dump >/dev/null || { echo "install postgresql-client (pg_dump/pg_restore, version 16)"; exit 1; }
+command -v pg_dump >/dev/null || { echo "install postgresql-client matching the SOURCE server version (Railway: 18 → postgresql-client-18; then PATH=/usr/lib/postgresql/18/bin:\$PATH)"; exit 1; }
 command -v rclone >/dev/null || { echo "install rclone"; exit 1; }
 command -v cloud-sql-proxy >/dev/null || { echo "install cloud-sql-proxy: https://cloud.google.com/sql/docs/postgres/sql-proxy"; exit 1; }
 CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
@@ -26,7 +26,9 @@ for i in $(seq 1 20); do (echo > /dev/tcp/127.0.0.1/5433) 2>/dev/null && break; 
 export PGPASSWORD="$PASS"
 # a rehearsal replaces the previous rehearsal: drop and recreate the public schema first
 psql -h 127.0.0.1 -p 5433 -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-pg_restore --no-owner --no-acl --exit-on-error -h 127.0.0.1 -p 5433 -U "$DB_USER" -d "$DB_NAME" "$D/tht.dump"
+# the source may be a newer Postgres (Railway runs 18): drop settings the target does not know, then load as plain SQL
+pg_restore --no-owner --no-acl -f - "$D/tht.dump" | grep -Ev '^SET (transaction_timeout|idle_in_transaction_session_timeout) ' \
+  | psql -h 127.0.0.1 -p 5433 -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q
 psql -h 127.0.0.1 -p 5433 -U "$DB_USER" -d "$DB_NAME" -Atc "select 'households', count(*) from households union all select 'users', count(*) from users union all select 'household_state', count(*) from household_state"
 
 echo "== 3/3 copy documents (Railway bucket → gs://$BUCKET)"
