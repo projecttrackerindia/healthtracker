@@ -12,6 +12,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_FIREBASE: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_BUCKET: ${{ secrets.S3_BUCKET != '' }}
     defaults:
       run:
         working-directory: mobile
@@ -30,7 +34,7 @@ jobs:
       - name: Web shell
         run: mkdir -p www && cp src/index.html www/index.html
       - name: Firebase config (optional)
-        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+        if: ${{ env.HAS_FIREBASE == 'true' }}
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
       - name: Sync native project
         env:
@@ -44,7 +48,7 @@ jobs:
           name: TheHealthTracker-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
       - name: Release APK (signed, when a keystore is configured)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_KEYSTORE == 'true' }}
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -57,7 +61,7 @@ jobs:
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
       - name: Publish the APK to the bucket for the website's download button (when S3 secrets exist)
-        if: ${{ secrets.S3_BUCKET != '' }}
+        if: ${{ env.HAS_BUCKET == 'true' }}
         env:
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
           S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
@@ -92,7 +96,7 @@ jobs:
             mobile/android/app/build/outputs/apk/release/app-release.apk
           fail_on_unmatched_files: false
       - name: Release bundle (when a keystore is configured)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_KEYSTORE == 'true' }}
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -105,7 +109,7 @@ jobs:
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
       - uses: actions/upload-artifact@v4
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_KEYSTORE == 'true' }}
         with:
           name: TheHealthTracker-release-aab
           path: mobile/android/app/build/outputs/bundle/release/app-release.aab
