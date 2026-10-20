@@ -20,5 +20,5 @@ gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" --service-accou
   --env-vars-file env.yaml --set-secrets "$SECRETS" --quiet
 URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
 echo "Deployed: $URL"
-for i in 1 2 3 4 5 6; do curl -fsS "$URL/healthz" && echo && exit 0 || sleep 5; done
+for i in 1 2 3 4 5 6; do curl -fsS "$URL/api/health" && echo && exit 0 || sleep 5; done
 echo "Health check failed — gcloud run services logs read $SERVICE --region $REGION --limit 50"; exit 1

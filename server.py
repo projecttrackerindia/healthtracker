@@ -187,6 +187,7 @@ async def headers(request: Request, call_next):
 # API (Phase 1 starts here; every route is versioned)
 # --------------------------------------------------------------------------------------------------
 @app.api_route("/healthz", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/api/health", methods=["GET", "HEAD"], include_in_schema=False)  # Cloud Run reserves /healthz at its front door
 def healthz():
     return {"ok": True, "version": VERSION, "uptime_s": int(time.time() - STARTED)}
 
