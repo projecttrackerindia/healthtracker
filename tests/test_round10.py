@@ -516,3 +516,23 @@ def test_blood_network_request_offer_accept_track():
     r2 = a.post(f"/api/admin/stores/{pid}/users", json={"email": f"ph{uuid.uuid4().hex[:5]}@ap.in", "name": "Desk", "role": "owner"}).json()
     pp = TestClient(server.app); pp.post("/api/partner/login", json={"email": r2["email"], "password": r2["tempPassword"]})
     assert pp.post("/api/partner/blood", json={"group": "A+"}).status_code == 403
+
+
+def test_idle_session_expires_and_deep_link_shell():
+    from api import auth as A
+    f = family()
+    assert f.get("/api/v1/auth/me").status_code == 200
+    with DB.session() as db:
+        from api.models import AuthSession
+        for s in db.scalars(select_sessions(db)).all():
+            s.last_seen -= A.IDLE_SECONDS + 5
+    assert f.get("/api/v1/auth/me").json()["user"] is None
+    pub = TestClient(server.app)
+    r = pub.get("/app/abc123/def456/mid")
+    assert r.status_code == 200 and "live-p13" in r.text
+
+
+def select_sessions(db):
+    from sqlalchemy import select
+    from api.models import AuthSession
+    return select(AuthSession)

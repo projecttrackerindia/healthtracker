@@ -294,7 +294,9 @@ def shared_doc(token: str, request: Request, raw: str = ""):
 
 @app.api_route("/app", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/app/", methods=["GET", "HEAD"], include_in_schema=False)
-def app_shell(request: Request):
+@app.api_route("/app/{rest:path}", methods=["GET", "HEAD"], include_in_schema=False)
+def app_shell(request: Request, rest: str = ""):
+    """Deep links: /app/<person>/<profile>/<page> — opaque ids, resolved by the app itself; the shell is the same."""
     return _send(WEB / "index.html", request, "no-cache")
 
 

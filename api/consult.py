@@ -342,7 +342,7 @@ def partner_rx(aid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUs
     a.rx, a.updated = rx, now()
     names = ", ".join(i["name"] for i in items[:3]) + (" …" if len(items) > 3 else "")
     notify(db, a.household_id, "prescription", f"Prescription from Dr {u.name}", f"{names}. Open Medicines to order, or Lab results → Prescriptions to read it.",
-           {"appointment": a.id, "fileId": f"erx_{a.id}", "store": s.name, "doctor": u.name, "items": items, "mime": "application/pdf", "name": f"Prescription · Dr {u.name}"},
+           {"appointment": a.id, "fileId": f"erx_{a.id}", "store": s.name, "doctor": u.name, "items": items, "mime": "application/pdf", "name": f"Prescription · Dr {u.name}", "diagnosis": rx["diagnosis"]},
            a.member_id, "/app")
     return consult_json(db, a, True)
 
