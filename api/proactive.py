@@ -310,6 +310,18 @@ def housekeeping(db, today: date) -> int:
     from .models import Appointment
     n = 0
     t = int(time.time())
+    # demo sessions (website "see a demo") touch the server with a throw-away key; their rows go after an hour
+    for h in db.scalars(select(Household).where(Household.key.like("demo-%"), Household.created < t - 3600)).all():
+        from .models import HouseholdState
+        try:
+            with db.begin_nested():
+                st = db.get(HouseholdState, h.id)
+                if st:
+                    db.delete(st)
+                db.delete(h)
+            n += 1
+        except Exception:
+            pass
     for h in db.scalars(select(Household).where(Household.plan != "free", Household.plan_until != None)).all():  # noqa: E711
         if h.plan_until < t:
             old = h.plan

@@ -147,7 +147,8 @@ def hello(body: Hello, request: Request, db: Session = Depends(get_db), x_dokko_
         h.lat, h.lng = body.lat, body.lng
         h.city = nearest_city(body.lat, body.lng)[0] or h.city
     used = db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t > now() - 30 * 86400)) or 0
-    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "plan": h.plan, "planUntil": h.plan_until, "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(h.plan, 3)}, "orders": len(h.orders)}
+    claimed = bool(u) or bool(db.scalar(select(User.id).where(User.household_id == h.id).limit(1)))
+    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "claimed": claimed, "plan": h.plan, "planUntil": h.plan_until, "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(h.plan, 3)}, "orders": len(h.orders)}
 
 
 # ---- partners -------------------------------------------------------------------------------------------------------

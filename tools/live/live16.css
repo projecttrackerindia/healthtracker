@@ -1,0 +1,8 @@
+/* live16: nothing paints while locked; demo banner */
+body.lv16-lock > :not(#lv15auth):not(#lv15s):not(#lv16demo):not(.sx-toast):not(script):not(style){visibility:hidden!important}
+body.lv16-lock{overflow:hidden}
+.lv16-demo{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:950;display:flex;gap:12px;align-items:center;padding:8px 10px 8px 14px;border-radius:999px;background:#111827;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.28);font-size:13px;max-width:calc(100vw - 24px);white-space:nowrap}
+.lv16-demo b{font-weight:800}.lv16-demo .btn{margin:0;white-space:nowrap}
+@media(min-width:721px){.lv16-demo{bottom:22px}}
+@media(min-width:721px){.lv15-auth{display:flex;align-items:center;justify-content:center}.lv15-auth .lv15-ain{min-height:0;background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:24px;padding:28px 28px 20px;box-shadow:0 30px 80px rgba(16,24,40,.12)}}
+.lv15-skip{margin-top:14px}

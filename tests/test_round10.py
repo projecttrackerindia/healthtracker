@@ -560,3 +560,13 @@ def test_partner_csv_import_and_whatsapp_channel_logging(monkeypatch):
     p_orders = p.get("/api/partner/orders").json()["orders"]
     p.post(f"/api/partner/orders/{p_orders[0]['id']}/status", json={"status": "confirmed"})
     assert any(x["to"] == ph for x in WA.SENT) and posted and posted[-1]["to"] == ph.lstrip("+") and "quick labs" in posted[-1]["text"]["body"].lower()
+
+
+def test_demo_keys_are_read_only_and_hello_reports_claimed():
+    client = TestClient(server.app)
+    k = "demo-" + "x" * 20
+    r = client.post("/api/v1/hello", json={"name": "Demo"}, headers={"x-dokko-key": k})
+    assert r.status_code == 200 and r.json()["claimed"] is False
+    r = client.post("/api/v1/orders", json={}, headers={"x-dokko-key": k})
+    assert r.status_code == 403 and "demo" in r.json()["detail"].lower()
+    assert client.get("/api/v1/stores?kind=pharmacy", headers={"x-dokko-key": k}).status_code == 200
