@@ -1,0 +1,169 @@
+/* ===================== live layer 22: the phone design system — light first, one icon set, display type, glass cards, floating tab bar ===================== */
+@media (max-width:720px){
+ /* ---- tokens: light is the default; dark only when chosen (data-theme=dark) */
+ :root,:root[data-theme=light]{--bg:#f4f6fb;--bg2:#eceff7;--shell:#ffffff;--card:#ffffff;--soft:#f0f2f8;--line:rgba(16,24,48,.07);--line2:rgba(16,24,48,.13);--mute:#667085;--ink:#0b0f1a;--blue:#2F5BFF;--blue2:#5e82ff;--red:#E11D48;--green:#16a34a;--amber:#d97706;--glass:rgba(255,255,255,.72);--shadow:0 1px 2px rgba(16,24,48,.04),0 8px 24px -12px rgba(16,24,48,.12);--bar:#0b0f1a;--bar-ink:#fff;--bar-mute:rgba(255,255,255,.55)}
+ :root[data-theme=dark]{--bg:#07080d;--bg2:#0f1118;--shell:#0f1118;--card:#12151f;--soft:#181c28;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.14);--mute:#8b93a7;--ink:#f2f4f8;--blue:#3b6cff;--blue2:#7aa0ff;--red:#ff3b5c;--green:#22c55e;--amber:#f5a524;--glass:rgba(18,21,31,.72);--shadow:0 1px 0 rgba(255,255,255,.03) inset;--bar:#161a26;--bar-ink:#fff;--bar-mute:rgba(255,255,255,.5)}
+ :root{--font-d:'Plus Jakarta Sans',Inter,-apple-system,'Segoe UI',Roboto,sans-serif}
+ body{background:radial-gradient(900px 420px at 50% -12%,rgba(47,91,255,.14),transparent 62%),var(--bg)!important;color:var(--ink);-webkit-font-smoothing:antialiased;letter-spacing:-.006em}
+ :root[data-theme=dark] body{background:radial-gradient(900px 500px at 50% -10%,rgba(59,108,255,.18),transparent 60%),var(--bg)!important}
+ h1,h2,h3,.lv22-d,#lv17title,.lv22-tile b,.lv22-hello b,.lv21-ring b{font-family:var(--font-d);letter-spacing:-.02em}
+ h2{font-size:22px;font-weight:700}h3{font-size:16.5px;font-weight:700}
+ .mute{color:var(--mute)}
+ /* ---- app bar */
+ .top{background:transparent!important;padding-top:max(8px,env(safe-area-inset-top))}
+ body.lv14-scrolled .top{background:color-mix(in srgb,var(--shell) 84%,transparent)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;border-bottom:1px solid var(--line)}
+ .topb{display:flex!important;align-items:center;gap:8px;min-height:56px}
+ #lv14greet,.top>div>h1#hh,.top>div>p#hp,#lv6Loc,#sxLang,#sxAcct,#tourBtn,#theme{display:none!important}
+ .topb #sxWho{order:1;flex:none;padding:0!important;background:none!important;border:0!important}
+ .topb #sxWho .av{width:40px!important;height:40px!important;font-size:13px!important;box-shadow:0 0 0 2px var(--shell),0 0 0 4px var(--blue)}
+ .topb #sxWho .sx-wn{display:none}
+ .topb #lv17title{order:2;flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .topb #sxBell{order:3;flex:none;width:40px;height:40px;border-radius:50%!important;border:1px solid var(--line2)!important;background:var(--glass)!important;backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+ .topb #sxBell svg{width:20px;height:20px}
+ .topb #sxBell em{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font:700 10.5px/18px Inter,sans-serif;padding:0 5px;border:2px solid var(--shell);font-style:normal}
+ .topb #lv18sos{order:4;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#ff3b5c,#E11D48);color:#fff;font:800 11px var(--font-d);letter-spacing:.08em;box-shadow:0 0 0 0 rgba(225,29,72,.35);animation:lv22sos 2.4s ease-out infinite}
+ @keyframes lv22sos{0%{box-shadow:0 0 0 0 rgba(225,29,72,.35)}70%{box-shadow:0 0 0 12px rgba(225,29,72,0)}100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}}
+ /* sub-tabs: a scrolling pill strip that never clips */
+ #lv17tabs{margin:4px -16px 0;padding:0 16px;-webkit-mask:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+ #lv17tabs .sx-tabs{display:flex;gap:4px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:4px!important;border-radius:999px!important;background:var(--soft)!important;border:1px solid var(--line)!important;width:max-content;max-width:none;min-width:100%}
+ #lv17tabs .sx-tabs::-webkit-scrollbar{display:none}
+ #lv17tabs .sx-tabs button{flex:none;scroll-snap-align:center;border-radius:999px;padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--mute);white-space:nowrap}
+ #lv17tabs .sx-tabs button.on{background:var(--card)!important;color:var(--ink)!important;box-shadow:var(--shadow)}
+ :root[data-theme=dark] #lv17tabs .sx-tabs button.on{background:var(--blue)!important;color:#fff!important}
+ /* ---- cards, buttons, inputs, rows */
+ .card{border-radius:22px!important;background:var(--card)!important;border:1px solid var(--line)!important;box-shadow:var(--shadow)!important;padding:16px!important}
+ .card .card{background:var(--soft)!important;border:0!important;box-shadow:none!important;border-radius:16px!important}
+ .card .hd{align-items:center;gap:10px;margin-bottom:10px}.card .hd h3{margin:0}.card .hd small.mute{font-size:12.5px;line-height:1.4}
+ .card p,.card li{font-size:14px;line-height:1.5}.card small,.sm{font-size:12.5px}
+ .btn{font-weight:600;border-radius:999px;min-height:44px;padding:0 18px;font-size:14.5px}
+ .btn.sm{min-height:38px;padding:0 14px;font-size:13.5px}
+ .btn.p{background:linear-gradient(135deg,#2F5BFF,#4f7cff)!important;color:#fff!important;box-shadow:0 8px 20px -10px rgba(47,91,255,.8);border:0}
+ .btn.s{background:var(--soft)!important;border:1px solid var(--line2)!important;color:var(--ink)}
+ .btn.red{background:linear-gradient(135deg,#ff3b5c,#E11D48)!important;color:#fff!important;border:0}
+ input,select,textarea,.form input,.form select{border-radius:14px!important;background:var(--soft)!important;border:1px solid var(--line)!important;min-height:48px;color:var(--ink);font-size:15px}
+ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(47,91,255,.15)}
+ .row{min-height:52px;gap:12px}.row b{font-size:14.5px}.row small{font-size:12.5px;color:var(--mute)}
+ button.row span:last-child{width:28px;height:28px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--mute)}
+ .sx-sheet{border-radius:28px 28px 0 0;background:var(--card);box-shadow:0 -10px 40px rgba(0,0,0,.18)}
+ /* ---- floating tab bar: dark pill, labels, one active pill */
+ #mtab{position:fixed;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom) + 10px);height:64px;border-radius:999px;background:color-mix(in srgb,var(--bar) 92%,transparent)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.08)!important;display:flex;align-items:center;justify-content:space-around;padding:6px!important;box-shadow:0 18px 40px -16px rgba(11,15,26,.6)}
+ #mtab{gap:0!important}
+ #mtab button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:1 1 0!important;min-width:0!important;width:auto!important;max-width:none!important;height:52px;border-radius:999px;color:var(--bar-mute);background:none;border:0;padding:0!important;margin:0!important;transition:background .2s,color .2s}
+ #mtab button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ #mtab button span{display:block!important;font:600 10px/1 Inter,sans-serif;letter-spacing:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+ #mtab button.on{color:var(--bar-ink);background:rgba(255,255,255,.12)}
+ #mtab button.on svg{stroke:var(--blue2)}
+ #page{padding-bottom:calc(env(safe-area-inset-bottom) + 96px)!important}
+ body.lv17-kb #mtab{display:none}
+ /* ---- quick add: a raised + above the bar */
+ #lv22add{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 84px);width:54px;height:54px;border-radius:50%;border:0;background:linear-gradient(135deg,#2F5BFF,#5e82ff);color:#fff;box-shadow:0 14px 30px -10px rgba(47,91,255,.75);display:flex;align-items:center;justify-content:center;z-index:60}
+ #lv22add svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
+ body.lv17-kb #lv22add,body.sx-mo #lv22add,body.lv16-lock #lv22add{display:none}
+ .lv22-qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+ .lv22-qa button{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:18px;background:var(--soft);border:1px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:600;line-height:1.2;text-align:center}
+ .lv22-qa button i{width:42px;height:42px;border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+ .lv22-qa button svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ /* ---- icons everywhere */
+ .lv22-i{display:inline-flex;align-items:center;justify-content:center}.lv22-i svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ .lv22-tile-i{width:40px;height:40px;border-radius:13px;background:var(--soft);color:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}
+ /* ---- Home */
+ #page{display:grid}
+ #lv17greet{display:none!important}
+ .lv22-top{grid-column:1/-1;order:-10;display:flex;flex-direction:column;gap:14px;margin:2px 0 2px}
+ .lv22-hello{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+ .lv22-hello small{display:block;font-size:14.5px;color:var(--mute);margin-bottom:2px}
+ .lv22-hello b{display:block;font-size:30px;font-weight:800;line-height:1.05;letter-spacing:-.03em}
+ .lv22-date{flex:none;border-radius:999px;background:var(--card);border:1px solid var(--line);padding:8px 12px;font-size:12.5px;font-weight:600;box-shadow:var(--shadow)}
+ .lv22-fam{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:4px 16px 2px}.lv22-fam::-webkit-scrollbar{display:none}
+ .lv22-fam button{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;color:var(--mute);font-size:11.5px;font-weight:600;width:60px}
+ .lv22-fam button .av{width:54px;height:54px;font-size:16px;box-shadow:0 0 0 2px var(--bg),0 0 0 3px transparent;transition:box-shadow .2s}
+ .lv22-fam button.on{color:var(--ink)}.lv22-fam button.on .av{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--blue)}
+ .lv22-fam button.add .av{background:var(--card);border:1.5px dashed var(--line2);color:var(--mute);box-shadow:none}
+ .lv22-fam button span{max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .lv22-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .lv22-tile{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);text-align:left;color:var(--ink);min-height:112px}
+ .lv22-tile .t{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;color:var(--mute)}
+ .lv22-tile .t .lv22-tile-i{width:32px;height:32px;border-radius:10px}.lv22-tile .t svg{width:18px;height:18px}
+ .lv22-tile b{font-size:26px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.lv22-tile b small{font-size:13px;font-weight:600;color:var(--mute);margin-left:4px;letter-spacing:0}
+ .lv22-tile em{font-style:normal;font-size:12px;color:var(--mute)}.lv22-tile em.up{color:var(--green)}.lv22-tile em.warn{color:var(--amber)}.lv22-tile em.bad{color:var(--red)}
+ .lv22-tile.hi{background:linear-gradient(135deg,#2F5BFF,#5e82ff);color:#fff;border:0}.lv22-tile.hi .t,.lv22-tile.hi em,.lv22-tile.hi b small{color:rgba(255,255,255,.8)}.lv22-tile.hi .lv22-tile-i{background:rgba(255,255,255,.18);color:#fff}
+ .lv22-week{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+ .lv22-week .l{font-size:13px;font-weight:600}.lv22-week .l small{display:block;color:var(--mute);font-weight:500;font-size:11.5px}
+ .lv22-days{display:flex;gap:8px}.lv22-days i{display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10px Inter,sans-serif;color:var(--mute);font-style:normal}
+ .lv22-days i b{width:24px;height:24px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+ .lv22-days i.on b{background:var(--blue);color:#fff}.lv22-days i.today b{box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--blue)}
+ /* the existing Home cards: order, contrast, the ones that now duplicate the top block */
+ .card.lv6-setupcard{order:1;background:linear-gradient(135deg,#1d4ed8 0%,#2F5BFF 50%,#5e82ff 100%)!important;color:#fff}
+ .card.lv6-setupcard .grow b,.card.lv6-setupcard .grow small,.card.lv6-setupcard .mute{color:#fff!important;opacity:1}.card.lv6-setupcard .grow small{opacity:.85}
+ .card.lv6-setupcard .lv6-ring b{color:#fff}
+ .card.lv6-setupcard .btn{background:#fff!important;color:#1f4fff!important;box-shadow:none}
+ .card.lv6-today{order:2}[data-lv22=meds]{order:3}[data-lv22=visit]{order:4}[data-lv22=vitals]{order:5}.card.lv15-score{order:6}[data-lv22=safety]{order:7}[data-lv22=talk]{order:8}[data-lv22=quick]{order:9}
+ .card.lv3-ai,#sxseas,.card.sx-hero.lv-hero0,[data-lv22=vitals]{display:none!important}
+ .lv6-today .hd .btn{white-space:nowrap}
+ .lv6-season button{border-radius:14px}
+ .card.lv15-score{align-items:center}.card.lv15-score .lv15-ring{width:64px;height:64px}
+ .sx-qa{grid-template-columns:repeat(3,1fr);gap:10px}
+ .sx-qa button{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:18px;background:var(--soft);border:1px solid var(--line);font-size:12.5px;font-weight:600}
+ .sx-qa button i{width:42px;height:42px;border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:center;font-style:normal;box-shadow:var(--shadow)}
+ .sx-qa button i svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ /* ---- Assistant: the orb hero, in every state */
+ body[data-page=assist] .lv5-agent{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+ .lv22-orbwrap{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:28px 0 18px}
+ .lv22-orb{width:132px;height:132px;border-radius:50%;background:radial-gradient(circle at 36% 34%,#dbe4ff 0,#5e82ff 32%,#1d4ed8 66%,transparent 70%);box-shadow:0 0 60px 10px rgba(47,91,255,.25),0 0 120px 30px rgba(47,91,255,.12);animation:lv22orb 7s ease-in-out infinite;margin-bottom:14px;position:relative}
+ .lv22-orb::after{content:"";position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle at 60% 60%,rgba(255,255,255,.55),transparent 55%);filter:blur(4px);animation:lv22orb2 5s ease-in-out infinite}
+ @keyframes lv22orb{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.05) rotate(10deg)}}@keyframes lv22orb2{0%,100%{transform:rotate(0)}50%{transform:rotate(-40deg)}}
+ .lv22-orbwrap small{font-size:15px;color:var(--mute)}.lv22-orbwrap b{font-family:var(--font-d);font-size:28px;font-weight:700;letter-spacing:-.03em;line-height:1.15;max-width:300px}
+ body[data-page=assist] .lv5-tabs{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--soft);border:1px solid var(--line);margin:0 0 12px}
+ body[data-page=assist] .lv5-tabs button{flex:1;border-radius:999px;padding:9px 0;font-weight:600;color:var(--mute)}body[data-page=assist] .lv5-tabs button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+ body[data-page=assist] .lv5-off{border-radius:18px;background:var(--card);border:1px solid var(--line);padding:14px 16px;color:var(--mute);font-size:14px}
+ body[data-page=assist] .lv5-ask input{border-radius:999px!important;height:56px!important;padding:0 18px!important;background:var(--card)!important;border:1px solid var(--line2)!important;font-size:15px;box-shadow:var(--shadow)}
+ body[data-page=assist] .lv5-ask .btn{border-radius:999px;height:56px;min-width:56px;padding:0 18px}
+ body[data-page=assist] .lv5-sugg button{border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+ #lv18orb{display:none!important}
+ .bub{border-radius:18px!important;padding:12px 14px!important;font-size:14.5px!important;line-height:1.45}.bub.me{background:var(--blue)!important;color:#fff}
+ /* ---- Devices: icon tiles instead of emoji, rows with room to breathe */
+ .lv11-src{align-items:center;gap:12px;padding:12px 0}.lv11-src+.lv11-src{border-top:1px solid var(--line)}
+ .lv11-ic{width:44px;height:44px;border-radius:14px;background:var(--soft);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:0;flex:none}
+ .lv11-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ .lv11-src.on .lv11-ic{background:var(--blue);color:#fff}
+ .lv11-src .grow b{font-size:15px;display:block;margin-bottom:2px}.lv11-src .grow small{display:block;font-size:12.5px;color:var(--mute);line-height:1.4}
+ .lv11-dl .btn{margin-top:8px}
+ /* ---- Medical ID card */
+ .lv12-id{border-radius:22px}.lv12-bg{white-space:nowrap;min-width:64px;text-align:center;border-radius:14px}.lv12-bg b{font-size:20px;display:block;letter-spacing:-.02em}.lv12-bg small{font-size:10px;letter-spacing:.08em}
+ .lv12-id-who h2{font-size:22px;line-height:1.1}
+ .lv12-idacts{display:flex;gap:8px;flex-wrap:wrap}.lv12-idacts .btn{flex:1;white-space:nowrap}
+ .lv17-hcset{align-items:center}
+ /* ---- SOS page & sheet */
+ .sx-callrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .sx-callrow .btn.red.sx-big{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:84px;border-radius:20px;padding:12px 16px;text-align:left}
+ .sx-callrow .btn.red.sx-big b{font-size:22px;font-family:var(--font-d);letter-spacing:-.02em}.sx-callrow .btn.red.sx-big small{opacity:.85;font-size:12px}
+ .sx-sep{margin:14px 0}.sx-sosrow{align-items:center;gap:12px}
+ .lv21-setup .lv21-row{gap:10px}.lv21-sel{max-width:50%;min-width:150px;font-size:13.5px;border-radius:999px!important;padding:0 12px}
+ .lv21-setup .btn.sm{white-space:nowrap}
+ .sx-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sx-num{border-radius:16px;background:var(--soft);padding:12px}.sx-num.big{grid-column:1/-1;background:linear-gradient(135deg,#ff3b5c,#E11D48);color:#fff}.sx-num b{font-family:var(--font-d);font-size:20px}
+ .sx-chk i{width:26px;height:26px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:13px}.sx-chk.ok i{background:#dcf8e6;color:#0f5132}
+ /* ---- sign-in: the blue hero */
+ .lv15-auth{background:linear-gradient(180deg,#1d4ed8 0%,#2F5BFF 38%,#13245e 100%)!important}
+ .lv15-auth .lv15-ain{background:transparent}
+ .lv15-auth h2{font-family:var(--font-d);font-size:30px;font-weight:800;letter-spacing:-.03em;color:#fff}
+ .lv15-auth p.mute{color:rgba(255,255,255,.82)}
+ .lv15-auth label{color:rgba(255,255,255,.9);font-weight:600;font-size:13px}
+ .lv15-auth label input{background:rgba(255,255,255,.14)!important;border:1px solid rgba(255,255,255,.28)!important;color:#fff;border-radius:16px!important;min-height:52px;backdrop-filter:blur(8px)}
+ .lv15-auth label input::placeholder{color:rgba(255,255,255,.55)}
+ .lv15-auth .lv15-seg{background:rgba(255,255,255,.16);border-radius:999px;padding:4px}.lv15-auth .lv15-seg button{color:rgba(255,255,255,.8);border-radius:999px}.lv15-auth .lv15-seg button.on{background:#fff;color:#1f4fff}
+ .lv15-auth .lv15-main{background:#fff!important;color:#1f4fff!important;border-radius:999px;min-height:54px;font-weight:700;font-size:16px;box-shadow:0 12px 30px -12px rgba(0,0,0,.5)}
+ .lv15-auth .lv15-pk{background:rgba(255,255,255,.14)!important;color:#fff!important;border:1px solid rgba(255,255,255,.3)!important;border-radius:999px;min-height:50px}
+ .lv15-auth .lv15-link{color:#fff;font-weight:600}.lv15-auth .lv15-skip{color:rgba(255,255,255,.85)}.lv15-foot{color:rgba(255,255,255,.65)!important}
+ .lv15-code{font-family:var(--font-d);letter-spacing:.3em;font-size:28px;text-align:center}
+ .lv15-splash{background:linear-gradient(160deg,#1d4ed8,#2F5BFF 50%,#5e82ff)!important}
+ /* ---- More sheet rows */
+ .lv13-more button{border-radius:18px!important;background:var(--card)!important;border:1px solid var(--line)!important;box-shadow:var(--shadow)}
+ .lv13-more button::after{background:var(--soft)}
+ /* ---- empty states */
+ .lv22-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:18px 8px}
+ .lv22-empty .lv22-tile-i{width:52px;height:52px;border-radius:18px;margin-bottom:6px}.lv22-empty b{font-size:15px}.lv22-empty p{margin:0;color:var(--mute);font-size:13.5px}
+ /* ---- health card banner (lv17) */
+ #lv17hc{border-radius:18px;border:1px solid var(--line)!important;background:var(--card)!important;box-shadow:var(--shadow)}
+ /* ---- SOS bar sits under the app bar */
+ #lv21bar{top:calc(env(safe-area-inset-top) + 64px)}
+}

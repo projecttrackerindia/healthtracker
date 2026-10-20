@@ -1841,6 +1841,178 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
 .lv21-setup .lv21-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.lv21-setup .lv21-row b{display:block;font-size:14.5px}.lv21-setup .lv21-row small{color:var(--mute);font-size:12.5px;line-height:1.4}
 .lv21-sel{max-width:46%;border-radius:12px;min-height:40px}.lv21-ok{width:32px;height:32px;border-radius:50%;background:#dcf8e6;color:#0f5132;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
 </style>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("tht.theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style id="live22-css">/* ===================== live layer 22: the phone design system — light first, one icon set, display type, glass cards, floating tab bar ===================== */
+@media (max-width:720px){
+ /* ---- tokens: light is the default; dark only when chosen (data-theme=dark) */
+ :root,:root[data-theme=light]{--bg:#f4f6fb;--bg2:#eceff7;--shell:#ffffff;--card:#ffffff;--soft:#f0f2f8;--line:rgba(16,24,48,.07);--line2:rgba(16,24,48,.13);--mute:#667085;--ink:#0b0f1a;--blue:#2F5BFF;--blue2:#5e82ff;--red:#E11D48;--green:#16a34a;--amber:#d97706;--glass:rgba(255,255,255,.72);--shadow:0 1px 2px rgba(16,24,48,.04),0 8px 24px -12px rgba(16,24,48,.12);--bar:#0b0f1a;--bar-ink:#fff;--bar-mute:rgba(255,255,255,.55)}
+ :root[data-theme=dark]{--bg:#07080d;--bg2:#0f1118;--shell:#0f1118;--card:#12151f;--soft:#181c28;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.14);--mute:#8b93a7;--ink:#f2f4f8;--blue:#3b6cff;--blue2:#7aa0ff;--red:#ff3b5c;--green:#22c55e;--amber:#f5a524;--glass:rgba(18,21,31,.72);--shadow:0 1px 0 rgba(255,255,255,.03) inset;--bar:#161a26;--bar-ink:#fff;--bar-mute:rgba(255,255,255,.5)}
+ :root{--font-d:'Plus Jakarta Sans',Inter,-apple-system,'Segoe UI',Roboto,sans-serif}
+ body{background:radial-gradient(900px 420px at 50% -12%,rgba(47,91,255,.14),transparent 62%),var(--bg)!important;color:var(--ink);-webkit-font-smoothing:antialiased;letter-spacing:-.006em}
+ :root[data-theme=dark] body{background:radial-gradient(900px 500px at 50% -10%,rgba(59,108,255,.18),transparent 60%),var(--bg)!important}
+ h1,h2,h3,.lv22-d,#lv17title,.lv22-tile b,.lv22-hello b,.lv21-ring b{font-family:var(--font-d);letter-spacing:-.02em}
+ h2{font-size:22px;font-weight:700}h3{font-size:16.5px;font-weight:700}
+ .mute{color:var(--mute)}
+ /* ---- app bar */
+ .top{background:transparent!important;padding-top:max(8px,env(safe-area-inset-top))}
+ body.lv14-scrolled .top{background:color-mix(in srgb,var(--shell) 84%,transparent)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;border-bottom:1px solid var(--line)}
+ .topb{display:flex!important;align-items:center;gap:8px;min-height:56px}
+ #lv14greet,.top>div>h1#hh,.top>div>p#hp,#lv6Loc,#sxLang,#sxAcct,#tourBtn,#theme{display:none!important}
+ .topb #sxWho{order:1;flex:none;padding:0!important;background:none!important;border:0!important}
+ .topb #sxWho .av{width:40px!important;height:40px!important;font-size:13px!important;box-shadow:0 0 0 2px var(--shell),0 0 0 4px var(--blue)}
+ .topb #sxWho .sx-wn{display:none}
+ .topb #lv17title{order:2;flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .topb #sxBell{order:3;flex:none;width:40px;height:40px;border-radius:50%!important;border:1px solid var(--line2)!important;background:var(--glass)!important;backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+ .topb #sxBell svg{width:20px;height:20px}
+ .topb #sxBell em{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font:700 10.5px/18px Inter,sans-serif;padding:0 5px;border:2px solid var(--shell);font-style:normal}
+ .topb #lv18sos{order:4;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#ff3b5c,#E11D48);color:#fff;font:800 11px var(--font-d);letter-spacing:.08em;box-shadow:0 0 0 0 rgba(225,29,72,.35);animation:lv22sos 2.4s ease-out infinite}
+ @keyframes lv22sos{0%{box-shadow:0 0 0 0 rgba(225,29,72,.35)}70%{box-shadow:0 0 0 12px rgba(225,29,72,0)}100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}}
+ /* sub-tabs: a scrolling pill strip that never clips */
+ #lv17tabs{margin:4px -16px 0;padding:0 16px;-webkit-mask:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+ #lv17tabs .sx-tabs{display:flex;gap:4px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:4px!important;border-radius:999px!important;background:var(--soft)!important;border:1px solid var(--line)!important;width:max-content;max-width:none;min-width:100%}
+ #lv17tabs .sx-tabs::-webkit-scrollbar{display:none}
+ #lv17tabs .sx-tabs button{flex:none;scroll-snap-align:center;border-radius:999px;padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--mute);white-space:nowrap}
+ #lv17tabs .sx-tabs button.on{background:var(--card)!important;color:var(--ink)!important;box-shadow:var(--shadow)}
+ :root[data-theme=dark] #lv17tabs .sx-tabs button.on{background:var(--blue)!important;color:#fff!important}
+ /* ---- cards, buttons, inputs, rows */
+ .card{border-radius:22px!important;background:var(--card)!important;border:1px solid var(--line)!important;box-shadow:var(--shadow)!important;padding:16px!important}
+ .card .card{background:var(--soft)!important;border:0!important;box-shadow:none!important;border-radius:16px!important}
+ .card .hd{align-items:center;gap:10px;margin-bottom:10px}.card .hd h3{margin:0}.card .hd small.mute{font-size:12.5px;line-height:1.4}
+ .card p,.card li{font-size:14px;line-height:1.5}.card small,.sm{font-size:12.5px}
+ .btn{font-weight:600;border-radius:999px;min-height:44px;padding:0 18px;font-size:14.5px}
+ .btn.sm{min-height:38px;padding:0 14px;font-size:13.5px}
+ .btn.p{background:linear-gradient(135deg,#2F5BFF,#4f7cff)!important;color:#fff!important;box-shadow:0 8px 20px -10px rgba(47,91,255,.8);border:0}
+ .btn.s{background:var(--soft)!important;border:1px solid var(--line2)!important;color:var(--ink)}
+ .btn.red{background:linear-gradient(135deg,#ff3b5c,#E11D48)!important;color:#fff!important;border:0}
+ input,select,textarea,.form input,.form select{border-radius:14px!important;background:var(--soft)!important;border:1px solid var(--line)!important;min-height:48px;color:var(--ink);font-size:15px}
+ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(47,91,255,.15)}
+ .row{min-height:52px;gap:12px}.row b{font-size:14.5px}.row small{font-size:12.5px;color:var(--mute)}
+ button.row span:last-child{width:28px;height:28px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--mute)}
+ .sx-sheet{border-radius:28px 28px 0 0;background:var(--card);box-shadow:0 -10px 40px rgba(0,0,0,.18)}
+ /* ---- floating tab bar: dark pill, labels, one active pill */
+ #mtab{position:fixed;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom) + 10px);height:64px;border-radius:999px;background:color-mix(in srgb,var(--bar) 92%,transparent)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.08)!important;display:flex;align-items:center;justify-content:space-around;padding:6px!important;box-shadow:0 18px 40px -16px rgba(11,15,26,.6)}
+ #mtab{gap:0!important}
+ #mtab button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:1 1 0!important;min-width:0!important;width:auto!important;max-width:none!important;height:52px;border-radius:999px;color:var(--bar-mute);background:none;border:0;padding:0!important;margin:0!important;transition:background .2s,color .2s}
+ #mtab button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ #mtab button span{display:block!important;font:600 10px/1 Inter,sans-serif;letter-spacing:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+ #mtab button.on{color:var(--bar-ink);background:rgba(255,255,255,.12)}
+ #mtab button.on svg{stroke:var(--blue2)}
+ #page{padding-bottom:calc(env(safe-area-inset-bottom) + 96px)!important}
+ body.lv17-kb #mtab{display:none}
+ /* ---- quick add: a raised + above the bar */
+ #lv22add{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 84px);width:54px;height:54px;border-radius:50%;border:0;background:linear-gradient(135deg,#2F5BFF,#5e82ff);color:#fff;box-shadow:0 14px 30px -10px rgba(47,91,255,.75);display:flex;align-items:center;justify-content:center;z-index:60}
+ #lv22add svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
+ body.lv17-kb #lv22add,body.sx-mo #lv22add,body.lv16-lock #lv22add{display:none}
+ .lv22-qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+ .lv22-qa button{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:18px;background:var(--soft);border:1px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:600;line-height:1.2;text-align:center}
+ .lv22-qa button i{width:42px;height:42px;border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+ .lv22-qa button svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ /* ---- icons everywhere */
+ .lv22-i{display:inline-flex;align-items:center;justify-content:center}.lv22-i svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ .lv22-tile-i{width:40px;height:40px;border-radius:13px;background:var(--soft);color:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}
+ /* ---- Home */
+ #page{display:grid}
+ #lv17greet{display:none!important}
+ .lv22-top{grid-column:1/-1;order:-10;display:flex;flex-direction:column;gap:14px;margin:2px 0 2px}
+ .lv22-hello{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+ .lv22-hello small{display:block;font-size:14.5px;color:var(--mute);margin-bottom:2px}
+ .lv22-hello b{display:block;font-size:30px;font-weight:800;line-height:1.05;letter-spacing:-.03em}
+ .lv22-date{flex:none;border-radius:999px;background:var(--card);border:1px solid var(--line);padding:8px 12px;font-size:12.5px;font-weight:600;box-shadow:var(--shadow)}
+ .lv22-fam{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:4px 16px 2px}.lv22-fam::-webkit-scrollbar{display:none}
+ .lv22-fam button{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;color:var(--mute);font-size:11.5px;font-weight:600;width:60px}
+ .lv22-fam button .av{width:54px;height:54px;font-size:16px;box-shadow:0 0 0 2px var(--bg),0 0 0 3px transparent;transition:box-shadow .2s}
+ .lv22-fam button.on{color:var(--ink)}.lv22-fam button.on .av{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--blue)}
+ .lv22-fam button.add .av{background:var(--card);border:1.5px dashed var(--line2);color:var(--mute);box-shadow:none}
+ .lv22-fam button span{max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .lv22-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .lv22-tile{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);text-align:left;color:var(--ink);min-height:112px}
+ .lv22-tile .t{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;color:var(--mute)}
+ .lv22-tile .t .lv22-tile-i{width:32px;height:32px;border-radius:10px}.lv22-tile .t svg{width:18px;height:18px}
+ .lv22-tile b{font-size:26px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.lv22-tile b small{font-size:13px;font-weight:600;color:var(--mute);margin-left:4px;letter-spacing:0}
+ .lv22-tile em{font-style:normal;font-size:12px;color:var(--mute)}.lv22-tile em.up{color:var(--green)}.lv22-tile em.warn{color:var(--amber)}.lv22-tile em.bad{color:var(--red)}
+ .lv22-tile.hi{background:linear-gradient(135deg,#2F5BFF,#5e82ff);color:#fff;border:0}.lv22-tile.hi .t,.lv22-tile.hi em,.lv22-tile.hi b small{color:rgba(255,255,255,.8)}.lv22-tile.hi .lv22-tile-i{background:rgba(255,255,255,.18);color:#fff}
+ .lv22-week{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+ .lv22-week .l{font-size:13px;font-weight:600}.lv22-week .l small{display:block;color:var(--mute);font-weight:500;font-size:11.5px}
+ .lv22-days{display:flex;gap:8px}.lv22-days i{display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10px Inter,sans-serif;color:var(--mute);font-style:normal}
+ .lv22-days i b{width:24px;height:24px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+ .lv22-days i.on b{background:var(--blue);color:#fff}.lv22-days i.today b{box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--blue)}
+ /* the existing Home cards: order, contrast, the ones that now duplicate the top block */
+ .card.lv6-setupcard{order:1;background:linear-gradient(135deg,#1d4ed8 0%,#2F5BFF 50%,#5e82ff 100%)!important;color:#fff}
+ .card.lv6-setupcard .grow b,.card.lv6-setupcard .grow small,.card.lv6-setupcard .mute{color:#fff!important;opacity:1}.card.lv6-setupcard .grow small{opacity:.85}
+ .card.lv6-setupcard .lv6-ring b{color:#fff}
+ .card.lv6-setupcard .btn{background:#fff!important;color:#1f4fff!important;box-shadow:none}
+ .card.lv6-today{order:2}[data-lv22=meds]{order:3}[data-lv22=visit]{order:4}[data-lv22=vitals]{order:5}.card.lv15-score{order:6}[data-lv22=safety]{order:7}[data-lv22=talk]{order:8}[data-lv22=quick]{order:9}
+ .card.lv3-ai,#sxseas,.card.sx-hero.lv-hero0,[data-lv22=vitals]{display:none!important}
+ .lv6-today .hd .btn{white-space:nowrap}
+ .lv6-season button{border-radius:14px}
+ .card.lv15-score{align-items:center}.card.lv15-score .lv15-ring{width:64px;height:64px}
+ .sx-qa{grid-template-columns:repeat(3,1fr);gap:10px}
+ .sx-qa button{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:18px;background:var(--soft);border:1px solid var(--line);font-size:12.5px;font-weight:600}
+ .sx-qa button i{width:42px;height:42px;border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:center;font-style:normal;box-shadow:var(--shadow)}
+ .sx-qa button i svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ /* ---- Assistant: the orb hero, in every state */
+ body[data-page=assist] .lv5-agent{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+ .lv22-orbwrap{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:28px 0 18px}
+ .lv22-orb{width:132px;height:132px;border-radius:50%;background:radial-gradient(circle at 36% 34%,#dbe4ff 0,#5e82ff 32%,#1d4ed8 66%,transparent 70%);box-shadow:0 0 60px 10px rgba(47,91,255,.25),0 0 120px 30px rgba(47,91,255,.12);animation:lv22orb 7s ease-in-out infinite;margin-bottom:14px;position:relative}
+ .lv22-orb::after{content:"";position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle at 60% 60%,rgba(255,255,255,.55),transparent 55%);filter:blur(4px);animation:lv22orb2 5s ease-in-out infinite}
+ @keyframes lv22orb{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.05) rotate(10deg)}}@keyframes lv22orb2{0%,100%{transform:rotate(0)}50%{transform:rotate(-40deg)}}
+ .lv22-orbwrap small{font-size:15px;color:var(--mute)}.lv22-orbwrap b{font-family:var(--font-d);font-size:28px;font-weight:700;letter-spacing:-.03em;line-height:1.15;max-width:300px}
+ body[data-page=assist] .lv5-tabs{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--soft);border:1px solid var(--line);margin:0 0 12px}
+ body[data-page=assist] .lv5-tabs button{flex:1;border-radius:999px;padding:9px 0;font-weight:600;color:var(--mute)}body[data-page=assist] .lv5-tabs button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+ body[data-page=assist] .lv5-off{border-radius:18px;background:var(--card);border:1px solid var(--line);padding:14px 16px;color:var(--mute);font-size:14px}
+ body[data-page=assist] .lv5-ask input{border-radius:999px!important;height:56px!important;padding:0 18px!important;background:var(--card)!important;border:1px solid var(--line2)!important;font-size:15px;box-shadow:var(--shadow)}
+ body[data-page=assist] .lv5-ask .btn{border-radius:999px;height:56px;min-width:56px;padding:0 18px}
+ body[data-page=assist] .lv5-sugg button{border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+ #lv18orb{display:none!important}
+ .bub{border-radius:18px!important;padding:12px 14px!important;font-size:14.5px!important;line-height:1.45}.bub.me{background:var(--blue)!important;color:#fff}
+ /* ---- Devices: icon tiles instead of emoji, rows with room to breathe */
+ .lv11-src{align-items:center;gap:12px;padding:12px 0}.lv11-src+.lv11-src{border-top:1px solid var(--line)}
+ .lv11-ic{width:44px;height:44px;border-radius:14px;background:var(--soft);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:0;flex:none}
+ .lv11-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ .lv11-src.on .lv11-ic{background:var(--blue);color:#fff}
+ .lv11-src .grow b{font-size:15px;display:block;margin-bottom:2px}.lv11-src .grow small{display:block;font-size:12.5px;color:var(--mute);line-height:1.4}
+ .lv11-dl .btn{margin-top:8px}
+ /* ---- Medical ID card */
+ .lv12-id{border-radius:22px}.lv12-bg{white-space:nowrap;min-width:64px;text-align:center;border-radius:14px}.lv12-bg b{font-size:20px;display:block;letter-spacing:-.02em}.lv12-bg small{font-size:10px;letter-spacing:.08em}
+ .lv12-id-who h2{font-size:22px;line-height:1.1}
+ .lv12-idacts{display:flex;gap:8px;flex-wrap:wrap}.lv12-idacts .btn{flex:1;white-space:nowrap}
+ .lv17-hcset{align-items:center}
+ /* ---- SOS page & sheet */
+ .sx-callrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .sx-callrow .btn.red.sx-big{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:84px;border-radius:20px;padding:12px 16px;text-align:left}
+ .sx-callrow .btn.red.sx-big b{font-size:22px;font-family:var(--font-d);letter-spacing:-.02em}.sx-callrow .btn.red.sx-big small{opacity:.85;font-size:12px}
+ .sx-sep{margin:14px 0}.sx-sosrow{align-items:center;gap:12px}
+ .lv21-setup .lv21-row{gap:10px}.lv21-sel{max-width:50%;min-width:150px;font-size:13.5px;border-radius:999px!important;padding:0 12px}
+ .lv21-setup .btn.sm{white-space:nowrap}
+ .sx-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sx-num{border-radius:16px;background:var(--soft);padding:12px}.sx-num.big{grid-column:1/-1;background:linear-gradient(135deg,#ff3b5c,#E11D48);color:#fff}.sx-num b{font-family:var(--font-d);font-size:20px}
+ .sx-chk i{width:26px;height:26px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:13px}.sx-chk.ok i{background:#dcf8e6;color:#0f5132}
+ /* ---- sign-in: the blue hero */
+ .lv15-auth{background:linear-gradient(180deg,#1d4ed8 0%,#2F5BFF 38%,#13245e 100%)!important}
+ .lv15-auth .lv15-ain{background:transparent}
+ .lv15-auth h2{font-family:var(--font-d);font-size:30px;font-weight:800;letter-spacing:-.03em;color:#fff}
+ .lv15-auth p.mute{color:rgba(255,255,255,.82)}
+ .lv15-auth label{color:rgba(255,255,255,.9);font-weight:600;font-size:13px}
+ .lv15-auth label input{background:rgba(255,255,255,.14)!important;border:1px solid rgba(255,255,255,.28)!important;color:#fff;border-radius:16px!important;min-height:52px;backdrop-filter:blur(8px)}
+ .lv15-auth label input::placeholder{color:rgba(255,255,255,.55)}
+ .lv15-auth .lv15-seg{background:rgba(255,255,255,.16);border-radius:999px;padding:4px}.lv15-auth .lv15-seg button{color:rgba(255,255,255,.8);border-radius:999px}.lv15-auth .lv15-seg button.on{background:#fff;color:#1f4fff}
+ .lv15-auth .lv15-main{background:#fff!important;color:#1f4fff!important;border-radius:999px;min-height:54px;font-weight:700;font-size:16px;box-shadow:0 12px 30px -12px rgba(0,0,0,.5)}
+ .lv15-auth .lv15-pk{background:rgba(255,255,255,.14)!important;color:#fff!important;border:1px solid rgba(255,255,255,.3)!important;border-radius:999px;min-height:50px}
+ .lv15-auth .lv15-link{color:#fff;font-weight:600}.lv15-auth .lv15-skip{color:rgba(255,255,255,.85)}.lv15-foot{color:rgba(255,255,255,.65)!important}
+ .lv15-code{font-family:var(--font-d);letter-spacing:.3em;font-size:28px;text-align:center}
+ .lv15-splash{background:linear-gradient(160deg,#1d4ed8,#2F5BFF 50%,#5e82ff)!important}
+ /* ---- More sheet rows */
+ .lv13-more button{border-radius:18px!important;background:var(--card)!important;border:1px solid var(--line)!important;box-shadow:var(--shadow)}
+ .lv13-more button::after{background:var(--soft)}
+ /* ---- empty states */
+ .lv22-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:18px 8px}
+ .lv22-empty .lv22-tile-i{width:52px;height:52px;border-radius:18px;margin-bottom:6px}.lv22-empty b{font-size:15px}.lv22-empty p{margin:0;color:var(--mute);font-size:13.5px}
+ /* ---- health card banner (lv17) */
+ #lv17hc{border-radius:18px;border:1px solid var(--line)!important;background:var(--card)!important;box-shadow:var(--shadow)}
+ /* ---- SOS bar sits under the app bar */
+ #lv21bar{top:calc(env(safe-area-inset-top) + 64px)}
+}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -7943,6 +8115,98 @@ SX.act.sossafe=async()=>{if(!A)return;A.active=false;clearInterval(A.timer);if(A
 SX.act.sosclose=()=>{SX.closeModal();if(A&&!A.active)A=null;try{render()}catch(e){}};
 // an alert that is still open shows a thin bar at the top of every screen
 setInterval(()=>{const on=!!(A&&A.active);let b=document.getElementById('lv21bar');if(on&&!b){b=document.createElement('button');b.id='lv21bar';b.innerHTML=`<i></i>${P('SOS active')} · ${P('tap to open')}`;b.onclick=()=>SX.openSOS();document.body.appendChild(b)}else if(!on&&b)b.remove()},1000);
+}
+
+/*live-p22*/
+// ===================== live layer 22: the phone design system — theme, icons, app bar, tab bar, Home, quick add, assistant hero =====================
+{
+const P=SX.p,S=SX.S;
+const phone=()=>matchMedia('(max-width:720px)').matches;
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
+
+// ---------------------------------------------------------------- A. theme: light unless the person chose dark; the choice sticks
+{const r=document.documentElement,saved=ls('tht.theme');r.dataset.theme=saved==='dark'?'dark':'light';
+ new MutationObserver(()=>{const t=r.dataset.theme;if(t==='dark'||t==='light')ls('tht.theme',t);else{r.dataset.theme='light';ls('tht.theme','light')}}).observe(r,{attributes:true,attributeFilter:['data-theme']})}
+
+// ---------------------------------------------------------------- B. one icon set (24-unit stroke icons)
+const I={
+ home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+ records:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
+ pill:'<rect x="3" y="8.5" width="18" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="m8.5 8.5 7 7"/>',
+ heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+ grid:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ steps:'<path d="M9 4c-2 0-3 2-3 4.5S7.5 13 9 13s3-2 3-4.5S11 4 9 4z"/><path d="M8 14h3l-.5 6h-2z"/><path d="M15 8c1.6 0 2.5 1.6 2.5 3.5S16.5 15 15 15s-2.5-1.6-2.5-3.5S13.4 8 15 8z"/><path d="M14 16h2.5l-.3 4h-2z"/>',
+ moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+ pulse:'<path d="M3 12h4l2-6 4 12 2-6h6"/>',
+ bp:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/>',
+ drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+ scale:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 10h8M12 10v6"/>',
+ upload:'<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 20h16"/>',
+ calendar:'<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8 3v4M16 3v4"/>',
+ id:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4M14 14h4"/>',
+ cross:'<path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/>',
+ cart:'<path d="M3 4h2l2.4 11h10.8L21 7H6"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
+ users:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14c2.7 0 5 1.8 5 4.5"/>',
+ phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/>',
+ watch:'<rect x="7" y="7" width="10" height="10" rx="3"/><path d="M9 7l.6-4h4.8L15 7M9 17l.6 4h4.8l.6-4"/>',
+ bluetooth:'<path d="M7 7l10 10-5 4V3l5 4L7 17"/>',
+ ecg:'<path d="M3 12h3l2-5 3 10 3-8 2 3h5"/>',
+ ring:'<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3.5"/>',
+ bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+ chevron:'<path d="m9 6 6 6-6 6"/>',
+ sparkle:'<path d="M12 3l2 5.5L19.5 10 14 12l-2 5.5L10 12 4.5 10 10 8.5z"/>',
+ mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/>',
+ message:'<path d="M4 6h16v10H9l-5 4z"/>',
+ shield:'<path d="M12 3l8 3v6c0 4.5-3.4 7.8-8 9-4.6-1.2-8-4.5-8-9V6z"/>',
+ pin:'<path d="M12 21s-6-5.5-6-10a6 6 0 0 1 12 0c0 4.5-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+ lab:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>'
+};
+SX.ico=(n,cls)=>`<svg class="${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${I[n]||I.sparkle}</svg>`;
+const EMOJI={'⬆':'upload','💊':'pill','📅':'calendar','🪪':'id','🩹':'cross','🫀':'heart','📱':'phone','⌚':'watch','🩺':'bluetooth','💓':'ecg','💍':'ring','📄':'records','📍':'pin','🧪':'lab','👤':'user','🛡️':'shield'};
+function swapEmoji(root){if(!phone())return;(root||document).querySelectorAll('.sx-qa button i, .lv11-ic').forEach(el=>{const k=EMOJI[el.textContent.trim()];if(k&&!el.querySelector('svg'))el.innerHTML=SX.ico(k)})}
+
+// ---------------------------------------------------------------- C. tab bar: our icons, labels on
+const TAB={Home:'home',Records:'records',Medicines:'pill',Care:'heart',More:'grid'};
+function tabbar(){if(!phone())return;document.querySelectorAll('#mtab button').forEach(b=>{const t=(b.querySelector('span')||{}).textContent||'';const k=TAB[t.trim()];if(k&&!b.dataset.lv22){b.dataset.lv22=k;if(t.trim()==='Medicines')b.querySelector('span').textContent=P('Meds');const svg=b.querySelector('svg');const n=document.createElement('span');n.innerHTML=SX.ico(k);if(svg)svg.replaceWith(n.firstChild);else b.prepend(n.firstChild)}})}
+
+// ---------------------------------------------------------------- D. Home: greeting, family strip, stat tiles, week strip
+const day=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
+const latest=(m,k)=>{const V=S.vitals[m.id]||[];for(let i=V.length-1;i>=0;i--)if(V[i][k]!=null)return V[i];return null};
+const ago=t=>{const h=Math.round((Date.now()-t)/36e5);return h<1?P('just now'):h<24?h+' '+P('h ago'):Math.round(h/24)+' '+P('d ago')};
+function tiles(m){const st=(S.steps[m.id]||{})[day(0)],sl=(S.sleep[m.id]||{})[day(0)]||(S.sleep[m.id]||{})[day(1)],hr=latest(m,'hr'),bp=latest(m,'sys'),goal=10000;
+ const T=[];
+ T.push(`<button class="lv22-tile hi" data-sx="tab:lab"><div class="t"><span>${P('Steps today')}</span><span class="lv22-tile-i">${SX.ico('steps')}</span></div><b>${st!=null?st.toLocaleString('en-IN'):'—'}<small>${st!=null?Math.round(st/goal*100)+'% '+P('of goal'):''}</small></b><em>${st!=null?P('from your phone or watch'):P('connect a watch or the app')}</em></button>`);
+ T.push(`<button class="lv22-tile" data-sx="tab:lab"><div class="t"><span>${P('Sleep')}</span><span class="lv22-tile-i">${SX.ico('moon')}</span></div><b>${sl!=null?sl:'—'}<small>${sl!=null?P('hours'):''}</small></b><em>${sl!=null?P('last night'):P('no sleep data yet')}</em></button>`);
+ T.push(`<button class="lv22-tile" data-sx="vlog"><div class="t"><span>${P('Heart rate')}</span><span class="lv22-tile-i">${SX.ico('pulse')}</span></div><b>${hr?hr.hr:'—'}<small>${hr?'bpm':''}</small></b><em class="${hr&&(hr.hr>100||hr.hr<50)?'warn':''}">${hr?ago(hr.t):P('tap to add')}</em></button>`);
+ T.push(`<button class="lv22-tile" data-sx="vlog"><div class="t"><span>${P('Blood pressure')}</span><span class="lv22-tile-i">${SX.ico('bp')}</span></div><b>${bp?bp.sys+'/'+bp.dia:'—'}<small>${bp?'mmHg':''}</small></b><em class="${bp&&(bp.sys>=140||bp.dia>=90)?'bad':bp&&bp.sys>=130?'warn':''}">${bp?(bp.sys>=140||bp.dia>=90?P('high · discuss with your doctor'):bp.sys>=130?P('slightly raised'):P('normal')):P('tap to add')}</em></button>`);
+ return `<div class="lv22-tiles">${T.join('')}</div>`}
+function week(m){const V=S.vitals[m.id]||[],st=S.steps[m.id]||{},names=['S','M','T','W','T','F','S'];let n=0;const cells=[];
+ for(let i=6;i>=0;i--){const d=day(i),dt=new Date(d+'T12:00:00');const on=!!(st[d]||V.some(v=>new Date(v.t).toISOString().slice(0,10)===d));if(on)n++;cells.push(`<i class="${on?'on':''} ${i===0?'today':''}"><b>${on?'✓':''}</b>${names[dt.getDay()]}</i>`)}
+ return `<div class="lv22-week"><div class="l">${P('This week')}<small>${n?n+' '+P('of 7 days with readings'):P('no readings yet this week')}</small></div><div class="lv22-days">${cells.join('')}</div></div>`}
+function family(){const ms=S.members||[];if(ms.length<2&&!SX.user)return '';return `<div class="lv22-fam">${ms.map(m=>`<button class="${m.id===S.active?'on':''}" data-sx="who:${E(m.id)}">${SX.avatar(m,54)}<span>${E(m.rel==='You'?P('You'):m.name.split(' ')[0])}</span></button>`).join('')}<button class="add" data-sx="tab:family"><div class="av">+</div><span>${P('Add')}</span></button></div>`}
+SX.extend('dash',{before(){if(!phone())return '';const m=SX.me();const h=new Date().getHours(),g=h<12?P('Good morning'):h<17?P('Good afternoon'):P('Good evening');
+ return `<div class="lv22-top"><div class="lv22-hello"><div><small>${g},</small><b>${E(m.name.split(' ')[0])}</b></div><span class="lv22-date">${new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</span></div>${family()}${tiles(m)}${week(m)}</div>`}});
+// name the Home cards that have no class, so the stylesheet can order them
+function tagCards(){if(!phone()||page!=='dash')return;document.querySelectorAll('#page>.card:not([data-lv22])').forEach(c=>{const h=c.querySelector('h3');const t=h?h.textContent.trim():'';const k=/^Medicines today/.test(t)?'meds':/^Next visit/.test(t)?'visit':/^Vitals/.test(t)?'vitals':/^Safety setup/.test(t)?'safety':/^Worth a conversation/.test(t)?'talk':/^Quick actions/.test(t)?'quick':'';if(k)c.dataset.lv22=k})}
+
+// ---------------------------------------------------------------- E. quick add
+function fab(){if(!phone())return;let b=document.getElementById('lv22add');if(!b){b=document.createElement('button');b.id='lv22add';b.setAttribute('aria-label',P('Add'));b.innerHTML=SX.ico('plus');b.onclick=quick;document.body.appendChild(b)}}
+function quick(){const m=SX.me();SX.modal(`<h2>${P('Add')}</h2><p class="mute sm" style="margin:0">${P('For')} ${E(m.name.split(' ')[0])}</p><div class="lv22-qa">
+ <button data-sx="vlog"><i>${SX.ico('pulse')}</i>${P('Reading')}</button><button data-sx="tab:vault"><i>${SX.ico('upload')}</i>${P('Report')}</button><button data-sx="medadd"><i>${SX.ico('pill')}</i>${P('Medicine')}</button>
+ <button data-sx="tab:appts"><i>${SX.ico('calendar')}</i>${P('Visit')}</button><button data-sx="tab:family"><i>${SX.ico('users')}</i>${P('Family member')}</button><button data-sx="tab:assist"><i>${SX.ico('sparkle')}</i>${P('Ask the assistant')}</button></div>`,{label:P('Add')});
+ document.querySelectorAll('.lv22-qa button').forEach(b=>b.addEventListener('click',()=>setTimeout(()=>{if(/^tab:/.test(b.dataset.sx))SX.closeModal()},0)))}
+
+// ---------------------------------------------------------------- F. assistant hero in every state
+function orb(){if(!phone()||page!=='assist')return;const ag=document.querySelector('.lv5-agent');if(!ag||ag.querySelector('.lv22-orbwrap'))return;const m=SX.me();const el=document.createElement('div');el.className='lv22-orbwrap';el.innerHTML=`<div class="lv22-orb"></div><small>${P('Hello')} ${E(m.name.split(' ')[0])}</small><b>${P('How can I help you today?')}</b>`;ag.prepend(el)}
+
+// ---------------------------------------------------------------- wiring
+function refresh(){tabbar();fab();tagCards();swapEmoji();orb()}
+new MutationObserver(()=>setTimeout(refresh,0)).observe(document.getElementById('page'),{childList:true});
+new MutationObserver(()=>setTimeout(refresh,0)).observe(document.body,{attributes:true,attributeFilter:['data-page']});
+setTimeout(refresh,300);
+SX.lv22={ico:SX.ico,tiles,week};
 }
 
 SX.boot();
