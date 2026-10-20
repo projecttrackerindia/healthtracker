@@ -101,7 +101,7 @@ def test_app_has_no_sample_people():
 
 
 def test_card_reader_without_key_offers_manual_entry(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False); monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     c = client()
     r = c.post("/api/v1/auth/../hello".replace("/auth/../", "/"), json={"name": "T"}, headers={"X-DoKKo-Key": "k" * 32})
     assert r.status_code == 200
@@ -113,10 +113,10 @@ def test_card_reader_without_key_offers_manual_entry(monkeypatch):
 
 
 def test_admin_ai_test_reports_missing_key(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False); monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     from api import ai as AI
     r = AI.test_connection()
-    assert r["ok"] is False and "ANTHROPIC_API_KEY" in r["error"]
+    assert r["ok"] is False and "API_KEY" in r["error"]
 
 
 def test_no_admin_wording_in_user_messages():
@@ -161,7 +161,7 @@ def test_paid_plan_needs_a_payment_provider(monkeypatch):
 
 
 def test_ai_ask_and_insight_without_key(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False); monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     c = client()
     c.headers["X-DoKKo-Key"] = uuid.uuid4().hex
     c.post("/api/v1/hello", json={"name": "T", "members": 1})

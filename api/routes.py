@@ -101,7 +101,7 @@ def config():
     return {"version": os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8], "region": os.getenv("DOKKO_REGION", "IN"),
             "emergency": {"national": "112", "ambulance": "108"}, "languages": ["en", "hi", "te"],
             # public: only whether smart reading is available. The provider and model stay server-side (named in the privacy policy).
-            "ai": {"engine": "ai" if os.getenv("ANTHROPIC_API_KEY") else "local"},
+            "ai": {"engine": "ai" if AI.available() else "local"},
             "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("upi" if _upi_on() else "demo"), "cities": list(CITIES),
             "maps": {"provider": "google" if os.getenv("GOOGLE_MAPS_KEY") else "osm", "key": os.getenv("GOOGLE_MAPS_KEY", "")}}
 
@@ -494,7 +494,7 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
     except Exception:
         ctx = {}
     kind = kind if kind in ("report", "prescription", "card", "policy") else "report"
-    capped = bool(os.getenv("ANTHROPIC_API_KEY")) and used >= cap
+    capped = AI.available() and used >= cap
     try:
         if kind == "policy":
             if capped:

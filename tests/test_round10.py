@@ -570,3 +570,41 @@ def test_demo_keys_are_read_only_and_hello_reports_claimed():
     r = client.post("/api/v1/orders", json={}, headers={"x-dokko-key": k})
     assert r.status_code == 403 and "demo" in r.json()["detail"].lower()
     assert client.get("/api/v1/stores?kind=pharmacy", headers={"x-dokko-key": k}).status_code == 200
+
+
+def test_gemini_provider_shapes_and_fallback(monkeypatch):
+    """Gemini is used when its key is set; content blocks become inline_data parts; token usage is counted; Anthropic is the fallback."""
+    from api import ai as AI
+    monkeypatch.setenv("GEMINI_API_KEY", "g"); monkeypatch.setenv("ANTHROPIC_API_KEY", "a"); monkeypatch.delenv("AI_PROVIDER", raising=False)
+    assert AI.provider_order() == ["gemini", "anthropic"]
+    sent = {}
+
+    class R:
+        status_code = 200
+        def raise_for_status(self): pass
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": '{"answer":"hi"}'}]}, "finishReason": "STOP"}], "usageMetadata": {"promptTokenCount": 12, "candidatesTokenCount": 5}}
+
+    class C:
+        def __init__(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+        def post(self, url, params=None, json=None):
+            sent.update({"url": url, "body": json}); return R()
+
+    import httpx
+    monkeypatch.setattr(httpx, "Client", C)
+    AI.USAGE.set(None)
+    r = AI.create(max_tokens=50, system="sys", messages=[{"role": "user", "content": [{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "AAAA"}}, {"type": "text", "text": "Return the JSON now."}]}])
+    assert r.content[0].text == '{"answer":"hi"}' and r.usage.input_tokens == 12 and r.usage.output_tokens == 5
+    assert "gemini-2.5-flash:generateContent" in sent["url"] and sent["body"]["systemInstruction"]["parts"][0]["text"] == "sys"
+    parts = sent["body"]["contents"][0]["parts"]
+    assert parts[0]["inline_data"]["mime_type"] == "image/png" and parts[1]["text"].startswith("Return")
+    assert AI.take_usage() == (12, 5) and AI.current_model().startswith("gemini")
+    # Gemini down → Anthropic path is attempted (its SDK call fails here, so create raises with the last error)
+    def boom(*a, **k): raise RuntimeError("gemini down")
+    monkeypatch.setattr(AI, "_gemini_create", boom)
+    monkeypatch.setattr(AI, "_anthropic_create", lambda **k: AI._Resp("fallback", 1, 1))
+    assert AI.create(max_tokens=5, messages=[{"role": "user", "content": "x"}]).content[0].text == "fallback"
+    monkeypatch.setenv("AI_PROVIDER", "anthropic")
+    assert AI.provider_order() == ["anthropic", "gemini"]
