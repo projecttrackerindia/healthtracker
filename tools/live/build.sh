@@ -13,4 +13,5 @@ python3 tools/live/p10.py >/dev/null || true
 python3 tools/live/p11.py >/dev/null || true
 python3 tools/live/p12.py >/dev/null || true
 python3 tools/live/p13.py >/dev/null || true
+python3 tools/live/p14.py >/dev/null || true
 python3 tools/compress.py --check && echo "web/index.html up to date"
