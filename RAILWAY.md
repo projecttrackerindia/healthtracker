@@ -63,7 +63,13 @@ OTP_DEMO=0
 | `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
-### Round 20 — mobile codes through Firebase Phone Authentication (2026-10-20)
+### Round 21 — SOS that acts (2026-10-20)
+
+* One press: 3-second countdown (Cancel / Send now) → the phone calls the chosen number (112 / 108 / a contact; the Android app dials by itself through the `Sos` plugin, CALL_PHONE) → `POST /api/v1/sos/start` creates an alert with a public **live page** `/sos/<token>` (map that follows the person, Medical ID, call/directions buttons) → the server emails contacts with an address, pushes + WhatsApps the family's own phones (via inbox.notify), free-text SMS when Twilio exists → the sheet offers one-tap WhatsApp/SMS for the rest, nearest hospitals with directions, "I'm safe" ends the alert. Location keeps updating every 30 s while the alert is open; the first fix re-sends to everyone told "not available yet".
+* Safety page set-up card: who to call first, allow location (and the call permission) ahead of time, email on contacts. Emergency contacts gained an email field.
+* `messaging.send_mail` / `send_text_sms`; `SosAlert` table. Service worker `dk-r21`.
+
+## Round 20 — mobile codes through Firebase Phone Authentication (2026-10-20)
 
 * `MAIL`/SMS channels: `messaging.sms_mode()` = msg91 | twilio | **firebase** (`FIREBASE_WEB_API_KEY` + `FIREBASE_PROJECT_ID` + `FIREBASE_APP_ID`). With Firebase, a start answer carries `{firebase:true, phone}`; the browser runs `THT.phone.send/token` (Firebase JS, invisible reCAPTCHA) and verifies with `{flow, firebaseToken}`; the server checks the token with `accounts:lookup` and matches the number (`auth.verify_code`). Unknown numbers get the same answer as known ones.
 * `/auth/config` → `firebase` web config. CSP allows gstatic / identitytoolkit / recaptcha.

@@ -75,6 +75,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" tools:targetApi="s" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- SOS: place the emergency call without a second tap -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
     <!-- Health Connect read permissions (the person grants each one in the Health Connect screen) -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />

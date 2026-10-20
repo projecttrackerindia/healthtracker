@@ -124,6 +124,50 @@ def send_email(to: str, code: str, purpose: str) -> None:
             s.send_message(m)
 
 
+def send_mail(to: str, subject: str, text: str, html: str | None = None) -> None:
+    """Any transactional email (SOS alerts, reports) through the same transport as the codes."""
+    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
+    if _use_resend():
+        payload = {"from": sender, "to": [to], "subject": subject, "text": text}
+        if html:
+            payload["html"] = html
+        req = urllib.request.Request("https://api.resend.com/emails", method="POST", data=json.dumps(payload).encode(),
+                                     headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
+        try:
+            urllib.request.urlopen(req, timeout=10).read()
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"Resend {e.code}: {e.read().decode('utf-8', 'ignore')[:300]}") from e
+        return
+    m = EmailMessage()
+    m["From"], m["To"], m["Subject"] = sender, to, subject
+    m.set_content(text)
+    if html:
+        m.add_alternative(html, subtype="html")
+    host, port = os.getenv("SMTP_HOST"), int(os.getenv("SMTP_PORT", "587"))
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=10) as s:
+            s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+            s.send_message(m)
+    else:
+        with smtplib.SMTP(host, port, timeout=10) as s:
+            s.starttls(context=ssl.create_default_context())
+            if os.getenv("SMTP_USER"):
+                s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+            s.send_message(m)
+
+
+def send_text_sms(to: str, text: str) -> bool:
+    """Free-text SMS: Twilio only (MSG91 OTP templates cannot carry arbitrary text). False when no such channel exists."""
+    sid, tok = os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN")
+    if not (sid and tok):
+        return False
+    body = urllib.parse.urlencode({"To": to, "From": os.getenv("TWILIO_FROM", ""), "Body": text[:1500]}).encode()
+    req = urllib.request.Request(f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json", method="POST", data=body,
+                                 headers={"Authorization": "Basic " + base64.b64encode(f"{sid}:{tok}".encode()).decode(), "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA})
+    urllib.request.urlopen(req, timeout=10).read()
+    return True
+
+
 def send_sms(to: str, code: str) -> None:
     if os.getenv("MSG91_AUTH_KEY") and os.getenv("MSG91_TEMPLATE_ID"):
         q = urllib.parse.urlencode({"template_id": os.getenv("MSG91_TEMPLATE_ID"), "mobile": to.lstrip("+"), "otp": code, "otp_expiry": 10})

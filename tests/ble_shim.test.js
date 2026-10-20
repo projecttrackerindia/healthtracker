@@ -1,7 +1,7 @@
 // Drives the live-19 Bluetooth bridge with a fake native plugin. Exit 0 and "ok N" lines on success.
 const fs = require('fs'), path = require('path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8');
-const i = html.indexOf('/*live-p19*/'), j = html.indexOf('SX.boot();\n})();', i);
+const i = html.indexOf('/*live-p19*/');const nxt = html.indexOf('/*live-p', i + 10);const j = nxt > 0 ? nxt : html.indexOf('SX.boot();\n})();', i);   // layer 19 alone, whatever follows it
 if (i < 0 || j < 0) { console.error('layer 19 not in page'); process.exit(1); }
 const src = html.slice(i, j);
 

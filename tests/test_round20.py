@@ -118,5 +118,5 @@ def test_page_and_site_carry_the_phone_step():
     assert site.count("await codeBody(c)") == 4 and "THT.phone.send(r.phone)" in site
     js = (ROOT / "site" / "auth.js").read_text(encoding="utf-8")
     assert "signInWithPhoneNumber" in js and "accounts:lookup" not in js   # the browser never talks to the lookup endpoint; the server does
-    assert "dk-r20" in (ROOT / "web" / "sw.js").read_text(encoding="utf-8")
+    assert "const V='dk-r" in (ROOT / "web" / "sw.js").read_text(encoding="utf-8")
     assert "identitytoolkit.googleapis.com" in server.CSP and "www.gstatic.com" in server.CSP
