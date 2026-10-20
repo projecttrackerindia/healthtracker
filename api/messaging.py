@@ -26,6 +26,16 @@ def email_ready() -> bool:
     return bool(os.getenv("RESEND_API_KEY") or os.getenv("SMTP_HOST"))
 
 
+def _use_resend() -> bool:
+    """MAIL_TRANSPORT=smtp forces SMTP (e.g. Google Workspace) even when a Resend key is still set; resend forces Resend; auto = Resend when its key exists."""
+    t = (os.getenv("MAIL_TRANSPORT") or "auto").strip().lower()
+    if t == "smtp":
+        return False
+    if t == "resend":
+        return bool(os.getenv("RESEND_API_KEY"))
+    return bool(os.getenv("RESEND_API_KEY"))
+
+
 def sms_ready() -> bool:
     return bool((os.getenv("MSG91_AUTH_KEY") and os.getenv("MSG91_TEMPLATE_ID")) or (os.getenv("TWILIO_ACCOUNT_SID") and os.getenv("TWILIO_AUTH_TOKEN")))
 
@@ -49,7 +59,7 @@ def send_email(to: str, code: str, purpose: str) -> None:
     sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
     subject = f"{code} is your {APP} code"
     text = f"Your {APP} code is {code}. It expires in 10 minutes. Never share it with anyone."
-    if os.getenv("RESEND_API_KEY"):
+    if _use_resend():
         req = urllib.request.Request("https://api.resend.com/emails", method="POST",
                                      data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": _html(code, purpose)}).encode(),
                                      headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
@@ -102,7 +112,7 @@ def send_invite_email(to: str, by: str, name: str, link: str) -> None:
 <p>A profile for <b>{name or 'you'}</b> is ready. Create your account to see your own records and your family's, on your own phone.</p>
 <p style="margin:20px 0"><a href="{link}" style="background:#2F5BFF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px;font-weight:600">Create my account</a></p>
 <p style="color:#5f6577;font-size:13px">The link works for 7 days. If you were not expecting this, ignore this email.</p></div>"""
-    if os.getenv("RESEND_API_KEY"):
+    if _use_resend():
         req = urllib.request.Request("https://api.resend.com/emails", method="POST",
                                      data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": html}).encode(),
                                      headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
@@ -132,7 +142,7 @@ def send_mail(to: str, subject: str, text: str, html: str = "") -> None:
     """Any transactional email (partner alerts, welcome mails, admin attention). Same transport as the codes."""
     sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
     html = html or "<div style=\"font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f1220;white-space:pre-line\">" + text.replace("&", "&amp;").replace("<", "&lt;") + "</div>"
-    if os.getenv("RESEND_API_KEY"):
+    if _use_resend():
         req = urllib.request.Request("https://api.resend.com/emails", method="POST",
                                      data=json.dumps({"from": sender, "to": [to], "subject": subject, "text": text, "html": html}).encode(),
                                      headers={"Authorization": "Bearer " + os.getenv("RESEND_API_KEY"), "Content-Type": "application/json", "User-Agent": UA})
