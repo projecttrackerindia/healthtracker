@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   appName: 'TheHealthTracker',
   webDir: 'www',
   server: {
-    url: process.env.APP_URL || 'https://thehealthtracker.com/app',
+    url: process.env.APP_URL || 'https://tht-88456779070.asia-south1.run.app/app',   // Google Cloud Run (Mumbai); becomes https://thehealthtracker.com/app once the domain is attached
     cleartext: false,
     androidScheme: 'https'
   },
