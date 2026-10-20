@@ -198,6 +198,10 @@ def send_code(request: Request, db: Session, target: str, kind: str, purpose: st
     code = f"{secrets.randbelow(10 ** 6):06d}"
     db.query(OtpCode).filter(OtpCode.target == target, OtpCode.purpose == purpose, OtpCode.used == False).update({"used": True})  # noqa: E712
     db.add(OtpCode(target=target, purpose=purpose, code_hash=code_hash(target, code), expires=now() + 600, ip=(request.client.host if request.client else "")[:64]))
+    if kind == "phone" and messaging.sms_mode() == "firebase" and not messaging.demo():
+        # Firebase sends the SMS from the browser and checks the digits; the row above only carries the rate limits.
+        # The browser comes back with an ID token instead of a code (verify_code below).
+        return {"firebase": True, "phone": target}
     if ready:
         try:
             (messaging.send_email(target, code, purpose) if kind == "email" else messaging.send_sms(target, code))
@@ -225,6 +229,21 @@ def check_code(db: Session, target: str, purpose: str, code: str) -> bool:
     return True
 
 
+def verify_code(db: Session, target: str, purpose: str, body: "FlowCode") -> bool:
+    """A 6-digit code of ours, or — for a mobile number when Firebase is the SMS channel — a Firebase ID token that certifies that number."""
+    if body.firebaseToken and target.startswith("+") and messaging.sms_mode() == "firebase":
+        c = db.scalar(select(OtpCode).where(OtpCode.target == target, OtpCode.purpose == purpose, OtpCode.used == False).order_by(OtpCode.created.desc()))  # noqa: E712
+        if not c or c.expires < now():
+            raise HTTPException(400, "This step has expired. Ask for a new code.")
+        if messaging.firebase_phone(body.firebaseToken) != target:
+            c.attempts += 1
+            db.commit()
+            raise HTTPException(400, "That code is not right. Ask for a new one and try again.")
+        c.used = True
+        return True
+    return check_code(db, target, purpose, body.code)
+
+
 def masked(kind: str, v: str) -> str:
     if kind == "email":
         a, _, d = v.partition("@")
@@ -237,7 +256,7 @@ def masked(kind: str, v: str) -> str:
 def config(request: Request):
     host, origin = rp(request)
     return {"passkeys": True, "email": messaging.email_ready(), "sms": messaging.sms_ready(), "demo": messaging.demo(), "rpId": host,
-            "policy": {"min": 12, "max": 128}}
+            "policy": {"min": 12, "max": 128}, "firebase": messaging.firebase_web_config()}
 
 
 @r.get("/me")
@@ -310,7 +329,8 @@ def signup_start(body: Signup, request: Request, db: Session = Depends(get_db)):
 
 class FlowCode(BaseModel):
     flow: str
-    code: str
+    code: str = ""
+    firebaseToken: str = ""   # Firebase Phone Authentication: the browser's ID token stands in for the code
 
 
 @r.post("/signup/verify", dependencies=[Depends(csrf)])
@@ -318,7 +338,7 @@ def signup_verify(body: FlowCode, request: Request, response: Response, db: Sess
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "signup")
     d = f.data
-    check_code(db, d["target"], "signup", body.code)
+    verify_code(db, d["target"], "signup", body)
     if d["email"] and db.scalar(select(User.id).where(User.email == d["email"])) or d["phone"] and db.scalar(select(User.id).where(User.phone == d["phone"])):
         raise HTTPException(409, "This account already exists. Sign in instead.")
     u = User(name=d["name"], email=d["email"], phone=d["phone"], pw_hash=d["pw"], pw_changed=now(),
@@ -373,7 +393,7 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
         kind, target = ("email", u.email) if u.email else ("phone", u.phone)
         f = new_flow(db, "step", 10, user_id=u.id, data={"kind": kind, "target": target})
         out = send_code(request, db, target, kind, "step")
-        return {"step": f.id, "sentTo": masked(kind, target), **out}
+        return {"step": f.id, "sentTo": masked(kind, target), "channel": kind, **out}
     return start_session(request, response, db, u, "password")
 
 
@@ -381,7 +401,7 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
 def step_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db)):
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "step")
-    check_code(db, f.data["target"], "step", body.code)
+    verify_code(db, f.data["target"], "step", body)
     u = db.get(User, f.user_id)
     db.delete(f)
     return start_session(request, response, db, u, "password+otp")
@@ -405,6 +425,8 @@ def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
         out = send_code(request, db, target, kind, purpose)
     elif not (messaging.email_ready() if kind == "email" else messaging.sms_ready()) and not messaging.demo():
         raise HTTPException(503, ("Email" if kind == "email" else "SMS") + " codes are not set up on this server yet. Use a passkey or password.")
+    elif kind == "phone" and messaging.sms_mode() == "firebase" and not messaging.demo():
+        out = {"firebase": True, "phone": target}   # the browser still runs the SMS step, so an unknown number looks like a known one
     # same answer whether or not the account exists
     return {"flow": f.id, "sentTo": masked(kind, target), "channel": kind, **out}
 
@@ -416,7 +438,7 @@ def otp_verify(body: FlowCode, request: Request, response: Response, db: Session
     if not f.user_id:
         raise HTTPException(400, "That code is not right. 4 attempts left.")
     d = f.data
-    check_code(db, d["target"], d["purpose"], body.code)
+    verify_code(db, d["target"], d["purpose"], body)
     u = db.get(User, f.user_id)
     if d["kind"] == "email":
         u.email_verified = True
@@ -688,7 +710,7 @@ def contact_verify(body: FlowCode, request: Request, db: Session = Depends(get_d
     if f.user_id != u.id:
         raise HTTPException(400, "This step has expired. Please start again.")
     d = f.data
-    check_code(db, d["target"], "contact", body.code)
+    verify_code(db, d["target"], "contact", body)
     col = User.email if d["kind"] == "email" else User.phone
     if db.scalar(select(User.id).where(col == d["target"], User.id != u.id)):
         raise HTTPException(409, "This is now linked to another account.")

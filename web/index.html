@@ -7528,15 +7528,15 @@ function paint(m){mode=m;const el=document.getElementById('lv15auth');if(!el)ret
  el.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>paint(b.dataset.m));const sk=document.getElementById('lv15skip');if(sk)sk.onclick=()=>{if(SX.demo)SX.demo.enter()};
  const f=document.getElementById('lv15f');if(!f)return;const err=f.querySelector('.lv15-err'),main=f.querySelector('.lv15-main');const fail=e=>{err.textContent=e.message;err.hidden=false;main.disabled=false;main.textContent=main.dataset.t};
  const busy=()=>{err.hidden=true;main.dataset.t=main.textContent;main.disabled=true;main.innerHTML='<span class="sx-spin sm"></span>'};
- const otp=document.getElementById('lv15otp');if(otp)otp.onclick=async()=>{const id=f.id.value.trim();if(id.length<5){fail(new Error(P('Enter your email or mobile first')));return}busy();try{const r=await A('/otp/start',{id});flow=r.flow;flowKind='otp';pending={title:P('Enter the code'),sub:P('Sent to')+' '+r.sentTo,demo:r.demo,back:'in'};paint('code')}catch(e){fail(e)}};
+ const otp=document.getElementById('lv15otp');if(otp)otp.onclick=async()=>{const id=f.id.value.trim();if(id.length<5){fail(new Error(P('Enter your email or mobile first')));return}busy();try{const r=await SX.fbArm(await A('/otp/start',{id}));flow=r.flow;flowKind='otp';pending={title:P('Enter the code'),sub:P('Sent to')+' '+r.sentTo,demo:r.demo,back:'in'};paint('code')}catch(e){fail(e)}};
  f.onsubmit=async e=>{e.preventDefault();const fd=new FormData(f);busy();try{
-  if(mode==='in'){const r=await A('/password/login',{id:fd.get('id').trim(),password:fd.get('pw')});if(r.step){flow=r.step;flowKind='step';pending={title:P('Second step'),sub:P('Enter the code sent to')+' '+r.sentTo,demo:r.demo,back:'in'};paint('code');return}done()}
-  else if(mode==='up'){const ph=String(fd.get('phone')).replace(/\D/g,'');const r=await A('/signup/start',{name:fd.get('name').trim(),email:fd.get('email').trim(),phone:ph.length===10?'+91'+ph:'+'+ph,password:fd.get('pw'),terms:!!fd.get('terms')});flow=r.flow;flowKind='signup';pending={title:r.channel==='email'?P('Verify your email'):P('Verify your mobile'),sub:P('Enter the 6-digit code we sent to')+' '+r.sentTo,demo:r.demo,back:'up'};paint('code')}
+  if(mode==='in'){const r=await A('/password/login',{id:fd.get('id').trim(),password:fd.get('pw')});if(r.step){await SX.fbArm(r);flow=r.step;flowKind='step';pending={title:P('Second step'),sub:P('Enter the code sent to')+' '+r.sentTo,demo:r.demo,back:'in'};paint('code');return}done()}
+  else if(mode==='up'){const ph=String(fd.get('phone')).replace(/\D/g,'');const r=await A('/signup/start',{name:fd.get('name').trim(),email:fd.get('email').trim(),phone:ph.length===10?'+91'+ph:'+'+ph,password:fd.get('pw'),terms:!!fd.get('terms')});await SX.fbArm(r);flow=r.flow;flowKind='signup';pending={title:r.channel==='email'?P('Verify your email'):P('Verify your mobile'),sub:P('Enter the 6-digit code we sent to')+' '+r.sentTo,demo:r.demo,back:'up'};paint('code')}
   else if(mode==='code'){const code=String(fd.get('code')).trim();let r;
-   if(flowKind==='signup'){r=await A('/signup/verify',{flow,code});if(r.verifyNext&&r.verifyNext.flow){flow=r.verifyNext.flow;flowKind='contact';pending={title:P('One more: verify your mobile'),sub:P('Enter the code sent to')+' '+r.verifyNext.sentTo,demo:r.verifyNext.demo,back:'up'};paint('code');return}if(r.aadhaarNext){const j=await fetch('/api/v1/digilocker/start',{method:'POST',headers:{'x-tht':'1','content-type':'application/json'},credentials:'same-origin'}).then(x=>x.json());if(j.url){location.href=j.url;return}}done()}
-   else if(flowKind==='contact'){await A('/contact/verify',{flow,code});done()}
-   else if(flowKind==='step'){await A('/step/verify',{step:flow,code});done()}
-   else{r=await A('/otp/verify',{flow,code});if(r.reset){location.href='/reset';return}done()}}
+   if(flowKind==='signup'){r=await A('/signup/verify',await SX.fbBody(flow,code));if(r.verifyNext&&r.verifyNext.flow){await SX.fbArm(r.verifyNext);flow=r.verifyNext.flow;flowKind='contact';pending={title:P('One more: verify your mobile'),sub:P('Enter the code sent to')+' '+r.verifyNext.sentTo,demo:r.verifyNext.demo,back:'up'};paint('code');return}if(r.aadhaarNext){const j=await fetch('/api/v1/digilocker/start',{method:'POST',headers:{'x-tht':'1','content-type':'application/json'},credentials:'same-origin'}).then(x=>x.json());if(j.url){location.href=j.url;return}}done()}
+   else if(flowKind==='contact'){await A('/contact/verify',await SX.fbBody(flow,code));done()}
+   else if(flowKind==='step'){await A('/step/verify',await SX.fbBody(flow,code));done()}
+   else{r=await A('/otp/verify',await SX.fbBody(flow,code));if(r.reset){location.href='/reset';return}done()}}
  }catch(x){fail(x)}}}
 function done(){try{sessionStorage.removeItem('tht.skipauth')}catch(e){}closeAuth();location.reload()}
 // decide once the app knows who is signed in
@@ -7810,6 +7810,16 @@ SX.act.wearsync=async([p])=>{const m=SX.me();toast(P('Syncing')+' '+label(p)+'â€
   S.hc[m.id]={t:Date.now(),n,src:p};SX.ledger('reading',true,'Synced from '+label(p),m.id);SX.save();status();render();toast(n?P('Added')+' '+n+' '+P('new readings'):P('Nothing new since the last sync'))}catch(e){toast(e.message);if(e.status===401)status()}};
 SX.act.wearunlink=async([p])=>{const m=SX.me();if(!confirm(P('Unlink')+' '+label(p)+' '+P('from this profile?')))return;try{await J('/wear/'+encodeURIComponent(p)+'/'+encodeURIComponent(m.id),'DELETE');status();toast(label(p)+' '+P('unlinked'))}catch(e){toast(e.message)}};
 if(/#wear=/.test(location.hash)){const mm=/#wear=([a-z]+):([a-z]+)/.exec(location.hash);history.replaceState(null,'',location.pathname);if(mm)setTimeout(()=>{const p=mm[1],st=mm[2];if(st==='done'){toast(label(p)+' '+P('linked â€” syncing'));go('devices');SX.act.wearsync([p])}else toast(st==='cancelled'?P('Linking was cancelled'):P('Linking did not complete'))},1200)}
+}
+
+/*live-p20*/
+// ===================== live layer 20: mobile codes through Firebase Phone Authentication on the in-app sign-in =====================
+{
+const loadAuthJs=()=>window.THT&&THT.phone?Promise.resolve():new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='/s/auth.js?v=20';sc.onload=res;sc.onerror=rej;document.head.append(sc)});
+// a start answer that says {firebase:true, phone} means Google sends the SMS: arm it before the code screen opens
+SX.fbArm=async r=>{if(r&&r.firebase&&r.phone){await loadAuthJs();await THT.phone.send(r.phone)}return r};
+// the verify body: our 6-digit code, or the Firebase ID token that stands in for it
+SX.fbBody=async(flow,code)=>({flow,code,firebaseToken:(window.THT&&THT.phone&&THT.phone.pending())?await THT.phone.token(code):undefined});
 }
 
 SX.boot();

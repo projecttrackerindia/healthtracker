@@ -108,7 +108,7 @@ def test_page_carries_layer_19_and_sw_bumped():
     assert "/*live-p19*/" in html and "SX.bleShim=makeBluetooth" in html
     assert "withings:'Withings',oura:'Oura'" in html
     assert "SX.act.bledev=(...a)=>(navigator.bluetooth&&navigator.bluetooth.requestDevice)?ble0(...a):SX.act.hcsync()" in html
-    assert "dk-r19" in (ROOT / "web" / "sw.js").read_text(encoding="utf-8")
+    assert "const V='dk-r" in (ROOT / "web" / "sw.js").read_text(encoding="utf-8")   # bumped every round
     assert subprocess.run(["python3", str(ROOT / "tools" / "compress.py"), "--check"], capture_output=True).returncode == 0
 
 

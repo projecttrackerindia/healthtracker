@@ -76,7 +76,8 @@ def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)
     h = household(db, x_dokko_key, create=False)
     links = db.scalars(select(DeviceLink).where(DeviceLink.household_id == h.id, DeviceLink.provider == "fitbit")).all() if h else []
     return {"enabled": enabled(), "links": [link_json(l) for l in links],
-            "message": "" if enabled() else "Fitbit linking opens once TheHealthTracker's Fitbit developer app is approved."}
+            "sunset": "2026-10-30",
+            "message": "" if enabled() else "Fitbit's cloud service for apps closes on 30 October 2026 (Google is replacing it). Fitbit readings reach TheHealthTracker through the phone app — Fitbit shares with Health Connect on Android."}
 
 
 @r.post("/start")

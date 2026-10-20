@@ -92,5 +92,49 @@
     let p; do { p = cap(A[rnd(A.length)]) + S[rnd(S.length)] + A[rnd(A.length)] + (10 + rnd(89)) + S[rnd(S.length)] + cap(A[rnd(A.length)]) } while (rules(p, {}).some(r => !r.ok));
     return p;
   }
-  window.THT = { api, passkey, pw: { rules, score, generate } };
+  // ---- mobile codes through Firebase Phone Authentication (when the server says so in /auth/config → firebase).
+  //      The SMS is sent and checked by Google; the browser then hands the server an ID token in place of the 6-digit code.
+  //      Flow: a start call answers {firebase:true, phone} → THT.phone.send(phone) → person types the SMS code → THT.phone.token(code) → verify with {firebaseToken}.
+  const FB_V = '10.14.1';
+  let fbReady = null, fbConfirm = null, fbVerifier = null;
+  const script = src => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => rej(new Error('Could not load the sign-in library')); document.head.append(sc) });
+  async function fbLoad() {
+    if (fbReady) return fbReady;
+    fbReady = (async () => {
+      const cfg = (await api('/config')).firebase;
+      if (!cfg || !cfg.apiKey) throw new Error('Mobile codes are not available right now. Use your email or password.');
+      if (!window.firebase) { await script('https://www.gstatic.com/firebasejs/' + FB_V + '/firebase-app-compat.js'); await script('https://www.gstatic.com/firebasejs/' + FB_V + '/firebase-auth-compat.js') }
+      if (!firebase.apps.length) firebase.initializeApp(cfg);
+      try { firebase.auth().useDeviceLanguage() } catch (e) { }
+      return firebase.auth();
+    })().catch(e => { fbReady = null; throw e });
+    return fbReady;
+  }
+  const phone = {
+    async send(number) {
+      const auth = await fbLoad();
+      let host = document.getElementById('tht-recaptcha');
+      if (!host) { host = document.createElement('div'); host.id = 'tht-recaptcha'; host.style.cssText = 'position:fixed;left:-9999px;bottom:0'; document.body.append(host) }
+      if (fbVerifier) { try { fbVerifier.clear() } catch (e) { } fbVerifier = null; host.innerHTML = '' }
+      fbVerifier = new firebase.auth.RecaptchaVerifier(host, { size: 'invisible' });
+      try { fbConfirm = await auth.signInWithPhoneNumber(number, fbVerifier) }
+      catch (e) {
+        const c = e && e.code || '';
+        throw new Error(c === 'auth/too-many-requests' ? 'Too many codes asked for this number. Try again later.' : c === 'auth/invalid-phone-number' ? 'Check the mobile number.' : c === 'auth/quota-exceeded' ? 'SMS codes are busy right now; try email or your password.' : (e && e.message) || 'Could not send the SMS code');
+      }
+      return true;
+    },
+    async token(code) {
+      if (!fbConfirm) throw new Error('Ask for the code again.');
+      let res;
+      try { res = await fbConfirm.confirm(String(code || '').replace(/\D/g, '')) }
+      catch (e) { const c = e && e.code || ''; throw new Error(c === 'auth/invalid-verification-code' ? 'That code is not right.' : c === 'auth/code-expired' ? 'The code has expired. Ask for a new one.' : (e && e.message) || 'That code is not right.') }
+      const t = await res.user.getIdToken();
+      try { await firebase.auth().signOut() } catch (e) { }   // nothing stays signed in on Google's side; the server owns the session
+      fbConfirm = null;
+      return t;
+    },
+    pending: () => !!fbConfirm
+  };
+  window.THT = { api, passkey, phone, pw: { rules, score, generate } };
 })();

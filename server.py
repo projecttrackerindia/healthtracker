@@ -139,14 +139,14 @@ app.include_router(blood_api.pr)
 # --------------------------------------------------------------------------------------------------
 CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com https://maps.googleapis.com; "
+    "script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com https://maps.googleapis.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; "
     "worker-src 'self' blob:; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "img-src 'self' data: blob: https://i.ytimg.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com; "
     "font-src 'self' data: https://fonts.gstatic.com; "
-    "connect-src 'self' wss: ws: blob: data: https://api.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com; "
+    "connect-src 'self' wss: ws: blob: data: https://api.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; "
     "media-src 'self' blob:; "
-    "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://api.razorpay.com https://checkout.razorpay.com; "
+    "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://api.razorpay.com https://checkout.razorpay.com https://www.google.com https://www.recaptcha.net https://*.firebaseapp.com; "
     "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 )
 SECURITY = {
