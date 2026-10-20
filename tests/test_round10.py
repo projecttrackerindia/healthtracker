@@ -536,3 +536,27 @@ def select_sessions(db):
     from sqlalchemy import select
     from api.models import AuthSession
     return select(AuthSession)
+
+
+def test_partner_csv_import_and_whatsapp_channel_logging(monkeypatch):
+    from api import whatsapp as WA
+    monkeypatch.setenv("WA_TOKEN", "x"); monkeypatch.setenv("WA_PHONE_ID", "1")
+    posted = []
+    monkeypatch.setattr(WA, "_post", lambda payload: posted.append(payload) or {})
+    f, a = family(), admin()
+    with DB.session() as db:
+        lab = Store(kind="lab", name="Quick Labs", city="Hyderabad", area="x", lat=17.4, lng=78.5, verified=True); db.add(lab); db.flush(); lid = lab.id
+    r = a.post(f"/api/admin/stores/{lid}/users", json={"email": f"l{uuid.uuid4().hex[:5]}@ql.in", "name": "Desk", "role": "owner"}).json()
+    p = TestClient(server.app); p.post("/api/partner/login", json={"email": r["email"], "password": r["tempPassword"]})
+    csv = "code,price,tat_hours\nhba1c,399,24\nlipid,650,24\nnotatest,10,1\n"
+    out = p.post("/api/partner/prices/import", headers={"content-type": "text/csv"}, content=csv).json()
+    assert out["updated"] == 2 and out["skipped"] == ["notatest"]
+    assert any(t["code"] == "hba1c" and t["price"] == 399 for t in p.get("/api/partner/prices").json()["tests"])
+    # a notice to a family with a verified phone is queued for WhatsApp (logged; no transport in tests)
+    with DB.session() as db:
+        from api.models import User
+        u = db.scalar(select_user(db, f)); u.phone_verified = True; ph = u.phone
+    f.post("/api/v1/orders", json={"store": lid, "kind": "lab", "items": [{"code": "hba1c"}], "address": "12 Road", "member": "P", "memberId": "m1", "slot": "Mon 08:00"})
+    p_orders = p.get("/api/partner/orders").json()["orders"]
+    p.post(f"/api/partner/orders/{p_orders[0]['id']}/status", json={"status": "confirmed"})
+    assert any(x["to"] == ph for x in WA.SENT) and posted and posted[-1]["to"] == ph.lstrip("+") and "quick labs" in posted[-1]["text"]["body"].lower()

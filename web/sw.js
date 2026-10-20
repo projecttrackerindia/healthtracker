@@ -1,7 +1,11 @@
-const V='dk-r14a1',SHELL=['/app','/manifest.webmanifest','/icon.svg','/brand/png/user-icon-192.png','/brand/png/user-icon-512.png'];
+const V='dk-r15a1',SHELL=['/app','/manifest.webmanifest','/icon.svg','/brand/png/user-icon-192.png','/brand/png/user-icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x.startsWith('dk-')).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||u.pathname.startsWith('/api/'))return;
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==V+'-api'&&x.startsWith('dk-')).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
+const SWR=/^\/api\/v1\/(config|plans|shop\/products|app\/(android|ios)|seasonal|videos|hospitals|places|labs\/quotes)/;
+self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin)return;
+ if(u.pathname.startsWith('/api/')){if(!SWR.test(u.pathname))return;
+  // reference data: answer from cache at once, refresh in the background (offline-first for the lists that do not change by the minute)
+  e.respondWith(caches.open(V+'-api').then(async c=>{const h=await c.match(e.request);const f=fetch(e.request).then(r=>{if(r.ok)c.put(e.request,r.clone());return r}).catch(()=>h);return h||f}));return}
  if(u.pathname.startsWith('/a/')){e.respondWith(caches.open(V).then(async c=>{const h=await c.match(e.request);if(h)return h;const r=await fetch(e.request);if(r.ok)c.put(e.request,r.clone());return r}));return}
  e.respondWith(fetch(e.request).then(r=>{if(r.ok&&u.pathname.startsWith('/app'))caches.open(V).then(c=>c.put('/app',r.clone()));return r}).catch(()=>caches.match(e.request).then(h=>h||(u.pathname.startsWith('/app')?caches.match('/app'):h))))});
 

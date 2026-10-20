@@ -21,6 +21,15 @@ def notify(db: Session, household_id: str, kind: str, title: str, body: str = ""
     """One notice row + a push to every phone in the family (when push is configured)."""
     n = Notice(household_id=household_id, member_id=member_id or "", kind=kind, title=title[:160], body=body[:400], ref=ref or {})
     db.add(n)
+    try:
+        from . import whatsapp as WA
+        if WA.ready() and kind in WA.KINDS:
+            from .models import User
+            for u in db.scalars(select(User).where(User.household_id == household_id, User.phone_verified == True)).all():  # noqa: E712
+                if u.phone and (not member_id or not u.member_id or u.member_id == member_id):
+                    WA.send(u.phone, f"{title}\n{body}\n\nthehealthtracker.com/app")
+    except Exception as e:
+        print("[inbox] whatsapp failed:", str(e)[:120], flush=True)
     if PUSH.ready():
         for s in db.scalars(select(PushSub).where(PushSub.household_id == household_id)).all():
             try:

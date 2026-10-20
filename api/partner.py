@@ -343,6 +343,55 @@ class ProfileIn(BaseModel):
     discount: float | None = None
 
 
+@r.post("/prices/import")
+async def import_prices(request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """CSV from the shop's own software: labs `code,price,tat_hours`; pharmacies `sku,price,mrp,stock`. Unknown codes/skus are reported, not guessed."""
+    import csv
+    import io
+    s = my_store(db, u)
+    data = (await request.body()).decode("utf-8", "ignore")
+    rows = list(csv.DictReader(io.StringIO(data)))
+    if not rows:
+        raise HTTPException(400, "Empty CSV. First line must be the header.")
+    rows = [{k.strip().lower(): (v or "").strip() for k, v in r.items() if k} for r in rows]
+    n, skipped = 0, []
+    if s.kind == "lab":
+        have = {t.code: t for t in db.scalars(select(LabTest).where(LabTest.store_id == s.id)).all()}
+        for r in rows:
+            code = r.get("code", "").lower()
+            if code not in TESTS:
+                skipped.append(code or "?"); continue
+            try:
+                price = int(float(r.get("price") or 0))
+            except ValueError:
+                skipped.append(code); continue
+            tat = int(float(r.get("tat_hours") or r.get("tat") or TESTS[code][2]))
+            if code in have:
+                have[code].price, have[code].tat_hours = price, max(1, min(720, tat))
+            else:
+                db.add(LabTest(store_id=s.id, code=code, name=TESTS[code][0], price=price, tat_hours=max(1, min(720, tat)), fasting=TESTS[code][3]))
+            n += 1
+    else:
+        cat = {c["id"]: c for c in CATALOG}
+        have = {i.sku: i for i in db.scalars(select(StoreItem).where(StoreItem.store_id == s.id)).all()}
+        for r in rows:
+            sku = r.get("sku", "").lower()
+            if sku not in cat and sku not in have:
+                skipped.append(sku or "?"); continue
+            try:
+                price = int(float(r.get("price") or 0)); mrp = int(float(r.get("mrp") or 0)) or price; stock = int(float(r.get("stock") or 0))
+            except ValueError:
+                skipped.append(sku); continue
+            if price > mrp:
+                skipped.append(sku + " (price > MRP)"); continue
+            if sku in have:
+                have[sku].price, have[sku].mrp, have[sku].stock = price, mrp, stock
+            else:
+                db.add(StoreItem(store_id=s.id, sku=sku, name=cat[sku]["name"], price=price, mrp=mrp, stock=stock))
+            n += 1
+    return {"updated": n, "skipped": skipped[:50], "skippedCount": len(skipped)}
+
+
 @r.put("/profile")
 def set_profile(body: ProfileIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
     s = my_store(db, u)
