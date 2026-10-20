@@ -24,10 +24,130 @@ MODEL = os.getenv("DOKKO_AI_MODEL", "claude-sonnet-5-5")
 FALLBACK_MODELS = [m for m in [MODEL, "claude-sonnet-5-5", "claude-haiku-5-5", "claude-sonnet-4-5", "claude-3-5-sonnet-latest"] if m]
 LAST_ERROR: dict = {}   # admins see this on the dashboard; users never do
 FOCUS = {"heart", "lungs", "liver", "kidneys", "pancreas", "thyroid", "stomach", "intestines", "brain", "spleen", "bones", "spine", "uterus", "prostate", "bladder", "breast", "skin", "eyes", "blood", "whole_body"}
-_WORKING: dict = {"model": None}
+_WORKING: dict = {"model": None, "gemini": None, "provider": None}
+# token accounting: every successful call adds to USAGE for the request that is running; routes move it into AiJob rows
+import contextvars as _cv
+USAGE: _cv.ContextVar = _cv.ContextVar("ai_usage", default=None)
+
+
+def take_usage() -> tuple[int, int]:
+    """Tokens used by the AI calls made since the last take (input, output). Zero when nothing ran."""
+    u = USAGE.get()
+    USAGE.set(None)
+    return (u[0], u[1]) if u else (0, 0)
+
+
+def _note_usage(r) -> None:
+    try:
+        u = USAGE.get() or (0, 0)
+        USAGE.set((u[0] + int(r.usage.input_tokens or 0), u[1] + int(r.usage.output_tokens or 0)))
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Providers. The app never names a vendor; "smart reading" runs on whichever key is configured:
+#   AI_PROVIDER=auto (default) → Gemini when GEMINI_API_KEY is set, otherwise Anthropic; the other one is the fallback.
+#   AI_PROVIDER=gemini | anthropic → that one first, the other as fallback when its key exists.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_FALLBACK = [m for m in [GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash"] if m]
+
+
+def available() -> bool:
+    return bool(os.getenv("ANTHROPIC_API_KEY") or os.getenv("GEMINI_API_KEY"))
+
+
+def provider_order() -> list[str]:
+    pref = (os.getenv("AI_PROVIDER") or "auto").strip().lower()
+    have = [p for p in ("gemini", "anthropic") if os.getenv("GEMINI_API_KEY" if p == "gemini" else "ANTHROPIC_API_KEY")]
+    if pref in ("gemini", "anthropic") and pref in have:
+        return [pref] + [p for p in have if p != pref]
+    return have  # auto: gemini first when both exist
+
+
+class _Block:
+    def __init__(self, text: str):
+        self.type, self.text = "text", text
+
+
+class _Usage:
+    def __init__(self, i: int, o: int):
+        self.input_tokens, self.output_tokens = i, o
+
+
+class _Resp:
+    """Shape shared by both providers: .content[].text and .usage.input_tokens/.output_tokens."""
+
+    def __init__(self, text: str, i: int, o: int):
+        self.content, self.usage = [_Block(text)], _Usage(i, o)
+
+
+def _gemini_parts(content) -> list[dict]:
+    if isinstance(content, str):
+        return [{"text": content}]
+    parts = []
+    for b in content:
+        t = b.get("type")
+        if t == "text":
+            parts.append({"text": b["text"]})
+        elif t in ("image", "document"):
+            src = b.get("source", {})
+            parts.append({"inline_data": {"mime_type": src.get("media_type", "application/octet-stream"), "data": src.get("data", "")}})
+    return parts
+
+
+def _gemini_create(max_tokens: int = 2000, system: str = "", messages: list | None = None, **_):
+    import httpx
+
+    key = os.getenv("GEMINI_API_KEY", "")
+    body = {"contents": [{"role": "model" if m["role"] == "assistant" else "user", "parts": _gemini_parts(m["content"])} for m in (messages or [])],
+            "generationConfig": {"maxOutputTokens": int(max_tokens), "temperature": 0.2}}
+    if system:
+        body["systemInstruction"] = {"parts": [{"text": system}]}
+    last = None
+    for m in dict.fromkeys([_WORKING.get("gemini") or GEMINI_MODEL] + GEMINI_FALLBACK):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent"
+        try:
+            with httpx.Client(timeout=120) as c:
+                r = c.post(url, params={"key": key}, json=body)
+            if r.status_code == 404:
+                last = RuntimeError(f"model {m} not found")
+                continue
+            r.raise_for_status()
+            j = r.json()
+            cands = j.get("candidates") or []
+            text = "".join(p.get("text", "") for p in (cands[0].get("content", {}).get("parts", []) if cands else []))
+            if not text and cands and cands[0].get("finishReason") not in (None, "STOP", "MAX_TOKENS"):
+                raise RuntimeError(f"blocked: {cands[0].get('finishReason')}")
+            u = j.get("usageMetadata", {})
+            if _WORKING.get("gemini") != m:
+                _WORKING["gemini"] = m
+                print(f"[ai] using model {m}", flush=True)
+            return _Resp(text, int(u.get("promptTokenCount", 0) or 0), int(u.get("candidatesTokenCount", 0) or 0))
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(f"gemini {e.response.status_code}: {e.response.text[:200]}") from e
+    raise RuntimeError(f"No usable Gemini model: {last}")
 
 
 def create(**kw):
+    """One call, whichever provider is configured; the other provider is tried when the first fails."""
+    order = provider_order()
+    if not order:
+        raise RuntimeError("No AI key configured (GEMINI_API_KEY or ANTHROPIC_API_KEY).")
+    last = None
+    for p in order:
+        try:
+            r = _gemini_create(**kw) if p == "gemini" else _anthropic_create(**kw)
+            _note_usage(r)
+            _WORKING["provider"] = p
+            return r
+        except Exception as e:  # noqa: BLE001 — the next provider gets its turn; the last error is reported
+            last = e
+            print(f"[ai] {p} failed: {type(e).__name__}: {str(e)[:200]}", flush=True)
+    raise last if last else RuntimeError("AI unavailable")
+
+
+def _anthropic_create(**kw):
     """messages.create with model fallback: a 404 'model not found' moves to the next candidate instead of failing the user."""
     import anthropic
     from anthropic import DefaultHttpxClient
@@ -58,6 +178,8 @@ def create(**kw):
 
 
 def current_model() -> str:
+    if _WORKING.get("provider") == "gemini" or (not _WORKING.get("provider") and provider_order()[:1] == ["gemini"]):
+        return _WORKING.get("gemini") or GEMINI_MODEL
     return _WORKING["model"] or MODEL
 
 
@@ -333,7 +455,7 @@ def claude_policy(data: bytes | None, mime: str, text: str) -> dict:
 
 def analyze_policy(data: bytes | None, mime: str, text: str) -> dict:
     t0 = time.time()
-    if not os.getenv("ANTHROPIC_API_KEY"):
+    if not available():
         return {"engine": "local", "kind": "policy", "readable": False, "ms": 0, "warnings": ["Policy reading needs the smart reader, which is not available right now. Enter the key terms yourself."]}
     try:
         out = claude_policy(data, mime, text)
@@ -431,7 +553,7 @@ def analyze_card(data: bytes | None, mime: str) -> dict:
     t0 = time.time()
     if not data:
         return {"engine": "local", "kind": "card", "readable": False, "fields": {}, "warnings": ["No file was received."], "ms": 0}
-    if not os.getenv("ANTHROPIC_API_KEY"):
+    if not available():
         return {"engine": "local", "kind": "card", "readable": False, "fields": {}, "warnings": ["Smart reading is not available right now. Fill in the details yourself; the photo is kept with the card."], "ms": 0}
     try:
         out = claude_card(data, mime)
@@ -445,8 +567,8 @@ def analyze_card(data: bytes | None, mime: str) -> dict:
 
 def test_connection() -> dict:
     """Admin check: can this server reach the smart reader? Returns ok or the exact error, never shown to users."""
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return {"ok": False, "error": "ANTHROPIC_API_KEY is not set on this server."}
+    if not available():
+        return {"ok": False, "error": "No AI key is set on this server (GEMINI_API_KEY or ANTHROPIC_API_KEY)."}
     try:
         import anthropic
     except ImportError:
@@ -462,7 +584,7 @@ def test_connection() -> dict:
 
 def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, force_local: bool = False) -> dict:
     t0 = time.time()
-    engine = "claude" if os.getenv("ANTHROPIC_API_KEY") and not force_local else "local"
+    engine = "claude" if available() and not force_local else "local"
     out = None
     if engine == "claude":
         try:

@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from . import ai as AI
 from .ai import LAST_ERROR as AI_LAST_ERROR
 from .db import get_db
 from .models import Admin, AiJob, Audit, Household, HouseholdState, HouseholdStateHistory, LabTest, PartnerUser, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
@@ -178,7 +179,7 @@ def stats(a: Admin = Depends(me), db: Session = Depends(get_db)):
         "subscriptions": {"month": len(subs), "mrr": sum(s.amount if s.period == "month" else round(s.amount / 12) for s in subs if s.status == "active")},
         "ai": {"month": len(ai), "claude": sum(1 for j in ai if j.engine == "claude"), "local": sum(1 for j in ai if j.engine == "local"), "errors": sum(1 for j in ai if not j.ok),
                "avgMs": round(sum(j.ms for j in ai) / len(ai)) if ai else 0},
-        "engine": "claude" if __import__("os").getenv("ANTHROPIC_API_KEY") else "local",
+        "engine": ("ai:" + AI.provider_order()[0]) if AI.available() else "local",
         "aiLastError": AI_LAST_ERROR,
     }
 

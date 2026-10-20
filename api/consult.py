@@ -114,7 +114,7 @@ def _clean_transcript(items: list[dict]) -> list[dict]:
 
 def _summarise(a: Appointment, db: Session) -> str:
     """Plain-words visit summary for the family, from the transcript and the e-prescription. Not a diagnosis."""
-    if not os.getenv("ANTHROPIC_API_KEY") or not (a.transcript or a.rx):
+    if not AI.available() or not (a.transcript or a.rx):
         return ""
     s = db.get(Store, a.store_id)
     ctx = {"hospital": s.name if s else "", "doctor": a.doctor, "reason": a.why, "when": f"{a.slot_date} {a.slot_time}".strip(),

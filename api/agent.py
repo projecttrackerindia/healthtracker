@@ -114,4 +114,4 @@ def ctx_key(ctx: dict) -> str:
 
 
 def enabled() -> bool:
-    return bool(os.getenv("ANTHROPIC_API_KEY"))
+    return AI.available()

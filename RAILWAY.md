@@ -160,6 +160,8 @@ Variables: none required (Google STUN is used). For calls across strict mobile n
 
 **Round 17 — phone shell v2.** One app bar (person avatar · page title · bell · account); the greeting lives in Today. The **Health Card banner** (blood group · name · allergies/conditions · SOS) is pinned under the bar on every screen and can only be switched off in Safety → Medical ID; while it is on, the floating SOS bubble is hidden. Sub-tabs live in the bar as one strip (never repeated below the 3D stage). The assistant is full-height with the input docked above the keyboard and the tab bar stepping aside while typing. Body and Heart Lab show the viewer first with tools in a bottom row; heart labels are on demand ("Labels"). Bottom bar is a floating, icon-only pill. Pull-to-refresh is gone (it fired on ordinary iOS scrolls). In the Android app the Health Card is also an **ongoing notification** (`@capacitor/local-notifications`, id 7001) with an SOS action, removed when the banner is switched off; iOS gets the equivalent (Live Activity) with the App Store build.
 
+**AI providers (round 18).** `GEMINI_API_KEY` (Gemini, `GEMINI_MODEL` default gemini-2.5-flash) and/or `ANTHROPIC_API_KEY`; `AI_PROVIDER=auto|gemini|anthropic` picks the first choice, the other is the automatic fallback. Same JSON contracts, same token accounting, no vendor named in the UI. **Email via Google Workspace**: `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER=<mailbox>`, `SMTP_PASS=<App Password>`, `MAIL_FROM` the same mailbox (≈2,000 mails/day cap per mailbox).
+
 ## Operations checklist
 
 * `/admin` → **System** shows the clinical reviewer, which services are on (smart reading, documents, push) and the last 100 app errors reported by phones.
