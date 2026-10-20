@@ -33,6 +33,12 @@ for r in roles/run.admin roles/artifactregistry.writer roles/cloudbuild.builds.e
 done
 gcloud iam service-accounts add-iam-policy-binding "$RUN_SA" --member="serviceAccount:$DEPLOY_SA" --role=roles/iam.serviceAccountUser >/dev/null
 
+# new projects: Cloud Build runs as the compute service account, which has no storage/registry/logging rights by default
+PN=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
+for r in roles/cloudbuild.builds.builder roles/artifactregistry.writer roles/logging.logWriter; do
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:${PN}-compute@developer.gserviceaccount.com" --role="$r" --condition=None >/dev/null
+done
+
 say "Artifact Registry"
 exists gcloud artifacts repositories describe "$REPO" --location="$REGION" || \
   gcloud artifacts repositories create "$REPO" --repository-format=docker --location="$REGION" --description="TheHealthTracker images"
