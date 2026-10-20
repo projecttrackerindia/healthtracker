@@ -49,8 +49,9 @@ def _note_usage(r) -> None:
 # Providers. The app never names a vendor; "smart reading" runs on whichever key is configured:
 #   AI_PROVIDER=auto (default) → Gemini when GEMINI_API_KEY is set, otherwise Anthropic; the other one is the fallback.
 #   AI_PROVIDER=gemini | anthropic → that one first, the other as fallback when its key exists.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-GEMINI_FALLBACK = [m for m in [GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash"] if m]
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+# Google retires model ids without notice (gemini-2.5-flash went 404 for new projects in Oct 2026): try the alias last
+GEMINI_FALLBACK = [m for m in [GEMINI_MODEL, "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"] if m]
 
 
 def available() -> bool:

@@ -597,7 +597,7 @@ def test_gemini_provider_shapes_and_fallback(monkeypatch):
     AI.USAGE.set(None)
     r = AI.create(max_tokens=50, system="sys", messages=[{"role": "user", "content": [{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "AAAA"}}, {"type": "text", "text": "Return the JSON now."}]}])
     assert r.content[0].text == '{"answer":"hi"}' and r.usage.input_tokens == 12 and r.usage.output_tokens == 5
-    assert "gemini-2.5-flash:generateContent" in sent["url"] and sent["body"]["systemInstruction"]["parts"][0]["text"] == "sys"
+    assert "gemini-3.8-flash:generateContent" in sent["url"] and sent["body"]["systemInstruction"]["parts"][0]["text"] == "sys"
     parts = sent["body"]["contents"][0]["parts"]
     assert parts[0]["inline_data"]["mime_type"] == "image/png" and parts[1]["text"].startswith("Return")
     assert AI.take_usage() == (12, 5) and AI.current_model().startswith("gemini")

@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "tools" / "i18n"))
 from core import CORE  # noqa: E402
 
 OUT = ROOT / "site" / "i18n" / "phrases.json"
-MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 RULES = ("You translate short UI strings for an Indian family health app (TheHealthTracker) from English into Hindi and Telugu. "
          "Register: respectful spoken (आप / మీరు), simple words a parent or grandparent uses; keep medical abbreviations familiar in India as they are (BP, ECG, SpO₂, HbA1c, OTP, SMS, UPI, PIN). "
          "Keep numbers, units, symbols, punctuation, ellipses, arrows and anything in braces or angle brackets exactly. Keep product names (TheHealthTracker, Health Connect, Apple Health, Fitbit, WhatsApp, Aadhaar, DigiLocker, ABHA, NOTTO) in English. "
