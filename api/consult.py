@@ -28,7 +28,7 @@ from . import ai as AI
 from . import storage
 from .db import get_db, session
 from .inbox import appt_json, notify
-from .models import Appointment, PartnerUser, Store, now
+from .models import Appointment, Household, PartnerUser, Store, now
 from .partner import COOKIE as PARTNER_COOKIE
 from .partner import me as partner_me
 from .partner import my_store
@@ -147,8 +147,17 @@ def family_end(aid: str, body: EndIn, db: Session = Depends(get_db), x_dokko_key
         a.call_ended = now()
     if not a.summary:
         a.summary = _summarise(a, db)
+        _count(db, a, bool(a.summary))
     a.updated = now()
     return consult_json(db, a)
+
+
+def _count(db: Session, a: Appointment, ok: bool) -> None:
+    """Tokens of a visit summary count against the family's daily allowance like any other smart reading."""
+    from .routes import _job
+    h = db.get(Household, a.household_id) if a.household_id else None
+    if h:
+        db.add(_job(h, "summary", "claude" if ok else "error", ok=ok))
 
 
 @r.post("/consults/{aid}/summary")
@@ -157,6 +166,7 @@ def family_summary(aid: str, db: Session = Depends(get_db), x_dokko_key: str | N
     if not a.call_ended:
         raise HTTPException(400, "The summary is written after the call ends.")
     a.summary = _summarise(a, db) or a.summary
+    _count(db, a, bool(a.summary))
     if not a.summary:
         raise HTTPException(502, "The summary could not be written right now; the transcript and prescription are saved.")
     return consult_json(db, a)

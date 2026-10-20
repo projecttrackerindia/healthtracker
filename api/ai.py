@@ -25,6 +25,24 @@ FALLBACK_MODELS = [m for m in [MODEL, "claude-sonnet-5-5", "claude-haiku-5-5", "
 LAST_ERROR: dict = {}   # admins see this on the dashboard; users never do
 FOCUS = {"heart", "lungs", "liver", "kidneys", "pancreas", "thyroid", "stomach", "intestines", "brain", "spleen", "bones", "spine", "uterus", "prostate", "bladder", "breast", "skin", "eyes", "blood", "whole_body"}
 _WORKING: dict = {"model": None}
+# token accounting: every successful call adds to USAGE for the request that is running; routes move it into AiJob rows
+import contextvars as _cv
+USAGE: _cv.ContextVar = _cv.ContextVar("ai_usage", default=None)
+
+
+def take_usage() -> tuple[int, int]:
+    """Tokens used by the AI calls made since the last take (input, output). Zero when nothing ran."""
+    u = USAGE.get()
+    USAGE.set(None)
+    return (u[0], u[1]) if u else (0, 0)
+
+
+def _note_usage(r) -> None:
+    try:
+        u = USAGE.get() or (0, 0)
+        USAGE.set((u[0] + int(r.usage.input_tokens or 0), u[1] + int(r.usage.output_tokens or 0)))
+    except Exception:
+        pass
 
 
 def create(**kw):
@@ -42,6 +60,7 @@ def create(**kw):
     for m in dict.fromkeys(order):
         try:
             r = client.messages.create(model=m, **kw)
+            _note_usage(r)
             if _WORKING["model"] != m:
                 _WORKING["model"] = m
                 print(f"[ai] using model {m}", flush=True)
