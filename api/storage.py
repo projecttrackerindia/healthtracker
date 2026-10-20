@@ -20,7 +20,15 @@ def _s3():
         return None
     import boto3  # imported lazily: only needed when a bucket is configured
 
-    kw = {"region_name": os.getenv("S3_REGION", "auto")}
+    from botocore.config import Config
+
+    # "when_required": recent boto3 adds CRC checksum headers that Google Cloud Storage's S3 interop (and some other S3 clones) reject
+    cfg = {"s3": {"addressing_style": os.getenv("S3_ADDRESSING", "auto")}}
+    try:
+        conf = Config(request_checksum_calculation="when_required", response_checksum_validation="when_required", **cfg)
+    except TypeError:  # older botocore without those options
+        conf = Config(**cfg)
+    kw = {"region_name": os.getenv("S3_REGION", "auto"), "config": conf}
     if os.getenv("S3_ENDPOINT"):
         kw["endpoint_url"] = os.getenv("S3_ENDPOINT")
     if os.getenv("S3_ACCESS_KEY"):
