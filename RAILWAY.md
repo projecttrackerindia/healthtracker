@@ -63,7 +63,13 @@ OTP_DEMO=0
 | `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
-### Round 26 — backups the family can see (2026-10-20)
+### Round 27 — medicine interactions (2026-10-20)
+
+* `live27`: ~40 drug classes (matched inside names and generics, brands included: Telma, Ecosprin, Thyronorm, Dolo…) and ~50 flagged pairs (blood thinners + NSAIDs, ARB + potassium, statin + macrolide, nitrate + sildenafil, levothyroxine + calcium/iron, SSRI + tramadol, benzo + opioid, two paracetamols…) with stop/warn levels and plain-language advice. Checked on the device from the names alone.
+* Where it shows: a **Checks on this list** card on Medicines; a toast when a medicine is added (catalogue or hand-typed); the finder's existing warnings (`SX.medWarn`) now include the pairs. `SX.medInteract(m, name)`, `SX.medPairs(m)`.
+* Service worker `dk-r27`.
+
+## Round 26 — backups the family can see (2026-10-20)
 
 * **Backed up** card (Home + My data): last record sync, the vault's document count, when the last copy was emailed and where the next one goes. "Email me a copy now" (2/day) and "Download everything".
 * On the 1st of every month the morning job emails the record ZIP (documents left out, ≤12 MB) to every verified address of the family (`api/backup.py`, `households.backup_at/backup_to`, dedupe per month). `export.build_zip(db, h, include_files)` is shared with `/export`. `messaging.send_mail_attachment` (SMTP + Resend). Duplicate `send_mail` removed.
