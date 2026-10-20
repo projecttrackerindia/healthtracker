@@ -9,7 +9,7 @@ source ./config.sh
 gcloud config set project "$PROJECT_ID" >/dev/null
 [ "${PREBUILT:-0}" = "1" ] || gcloud builds submit ../.. --tag "$IMAGE" --region "$REGION" --quiet
 CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
-SECRETS=$(grep -v '^\s*#' secrets.txt | grep -v '^\s*$' | while read -r n; do gcloud secrets describe "$n" >/dev/null 2>&1 && printf '%s=%s:latest,' "$n" "$n"; done | sed 's/,$//')
+SECRETS=$(grep -v '^\s*#' secrets.txt | grep -v '^\s*$' | while read -r n; do gcloud secrets describe "$n" >/dev/null 2>&1 && printf '%s=%s:latest,' "$n" "$n" || true; done | sed 's/,$//')   # optional secrets may not exist yet; without `|| true` pipefail aborts the deploy
 
 # min=max=1 instance, CPU always on, session affinity, 60-minute requests:
 #  - video-call rooms and the daily jobs (medicine nudges, weekly report, housekeeping) live inside this one process
