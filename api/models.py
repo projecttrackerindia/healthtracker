@@ -35,6 +35,8 @@ class Household(Base):
     members: Mapped[int] = mapped_column(Integer, default=1)
     blocked: Mapped[bool] = mapped_column(Boolean, default=False)
     notes: Mapped[str] = mapped_column(Text, default="")
+    backup_at: Mapped[int | None] = mapped_column(Integer, nullable=True)      # last emailed copy of the record
+    backup_to: Mapped[str] = mapped_column(String(200), default="")
     created: Mapped[int] = mapped_column(Integer, default=now)
     last_seen: Mapped[int] = mapped_column(Integer, default=now)
     orders: Mapped[list["Order"]] = relationship(back_populates="household")

@@ -35,12 +35,8 @@ def _safe(name: str) -> str:
     return re.sub(r"[^\w\-. ()]+", "_", name or "").strip()[:80] or "file"
 
 
-@r.get("/export")
-def export(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
-    h = household(db, x_dokko_key, create=False)
-    if not h:
-        raise HTTPException(400, "missing household key")
-    limit(request, f"export:{h.id}", 3, 86400)
+def build_zip(db: Session, h, include_files: bool = True) -> bytes:
+    """The family's export as ZIP bytes. `include_files=False` leaves the documents out (the monthly email; they stay in the vault)."""
     buf = io.BytesIO()
     total = 0
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
@@ -68,7 +64,7 @@ def export(request: Request, db: Session = Depends(get_db), x_dokko_key: str | N
         files = db.scalars(select(StoredFile).where(StoredFile.household_id == h.id).order_by(StoredFile.created)).all()
         index, skipped = [], []
         for f in files:
-            if total + f.size > MAX_ZIP:
+            if not include_files or total + f.size > MAX_ZIP:
                 skipped.append(f.file_id)
                 continue
             try:
@@ -105,6 +101,15 @@ accounts.json       The sign-ins attached to this family (no passwords).
 This export is provided under the Digital Personal Data Protection Act, 2023 (right to access and portability).
 To erase everything, use Family & Privacy → Delete family data in the app, or write to privacy@thehealthtracker.com.
 """)
-    buf.seek(0)
+    return buf.getvalue()
+
+
+@r.get("/export")
+def export(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    h = household(db, x_dokko_key, create=False)
+    if not h:
+        raise HTTPException(400, "missing household key")
+    limit(request, f"export:{h.id}", 3, 86400)
+    data = build_zip(db, h, True)
     name = f"thehealthtracker-export-{time.strftime('%Y%m%d')}.zip"
-    return StreamingResponse(buf, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{name}"', "Cache-Control": "private, no-store"})
+    return StreamingResponse(io.BytesIO(data), media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{name}"', "Cache-Control": "private, no-store"})
