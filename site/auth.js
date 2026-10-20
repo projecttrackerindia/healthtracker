@@ -47,7 +47,8 @@
       return api('/passkey/register/verify', { flow, credential: credJSON(c), name: name || '' });
     },
     async signin({ id = '', conditional = false, signal } = {}) {
-      const { flow, options } = await api('/passkey/login/options', { id });
+      const { flow, options, known } = await api('/passkey/login/options', { id });
+      if (known === false && !conditional) { const e = new Error('No passkey is set up for this account yet. Sign in with your password or a one-time code once, and the app will offer to set up Face ID or fingerprint sign-in.'); e.code = 'nopasskey'; throw e }
       let c; try { c = await navigator.credentials.get(Object.assign({ publicKey: toGet(options) }, conditional ? { mediation: 'conditional' } : {}, signal ? { signal } : {})) } catch (e) { throw new Error(friendly(e)) }
       if (!c) throw new Error('No passkey chosen');
       return api('/passkey/login/verify', { flow, credential: credJSON(c) });
