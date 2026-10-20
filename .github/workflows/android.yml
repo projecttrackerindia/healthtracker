@@ -28,7 +28,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: android-actions/setup-android@v3
+      - name: Android SDK (the runner ships it; accept licences and make sure API 34 is present)
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools" >/dev/null
       - name: Install Capacitor
         run: npm ci --no-audit --no-fund
       - name: Web shell
