@@ -91,6 +91,43 @@ def _flag(key: str, val: float, sex: str) -> str:
 
 
 # ---- daily nudges -----------------------------------------------------------------------------------------------------------
+def _day_of(v: dict) -> str:
+    return datetime.fromtimestamp(v["t"] / 1000, IST).strftime("%Y-%m-%d")
+
+
+def _fasting(v: dict) -> bool:
+    """A reading marked fasting, or an unmarked one taken before 10:00 (the usual fasting slot)."""
+    gt = str(v.get("gt") or "").lower()
+    if gt:
+        return gt.startswith("fast")
+    return datetime.fromtimestamp(v["t"] / 1000, IST).hour < 10
+
+
+PATTERN_RULES = (
+    # field, label, test on one reading, minimum days with readings, share of those days, what to say
+    ("sys", "blood pressure", lambda v: isinstance(v.get("sys"), (int, float)) and isinstance(v.get("dia"), (int, float)) and (v["sys"] >= 140 or v["dia"] >= 90), 3, 0.6,
+     "was 140/90 or above on {days} of the {of} days with a reading this week. Worth a word with the doctor; keep measuring at the same time each day, seated, after 5 minutes of rest."),
+    ("glu", "fasting sugar", lambda v: isinstance(v.get("glu"), (int, float)) and _fasting(v) and v["glu"] > 130, 3, 0.6,
+     "was above 130 mg/dL on {days} of the {of} days with a fasting reading this week. Mention it to the doctor before the next visit; do not change medicine doses on your own."),
+    ("spo2", "oxygen level", lambda v: isinstance(v.get("spo2"), (int, float)) and v["spo2"] < 94, 2, 0.5,
+     "was below 94% on {days} of the {of} days with a reading this week. If there is breathlessness or it drops below 90%, call a doctor today."),
+    ("hr", "resting heart rate", lambda v: isinstance(v.get("hr"), (int, float)) and v["hr"] > 100, 3, 0.6,
+     "was above 100 bpm on {days} of the {of} days with a reading this week. Fever, dehydration, thyroid and some medicines can do this; worth a check."),
+)
+
+
+def patterns(week: list[dict], first: str) -> list[dict]:
+    """Readings from the last 7 days → day-counted patterns a family would notice if they kept a diary."""
+    out = []
+    for field, label, test, min_days, share, text in PATTERN_RULES:
+        days_with = sorted({_day_of(v) for v in week if isinstance(v.get(field), (int, float))})
+        flagged = sorted({_day_of(v) for v in week if test(v)})
+        if len(days_with) >= min_days and len(flagged) >= min_days and len(flagged) / len(days_with) >= share:
+            out.append({"field": field, "days": len(flagged), "of": len(days_with), "title": f"{first}: {label} high this week",
+                        "body": f"{first}'s {label} " + text.format(days=len(flagged), of=len(days_with))})
+    return out
+
+
 def nudges(state: dict, today: date) -> list[dict]:
     """What the family should hear this morning. Each item: key (dedupe), kind, title, body, member, url."""
     out: list[dict] = []
@@ -153,6 +190,13 @@ def nudges(state: dict, today: date) -> list[dict]:
                                 "title": f"{first}: {label} is running higher",
                                 "body": f"Average {label} this week {statistics.mean(a):.0f} {unit} vs {statistics.mean(b):.0f} before. Ask the health assistant what changed, and mention it to the doctor.",
                                 "url": "/app#page=assist", "ref": {"member": mid, "field": fld}})
+        # 4b. patterns over the last 7 days, counted in days ("high on 5 of the 6 days with readings"), one per week
+        if vit:
+            t_now = datetime.combine(today, datetime.min.time(), IST).timestamp() * 1000
+            week = [v for v in vit if v["t"] >= t_now - 7 * 86400000]
+            for p in patterns(week, first):
+                out.append({"key": f"pattern:{mid}:{p['field']}:{today.isocalendar()[1]}", "kind": "nudge_drift", "member": mid, "title": p["title"], "body": p["body"],
+                            "url": "/app#page=assist", "ref": {"member": mid, "field": p["field"], "days": p["days"], "of": p["of"]}})
     # 5. health cover about to lapse
     for c in state.get("cards") or []:
         f = c.get("f") or {}
@@ -356,7 +400,9 @@ def run_morning(today: date | None = None, force: bool = False) -> int:
             except Exception:
                 continue
             items = nudges(state, today)
-            sent_today = 0
+            # the cap is per day, not per run: a second pass the same day (restart, force) writes nothing more
+            day_key = lambda i: f"nudgeday:{h.id}:{today.isoformat()}:{i}"  # noqa: E731
+            sent_today = sum(1 for i in range(MAX_NUDGES_PER_DAY) if db.get(ReminderSent, day_key(i)))
             for n in items:
                 if sent_today >= MAX_NUDGES_PER_DAY:
                     break
@@ -364,6 +410,7 @@ def run_morning(today: date | None = None, force: bool = False) -> int:
                 if db.get(ReminderSent, k):
                     continue
                 db.add(ReminderSent(key=k))
+                db.add(ReminderSent(key=day_key(sent_today)))
                 notify(db, h.id, n["kind"], n["title"], n["body"], n.get("ref"), n.get("member", ""), n.get("url", "/app"))
                 sent_today += 1
                 written += 1

@@ -44,6 +44,17 @@ def test_tick_sends_one_refill_push_per_day(monkeypatch):
         db.add(HouseholdState(household_id=hid, blob=seal_state(state)))
         db.add(PushSub(user_id="u_none", household_id=hid, endpoint="https://push.test/1", sub={"endpoint": "https://push.test/1", "keys": {}}))
         db.commit()
+    try:
+        _refill_flow(sent, hid, SessionLocal)
+    finally:   # the engine is shared by every test module, so leave nothing behind for the other reminder tests
+        with SessionLocal() as db:
+            db.query(PushSub).filter(PushSub.household_id == hid).delete()
+            db.query(HouseholdState).filter(HouseholdState.household_id == hid).delete()
+            db.query(ReminderSent).filter(ReminderSent.key.like(f"{hid}:%")).delete()
+            db.commit()
+
+
+def _refill_flow(sent, hid, SessionLocal):
     at = datetime(2026, 10, 21, 9, 5, tzinfo=reminders.IST)
     n = reminders.tick(at)
     refills = [m for m in sent if m["tag"] == "refill-d3"]

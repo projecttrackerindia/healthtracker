@@ -712,3 +712,20 @@ class SosAlert(Base):
     created: Mapped[int] = mapped_column(Integer, default=now)
     updated: Mapped[int] = mapped_column(Integer, default=now)
     ended: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class SharedSummary(Base):
+    """A time-limited link to a person's doctor summary (one page: allergies, medicines, results, readings, contacts), sealed at rest."""
+
+    __tablename__ = "shared_summaries"
+    token: Mapped[str] = mapped_column(String(48), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    name: Mapped[str] = mapped_column(String(80), default="")
+    label: Mapped[str] = mapped_column(String(160), default="")
+    blob: Mapped[bytes] = mapped_column(LargeBinary)            # sealed HTML
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    expires: Mapped[int] = mapped_column(Integer)
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
