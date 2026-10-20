@@ -20,15 +20,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "i18n"))
+sys.path.insert(0, str(ROOT))
 from core import CORE  # noqa: E402
 
 OUT = ROOT / "site" / "i18n" / "phrases.json"
 MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
-RULES = ("You translate short UI strings for an Indian family health app (TheHealthTracker) from English into Hindi and Telugu. "
-         "Register: respectful spoken (आप / మీరు), simple words a parent or grandparent uses; keep medical abbreviations familiar in India as they are (BP, ECG, SpO₂, HbA1c, OTP, SMS, UPI, PIN). "
-         "Keep numbers, units, symbols, punctuation, ellipses, arrows and anything in braces or angle brackets exactly. Keep product names (TheHealthTracker, Health Connect, Apple Health, Fitbit, WhatsApp, Aadhaar, DigiLocker, ABHA, NOTTO) in English. "
-         "Strings that start or end mid-sentence (lower-case start, trailing ':' or '…', leading '’s') are fragments joined to other text: translate them as fragments. "
-         "Return ONLY a JSON object mapping each English string exactly as given to a two-element array [Hindi, Telugu]. No commentary.")
+from api.i18n import RULES  # noqa: E402  (one set of rules for the build-time pass and the server's background translator)
 
 
 def phrases() -> list[str]:

@@ -2,7 +2,7 @@
 <html lang="en">
 <head><base href="/">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>TheHealthTracker · Family health, in 3D</title>
 
 <style>
@@ -2056,6 +2056,125 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
 <style id="live28-css">/* live layer 28: language */
 .lv28-langs{display:flex;gap:8px;flex-wrap:wrap}
 </style>
+<style id="live29-css">/* live layer 29: fixes from the phone — no zoom, tab bar inside the screen, assistant under the keyboard, the head of the body,
+   Heart Lab under Care, one location with a Google map everywhere, SOS that acts at once, card vault arrows, translations on every string */
+html,body{touch-action:manipulation;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#stage,#hstage,.lv29-pm{touch-action:none}
+input,select,textarea{font-size:max(16px,1em)}   /* iOS zooms into any field smaller than 16px; keep the layout where it is */
+@media (max-width:720px){
+ /* ---- tab bar: never past the right edge ---- */
+ #mtab{left:12px!important;right:12px!important;width:auto!important;max-width:calc(100vw - 24px)!important;box-sizing:border-box!important;overflow:hidden!important;margin:0!important;transform:none!important}
+ #mtab button{min-width:0!important;flex:1 1 0!important;overflow:hidden}
+ /* ---- 3D body: a compact search that leaves the head alone ---- */
+ #stage .ui.sp{top:10px!important;left:10px!important;right:60px!important;width:auto!important;max-width:none!important;transform:none!important}
+ #stage .ui.sp input,#stage #sq{height:40px!important;min-height:0!important;padding:0 14px 0 38px!important;font-size:14px!important;border-radius:12px!important;background:rgba(255,255,255,.78)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(17,24,39,.08)!important;box-shadow:0 6px 18px -10px rgba(11,15,26,.3)}
+ #stage .ui.sp::before{content:"";position:absolute;left:12px;top:11px;width:18px;height:18px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none;z-index:2}
+ /* ---- Heart Lab: calmer chrome ---- */
+ #hstage .seg{background:rgba(255,255,255,.1)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:999px!important;padding:3px!important}
+ #hstage .seg button{color:#f3e8ec!important;font-weight:600;border-radius:999px!important;padding:7px 12px!important;font-size:13px!important}
+ #hstage .seg button.on{background:#fff!important;color:#7a1f36!important;box-shadow:0 4px 12px -6px rgba(0,0,0,.5)}
+ #hstage .htime,#hstage #hwinw,#hstage .cr{display:none!important}
+ #hstage.lv29-hx .htime,#hstage.lv29-hx #hwinw{display:flex!important}
+ #hstage .hphase{background:rgba(20,8,14,.55)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:14px!important;border:1px solid rgba(255,255,255,.08)}
+ #hstage .tools{background:rgba(255,255,255,.1)!important;border-radius:14px!important}
+ #hstage .tools button.on{background:#fff!important;color:#7a1f36!important}
+ #lv29hx{position:absolute;right:12px;top:12px;z-index:7;height:36px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.12);color:#fff;font:600 12px/1 Inter,sans-serif;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+ #lv29hx.on{background:#fff;color:#7a1f36}
+ /* ---- assistant: the hero folds away under the keyboard, the ask bar rides above it ---- */
+ body.lv17-focus[data-page=assist] .lv22-orbwrap,body.lv17-kb[data-page=assist] .lv22-orbwrap{display:none!important}
+ body.lv17-kb[data-page=assist] .lv5-agent{padding-bottom:84px}
+ body.lv17-kb[data-page=assist] .lv5-ask.lv29-float{position:fixed;left:12px;right:12px;z-index:75;background:var(--card);padding:8px;border-radius:16px;box-shadow:0 10px 30px -10px rgba(11,15,26,.35);border:1px solid var(--line)}
+ body.lv17-kb[data-page=assist] .lv5-sugg{display:none}
+}
+/* ---- the assistant mark: a living orb with a pulse line, used on the hero and as the reply avatar ---- */
+.lv22-orb{background:none!important;box-shadow:none!important;animation:none!important;width:140px!important;height:140px!important;margin-bottom:10px!important}
+.lv22-orb::after{display:none!important}
+.lv29-mark *{stroke:none}
+.lv29-mark .lv29-line{stroke:#fff;stroke-opacity:.95;stroke-linecap:round;stroke-linejoin:round}
+.lv29-mark .lv29-edge{stroke:#fff;stroke-opacity:.3}
+.lv29-mark{width:100%;height:100%;display:block;filter:drop-shadow(0 18px 30px rgba(47,91,255,.35));animation:lv29float 7s ease-in-out infinite}
+@keyframes lv29float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.03)}}
+.lv29-mark .lv29-pulse{stroke:#bff6ff;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:26 150;stroke-dashoffset:176;animation:lv29pulse 2.8s linear infinite;filter:drop-shadow(0 0 5px rgba(191,246,255,.9))}
+@keyframes lv29pulse{0%{stroke-dashoffset:176;opacity:0}8%{opacity:1}85%{opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+.lv29-mark .lv29-ring{stroke:#2f5bff;stroke-opacity:.28;transform-origin:60px 60px;animation:lv29spin 14s linear infinite}
+@keyframes lv29spin{to{transform:rotate(360deg)}}
+.lv29-av{width:30px;height:30px;border-radius:50%;flex:none;overflow:hidden}
+/* ---- money never wraps ---- */
+.sx-lo1>b,.sx-tot b,.sx-tot>b,.lv10-tot b,[data-money],.lv29-money{white-space:nowrap;font-variant-numeric:tabular-nums;flex:none}
+/* ---- Devices: install the way this phone installs ---- */
+.lv29-ios{display:flex;gap:10px;align-items:center;background:var(--soft);border-radius:14px;padding:10px 12px;margin-top:8px}
+.lv29-ios i{font-style:normal;font-size:20px}
+/* ---- card vault: arrows ---- */
+.lv29-wnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 2px 6px}
+.lv29-wnav small{color:var(--mute);font-weight:600}
+.lv29-wnav button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);display:grid;place-items:center;font-size:18px;box-shadow:0 4px 12px -8px rgba(11,15,26,.3)}
+.lv29-wnav button:disabled{opacity:.35;box-shadow:none}
+.lv29-wdots{display:flex;gap:5px;justify-content:center;margin:-4px 0 8px}
+.lv29-wdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.lv29-wdots i.on{background:var(--blue);width:18px;border-radius:3px}
+/* ---- one location, one map ---- */
+.lv29-loc{order:-9;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--card);border:1px solid var(--line);margin:0 0 12px;grid-column:1/-1}
+.lv29-loc .lv29-mini{width:84px;height:64px;border-radius:12px;overflow:hidden;flex:none;background:var(--soft);position:relative}
+.lv29-loc .lv29-mini img{position:absolute;width:256px;height:256px}
+.lv29-loc .lv29-mini .lv6-map,.lv29-loc .lv29-mini .lv13-gmap{height:64px!important;min-height:0!important;border-radius:0}
+.lv29-loc .lv29-mini .lv29-dot{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,91,255,.18);z-index:2}
+.lv29-loc b{display:block;font-size:15px}.lv29-loc small{color:var(--mute);display:block}
+.lv29-loc .grow{min-width:0}.lv29-loc .grow b,.lv29-loc .grow small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv29-loc button{flex:none}
+.sx-modal.lv29-pm-m .sx-sheet::before,.sx-modal.lv29-pm-m .sx-sheet::after{display:none!important}
+.sx-modal.lv29-pm-m .sx-sheet{padding:0!important;max-width:720px;width:100%;overflow:hidden;border-radius:24px}
+@media (max-width:720px){.sx-modal.lv29-pm-m{align-items:flex-end}.sx-modal.lv29-pm-m .sx-sheet{border-radius:24px 24px 0 0;max-width:100vw;max-height:100dvh;height:100dvh;border-radius:0;display:flex;flex-direction:column}}
+.lv29-pick{display:flex;flex-direction:column;height:min(88dvh,760px);min-height:520px;position:relative}
+@media (max-width:720px){.lv29-pick{height:100%;flex:1}}
+.lv29-pm{flex:1;position:relative;background:#e9edf3;min-height:260px;overflow:hidden;cursor:grab}
+.lv29-pm:active{cursor:grabbing}
+.lv29-pm .lv29-tiles{position:absolute;left:0;top:0;width:100%;height:100%;will-change:transform}
+.lv29-pm .lv29-tiles img{position:absolute;width:256px;height:256px;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.lv29-pm .lv29-g{position:absolute;inset:0}
+.lv29-pin{position:absolute;left:50%;top:50%;width:34px;height:46px;margin:-46px 0 0 -17px;z-index:5;pointer-events:none;filter:drop-shadow(0 8px 10px rgba(0,0,0,.3));transition:transform .18s}
+.lv29-pm.drag .lv29-pin{transform:translateY(-10px)}
+.lv29-pin::after{content:"";position:absolute;left:50%;bottom:-4px;width:10px;height:4px;margin-left:-5px;border-radius:50%;background:rgba(0,0,0,.28)}
+.lv29-ptop{position:absolute;left:12px;right:12px;top:12px;z-index:6;display:flex;gap:8px;align-items:center}
+.lv29-ptop .lv29-back{width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid rgba(17,24,39,.08);box-shadow:0 8px 20px -10px rgba(11,15,26,.4);display:grid;place-items:center;font-size:18px;flex:none;color:#111}
+.lv29-ps{flex:1;position:relative}
+.lv29-ps input{width:100%;height:44px;border-radius:14px;border:1px solid rgba(17,24,39,.08);background:#fff;padding:0 14px 0 40px;font:inherit;font-size:15px;box-shadow:0 8px 20px -10px rgba(11,15,26,.4);color:#111}
+.lv29-ps::before{content:"";position:absolute;left:14px;top:13px;width:18px;height:18px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;z-index:2;pointer-events:none}
+.lv29-sug{position:absolute;left:0;right:0;top:50px;background:#fff;border-radius:14px;box-shadow:0 18px 40px -16px rgba(11,15,26,.5);overflow:hidden;max-height:260px;overflow-y:auto;color:#111}
+.lv29-sug:empty{display:none}
+.lv29-sug button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #eef0f4;background:#fff;color:#111;font:inherit}
+.lv29-sug button b{display:block;font-size:14px}.lv29-sug button small{display:block;color:#6b7280;font-size:12px}
+.lv29-sug button i{font-style:normal;flex:none;margin-top:2px}
+.lv29-gps{position:absolute;right:12px;bottom:14px;z-index:7;width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid rgba(17,24,39,.08);box-shadow:0 10px 24px -10px rgba(11,15,26,.5);display:grid;place-items:center;color:#2f5bff}
+.lv29-gps svg{width:22px;height:22px}
+.lv29-gps.busy svg{animation:lv29spin 1s linear infinite;transform-origin:center}
+.lv29-sheet{background:var(--card);padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.lv29-sheet .lv29-addr{display:flex;gap:10px;align-items:flex-start}
+.lv29-sheet .lv29-addr i{font-style:normal;width:36px;height:36px;border-radius:12px;background:color-mix(in srgb,var(--blue) 12%,transparent);display:grid;place-items:center;flex:none;color:var(--blue)}
+.lv29-sheet .lv29-addr b{display:block;font-size:15px;line-height:1.25}
+.lv29-sheet .lv29-addr small{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
+.lv29-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lv29-fields input{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--soft);padding:0 12px;font:inherit;color:var(--ink);min-width:0;width:100%}
+.lv29-fields .full{grid-column:1/-1}
+.lv29-lbl{display:flex;gap:6px}
+.lv29-lbl button{flex:1;height:38px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--ink);font:600 13px Inter,sans-serif}
+.lv29-lbl button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.lv29-sheet .btn.p{height:48px;border-radius:14px;font-size:15px;justify-content:center}
+.lv29-sheet .lv29-note{font-size:12px;color:var(--mute);margin:0;text-align:center}
+.lv29-attr{position:absolute;left:8px;bottom:6px;z-index:6;font-size:10px;color:#4b5563;background:rgba(255,255,255,.7);padding:2px 6px;border-radius:6px}
+/* ---- SOS: the siren state ---- */
+.lv21-head .lv21-live.lv29-alarm i{animation:lv29blink .6s steps(2) infinite}
+@keyframes lv29blink{to{opacity:.2}}
+.lv29-mute{height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 12px Inter,sans-serif;display:inline-flex;align-items:center;gap:6px}
+.lv29-ch{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+.lv29-ch span{font-size:11.5px;padding:4px 9px;border-radius:999px;background:var(--soft);color:var(--mute);border:1px solid var(--line)}
+.lv29-ch span.on{background:color-mix(in srgb,#16a34a 12%,transparent);color:#15803d;border-color:transparent}
+.lv21-safe{animation:lv29safe 1.2s ease-in-out infinite}
+@keyframes lv29safe{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,.45)}50%{box-shadow:0 0 0 10px rgba(22,163,74,0)}}
+.lv29-sosmap{height:160px;border-radius:14px;overflow:hidden;margin:8px 0 2px;position:relative;background:var(--soft)}
+.lv29-sosmap .lv6-map,.lv29-sosmap .lv13-gmap{height:160px!important;min-height:0!important;border-radius:0}
+/* ---- language: the whole screen ---- */
+.lv28-langs button{min-width:92px}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -2959,7 +3078,7 @@ stage.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);pinch0=null;
 stage.addEventListener('pointerleave',()=>{hv=null;setHover(-1)});
 stage.addEventListener('dblclick',e=>{if(ui(e))return;const i=pick(e.clientX,e.clientY);if(i<0)return;const w=body.localToWorld(lastHit.clone());tx=w.x;ty=w.y-.2;zoom=Math.max(w.z+.7,w.z+(zoom-w.z)*.42);if(A.auto){A.auto=false;syncChrome()}});
 stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(e.deltaY*(e.deltaMode?.05:.0015)))},{passive:false});
-const fit=()=>{const w=stage.clientWidth,h=stage.clientHeight;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()};
+const fit=()=>{const w=stage.clientWidth,h=stage.clientHeight;R.setSize(w,h,false);C.aspect=w/h;const ph=w>0&&h>0&&w/h<.85;C.fov=ph?33:30;if(ph)C.setViewOffset(w,h,0,-Math.round(h*.05),w,h);else if(C.view&&C.view.enabled)C.clearViewOffset();C.updateProjectionMatrix()};
 new ResizeObserver(fit).observe(stage);fit();tip();
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,v=new THREE.Vector3();let fr=0;
 function step(){body.rotation.x+=(goalRX-body.rotation.x)*.15;if(goalRY!==null){let d=goalRY-body.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));body.rotation.y+=d*.12;if(Math.abs(d)<.002)goalRY=null}else if(A.auto&&!dragging&&!reduce&&!A.quiz)body.rotation.y+=.004;
@@ -7452,8 +7571,8 @@ function phoneCard(m){const hc=S.hc[m.id];const native=SX.native;
  if(native)return `<div class="lv11-src on"><div class="lv11-ic">📱</div><div class="grow"><b>${isIOS?P('Apple Health'):P('Health Connect')}</b><small>${hc?P('Last sync')+' '+fmtT(hc.t)+' · '+hc.n+' '+P('new readings'):P('Not synced yet on this phone.')}</small><small>${P('Steps, sleep, heart rate, weight, blood pressure, sugar, SpO₂')}${isIOS?' · '+P('Apple Watch ECG'):''} ${P('from any watch that writes to it')}.</small></div><button class="btn p sm" data-sx="hcsync">${hc?P('Sync now'):P('Connect')}</button></div>`;
  const a=APPS.android||{},i=APPS.ios||{};
  return `<div class="lv11-src"><div class="lv11-ic">📱</div><div class="grow"><b>${P('TheHealthTracker app')}</b><small>${P('Your watch’s steps, sleep, heart rate and more arrive automatically through Health Connect (Android) or Apple Health (iPhone).')}</small>
-   <div class="lv11-dl">${a.available?`<a class="btn p sm" href="${E(a.url)}">🤖 ${P('Download for Android')} <small>v${E(a.version)} · ${(a.size/1048576).toFixed(1)} MB</small></a>`:`<span class="btn s sm" aria-disabled="true">🤖 ${P('Android app — publishing soon')}</span>`}${a.play?`<a class="btn s sm" href="${E(a.play)}" target="_blank" rel="noopener">Google Play</a>`:''}${i.appstore?`<a class="btn p sm" href="${E(i.appstore)}" target="_blank" rel="noopener"> App Store</a>`:i.testflight?`<a class="btn s sm" href="${E(i.testflight)}" target="_blank" rel="noopener"> TestFlight beta</a>`:`<span class="btn s sm" aria-disabled="true"> ${P('iPhone app — coming')}</span>`}</div>
-   ${isIOS&&!native?`<small>${P('iPhone today: Share → Add to Home Screen installs this as an app; Apple Health sync arrives with the App Store app.')}</small>`:''}</div></div>`}
+   <div class="lv11-dl">${isIOS?'':a.available?`<a class="btn p sm" href="${E(a.url)}">🤖 ${P('Download for Android')} <small>v${E(a.version)} · ${(a.size/1048576).toFixed(1)} MB</small></a>`:''}${!isIOS&&a.play?`<a class="btn s sm" href="${E(a.play)}" target="_blank" rel="noopener">Google Play</a>`:''}${isIOS&&i.appstore?`<a class="btn p sm" href="${E(i.appstore)}" target="_blank" rel="noopener"> App Store</a>`:isIOS&&i.testflight?`<a class="btn s sm" href="${E(i.testflight)}" target="_blank" rel="noopener"> TestFlight beta</a>`:''}</div>
+   ${isIOS&&!matchMedia('(display-mode: standalone)').matches?`<div class="lv29-ios"><i>📲</i><div class="grow"><b>${P('Install on this iPhone')}</b><small class="mute">${P('Share → Add to Home Screen. Full-screen, with your sign-in kept.')}</small></div><button class="btn p sm" data-sx="a2hs">${P('How')}</button></div>`:''}</div></div>`}
 function fitbitCard(m){const f=APPS.fitbit;if(!f)return '';const link=(f.links||[]).find(l=>l.member===m.id);
  return `<div class="lv11-src ${link?'on':''}"><div class="lv11-ic">⌚</div><div class="grow"><b>Fitbit</b><small>${link?P('Linked')+(link.user?' · '+E(link.user):'')+(link.lastSync?' · '+P('last sync')+' '+fmtT(link.lastSync*1000):''):f.enabled?P('Steps, sleep, resting heart rate, SpO₂ and weight from your Fitbit account, no phone app needed.'):E(f.message||'')}</small></div>${link?`<button class="btn p sm" data-sx="fbsync">${P('Sync now')}</button><button class="btn g sm" data-sx="fbunlink" aria-label="${E(P('Unlink'))}">✕</button>`:f.enabled?`<button class="btn s sm" data-sx="fblink">${P('Link Fitbit')}</button>`:''}</div>`}
 function bleCard(){const ok=!!(navigator.bluetooth&&navigator.bluetooth.requestDevice);
@@ -7671,7 +7790,7 @@ fetchCfg().then(()=>{if(key())load()});
 let seq=0;const PENDING={};
 SX.gmapHTML=(center,items,opt={})=>{const id='gm'+(++seq);PENDING[id]={center,items,opt};setTimeout(()=>mount(id),0);return `<div class="lv6-map lv13-gmap" id="${id}" style="height:${opt.h||300}px"><div class="lv13-gmap-in"></div>${opt.act?'':''}</div>`};
 function mount(id){const el=document.getElementById(id),job=PENDING[id];if(!el||!job)return;if(!G.ready){load();setTimeout(()=>mount(id),400);return}delete PENDING[id];const {center,items,opt}=job;
- const map=new google.maps.Map(el.querySelector('.lv13-gmap-in'),{center:{lat:center.lat,lng:center.lng},zoom:opt.zoom||13,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false,mapId:'THT'});
+ const map=new google.maps.Map(el.querySelector('.lv13-gmap-in'),{center:{lat:center.lat,lng:center.lng},zoom:opt.zoom||13,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false});
  const bounds=new google.maps.LatLngBounds();bounds.extend({lat:center.lat,lng:center.lng});
  new google.maps.Marker({map,position:{lat:center.lat,lng:center.lng},title:P('You'),icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#2f5bff',fillOpacity:1,strokeColor:'#fff',strokeWeight:3}});
  items.filter(p=>p.lat&&p.lng).forEach(p=>{const m=new google.maps.Marker({map,position:{lat:p.lat,lng:p.lng},title:p.name||'',icon:p.partner?undefined:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#dc2626',fillOpacity:.95,strokeColor:'#fff',strokeWeight:2}});bounds.extend({lat:p.lat,lng:p.lng});
@@ -8107,23 +8226,17 @@ SX.extend('sos',{before(){const m=SX.me(),cs=SX.contactsOf(m.id),withEm=cs.filte
 let A=null;   // the open alert: {id, token, url, m, timer, loc}
 let cd=null;
 SX.openSOS=()=>{const m=SX.me();if(A&&A.active){SX.modal(activeHTML(m),{cls:'sx-sos-m lv21-m',label:'SOS',sticky:true});wire();return}
- const t=callTarget(m);let n=3;
- SX.modal(`<div class="lv21-cd"><div class="lv21-ring"><b id="lv21n">${n}</b></div><h2>${P('Calling')} ${E(t.label)}</h2><p>${P('and alerting your family with your location')}</p><button class="lv21-cancel" id="lv21cancel">${P('Cancel')}</button><button class="lv21-now" id="lv21now">${P('Send now')}</button></div>`,{cls:'sx-sos-m lv21-m',label:'SOS',sticky:true});
- locate(2500);   // warm the fix while the ring counts down
- const stop=()=>{clearInterval(cd);cd=null};
- document.getElementById('lv21cancel').onclick=()=>{stop();SX.closeModal();toast(P('SOS cancelled'))};
- document.getElementById('lv21now').onclick=()=>{stop();fire(m)};
- cd=setInterval(()=>{n--;const el=document.getElementById('lv21n');if(!el){stop();return}if(n<=0){stop();fire(m)}else el.textContent=n},1000)};
+ fire(m)};
 SX.act.sos=()=>SX.openSOS();
 
-async function fire(m){const t=callTarget(m),cs=SX.contactsOf(m.id).filter(c=>c.notify);
+async function fire(m){try{SX.siren&&SX.siren.start()}catch(e){}const t=callTarget(m),cs=SX.contactsOf(m.id).filter(c=>c.notify);
  A={m:m.id,active:true,call:t,sent:[],loc:lastFix,created:Date.now(),hosp:null};
  SX.modal(activeHTML(m),{cls:'sx-sos-m lv21-m',label:'SOS',sticky:true});wire();
  // 1. the call — first, nothing waits for the network
  try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
- A.how=await placeCall(t.num);paint(m);
+ placeCall(t.num).then(h=>{A.how=h;paint(m)});
  // 2. the alert — with whatever location we already have; the first fix follows as an update
- const loc=A.loc||await locate(6000);A.loc=loc;
+ const loc=A.loc||(S.net&&S.net.geo?{lat:S.net.geo.lat,lng:S.net.geo.lng,acc:0}:null)||await locate(4000);A.loc=loc;
  const body={member:m.id,name:m.name,phone:(m.rel==='You'&&SX.user&&SX.user.phone)||'',summary:SX.medSummary(m),blood:(SX.midOf(m.id).blood||''),loc:loc?{lat:loc.lat,lng:loc.lng,acc:loc.acc}:null,contacts:cs.map(c=>({n:c.n,ph:c.ph||'',em:c.em||''})),lang:S.lang||'en'};
  try{const r=await J('/sos/start','POST',body);Object.assign(A,{id:r.id,token:r.token,url:r.url,sent:r.sent||[],msg:r.message});S.sos.unshift({t:Date.now(),m:m.id,loc:loc?{lat:+loc.lat.toFixed(4),lng:+loc.lng.toFixed(4)}:null,n:cs.filter(c=>c.ph).length,url:r.url});S.sos.length=Math.min(S.sos.length,30);SX.ledger('sos',true,'SOS sent · live page '+r.url,m.id);SX.save()}
  catch(e){A.err=e.message;A.msg=offlineMsg(m,loc)}
@@ -8133,7 +8246,7 @@ async function fire(m){const t=callTarget(m),cs=SX.contactsOf(m.id).filter(c=>c.
  else if(!loc){const f=await locate(15000);if(f){A.loc=f;A.msg=offlineMsg(m,f);paint(m)}}
  hospitals(m)}
 function offlineMsg(m,loc){return [`EMERGENCY: ${m.name} needs help.`,loc?`Location: https://maps.google.com/?q=${loc.lat.toFixed(6)},${loc.lng.toFixed(6)}`:'Location: not available. Please call them.',SX.medSummary(m),'Call them or 112 now. Sent from TheHealthTracker SOS.'].join('\n')}
-async function hospitals(m){if(!A||!A.loc||A.hosp)return;try{const r=await J(`/places?kind=hospital&lat=${A.loc.lat}&lng=${A.loc.lng}&radius=6000`);A.hosp=(r.items||[]).slice(0,3);paint(m)}catch(e){A.hosp=[]}}
+async function hospitals(m){if(!A||!A.loc||A.hosp)return;try{const r=await J(`/places?kind=hospital&lat=${A.loc.lat}&lng=${A.loc.lng}&radius=6000`);A.hosp=((r.places||[]).concat(r.partners||[])).sort((a,b)=>a.km-b.km).slice(0,3);paint(m)}catch(e){A.hosp=[]}}
 
 // ---------------------------------------------------------------- the active sheet
 function activeHTML(m){return `<div class="lv21-act" id="lv21act">${activeBody(m)}</div>`}
@@ -8154,7 +8267,7 @@ function activeBody(m){if(!A)return '';const cs=SX.contactsOf(m.id).filter(c=>c.
  <div class="lv21-foot"><button class="btn s" data-sx="sosclose">${A.active?P('Hide (stays active)'):P('Close')}</button></div>`}
 function wire(){}
 SX.act.soslink=async()=>{if(!A||!A.url)return;const text=A.msg||A.url;try{if(navigator.share)await navigator.share({title:'Emergency',text,url:A.url});else{await navigator.clipboard.writeText(A.url);toast(P('Live link copied'))}}catch(e){if(e&&e.name!=='AbortError'){try{await navigator.clipboard.writeText(A.url);toast(P('Live link copied'))}catch(_){}}}};
-SX.act.sossafe=async()=>{if(!A)return;A.active=false;clearInterval(A.timer);if(A.id){try{await J('/sos/'+A.id+'/end','POST',{})}catch(e){}}toast(P('Alert ended — your family is told you are safe'));const m=SX.member(A.m)||SX.me();paint(m);setTimeout(()=>{if(A&&!A.active){A=null;SX.closeModal();try{render()}catch(e){}}},1500)};
+SX.act.sossafe=async()=>{if(!A)return;A.active=false;try{SX.siren&&SX.siren.stop()}catch(e){}clearInterval(A.timer);if(A.id){try{await J('/sos/'+A.id+'/end','POST',{})}catch(e){}}toast(P('Alert ended — your family is told you are safe'));const m=SX.member(A.m)||SX.me();paint(m);setTimeout(()=>{if(A&&!A.active){A=null;SX.closeModal();try{render()}catch(e){}}},1500)};
 SX.act.sosclose=()=>{SX.closeModal();if(A&&!A.active)A=null;try{render()}catch(e){}};
 // an alert that is still open shows a thin bar at the top of every screen
 setInterval(()=>{const on=!!(A&&A.active);let b=document.getElementById('lv21bar');if(on&&!b){b=document.createElement('button');b.id='lv21bar';b.innerHTML=`<i></i>${P('SOS active')} · ${P('tap to open')}`;b.onclick=()=>SX.openSOS();document.body.appendChild(b)}else if(!on&&b)b.remove()},1000);
@@ -8520,6 +8633,247 @@ if(S.lang&&S.lang!=='en')table().then(()=>{try{render();if(SX.paintNav)SX.paintN
 // a language choice on the sign-in / first screens, where parents start
 SX.extend('set',{before(){return `<div class="card lv28"><div class="hd"><div><h3>${P('Language')}</h3><small class="mute">${P('Hindi and Telugu cover the everyday screens; medical guidance stays in English until a doctor has reviewed each translation.')}</small></div></div><div class="lv28-langs">${[['en','English'],['hi','हिन्दी'],['te','తెలుగు']].map(([k,t])=>`<button class="btn ${S.lang===k||(!S.lang&&k==='en')?'p':'s'} sm" data-sx="lang:${k}">${t}</button>`).join('')}</div></div>`}});
 SX.lv28={table};
+}
+
+/*live-p29*/
+// ===================== live layer 29: fixes from the phone — zoom lock, tab bar, assistant + keyboard, the body's head, Heart Lab under Care,
+// one location with a Google map everywhere, SOS that acts the moment it is pressed, card vault arrows, every string translated =====================
+{
+const P=SX.p,S=SX.S;
+const phone=()=>matchMedia('(max-width:720px)').matches;
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
+const J=(path,method,body)=>fetch('/api/v1'+path,{method:method||'GET',headers:{'content-type':'application/json','x-tht':'1','x-dokko-key':(S.key||'')},credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)}).then(async r=>{let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(typeof j.detail==='string'?j.detail:'Request failed'),{status:r.status});return j});
+const native=()=>!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const ios=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+S.net=S.net||{};
+
+// ---------------------------------------------------------------- A. a mobile app does not pinch or double-tap zoom (the 3D stages keep their own pinch)
+document.addEventListener('gesturestart',e=>{if(!e.target.closest||!e.target.closest('#stage,#hstage,#pstage,.lv29-pm'))e.preventDefault()},{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1&&!(e.target.closest&&e.target.closest('#stage,#hstage,#pstage,.lv29-pm')))e.preventDefault()},{passive:false});
+{let last=0;document.addEventListener('touchend',e=>{const t=Date.now();if(t-last<300&&!(e.target.closest&&e.target.closest('input,textarea,select,button,a,[data-sx],#stage,#hstage,#pstage,.lv29-pm')))e.preventDefault();last=t},{passive:false})}
+
+// ---------------------------------------------------------------- B. the assistant's mark: a living orb with a pulse line
+function mark(id){id=id||'m';return `<svg class="lv29-mark" viewBox="0 0 120 120" aria-hidden="true"><defs>
+ <radialGradient id="lv29g${id}" cx="36%" cy="28%" r="82%"><stop offset="0" stop-color="#e8efff"/><stop offset=".22" stop-color="#8aa8ff"/><stop offset=".55" stop-color="#2f5bff"/><stop offset=".85" stop-color="#1733c2"/><stop offset="1" stop-color="#0a1570"/></radialGradient>
+ <radialGradient id="lv29t${id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#5ef2d8" stop-opacity=".95"/><stop offset="1" stop-color="#5ef2d8" stop-opacity="0"/></radialGradient>
+ <radialGradient id="lv29p${id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ff7ad9" stop-opacity=".9"/><stop offset="1" stop-color="#ff7ad9" stop-opacity="0"/></radialGradient>
+ <radialGradient id="lv29h${id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+ <clipPath id="lv29c${id}"><circle cx="60" cy="60" r="54"/></clipPath></defs>
+ <circle cx="60" cy="60" r="54" fill="url(#lv29g${id})"/>
+ <g clip-path="url(#lv29c${id})">
+  <ellipse cx="86" cy="84" rx="44" ry="26" fill="url(#lv29t${id})" transform="rotate(-28 86 84)"/>
+  <ellipse cx="30" cy="92" rx="38" ry="22" fill="url(#lv29p${id})" transform="rotate(16 30 92)"/>
+  <ellipse cx="44" cy="30" rx="26" ry="13" fill="url(#lv29h${id})" transform="rotate(-28 44 30)"/>
+  <path class="lv29-line" d="M20 64h14l6-13 9 29 8-22 5 8h30" fill="none" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="lv29-pulse" d="M20 64h14l6-13 9 29 8-22 5 8h30" fill="none" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round"/>
+ </g>
+ <circle class="lv29-ring" cx="60" cy="60" r="57.5" fill="none" stroke-width="1.6" stroke-dasharray="3 12" stroke-linecap="round"/>
+ <circle class="lv29-edge" cx="60" cy="60" r="54" fill="none" stroke-width=".9"/></svg>`}
+SX.assistMark=mark;
+function paintOrb(){document.querySelectorAll('.lv22-orb:not([data-lv29])').forEach(o=>{o.dataset.lv29='1';o.innerHTML=mark('o')});
+ document.querySelectorAll('.lv5-msg.ai:not([data-lv29]),.lv5-a:not([data-lv29])').forEach(m=>{m.dataset.lv29='1'})}
+// the keyboard: the hero folds away (CSS) and the ask bar rides just above the keys
+const vv=window.visualViewport;
+function askBar(){const f=document.querySelector('body[data-page=assist] .lv5-ask');if(!f)return;const kb=document.body.classList.contains('lv17-kb')&&phone();
+ if(kb&&vv){f.classList.add('lv29-float');f.style.bottom=Math.max(0,Math.round(innerHeight-(vv.height+vv.offsetTop)))+8+'px';const log=document.querySelector('.lv5-log,.lv5-thread');if(log)log.scrollTop=log.scrollHeight}
+ else{f.classList.remove('lv29-float');f.style.bottom=''}}
+if(vv){vv.addEventListener('resize',()=>setTimeout(askBar,30));vv.addEventListener('scroll',()=>askBar())}
+document.addEventListener('focusin',()=>setTimeout(askBar,120));document.addEventListener('focusout',()=>setTimeout(askBar,150));
+
+// ---------------------------------------------------------------- C. Heart Lab belongs under Care, and only when the heart is the subject
+const HEART=/heart|cardi|hypertens|high bp|\bbp\b|cholesterol|arrhythm|atrial|angina|stent|bypass|valve|murmur|palpitat|\becg\b|lipid|statin|infarct|cabg|pacemaker|amlodipine|telmisartan|losartan|olmesartan|metoprolol|atenolol|bisoprolol|carvedilol|propranolol|atorva|rosuva|clopidogrel|ecosprin|aspirin 75|ramipril|enalapril|lisinopril|digoxin|warfarin|apixaban|rivaroxaban|dabigatran|nitro|sorbitrate|isosorbide|diltiazem|verapamil|amiodarone|furosemide|spironolactone|torsemide|sacubitril|ticagrelor|prasugrel/i;
+SX.heartOn=m=>{try{return heartOn(m)}catch(e){return false}};
+function heartOn(m){m=m||SX.me();if(!m)return false;if(S.heartLab===true)return true;if(S.heartLab===false)return false;
+ const mid=(S.mid&&SX.midOf&&SX.midOf(m.id))||{};const txt=[...(mid.conditions||[]),mid.doctor||'',mid.notes||'',mid.history||'',...(S.meds&&S.meds[m.id]||[]).map(x=>[x.n,x.gen,x.for,x.why].filter(Boolean).join(' '))].join(' | ');
+ if(HEART.test(txt))return true;
+ const v=((S.vitals&&S.vitals[m.id])||[]).filter(x=>x.sys).slice(-12);if(v.filter(x=>x.sys>=140||x.dia>=90).length>=2)return true;
+ try{if((S.meds[m.id]||[]).some(x=>(SX.medClasses(x)||[]).some(c=>/bp|cardiac|statin|anticoag|antiplatelet|betablock|ace|arb|diuretic/i.test(c))))return true}catch(e){}
+ return false}
+SX.heartWhy=m=>{m=m||SX.me();if(S.heartLab===true)return P('Switched on in Settings');const mid=(S.mid&&SX.midOf&&SX.midOf(m.id))||{};const c=(mid.conditions||[]).find(x=>HEART.test(x));if(c)return P('Condition')+': '+c;if(HEART.test(mid.doctor||''))return P('Doctor')+': '+mid.doctor;const md=(S.meds[m.id]||[]).find(x=>HEART.test([x.n,x.gen,x.for].join(' ')));if(md)return P('Medicine')+': '+md.n;return P('Blood pressure readings')};
+{const home=SX.G.find(g=>g.k==='home');if(home)home.tabs=home.tabs.filter(t=>t!=='heart');
+ const place=()=>{const care=SX.G.find(g=>g.k==='care');if(!care)return;care.tabs=care.tabs.filter(t=>t!=='heart');if(SX.heartOn())care.tabs.push('heart')};
+ const pn0=SX.pregNav;SX.pregNav=function(){try{pn0&&pn0.apply(this,arguments)}catch(e){}place()};place();
+ const sv0=SX.save;SX.save=function(){const r=sv0.apply(this,arguments);try{place()}catch(e){}return r};
+ SX.addStrings&&SX.addStrings({'tab.heart':SX.D('Heart Lab','हार्ट लैब','హార్ట్ ల్యాబ్')});}
+SX.chg.heartlab=(a,el)=>{S.heartLab=el.value==='auto'?null:el.value==='on';SX.save();SX.pregNav();try{render();SX.paintNav()}catch(e){}};
+SX.extend('set',{after(){const on=SX.heartOn();return `<div class="card"><div class="hd"><div><h3>❤️ ${P('Heart Lab')}</h3><small class="mute">${P('A living 3D heart for people with a heart condition, BP medicines or a cardiologist. It appears under Care.')}</small></div></div>
+ <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><select data-sxc="heartlab" class="lv21-sel"><option value="auto" ${S.heartLab==null?'selected':''}>${P('Automatic')}</option><option value="on" ${S.heartLab===true?'selected':''}>${P('Always show')}</option><option value="off" ${S.heartLab===false?'selected':''}>${P('Never show')}</option></select><small class="mute">${on?'✓ '+P('Shown')+' · '+SX.heartWhy():P('Hidden for')+' '+E(SX.me().name.split(' ')[0])}</small></div></div>`}});
+// phones: fewer controls on the heart stage until asked for
+function heartChrome(){if(!phone())return;const st=document.getElementById('hstage');if(!st||st.hidden||document.getElementById('lv29hx'))return;const b=document.createElement('button');b.id='lv29hx';b.type='button';b.textContent=P('Controls');b.onclick=()=>{st.classList.toggle('lv29-hx');b.classList.toggle('on',st.classList.contains('lv29-hx'))};st.appendChild(b)}
+
+// ---------------------------------------------------------------- D. one location for the whole app, picked on a map
+const STATES={'Andhra Pradesh':'AP','Telangana':'TS','Karnataka':'KA','Tamil Nadu':'TN','Kerala':'KL','Maharashtra':'MH','Gujarat':'GJ','Delhi':'DL','Uttar Pradesh':'UP','West Bengal':'WB','Rajasthan':'RJ','Madhya Pradesh':'MP','Punjab':'PB','Haryana':'HR','Bihar':'BR','Odisha':'OD','Assam':'AS','Jharkhand':'JH','Chhattisgarh':'CG','Uttarakhand':'UK','Himachal Pradesh':'HP','Goa':'GA','Jammu and Kashmir':'JK','Puducherry':'PY','Chandigarh':'CH'};
+const INDIA={lat:20.5937,lng:78.9629};
+SX.loc={
+ get:()=>S.net.geo?{lat:S.net.geo.lat,lng:S.net.geo.lng}:null,
+ where:()=>S.net.where||null,
+ text:()=>{const w=S.net.where;if(!w)return '';return w.label||[w.place,w.city,w.state].filter(Boolean).join(', ')},
+ short:()=>{const w=S.net.where;if(!w)return '';return [w.place,w.city].filter((x,i,a)=>x&&a.indexOf(x)===i).join(', ')},
+ // the single write path: everything that shows a position or "near you" reads S.net.geo / S.net.where
+ set:(lat,lng,where,manual)=>{S.net.geo={lat:+(+lat).toFixed(5),lng:+(+lng).toFixed(5),t:Date.now()};S.net.geoManual=!!manual;
+  S.net.where={ok:true,...(where||{}),lat:S.net.geo.lat,lng:S.net.geo.lng,t:Date.now()};if(where&&where.state)S.state=where.state;SX.save(true);
+  try{const a=document.getElementById('lv6Loc');if(a)a.querySelector('span').textContent=SX.loc.short()||P('Located')}catch(e){}
+  document.dispatchEvent(new CustomEvent('tht:location',{detail:S.net.geo}))},
+ gps:(ms)=>new Promise(res=>{if(!navigator.geolocation)return res(null);let done=false;const to=setTimeout(()=>{if(!done){done=true;res(null)}},ms||9000);
+  navigator.geolocation.getCurrentPosition(p=>{if(done)return;done=true;clearTimeout(to);res({lat:+p.coords.latitude.toFixed(5),lng:+p.coords.longitude.toFixed(5),acc:Math.round(p.coords.accuracy||0)})},()=>{if(!done){done=true;clearTimeout(to);res(null)}},{enableHighAccuracy:true,timeout:ms||9000,maximumAge:30000})}),
+ resolve:async(lat,lng)=>{try{const r=await J(`/geo/where?lat=${lat}&lng=${lng}`);if(r&&r.ok)return r}catch(e){}return null}};
+const gready=()=>!!(window.google&&google.maps&&google.maps.Map);
+const gwait=ms=>new Promise(res=>{if(!(SX.gmapsOn&&SX.gmapsOn()))return res(false);const t0=Date.now();(function w(){if(gready())return res(true);if(Date.now()-t0>ms)return res(false);setTimeout(w,120)})()});
+const PIN=`<svg viewBox="0 0 34 46" width="34" height="46"><path d="M17 1C8.2 1 1 8.1 1 16.8c0 11.3 13.2 25.9 15 27.9a1.3 1.3 0 0 0 2 0c1.8-2 15-16.6 15-27.9C33 8.1 25.8 1 17 1z" fill="#2f5bff" stroke="#fff" stroke-width="2"/><circle cx="17" cy="17" r="6" fill="#fff"/></svg>`;
+const GPSI=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>`;
+// from a Google Geocoder result to the fields the app keeps
+function gaddr(res){const c={};(res.address_components||[]).forEach(x=>(x.types||[]).forEach(t=>{if(!c[t])c[t]=x.long_name}));const place=c.sublocality_level_1||c.sublocality||c.neighborhood||c.sublocality_level_2||c.locality||'',city=c.locality||c.administrative_area_level_3||c.administrative_area_level_2||'',state=c.administrative_area_level_1||'';
+ return {ok:true,place,city,district:c.administrative_area_level_2||'',state,stateCode:STATES[state]||'',pin:c.postal_code||'',label:(res.formatted_address||'').slice(0,160)}}
+const osmPosToTile=(lat,lng,z)=>{const n=Math.pow(2,z);return {x:(lng+180)/360*n,y:(1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*n}};
+const osmTileToPos=(x,y,z)=>{const n=Math.pow(2,z);const lng=x/n*360-180,lat=Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;return {lat:+lat.toFixed(6),lng:+lng.toFixed(6)}};
+function osmTiles(el,c,z){const W=el.clientWidth||360,H=el.clientHeight||300,n=Math.pow(2,z),t=osmPosToTile(c.lat,c.lng,z),x0=t.x-W/512,y0=t.y-H/512;let h='';
+ for(let x=Math.floor(x0);x<=Math.floor(x0+W/256);x++)for(let y=Math.floor(y0);y<=Math.floor(y0+H/256);y++){if(y<0||y>=n)continue;h+=`<img src="https://tile.openstreetmap.org/${z}/${((x%n)+n)%n}/${y}.png" style="left:${Math.round((x-x0)*256)}px;top:${Math.round((y-y0)*256)}px" alt="" draggable="false">`}
+ return h}
+// the picker: a map that moves under a fixed pin (Rapido / Uber style), search, "locate me", then the door and landmark
+SX.mapPick=(opt={})=>new Promise(async resolve=>{
+ let cur=opt.center||SX.loc.get()||null,z=cur?16:5,info=null,map=null,drag=null,tdeb=null,sdeb=null,done=false,label=opt.label||'home';if(!cur){cur={...INDIA}}
+ const fields=opt.address?`<div class="lv29-lbl">${[['home','🏠',P('Home')],['work','💼',P('Work')],['other','📍',P('Other')]].map(([k,i,t])=>`<button type="button" data-l="${k}" class="${k===label?'on':''}">${i} ${t}</button>`).join('')}</div>
+  <div class="lv29-fields"><input class="full" id="lv29door" placeholder="${E(P('House / flat, building'))}" value="${E(opt.door||'')}" maxlength="120"><input id="lv29lm" placeholder="${E(P('Landmark'))}" value="${E(opt.landmark||'')}" maxlength="80"><input id="lv29pin" placeholder="PIN" inputmode="numeric" maxlength="6" value="${E(opt.pin||'')}"></div>`:'';
+ SX.modal(`<div class="lv29-pick"><div class="lv29-pm" id="lv29pm"><div class="lv29-tiles" id="lv29tiles"></div><div class="lv29-pin">${PIN}</div><span class="lv29-attr" id="lv29attr"></span><button type="button" class="lv29-gps" id="lv29gps" aria-label="${E(P('Use my current location'))}">${GPSI}</button></div>
+  <div class="lv29-ptop"><button type="button" class="lv29-back" id="lv29back" aria-label="${E(P('Back'))}">‹</button><div class="lv29-ps"><input id="lv29q" placeholder="${E(P('Search area, landmark or PIN'))}" autocomplete="off"><div class="lv29-sug" id="lv29sug"></div></div></div>
+  <div class="lv29-sheet"><div class="lv29-addr"><i>📍</i><div class="grow"><b id="lv29addr">${P('Move the map to your door')}</b><small id="lv29sub">${P('The pin stays in the middle; drag the map underneath it.')}</small></div></div>${fields}
+   <button class="btn p" id="lv29ok" type="button">${E(opt.cta||P('Confirm location'))}</button><p class="lv29-note">${P('Used for nearby labs, hospitals, deliveries and SOS. Not shared with other families.')}</p></div></div>`,{cls:'lv29-pm-m',label:opt.title||P('Your location'),sticky:true,onclose:()=>{if(!done){done=true;resolve(null)}}});
+ const pm=document.getElementById('lv29pm'),tiles=document.getElementById('lv29tiles'),addr=document.getElementById('lv29addr'),sub=document.getElementById('lv29sub'),sug=document.getElementById('lv29sug'),q=document.getElementById('lv29q'),gps=document.getElementById('lv29gps');
+ const show=()=>{if(!info){addr.textContent=P('Finding the address…');sub.textContent=cur.lat.toFixed(5)+', '+cur.lng.toFixed(5);return}addr.textContent=info.label||[info.place,info.city].filter(Boolean).join(', ')||P('Pinned');sub.textContent=[info.place,info.city,info.state,info.pin].filter((x,i,a)=>x&&a.indexOf(x)===i).join(' · ');const pin=document.getElementById('lv29pin');if(pin&&info.pin&&!pin.value)pin.value=info.pin};
+ const g=await gwait(5000);
+ const reverse=async()=>{const at={...cur};info=null;show();let r=null;
+  if(g){try{const res=await new Promise((ok,no)=>new google.maps.Geocoder().geocode({location:at,region:'IN'},(x,st)=>st==='OK'&&x&&x.length?ok(x):no(st)));r=gaddr(res[0]);for(const x of res.slice(1,4)){const o=gaddr(x);['place','city','district','state','pin'].forEach(k=>{r[k]=r[k]||o[k]})}}catch(e){}}
+  if(!r)r=await SX.loc.resolve(at.lat,at.lng);if(at.lat!==cur.lat||at.lng!==cur.lng)return;info=r||{ok:false,label:''};show()};
+ const moved=()=>{clearTimeout(tdeb);tdeb=setTimeout(reverse,g?250:700)};
+ const goTo=(lat,lng,zoom)=>{cur={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)};if(zoom)z=zoom;if(map){map.setZoom(z);map.panTo(cur)}else{tiles.innerHTML=osmTiles(pm,cur,z);tiles.style.transform='';moved()}};
+ if(g){const gd=document.createElement('div');gd.className='lv29-g';pm.insertBefore(gd,tiles);tiles.remove();document.getElementById('lv29attr').remove();
+  map=new google.maps.Map(gd,{center:cur,zoom:z,disableDefaultUI:true,gestureHandling:'greedy',clickableIcons:false,keyboardShortcuts:false});
+  map.addListener('dragstart',()=>pm.classList.add('drag'));map.addListener('idle',()=>{pm.classList.remove('drag');const c=map.getCenter();if(!c)return;cur={lat:+c.lat().toFixed(6),lng:+c.lng().toFixed(6)};moved()})}
+ else{document.getElementById('lv29attr').textContent='© OpenStreetMap';tiles.innerHTML=osmTiles(pm,cur,z);
+  pm.addEventListener('pointerdown',e=>{if(e.target.closest('button,input'))return;drag={x:e.clientX,y:e.clientY,dx:0,dy:0};pm.setPointerCapture(e.pointerId);pm.classList.add('drag')});
+  pm.addEventListener('pointermove',e=>{if(!drag)return;drag.dx=e.clientX-drag.x;drag.dy=e.clientY-drag.y;tiles.style.transform=`translate(${drag.dx}px,${drag.dy}px)`});
+  const end=()=>{if(!drag)return;const t=osmPosToTile(cur.lat,cur.lng,z);const p=osmTileToPos(t.x-drag.dx/256,t.y-drag.dy/256,z);drag=null;pm.classList.remove('drag');goTo(p.lat,p.lng)};
+  pm.addEventListener('pointerup',end);pm.addEventListener('pointercancel',end);
+  pm.addEventListener('wheel',e=>{e.preventDefault();z=Math.max(4,Math.min(18,z+(e.deltaY<0?1:-1)));goTo(cur.lat,cur.lng)},{passive:false});
+  moved()}
+ if(!opt.center&&(!S.net.geoManual||!SX.loc.get())){gps.classList.add('busy');SX.loc.gps(8000).then(f=>{gps.classList.remove('busy');if(f&&!done)goTo(f.lat,f.lng,16)})}   // a fresh fix unless the family chose a point by hand
+ gps.onclick=async()=>{gps.classList.add('busy');const f=await SX.loc.gps(10000);gps.classList.remove('busy');if(f)goTo(f.lat,f.lng,Math.max(z,16));else toast(P('Location is blocked for this site. Allow it in the browser’s site settings, or search your area.'))};
+ q.oninput=()=>{clearTimeout(sdeb);const v=q.value.trim();if(v.length<2){sug.innerHTML='';return}sdeb=setTimeout(async()=>{try{const r=await J('/geo/search?q='+encodeURIComponent(v));if(q.value.trim()!==v)return;sug.innerHTML=(r.results||[]).map((x,i)=>`<button type="button" data-i="${i}"><i>📍</i><div><b>${E(x.place||x.city||x.label)}</b><small>${E(x.label)}</small></div></button>`).join('')||`<button type="button" disabled><small>${P('Nothing found. Try the city name or PIN.')}</small></button>`;
+   sug.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const x=r.results[+b.dataset.i];sug.innerHTML='';q.value=x.place||x.city||'';q.blur();info=null;goTo(x.lat,x.lng,/^\d{6}$/.test(v)?14:16)})}catch(e){sug.innerHTML=''}},350)};
+ q.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const b=sug.querySelector('[data-i]');if(b)b.click()}};
+ document.querySelectorAll('.lv29-lbl button').forEach(b=>b.onclick=()=>{label=b.dataset.l;document.querySelectorAll('.lv29-lbl button').forEach(x=>x.classList.toggle('on',x===b))});
+ document.getElementById('lv29back').onclick=()=>{done=true;SX.closeModal();resolve(null)};
+ document.getElementById('lv29ok').onclick=async()=>{const ok=document.getElementById('lv29ok');ok.disabled=true;ok.textContent=P('Saving…');let w=info&&info.ok?info:null;if(!w){w=await SX.loc.resolve(cur.lat,cur.lng)}w=w||{ok:true,place:'',city:'',state:'',pin:'',label:cur.lat.toFixed(5)+', '+cur.lng.toFixed(5)};
+  const pinEl=document.getElementById('lv29pin');if(pinEl&&/^\d{6}$/.test(pinEl.value.trim()))w.pin=pinEl.value.trim();
+  const out={lat:cur.lat,lng:cur.lng,where:w,label,door:(document.getElementById('lv29door')||{}).value||'',landmark:(document.getElementById('lv29lm')||{}).value||''};done=true;SX.closeModal();resolve(out)};
+});
+// "Set location" everywhere opens the picker and writes the one location
+SX.act.locset=async()=>{const r=await SX.mapPick({title:P('Your location')});if(!r)return;SX.loc.set(r.lat,r.lng,r.where,true);toast(P('Location set')+' · '+(SX.loc.short()||''));try{render()}catch(e){}};
+// a manual choice wins over an automatic refresh; a GPS fix that moved us far away replaces a stale automatic one
+const geo0=SX.geo;SX.geo=async ask=>{if(S.net.geoManual&&S.net.geo)return {lat:S.net.geo.lat,lng:S.net.geo.lng};const g=await geo0(ask);return g};
+// Today: the location card with a live map, right under the greeting
+function miniMap(c){if(!c)return '';if(SX.gmapsOn&&SX.gmapsOn()&&SX.gmapHTML)return SX.gmapHTML(c,[],{h:64,zoom:15,static:true});const z=15,t=osmPosToTile(c.lat,c.lng,z),x=Math.floor(t.x),y=Math.floor(t.y),ox=Math.round((t.x-x)*256),oy=Math.round((t.y-y)*256);
+ return `<img src="https://tile.openstreetmap.org/${z}/${x}/${y}.png" style="left:${42-ox}px;top:${32-oy}px" alt="">`}
+SX.locCard=(opt={})=>{const c=SX.loc.get(),w=S.net.where;return `<div class="lv29-loc" data-lv29="loc"><div class="lv29-mini">${miniMap(c)}${c?'<i class="lv29-dot"></i>':''}</div><div class="grow"><b>${c?E(SX.loc.short()||P('Located')):P('Where are you?')}</b><small>${c?E(w&&w.label?w.label:(w?[w.district,w.state].filter(Boolean).join(', '):P('Position set')))+(S.net.geoManual?' · '+P('chosen on the map'):''):P('Nearby labs, hospitals, deliveries and SOS use this.')}</small></div><button class="btn ${c?'s':'p'} sm" data-sx="locset">${c?P('Change'):P('Set')}</button></div>`};
+SX.extend('dash',{before(){return phone()?SX.locCard():''}});
+SX.extend('book',{before(){return SX.locCard()}});
+// the address book: pick on the map first (Uber style), then the door — the typed form stays for edits
+const ae0=SX.act.addredit;
+SX.act.addredit=async a=>{const id=a&&a[0];const me=SX.me();
+ if(id==='new'){const r=await SX.mapPick({address:true,title:P('Add address'),cta:P('Save address')});if(!r)return;const w=r.where||{};
+  const o={id:'ad'+Math.random().toString(36).slice(2,9),label:r.label||'home',t:Date.now(),name:me.name,phone:(SX.user&&SX.user.phone)||'',line1:r.door.trim(),line2:'',landmark:r.landmark.trim(),area:w.place||'',city:w.city||'',state:w.state||'',pin:w.pin||'',lat:r.lat,lng:r.lng,default:!S.addresses.length};
+  if(o.default)S.addresses.forEach(x=>x.default=false);S.addresses.push(o);S.addr=SX.addrFmt(o);SX.save();try{SX.act.addrpick([o.id])}catch(e){}
+  if(!o.line1||!/^\d{6}$/.test(o.pin)){toast(P('Pinned. Add the house and PIN.'));return ae0([o.id])}
+  toast(P('Address saved'));try{render()}catch(e){}const c=document.getElementById('caddr');if(c)c.value=S.addr;return}
+ ae0(a);const b=document.getElementById('aduse');if(!b)return;b.textContent='🗺️ '+P('Pick on the map');
+ b.onclick=async()=>{const F=document.getElementById('adf');const keep={};['name','phone','line1','line2','landmark','area','city','state','pin','label'].forEach(k=>{const el=F.elements[k];if(el)keep[k]=el.value});
+  const r=await SX.mapPick({address:true,title:P('Pin the address'),cta:P('Use this spot'),door:keep.line1,landmark:keep.landmark,pin:keep.pin,label:keep.label||'home'});if(!r){return SX.act.addredit([id])}
+  const ad=S.addresses.find(x=>x.id===id);if(ad){Object.assign(ad,{lat:r.lat,lng:r.lng});if(r.where){ad.area=r.where.place||ad.area;ad.city=r.where.city||ad.city;ad.state=r.where.state||ad.state;ad.pin=r.where.pin||ad.pin}if(r.door)ad.line1=r.door;if(r.landmark)ad.landmark=r.landmark;Object.keys(keep).forEach(k=>{if(['name','phone','line2'].includes(k)&&keep[k])ad[k]=keep[k]});SX.save()}
+  SX.act.addredit([id])}};
+
+// ---------------------------------------------------------------- E. SOS: siren + vibration until "I'm safe"; a map of the live position; what went out by itself
+let ctx=null,osc=null,gain=null,vib=null,sweep=null,muted=false;
+SX.siren={
+ start(){if(osc)return;muted=false;try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();osc=ctx.createOscillator();gain=ctx.createGain();osc.type='square';gain.gain.value=.0001;osc.connect(gain);gain.connect(ctx.destination);osc.start();
+   gain.gain.exponentialRampToValueAtTime(.35,ctx.currentTime+.15);let up=true;const step=()=>{if(!osc)return;const t=ctx.currentTime;osc.frequency.cancelScheduledValues(t);osc.frequency.setValueAtTime(up?620:1180,t);osc.frequency.linearRampToValueAtTime(up?1180:620,t+.55);up=!up};step();sweep=setInterval(step,550)}catch(e){}
+  try{if(navigator.vibrate){navigator.vibrate([500,200,500,200,500]);vib=setInterval(()=>navigator.vibrate([500,200,500,200,500]),2000)}}catch(e){}
+  try{if(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Haptics)Capacitor.Plugins.Haptics.vibrate({duration:600})}catch(e){}
+  document.body.classList.add('lv29-siren')},
+ mute(){muted=true;try{if(gain&&ctx)gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.1)}catch(e){}clearInterval(sweep);sweep=null;setTimeout(()=>{try{osc&&osc.stop()}catch(e){}osc=null},150)},
+ stop(){this.mute();clearInterval(vib);vib=null;try{navigator.vibrate&&navigator.vibrate(0)}catch(e){}document.body.classList.remove('lv29-siren')},
+ on:()=>!!osc};
+SX.act.sosmute=()=>{SX.siren.mute();const b=document.getElementById('lv29mute');if(b)b.textContent='🔇 '+P('Siren off')};
+let CH=null;J('/sos/channels').then(j=>{CH=j}).catch(()=>{});
+function sosChrome(){const act=document.getElementById('lv21act');if(!act)return;const head=act.querySelector('.lv21-head');
+ if(head&&!document.getElementById('lv29mute')&&SX.siren.on()){const b=document.createElement('button');b.id='lv29mute';b.className='lv29-mute';b.type='button';b.textContent='🔊 '+P('Siren');b.onclick=SX.act.sosmute;head.insertBefore(b,head.querySelector('.lv21-safe'));head.querySelector('.lv21-live')&&head.querySelector('.lv21-live').classList.add('lv29-alarm')}
+ const sec=act.querySelector('.lv21-sec');if(sec&&!sec.querySelector('.lv29-sosmap')){const a=act.querySelector('a[href*="maps.google.com/?q="]');const m=a&&a.getAttribute('href').match(/q=(-?[\d.]+),(-?[\d.]+)/);const c=m?{lat:+m[1],lng:+m[2]}:SX.loc.get();
+  if(c){const d=document.createElement('div');d.className='lv29-sosmap';d.innerHTML=SX.mapHTML?SX.mapHTML(c,[],{h:160,zoom:15}):miniMap(c);sec.appendChild(d)}}
+ const al=act.querySelectorAll('.lv21-sec')[1];if(al&&CH&&!al.querySelector('.lv29-ch')){const d=document.createElement('div');d.className='lv29-ch';d.innerHTML=[['push',P('Family phones')],['email',P('Email')],['sms','SMS'],['whatsapp','WhatsApp']].map(([k,t])=>`<span class="${CH[k]?'on':''}">${CH[k]?'✓':'·'} ${t}${CH[k]?'':' · '+P('one tap')}</span>`).join('');al.querySelector('.lv21-sh').after(d)}}
+SX.extend('sos',{after(){if(!CH)return '';const auto=[['push',P('App alert on family phones')],['email',P('Email to contacts')],['sms',P('SMS to contacts')],['whatsapp',P('WhatsApp to contacts')]];
+ return `<div class="card"><div class="hd"><div><h3>⚡ ${P('Goes out the moment you press')}</h3><small class="mute">${P('No countdown, no confirmation. A siren sounds and your phone buzzes until you tap “I’m safe”.')}</small></div></div><div class="lv29-ch">${auto.map(([k,t])=>`<span class="${CH[k]?'on':''}">${CH[k]?'✓ ':''}${t}${CH[k]?'':' · '+P('one tap')}</span>`).join('')}</div>${CH.sms&&CH.whatsapp?'':`<p class="mute sm" style="margin:8px 0 0">${P('SMS and WhatsApp that leave without a tap need a registered sender (DLT template / WhatsApp Business); until then they open ready to send with one tap.')}</p>`}</div>`}});
+// the WhatsApp / SMS chips open by themselves for the first contact when the server cannot send them (one tap fewer in the moment)
+// (nothing automatic here: a browser cannot send a message without the person's tap)
+
+// ---------------------------------------------------------------- F. Devices: install the way this phone installs
+SX.a2hs=()=>{SX.modal(`<h2>📲 ${P('Install on iPhone')}</h2><ol class="lv-steps" style="padding-left:18px;line-height:1.7"><li>${P('Tap the Share button')} <b>⎙</b> ${P('at the bottom of Safari')}</li><li>${P('Choose')} <b>${P('Add to Home Screen')}</b></li><li>${P('Tap')} <b>${P('Add')}</b> — ${P('TheHealthTracker opens full-screen like an app, with your sign-in kept.')}</li></ol><p class="mute sm">${P('Apple Health sync arrives with the App Store app.')}</p><div class="lv-row-end"><button class="btn p" data-sx="closeModal">${P('Got it')}</button></div>`,{label:'Install'})};
+SX.act.a2hs=()=>SX.a2hs();
+
+// the tab bar keeps its short labels and icons when the nav is rebuilt
+function tabLabels(){const bar=document.getElementById('mtab');if(!bar)return;bar.querySelectorAll('button span').forEach(sp=>{const t=sp.textContent.trim();if(t==='Medicines'||t===P('Medicines'))sp.textContent=P('Meds')})}
+
+// the week strip's day letters follow the language too
+function weekDays(){if(LANG()==='en')return;const box=document.querySelector('.lv22-days');if(!box||box.dataset.lv29===LANG())return;box.dataset.lv29=LANG();
+ const cells=[...box.querySelectorAll('i')],L=LANG()==='hi'?'hi-IN':'te-IN';
+ cells.forEach((c,k)=>{const d=new Date();d.setDate(d.getDate()-(cells.length-1-k));const t=d.toLocaleDateString(L,{weekday:'narrow'});
+  [...c.childNodes].forEach(n=>{if(n.nodeType===3&&n.nodeValue.trim())n.nodeValue=t})})}
+
+// ---------------------------------------------------------------- G. card vault: previous / next
+function walletNav(){const w=document.querySelector('.lv2-wallet');if(!w||w.previousElementSibling&&w.previousElementSibling.classList.contains('lv29-wnav'))return;const slots=[...w.querySelectorAll('.lv2-slot:not(.lv2-add)')];if(slots.length<1)return;
+ const i=Math.max(0,slots.findIndex(s=>s.classList.contains('on')));const nav=document.createElement('div');nav.className='lv29-wnav';nav.innerHTML=`<button type="button" ${i<=0?'disabled':''} aria-label="${E(P('Previous card'))}">‹</button><small>${i+1} / ${slots.length}</small><button type="button" ${i>=slots.length-1?'disabled':''} aria-label="${E(P('Next card'))}">›</button>`;
+ const [prev,,next]=nav.children;const goI=k=>{const s=slots[k];if(!s)return;const id=(s.dataset.sx||'').replace(/^wsel:/,'');if(id)SX.act.wsel(id.split(':'))};
+ prev.onclick=()=>goI(i-1);next.onclick=()=>goI(i+1);w.before(nav);
+ const dots=document.createElement('div');dots.className='lv29-wdots';dots.innerHTML=slots.map((s,k)=>`<i class="${k===i?'on':''}"></i>`).join('');w.after(dots);
+ const on=slots[i];if(on)setTimeout(()=>{try{on.scrollIntoView({inline:'center',block:'nearest',behavior:'instant'})}catch(e){on.scrollIntoView()}},0);
+ let sx=0;w.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});w.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>60)goI(dx<0?i+1:i-1)},{passive:true})}
+
+// ---------------------------------------------------------------- H. translations on every string the screen paints
+// dates and times follow the chosen language (the app asks for 'en-IN' in a hundred places; one interception covers them all)
+{const LOC={hi:'hi-IN',te:'te-IN'};['toLocaleDateString','toLocaleTimeString','toLocaleString'].forEach(k=>{const f=Date.prototype[k];Date.prototype[k]=function(l,o){const L=LOC[S.lang||'en'];return f.call(this,(!l||l==='en-IN'||l==='en')&&L?L:l,o)}})}
+SX.addPhrases({"Where are you?": ["आप कहाँ हैं?", "మీరు ఎక్కడ ఉన్నారు?"], "Located": ["लोकेशन मिल गई", "లొకేషన్ దొరికింది"], "Position set": ["लोकेशन सेट है", "లొకేషన్ సెట్ చేయబడింది"], "Set": ["सेट करें", "సెట్ చేయండి"], "Change": ["बदलें", "మార్చండి"], "Location set": ["लोकेशन सेट हो गई", "లొకేషన్ సెట్ అయింది"], "chosen on the map": ["मैप पर चुनी गई", "మ్యాప్‌లో ఎంచుకున్నది"], "Nearby labs, hospitals, deliveries and SOS use this.": ["पास की लैब, अस्पताल, डिलीवरी और SOS इसी का उपयोग करते हैं।", "సమీప ల్యాబ్‌లు, ఆసుపత్రులు, డెలివరీలు మరియు SOS దీన్నే ఉపయోగిస్తాయి."], "Search area, landmark or PIN": ["इलाक़ा, लैंडमार्क या पिन खोजें", "ప్రాంతం, ల్యాండ్‌మార్క్ లేదా పిన్ వెతకండి"], "Move the map to your door": ["मैप को अपने दरवाज़े तक ले जाएँ", "మ్యాప్‌ను మీ ఇంటి గుమ్మం వరకు జరపండి"], "The pin stays in the middle; drag the map underneath it.": ["पिन बीच में रहेगा; मैप को नीचे से खिसकाएँ।", "పిన్ మధ్యలోనే ఉంటుంది; మ్యాప్‌ను కిందనుంచి జరపండి."], "Finding the address…": ["पता खोजा जा रहा है…", "చిరునామా వెతుకుతోంది…"], "Pinned": ["पिन हो गया", "పిన్ చేయబడింది"], "Confirm location": ["लोकेशन पक्की करें", "లొకేషన్ ఖరారు చేయండి"], "Use this spot": ["यही जगह चुनें", "ఇదే ప్రదేశం"], "Pin the address": ["पता पिन करें", "చిరునామాను పిన్ చేయండి"], "Pick on the map": ["मैप पर चुनें", "మ్యాప్‌లో ఎంచుకోండి"], "Pinned. Add the house and PIN.": ["पिन हो गया। मकान और पिन कोड भरें।", "పిన్ అయింది. ఇల్లు మరియు పిన్ కోడ్ చేర్చండి."], "Used for nearby labs, hospitals, deliveries and SOS. Not shared with other families.": ["पास की लैब, अस्पताल, डिलीवरी और SOS के लिए। दूसरे परिवारों से साझा नहीं होता।", "సమీప ల్యాబ్‌లు, ఆసుపత్రులు, డెలివరీలు, SOS కోసం. ఇతర కుటుంబాలతో పంచుకోము."], "Nothing found. Try the city name or PIN.": ["कुछ नहीं मिला। शहर का नाम या पिन कोड आज़माएँ।", "ఏమీ దొరకలేదు. నగరం పేరు లేదా పిన్ కోడ్ ప్రయత్నించండి."], "Use my current location": ["मेरी मौजूदा लोकेशन लें", "నా ప్రస్తుత లొకేషన్ వాడండి"], "Previous card": ["पिछला कार्ड", "మునుపటి కార్డ్"], "Next card": ["अगला कार्ड", "తదుపరి కార్డ్"], "Siren": ["सायरन", "సైరన్"], "Siren off": ["सायरन बंद", "సైరన్ ఆఫ్"], "Goes out the moment you press": ["दबाते ही चला जाता है", "నొక్కిన వెంటనే వెళ్లిపోతుంది"], "No countdown, no confirmation. A siren sounds and your phone buzzes until you tap “I’m safe”.": ["कोई गिनती नहीं, कोई पुष्टि नहीं। “मैं सुरक्षित हूँ” दबाने तक सायरन बजेगा और फ़ोन कंपन करेगा।", "కౌంట్‌డౌన్ లేదు, నిర్ధారణ లేదు. “నేను క్షేమం” నొక్కే వరకు సైరన్ మోగుతుంది, ఫోన్ వైబ్రేట్ అవుతుంది."], "App alert on family phones": ["परिवार के फ़ोन पर ऐप अलर्ट", "కుటుంబ ఫోన్‌లలో యాప్ అలర్ట్"], "Email to contacts": ["संपर्कों को ईमेल", "కాంటాక్ట్‌లకు ఇమెయిల్"], "SMS to contacts": ["संपर्कों को SMS", "కాంటాక్ట్‌లకు SMS"], "WhatsApp to contacts": ["संपर्कों को WhatsApp", "కాంటాక్ట్‌లకు WhatsApp"], "one tap": ["एक टैप", "ఒక ట్యాప్"], "Install on this iPhone": ["इस iPhone पर इंस्टॉल करें", "ఈ iPhoneలో ఇన్‌స్టాల్ చేయండి"], "Install on iPhone": ["iPhone पर इंस्टॉल करें", "iPhoneలో ఇన్‌స్టాల్ చేయండి"], "Share → Add to Home Screen. Full-screen, with your sign-in kept.": ["शेयर → होम स्क्रीन पर जोड़ें। पूरी स्क्रीन, साइन-इन बना रहेगा।", "షేర్ → హోమ్ స్క్రీన్‌కు జోడించండి. పూర్తి స్క్రీన్, సైన్-ఇన్ అలాగే ఉంటుంది."], "How": ["कैसे", "ఎలా"], "Got it": ["समझ गया", "అర్థమైంది"], "Controls": ["कंट्रोल", "కంట్రోల్స్"], "Automatic": ["अपने आप", "ఆటోమేటిక్"], "Always show": ["हमेशा दिखाएँ", "ఎల్లప్పుడూ చూపించు"], "Never show": ["कभी न दिखाएँ", "ఎప్పుడూ చూపవద్దు"], "Shown": ["दिख रहा है", "చూపిస్తోంది"], "Hidden for": ["इनके लिए छिपा है", "వీరికి దాచబడింది"], "Switched on in Settings": ["सेटिंग्स में चालू", "సెట్టింగ్‌లలో ఆన్"], "Condition": ["स्थिति", "పరిస్థితి"], "Blood pressure readings": ["ब्लड प्रेशर रीडिंग", "రక్తపోటు రీడింగ్‌లు"], "A living 3D heart for people with a heart condition, BP medicines or a cardiologist. It appears under Care.": ["दिल की बीमारी, BP की दवा या हृदय-रोग विशेषज्ञ वालों के लिए जीवंत 3D दिल। यह Care में दिखता है।", "గుండె జబ్బు, BP మందులు లేదా కార్డియాలజిస్ట్ ఉన్నవారికి సజీవ 3D గుండె. ఇది Careలో కనిపిస్తుంది."]});   // the round-29 strings, by hand (inlined from tools/i18n/core.py at patch time)
+const LANG=()=>S.lang||'en';
+const SKIP='script,style,textarea,code,pre,svg,canvas,#stage,#hstage,#pstage,[data-noi18n],.lv-card-num,.lv29-sug,.lv29-addr,[contenteditable]';
+const tr=s=>{let r=P(s);if(r!==s)return r;const m=s.match(/^(.*?)([:…·.!?]+)$/);if(m){r=P(m[1]);if(r!==m[1])return r+m[2]}const m2=s.match(/^([\u{1F300}-\u{1FAFF}☀-➿✓✔•·—–]️?\s*)(.+)$/u);if(m2){r=P(m2[2]);if(r!==m2[2])return m2[1]+r}return null};
+let missing=new Set(),sentSet=null,flushT=null,applying=false;
+const sentLoad=()=>{if(sentSet)return;sentSet=new Set();try{(JSON.parse(ls('tht.i18n.sent')||'[]')).forEach(x=>sentSet.add(x))}catch(e){}};
+function names(){const out=[];(S.members||[]).forEach(m=>{(m.name||'').split(/\s+/).forEach(w=>{if(w.length>2)out.push(w)})});if(SX.user&&SX.user.name)out.push(SX.user.name.split(/\s+/)[0]);return out}
+function note(s){if(LANG()==='en')return;if(s.length>200||!/[A-Za-z]{3,}/.test(s)||/[{}<>]|\$\{|https?:|@/.test(s)||/^[A-Z0-9 _\-./]{2,12}$/.test(s))return;
+ if(/\d/.test(s)&&!/\s/.test(s))return;
+ if(names().some(n=>s.includes(n)))return;   // a line with a family name in it is one person's, not a phrase
+ sentLoad();if(sentSet.has(s)||missing.has(s))return;missing.add(s);clearTimeout(flushT);flushT=setTimeout(flush,2500)}
+async function flush(){if(!missing.size||LANG()==='en')return;const items=[...missing].slice(0,150);items.forEach(x=>{missing.delete(x);sentSet.add(x)});try{ls('tht.i18n.sent',JSON.stringify([...sentSet].slice(-4000)))}catch(e){}
+ try{const r=await J('/i18n/missing','POST',{items});if(r.added&&r.translator){let n=0;const again=()=>{if(n++>4)return;setTimeout(async()=>{const fresh=await table(true);if(!fresh)again()},n*12000)};again()}}catch(e){}
+ if(missing.size)flushT=setTimeout(flush,3000)}
+function textNode(n){const v=n.nodeValue;if(!v||!/\S/.test(v))return;const s=v.trim();if(s.length<2||s.length>240)return;if(n.__i18n===s)return;const r=tr(s);if(r){applying=true;n.nodeValue=v.replace(s,r);n.__i18n=r;applying=false}else{n.__i18n=s;if(/[A-Za-z]{2,}/.test(s))note(s)}}
+const AK={placeholder:'i18nPh','aria-label':'i18nAria',title:'i18nTitle'};
+function attrs(el){for(const a in AK){const v=el.getAttribute&&el.getAttribute(a);if(!v||el.dataset[AK[a]]===v)continue;const r=tr(v.trim());if(r){el.setAttribute(a,r);el.dataset[AK[a]]=r}else{el.dataset[AK[a]]=v;note(v.trim())}}
+ if(el.tagName==='INPUT'&&/^(submit|button)$/.test(el.type)&&el.value){const r=tr(el.value.trim());if(r)el.value=r}}
+function walk(root){if(LANG()==='en'||!root)return;if(root.nodeType===3){const p=root.parentElement;if(p&&!p.closest(SKIP))textNode(root);return}if(root.nodeType!==1||root.closest(SKIP))return;
+ const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>{const p=n.parentElement;return p&&!p.closest(SKIP)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}});const nodes=[];let n;while((n=tw.nextNode()))nodes.push(n);nodes.forEach(textNode);
+ if(root.matches&&root.matches('[placeholder],[aria-label],[title],input'))attrs(root);root.querySelectorAll('[placeholder],[aria-label],[title],input[type=submit]').forEach(attrs)}
+SX.i18nDom=root=>walk(root||document.body);
+// the table: always fresh (no stale cache), re-applied when it changes
+let tv=ls('tht.i18n.v')||'';
+async function table(quiet){if(LANG()==='en')return false;try{const r=await fetch('/api/v1/i18n',{cache:'no-store',headers:{'x-tht':'1'}});if(!r.ok)return false;const j=await r.json();const v=String(j.__v||'');delete j.__v;if(v&&v===tv&&quiet)return false;SX.addPhrases(j);ls('tht.i18n',JSON.stringify(j));ls('tht.i18n.v',v);const changed=v!==tv;tv=v;
+  if(changed){document.querySelectorAll('[data-i18n-ph],[data-i18n-aria],[data-i18n-title]').forEach(el=>{delete el.dataset.i18nPh;delete el.dataset.i18nAria;delete el.dataset.i18nTitle});const tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while((n=tw.nextNode()))if(n.__i18n===n.nodeValue.trim())delete n.__i18n;walk(document.body);try{SX.paintNav&&SX.paintNav()}catch(e){}}return changed}catch(e){return false}}
+SX.i18nRefresh=()=>table(false);
+const lang0=SX.act.lang;SX.act.lang=async a=>{await lang0(a);document.documentElement.lang=LANG();if(LANG()!=='en'){await table(false);walk(document.body)}};
+document.documentElement.lang=LANG();
+// one observer for all the after-paint work: translations, the orb, the heart chrome, the SOS sheet, the wallet arrows
+let obT=null,pend=[];
+const after=()=>{obT=null;tabLabels();weekDays();const nodes=pend;pend=[];if(LANG()!=='en'&&!applying)nodes.forEach(n=>{if(n.isConnected)walk(n)});paintOrb();heartChrome();sosChrome();walletNav();askBar()};
+new MutationObserver(ms=>{if(applying)return;ms.forEach(m=>m.addedNodes.forEach(n=>pend.push(n)));if(!obT)obT=setTimeout(after,40)}).observe(document.body,{childList:true,subtree:true});
+setTimeout(()=>{if(LANG()!=='en'){table(true).then(()=>walk(document.body));walk(document.body)}paintOrb();heartChrome();walletNav();tabLabels();SX.pregNav&&SX.pregNav()},300);
+addEventListener('focus',()=>{if(LANG()!=='en')table(true)});
 }
 
 SX.boot();

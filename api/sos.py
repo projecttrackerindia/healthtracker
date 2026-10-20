@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import messaging
+from . import messaging, whatsapp
 from .auth import limit
 from .db import get_db
 from .fitbit import _origin
@@ -107,11 +107,18 @@ def fan_out(db: Session, a: SosAlert, origin: str) -> list[dict]:
                 sent.append({"n": c.get("n", ""), "channel": "email", "ok": False})
         if c.get("ph"):
             try:
-                if messaging.send_text_sms(c["ph"], text):
+                if messaging.send_text_sms(c["ph"], text, flow_vars={"name": a.name, "link": f"{origin}/sos/{a.token}"}):
                     sent.append({"n": c.get("n", ""), "channel": "sms", "ok": True})
             except Exception as e:
                 print("[sos] sms failed:", str(e)[:160], flush=True)
                 sent.append({"n": c.get("n", ""), "channel": "sms", "ok": False})
+            # WhatsApp straight from the server (Meta Cloud API) when it is set up: WA_TEMPLATE_SOS (name, link) or the notice template
+            try:
+                if whatsapp.ready():
+                    ok = whatsapp.send_sos(c["ph"], a.name, f"{origin}/sos/{a.token}", text)
+                    sent.append({"n": c.get("n", ""), "channel": "whatsapp", "ok": bool(ok)})
+            except Exception as e:
+                print("[sos] whatsapp failed:", str(e)[:160], flush=True)
     # the family's own phones: push (+ WhatsApp when that channel is live), through the inbox so it also shows in-app
     try:
         notify(db, a.household_id, "message", f"EMERGENCY: {a.name} needs help", "Open the live map and call them.", {"sos": a.token}, a.member_id, f"/sos/{a.token}")
@@ -126,6 +133,17 @@ def alert_json(a: SosAlert, origin: str) -> dict:
             "loc": {"lat": a.lat, "lng": a.lng, "acc": a.acc} if a.lat is not None else None, "trail": (a.trail or [])[-50:], "sent": a.sent or [],
             "summary": a.data.get("summary", ""), "blood": a.data.get("blood", ""), "phone": a.data.get("phone", ""), "message": message(a, origin),
             "maps": maps_link(a.lat, a.lng) if a.lat is not None else "", "directions": directions_link(a.lat, a.lng) if a.lat is not None else ""}
+
+
+def channels() -> dict:
+    """Which alert channels this server drives by itself the moment SOS is pressed (the app shows the rest as one-tap)."""
+    from .push import ready as push_ready
+    return {"email": messaging.email_ready(), "sms": messaging.alert_sms_ready(), "whatsapp": whatsapp.ready(), "push": bool(push_ready())}
+
+
+@r.get("/api/v1/sos/channels")
+def sos_channels():
+    return channels()
 
 
 @r.post("/api/v1/sos/start")

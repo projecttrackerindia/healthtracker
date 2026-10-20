@@ -154,10 +154,31 @@ def send_mail_attachment(to: str, subject: str, text: str, filename: str, data: 
             s.send_message(m)
 
 
-def send_text_sms(to: str, text: str) -> bool:
-    """Free-text SMS: Twilio only (MSG91 OTP templates cannot carry arbitrary text). False when no such channel exists."""
+def alert_sms_ready() -> bool:
+    """A channel that can carry free text, not only an OTP: Twilio, or an MSG91 flow registered for alerts (Firebase sends OTPs only)."""
+    return bool((os.getenv("TWILIO_ACCOUNT_SID") and os.getenv("TWILIO_AUTH_TOKEN")) or (os.getenv("MSG91_AUTH_KEY") and os.getenv("MSG91_SOS_FLOW_ID")))
+
+
+def send_flow_sms(to: str, flow_id: str, variables: dict) -> bool:
+    """MSG91 Flow API: a DLT-registered transactional template with variables (##name##, ##link##). India's way to send an alert
+    SMS without Twilio: register the template once in MSG91 → DLT, then set MSG91_SOS_FLOW_ID."""
+    key = os.getenv("MSG91_AUTH_KEY")
+    if not (key and flow_id):
+        return False
+    body = json.dumps({"template_id": flow_id, "short_url": "0", "recipients": [{"mobiles": to.lstrip("+"), **{k: str(v)[:160] for k, v in variables.items()}}]}).encode()
+    req = urllib.request.Request("https://control.msg91.com/api/v5/flow/", method="POST", data=body,
+                                 headers={"authkey": key, "Content-Type": "application/json", "Accept": "application/json", "User-Agent": UA})
+    urllib.request.urlopen(req, timeout=10).read()
+    return True
+
+
+def send_text_sms(to: str, text: str, flow_vars: dict | None = None) -> bool:
+    """Free-text SMS through Twilio; or, when flow_vars is given and MSG91_SOS_FLOW_ID is set, the MSG91 alert template. False when
+    no such channel exists (MSG91 OTP templates cannot carry arbitrary text)."""
     sid, tok = os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN")
     if not (sid and tok):
+        if flow_vars is not None and os.getenv("MSG91_SOS_FLOW_ID"):
+            return send_flow_sms(to, os.getenv("MSG91_SOS_FLOW_ID", ""), flow_vars)
         return False
     body = urllib.parse.urlencode({"To": to, "From": os.getenv("TWILIO_FROM", ""), "Body": text[:1500]}).encode()
     req = urllib.request.Request(f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json", method="POST", data=body,

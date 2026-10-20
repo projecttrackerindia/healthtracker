@@ -232,3 +232,35 @@ Variables: none required (Google STUN is used). For calls across strict mobile n
 * `/admin` → **System** shows the clinical reviewer, which services are on (smart reading, documents, push) and the last 100 app errors reported by phones.
 * `/admin` → **Dashboard** shows the last smart-reading failure with its exact error.
 * Back up Postgres daily (Railway → Postgres → Backups) and test a restore once before launch.
+
+## Round 29 — the phone list (20 Oct 2026)
+
+Twelve things Prasanna hit on an iPhone, all in one layer (`tools/live/live29.{js,css}`, patched by `tools/live/p29.py`) plus the
+server side:
+
+* **No zoom.** `maximum-scale=1, user-scalable=no`, `touch-action:manipulation`, double-tap and pinch suppressed everywhere
+  except the three 3D stages and the map picker. Every input is ≥16px so iOS never zooms a form.
+* **Tab bar.** `#mtab` is pinned to `calc(100vw - 24px)`; the labels keep their short form when the nav is rebuilt.
+* **Assistant.** A new mark (`SX.assistMark`, an SVG orb with a running ECG trace) replaces the CSS circle; under the keyboard
+  the hero folds away and the ask bar rides on `visualViewport`.
+* **3D body.** On a portrait phone the camera takes a wider field (33°) and a 5% view offset, so the head clears the search
+  bar, which is now a compact pill.
+* **Heart Lab** leaves Home. `SX.heartOn(member)` looks at conditions, the regular doctor, medicines (through the layer-27
+  classes) and two or more high BP readings; when it fires, the tab joins **Care**. Settings has Automatic / Always / Never.
+* **Devices.** No Android download on an iPhone — an "Install on this iPhone" card (Share → Add to Home Screen) instead.
+* **One location.** `SX.loc` is the single source: `get/where/set/gps/resolve`. `SX.mapPick()` is a Rapido/Uber-style picker —
+  the map moves under a fixed pin, with search, "locate me", and (for addresses) door, landmark and PIN. It backs
+  `SX.act.locset`, the Today and Book location card (`SX.locCard`), and the address book.
+* **Google Maps.** `api/places.py` now calls the Geocoding API and Places API (New) when `GOOGLE_MAPS_SERVER_KEY` is set, and
+  falls back to Nominatim/Overpass otherwise (`src` in the response says which answered). The browser key stays
+  `GOOGLE_MAPS_KEY` in `env.yaml`.
+* **Money** never wraps (`.sx-lo1>b`, `.sx-tot b`, tabular numerals).
+* **SOS** acts on the press: no countdown, the call no longer blocks the alert, the last known fix goes out immediately, and a
+  Web Audio siren + vibration run until "I'm safe". `GET /api/v1/sos/channels` tells the app which channels leave without a
+  tap; the fan-out now also sends WhatsApp (Meta Cloud API, `WA_TEMPLATE_SOS`) and SMS through an MSG91 DLT flow
+  (`MSG91_SOS_FLOW_ID`) when Twilio is absent.
+* **Card vault** has prev/next arrows, a counter, dots and swipe.
+* **Translations.** `SX.i18nDom` walks the DOM (text nodes, placeholders, aria-labels, titles) so strings outside `P()` are
+  translated too; dates follow the language; the table is fetched `no-store` with a `__v` version. Anything still untranslated
+  is posted to `POST /api/v1/i18n/missing`, stored in the new `phrases` table, translated in the background with Gemini and
+  served to every device by `GET /api/v1/i18n` — the app's coverage now grows by itself.

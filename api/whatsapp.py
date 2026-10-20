@@ -49,3 +49,22 @@ def send(phone: str, text: str, template: bool = True) -> bool:
     except Exception as e:
         print("[whatsapp] send failed:", str(e)[:200], flush=True)
         return False
+
+
+def send_sos(phone: str, name: str, link: str, text: str) -> bool:
+    """The emergency message: the WA_TEMPLATE_SOS template (two body variables: name, live link) when approved, else the notice
+    template / free text through send()."""
+    phone = (phone or "").strip()
+    if not phone.startswith("+"):
+        phone = "+91" + phone.lstrip("0") if len(phone.lstrip("0")) == 10 else phone
+    tpl = os.getenv("WA_TEMPLATE_SOS")
+    if not (ready() and tpl):
+        return send(phone, text)
+    try:
+        _post({"messaging_product": "whatsapp", "to": phone.lstrip("+"), "type": "template",
+               "template": {"name": tpl, "language": {"code": os.getenv("WA_TEMPLATE_LANG", "en")},
+                            "components": [{"type": "body", "parameters": [{"type": "text", "text": name[:60]}, {"type": "text", "text": link[:200]}]}]}})
+        return True
+    except Exception as e:
+        print("[whatsapp] sos failed:", str(e)[:200], flush=True)
+        return send(phone, text)

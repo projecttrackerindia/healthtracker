@@ -756,3 +756,17 @@ class SharedSummary(Base):
     expires: Mapped[int] = mapped_column(Integer)
     views: Mapped[int] = mapped_column(Integer, default=0)
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class Phrase(Base):
+    """A UI string the app met on a phone in Hindi/Telugu mode that the phrase table did not cover. Translated in the background
+    (Gemini), then served by /api/v1/i18n to every device — so the app's coverage grows on its own instead of waiting for a release."""
+
+    __tablename__ = "phrases"
+    en: Mapped[str] = mapped_column(String(200), primary_key=True)
+    hi: Mapped[str] = mapped_column(String(400), default="")
+    te: Mapped[str] = mapped_column(String(400), default="")
+    src: Mapped[str] = mapped_column(String(12), default="auto")      # auto (model) | reviewed (a doctor / translator signed off)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    done: Mapped[int] = mapped_column(Integer, default=0)             # when the translation landed (0 = still pending)
+    tries: Mapped[int] = mapped_column(Integer, default=0)
