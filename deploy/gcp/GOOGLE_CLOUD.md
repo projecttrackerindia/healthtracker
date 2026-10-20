@@ -114,6 +114,17 @@ Keep Railway (paused, scaled to 0 costs almost nothing) for **7 days**, then del
 * **Cheaper compute**: once the daily jobs move to Cloud Scheduler, Cloud Run can drop `--no-cpu-throttling` and `--min-instances 1` (CPU is then billed only while serving requests, roughly 40–60% less at low traffic) — but a video call would then need a warm instance, so keep one instance warm.
 * **Cloud Armor + CDN**: put a global load balancer in front, add Cloud CDN for `/web` and `/site` assets and a WAF policy.
 
+## Two things new Google Workspace organizations need (seen on the first real run)
+
+1. **Cloud Build "could not resolve source"** — the compute service account has no storage rights in new projects. `setup.sh` now grants `roles/cloudbuild.builds.builder`, `artifactregistry.writer` and `logging.logWriter` to `<project-number>-compute@developer.gserviceaccount.com`.
+2. **Public access refused** (`FAILED_PRECONDITION: … do not belong to a permitted customer`) — the organization's *domain restricted sharing* policy blocks `allUsers`. An org admin lifts it for this project only:
+   ```bash
+   gcloud organizations add-iam-policy-binding <ORG_ID> --member=user:<you> --role=roles/orgpolicy.policyAdmin --condition=None
+   printf 'name: projects/<PROJECT_NUMBER>/policies/iam.allowedPolicyMemberDomains\nspec:\n  rules:\n  - allowAll: true\n' > pol.yaml
+   gcloud org-policies set-policy pol.yaml
+   gcloud run services add-iam-policy-binding tht --region=asia-south1 --member=allUsers --role=roles/run.invoker
+   ```
+
 ## Cost (approximate, US$/month, Mumbai)
 
 | | Lean (this setup) | With HA |
