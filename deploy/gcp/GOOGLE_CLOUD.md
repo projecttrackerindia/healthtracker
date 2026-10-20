@@ -47,7 +47,7 @@ At the end the script prints the two GitHub secrets and two variables to add (Se
 ./deploy.sh
 ```
 
-It builds with Cloud Build, deploys, and calls `/healthz`. Open the printed URL: the app, `/admin`, and `/partner` all work there. Passkeys and sign-in work on that address too (the app uses whichever host serves it).
+It builds with Cloud Build, deploys, and calls `/api/health` (Cloud Run's own front door answers `/healthz` with a 404, so the app also serves `/api/health`). Open the printed URL: the app, `/admin`, and `/partner` all work there. Passkeys and sign-in work on that address too (the app uses whichever host serves it).
 
 The new database is empty at this point. Sign up a test account to prove it works, then continue.
 
