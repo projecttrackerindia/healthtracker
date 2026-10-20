@@ -63,7 +63,7 @@ class HealthSyncPlugin : Plugin() {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    override fun requestPermissions(call: PluginCall) {
         if (HealthConnectClient.getSdkStatus(context) != HealthConnectClient.SDK_AVAILABLE) {
             call.reject("Health Connect is not available on this phone"); return
         }
