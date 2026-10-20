@@ -1,0 +1,12 @@
+.git
+.github
+__pycache__
+*.pyc
+data
+tests
+mobile
+docs
+deploy
+*.md
+node_modules
+.env*

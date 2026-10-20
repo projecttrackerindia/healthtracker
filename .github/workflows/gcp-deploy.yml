@@ -1,0 +1,51 @@
+name: Deploy to Google Cloud Run
+
+# Manual on purpose: production stays on Railway until the cut-over in deploy/gcp/GOOGLE_CLOUD.md is done.
+# After the cut-over, add `push: branches: [main]` here so merges deploy automatically.
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: "What is being deployed (shows in the run list)"
+        required: false
+
+permissions:
+  contents: read
+  id-token: write   # keyless login to Google (Workload Identity Federation) — no service-account key is stored anywhere
+
+concurrency:
+  group: gcp-deploy
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION || 'asia-south1' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push the image
+        run: |
+          set -euo pipefail
+          source deploy/gcp/config.sh
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}"
+          docker build -t "$TAG:${GITHUB_SHA}" -t "$TAG:latest" .
+          docker push "$TAG:${GITHUB_SHA}"
+          docker push "$TAG:latest"
+          echo "IMAGE=$TAG:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Deploy to Cloud Run
+        run: PREBUILT=1 ./deploy/gcp/deploy.sh
