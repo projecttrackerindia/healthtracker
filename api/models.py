@@ -147,6 +147,16 @@ class Order(Base):
     # The visit is a separate judgement from the store. A family has a clear opinion about the person who stood
     # at their door with a needle, and it is not the same opinion as the one they have about the report that
     # arrives two days later. Folding them into one star would hide both.
+    # A prescription order that has been checked, and by whom. The family's status line has said "Pharmacist
+    # checking" since the first version; until now no pharmacist was named, registered or recorded. Rule
+    # 65(11-A) also forbids substitution absolutely, so what was dispensed is what was prescribed or the order
+    # does not go out at all.
+    verified_by: Mapped[str | None] = mapped_column(String(32), nullable=True)   # the pharmacist's PartnerUser id
+    verified_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rx_doctor: Mapped[str] = mapped_column(String(120), default="")              # prescriber, as written on it
+    rx_reg_no: Mapped[str] = mapped_column(String(40), default="")               # their council registration
+    rx_date: Mapped[str] = mapped_column(String(10), default="")                 # the date on the prescription
+    verify_note: Mapped[str] = mapped_column(String(400), default="")
     visit_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
     visit_tags: Mapped[list] = mapped_column(JSON, default=list)
     visit_note: Mapped[str] = mapped_column(String(400), default="")
