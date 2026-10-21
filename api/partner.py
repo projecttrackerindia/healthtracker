@@ -26,7 +26,6 @@ from .seed import CATALOG, TESTS
 
 r = APIRouter(prefix="/api/partner")
 COOKIE = "dk_partner"
-FAILS: dict[str, list[float]] = {}
 NEXT_MED = {"placed": ["checking", "cancelled"], "checking": ["packing", "cancelled"], "packing": ["out", "cancelled"], "out": ["delivered"], "delivered": [],
             "return_requested": ["returned", "refunded", "delivered"], "returned": ["refunded"], "refunded": [], "cancelled": []}
 # A lab booking now has a person attached to it, so the walk from "confirmed" to "collected" is no longer one
@@ -106,15 +105,14 @@ class Login(BaseModel):
 
 @r.post("/login")
 def login(body: Login, request: Request, response: Response, db: Session = Depends(get_db)):
-    ip = request.client.host if request.client else "?"
-    recent = [t for t in FAILS.get(ip, []) if t > time.time() - 900]
-    if len(recent) >= 8:
-        raise HTTPException(429, "Too many attempts; try again in 15 minutes.")
+    from .auth import clear as rl_clear, fail as rl_fail, guard as rl_guard
+
+    rl_guard(request, "partner-login", 8, 900)
     u = find_user(db, body.email)
     if not u or not u.active or not check_pw(body.password, u.pw_hash):
-        FAILS[ip] = recent + [time.time()]
+        rl_fail(request, "partner-login", 900)
         raise HTTPException(401, "Wrong email or password.")
-    FAILS.pop(ip, None)
+    rl_clear(request, "partner-login")
     u.last_login = now()
     response.set_cookie(COOKIE, sign({"id": u.id, "k": "partner"}), httponly=True, samesite="strict", secure=request.headers.get("x-forwarded-proto", request.url.scheme) == "https", max_age=12 * 3600, path="/")
     return me_json(db, u)

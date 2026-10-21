@@ -906,3 +906,40 @@ row becomes a green ₹2,896 with the UTR under it and an undo.
 Paying for a booking at checkout needs a Razorpay merchant account (KYC) for TheHealthTracker. The plumbing
 in `api/payments.py` is already written and used for subscriptions; nothing can be exercised end to end until
 that account exists. The ledger above does not depend on it.
+
+## Rate limiting that holds across containers (2026-10-21)
+
+The last thing pinning the service to `--max-instances 1`, besides the loops Phase 0 already moved out.
+
+`limit()` was a dict in each process. That was exactly right while one container served everything and wrong
+the moment two did: eight sign-in attempts per container is eight times eight across eight containers. The
+dict also grew one key per attacking address and never dropped it — a slow leak with an attacker holding the
+tap.
+
+**Two layers now, and both earn their place.** The in-process deque is first because it is free, and because
+it is the only thing still standing when the database is unreachable; a limiter that raises 500 on a database
+blip takes sign-in down with it, which is a worse outage than the one it was guarding against. The shared
+counter in `rate_hits` is second, and is what makes the budget one budget.
+
+**The window is kept as the hit times, not a count and a start time**, so it slides the way the deque did. A
+fixed window lets a burst through at twice the rate as it rolls over, which on a sign-in endpoint is the
+exact thing one is guarding against. On Postgres the read-modify-write is taken `FOR UPDATE`, or two
+containers both read 7 and both write 8. Rows older than a day are swept every fifteen minutes by whichever
+request notices.
+
+**Sign-in counts failures, not attempts.** `guard` / `fail` / `clear` replace the two hand-rolled `FAILS`
+dicts in `admin.py` and `partner.py`. Somebody who keeps signing in correctly is not an attacker, and a
+fat-fingered morning should not lock out the afternoon.
+
+One test-harness consequence, worth knowing: `conftest.py` now clears both layers between tests. Left alone,
+a full run spends the signup budget around the ninth test that signs anybody up, and everything after it gets
+a 429 from a limiter working exactly as intended — which is how this was found.
+
+12 new tests, suite at **250**.
+
+### Phase 0 switch-over, in this order
+1. Create the three Cloud Scheduler jobs and set `TASKS_TOKEN` (see the docstring in `api/tasks.py`).
+2. Confirm `GET /api/v1/tasks/health` shows all three running.
+3. Set `IN_PROCESS_LOOPS=0`.
+4. Only then drop `--no-cpu-throttling` and raise `--max-instances`. The limiter above is what makes step 4
+   safe; it was the remaining per-container state.
