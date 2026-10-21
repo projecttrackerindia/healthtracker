@@ -150,7 +150,7 @@ def hello(body: Hello, request: Request, db: Session = Depends(get_db), x_dokko_
         h.city = nearest_city(body.lat, body.lng)[0] or h.city
     used = db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t > now() - 30 * 86400)) or 0
     claimed = bool(u) or bool(db.scalar(select(User.id).where(User.household_id == h.id).limit(1)))
-    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "claimed": claimed, "plan": plan_of(h), "planUntil": None if free_now() else h.plan_until, "launch": launch_state(), "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(plan_of(h), 3)}, "orders": len(h.orders)}
+    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "claimed": claimed, "plan": plan_of(h), "planUntil": None if free_now() else h.plan_until, "launch": launch_state(), "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(plan_of(h), 3), "today": docs_today(db, h), "dayCap": AI_DAY_DOCS}, "orders": len(h.orders)}
 
 
 # ---- partners -------------------------------------------------------------------------------------------------------
@@ -495,9 +495,12 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
         ctx = json.loads(context or "{}")
     except Exception:
         ctx = {}
-    kind = kind if kind in ("report", "prescription", "card", "policy") else "report"
-    capped = AI.available() and used >= cap
-    budget_note = ""
+    kind = kind if kind in DOC_KINDS else "report"
+    today = docs_today(db, h)
+    day_full = bool(AI_DAY_DOCS) and today >= AI_DAY_DOCS
+    capped = AI.available() and (used >= cap or day_full)
+    budget_note = (f"That is {AI_DAY_DOCS} documents read today — smart reading rests until midnight. The basic reader was used; "
+                   "nothing is lost, and you can read this one again tomorrow.") if day_full else ""
     if not capped and AI.available():
         try:
             ai_budget(db, h)
@@ -506,7 +509,7 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
     try:
         if kind == "policy":
             if capped:
-                out = {"engine": "local", "kind": "policy", "readable": False, "ms": 0, "warnings": [f"Monthly smart-reading limit for the {h.plan} plan reached ({cap}). Enter the key terms yourself, or upgrade in Family & Privacy → Plan."]}
+                out = {"engine": "local", "kind": "policy", "readable": False, "ms": 0, "warnings": [budget_note or f"Monthly smart-reading limit reached ({cap}). Enter the key terms yourself."]}
             else:
                 txt = text or ""
                 if data and (mime.startswith("text/")):
@@ -516,17 +519,18 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
             out = AI.analyze_card(data, mime)
             if capped:
                 out = {"engine": "local", "kind": "card", "readable": False, "fields": {}, "ms": 0,
-                       "warnings": [f"Monthly smart-reading limit for the {h.plan} plan reached ({cap}). Fill in the details yourself, or upgrade in Family & Privacy → Plan."]}
+                       "warnings": [budget_note or f"Monthly smart-reading limit reached ({cap}). Fill in the details yourself."]}
         else:
             out = AI.analyze(kind, data, mime, text, ctx, force_local=capped)
         if capped:
-            out["warnings"] = list(out.get("warnings", [])) + [budget_note or f"Monthly AI limit for the {h.plan} plan reached ({cap}); the basic reader was used. Upgrade in Family & Privacy → Plan."]
+            out["warnings"] = list(out.get("warnings", [])) + [budget_note or f"Monthly AI limit reached ({cap}); the basic reader was used."]
     except Exception as e:
         db.add(_job(h, kind, "error", ok=False))
         print("[ai] analysis failed:", str(e)[:300], flush=True)  # details stay in the server log
         raise HTTPException(500, "We could not read this document right now. Please try again in a few minutes.")
     db.add(_job(h, kind, out["engine"], ms=out["ms"], findings=len(out.get("findings", [])) + len(out.get("medicines", [])) + len(out.get("fields", {}))))
-    out["quota"] = {"used": used + (1 if out["engine"] == "claude" else 0), "cap": cap, "plan": h.plan}
+    out["quota"] = {"used": used + (1 if out["engine"] == "claude" else 0), "cap": cap, "plan": h.plan,
+                    "today": docs_today(db, h), "dayCap": AI_DAY_DOCS}
     # what the browser sees: no provider or model names
     out["engine"] = "ai" if out["engine"] == "claude" else "local"
     out.pop("model", None)
@@ -567,6 +571,7 @@ def beacon(body: Beacon, request: Request, db: Session = Depends(get_db)):
 
 # daily token budget per family (and a global one for the bill), on top of the monthly per-feature counts
 LAUNCH_DAY_TOKENS = int(os.getenv("AI_DAY_TOKENS_LAUNCH", "400000"))      # per family per day while the launch period runs
+AI_DAY_DOCS = int(os.getenv("AI_DAY_DOCS", "10"))                        # documents a family can have read by the AI in one day
 AI_DAY_TOKENS = {"free": int(os.getenv("AI_DAY_TOKENS_FREE", "80000")), "family": int(os.getenv("AI_DAY_TOKENS_FAMILY", "400000")), "plus": int(os.getenv("AI_DAY_TOKENS_PLUS", "1500000"))}
 AI_DAY_TOKENS_ALL = int(os.getenv("AI_DAY_TOKENS_ALL", "40000000"))
 
@@ -574,6 +579,15 @@ AI_DAY_TOKENS_ALL = int(os.getenv("AI_DAY_TOKENS_ALL", "40000000"))
 def _ist_midnight() -> int:
     from zoneinfo import ZoneInfo
     return int(datetime.now(ZoneInfo("Asia/Kolkata")).replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+
+
+DOC_KINDS = ("report", "prescription", "card", "policy")
+
+
+def docs_today(db, h) -> int:
+    """Documents this family has had read by the AI since midnight IST (questions and insights have their own limits)."""
+    return db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t >= _ist_midnight(),
+                                                        AiJob.engine == "claude", AiJob.kind.in_(DOC_KINDS))) or 0
 
 
 def ai_budget(db, h) -> None:
