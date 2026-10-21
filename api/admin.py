@@ -21,7 +21,6 @@ from .seed import CATALOG, TESTS
 
 r = APIRouter(prefix="/api/admin")
 COOKIE = "dk_admin"
-FAILS: dict[str, list[float]] = {}
 
 
 def me(request: Request, db: Session = Depends(get_db)) -> Admin:
@@ -51,15 +50,14 @@ class Login(BaseModel):
 
 @r.post("/login")
 def login(body: Login, request: Request, response: Response, db: Session = Depends(get_db)):
-    ip = request.client.host if request.client else "?"
-    recent = [t for t in FAILS.get(ip, []) if t > time.time() - 900]
-    if len(recent) >= 8:
-        raise HTTPException(429, "too many attempts; try again in 15 minutes")
+    from .auth import clear as rl_clear, fail as rl_fail, guard as rl_guard
+
+    rl_guard(request, "admin-login", 8, 900)
     a = db.scalar(select(Admin).where(Admin.email == body.email.strip().lower()))
     if not a or not check_pw(body.password, a.pw_hash):
-        FAILS[ip] = recent + [time.time()]
+        rl_fail(request, "admin-login", 900)
         raise HTTPException(401, "wrong email or password")
-    FAILS.pop(ip, None)
+    rl_clear(request, "admin-login")
     a.last_login = now()
     log(db, a.email, "login")
     response.set_cookie(COOKIE, sign({"id": a.id, "e": a.email}), httponly=True, samesite="strict", secure=request.url.scheme == "https", max_age=12 * 3600, path="/")

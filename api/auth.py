@@ -39,20 +39,140 @@ COOKIE = "tht_s"
 SESSION_DAYS = 30
 RP_NAME = "TheHealthTracker"
 
-# ---------------------------------------------------------------------------------------------------------------------
+# ---- rate limiting ---------------------------------------------------------------------------------------------------
+# Two layers, and both earn their place.
+#
+# The in-process deque is first because it is free, and because it is the only thing still standing when the
+# database is unreachable — a limiter that raises 500 on a database blip takes sign-in down with it, which is
+# a worse outage than the one it was guarding against.
+#
+# The shared counter is second because the in-process one is per container. Eight attempts per container is
+# eight times eight across eight containers, which is the whole reason the service has been pinned to a single
+# instance. This is what unpins it.
 _HITS: dict[str, deque] = defaultdict(deque)
+TOO_MANY = "Too many attempts. Please wait a few minutes and try again."
+_SWEPT = 0.0
 
 
-def limit(request: Request, key: str, n: int, per: int):
-    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "?"))
-    k = f"{key}:{ip}"
+def client_ip(request: Request) -> str:
+    return (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or (request.client.host if request.client else "?"))
+
+
+def _local(k: str, n: int, per: int) -> bool:
+    """The per-container view. True when this container alone has already seen too many."""
     q, t = _HITS[k], time.time()
     while q and q[0] < t - per:
         q.popleft()
+    if not q:
+        # Drop the key rather than leaving an empty deque behind: otherwise the dict grows one entry per
+        # attacking address and nothing ever removes it.
+        _HITS.pop(k, None)
+        q = _HITS[k]
     if len(q) >= n:
-        raise HTTPException(429, "Too many attempts. Please wait a few minutes and try again.")
+        return True
     q.append(t)
+    return False
+
+
+def _shared(k: str, n: int, per: int) -> bool:
+    """The view across every container. Falls open on a database error, because the local layer still holds."""
+    global _SWEPT
+    from .db import engine, session
+    from .models import RateHit
+
+    t = int(time.time())
+    try:
+        with session() as db:
+            q = db.query(RateHit).filter(RateHit.k == k)
+            if engine.dialect.name == "postgresql":
+                # Serialise the read-modify-write; without it two containers can both read 7 and both write 8.
+                q = q.with_for_update()
+            row = q.one_or_none()
+            hits = [x for x in (row.hits if row else []) if x > t - per]
+            if len(hits) >= n:
+                if row:
+                    row.seen = t
+                return True
+            hits.append(t)
+            if row:
+                row.hits, row.seen = hits, t
+            else:
+                db.add(RateHit(k=k, hits=hits, seen=t))
+
+            # Sweep now and then, in the same transaction, so the table does not grow a row per address seen.
+            if t - _SWEPT > 900:
+                _SWEPT = t
+                db.query(RateHit).filter(RateHit.seen < t - 86400).delete(synchronize_session=False)
+            return False
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("[limit] shared counter unavailable:", type(e).__name__, str(e)[:120], flush=True)
+        return False
+
+
+def limit(request: Request, key: str, n: int, per: int):
+    ip = client_ip(request)
+    k = f"{key}:{ip}"
+    if _local(k, n, per) or _shared(k, n, per):
+        raise HTTPException(429, TOO_MANY)
     return ip
+
+
+# ---- the same two layers, counting failures instead of attempts ------------------------------------------------------
+# A sign-in page is different from the endpoints above: somebody who keeps signing in correctly is not an
+# attacker, and locking them out for it is a fault. So these three count only what went wrong.
+def _peek(k: str, n: int, per: int) -> bool:
+    t = time.time()
+    q = _HITS.get(k)
+    if q:
+        while q and q[0] < t - per:
+            q.popleft()
+        if len(q) >= n:
+            return True
+    from .db import session
+    from .models import RateHit
+
+    try:
+        with session() as db:
+            row = db.get(RateHit, k)
+            if not row:
+                return False
+            return len([x for x in row.hits if x > t - per]) >= n
+    except Exception:
+        return False
+
+
+def guard(request: Request, key: str, n: int, per: int) -> str:
+    """Refuse an address that has already failed too often. Counts nothing itself."""
+    ip = client_ip(request)
+    if _peek(f"{key}:{ip}", n, per):
+        raise HTTPException(429, TOO_MANY)
+    return ip
+
+
+def fail(request: Request, key: str, per: int) -> None:
+    """One wrong password. Recorded in both layers; a very large n so neither refuses the write itself."""
+    k = f"{key}:{client_ip(request)}"
+    _local(k, 10 ** 6, per)
+    _shared(k, 10 ** 6, per)
+
+
+def clear(request: Request, key: str) -> None:
+    """They got in. Forget the near misses, so a fat-fingered morning does not lock out the afternoon."""
+    k = f"{key}:{client_ip(request)}"
+    _HITS.pop(k, None)
+    from .db import session
+    from .models import RateHit
+
+    try:
+        with session() as db:
+            row = db.get(RateHit, k)
+            if row:
+                db.delete(row)
+    except Exception:
+        pass
 
 
 def csrf(request: Request):

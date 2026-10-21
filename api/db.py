@@ -130,6 +130,7 @@ def ensure_indexes() -> None:
         ("ix_rtc_relay_pick", "rtc_relay", "(aid, to_role, id)"),
         ("ix_track_pings_pick", "track_pings", "(order_id, id)"),
         ("ix_orders_agent_state", "orders", "(agent_id, status)"),
+        ("ix_rate_hits_seen", "rate_hits", "(seen)"),
     ]
     with engine.begin() as c:
         for name, table, cols in want:

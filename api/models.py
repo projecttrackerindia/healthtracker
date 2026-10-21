@@ -598,6 +598,23 @@ class Payout(Base):
     paid_by: Mapped[str] = mapped_column(String(160), default="")
 
 
+class RateHit(Base):
+    """Rate-limit counters, shared across containers.
+
+    The limiter used to be a dict in each process, which was exactly right while the service ran on one
+    instance and wrong the moment it did not: eight sign-in attempts per container is eight times eight across
+    eight containers, and the dict grew a key per attacking IP that nothing ever removed.
+
+    The window is kept as the hit times themselves rather than a count and a start time, so it slides the way
+    the in-memory deque did. A fixed window would let a burst at the boundary through at twice the rate, which
+    on a sign-in endpoint is the whole thing one is trying to prevent."""
+
+    __tablename__ = "rate_hits"
+    k: Mapped[str] = mapped_column(String(100), primary_key=True)     # "<bucket>:<ip>"
+    hits: Mapped[list] = mapped_column(JSON, default=list)            # unix seconds, inside the window
+    seen: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
 class Appointment(Base):
     """A visit requested at a partner hospital or clinic; the partner confirms a slot, reschedules or declines."""
 
