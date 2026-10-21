@@ -27,7 +27,10 @@ ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 ADMIN = ROOT / "admin"
 SITE = ROOT / "site"
-VERSION = os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8]
+# What is actually running. This read RAILWAY_GIT_COMMIT_SHA, which nothing on Cloud Run sets, so the health
+# endpoint has reported "dev" since the move and has been no help at all in answering "did that deploy land?".
+# deploy.sh now writes APP_VERSION into env.yaml from the commit it is building.
+VERSION = (os.getenv("APP_VERSION") or os.getenv("RAILWAY_GIT_COMMIT_SHA") or "dev")[:12]
 STARTED = time.time()
 
 app = FastAPI(title="TheHealthTracker", version=VERSION, docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json")
@@ -208,10 +211,27 @@ async def headers(request: Request, call_next):
 # --------------------------------------------------------------------------------------------------
 # API (Phase 1 starts here; every route is versioned)
 # --------------------------------------------------------------------------------------------------
+def _sw_version() -> str:
+    """The service-worker cache name, which is what actually decides whether a family's phone picks up new
+    front-end code. Read once at boot from the file we ship."""
+    try:
+        head = (ROOT / "web" / "sw.js").read_text(encoding="utf-8")[:120]
+        import re as _re
+        m = _re.search(r"const V='([^']+)'", head)
+        return m.group(1) if m else ""
+    except Exception:
+        return ""
+
+
+SW_VERSION = _sw_version()
+
+
 @app.api_route("/healthz", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/api/health", methods=["GET", "HEAD"], include_in_schema=False)  # Cloud Run reserves /healthz at its front door
 def healthz():
-    return {"ok": True, "version": VERSION, "uptime_s": int(time.time() - STARTED)}
+    return {"ok": True, "version": VERSION, "uptime_s": int(time.time() - STARTED),
+            # Enough to answer "is the thing I just merged live?" from one public URL, without a shell.
+            "built": os.getenv("APP_BUILT", ""), "sw": SW_VERSION}
 
 
 # --------------------------------------------------------------------------------------------------
