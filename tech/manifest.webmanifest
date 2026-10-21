@@ -1,12 +1,16 @@
 {
-  "name": "Collect — TheHealthTracker",
+  "name": "Collect · TheHealthTracker",
   "short_name": "Collect",
   "description": "Sample collection jobs for lab technicians.",
   "start_url": "/tech",
   "scope": "/tech",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f3f5f6",
-  "theme_color": "#0f766e",
-  "icons": [{ "src": "/tech/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "background_color": "#e8e9eb",
+  "theme_color": "#0B8A7C",
+  "icons": [
+    { "src": "/brand/png/partner-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/brand/png/partner-icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/brand/svg/partner-icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
 }

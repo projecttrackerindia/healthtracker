@@ -723,3 +723,23 @@ Worth remembering: an API test proves the endpoint. It does not prove the screen
 
 9 new tests covering assignment, the four taps, cross-lab and cross-technician isolation, the ping window and
 the family's view; full suite 182 passing.
+
+
+### Follow-up: the technician app is TheHealthTracker, in the partner colour
+
+The first cut invented a teal palette and drew its own test-tube glyph. `BRAND.md` already answers both:
+
+| Audience | Colour |
+| --- | --- |
+| Users (families) | Signal Blue |
+| **Partners** (doctors, hospitals, pharmacies, **labs**) | **Care Teal `#0B8A7C`** |
+| Admin | Graphite |
+
+So the technician app now uses the real partner mark from `web/brand/svg/partner-mark.svg`, Care Teal, the
+family app's greys, radii, shadow and type stack, and the `partner-icon` PNGs in its manifest. It reads as
+TheHealthTracker in the partner colour rather than as a different product, which is what a technician glancing
+down should see.
+
+The rule this sets for the five roles still to come: **a role gets an accent, not a look.** One design system,
+one set of structural tokens, one type stack; only the accent and the mark change, and which accent is not a
+free choice — it is in the brand guide.

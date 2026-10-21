@@ -3,28 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Collect</title>
-<meta name="theme-color" content="#0f766e">
+<title>Collect · TheHealthTracker</title>
+<meta name="theme-color" content="#0B8A7C">
 <link rel="manifest" href="/tech/manifest.webmanifest">
-<link rel="icon" href="/tech/icon.svg">
+<link rel="icon" href="/brand/svg/partner-icon.svg">
 <style>
 /* One screen at a time, one decision per screen. This is read at arm's length, in sunlight, by someone
    holding a bag in the other hand — so: 17px floor on body text, 56px floor on anything tappable, and no
    control that needs precision. The palette is its own: a technician who glances down should never wonder
    which app they are in. */
 :root{
-  --bg:#f3f5f6; --card:#ffffff; --ink:#0d1b1a; --mute:#5c6f6d; --line:#dfe6e5;
-  --brand:#0f766e; --brand-ink:#ffffff; --brand-soft:#e3f1ef;
-  --go:#0f766e; --warn:#b45309; --bad:#b91c1c; --ok:#15803d;
-  --r:18px; --sh:0 10px 30px -18px rgba(8,30,28,.45);
+  /* Same system as the family app — same greys, same radii, same shadow language, same type. The only thing
+     that changes is the accent, and that is not a free choice: BRAND.md assigns Care Teal #0B8A7C to
+     partners (doctors, hospitals, pharmacies, labs) and Signal Blue to families. A technician glancing down
+     should see TheHealthTracker in the partner colour, not a different product. */
+  --bg:#e8e9eb; --shell:#f1f1f2; --card:#ffffff; --soft:#f7f7f8;
+  --ink:#0e1424; --mute:#6a7385; --line:#dcdde1;
+  --brand:#0B8A7C; --brand-ink:#ffffff; --brand-soft:#e4f2f0;
+  --warn:#b45309; --bad:#b91c1c; --ok:#0B8A7C;
+  --r:18px; --sh:0 10px 30px rgba(20,30,60,.08);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --bg:#0b1211; --card:#121d1c; --ink:#e7f0ef; --mute:#8ba5a2; --line:#1e2e2c;
-  --brand:#2dd4bf; --brand-ink:#04211e; --brand-soft:#14312d; --sh:none; color-scheme:dark}}
+  --bg:#0b0d12; --shell:#12151c; --card:#181c25; --soft:#1e232e;
+  --ink:#eef1f7; --mute:#8d96a8; --line:#262c39;
+  --brand:#3fbfae; --brand-ink:#04231f; --brand-soft:#11312c;
+  --sh:none; color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink);font:17px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+body{background:var(--bg);color:var(--ink);font:17px/1.45 "Geist","Noto Sans Devanagari","Noto Sans Telugu",Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   -webkit-text-size-adjust:100%}
 button,input{font:inherit;color:inherit}
@@ -33,7 +40,7 @@ button{border:0;background:none;cursor:pointer}
 
 /* header */
 .top{display:flex;align-items:center;gap:10px;padding:8px 2px 14px}
-.mark{width:34px;height:34px;flex:none}
+.mark{width:38px;height:30px;flex:none}
 .top b{font-size:17px;letter-spacing:-.01em}
 .top small{display:block;color:var(--mute);font-size:12.5px}
 .top .grow{flex:1;min-width:0}
@@ -88,7 +95,9 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
 "use strict";
 const $ = s => document.querySelector(s);
 const E = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const MARK = `<svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="var(--brand)"/><path d="M13 11h14M15 11v9.5a5 5 0 0 0 10 0V11" stroke="var(--brand-ink)" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="20" cy="27" r="3.2" fill="var(--brand-ink)"/></svg>`;
+// The partner lock-up from web/brand — the cross whose arm becomes a heartbeat, in Care Teal. Inlined rather
+// than fetched so the first screen paints with no network.
+const MARK = `<svg class="mark" viewBox="8 10 52 44" aria-hidden="true"><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="var(--brand)"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="var(--brand)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="var(--brand)"/></svg>`;
 
 let S = { me: null, jobs: [], busy: false, err: "" };
 let watchId = null, pinging = null;
@@ -128,7 +137,7 @@ function stopSharing() {
 
 // ---- screens ----------------------------------------------------------------------------------------------
 function signIn() {
-  return `<div class="top">${MARK}<div class="grow"><b>Collect</b><small>Sample collection</small></div></div>
+  return `<div class="top">${MARK}<div class="grow"><b>Collect</b><small>TheHealthTracker for partners</small></div></div>
   <div class="card">
     <h2 style="margin:0 0 4px;font-size:21px;letter-spacing:-.015em">Sign in</h2>
     <p style="color:var(--mute);margin:0;font-size:15px">Use the details your lab gave you.</p>
