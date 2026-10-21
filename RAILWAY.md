@@ -1006,3 +1006,31 @@ New: `GET /partner/picklist`, `POST /partner/batch/pack`; the Pick list view. 13
 ### Verified in a browser
 Five orders → 4 ready, 1 waiting, 4 lines: Metformin 6, Amoxicillin 3 (1 held), Paracetamol 10, ORS 6
 (2 held). **Mark picked as packed** → 0 ready, 2 lines, and only Vikram's unchecked order left on the sheet.
+
+## Pharmacy slice 3 — the prescription record, both ways (2026-10-21)
+
+Two halves of the same record, now that a named registered pharmacist signs every prescription off.
+
+**The family is told who checked it.** `order_json` carries `checkedBy` — name, registration number and
+when — and live layer 38 puts a green line under the order: *"✓ Checked by Priya Nair · Pharmacist
+AP/12345"*. A pharmacy council registration is a public professional credential, and showing it is most of
+what separates a pharmacy from a website that posts medicines through a letterbox. The family is **not**
+shown the prescriber's details back: they wrote it, it is theirs, and what is new to them is who at the
+pharmacy checked it.
+
+`_checked_by()` takes the pharmacist off the order's own session via `object_session`. `order_json` runs in
+a loop over a family's orders, so opening a connection per row turns a list of twelve into twelve
+round-trips.
+
+**The pharmacist is told how old it is.** Doorstep delivery under MoHFW s.26B (26 March 2020) asks for a
+prescription no older than 30 days for a repeat of a chronic medicine and 7 for an acute course. Entering
+the date now shows the age inline before they sign: green under a week, plain up to thirty days, amber past
+that with the rule quoted.
+
+**It is a note, never a refusal.** The registered pharmacist is the professional, and software substituting
+its own judgement for theirs is precisely what TPG §5.4 forbids. We state the fact; they decide. The
+thresholds come from `GET /partner/rx-rules` rather than being written into the console's JavaScript, so
+there is one place they live.
+
+New: `GET /partner/rx-rules`, `checkedBy` on the family's order, `rxAgeDays` on the partner's; live layer 38
+(`dk-r38`). 10 new tests, suite at **289**.

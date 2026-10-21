@@ -2505,6 +2505,11 @@ body[data-page=assist]{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
 .lv37-t{padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--soft);font-size:13.5px;cursor:pointer}
 .lv37-t.on{background:color-mix(in srgb,var(--brand,#13b5a3) 16%,transparent);border-color:color-mix(in srgb,var(--brand,#13b5a3) 45%,transparent);font-weight:600}
 </style>
+<style id="live38-css">/* live 38 — the pharmacist's sign-off, on the family's order */
+.lv38{display:block;margin-top:4px;color:var(--ok,#16a34a);font-size:12px;font-weight:600;letter-spacing:-.005em}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .lv38{color:#4ade80}}
+:root[data-theme=dark] .lv38{color:#4ade80}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -10352,6 +10357,47 @@ function paint() {
 setInterval(() => { try { paint(); } catch (e) {} }, 4000);
 setTimeout(() => { try { paint(); } catch (e) {} }, 1200);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(paint, 300); });
+}
+
+/*live-p38*/
+// ===================== live layer 38: who checked your prescription =====================
+// A named, registered pharmacist now signs off every prescription order before it is packed. The family
+// should be told who that was. A pharmacy registration number is a public professional credential, and
+// showing it is most of what separates a pharmacy from a website that posts medicines through a letterbox.
+{
+const P = SX.p, E = SX.E || (s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+const St = () => SX.S || {};
+
+SX.addPhrases({
+  'Checked by': ['जाँच की', 'తనిఖీ చేసినవారు'],
+  'Pharmacist': ['फार्मासिस्ट', 'ఫార్మసిస్ట్'],
+  'Reg': ['रजि', 'రిజి'],
+});
+
+function line(o) {
+  const c = o.checkedBy;
+  if (!c) return '';
+  const who = `${P('Checked by')} ${E(c.name)}`;
+  const reg = c.regNo ? ` · ${P('Pharmacist')} ${E(c.regNo)}` : ` · ${P('Pharmacist')}`;
+  return `<small class="lv38">✓ ${who}${reg}</small>`;
+}
+
+SX.extend('orders', {
+  mounted() {
+    const orders = (St().liveOrders || []).filter(o => o.kind === 'medicine' && o.checkedBy);
+    if (!orders.length) return;
+    const rows = [...document.querySelectorAll('.sx-lo')];
+    orders.forEach(o => {
+      // Same way layer 10 finds a row: the order id is printed in its <small>. There is no data attribute
+      // on these rows and adding one would mean editing the main renderer from a layer, which is how the
+      // two get out of step.
+      const row = rows.find(el => el.textContent.includes(o.id));
+      if (!row || row.querySelector('.lv38')) return;
+      const head = row.querySelector('.sx-lo1');
+      if (head) head.insertAdjacentHTML('afterend', line(o));
+    });
+  }
+});
 }
 
 SX.boot();

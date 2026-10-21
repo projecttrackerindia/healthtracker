@@ -87,7 +87,7 @@ async function loadOrders(){const st=$('#ost')?$('#ost').value:'open';let r;try{
    <div><b>${E(o.member||o.family.name||'Family')}</b> · ${E(o.address||o.family.city||'')}${o.addr&&o.addr.lat?` · <a href="https://www.google.com/maps/dir/?api=1&destination=${o.addr.lat},${o.addr.lng}" target="_blank" rel="noopener">Directions</a>`:''}${o.addr&&o.addr.phone?` · <a href="tel:${E(o.addr.phone)}">${E(o.addr.phone)}</a>`:''}${o.payment==='upi-paid'?' · <span class="tag ok">paid by UPI</span>':''}${o.slot?` · <b>${E(o.slot)}</b>`:''}${o.payment?` · ${o.payment==='cod'?(isLab?'Pay at collection':'Pay on delivery'):E(o.payment)}`:''}</div>
    <div class="items">${o.items.map(i=>`${E(i.name)}${i.qty>1?' × '+i.qty:''}${i.rx?' <span class="tag warn">Rx</span>':''}`).join(' · ')} · <b>${money(o.total)}</b></div>
    ${o.rxShared?`<div class="items">Prescription: ${o.rxFiles.length?o.rxFiles.map((f,i)=>`<a href="/api/partner/orders/${E(o.id)}/rx/${encodeURIComponent(f)}" target="_blank" rel="noopener">open ${i+1} ↗</a>`).join(' · '):'<span class="tag warn">shared, syncing from the family’s phone</span>'}</div>`:o.items.some(i=>i.rx)?`<div class="items"><span class="tag bad">Rx items without a prescription</span> — do not dispense; message the family.</div>`:''}
-   ${o.verified?`<div class="items">Checked by <b>${E(o.verified.by)}</b> <span style="font-family:var(--mono)">${E(o.verified.regNo)}</span> · prescriber ${E(o.verified.doctor)} ${E(o.verified.doctorReg)}${o.verified.rxDate?` · dated ${E(o.verified.rxDate)}`:''}${o.verified.note?`<br>↳ ${E(o.verified.note)}`:''}</div>`:o.needsVerify?`<div class="items"><span class="tag warn">prescription not checked</span> — a registered pharmacist must check it before this can be packed.</div>`:''}
+   ${o.verified?`<div class="items">Checked by <b>${E(o.verified.by)}</b> <span style="font-family:var(--mono)">${E(o.verified.regNo)}</span> · prescriber ${E(o.verified.doctor)} ${E(o.verified.doctorReg)}${o.verified.rxDate?` · dated ${E(o.verified.rxDate)}${o.verified.rxAgeDays!=null&&o.verified.rxAgeDays>30?` <span class="tag warn">${o.verified.rxAgeDays} days old</span>`:''}`:''}${o.verified.note?`<br>↳ ${E(o.verified.note)}`:''}</div>`:o.needsVerify?`<div class="items"><span class="tag warn">prescription not checked</span> — a registered pharmacist must check it before this can be packed.</div>`:''}
    ${o.agent?`<div class="items">Going: <b>${E(o.agent.name)}</b>${o.agent.phone?` · <a href="tel:${E(o.agent.phone)}">${E(o.agent.phone)}</a>`:''}${o.status==='en_route'?' · <span class="tag go">on the way</span>':o.status==='arrived'?' · <span class="tag go">at the door</span>':''}</div>`:o.canAssign?`<div class="items"><span class="tag warn">nobody assigned</span> — the family is waiting to be told who is coming.</div>`:''}
    ${(o.timeline||[]).filter(t=>(t.note||t.reason)&&t.s!=='assigned').map(t=>`<div class="items">↳ ${E(t.s.replace(/_/g,' '))}: ${E(t.reason||'')} ${E(t.note||'')}</div>`).join('')}<div class="asg" data-for="${E(o.id)}"></div></div>
   <div class="acts">${o.needsVerify?`<button class="btn sm p" data-vrx="${E(o.id)}">Check prescription</button>`:''}${o.canAssign?`<button class="btn sm ${o.agent?'':'p'}" data-asg="${E(o.id)}">${o.agent?'Reassign':'Assign a technician'}</button>`:''}${isLab&&!/cancel/.test(o.status)?`<label class="btn sm ${!o.hasReport&&/collected|processing/.test(o.status)?'p':''}">${o.hasReport?'Replace report':'⬆ Upload report'}<input type="file" accept="application/pdf,image/*" hidden data-rep="${E(o.id)}"></label>`:''}${o.next.map(n=>`<button class="btn sm ${n==='cancelled'?'d':''}" data-st="${E(o.id)}:${n}">${E(o.labels[n])}</button>`).join('')}<button class="btn sm" data-msg="${E(o.householdId)}" data-nm="${E(o.member||o.family.name||'Family')}">💬 Message</button></div></div>`).join('');
@@ -98,7 +98,7 @@ async function loadOrders(){const st=$('#ost')?$('#ost').value:'open';let r;try{
  $('#ol').querySelectorAll('[data-rep]').forEach(i=>i.onchange=async()=>{const f=i.files[0];if(!f)return;if(f.size>15e6){toast('Up to 15 MB');return}try{await api(`/orders/${i.dataset.rep}/report`,{method:'PUT',raw:true,headers:{'content-type':f.type||'application/pdf','x-file-name':f.name},body:f});toast('Report delivered to the family');loadOrders();load()}catch(e){toast(e.message)}})}
 // The assign picker. It opens under the booking rather than in a modal: the owner is choosing between people
 // by how loaded they already are, and that decision reads better next to the address they are being sent to.
-let asgOpen='';
+let asgOpen='',RXR=null;
 async function openAssign(oid){const box=$(`.asg[data-for="${oid}"]`);if(!box)return;
  if(asgOpen===oid){box.innerHTML='';asgOpen='';return}
  document.querySelectorAll('.asg').forEach(e=>e.innerHTML='');asgOpen=oid;
@@ -158,12 +158,22 @@ function verifyRx(oid){const o=(LASTO||[]).find(x=>x.id===oid);if(!o)return;
    <div class="row" style="margin:0 0 8px"><label class="grow">Prescriber<input name="doctor" required placeholder="As written on it"></label>
     <label class="grow">Their registration no.<input name="regNo" required placeholder="NMC / state council"></label>
     <label>Dated<input name="rxDate" type="date" max="${new Date().toISOString().slice(0,10)}"></label></div>
+   <p class="items" id="vrxage" hidden></p>
    <div class="row" style="margin:0 0 8px"><label class="grow">Note <span style="font-weight:400;color:var(--mute)">(optional — anything you queried)</span><input name="note" maxlength="300"></label></div>
    <div class="row" style="margin:0"><button class="btn p sm">Checked — signed off</button>
     <button class="btn sm d" type="button" id="vrxno">Refuse to dispense</button>
     <button class="btn sm" type="button" id="vrxx">Cancel</button>
     <span class="grow"></span><span style="color:var(--mute);font-size:12px">Signed as ${E(ME.user.name||ME.user.email)} · ${E(ME.user.regNo||'')}</span></div></form>`;
  $('#vrxx').onclick=()=>{box.innerHTML=''};
+ // State the age; never refuse on it. The registered pharmacist is the professional, and software putting
+ // its own judgement above theirs is the thing the Telemedicine Practice Guidelines forbid outright.
+ const dt=$('#vrxf input[name=rxDate]'),ag=$('#vrxage');
+ dt.onchange=async()=>{if(!dt.value){ag.hidden=true;return}
+  const days=Math.max(0,Math.round((Date.now()-new Date(dt.value+'T00:00:00').getTime())/86400000));
+  if(!RXR)try{RXR=await api('/rx-rules')}catch(e){RXR={chronicDays:30,acuteDays:7,note:''}}
+  if(days>RXR.chronicDays){ag.hidden=false;ag.innerHTML=`<span class="tag warn">${days} days old</span> ${E(RXR.note)}`}
+  else if(days>RXR.acuteDays){ag.hidden=false;ag.innerHTML=`<span class="tag">${days} days old</span> Fine for a repeat of a chronic medicine; older than the ${RXR.acuteDays} days asked for on an acute course.`}
+  else{ag.hidden=false;ag.innerHTML=`<span class="tag ok">${days} day${days===1?'':'s'} old</span>`}};
  $('#vrxno').onclick=async()=>{const why=prompt('Why are you not dispensing this? The family is shown exactly what you write, so that they do not simply take the same prescription elsewhere.');
   if(!why)return;try{await api(`/orders/${oid}/refuse`,{method:'POST',body:{reason:why}});toast('Refused · the family has been told why');loadOrders();load()}catch(e){toast(e.message)}};
  $('#vrxf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=e.target.querySelector('button');b.disabled=true;
