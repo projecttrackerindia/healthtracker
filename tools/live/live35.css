@@ -1,0 +1,56 @@
+/* ---- layer 35: global button behaviour, the map sheet, the picker ---- */
+
+/* A. A button is a button. It never folds its letters into a vertical column, and it never shrinks below its
+   own text — the label beside it gives way instead. This was fixed inside one sheet in round 34; it belongs
+   here, once, for the whole app. */
+.btn,.chip,.sx-cta .btn,.row .btn,.hd .btn,button.btn{white-space:nowrap;flex-shrink:0}
+.btn>*,.chip>*{white-space:nowrap}
+/* and the text they sit beside is what gives way */
+.card .hd,.sx-cta,.row,.lv6-pl,.sx-store{min-width:0}
+.card .hd .grow,.sx-cta .grow,.row .grow,.lv6-pl .grow,.sx-store .grow{min-width:0}
+.card .hd .grow>b,.sx-cta .grow>b,.row .grow>b{overflow-wrap:anywhere}
+/* a long saved address must wrap or clip, never push the box wider than the screen */
+.sx-addr,.sx-addr *,[data-net=addr],.lv35-clip{min-width:0;overflow-wrap:anywhere}
+
+/* B. The map sheet keeps one height whatever the address says, so the map above it is never resized. */
+.lv29-sheet .lv29-addr{min-height:46px}
+.lv29-sheet .lv29-addr .grow{min-width:0}
+.lv29-sheet .lv29-addr b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.lv29-sheet .lv29-addr small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.2em}
+.lv29-sheet .lv29-addr.busy b{opacity:.62}
+.lv29-sheet .lv29-addr.busy small::after{content:" ·";animation:lv35dots 1s steps(4,end) infinite}
+@keyframes lv35dots{0%{content:" ·"}25%{content:" ··"}50%{content:" ···"}75%{content:" ··"}}
+
+/* C. The floating compose button is part of the page, not of a sheet on top of it. */
+body.lv35-modal .fab,body.lv35-modal #sxfab,body.lv35-modal .sx-fab{opacity:0;pointer-events:none;transform:scale(.9)}
+.fab,#sxfab,.sx-fab{transition:opacity .16s ease,transform .16s ease}
+
+/* D. The test picker: selecting must not move the list under the finger. */
+.lv34-tests{overscroll-behavior:contain}
+.lv34-t{transition:background .14s ease,border-color .14s ease}
+
+/* E. The stage controls were a wrapping, centred, absolutely-positioned row, so on a short stage they rode up
+   over the speciality chips. One line, anchored to the bottom of the stage, scrollable if they do not fit,
+   and on a surface of their own so they read as controls rather than text floating on the model. */
+.pro-stage-bar{left:10px;right:10px;bottom:76px;top:auto;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-end;
+  scrollbar-width:none;gap:6px;padding:0 2px}
+.pro-stage-bar::-webkit-scrollbar{display:none}
+.pro-stage-bar button{pointer-events:auto;flex:none;white-space:nowrap;font-size:12.5px;line-height:1;
+  padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--card) 88%,transparent);color:var(--ink);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 8px 22px -14px rgba(16,24,48,.5)}
+/* the speciality row owns the top of the stage; nothing else may sit there */
+.stage .seg,.stage .chips{position:relative;z-index:7}
+
+/* F. The assistant in chat mode: messages scroll, chips sit on their own line, the composer reaches the
+   bottom of the screen instead of floating where the content happens to end. 100dvh so an open keyboard
+   does not strand it halfway up. */
+body.lv33-chat[data-page=assist] .lv5-agent{min-height:calc(100dvh - 150px);display:flex;flex-direction:column}
+body.lv33-chat[data-page=assist] .lv5-chat{flex:1 1 auto;min-height:0}
+body.lv33-chat[data-page=assist] .lv5-sugg{flex:none;margin-bottom:6px}
+body[data-page=assist] form.lv5-ask{flex:none;bottom:calc(8px + env(safe-area-inset-bottom))}
+/* and the page leaves room for the tab bar so the composer is never under it */
+body[data-page=assist]{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+
+/* G. A saved address is text, not a layout. It wraps inside its box. */
+.lv35-addrbox{display:block;width:100%;min-width:0;overflow-wrap:anywhere;white-space:normal}
