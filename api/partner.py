@@ -132,7 +132,8 @@ def me_json(db: Session, u: PartnerUser) -> dict:
     pending_appts = db.scalar(select(func.count(Appointment.id)).where(Appointment.store_id == u.store_id, Appointment.status == "requested")) or 0
     unread = db.scalar(select(func.count(Message.id)).where(Message.store_id == u.store_id, Message.sender == "family", Message.read_partner == False)) or 0  # noqa: E712
     return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith("@tech.invalid") else u.email,
-                     "phone": u.phone, "role": u.role, "mustChange": u.must_change},
+                     "phone": u.phone, "role": u.role, "mustChange": u.must_change,
+                     "rating": u.rating or 0, "ratingN": u.rating_n or 0},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
                       "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct} if s else None,
@@ -253,6 +254,7 @@ def tech_json(db: Session, t: PartnerUser) -> dict:
     real = "" if t.email.endswith("@tech.invalid") else t.email
     return {"id": t.id, "name": t.name or real or t.phone, "email": real, "phone": t.phone, "active": t.active,
             "openJobs": len(jobs), "lastLogin": t.last_login, "mustChange": t.must_change,
+            "rating": t.rating or 0, "ratingN": t.rating_n or 0,
             # What the owner needs to know before handing somebody another job: are they out on one already?
             "live": on.status if on else "", "liveOrder": on.id if on else ""}
 

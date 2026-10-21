@@ -138,9 +138,15 @@ class Order(Base):
     timeline: Mapped[list] = mapped_column(JSON, default=list)  # [{s,t}]
     eta: Mapped[int | None] = mapped_column(Integer, nullable=True)
     payment: Mapped[str] = mapped_column(String(24), default="cod")
-    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)          # the store: the report, the price, the service
     rating_tags: Mapped[list] = mapped_column(JSON, default=list)
     rating_note: Mapped[str] = mapped_column(String(400), default="")
+    # The visit is a separate judgement from the store. A family has a clear opinion about the person who stood
+    # at their door with a needle, and it is not the same opinion as the one they have about the report that
+    # arrives two days later. Folding them into one star would hide both.
+    visit_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    visit_tags: Mapped[list] = mapped_column(JSON, default=list)
+    visit_note: Mapped[str] = mapped_column(String(400), default="")
     created: Mapped[int] = mapped_column(Integer, default=now, index=True)
     household: Mapped[Household] = relationship(back_populates="orders")
     store: Mapped[Store] = relationship()
@@ -551,6 +557,8 @@ class PartnerUser(Base):
     specialty: Mapped[str] = mapped_column(String(60), default="")
     verified: Mapped[bool] = mapped_column(Boolean, default=False)   # doctors: registration checked by an admin
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    rating: Mapped[float] = mapped_column(Float, default=0)          # technicians: what the families they visited said
+    rating_n: Mapped[int] = mapped_column(Integer, default=0)
     must_change: Mapped[bool] = mapped_column(Boolean, default=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
     last_login: Mapped[int | None] = mapped_column(Integer, nullable=True)
