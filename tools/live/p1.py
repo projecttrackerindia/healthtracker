@@ -66,7 +66,7 @@ s = s[:a] + json.dumps(J, separators=(",", ":")) + s[b:]
 
 # 6. our mark on the health card made by the first live layer (the fresh-card reveal uses it)
 one('<span class="lv-card-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-5 3 10 2-5h7"/></svg>urbanhealth</span>',
-    '<span class="lv-card-brand"><svg viewBox="10 4 44 54" aria-hidden="true"><path fill-rule="evenodd" d="M32 6c-11 0-20 8.8-20 19.6 0 10.6 12.9 24.9 17.7 29.9a3.2 3.2 0 0 0 4.6 0C39.1 50.5 52 36.2 52 25.6 52 14.8 43 6 32 6zM27.9 14.1h8.2v7.4h7.4v8.2h-7.4v7.4h-8.2v-7.4h-7.4v-8.2h7.4z" fill="currentColor"/></svg><b>Urban <i>Health</i></b></span>')
+    '<span class="lv-card-brand"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="currentColor"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="currentColor"/></svg><b>Urban <i>Health</i></b></span>')
 
 # 7. the layer itself
 BOOT = "SX.boot();\n})();"
