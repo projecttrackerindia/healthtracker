@@ -1098,3 +1098,20 @@ New: `counter/index.html`, `/counter`, `GET /api/v1/board/{token}`, `GET|POST /p
 Owner sets the link in Store profile → opening it on a 1920×1080 page shows **Dr Rao · General medicine · 5
 · WITH THE DOCTOR · NEXT 6 7 8**, dark, with the clock and a live dot. The first run came out in light mode
 and with the card floating in a third of the screen; both are fixed above.
+
+## /api/health finally says what is running (2026-10-21)
+
+`VERSION` read `RAILWAY_GIT_COMMIT_SHA`, which nothing on Cloud Run sets, so the health endpoint has
+reported `"dev"` for every deploy since the move. Several deploys today were therefore verified by reading
+a service-worker cache name out of a terminal — and when Cloud Shell was unreachable, not verified at all.
+
+`deploy.sh` now stamps `APP_VERSION` (the short commit) and `APP_BUILT` into `env.yaml` **before** the
+build, so the value names exactly what was built rather than whatever HEAD had become by the time the build
+finished. `/api/health` returns both, plus `sw` — the service-worker cache name read from the file we
+actually ship, which is what decides whether a family's phone picks up new front-end code.
+
+One public URL now answers "did that land?":
+
+    curl -s https://thehealthtracker.com/api/health
+
+4 new tests, suite at **326**.
