@@ -101,9 +101,9 @@ def ensure_columns() -> None:
     """create_all() only creates missing tables. New columns on old tables are added here, idempotently."""
     from sqlalchemy import inspect, text
 
-    wanted = {"users": [("member_id", "VARCHAR(32)"), ("name_changed", "INTEGER"), ("role", "VARCHAR(12) DEFAULT 'member'"), ("aadhaar_verified", "INTEGER"), ("aadhaar_last4", "VARCHAR(4) DEFAULT ''"), ("aadhaar_dob", "VARCHAR(10) DEFAULT ''"), ("ref_code", "VARCHAR(12) DEFAULT ''"), ("referred_by", "VARCHAR(32) DEFAULT ''"), ("ref_rewarded", "INTEGER DEFAULT 0")], "ai_jobs": [("tin", "INTEGER DEFAULT 0"), ("tout", "INTEGER DEFAULT 0")], "stores": [("gstin", "VARCHAR(20) DEFAULT ''"), ("gst_pct", "INTEGER DEFAULT 0")], "orders": [("member_id", "VARCHAR(32)"), ("rx_files", "JSON"), ("addr", "JSON")],
+    wanted = {"users": [("member_id", "VARCHAR(32)"), ("name_changed", "INTEGER"), ("role", "VARCHAR(12) DEFAULT 'member'"), ("aadhaar_verified", "INTEGER"), ("aadhaar_last4", "VARCHAR(4) DEFAULT ''"), ("aadhaar_dob", "VARCHAR(10) DEFAULT ''"), ("ref_code", "VARCHAR(12) DEFAULT ''"), ("referred_by", "VARCHAR(32) DEFAULT ''"), ("ref_rewarded", "INTEGER DEFAULT 0")], "ai_jobs": [("tin", "INTEGER DEFAULT 0"), ("tout", "INTEGER DEFAULT 0")], "stores": [("gstin", "VARCHAR(20) DEFAULT ''"), ("gst_pct", "INTEGER DEFAULT 0")], "orders": [("member_id", "VARCHAR(32)"), ("rx_files", "JSON"), ("addr", "JSON"), ("agent_id", "VARCHAR(32)"), ("accepted_at", "INTEGER"), ("started_at", "INTEGER"), ("arrived_at", "INTEGER"), ("done_at", "INTEGER"), ("visit_rating", "INTEGER"), ("visit_tags", "JSON"), ("visit_note", "VARCHAR(400) DEFAULT ''")],
               "invites": [("role", "VARCHAR(12) DEFAULT 'member'")],
-              "partner_users": [("reg_no", "VARCHAR(40) DEFAULT ''"), ("specialty", "VARCHAR(60) DEFAULT ''"), ("verified", "BOOLEAN DEFAULT FALSE")],
+              "partner_users": [("reg_no", "VARCHAR(40) DEFAULT ''"), ("specialty", "VARCHAR(60) DEFAULT ''"), ("verified", "BOOLEAN DEFAULT FALSE"), ("rating", "FLOAT DEFAULT 0"), ("rating_n", "INTEGER DEFAULT 0")],
               "appointments": [("transcript", "JSON"), ("rx", "JSON"), ("summary", "TEXT DEFAULT ''"), ("call_started", "INTEGER"), ("call_ended", "INTEGER")],
               "households": [("backup_at", "INTEGER"), ("backup_to", "VARCHAR(200) DEFAULT ''")]}
     insp = inspect(engine)

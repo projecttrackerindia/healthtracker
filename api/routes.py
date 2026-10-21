@@ -315,7 +315,11 @@ def order_json(o: Order):
     return {"id": o.id, "kind": o.kind, "store": store_json(o.store) if o.store else None, "items": o.items, "subtotal": o.subtotal, "fee": o.fee,
             "discount": o.discount, "total": o.total, "address": o.address, "member": o.member, "rxShared": o.rx_shared, "slot": o.slot,
             "status": "cancelled" if i < 0 else (o.status if o.status in ("return_requested", "returned", "refunded") else steps[i][0]), "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
-            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr}
+            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr,
+            "visitRating": o.visit_rating, "visitTags": o.visit_tags,
+            # Asked once the sample is in the bag and the person is still fresh in mind — not days later when
+            # the report lands, by which time the family is rating the report and calling it the visit.
+            "canRateVisit": bool(o.kind == "lab" and o.agent_id and o.done_at and o.visit_rating is None)}
 
 
 @r.post("/orders")
@@ -424,6 +428,54 @@ def rate(oid: str, body: RateReq, db: Session = Depends(get_db), x_dokko_key: st
     if s and first:
         s.rating = round((s.rating * s.rating_n + body.rating) / (s.rating_n + 1), 2)
         s.rating_n += 1
+    return order_json(o)
+
+
+# What a family actually has an opinion about after a home collection. Kept short, because a list of twenty
+# tags is a list nobody reads; kept concrete, because "good service" tells the lab nothing it can act on.
+VISIT_TAGS_GOOD = ["On time", "Gentle", "Polite", "Clean and careful", "Explained everything"]
+VISIT_TAGS_BAD = ["Late", "Rushed", "Several attempts", "Careless with hygiene", "Hard to reach"]
+
+
+@r.get("/visit-tags")
+def visit_tags():
+    return {"good": VISIT_TAGS_GOOD, "bad": VISIT_TAGS_BAD}
+
+
+class VisitRateReq(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    tags: list[str] = []
+    note: str = ""
+
+
+@r.post("/orders/{oid}/visit-rating")
+def rate_visit(oid: str, body: VisitRateReq, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    """How the home collection itself went. Separate from the store rating, which is about the report.
+
+    A family has a clear and immediate opinion about the person who stood at their door with a needle, and it
+    is not the opinion they will have two days later about a PDF. Folding the two into one star would hide
+    both: a gentle phlebotomist at a slow lab, and the reverse, would score the same."""
+    from api.models import PartnerUser
+
+    h = household(db, x_dokko_key, create=False)
+    o = db.get(Order, oid)
+    if not h or not o or o.household_id != h.id:
+        raise HTTPException(404)
+    if o.kind != "lab" or not o.agent_id:
+        raise HTTPException(400, "There was no home visit on this booking.")
+    if not o.done_at:
+        raise HTTPException(409, "You can rate the visit once the sample has been collected.")
+    if o.visit_rating is not None:
+        raise HTTPException(409, "You have already rated this visit.")
+    known = set(VISIT_TAGS_GOOD + VISIT_TAGS_BAD)
+    o.visit_rating = body.rating
+    o.visit_tags = [t for t in body.tags if t in known][:5]
+    o.visit_note = body.note[:400]
+    t = db.get(PartnerUser, o.agent_id)
+    if t:
+        # A running mean, so one bad morning does not define somebody and a long good record is not erased.
+        t.rating = round(((t.rating or 0) * (t.rating_n or 0) + body.rating) / ((t.rating_n or 0) + 1), 2)
+        t.rating_n = (t.rating_n or 0) + 1
     return order_json(o)
 
 

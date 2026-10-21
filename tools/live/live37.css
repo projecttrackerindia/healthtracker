@@ -1,0 +1,13 @@
+/* live 37 — the visit review */
+.lv37{padding:14px 15px;grid-column:1/-1}
+.lv37-hd{display:flex;align-items:flex-start;gap:10px}
+.lv37-hd b{display:block;font-size:15px;letter-spacing:-.01em}
+.lv37-hd small{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
+.lv37-stars{display:flex;gap:6px;margin-top:10px}
+.lv37-s{flex:1 1 0;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--soft);
+  font-size:22px;line-height:1;color:var(--mute);cursor:pointer;transition:background .12s,color .12s,transform .08s}
+.lv37-s:hover{transform:translateY(-1px)}
+.lv37-s.on{color:#f59e0b;background:color-mix(in srgb,#f59e0b 14%,transparent);border-color:color-mix(in srgb,#f59e0b 40%,transparent)}
+.lv37-tags{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}
+.lv37-t{padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--soft);font-size:13.5px;cursor:pointer}
+.lv37-t.on{background:color-mix(in srgb,var(--brand,#13b5a3) 16%,transparent);border-color:color-mix(in srgb,var(--brand,#13b5a3) 45%,transparent);font-weight:600}

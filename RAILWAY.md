@@ -829,3 +829,38 @@ New: `POST /partner/techs`, `POST /partner/techs/{uid}/reset`, `POST /partner/te
 Verified in a browser end to end: owner adds Ravi Kumar, the one-time password is shown once, the technician
 signs in at `/tech` with `9876512001`, is forced to choose a password, and sees the job with the family's
 address, Call and Directions.
+
+## Lab slice 4 — how was the visit? (2026-10-21)
+
+The last thing the user described in the lab loop: "lab technician will get review and I'll send amount and
+will track reviews." This is the review half.
+
+**It is a separate judgement from the store rating, deliberately.** A family has a clear and immediate opinion
+about the person who stood at their door with a needle, and it is not the opinion they will have two days
+later about a PDF. Under one star, a gentle phlebotomist at a slow lab and a rushed one at a fast lab score
+identically, and neither lab learns anything it can act on. So `Order` gained `visit_rating / visit_tags /
+visit_note` beside the existing `rating`, and `PartnerUser` gained `rating / rating_n` of its own.
+
+- **Asked the moment the sample is in the bag**, not when the report lands — by then the family is rating the
+  report and calling it the visit. `canRateVisit` is true once `done_at` is set and an agent is attached.
+- **The tag list follows the stars.** Five stars asks what went well; two asks what went wrong. Asking "what
+  went well?" under two stars is not listening. Only tags we offered are stored, so they can be counted.
+- **Once only**, so the running mean stays honest; one bad morning does not define somebody and a long good
+  record is not erased.
+- A booking with nobody on it — a family who walked into the lab — is never asked.
+- The roster shows **★ 4.8 · 12 visits** per technician; the Collect app shows a technician their own.
+
+New: `GET /api/v1/visit-tags`, `POST /api/v1/orders/{oid}/visit-rating`; live layer 37 (`dk-r37`).
+11 new tests, suite at **221**.
+
+Also added to `ensure_columns()`: the slice-1 columns on `orders` (`agent_id`, `accepted_at`, `started_at`,
+`arrived_at`, `done_at`). They were only ever created by `create_all()`, which does not touch an existing
+table — fine on this database because the table was created after the model gained them, but not something to
+leave resting on luck.
+
+### Verified in a browser
+Card appears on Today reading "How was the visit? · Ravi Kumar collected your sample · Tap a star". Two stars
+switches the tag list to Late / Rushed / Several attempts / Careless with hygiene / Hard to reach; five
+switches it back. Submitting posts `{"rating":5,"tags":["On time"],"note":"..."}` to
+`/api/v1/orders/{id}/visit-rating`, the sheet closes and the card goes. In demo mode the write is swallowed,
+which is correct — the demo banner says nothing is saved.

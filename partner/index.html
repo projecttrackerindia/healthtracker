@@ -119,8 +119,9 @@ VIEWS.team=()=>{const isOwner=ME.user.role==='owner';
 async function loadTechs(){let r;try{r=await api('/techs')}catch(e){if($('#tl'))$('#tl').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
  TECHS=r.techs;if(!$('#tl'))return;const isOwner=ME.user.role==='owner';
  if(!r.techs.length){$('#tl').innerHTML=`<div class="empty">Nobody on the team yet.${isOwner?' Add the phlebotomists who do home collections — until then, home bookings cannot be assigned to anyone.':''}</div>`;return}
- $('#tl').innerHTML=`<table><tr><th>Name</th><th>Signs in with</th><th>Right now</th><th>Last signed in</th>${isOwner?'<th></th>':''}</tr>`
+ $('#tl').innerHTML=`<table><tr><th>Name</th><th>Families said</th><th>Signs in with</th><th>Right now</th><th>Last signed in</th>${isOwner?'<th></th>':''}</tr>`
   +r.techs.map(t=>`<tr><td><b>${E(t.name)}</b>${t.mustChange?' <span class="tag warn">not signed in yet</span>':''}</td>
+    <td>${t.ratingN?`<b>★ ${t.rating.toFixed(1)}</b> <small style="color:var(--mute)">${t.ratingN} visit${t.ratingN>1?'s':''}</small>`:'<span style="color:var(--mute)">no visits rated yet</span>'}</td>
     <td><a href="tel:${E(t.phone)}">${E(t.phone)}</a>${t.email?`<br><small style="color:var(--mute)">${E(t.email)}</small>`:''}</td>
     <td>${techLine(t)}</td><td style="color:var(--mute)">${t.lastLogin?fmt(t.lastLogin):'—'}</td>
     ${isOwner?`<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-trs="${E(t.id)}">Reset password</button> <button class="btn sm ${t.active?'d':''}" data-tac="${E(t.id)}:${t.active?0:1}">${t.active?'Turn off':'Turn on'}</button></td>`:''}</tr>`).join('')+`</table>`;

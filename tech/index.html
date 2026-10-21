@@ -194,8 +194,11 @@ function jobCard(j) {
 
 function jobs() {
   const open = S.jobs;
-  return `<div class="top">${MARK}<div class="grow"><b>${E(S.me.name || "Collect")}</b><small>${E(S.me.store || "")}</small></div>
-    <span class="pill">${open.length} ${open.length === 1 ? "job" : "jobs"}</span></div>
+  // Their own rating, because the families they visited gave it and they should not have to ask the lab what
+  // it says about them.
+  const r = S.me.ratingN ? `★ ${S.me.rating.toFixed(1)}` : `${open.length} ${open.length === 1 ? "job" : "jobs"}`;
+  return `<div class="top">${MARK}<div class="grow"><b>${E(S.me.name || "Collect")}</b><small>${E(S.me.store || "")}${S.me.ratingN ? ` · ${S.me.ratingN} visit${S.me.ratingN > 1 ? "s" : ""} rated` : ""}</small></div>
+    <span class="pill">${E(r)}</span></div>
   ${open.length ? open.map(jobCard).join("")
     : `<div class="empty"><b>Nothing assigned</b>Your lab will send jobs here. Pull down to refresh.</div>`}`;
 }
@@ -252,7 +255,8 @@ async function load() {
   try {
     const me = await api("/partner/me");
     const u = me.user || me;
-    S.me = { name: u.name || u.phone || u.email, store: (me.store && me.store.name) || "" };
+    S.me = { name: u.name || u.phone || u.email, store: (me.store && me.store.name) || "",
+             rating: u.rating || 0, ratingN: u.ratingN || 0 };
     S.mustChange = !!u.mustChange;
     // Until they have chosen a password, the one the lab wrote on a slip is the only one there is. Don't
     // fetch anybody's address until that slip has stopped being a way in.
