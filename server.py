@@ -118,8 +118,10 @@ app.include_router(consult_api.pr)
 app.include_router(consult_api.ws)
 from api import proactive as proactive_api  # noqa: E402
 from api import tasks as tasks_api  # noqa: E402
+from api import tech as tech_api  # noqa: E402
 app.include_router(proactive_api.r)
 app.include_router(tasks_api.r)
+app.include_router(tech_api.r)
 from api import abdm as abdm_api, export as export_api, medid as medid_api, network as network_api  # noqa: E402
 app.include_router(medid_api.r)
 app.include_router(export_api.r)
@@ -237,6 +239,27 @@ def _safe(rel: str) -> Path:
     if WEB not in p.parents and p != WEB:
         raise HTTPException(404)
     return p
+
+
+# The technician app. Its own URL, its own name, icon and colour, so it installs on a phone as a separate
+# app — while being the same codebase, the same auth and the same deploy as everything else.
+@app.api_route("/tech", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/tech/", methods=["GET", "HEAD"], include_in_schema=False)
+def tech_page(request: Request):
+    return FileResponse(ROOT / "tech" / "index.html", media_type="text/html; charset=utf-8",
+                        headers={"Cache-Control": "no-cache", "X-Frame-Options": "DENY"})
+
+
+@app.api_route("/tech/manifest.webmanifest", methods=["GET", "HEAD"], include_in_schema=False)
+def tech_manifest():
+    return FileResponse(ROOT / "tech" / "manifest.webmanifest", media_type="application/manifest+json",
+                        headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.api_route("/tech/icon.svg", methods=["GET", "HEAD"], include_in_schema=False)
+def tech_icon():
+    return FileResponse(ROOT / "tech" / "icon.svg", media_type="image/svg+xml",
+                        headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.api_route("/partner", methods=["GET", "HEAD"], include_in_schema=False)

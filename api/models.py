@@ -129,6 +129,11 @@ class Order(Base):
     rx_files: Mapped[list | None] = mapped_column(JSON, nullable=True)         # prescription file ids the family chose to share
     addr: Mapped[dict | None] = mapped_column(JSON, nullable=True)             # structured delivery / collection address {label,name,phone,line1,line2,landmark,area,city,state,pin,lat,lng}
     slot: Mapped[str] = mapped_column(String(40), default="")  # lab home-collection slot
+    agent_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)   # the technician or rider doing this job
+    accepted_at: Mapped[int | None] = mapped_column(Integer, nullable=True)               # when the facility took it
+    started_at: Mapped[int | None] = mapped_column(Integer, nullable=True)                # when the agent set off
+    arrived_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    done_at: Mapped[int | None] = mapped_column(Integer, nullable=True)                   # sample collected / parcel handed over
     status: Mapped[str] = mapped_column(String(24), default="placed", index=True)
     timeline: Mapped[list] = mapped_column(JSON, default=list)  # [{s,t}]
     eta: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -465,6 +470,23 @@ class RtcRelay(Base):
     aid: Mapped[str] = mapped_column(String(40), index=True)
     to_role: Mapped[str] = mapped_column(String(10))
     body: Mapped[str] = mapped_column(Text, default="")
+    at: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class TrackPing(Base):
+    """Where the agent is while they are travelling to a job.
+
+    Only written between the agent setting off and the work being done, visible to one family, and swept 24
+    hours after the job finishes. A position trail is the one piece of data here that belongs to an employee
+    rather than a patient, and it is treated accordingly."""
+
+    __tablename__ = "track_pings"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    order_id: Mapped[str] = mapped_column(String(32), index=True)
+    lat: Mapped[float] = mapped_column(Float)
+    lng: Mapped[float] = mapped_column(Float)
+    accuracy: Mapped[float] = mapped_column(Float, default=0)
+    heading: Mapped[float | None] = mapped_column(Float, nullable=True)
     at: Mapped[int] = mapped_column(Integer, default=now, index=True)
 
 
