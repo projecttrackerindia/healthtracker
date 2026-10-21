@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Now serving · TheHealthTracker</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/brand/svg/partner-icon.svg"><meta name="theme-color" content="#0b0f0e">
+<style>
+/* A television on a wall, read from across a room. Dark by default because that is what a screen left on
+   all day should be, and because a white wall of light in a waiting room is unkind to people who are ill. */
+:root{--bg:#0b0f0e;--card:#141c1b;--line:rgba(255,255,255,.09);--ink:#f2f6f5;--mute:#8e9aa0;
+  --teal:#13b5a3;--amber:#f59e0b;--font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+.wrap{height:100%;display:flex;flex-direction:column;padding:2.2vh 2.4vw}
+header{display:flex;align-items:center;gap:1.2vw;padding-bottom:1.6vh;border-bottom:1px solid var(--line)}
+header img{height:4.2vh}
+header h1{font-size:2.6vh;margin:0;letter-spacing:-.02em;font-weight:700}
+header .clk{margin-left:auto;font:600 2.8vh/1 var(--mono);color:var(--mute);font-variant-numeric:tabular-nums}
+.rooms{flex:1;display:grid;gap:1.6vh 1.6vw;padding-top:1.8vh;align-content:start;
+  grid-template-columns:repeat(auto-fit,minmax(28vw,1fr))}
+.room{background:var(--card);border:1px solid var(--line);border-radius:1.6vh;padding:2.2vh 2vw;display:flex;flex-direction:column;min-height:0}
+.room h2{margin:0;font-size:2.4vh;letter-spacing:-.015em}
+.room small{display:block;color:var(--mute);font-size:1.7vh;margin-top:.3vh}
+.now{display:flex;align-items:baseline;gap:1.2vw;margin:1.6vh 0 .6vh}
+.now b{font:800 13vh/0.9 var(--font);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.now span{font-size:1.9vh;color:var(--mute);text-transform:uppercase;letter-spacing:.14em;font-weight:600}
+.none{font-size:4.4vh;color:var(--mute);font-weight:700;margin:1.6vh 0 .6vh;letter-spacing:-.02em}
+.next{display:flex;gap:.8vw;flex-wrap:wrap;margin-top:auto;padding-top:1.4vh;border-top:1px solid var(--line)}
+.next i{font:700 2.6vh/1 var(--mono);font-style:normal;background:rgba(255,255,255,.055);border-radius:1vh;
+  padding:1vh 1.4vw;color:var(--mute);font-variant-numeric:tabular-nums}
+.next u{text-decoration:none;align-self:center;color:var(--mute);font-size:1.7vh;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+/* The one being called now is the only thing on the screen that moves, so the movement means something. */
+.calling b{color:var(--teal)}
+.calling{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.empty{flex:1;display:grid;place-items:center;text-align:center;color:var(--mute);font-size:3vh;padding:0 6vw;line-height:1.5}
+footer{padding-top:1.4vh;border-top:1px solid var(--line);color:var(--mute);font-size:1.6vh;display:flex;gap:1.2vw}
+footer .dot{width:.9vh;height:.9vh;border-radius:50%;background:var(--teal);align-self:center}
+footer .dot.off{background:var(--amber)}
+/* Dark unconditionally, not by preference. A television reports whatever its browser was shipped with,
+   which is nearly always light, so honouring prefers-color-scheme here would mean the wall display almost
+   never looks like one. A waiting-room board should read like an airport board, and a wall of white light
+   is unkind to people who are already unwell. */
+
+/* One doctor is the common case in a small clinic, and the screen should be mostly that number. */
+.rooms:has(.room:only-child){grid-template-columns:1fr;align-content:stretch}
+.room:only-child{align-items:center;text-align:center;justify-content:center}
+.room:only-child .now{flex-direction:column;gap:.4vh;align-items:center;margin:2vh 0 1vh}
+.room:only-child .now b{font-size:34vh}
+.room:only-child .now span{font-size:2.8vh}
+.room:only-child .none{font-size:9vh}
+.room:only-child h2{font-size:4vh}
+.room:only-child small{font-size:2.4vh}
+.room:only-child .next{justify-content:center;width:100%}
+.room:only-child .next i{font-size:4vh;padding:1.4vh 2vw}
+.room:only-child .next u{font-size:2.2vh}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img src="/brand/svg/partner-logo.svg" alt="TheHealthTracker"><h1 id="store">…</h1><span class="clk" id="clk"></span></header>
+  <div class="rooms" id="rooms"></div>
+  <footer><span class="dot" id="dot"></span><span id="foot">Connecting…</span></footer>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TOKEN = new URLSearchParams(location.search).get('t') || '';
+let misses = 0, lastGood = 0;
+
+function clock() {
+  const d = new Date();
+  $('#clk').textContent = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+setInterval(clock, 1000); clock();
+
+function room(r) {
+  return `<div class="room">
+    <h2>${E(r.doctor)}</h2>${r.specialty ? `<small>${E(r.specialty)}</small>` : ''}
+    ${r.now != null
+      ? `<div class="now ${r.calling ? 'calling' : ''}"><b>${r.now}</b><span>${r.calling ? 'please come in' : 'with the doctor'}</span></div>`
+      : `<div class="none">Next patient, please</div>`}
+    <div class="next">${r.next.length
+      ? `<u>Next</u>${r.next.map(n => `<i>${n}</i>`).join('')}${r.waiting > r.next.length ? `<u>+${r.waiting - r.next.length} more</u>` : ''}`
+      : '<u>Nobody else waiting</u>'}</div>
+  </div>`;
+}
+
+async function tick() {
+  if (!TOKEN) {
+    $('#rooms').innerHTML = `<div class="empty">This screen has not been linked yet.<br>Open the partner portal, go to Store profile, and set up the waiting-room screen.</div>`;
+    $('#foot').textContent = 'No link'; $('#dot').className = 'dot off';
+    return;
+  }
+  try {
+    const res = await fetch(`/api/v1/board/${encodeURIComponent(TOKEN)}`, { cache: 'no-store' });
+    if (res.status === 404) {
+      $('#rooms').innerHTML = `<div class="empty">This screen is no longer linked to a clinic.<br>Ask at the counter for a new link.</div>`;
+      $('#foot').textContent = 'Link no longer valid'; $('#dot').className = 'dot off';
+      return;
+    }
+    if (!res.ok) throw new Error(res.status);
+    const d = await res.json();
+    misses = 0; lastGood = Date.now();
+    $('#store').textContent = d.store;
+    document.title = `Now serving · ${d.store}`;
+    $('#rooms').innerHTML = d.rooms.length
+      ? d.rooms.map(room).join('')
+      : `<div class="empty">No one is waiting at the moment.<br>Please take a number at the counter.</div>`;
+    $('#dot').className = 'dot';
+    $('#foot').textContent = 'Updated just now';
+  } catch (e) {
+    // A screen that silently freezes is worse than one that admits it: people stand up at the wrong number.
+    misses++;
+    $('#dot').className = 'dot off';
+    const mins = lastGood ? Math.round((Date.now() - lastGood) / 60000) : 0;
+    $('#foot').textContent = misses > 2
+      ? `Not updating — last changed ${mins < 1 ? 'less than a minute' : mins + ' min'} ago. Ask at the counter.`
+      : 'Reconnecting…';
+  }
+}
+tick();
+setInterval(tick, 5000);
+// Televisions and tablets sleep. Catch up the moment the screen comes back rather than waiting for the tick.
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+</script>
+</body>
+</html>

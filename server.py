@@ -246,6 +246,15 @@ def _safe(rel: str) -> Path:
 
 # The technician app. Its own URL, its own name, icon and colour, so it installs on a phone as a separate
 # app — while being the same codebase, the same auth and the same deploy as everything else.
+@app.api_route("/counter", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/counter/", methods=["GET", "HEAD"], include_in_schema=False)
+def counter_page(request: Request):
+    """The waiting-room screen. No sign-in: the token lives in the URL, which is what lets a television be
+    set up once and then left alone."""
+    return FileResponse(ROOT / "counter" / "index.html", media_type="text/html; charset=utf-8",
+                        headers={"Cache-Control": "no-cache", "X-Frame-Options": "DENY"})
+
+
 @app.api_route("/tech", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/tech/", methods=["GET", "HEAD"], include_in_schema=False)
 def tech_page(request: Request):
