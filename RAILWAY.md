@@ -1115,3 +1115,30 @@ One public URL now answers "did that land?":
     curl -s https://thehealthtracker.com/api/health
 
 4 new tests, suite at **326**.
+
+## Doctor slice 3 — the prescription drafts itself from what the doctor said (2026-10-21)
+
+The transcript was sitting there while the doctor retyped, from memory, the medicines they had named out
+loud twelve minutes earlier. `POST /partner/consults/{aid}/rx-draft` fills the form in from this consult's
+own captions. It saves nothing; the doctor still signs with `PUT .../rx` exactly as before.
+
+**Extraction, not completion.** TPG §5.4 is explicit that software must not prescribe, so every instruction
+to the model is about *not* helping: include a medicine only if the doctor said it, leave every field they
+did not say empty, never infer a strength or a duration, never change a heard number. An empty duration the
+doctor fills in is correct. A plausible "5 days" nobody said is a fabricated prescription with a real
+registration number at the bottom of it.
+
+- Each drafted row carries **`heard`** — the doctor's own sentence about that medicine, quoted back, so the
+  check takes a glance rather than a replay.
+- A strength that sounded ambiguous is flagged `unclear` rather than silently corrected; flags for
+  medicines that did not make the form are dropped, because a warning you cannot act on is noise.
+- `_parse_draft` keeps only values the form can hold: a frequency of "as the doctor advised" becomes empty,
+  not a blank nobody notices on a signed PDF.
+
+### A back door this closed
+`RxItem.frequency` defaulted to `"od"`. Any client that left it out produced a signed prescription saying
+**once a day** that nobody had said — the same fabrication, arriving by the back door while the draft
+endpoint refused it at the front. The default is gone and the save now refuses an item without a frequency
+from the known set; the form's dropdown starts on "— how often —" instead of pre-selecting a dose.
+
+13 new tests, suite at **339**.

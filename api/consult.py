@@ -250,11 +250,17 @@ def partner_end(aid: str, body: DocEndIn, db: Session = Depends(get_db), u: Part
     return consult_json(db, a, True)
 
 
+FREQS = ("od", "bd", "tds", "qid", "sos", "hs", "weekly")
+
+
 class RxItem(BaseModel):
     name: str
     strength: str = ""
     form: str = ""          # tablet | capsule | syrup | drops | injection | cream | inhaler | other
-    frequency: str = "od"   # od | bd | tds | qid | sos | hs | weekly
+    # No default. It used to be "od", which meant a client that left it out produced a signed prescription
+    # saying "once a day" that nobody had said — the exact fabrication the draft endpoint below refuses to
+    # commit, arriving by the back door instead.
+    frequency: str = ""     # od | bd | tds | qid | sos | hs | weekly
     duration: str = ""      # e.g. "5 days"
     instructions: str = ""  # e.g. "after food"
     rx: bool = True
@@ -356,6 +362,8 @@ def partner_rx(aid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUs
     for it in body.items:
         if not it.name.strip():
             raise HTTPException(400, "Every medicine needs a name.")
+        if it.frequency.strip().lower() not in FREQS:
+            raise HTTPException(400, f"How often should {it.name.strip()[:40]} be taken? Choose one.")
         items.append({"name": it.name.strip()[:80], "strength": it.strength.strip()[:30], "form": it.form.strip()[:20], "frequency": it.frequency.strip()[:12],
                       "duration": it.duration.strip()[:30], "instructions": it.instructions.strip()[:80], "rx": bool(it.rx)})
     s = my_store(db, u)
@@ -374,6 +382,107 @@ def partner_rx(aid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUs
            {"appointment": a.id, "fileId": f"erx_{a.id}", "store": s.name, "doctor": u.name, "items": items, "mime": "application/pdf", "name": f"Prescription · Dr {u.name}", "diagnosis": rx["diagnosis"]},
            a.member_id, "/app")
     return consult_json(db, a, True)
+
+
+# ---- drafting the prescription from what the doctor said -------------------------------------------------------------
+# The transcript is sitting right there while the doctor retypes, from memory, the medicines they named out
+# loud twelve minutes ago. This fills the form in; it does not prescribe.
+#
+# That line is not a nicety. The Telemedicine Practice Guidelines (§5.4) are explicit that software must not
+# prescribe or counsel, so the rule given to the model is extraction, not completion: take the medicines the
+# doctor actually said, leave every field they did not say empty, and never offer one they did not mention.
+# An empty "duration" the doctor has to fill in is correct. A plausible "5 days" nobody said is a fabricated
+# prescription with a real doctor's registration number at the bottom of it.
+FREQ_WORDS = {"od": ["once a day", "once daily", "one time", "od", "mane"],
+              "bd": ["twice a day", "twice daily", "two times", "bd", "bid"],
+              "tds": ["three times", "thrice", "tds", "tid"],
+              "qid": ["four times", "qid", "qds"],
+              "sos": ["when needed", "if needed", "as needed", "sos", "prn"],
+              "hs": ["at night", "bedtime", "before bed", "hs", "nocte"],
+              "weekly": ["once a week", "weekly"]}
+
+
+@pr.post("/consults/{aid}/rx-draft")
+def partner_rx_draft(aid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """Fill the prescription form from the consult's own transcript. Saves nothing.
+
+    The doctor reviews every line and signs it with PUT /consults/{aid}/rx, exactly as before. Nothing
+    reaches the family until they do."""
+    _doctor(db, u)
+    a = _store_appt(db, u, aid)
+    lines = [f"{x['who']}: {x['text']}" for x in (a.transcript or []) if x.get("who") == "doctor"]
+    if not lines:
+        raise HTTPException(400, "There are no captions from this consult to draft from.")
+    if not AI.available():
+        raise HTTPException(503, "Drafting is unavailable just now — the form is yours to fill in.")
+
+    system = (
+        "You transcribe a doctor's spoken medicine instructions into form fields. You are not a clinician and you "
+        "do not prescribe. Input is speech captions from an Indian teleconsultation, so expect mishearings.\n"
+        "Return ONLY JSON: {\"items\":[{\"name\",\"strength\",\"form\",\"frequency\",\"duration\",\"instructions\",\"heard\"}],"
+        "\"advice\":\"\",\"followUp\":\"\",\"diagnosis\":\"\",\"unclear\":[]}\n"
+        "Rules, all of them absolute:\n"
+        "1. Include a medicine ONLY if the doctor said it. Never add one that would be usual for the condition.\n"
+        "2. Leave a field EMPTY if the doctor did not say it. Do not infer a strength, a dose, a duration or a route. "
+        "An empty field the doctor fills in is correct; a plausible one nobody said is a fabricated prescription.\n"
+        "3. Never change a number you heard. If a strength sounded ambiguous, put your best reading in 'strength' "
+        "and add the medicine's name to 'unclear'.\n"
+        "4. 'frequency' must be one of od, bd, tds, qid, sos, hs, weekly, or empty. Map the doctor's words; if they "
+        "said nothing about timing, leave it empty.\n"
+        "5. 'form' must be one of tablet, capsule, syrup, drops, injection, cream, inhaler, other, or empty.\n"
+        "6. 'heard' is the doctor's own sentence about that medicine, quoted from the captions, so they can check it.\n"
+        "7. 'diagnosis' and 'advice' are the doctor's words only, shortened, never your interpretation. "
+        "'followUp' only if they named one.\n"
+        "8. If the doctor named no medicine at all, return an empty items list. That is a correct answer.")
+    try:
+        res = AI.create(max_tokens=1400, system=system,
+                        messages=[{"role": "user", "content": json.dumps({"captions": lines[-150:]}, ensure_ascii=False)[:14000]}])
+        raw = "".join(b.text for b in res.content if getattr(b, "type", "") == "text").strip()
+    except Exception as e:
+        AI._fail("rx draft", e)
+        raise HTTPException(503, "Drafting is unavailable just now — the form is yours to fill in.")
+
+    draft = _parse_draft(raw)
+    draft["source"] = "captions"
+    draft["note"] = ("Drafted from this consult's captions. Nothing is saved and nothing has been sent — "
+                     "check every line, fill in anything blank, then sign it.")
+    return draft
+
+
+def _parse_draft(raw: str) -> dict:
+    """Take the model's JSON apart defensively and keep only what the form can hold.
+
+    Anything unrecognised is dropped rather than passed through: a 'frequency' of 'as the doctor advised'
+    would silently become a blank on a signed prescription."""
+    try:
+        body = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+    except Exception:
+        return {"items": [], "advice": "", "followUp": "", "diagnosis": "", "unclear": [],
+                "warning": "The captions could not be read into a draft. Please fill the form in yourself."}
+    forms = {"tablet", "capsule", "syrup", "drops", "injection", "cream", "inhaler", "other"}
+    items = []
+    for it in (body.get("items") or [])[:20]:
+        name = str(it.get("name") or "").strip()[:80]
+        if not name:
+            continue
+        freq = str(it.get("frequency") or "").strip().lower()
+        form = str(it.get("form") or "").strip().lower()
+        items.append({"name": name,
+                      "strength": str(it.get("strength") or "").strip()[:40],
+                      "form": form if form in forms else "",
+                      "frequency": freq if freq in FREQ_WORDS else "",
+                      "duration": str(it.get("duration") or "").strip()[:40],
+                      "instructions": str(it.get("instructions") or "").strip()[:120],
+                      "heard": str(it.get("heard") or "").strip()[:200],
+                      "rx": True})
+    names = {i["name"].lower() for i in items}
+    return {"items": items,
+            "advice": str(body.get("advice") or "").strip()[:600],
+            "followUp": str(body.get("followUp") or "").strip()[:60],
+            "diagnosis": str(body.get("diagnosis") or "").strip()[:200],
+            # Only flag medicines that actually made it onto the form; a warning about a line that is not
+            # there is noise the doctor cannot act on.
+            "unclear": [str(x)[:80] for x in (body.get("unclear") or []) if str(x).lower() in names][:10]}
 
 
 @pr.get("/consults/{aid}/rx.pdf")
