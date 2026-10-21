@@ -1034,3 +1034,37 @@ there is one place they live.
 
 New: `GET /partner/rx-rules`, `checkedBy` on the family's order, `rxAgeDays` on the partner's; live layer 38
 (`dk-r38`). 10 new tests, suite at **289**.
+
+## Doctor slice 1 — the OP queue (2026-10-21)
+
+Video consults, prescriptions and visit requests already existed. The queue did not, and it is the part of
+Indian outpatient care that actually happens: walk-ins, a number, and a room full of people watching a board.
+
+- **The number restarts at 1 for each doctor each day**, because that is how every OP counter in the country
+  already works and so is the number people will call out and look for.
+- **One queue, not two.** A family with a confirmed appointment joins the same list when they arrive. One
+  list the counter can see beats two it has to reconcile in its head.
+- **Most of a morning's queue is not on the app**, so `POST /partner/queue/add` gives a number to somebody
+  who simply walked in. No household is attached, nothing is sent to a phone; the number goes on a slip.
+- **The estimate only speaks when the day supports it.** `pace()` is the median of this doctor's last eight
+  finished consultations today, and under three it returns nothing — the screen says "pace not known yet"
+  rather than inventing a figure. A confident wrong "10 minutes" is why people stop watching the board and
+  crowd the door. Same reasoning as straight-line distance instead of an invented ETA on the lab side.
+- **`POST /partner/queue/next` finishes the person in the room and calls the next**, in one tap, because
+  that is the whole job at a counter and should not be two.
+- The family is pushed when their number is called, and told how to get back in if they were passed over.
+- A doctor signing in sees their own queue without picking, and cannot reach into another doctor's.
+
+New: `api/queue.py` — family `POST/GET /api/v1/queue`, `/queue/{id}`, `/queue/{id}/leave`; counter
+`GET /partner/doctors`, `GET /partner/queue`, `POST /partner/queue/{id}/move`, `/queue/next`, `/queue/add`.
+`GET /api/v1/doctors` now carries each doctor's live queue so a family can decide whether to set off.
+20 new tests, suite at **309**.
+
+### Two faults the browser run found, which the tests could not
+- The counter opened on the **alphabetically first** doctor — an empty queue, while a room full of people
+  sat one dropdown away. It now opens on whoever has somebody in the room, then whoever has most waiting.
+- By eleven o'clock the finished rows are most of the list and the live ones are below the fold. The day's
+  history folds behind a "Show the 12 already finished today" line.
+
+Also guarded `loadQueue`/`loadDoctors` against the counter navigating away mid-request: the 20-second
+refresh was writing into an element that no longer existed.

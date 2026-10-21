@@ -150,6 +150,9 @@ app.include_router(shop_api.ar)
 from api import blood as blood_api  # noqa: E402
 app.include_router(blood_api.r)
 app.include_router(blood_api.pr)
+from api import queue as queue_api  # noqa: E402
+app.include_router(queue_api.r)
+app.include_router(queue_api.pr)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)

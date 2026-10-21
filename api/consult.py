@@ -24,7 +24,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, WebSocke
 from starlette.concurrency import run_in_threadpool
 from fastapi.responses import Response
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from . import ai as AI
@@ -62,7 +62,23 @@ def doctors(store: str, db: Session = Depends(get_db)):
         return {"doctors": [], "video": False}
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == store, PartnerUser.role == "doctor", PartnerUser.active == True, PartnerUser.verified == True)  # noqa: E712
                       .order_by(PartnerUser.name)).all()
-    return {"doctors": [doctor_json(u) for u in rows], "video": bool(rows)}
+    # Today's queue, so a family can decide whether to set off now. Imported here rather than at module
+    # level: the queue module reaches into the partner portal, and this one must not.
+    from .models import Token
+    from .queue import pace, today
+
+    day = today()
+    out = []
+    for u in rows:
+        waiting = db.scalar(select(func.count(Token.id)).where(
+            Token.doctor_id == u.id, Token.day == day, Token.state == "waiting")) or 0
+        p = pace(db, store, u.id, day)
+        j = doctor_json(u)
+        # waitMin only once the doctor's own day supports it. A confident wrong number is why people stop
+        # watching the board and crowd the door.
+        j["queue"] = {"waiting": waiting, "paceMin": p, "waitMin": waiting * p if p else None}
+        out.append(j)
+    return {"doctors": out, "video": bool(rows)}
 
 
 # ---- ICE configuration ------------------------------------------------------------------------------------------------------
