@@ -406,3 +406,93 @@ would freeze, and `--max-instances 1` stops two containers sending every reminde
 Moving those three loops to **Cloud Scheduler** calling `/tasks/*` endpoints would let us drop `--no-cpu-throttling`
 (idle billing falls from $0.000018 to $0.0000025 per vCPU-second, roughly **$10–14/month**) and raise max-instances
 above one, which today is the whole capacity of the product.
+
+---
+
+## Round 33 — scalability and speed
+
+Prompted by a comparison with Project Tracker (`projecttrackerindia/project-tracker`), which is ASP.NET Core 9 +
+React 19 on an always-warm `e2-medium` VM. The conclusion of that comparison matters: **the framework was not the
+problem.** Everything below is a configuration or query fault in our own code.
+
+### A measurement warning, recorded so nobody repeats it
+
+The first load test was run with `curl` loops from Cloud Shell and reported p95 of 15–30 s. A control run against
+`https://www.google.com/generate_204` from the same shell reported `err=3/20, p95=15038ms`. **Cloud Shell cannot
+generate load** — it is a small shared VM and the numbers were measuring the test client. Always run a control
+against a known-good third-party endpoint before believing a latency number. The benchmarks below are from
+`scratchpad/bench.py` against a local uvicorn, which has no such ceiling.
+
+### Measured, before → after
+
+| | before | after |
+|---|---|---|
+| `/app` for a client without brotli | **1,647,226 B** | **523,210 B** (−68%) |
+| `/app` throughput, c=10 local | 134 rps | **253 rps** (+89%) |
+| `/app` reopened with the same ETag | 521,375 B | **0 B — 304** |
+| `/api/v1/i18n` | 33,706 B | **8,899 B** (−74%) |
+
+### What changed
+
+**1. The model call no longer freezes the container.** `/ai/analyze` is `async def` and called the Anthropic SDK
+synchronously *on the event loop*, with no timeout — so it inherited the SDK default of **600 s**. One slow document
+stopped every other request in the container, `/healthz` included, and Cloud Run then recycled the instance
+mid-request. The reading now runs through `run_in_threadpool`, and the client is built with `timeout=AI_TIMEOUT`
+(60 s, `AI_TIMEOUT_S`) and `max_retries=1`.
+
+**2. The connection pool is sized.** `api/db.py` passed only `pool_pre_ping`, so SQLAlchemy's defaults applied:
+5 + 10 overflow, `pool_timeout=30`. FastAPI's threadpool is 40 wide, so 25 concurrent requests blocked for 30 s
+inside `SessionLocal()` and then raised. Now `pool_size=20, max_overflow=15, pool_timeout=10, pool_recycle=1800`
+(all overridable by env). `pool_recycle` matters because the Cloud SQL proxy drops idle connections.
+
+**3. Compression, which did not exist.** No middleware at all: every JSON response went out raw. Worse,
+`web/index.html.br` existed but **`web/index.html.gz` did not**, so any browser that does not advertise brotli
+downloaded the full 1.57 MB. `tools/compress.py` only refreshed variants that already existed, so the gap was
+invisible. Now: `.br` and `.gz` are treated as a pair and the missing twins were generated, and
+`GZipMiddleware(minimum_size=1024)` is installed as the safety net. The middleware skips anything that already
+carries `Content-Encoding`, so the pre-built static variants are untouched and cost no runtime CPU — which matters:
+compressing the 1.57 MB shell on the fly measured **660 ms per request** on one vCPU.
+
+**4. Conditional requests.** The shell is served `no-cache`, i.e. *revalidate* — but starlette only honours
+`If-None-Match` inside `StaticFiles`, which this app does not mount. Every reopen was a full resend. `_conditional()`
+now returns a 304. Note the subtlety: `FileResponse` sets its ETag during `__call__`, not `__init__`, so the response
+must be constructed with `stat_result=os.stat(path)` or the header is not there yet to compare.
+
+**5. Listing files no longer loads them.** `GET /files` did `select(StoredFile)` where `blob` is a `LargeBinary`,
+pulling every document's bytes into a 1 GiB container to report names and sizes. Now it selects five columns.
+
+**6. Two N+1s on the hottest paths.** `/hello` (every app launch) did `len(h.orders)`, materialising every order row
+to produce one integer → `func.count`. `/orders` lazy-loaded `Order.store` per row, up to 51 queries →
+`joinedload`.
+
+**7. Two missing indexes.** `ReminderSent.t` is range-deleted **every 60 seconds** and had no index; `Phrase` is
+scanned on `(done, tries, created)` on every `/i18n` call. Both added — and because `create_all()` never adds an
+index to a table that already exists, `ensure_indexes()` issues `CREATE INDEX IF NOT EXISTS` at boot, next to
+`ensure_columns()`.
+
+**8. The places rate limiter stopped holding a mutex across a sleep.** `_get()` slept inside `with _LOCK`,
+serialising every caller at one per second *and* parking each one in the threadpool while it waited — 40 of those
+and static file serving stops too. The slot is now reserved under the lock and the sleep happens outside it.
+
+**9. The S3 client is cached and bounded.** `_s3()` built a new boto3 client per call (botocore reads its service
+model off disk each time) and set no timeouts. Now cached, `connect_timeout=5`, `read_timeout=30`, 2 attempts.
+
+### Known and not yet fixed
+
+- **`--max-instances 1` is load-bearing, not only a cost setting.** `api/consult.py` keeps WebRTC peers in process
+  memory (`ROOMS`), and `reminders.py` / `i18n.py` have no cross-process leader election. Raising it today would
+  break video calls and double-send every reminder. Horizontal scaling needs the daemon loops moved to Cloud
+  Scheduler behind a locked endpoint, and signalling moved to Redis or Cloud Run session affinity.
+- Six other `async def` handlers still do blocking S3 or CSV work on the loop (`more.py:40`, `partner.py:203`,
+  `partner.py:347`, `admin.py:427`, `shop.py:156`, `consult.py:402`). Lower traffic than `/ai/analyze`, and now
+  bounded by the S3 timeouts, but they should move to the threadpool.
+- `auth.py` `_HITS` is an unbounded in-memory rate-limit dict with no eviction, in a container that never restarts.
+- `sos.fan_out` sends to up to 12 contacts serially (email, SMS, WhatsApp each) — worst case minutes, on the
+  emergency path. Belongs in `BackgroundTasks`.
+
+### Still open from the hosting comparison
+
+Project Tracker runs on one `e2-medium` VM (2 vCPU / 4 GB) with docker-compose and Caddy, with Cloud SQL
+`db-f1-micro` — about **$35/month, always warm**. We are on Cloud Run with `--min-instances 1 --max-instances 1
+--no-cpu-throttling` plus `db-g1-small` — about **$82/month, and it still cold-starts**. Moving to the same one-VM
+pattern would be cheaper and warmer, and would give the three daemon threads a natural home. Not done in this round.

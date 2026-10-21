@@ -15,15 +15,26 @@ MAX_FILE = 15 * 1024 * 1024
 PREFIX = os.getenv("S3_PREFIX", "tht/")
 
 
+_CLIENT: dict = {}
+
+
 def _s3():
+    """Cached: botocore reads its service model off disk on every client build, which is tens of milliseconds
+    of file I/O we were paying on every upload and download."""
     if not os.getenv("S3_BUCKET"):
         return None
+    if _CLIENT.get("c") is not None:
+        return _CLIENT["c"]
     import boto3  # imported lazily: only needed when a bucket is configured
 
     from botocore.config import Config
 
     # "when_required": recent boto3 adds CRC checksum headers that Google Cloud Storage's S3 interop (and some other S3 clones) reject
     cfg = {"s3": {"addressing_style": os.getenv("S3_ADDRESSING", "auto")}}
+    # an upload with no timeout can hold a worker until the socket gives up; these are generous but finite
+    cfg["connect_timeout"] = int(os.getenv("S3_CONNECT_TIMEOUT", "5"))
+    cfg["read_timeout"] = int(os.getenv("S3_READ_TIMEOUT", "30"))
+    cfg["retries"] = {"max_attempts": 2, "mode": "standard"}
     try:
         conf = Config(request_checksum_calculation="when_required", response_checksum_validation="when_required", **cfg)
     except TypeError:  # older botocore without those options
@@ -34,7 +45,8 @@ def _s3():
     if os.getenv("S3_ACCESS_KEY"):
         kw["aws_access_key_id"] = os.getenv("S3_ACCESS_KEY")
         kw["aws_secret_access_key"] = os.getenv("S3_SECRET_KEY")
-    return boto3.client("s3", **kw)
+    _CLIENT["c"] = boto3.client("s3", **kw)
+    return _CLIENT["c"]
 
 
 def backend() -> str:

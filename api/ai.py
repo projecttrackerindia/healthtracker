@@ -21,6 +21,7 @@ HERE = Path(__file__).resolve().parent
 CATALOG = json.loads((HERE / "data" / "catalog.json").read_text(encoding="utf-8"))
 MODEL = os.getenv("DOKKO_AI_MODEL", "claude-sonnet-5-5")
 # if the configured model is not available to this API key, the next one is tried and remembered for the process
+AI_TIMEOUT = float(os.getenv("AI_TIMEOUT_S", "60"))
 FALLBACK_MODELS = [m for m in [MODEL, "claude-sonnet-5-5", "claude-haiku-5-5", "claude-sonnet-4-5", "claude-3-5-sonnet-latest"] if m]
 LAST_ERROR: dict = {}   # admins see this on the dashboard; users never do
 FOCUS = {"heart", "lungs", "liver", "kidneys", "pancreas", "thyroid", "stomach", "intestines", "brain", "spleen", "bones", "spine", "uterus", "prostate", "bladder", "breast", "skin", "eyes", "blood", "whole_body"}
@@ -156,7 +157,10 @@ def _anthropic_create(**kw):
     # the installed brotli package's C-extension API doesn't match what this SDK's HTTP client expects when
     # decoding a brotli-encoded response ("process() takes no keyword arguments"); gzip is always available,
     # so just don't advertise brotli support to the server instead of fighting the brotli package version.
-    client = anthropic.Anthropic(http_client=DefaultHttpxClient(headers={"Accept-Encoding": "gzip, identity"}))
+    # Without an explicit timeout the SDK waits 600s. On a single-instance container that is ten minutes in
+    # which one slow document can hold a worker; the caller already falls back to the on-device reading.
+    client = anthropic.Anthropic(timeout=AI_TIMEOUT, max_retries=1,
+                                 http_client=DefaultHttpxClient(headers={"Accept-Encoding": "gzip, identity"}))
     tried = []
     order = ([_WORKING["model"]] if _WORKING["model"] else []) + [m for m in FALLBACK_MODELS if m != _WORKING["model"]]
     last = None

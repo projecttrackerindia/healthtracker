@@ -37,11 +37,23 @@ def _url() -> str:
 DB_URL = _url()
 IS_SQLITE = DB_URL.startswith("sqlite")
 print(f"[db] backend={'sqlite (ephemeral!)' if IS_SQLITE else 'postgres'}", flush=True)
+# Pool sizing matters more than it looks. FastAPI runs every `def` endpoint in AnyIO's threadpool, which is 40
+# threads wide; SQLAlchemy's default pool is 5 + 10 overflow. The 25 requests that don't get a connection block
+# inside SessionLocal() for pool_timeout (default 30s) and then raise. 35 connections covers the threadpool and
+# the three daemon threads and still sits well under db-g1-small's max_connections. pool_timeout is short on
+# purpose: failing in 10s frees the thread, where waiting 30s holds it and spreads the stall.
+_POOL = {} if IS_SQLITE else {
+    "pool_size": int(os.getenv("DB_POOL_SIZE", "20")),
+    "max_overflow": int(os.getenv("DB_POOL_OVERFLOW", "15")),
+    "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "10")),
+    "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),   # the Cloud SQL proxy drops idle connections
+}
 engine = create_engine(
     DB_URL,
     pool_pre_ping=not IS_SQLITE,
     connect_args={"check_same_thread": False} if IS_SQLITE else {},
     future=True,
+    **_POOL,
 )
 if IS_SQLITE:
 
@@ -104,3 +116,20 @@ def ensure_columns() -> None:
                 if name not in have:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {typ}"))
                     print(f"[db] added column {table}.{name}", flush=True)
+
+
+def ensure_indexes() -> None:
+    """create_all() adds indexes only with the table. An index declared on a model that already exists in the
+    database is never created, so new ones are issued here, idempotently. Safe to run on every boot."""
+    from sqlalchemy import text
+
+    want = [
+        ("ix_reminders_sent_t", "reminders_sent", "(t)"),
+        ("ix_phrases_pending", "phrases", "(done, tries, created)"),
+    ]
+    with engine.begin() as c:
+        for name, table, cols in want:
+            try:
+                c.execute(text(f"CREATE INDEX IF NOT EXISTS {name} ON {table} {cols}"))
+            except Exception as e:   # a missing table on a fresh install, or a backend without IF NOT EXISTS
+                print(f"[db] index {name}: {type(e).__name__}: {str(e)[:120]}", flush=True)

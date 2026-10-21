@@ -64,8 +64,10 @@ def main() -> int:
         data = s.read_bytes()
         for suf in (".br", ".gz"):
             alt = s.with_name(s.name + suf)
-            if not alt.exists():
-                continue  # only refresh the copies that already exist
+            # .br and .gz are a pair: a file with only a .br leaves every browser that does not accept brotli
+            # downloading the raw original. index.html was 1.57 MB that way. Create the missing twin.
+            if not alt.exists() and not s.with_name(s.name + (".gz" if suf == ".br" else ".br")).exists():
+                continue  # this file is not meant to have pre-compressed copies at all
             if suf == ".br":
                 alt.write_bytes(brotli.compress(data, quality=11))
             else:

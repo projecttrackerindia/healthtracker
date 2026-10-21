@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 
 from sqlalchemy.exc import OperationalError
 
-from api.db import Base, engine, ensure_columns, session
+from api.db import Base, engine, ensure_columns, ensure_indexes, session
 from api import admin as admin_api, auth as auth_api, family as family_api, more as more_api, reminders, routes as public_api
 from api.seed import seed_all
 
@@ -31,6 +31,11 @@ VERSION = os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8]
 STARTED = time.time()
 
 app = FastAPI(title="TheHealthTracker", version=VERSION, docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json")
+# Nothing compressed API responses before this: the phrase table, places and store lists all went out raw.
+# GZipMiddleware skips anything that already carries Content-Encoding, so the pre-built .br variants below
+# are untouched - this only catches what they miss, including /app for a client that does not accept brotli.
+from fastapi.middleware.gzip import GZipMiddleware  # noqa: E402
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 # --------------------------------------------------------------------------------------------------
 # Pre-compressed copies are only served when they match their source byte for byte. An index.html edited
@@ -86,6 +91,7 @@ def _init_db():
         if "already exists" not in str(e):
             raise
     ensure_columns()
+    ensure_indexes()
     with session() as db:
         seed_all(db)
         try:
@@ -243,6 +249,18 @@ def admin_page(rest: str = ""):
     return FileResponse(ADMIN / "index.html", media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache", "X-Frame-Options": "DENY"})
 
 
+def _conditional(request: Request, r: FileResponse):
+    """FileResponse sets an ETag, but starlette only honours If-None-Match inside StaticFiles, which this app
+    does not mount. Without this, `no-cache` on the 400 KB app shell meant revalidate-and-resend on every open
+    instead of a 304."""
+    tag = r.headers.get("etag")
+    inm = request.headers.get("if-none-match")
+    if tag and inm and tag in [t.strip() for t in inm.split(",")]:
+        keep = {k: v for k, v in r.headers.items() if k.lower() in ("etag", "cache-control", "vary", "content-encoding")}
+        return Response(status_code=304, headers=keep)
+    return r
+
+
 def _send(p: Path, request: Request, cache: str):
     ext = p.suffix.lower()
     headers = {"Vary": "Accept-Encoding", "Cache-Control": cache}
@@ -251,7 +269,10 @@ def _send(p: Path, request: Request, cache: str):
         path, enc = _variant(p, request)
         if enc:
             headers["Content-Encoding"] = enc
-    return FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"), headers=headers)
+    # stat_result up front: without it starlette sets the ETag during __call__, i.e. after we would have
+    # looked for it, and every conditional request falls through to a full resend.
+    return _conditional(request, FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"),
+                                              headers=headers, stat_result=os.stat(path)))
 
 
 # landing page (public) at "/", the app at "/app"
@@ -351,4 +372,7 @@ def static(full_path: str, request: Request):
         path, enc = _variant(p, request)
         if enc:
             headers["Content-Encoding"] = enc
-    return FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"), headers=headers)
+    # stat_result up front: without it starlette sets the ETag during __call__, i.e. after we would have
+    # looked for it, and every conditional request falls through to a full resend.
+    return _conditional(request, FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"),
+                                              headers=headers, stat_result=os.stat(path)))

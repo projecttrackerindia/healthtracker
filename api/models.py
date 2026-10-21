@@ -445,7 +445,7 @@ class ReminderSent(Base):
 
     __tablename__ = "reminders_sent"
     key: Mapped[str] = mapped_column(String(120), primary_key=True)
-    t: Mapped[int] = mapped_column(Integer, default=now)
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)   # range-deleted every tick; without this it is a seq scan per minute
 
 
 class ClientError(Base):
@@ -770,3 +770,5 @@ class Phrase(Base):
     created: Mapped[int] = mapped_column(Integer, default=now)
     done: Mapped[int] = mapped_column(Integer, default=0)             # when the translation landed (0 = still pending)
     tries: Mapped[int] = mapped_column(Integer, default=0)
+
+    __table_args__ = (Index("ix_phrases_pending", "done", "tries", "created"),)   # the pending-work scan on every /i18n call
