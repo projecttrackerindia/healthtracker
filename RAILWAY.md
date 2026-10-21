@@ -496,3 +496,80 @@ Project Tracker runs on one `e2-medium` VM (2 vCPU / 4 GB) with docker-compose a
 `db-f1-micro` — about **$35/month, always warm**. We are on Cloud Run with `--min-instances 1 --max-instances 1
 --no-cpu-throttling` plus `db-g1-small` — about **$82/month, and it still cold-starts**. Moving to the same one-VM
 pattern would be cheaper and warmer, and would give the three daemon threads a natural home. Not done in this round.
+
+---
+
+## Round 35 — the shake, the theme, and buttons that stay in line
+
+All four reported from a phone, with two screen recordings. Two of them were my own earlier fixes aimed at the
+wrong place, which is worth recording.
+
+### The shake was a feedback loop, not a map bug
+
+Frame-by-frame, the map-pick footer alternates for the whole eight seconds:
+
+```
+"Finding the address… 13.07767, 80.23876"        ← 2 lines
+"65/27, near Dowlath Towers, Kilpauk, Chennai…"  ← 3 lines
+"Finding the address… 13.07767, 80.23876"        ← 2 lines
+```
+
+`reverse()` set `info=null; show()` before every lookup, which blanked the label to a **two-line** placeholder;
+the resolved address is **three** lines. The sheet changed height → the map above it was resized to fit →
+Google Maps fires `idle` on a resize → `idle` called `moved()` → another geocode → blank again. Forever.
+
+Both halves are fixed:
+
+* the label never blanks — the previous address stays on screen with a `busy` class, and CSS clamps the block to
+  a fixed two-line / one-line shape so the sheet cannot change height at all;
+* `idle` ignores a centre that has not moved more than **15 m** from the last resolved point, so a resize is no
+  longer mistaken for a pan.
+
+Verified: the sheet holds **one height (189 px) across 6 seconds, 0 changes, 0 geocodes** while idle.
+
+Round 34 fixed `SX.act.mapsel` re-rendering the *places list*. That was a real fault, but it was not this one.
+When a user says "the map is shaking", check which surface — the picker and the list are different code.
+
+### Dark mode had been switched off for everybody
+
+Two places wrote `data-theme="light"` whenever the stored value was not exactly `"dark"`:
+
+```js
+r.dataset.theme = saved==='dark' ? 'dark' : 'light';
+new MutationObserver(()=>{ … else { r.dataset.theme='light'; ls('tht.theme','light') } })
+```
+
+Every dark rule is guarded by `:root:not([data-theme="light"])`, so an explicit `light` **overrides the phone**.
+A device set to dark got the light app, and the *System* button in Settings did nothing because the observer put
+the attribute straight back one tick later. Now `light` and `dark` are the only values ever written and *System*
+removes the attribute, which is what lets `prefers-color-scheme` through. Dark mode renders correctly across
+Today, Book a test, the assistant, the quote sheet and Settings.
+
+`tests/test_round22.py` asserted the old light-first behaviour; it now asserts the new one, with the reason.
+
+### Buttons that folded into vertical letters
+
+"Details" rendered as `De tail s`. Round 34 fixed this inside the places sheet only. It is now one global rule —
+`.btn, .chip { white-space:nowrap; flex-shrink:0 }` with `min-width:0` on the flex rows that hold them, so the
+label beside a button is what gives way.
+
+### Everything else in this round
+
+* **The test picker** rebuilt the sheet's entire `innerHTML` on every tap, so the list scrolled back to the top
+  each time a test was chosen. Now the row's class is toggled in place and only the count and total are rewritten.
+* **The floating + button** sat on top of open sheets. It is hidden whenever a modal is open (`body.lv35-modal`).
+* **The stage controls** (`Expand workspace`, `Full screen`) were a centred, wrapping, absolutely-positioned row,
+  so on a short stage they rode up over the speciality chips. One line, bottom-anchored, scrollable, on their own
+  surface.
+* **The assistant in chat mode** gets a real column layout: `100dvh`-based height so an open keyboard does not
+  strand the composer halfway up the screen, chips on their own line, page padding that clears the tab bar.
+* **The medicine basket** drops its own "Use my location" button once the family has already granted location
+  for medicines in round 32's consent sheet, and gains the same non-partner fallback the labs got: pharmacies
+  from Google, with the basket sent on WhatsApp.
+
+### Dead code worth knowing about
+
+`SX.labCatalogue` was added to `tools/live/live31.js` during round 32, but layer 31 was already baked into
+`web/index.html` by then, so the edit never reached the build. `pickTests` falls back to fetching `/labs/tests`,
+which is why nobody noticed. **Editing a `live<N>.js` whose layer is already applied changes nothing** — the
+chain is only re-run for layers that have not been committed yet. New behaviour goes in a new layer.

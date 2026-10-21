@@ -1841,7 +1841,7 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
 .lv21-setup .lv21-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.lv21-setup .lv21-row b{display:block;font-size:14.5px}.lv21-setup .lv21-row small{color:var(--mute);font-size:12.5px;line-height:1.4}
 .lv21-sel{max-width:46%;border-radius:12px;min-height:40px}.lv21-ok{width:32px;height:32px;border-radius:50%;background:#dcf8e6;color:#0f5132;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
 </style>
-<script>try{document.documentElement.dataset.theme=localStorage.getItem("tht.theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
+<script>try{var _t=localStorage.getItem("tht.theme");if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t;else document.documentElement.removeAttribute("data-theme")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
 <style id="live22-css">/* ===================== live layer 22: the phone design system — light first, one icon set, display type, glass cards, floating tab bar ===================== */
 @media (max-width:720px){
@@ -2405,6 +2405,63 @@ body.lv34-scroll *{transition:none!important}
 .lv34-fbr b{display:block;font-size:14.5px;line-height:1.25}
 .lv34-fbr small{display:block;color:var(--mute,#6b7280);font-size:12px;margin-top:2px}
 .lv34-fbr .btn{flex:0 0 auto;white-space:nowrap}
+</style>
+<style id="live35-css">/* ---- layer 35: global button behaviour, the map sheet, the picker ---- */
+
+/* A. A button is a button. It never folds its letters into a vertical column, and it never shrinks below its
+   own text — the label beside it gives way instead. This was fixed inside one sheet in round 34; it belongs
+   here, once, for the whole app. */
+.btn,.chip,.sx-cta .btn,.row .btn,.hd .btn,button.btn{white-space:nowrap;flex-shrink:0}
+.btn>*,.chip>*{white-space:nowrap}
+/* and the text they sit beside is what gives way */
+.card .hd,.sx-cta,.row,.lv6-pl,.sx-store{min-width:0}
+.card .hd .grow,.sx-cta .grow,.row .grow,.lv6-pl .grow,.sx-store .grow{min-width:0}
+.card .hd .grow>b,.sx-cta .grow>b,.row .grow>b{overflow-wrap:anywhere}
+/* a long saved address must wrap or clip, never push the box wider than the screen */
+.sx-addr,.sx-addr *,[data-net=addr],.lv35-clip{min-width:0;overflow-wrap:anywhere}
+
+/* B. The map sheet keeps one height whatever the address says, so the map above it is never resized. */
+.lv29-sheet .lv29-addr{min-height:46px}
+.lv29-sheet .lv29-addr .grow{min-width:0}
+.lv29-sheet .lv29-addr b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.lv29-sheet .lv29-addr small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.2em}
+.lv29-sheet .lv29-addr.busy b{opacity:.62}
+.lv29-sheet .lv29-addr.busy small::after{content:" ·";animation:lv35dots 1s steps(4,end) infinite}
+@keyframes lv35dots{0%{content:" ·"}25%{content:" ··"}50%{content:" ···"}75%{content:" ··"}}
+
+/* C. The floating compose button is part of the page, not of a sheet on top of it. */
+body.lv35-modal .fab,body.lv35-modal #sxfab,body.lv35-modal .sx-fab{opacity:0;pointer-events:none;transform:scale(.9)}
+.fab,#sxfab,.sx-fab{transition:opacity .16s ease,transform .16s ease}
+
+/* D. The test picker: selecting must not move the list under the finger. */
+.lv34-tests{overscroll-behavior:contain}
+.lv34-t{transition:background .14s ease,border-color .14s ease}
+
+/* E. The stage controls were a wrapping, centred, absolutely-positioned row, so on a short stage they rode up
+   over the speciality chips. One line, anchored to the bottom of the stage, scrollable if they do not fit,
+   and on a surface of their own so they read as controls rather than text floating on the model. */
+.pro-stage-bar{left:10px;right:10px;bottom:76px;top:auto;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-end;
+  scrollbar-width:none;gap:6px;padding:0 2px}
+.pro-stage-bar::-webkit-scrollbar{display:none}
+.pro-stage-bar button{pointer-events:auto;flex:none;white-space:nowrap;font-size:12.5px;line-height:1;
+  padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--card) 88%,transparent);color:var(--ink);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 8px 22px -14px rgba(16,24,48,.5)}
+/* the speciality row owns the top of the stage; nothing else may sit there */
+.stage .seg,.stage .chips{position:relative;z-index:7}
+
+/* F. The assistant in chat mode: messages scroll, chips sit on their own line, the composer reaches the
+   bottom of the screen instead of floating where the content happens to end. 100dvh so an open keyboard
+   does not strand it halfway up. */
+body.lv33-chat[data-page=assist] .lv5-agent{min-height:calc(100dvh - 150px);display:flex;flex-direction:column}
+body.lv33-chat[data-page=assist] .lv5-chat{flex:1 1 auto;min-height:0}
+body.lv33-chat[data-page=assist] .lv5-sugg{flex:none;margin-bottom:6px}
+body[data-page=assist] form.lv5-ask{flex:none;bottom:calc(8px + env(safe-area-inset-bottom))}
+/* and the page leaves room for the tab bar so the composer is never under it */
+body[data-page=assist]{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+
+/* G. A saved address is text, not a layout. It wraps inside its box. */
+.lv35-addrbox{display:block;width:100%;min-width:0;overflow-wrap:anywhere;white-space:normal}
 </style>
 </head>
 <body>
@@ -8519,8 +8576,9 @@ const phone=()=>matchMedia('(max-width:720px)').matches;
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
 
 // ---------------------------------------------------------------- A. theme: light unless the person chose dark; the choice sticks
-{const r=document.documentElement,saved=ls('tht.theme');r.dataset.theme=saved==='dark'?'dark':'light';
- new MutationObserver(()=>{const t=r.dataset.theme;if(t==='dark'||t==='light')ls('tht.theme',t);else{r.dataset.theme='light';ls('tht.theme','light')}}).observe(r,{attributes:true,attributeFilter:['data-theme']})}
+{const r=document.documentElement,saved=ls('tht.theme');
+ if(saved==='dark'||saved==='light')r.dataset.theme=saved;else r.removeAttribute('data-theme');
+ new MutationObserver(()=>{const t=r.dataset.theme;if(t==='dark'||t==='light')ls('tht.theme',t);else ls('tht.theme','system')}).observe(r,{attributes:true,attributeFilter:['data-theme']})}
 
 // ---------------------------------------------------------------- B. one icon set (24-unit stroke icons)
 const I={
@@ -8969,7 +9027,7 @@ function osmTiles(el,c,z){const W=el.clientWidth||360,H=el.clientHeight||300,n=M
  return h}
 // the picker: a map that moves under a fixed pin (Rapido / Uber style), search, "locate me", then the door and landmark
 SX.mapPick=(opt={})=>new Promise(async resolve=>{
- let cur=opt.center||SX.loc.get()||null,z=cur?16:5,info=null,map=null,drag=null,tdeb=null,sdeb=null,done=false,label=opt.label||'home';if(!cur){cur={...INDIA}}
+ let cur=opt.center||SX.loc.get()||null,z=cur?16:5,info=null,map=null,drag=null,tdeb=null,sdeb=null,done=false,label=opt.label||'home',lastFix=null;if(!cur){cur={...INDIA}}
  const fields=opt.address?`<div class="lv29-lbl">${[['home','🏠',P('Home')],['work','💼',P('Work')],['other','📍',P('Other')]].map(([k,i,t])=>`<button type="button" data-l="${k}" class="${k===label?'on':''}">${i} ${t}</button>`).join('')}</div>
   <div class="lv29-fields"><input class="full" id="lv29door" placeholder="${E(P('House / flat, building'))}" value="${E(opt.door||'')}" maxlength="120"><input id="lv29lm" placeholder="${E(P('Landmark'))}" value="${E(opt.landmark||'')}" maxlength="80"><input id="lv29pin" placeholder="PIN" inputmode="numeric" maxlength="6" value="${E(opt.pin||'')}"></div>`:'';
  SX.modal(`<div class="lv29-pick"><div class="lv29-pm" id="lv29pm"><div class="lv29-tiles" id="lv29tiles"></div><div class="lv29-pin">${PIN}</div><span class="lv29-attr" id="lv29attr"></span><button type="button" class="lv29-gps" id="lv29gps" aria-label="${E(P('Use my current location'))}">${GPSI}</button></div>
@@ -8979,14 +9037,14 @@ SX.mapPick=(opt={})=>new Promise(async resolve=>{
  const pm=document.getElementById('lv29pm'),tiles=document.getElementById('lv29tiles'),addr=document.getElementById('lv29addr'),sub=document.getElementById('lv29sub'),sug=document.getElementById('lv29sug'),q=document.getElementById('lv29q'),gps=document.getElementById('lv29gps');
  const show=()=>{if(!info){addr.textContent=P('Finding the address…');sub.textContent=cur.lat.toFixed(5)+', '+cur.lng.toFixed(5);return}addr.textContent=info.label||[info.place,info.city].filter(Boolean).join(', ')||P('Pinned');sub.textContent=[info.place,info.city,info.state,info.pin].filter((x,i,a)=>x&&a.indexOf(x)===i).join(' · ');const pin=document.getElementById('lv29pin');if(pin&&info.pin&&!pin.value)pin.value=info.pin};
  const g=await gwait(5000);
- const reverse=async()=>{const at={...cur};info=null;show();let r=null;
+ const reverse=async()=>{const at={...cur};const box=document.querySelector('.lv29-sheet .lv29-addr');if(box)box.classList.add('busy');if(!info)show();let r=null;
   if(g){try{const res=await new Promise((ok,no)=>new google.maps.Geocoder().geocode({location:at,region:'IN'},(x,st)=>st==='OK'&&x&&x.length?ok(x):no(st)));r=gaddr(res[0]);for(const x of res.slice(1,4)){const o=gaddr(x);['place','city','district','state','pin'].forEach(k=>{r[k]=r[k]||o[k]})}}catch(e){}}
-  if(!r)r=await SX.loc.resolve(at.lat,at.lng);if(at.lat!==cur.lat||at.lng!==cur.lng)return;info=r||{ok:false,label:''};show()};
+  if(!r)r=await SX.loc.resolve(at.lat,at.lng);if(at.lat!==cur.lat||at.lng!==cur.lng)return;info=r||{ok:false,label:''};lastFix={lat:at.lat,lng:at.lng};if(box)box.classList.remove('busy');show()};
  const moved=()=>{clearTimeout(tdeb);tdeb=setTimeout(reverse,g?250:700)};
  const goTo=(lat,lng,zoom)=>{cur={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)};if(zoom)z=zoom;if(map){map.setZoom(z);map.panTo(cur)}else{tiles.innerHTML=osmTiles(pm,cur,z);tiles.style.transform='';moved()}};
  if(g){const gd=document.createElement('div');gd.className='lv29-g';pm.insertBefore(gd,tiles);tiles.remove();document.getElementById('lv29attr').remove();
   map=new google.maps.Map(gd,{center:cur,zoom:z,disableDefaultUI:true,gestureHandling:'greedy',clickableIcons:false,keyboardShortcuts:false});
-  map.addListener('dragstart',()=>pm.classList.add('drag'));map.addListener('idle',()=>{pm.classList.remove('drag');const c=map.getCenter();if(!c)return;cur={lat:+c.lat().toFixed(6),lng:+c.lng().toFixed(6)};moved()})}
+  map.addListener('dragstart',()=>pm.classList.add('drag'));map.addListener('idle',()=>{pm.classList.remove('drag');const c=map.getCenter();if(!c)return;cur={lat:+c.lat().toFixed(6),lng:+c.lng().toFixed(6)};if(lastFix&&Math.hypot((cur.lat-lastFix.lat)*111320,(cur.lng-lastFix.lng)*105000)<15)return;moved()})}
  else{document.getElementById('lv29attr').textContent='© OpenStreetMap';tiles.innerHTML=osmTiles(pm,cur,z);
   pm.addEventListener('pointerdown',e=>{if(e.target.closest('button,input'))return;drag={x:e.clientX,y:e.clientY,dx:0,dy:0};pm.setPointerCapture(e.pointerId);pm.classList.add('drag')});
   pm.addEventListener('pointermove',e=>{if(!drag)return;drag.dx=e.clientX-drag.x;drag.dy=e.clientY-drag.y;tiles.style.transform=`translate(${drag.dx}px,${drag.dy}px)`});
@@ -9752,7 +9810,7 @@ async function pickTests(p){let T=(SX.labCatalogue&&SX.labCatalogue())||[];
  const wire=()=>{document.querySelectorAll('.lv34-t').forEach(b=>b.onclick=()=>{const c=b.dataset.t;sel=sel.includes(c)?sel.filter(x=>x!==c):sel.concat([c]);paint()});
   const wa=document.getElementById('lv34wa');if(wa)wa.onclick=()=>send(p,sel,T);
   const sv=document.getElementById('lv34save');if(sv)sv.onclick=()=>{plan(p,sel,T);SX.closeModal();toast(P('Saved. It is on Book a test until the report arrives.'));try{render()}catch(e){}}};
- const paint=()=>{const w=document.querySelector('.sx-modal .sx-sheet');if(!w)return;w.innerHTML=body();wire()};
+ const paint=()=>{const w=document.querySelector('.sx-modal .sx-sheet');if(!w)return;w.querySelectorAll('.lv34-t').forEach(b=>b.classList.toggle('on',sel.includes(b.dataset.t)));const sum=w.querySelector('.lv34-sum');if(sum)sum.innerHTML=`<b>${sel.length} ${sel.length===1?P('test'):P('tests')}</b><span>${P('about')} ${money(T.filter(t=>sel.includes(t.code)).reduce((a,t)=>a+t.typical,0))}</span>`;['lv34wa','lv34save'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=!sel.length})};
  SX.modal(body(),{label:P('Which tests?'),cls:'lv34-m'});wire()}
 function msg(p,sel,T){const m=SX.me(),names=T.filter(t=>sel.includes(t.code)).map(t=>'• '+t.name);
  return [`Hello ${p.name},`,'',`I would like to book these tests${m?' for '+m.name:''}:`,...names,'',
@@ -9826,6 +9884,84 @@ async function fbLabs(box){if(!box)return;
   +`<p class="mute sm" style="margin:8px 0 0">${P('These labs are not partners yet, so we cannot hold the price. Pick your tests and we will send them the list — they confirm the amount.')}</p>`;
  list.forEach(l=>FB[l.id]=l);
  box.querySelectorAll('[data-lv34]').forEach(b=>b.onclick=()=>{const l=list.find(x=>String(x.id)===b.dataset.lv34);if(!l)return;SX.closeModal();pickTests(l)})}
+
+}
+/*live-p35*/
+// ===================== live layer 35: the map stops shaking, buttons stop folding, the picker stops jumping =====================
+// The shake was a feedback loop, not a map bug. The address under the map was blanked to "Finding the address…"
+// (two lines) on every geocode and filled back in with a full address (three lines). The sheet changed height,
+// the map above it was resized to fit, Google Maps fired `idle` on the resize, and `idle` kicked off another
+// geocode. Round and round for as long as the sheet was open. Both halves are fixed here: the label never
+// changes the sheet's height, and `idle` only re-geocodes when the pin has actually moved.
+{
+const P=SX.p,E=SX.E||(s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+SX.addPhrases({
+ 'Updating the address…':['पता अपडेट हो रहा है…','చిరునామా నవీకరిస్తోంది…'],
+});
+
+// ---------------------------------------------------------------- A. the floating button must never sit on a sheet
+// A modal is a surface of its own; the compose button belongs to the page underneath it.
+const fabWatch=()=>{const on=!!document.querySelector('.sx-modal');document.body.classList.toggle('lv35-modal',on)};
+new MutationObserver(fabWatch).observe(document.body,{childList:true,subtree:false});
+const m0=SX.modal,c0=SX.closeModal;
+SX.modal=function(){const r=m0.apply(this,arguments);fabWatch();return r};
+SX.closeModal=function(){const r=c0.apply(this,arguments);setTimeout(fabWatch,0);return r};
+fabWatch();
+
+// ---------------------------------------------------------------- B. the basket already knows where you are
+// The "Use my location" button sat in the pharmacy block whether or not the family had already granted
+// location in round 32's consent sheet. If they have, there is nothing to ask: run the lookup and drop the
+// button. Only a family that has not granted it, or has switched medicines off, still sees a prompt.
+const medsOn=()=>{try{return SX.locOn?SX.locOn('meds'):false}catch(e){return false}};
+const haveFix=()=>{try{return !!(SX.loc&&SX.loc.get&&SX.loc.get())}catch(e){return false}};
+function tidyGeoButtons(){
+ if(!(medsOn()&&haveFix()))return;
+ document.querySelectorAll('.sx-live [data-net=geo]').forEach(b=>{if(!b.dataset.lv35){b.dataset.lv35='1';b.remove()}})}
+
+// ---------------------------------------------------------------- C. pharmacies near you, when none are partners
+// Same gap as the labs had: /stores only knows partner pharmacies, and where there are none the basket ended
+// with "online ordering is not available in your area yet" and no way forward. Show what Google lists and let
+// the family send the basket to one of them.
+async function pharmFallback(box){
+ if(!box||box.querySelector('.lv35-ph'))return;
+ const txt=(box.textContent||'');
+ if(!/not available in your area|no pharmacy|No pharmacies/i.test(txt))return;
+ let g=null;try{g=await SX.geo(false)}catch(e){}
+ if(!g)return;
+ const list=document.createElement('div');list.className='lv35-ph';
+ list.innerHTML=`<p class="sx-h4" style="margin:10px 0 6px">${P('Pharmacies near you')}</p><div class="lv34-fbl"><div class="sx-livel"><div class="sx-spin sm"></div> ${P('Finding pharmacies…')}</div></div>`;
+ box.append(list);
+ const slot=list.querySelector('.lv34-fbl');
+ let r=null;try{r=await SX.api(`/places?kind=pharmacy&lat=${g.lat}&lng=${g.lng}&radius=6000`,{silent:true})}catch(e){}
+ const items=((r&&r.places)||[]).concat((r&&r.partners)||[]).sort((a,b)=>a.km-b.km).slice(0,5);
+ if(!items.length){slot.innerHTML=`<p class="mute sm">${P('No pharmacies listed near you yet.')}</p>`;return}
+ slot.innerHTML=items.map(x=>`<button class="lv34-fbr" data-lv35ph="${E(String(x.id))}"><div class="grow"><b>${E(x.name)}</b><small>${x.km} km${x.rating?' · ★ '+x.rating:''}${x.open===true?' · <i class="lv34-open">'+P('Open now')+'</i>':x.open===false?' · <i class="lv34-shut">'+P('Closed now')+'</i>':''}</small></div><span class="btn p sm">${P('Send list')}</span></button>`).join('')
+  +`<p class="mute sm" style="margin:8px 0 0">${P('Not partners yet, so we cannot hold the price. Send them your list and they confirm stock and the amount.')}</p>`;
+ slot.querySelectorAll('[data-lv35ph]').forEach(b=>b.onclick=()=>{
+  const x=items.find(i=>String(i.id)===b.dataset.lv35ph);if(!x)return;
+  const m=SX.me&&SX.me(),lines=(S.cart||[]).map(c=>'• '+(c.name||c.id)+(c.q>1?' ×'+c.q:''));
+  const body=[`Hello ${x.name},`,'',`I would like these medicines${m?' for '+m.name:''}:`,...lines,'',
+   S.addr?`Deliver to: ${S.addr}`:'','Please confirm stock and the total.','','Sent from TheHealthTracker'].filter(Boolean).join('\n');
+  const n=(x.phone||'').replace(/[^0-9+]/g,'').replace(/^\+/,'');
+  const url=n?`https://wa.me/${n}?text=${encodeURIComponent(body)}`:`https://wa.me/?text=${encodeURIComponent(body)}`;
+  try{window.open(url,'_blank','noopener')}catch(e){location.href=url}})}
+
+SX.addPhrases({
+ 'Pharmacies near you':['आपके पास की फ़ार्मेसी','మీ దగ్గరి ఫార్మసీలు'],
+ 'Finding pharmacies…':['फ़ार्मेसी खोजी जा रही हैं…','ఫార్మసీలు వెతుకుతోంది…'],
+ 'No pharmacies listed near you yet.':['आपके पास अभी कोई फ़ार्मेसी सूचीबद्ध नहीं है।','మీ దగ్గర ఇంకా ఫార్మసీలు జాబితాలో లేవు.'],
+ 'Send list':['सूची भेजें','జాబితా పంపండి'],
+ 'Not partners yet, so we cannot hold the price. Send them your list and they confirm stock and the amount.':
+  ['ये अभी पार्टनर नहीं हैं, इसलिए दाम पक्का नहीं कर सकते। सूची भेजें, वे स्टॉक और रक़म बताएँगे।',
+   'వీరు ఇంకా భాగస్వాములు కాదు, కాబట్టి ధర పట్టుకోలేము. జాబితా పంపండి, వారు స్టాక్ మరియు మొత్తాన్ని నిర్ధారిస్తారు.'],
+});
+
+// the basket is rebuilt by the page, so watch for it rather than wiring once
+let tick=null;
+new MutationObserver(()=>{clearTimeout(tick);tick=setTimeout(()=>{
+ try{tidyGeoButtons();document.querySelectorAll('.sx-live').forEach(pharmFallback)}catch(e){}
+},160)}).observe(document.body,{childList:true,subtree:true});
+setTimeout(()=>{try{tidyGeoButtons();document.querySelectorAll('.sx-live').forEach(pharmFallback)}catch(e){}},900);
 
 }
 SX.boot();

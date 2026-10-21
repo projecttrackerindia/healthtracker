@@ -9,8 +9,12 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_page_carries_layer_22_light_first():
     html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
     assert "/*live-p22*/" in html and 'id="live22-css"' in html
-    # light before first paint, dark only when chosen
-    assert 'localStorage.getItem("tht.theme")==="dark"?"dark":"light"' in html
+    # Round 35 changed this deliberately. It used to force data-theme="light" whenever the saved value was
+    # not exactly "dark", and because the dark rules are guarded by :root:not([data-theme="light"]) that
+    # overrode the phone's own setting: a device in dark mode still got the light app. No attribute at all is
+    # what lets the phone decide, so "light" and "dark" are now the only values ever written.
+    assert 'if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t' in html
+    assert 'document.documentElement.removeAttribute("data-theme")' in html
     assert ":root,:root[data-theme=light]{--bg:#f4f6fb" in html and ":root[data-theme=dark]{--bg:#07080d" in html
     assert "fonts.googleapis.com/css2?family=Plus+Jakarta+Sans" in html
     assert "SX.ico=" in html and "#lv22add" in html and "lv22-tiles" in html and "lv22-fam" in html
@@ -29,14 +33,14 @@ const i=html.indexOf('/*live-p22*/');const nxt=html.indexOf('/*live-p',i+10);con
 const src=html.slice(i,j);
 const store={};global.localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>store[k]=String(v),removeItem:k=>delete store[k]};
 const el=()=>({dataset:{},querySelectorAll:()=>[],querySelector:()=>null,appendChild(){},prepend(){},innerHTML:'',classList:{add(){},toggle(){}},setAttribute(){},getBoundingClientRect:()=>({height:0})});
-global.document={documentElement:{dataset:{}},body:el(),getElementById:()=>el(),querySelector:()=>null,querySelectorAll:()=>[],createElement:()=>el()};
+global.document={documentElement:{dataset:{},removeAttribute(){delete this.dataset.theme},setAttribute(k,v){this.dataset.theme=v}},body:el(),getElementById:()=>el(),querySelector:()=>null,querySelectorAll:()=>[],createElement:()=>el()};
 global.MutationObserver=class{observe(){}};global.matchMedia=()=>({matches:true});global.window=global;global.setTimeout=()=>0;global.setInterval=()=>0;
 global.page='dash';global.render=()=>{};global.go=()=>{};global.toast=()=>{};
 const S={members:[{id:'d1',name:'Meera Raghavan',rel:'You'},{id:'d2',name:'Vikram',rel:'Husband'}],active:'d1',steps:{d1:{[new Date().toISOString().slice(0,10)]:6420}},sleep:{},vitals:{d1:[{t:Date.now()-3600e3,hr:72},{t:Date.now()-7200e3,sys:142,dia:91}]}};
 const SX={p:s=>s,S,extend(){},me:()=>S.members[0],avatar:(m,s)=>'<div class="av">'+m.name[0]+'</div>',modal(){},closeModal(){},user:null};
 const E=s=>String(s);
 new Function('SX','S','E','P',src)(SX,S,E,SX.p);
-if(document.documentElement.dataset.theme!=='light')throw new Error('theme should default to light, got '+document.documentElement.dataset.theme);
+if(document.documentElement.dataset.theme!==undefined)throw new Error('with nothing saved the attribute must be absent so the phone decides, got '+document.documentElement.dataset.theme);
 const t=SX.lv22.tiles(S.members[0]);
 if(!/6,420/.test(t)||!/64% of goal/.test(t))throw new Error('steps tile: '+t.slice(0,200));
 if(!/142\/91/.test(t)||!/high · discuss with your doctor/.test(t))throw new Error('bp tile');
