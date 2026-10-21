@@ -310,3 +310,99 @@ every analyse response carry `today` and `dayCap`.
   comes from the lab quotes in the sheet.
 * The morning "repeat this test" nudge now lands on Book a test instead of a list of addresses.
 * Signing out goes to `/signin` (the sign-in sheet, with "Create an account") instead of the marketing page.
+
+---
+
+## Round 32 — one place for location, a heart that looks like a heart, chat first, and labs you can book
+
+Four faults, all reported from a phone, all fixed in live layers 32–34. The service worker is at `dk-r34`.
+
+### A. Location is asked once, for everything (`tools/live/live32.*`)
+
+Location was being requested separately by SOS, labs, medicines and the map, so a family saw the browser prompt four
+times and a refusal in one place said nothing to the others. There is now **one door**:
+
+```
+SX.needLoc(module)  →  first run: SX.locSheet()  →  per-module opt-in  →  fresh or saved fix
+SX.geo(ask)         →  wrapped, so every existing caller goes through the same door
+```
+
+* The consent sheet names all six modules — **SOS, labs, medicines, care, alerts, live tracking** — all selected by
+  default, each one the person may deselect. **SOS is locked on** (`req:true`, and `perm()` forces `mod.sos`): an
+  emergency with no location is not a feature we will ship.
+* Declining is a real answer: `Maybe later` keeps the app working and offers to pick the spot on a map instead.
+* The header carries a status chip (`SX.locChip`) and Settings has a card listing which modules may use the fix, so it
+  can be changed later without hunting through the browser's own settings.
+* Live tracking (`SX.sosWatch`) uses `watchPosition` and only while an SOS is open.
+
+### B. The heart (`tools/live/live33.*`)
+
+The model was lit with flat lights and shaded like plastic. It now renders in a small studio:
+
+* `studioEnv()` builds four emissive softboxes — key, crimson rim, cool rim, warm bounce — and bakes them through
+  `PMREMGenerator.fromScene`, so every material gets real image-based lighting. Tone mapping is ACES Filmic.
+* `noiseMaps()` generates a fractal-noise **normal map and roughness map** in a canvas at load. Without surface relief
+  no amount of lighting stops a mesh reading as a balloon; this is the single biggest change.
+* Myocardium is muscle-coloured rather than pink, the great vessels are cream and slate rather than lavender, and the
+  specular is matte — the earlier version had blobby highlights that looked like latex.
+* `myo.sheen` is a **Colour** in the three build we ship and a number in later ones; the code type-checks before
+  assigning, because assigning the wrong one throws inside the renderer and the canvas goes blank.
+* `p33.py` exports `gfx()` from the heart module so layers can reach the renderer; the export must be **outside** that
+  module's IIFE — put it inside and `HL` never initialises, and the Heart Lab dies with
+  `Cannot access 'HL' before initialization`.
+* Today's metric tiles gained 7-day sparklines; the heart stage gained vitals cards, drawn only for rows that have a value.
+
+**Still honest about this one:** the geometry underneath is procedural, so it reads as a good medical illustration, not
+as a photograph. Getting to photoreal needs a real anatomical asset (a scanned/licensed heart mesh with its own texture
+maps), which is a piece of work on its own.
+
+### C. The assistant leads with the conversation (`tools/live/live33.js`, part b)
+
+The mark was the size of the screen and the chat was an afterthought. On the assistant page the body now takes
+`lv33-chat`, the mark shrinks into a slim top bar (`#lv33bar`, with **New chat**), and the suggestion chips move up
+against the composer. Empty state keeps the larger mark; the moment a conversation starts, the chat owns the screen.
+
+### D. Places you can actually use (`tools/live/live34.*`)
+
+Three separate faults in one screen, all reproduced in the Playwright harness:
+
+| Reported | Cause | Fix |
+|---|---|---|
+| "UI is shaking" | `SX.act.mapsel` called `render()`, which rebuilt the Google map under the finger on every tap | selection is now an in-place class toggle plus `SX.gmapPan(p)` on the kept `LASTMAP` instance; observers also pause while the page is scrolling (`SX.busyScroll`) |
+| "Call & direction button is not professional" | three buttons in a flex row with no min-width collapsed into vertical letters | one primary **Book** on the row; Call / Directions / Map live in the sheet, `flex:1 1 0` with `nowrap` and a smaller type size under 400px |
+| "There is no booking option" | `/labs/quotes` only knows **partner** stores, and in production there are none — so the sheet showed prices and no labs | `SX.labSheetHook` appends **Labs near you** from `/places?kind=lab`; picking one opens a test picker, sends the list on WhatsApp, offers a call, and saves it as a **planned test** that shows on Book a test |
+
+Tapping a place opens `SX.placeSheet` — name, distance, rating, open/closed, address, hours, partner badge — rather
+than selecting a pin silently.
+
+### The scope trap worth remembering
+
+Live layers run in a **different scope from the main script**. `typeof PLACES`, `typeof labSheet`, `typeof plSel` are
+all `undefined` inside a layer, and because the lookups are wrapped in `try/catch` they fail *silently* — the feature
+just does nothing. Anything a layer needs must be exported by the patch script first:
+
+```python
+one("SX.act.mapsel=…;", "SX.act.mapsel=…;\nSX.placesData=()=>PLACES;SX.setPlSel=v=>{plSel=v};", "mapsel")
+one('const labCTA=…', 'SX.labQuotes=()=>LABS;\nSX.labSheetHook=f=>{…};\nconst labCTA=…', "lab sheet hook")
+```
+
+Two hours of this round went into that one lesson. Check `typeof` from inside the layer before assuming a name is reachable.
+
+### Harness notes
+
+`r32.py` and `r34.py` in the scratchpad. Two things that cost time:
+
+* **Block the service worker** (`service_workers="block"` on the context) or `pg.route` fixtures never reach the page —
+  the SW answers from cache and the test silently exercises the real endpoint.
+* Playwright's glob `?` is not a literal; route API paths with `re.compile(r"/api/v1/places")`.
+
+### Cost note (raised during this round, not yet acted on)
+
+`deploy.sh` runs `--no-cpu-throttling --min-instances 1 --max-instances 1`, which is Cloud Run's **instance-based**
+billing: a full vCPU and 1 GiB held 24×7, about **$47/month**, plus Cloud SQL on top. It is set that way because
+`api/reminders.py`, `api/proactive.py` and `api/i18n.py` each start a `while True` daemon thread, which CPU throttling
+would freeze, and `--max-instances 1` stops two containers sending every reminder twice.
+
+Moving those three loops to **Cloud Scheduler** calling `/tasks/*` endpoints would let us drop `--no-cpu-throttling`
+(idle billing falls from $0.000018 to $0.0000025 per vCPU-second, roughly **$10–14/month**) and raise max-instances
+above one, which today is the whole capacity of the product.

@@ -1,0 +1,61 @@
+/* live layer 33: the Heart Lab studio, Today's dashboard cards, and an assistant that is a chat first */
+
+/* ---- A. the heart on a studio stage (light by default, deep in dark mode) ---- */
+.stage.hst.lv33{background:radial-gradient(120% 95% at 50% 22%,#ffffff 0%,#f3f5fa 45%,#e6eaf2 100%)}
+.stage.hst.lv33::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 55% at 50% 48%,transparent 40%,rgba(18,24,44,.1) 100%)}
+.hst.lv33 .pvtop .seg,.hst.lv33 .tools,.hst.lv33 .htime,.hst.lv33 #hwin,.hst.lv33 #hmode{background:rgba(255,255,255,.72)!important;border:1px solid rgba(17,24,39,.07)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -16px rgba(16,24,48,.45)}
+.hst.lv33 .pvtop .seg button,.hst.lv33 .tools button,.hst.lv33 .htime,.hst.lv33 #hwin button,.hst.lv33 #hmode button{color:#2a2f3a!important}
+.hst.lv33 .seg button.on,.hst.lv33 .tools button.on,.hst.lv33 #hwin button.on,.hst.lv33 #hmode button.on{background:#e11d48!important;color:#fff!important}
+.hst.lv33 .hphase{background:rgba(255,255,255,.8)!important;color:#1b2030;border:1px solid rgba(17,24,39,.07)!important;backdrop-filter:blur(14px)}
+.hst.lv33 .hphase b{color:#e11d48}
+.hst.lv33 .cr{color:#8b93a7}
+.hst.lv33 #hld{color:#6b7280}
+.hst.lv33 #lv29hx{background:rgba(255,255,255,.8);border-color:rgba(17,24,39,.08);color:#2a2f3a}
+.hst.lv33 #lv29hx.on{background:#e11d48;color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage.hst.lv33{background:radial-gradient(120% 95% at 50% 22%,#241019 0%,#140810 52%,#070407 100%)}}
+:root[data-theme="dark"] .stage.hst.lv33{background:radial-gradient(120% 95% at 50% 22%,#241019 0%,#140810 52%,#070407 100%)}
+/* callout labels, like a clinical diagram */
+.hst.lv33 .plbl{background:rgba(255,255,255,.94)!important;color:#171b26!important;border:1px solid rgba(17,24,39,.07)!important;border-left:3px solid #e11d48!important;border-radius:11px!important;padding:6px 10px!important;font-weight:600;box-shadow:0 12px 30px -14px rgba(16,24,48,.5)!important;letter-spacing:-.01em}
+.hst.lv33 #hlines{stroke:rgba(225,29,72,.5);fill:#e11d48;stroke-width:1.2}
+/* the readings beside the heart */
+.lv33-hud{position:absolute;left:12px;top:58px;z-index:6;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.lv33-hcard{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.86);border:1px solid rgba(17,24,39,.06);border-radius:14px;padding:7px 11px 7px 8px;box-shadow:0 12px 30px -18px rgba(16,24,48,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.lv33-hi{width:28px;height:28px;border-radius:9px;background:rgba(225,29,72,.1);display:grid;place-items:center;font-size:14px}
+.lv33-hcard small{display:block;font-size:10.5px;color:#6b7280;letter-spacing:.04em;text-transform:uppercase}
+.lv33-hcard b{display:block;font-size:15px;color:#141824;line-height:1.15}
+.lv33-hcard b i{font-style:normal;font-size:11px;color:#6b7280;font-weight:600}
+@media (max-width:720px){.lv33-hud{left:10px;top:54px;gap:6px}.lv33-hcard{padding:5px 9px 5px 6px}.lv33-hcard b{font-size:13.5px}}
+:root[data-theme="dark"] .lv33-hcard{background:rgba(32,14,22,.8);border-color:rgba(255,190,205,.12)}
+:root[data-theme="dark"] .lv33-hcard b{color:#ffe7ec}
+:root[data-theme="dark"] .lv33-hcard small{color:#c9a3ad}
+
+/* ---- B. Today's tiles read like a dashboard ---- */
+.lv22-tile{position:relative;overflow:hidden}
+.lv33-spark{position:absolute;left:0;right:0;bottom:0;width:100%;height:34px;opacity:.5}
+.lv33-spark polyline{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.lv22-tile.hi .lv33-spark{opacity:.65;color:#fff}
+.lv22-tile:not(.hi) .lv33-spark{color:var(--blue)}
+
+/* ---- C. the assistant: chat first ---- */
+body.lv33-chat .lv22-orbwrap{display:none!important}
+body.lv33-empty .lv22-orb{width:104px!important;height:104px!important;margin-bottom:6px!important}
+body.lv33-empty .lv22-orbwrap{padding:14px 0 10px}
+body.lv33-empty .lv22-orbwrap b{font-size:23px;max-width:270px}
+body.lv33-empty .lv22-orbwrap small{font-size:13.5px}
+.lv33-bar{display:flex;align-items:center;gap:10px;padding:0 2px 10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.lv33-mini{flex:none;width:36px;height:36px;display:block}
+.lv33-mini .lv29-mark{filter:drop-shadow(0 6px 12px rgba(47,91,255,.3))}
+.lv33-bar .grow{min-width:0}
+.lv33-bar b{display:block;font-size:14.5px;line-height:1.2}
+.lv33-bar small{display:block;color:var(--mute);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv33-new{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;line-height:1}
+body[data-page=assist] #lv22add{display:none!important}
+body.lv33-chat[data-page=assist] .lv5-chat{flex:1;min-height:40vh;overflow-y:auto;padding-right:2px}
+body.lv33-chat[data-page=assist] .lv5-sugg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+body.lv33-chat[data-page=assist] .lv5-sugg::-webkit-scrollbar{display:none}
+body.lv33-chat[data-page=assist] .lv5-sugg button{flex:none}
+body[data-page=assist] form.lv5-ask{position:sticky;bottom:0;background:var(--bg);padding:8px 0 calc(6px + env(safe-area-inset-bottom));z-index:3}
+body[data-page=assist] form.lv5-ask .btn.p{min-width:76px;justify-content:center}
+
+.hst.lv33 #lv17lbl{background:rgba(255,255,255,.82)!important;border:1px solid rgba(17,24,39,.08)!important;color:#2a2f3a!important;backdrop-filter:blur(12px)}
+.hst.lv33 #lv17lbl.on,.hst.lv33 #lv17lbl[aria-pressed=true]{background:#e11d48!important;color:#fff!important}
