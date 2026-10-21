@@ -743,3 +743,55 @@ down should see.
 The rule this sets for the five roles still to come: **a role gets an accent, not a look.** One design system,
 one set of structural tokens, one type stack; only the accent and the mark change, and which accent is not a
 free choice — it is in the brand guide.
+
+---
+
+## Lab, slice 2 — the family watches them come
+
+The other half. A technician's phone is now sending its position; this is what the family sees. The card shows
+on Today and on Orders, because someone waiting at the door should not have to go and find the right screen.
+
+### What it says, and why each line is true
+
+| What we know | What the family sees |
+| --- | --- |
+| Technician pinging | "Ravi Kumar is on the way · 922 m away · Today 7–9 AM", live map, Call |
+| Pings stopped | "Last seen 2 min ago" — the map stays, the claim does not |
+| En route, never shared | "Not sharing their location right now — call them if you need to." |
+| Assigned, not started | "Ravi Kumar is assigned · They will set off closer to your slot." |
+| Arrived | "Ravi Kumar has arrived" — the pulse stops; nothing is moving any more |
+
+**Distance, not an invented ETA.** We have the technician's position and the family's address, so straight-line
+distance is something we can stand behind. "8 minutes" would need a routing call we are not making, and a wrong
+number on a doorstep is worse than no number. The Routes API slots in later behind the same line.
+
+**No map without a maps key.** `SX.gmapHTML` still returns a container when no key is configured, which paints
+as an empty grey box — worse than no map, because it reads as something that failed to load.
+
+**Repaint, never re-render.** Re-rendering the page would rebuild the Google map on every tick, which is
+exactly the fault that made the places list shake in round 34. The card swaps its own text and dots and pans
+the existing map instance.
+
+### Three things that cost time, worth writing down
+
+**The scope trap, again.** The layer used bare `S.liveOrders`. `S` is the main script's state and is not in
+layer scope, so it fails *silently* — the card simply never appeared. `SX.S` is the handle. This is the second
+round in a row this has bitten; it is now asserted in a test.
+
+**`#page` is a grid.** The card was prepended and *was* the first child of `#page`, and still rendered at
+774px down the screen — because the page lays its cards out on a grid. Being first in the DOM is not being
+first on screen. `order:-1; grid-row:1` fixed it. Somebody arriving at the family's door outranks the step
+counter.
+
+**The fetch throttle was longer than the poll.** The first fetch happens before the family has signed in, so
+it pins an empty result; with a 20-second throttle against a 10-second loop, the card did not appear until
+long after the technician set off. The throttle is now shorter than the interval, so every tick really
+refetches.
+
+### A real fault the test seeding exposed
+
+`_status()` derived the family's step from the **timeline alone**, ignoring `o.status`. Any path that moves the
+status without appending a timeline entry — an admin fixing something, a migration, a partner integration —
+showed the family a step behind reality. It now takes whichever of the two is further along.
+
+10 new tests; full suite 192 passing.
