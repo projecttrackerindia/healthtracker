@@ -84,7 +84,7 @@ def build_zip(db: Session, h, include_files: bool = True) -> bytes:
             total += len(data)
             index.append({"id": row.file_id, "file": path, "name": row.name, "mime": row.mime, "size": row.size, "added": row.created})
         z.writestr("documents/index.json", json.dumps({"files": index, "notIncluded": skipped}, ensure_ascii=False, indent=1))
-        z.writestr("README.txt", f"""TheHealthTracker — your family's data export
+        z.writestr("README.txt", f"""Urban Health — your family's data export
 Generated {time.strftime('%d/%m/%Y %H:%M')} IST for household {h.id}.
 
 record.json         Everything the app keeps for your family: profiles, readings, lab results, medicines and doses, cards,
@@ -99,7 +99,7 @@ notices.json        Notifications you received (order updates, reports ready, nu
 accounts.json       The sign-ins attached to this family (no passwords).
 
 This export is provided under the Digital Personal Data Protection Act, 2023 (right to access and portability).
-To erase everything, use Family & Privacy → Delete family data in the app, or write to privacy@thehealthtracker.com.
+To erase everything, use Family & Privacy → Delete family data in the app, or write to privacy@urbanhealth.in.
 """)
     return buf.getvalue()
 
@@ -111,5 +111,5 @@ def export(request: Request, db: Session = Depends(get_db), x_dokko_key: str | N
         raise HTTPException(400, "missing household key")
     limit(request, f"export:{h.id}", 3, 86400)
     data = build_zip(db, h, True)
-    name = f"thehealthtracker-export-{time.strftime('%Y%m%d')}.zip"
+    name = f"urbanhealth-export-{time.strftime('%Y%m%d')}.zip"
     return StreamingResponse(io.BytesIO(data), media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{name}"', "Cache-Control": "private, no-store"})

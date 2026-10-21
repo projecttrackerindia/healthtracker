@@ -1,6 +1,6 @@
 """App downloads (/api/v1/app/*, /download/android): the Android APK lives in our bucket under releases/.
 
-GitHub Actions uploads `releases/thehealthtracker.apk` + `releases/android.json` (version, size, sha256, built, commit)
+GitHub Actions uploads `releases/urbanhealth.apk` + `releases/android.json` (version, size, sha256, built, commit)
 after every successful build; an admin can also upload an APK by hand. The site and the app read the metadata and
 offer the download; the APK itself is streamed through the server so the bucket stays private.
 """
@@ -20,7 +20,7 @@ from .admin import me as admin_me
 from .db import get_db
 
 r = APIRouter()
-KEY_APK = "releases/thehealthtracker.apk"
+KEY_APK = "releases/urbanhealth.apk"
 KEY_META = "releases/android.json"
 _CACHE: dict = {"t": 0, "meta": None}
 
@@ -56,7 +56,7 @@ def android():
 @r.get("/api/v1/app/ios")
 def ios():
     return {"available": bool(os.getenv("APPSTORE_URL")), "appstore": os.getenv("APPSTORE_URL", ""), "testflight": os.getenv("TESTFLIGHT_URL", ""),
-            "pwa": True, "note": "On iPhone, open thehealthtracker.com/app in Safari → Share → Add to Home Screen for the installable web app today."}
+            "pwa": True, "note": "On iPhone, open urbanhealth.in/app in Safari → Share → Add to Home Screen for the installable web app today."}
 
 
 @r.get("/download/android", include_in_schema=False)
@@ -69,7 +69,7 @@ def download_android():
         obj = s3.get_object(Bucket=os.getenv("S3_BUCKET"), Key=KEY_APK)
     except Exception:
         raise HTTPException(404, "The Android app is not published yet.")
-    name = f"TheHealthTracker-{m.get('version', '1.0')}.apk"
+    name = f"Urban Health-{m.get('version', '1.0')}.apk"
     return StreamingResponse(obj["Body"].iter_chunks(1024 * 256), media_type="application/vnd.android.package-archive",
                              headers={"Content-Disposition": f'attachment; filename="{name}"', "Content-Length": str(obj.get("ContentLength", m.get("size", 0))), "Cache-Control": "public, max-age=300"})
 
@@ -81,7 +81,7 @@ def admin_status(a: Admin = Depends(admin_me)):
     return {"bucket": bool(storage._s3()), "published": bool(m), "meta": m, "githubRelease": GH_RELEASE, "githubPublic": bool(os.getenv("ANDROID_RELEASE_PUBLIC")),
             "play": os.getenv("PLAY_STORE_URL", ""), "appstore": os.getenv("APPSTORE_URL", ""), "testflight": os.getenv("TESTFLIGHT_URL", ""),
             "howTo": ["Add S3_BUCKET, S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY, S3_SECRET_KEY as GitHub → Settings → Secrets → Actions (same values as Railway).",
-                      "Run the 'Android app' workflow (Actions → Run workflow). It publishes releases/thehealthtracker.apk to the bucket and attaches the APK to the android-latest release.",
+                      "Run the 'Android app' workflow (Actions → Run workflow). It publishes releases/urbanhealth.apk to the bucket and attaches the APK to the android-latest release.",
                       "Or upload an APK here (built elsewhere) — it goes live at once.",
                       "Set ANDROID_RELEASE_PUBLIC=1 on Railway if the GitHub release is public and you want it as the fallback link."]}
 

@@ -8,17 +8,17 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.thehealthtracker.app</string>
+			<string>com.urbanhealth.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>thehealthtracker</string>
+				<string>urbanhealth</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>TheHealthTracker</string>
+        <string>Urban Health</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -34,9 +34,9 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>TheHealthTracker reads steps, sleep, heart rate, weight, blood pressure, blood sugar, SpO₂ and ECG recordings from Health so they appear in your family's records. Nothing is written back.</string>
+	<string>Urban Health reads steps, sleep, heart rate, weight, blood pressure, blood sugar, SpO₂ and ECG recordings from Health so they appear in your family's records. Nothing is written back.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>TheHealthTracker does not write to Health.</string>
+	<string>Urban Health does not write to Health.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>The camera is used for video visits with your doctor and to photograph reports and cards.</string>
 	<key>NSMicrophoneUsageDescription</key>

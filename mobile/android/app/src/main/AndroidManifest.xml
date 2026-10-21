@@ -22,12 +22,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- thehealthtracker://sos and thehealthtracker://medical-id from the lock-screen Health Card -->
+            <!-- urbanhealth://sos and urbanhealth://medical-id from the lock-screen Health Card -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="thehealthtracker" />
+                <data android:scheme="urbanhealth" />
             </intent-filter>
 
         </activity>

@@ -4,11 +4,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // release of the web app reaches phones without a store update; native pieces (Health Connect, notifications)
 // are exposed to it through plugins. Set APP_URL at build time to point at staging.
 const config: CapacitorConfig = {
-  appId: 'com.thehealthtracker.app',
-  appName: 'TheHealthTracker',
+  appId: 'com.urbanhealth.app',
+  appName: 'Urban Health',
   webDir: 'www',
   server: {
-    url: process.env.APP_URL || 'https://tht-88456779070.asia-south1.run.app/app',   // Google Cloud Run (Mumbai); becomes https://thehealthtracker.com/app once the domain is attached
+    url: process.env.APP_URL || 'https://tht-88456779070.asia-south1.run.app/app',   // Google Cloud Run (Mumbai); becomes https://urbanhealth.in/app once the domain is attached
     cleartext: false,
     androidScheme: 'https'
   },

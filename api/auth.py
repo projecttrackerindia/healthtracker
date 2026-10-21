@@ -37,7 +37,7 @@ from .security import SECRET
 r = APIRouter(prefix="/api/v1/auth")
 COOKIE = "tht_s"
 SESSION_DAYS = 30
-RP_NAME = "TheHealthTracker"
+RP_NAME = "Urban Health"
 
 # ---- rate limiting ---------------------------------------------------------------------------------------------------
 # Two layers, and both earn their place.
@@ -219,7 +219,7 @@ def rp(request: Request) -> tuple[str, str | list[str]]:
     host = rp_id if canonical else req_host
     proto = request.headers.get("x-forwarded-proto", request.url.scheme)
     own = f"{proto}://{(request.headers.get('x-forwarded-host') or request.headers.get('host') or host)}"
-    if canonical and os.getenv("APP_ORIGIN"):  # comma-separated list allowed, e.g. https://thehealthtracker.com,https://www.thehealthtracker.com
+    if canonical and os.getenv("APP_ORIGIN"):  # comma-separated list allowed, e.g. https://urbanhealth.in,https://www.urbanhealth.in
         allowed = [o.strip() for o in os.getenv("APP_ORIGIN").split(",") if o.strip()]
         if own not in allowed:
             allowed.append(own)

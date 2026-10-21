@@ -19,7 +19,7 @@ def new_id(prefix: str = "") -> str:
 
 
 class Household(Base):
-    """One TheHealthTracker install (a family on a device). Identified by an anonymous key the app generates; no account yet."""
+    """One Urban Health install (a family on a device). Identified by an anonymous key the app generates; no account yet."""
 
     __tablename__ = "households"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("h"))
@@ -805,7 +805,7 @@ class DeviceLink(Base):
 
 
 class ShopProduct(Base):
-    """A TheHealthTracker package or merchandise item (the hospital-bag package first). Price, MRP and stock live on the
+    """A Urban Health package or merchandise item (the hospital-bag package first). Price, MRP and stock live on the
     shop store's StoreItem with the same sku, so orders flow through the normal order machinery."""
 
     __tablename__ = "shop_products"

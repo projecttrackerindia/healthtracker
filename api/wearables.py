@@ -1,4 +1,4 @@
-"""Watch and smart-device clouds → TheHealthTracker (/api/v1/wear/<provider>): Withings and Oura, beside Fitbit.
+"""Watch and smart-device clouds → Urban Health (/api/v1/wear/<provider>): Withings and Oura, beside Fitbit.
 
 Where a watch's readings can come from, and which route this app uses:
 

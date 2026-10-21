@@ -86,4 +86,4 @@ def test_monthly_runs_on_the_first_once_per_household(monkeypatch):
 def test_page_carries_layer_26():
     html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
     assert "/*live-p26*/" in html and "SX.act.bkpsend=" in html and "/backup/status" in html
-    assert "There is no TheHealthTracker server account in this build" not in html
+    assert "There is no Urban Health server account in this build" not in html

@@ -107,7 +107,7 @@ def _vapid(endpoint: str) -> str:
     k = _priv()
     u = urlsplit(endpoint)
     header = b64u(json.dumps({"typ": "JWT", "alg": "ES256"}).encode())
-    claims = b64u(json.dumps({"aud": f"{u.scheme}://{u.netloc}", "exp": int(time.time()) + 12 * 3600, "sub": os.getenv("VAPID_SUBJECT", "mailto:support@thehealthtracker.com")}).encode())
+    claims = b64u(json.dumps({"aud": f"{u.scheme}://{u.netloc}", "exp": int(time.time()) + 12 * 3600, "sub": os.getenv("VAPID_SUBJECT", "mailto:support@urbanhealth.in")}).encode())
     signing = f"{header}.{claims}".encode()
     der = k.sign(signing, ec.ECDSA(hashes.SHA256()))
     from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
@@ -147,7 +147,7 @@ def send(sub: dict, data: dict, ttl: int = 3600) -> tuple[bool, int, str]:
     body = _encrypt(sub["keys"]["p256dh"], sub["keys"]["auth"], json.dumps(data, ensure_ascii=False).encode())
     req = urllib.request.Request(endpoint, data=body, method="POST", headers={
         "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", "TTL": str(ttl), "Urgency": "high",
-        "Authorization": _vapid(endpoint), "User-Agent": "TheHealthTracker/1.0"})
+        "Authorization": _vapid(endpoint), "User-Agent": "Urban Health/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
             return True, r.status, ""

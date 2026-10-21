@@ -27,7 +27,7 @@ def notify(db: Session, household_id: str, kind: str, title: str, body: str = ""
             from .models import User
             for u in db.scalars(select(User).where(User.household_id == household_id, User.phone_verified == True)).all():  # noqa: E712
                 if u.phone and (not member_id or not u.member_id or u.member_id == member_id):
-                    WA.send(u.phone, f"{title}\n{body}\n\nthehealthtracker.com/app")
+                    WA.send(u.phone, f"{title}\n{body}\n\nurbanhealth.in/app")
     except Exception as e:
         print("[inbox] whatsapp failed:", str(e)[:120], flush=True)
     if PUSH.ready():

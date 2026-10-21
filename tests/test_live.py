@@ -75,7 +75,7 @@ def test_legal_pages_filled():
     c = client()
     for p in ("/privacy", "/terms"):
         r = c.get(p)
-        assert r.status_code == 200 and "{{" not in r.text and "TheHealthTracker" in r.text
+        assert r.status_code == 200 and "{{" not in r.text and "Urban Health" in r.text
 
 
 def test_stale_compressed_copy_is_never_served(tmp_path):

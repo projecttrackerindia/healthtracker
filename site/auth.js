@@ -1,4 +1,4 @@
-/* TheHealthTracker · browser auth helper (landing page + app). No dependencies.
+/* Urban Health · browser auth helper (landing page + app). No dependencies.
    THT.api(path, body)            → JSON (throws Error with .status and server message)
    THT.passkey.supported()        → bool
    THT.passkey.conditional()      → Promise<bool>  (autofill UI available)
@@ -55,7 +55,7 @@
     }
   };
   // ---- password rules: keep in sync with api/passwords.py
-  const COMMON = 'password passw0rd password1 password123 p@ssw0rd 123456 12345678 123456789 qwerty qwerty123 iloveyou admin admin123 welcome welcome123 letmein monkey dragon sunshine princess football cricket abc123 india india123 hyderabad krishna sairam health healthy doctor changeme secret test123 thehealthtracker healthtracker'.split(' ');
+  const COMMON = 'password passw0rd password1 password123 p@ssw0rd 123456 12345678 123456789 qwerty qwerty123 iloveyou admin admin123 welcome welcome123 letmein monkey dragon sunshine princess football cricket abc123 india india123 hyderabad krishna sairam health healthy doctor changeme secret test123 urbanhealth healthtracker'.split(' ');
   const SEQ = ['abcdefghijklmnopqrstuvwxyz', '0123456789', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
   function hasRun(low) { for (const s of SEQ) for (let i = 0; i + 4 <= s.length; i++) { const t = s.slice(i, i + 4); if (low.includes(t) || low.includes([...t].reverse().join(''))) return true } return false }
   function personal(pw, ctx = {}) {

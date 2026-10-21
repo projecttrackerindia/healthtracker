@@ -316,7 +316,7 @@ def weekly(state: dict, today: date) -> dict:
 def narrate(report: dict, lang: str = "en") -> str:
     if not AI.available():
         return ""
-    system = ("You write the two-to-four sentence opening of a weekly family health report for TheHealthTracker (India). Input is JSON computed from the "
+    system = ("You write the two-to-four sentence opening of a weekly family health report for Urban Health (India). Input is JSON computed from the "
               "family's own readings: per person, 4-week means with change vs the previous 4 weeks, % in range, BP control %, medicine adherence %, recent "
               "lab values with flags, pregnancy week and weight gain against the expected range, anomalies. Say what is going well first, then the one or two "
               "things to act on, with numbers. Never diagnose, never change doses, never mention AI or vendors. Plain text, no headings, no markdown. "

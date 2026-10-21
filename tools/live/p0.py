@@ -69,7 +69,7 @@ R.append(("When accounts launch, data will be stored in India and you will be as
 R.append(("Sample people, results, doctors, pharmacies and prices are fictional. ", ""))
 R.append((" · Sample patient data is fictional</small>", "</small>"))
 R.append(("▶ Demo tour", "▶ Take a tour"))
-R.append((" Patients, results, doctors and invoices are fictional sample data for this demo. This is not a diagnostic tool.", " TheHealthTracker gives information, not a diagnosis."))
+R.append((" Patients, results, doctors and invoices are fictional sample data for this demo. This is not a diagnostic tool.", " Urban Health gives information, not a diagnosis."))
 R.append(("Visits and sharing','Book by specialty. Reports go to the doctor only if you tick share for that visit, and each share is written to your consent history.'",
           "Visits','Keep every doctor visit for the family in one place. The next one shows on Home.'"))
 

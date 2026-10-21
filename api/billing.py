@@ -1,4 +1,4 @@
-"""Bills: a TheHealthTracker-branded PDF receipt for every order, and return / claim requests.
+"""Bills: a Urban Health-branded PDF receipt for every order, and return / claim requests.
 
 The seller (pharmacy or lab) issues the tax invoice under its own licence and GSTIN; this receipt documents the order as
 placed through the platform. The PDF is drawn with PyMuPDF (already a dependency) — no HTML-to-PDF service, no third party.
@@ -119,13 +119,13 @@ def receipt_pdf(o: Order) -> bytes:
     st = order_json(o)
     page.insert_text((M, y), f"Status: {st['status'].replace('_', ' ')}", fontsize=9.5, fontname="helv", color=INK)
     y += 26
-    foot = ["This receipt records an order placed through TheHealthTracker (thehealthtracker.com). The tax invoice under the seller's",
+    foot = ["This receipt records an order placed through Urban Health (urbanhealth.in). The tax invoice under the seller's",
             "drug licence / NABL registration and GSTIN is issued by the seller and is available from them on request.",
             "Returns: sealed, unexpired medicines within 7 days of delivery; prescription, refrigerated and opened items cannot be returned.",
-            "Raise a return or a claim from Bills in the app. Support: " + (os.getenv("LEGAL_EMAIL") or "support@thehealthtracker.com") + "."]
+            "Raise a return or a claim from Bills in the app. Support: " + (os.getenv("LEGAL_EMAIL") or "support@urbanhealth.in") + "."]
     for line in foot:
         page.insert_text((M, y), line, fontsize=8, fontname="helv", color=MUTE); y += 11
-    page.insert_text((M, 842 - 30), f"Generated {time.strftime('%d/%m/%Y %H:%M')} IST · TheHealthTracker", fontsize=7.5, fontname="helv", color=MUTE)
+    page.insert_text((M, 842 - 30), f"Generated {time.strftime('%d/%m/%Y %H:%M')} IST · Urban Health", fontsize=7.5, fontname="helv", color=MUTE)
     buf = io.BytesIO()
     doc.save(buf, garbage=3, deflate=True)
     doc.close()

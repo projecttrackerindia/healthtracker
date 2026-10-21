@@ -6,7 +6,7 @@ s=open(p,encoding='utf-8').read()
 css=open('/home/claude/work/six/six.css').read()
 code='\n'.join(open('/home/claude/work/six/%s.js'%n).read() for n in SIX if __import__('os').path.exists('/home/claude/work/six/%s.js'%n))
 assert '</script' not in code
-code=re.sub(r'DoKKo(?!-Key)','TheHealthTracker',code);css=css.replace('DoKKo','TheHealthTracker')
+code=re.sub(r'DoKKo(?!-Key)','Urban Health',code);css=css.replace('DoKKo','Urban Health')
 s=re.sub(r'<style id="six-css">.*?</style>',lambda m:'<style id="six-css">'+css+'</style>',s,count=1,flags=re.S)
 s=re.sub(r'<script id="six-js">.*?</script>',lambda m:'<script id="six-js">'+code+'\n</script>',s,count=1,flags=re.S)
 open(p,'w',encoding='utf-8').write(s)

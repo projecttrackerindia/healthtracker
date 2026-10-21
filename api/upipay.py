@@ -58,7 +58,7 @@ def public(a: dict) -> dict:
 
 
 def upi_link(a: dict, amount: int, note: str) -> str:
-    return f"upi://pay?pa={quote(a['vpa'])}&pn={quote(a.get('name') or 'TheHealthTracker')}&am={amount}.00&cu=INR&tn={quote(note)}"
+    return f"upi://pay?pa={quote(a['vpa'])}&pn={quote(a.get('name') or 'Urban Health')}&am={amount}.00&cu=INR&tn={quote(note)}"
 
 
 def pay_json(p: Payment, base: str = "") -> dict:
@@ -165,7 +165,7 @@ def claim(pid: str, body: ClaimIn, request: Request, db: Session = Depends(get_d
     from . import messaging
     admin_to = os.getenv("ADMIN_ALERT_EMAIL") or os.getenv("LEGAL_EMAIL") or ""
     if admin_to:
-        messaging.mail(admin_to, f"[Admin] UPI payment to confirm · ₹{p.amount} · {p.note}", f"UTR {utr} · ₹{p.amount} · {p.kind} {p.ref} · account {p.account}\nPayer: {p.payer or '—'}\n\nConfirm: https://thehealthtracker.com/admin#payments")
+        messaging.mail(admin_to, f"[Admin] UPI payment to confirm · ₹{p.amount} · {p.note}", f"UTR {utr} · ₹{p.amount} · {p.kind} {p.ref} · account {p.account}\nPayer: {p.payer or '—'}\n\nConfirm: https://urbanhealth.in/admin#payments")
     return pay_json(p)
 
 

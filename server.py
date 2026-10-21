@@ -1,4 +1,4 @@
-"""TheHealthTracker web server (FastAPI) for Railway.
+"""Urban Health web server (FastAPI) for Railway.
 
 * Serves the static web app from ./web with pre-compressed (br / gzip) variants, long-lived caching for
   fingerprinted assets and a strict set of security headers.
@@ -33,7 +33,7 @@ SITE = ROOT / "site"
 VERSION = (os.getenv("APP_VERSION") or os.getenv("RAILWAY_GIT_COMMIT_SHA") or "dev")[:12]
 STARTED = time.time()
 
-app = FastAPI(title="TheHealthTracker", version=VERSION, docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json")
+app = FastAPI(title="Urban Health", version=VERSION, docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json")
 # Nothing compressed API responses before this: the phrase table, places and store lists all went out raw.
 # GZipMiddleware skips anything that already carries Content-Encoding, so the pre-built .br variants below
 # are untouched - this only catches what they miss, including /app for a client that does not accept brotli.
@@ -73,7 +73,7 @@ def _verified_variants() -> set[Path]:
 VARIANTS = _verified_variants()
 _skipped = [str(a.relative_to(ROOT)) for b in (WEB, SITE) for a in list(b.rglob("*.br")) + list(b.rglob("*.gz")) if a not in VARIANTS]
 if _skipped:
-    print(f"[TheHealthTracker] WARNING: {len(_skipped)} stale compressed file(s) ignored; run tools/compress.py: {', '.join(_skipped[:5])}", flush=True)
+    print(f"[Urban Health] WARNING: {len(_skipped)} stale compressed file(s) ignored; run tools/compress.py: {', '.join(_skipped[:5])}", flush=True)
 
 
 def _variant(p: Path, request: Request) -> tuple[Path, str | None]:
@@ -184,8 +184,8 @@ SECURITY = {
 
 
 # One address for the whole site. The sign-in cookie belongs to the exact host that set it, so someone who signs in on
-# www.thehealthtracker.com and opens thehealthtracker.com/app (or the other way round) would look signed out.
-CANONICAL = (os.getenv("CANONICAL_HOST") or "").strip().lower()  # e.g. thehealthtracker.com; set it only after both addresses resolve
+# www.urbanhealth.in and opens urbanhealth.in/app (or the other way round) would look signed out.
+CANONICAL = (os.getenv("CANONICAL_HOST") or "").strip().lower()  # e.g. urbanhealth.in; set it only after both addresses resolve
 
 
 @app.middleware("http")
@@ -338,9 +338,9 @@ def landing(request: Request, token: str = ""):
 
 # privacy policy and terms: legal details come from Railway variables so they can change without a code change
 LEGAL = {
-    "ENTITY": os.getenv("LEGAL_ENTITY", "TheHealthTracker"),
+    "ENTITY": os.getenv("LEGAL_ENTITY", "Urban Health"),
     "ADDRESS": os.getenv("LEGAL_ADDRESS", "Hyderabad, Telangana, India"),
-    "GRIEVANCE_NAME": os.getenv("GRIEVANCE_NAME", "Grievance Officer, TheHealthTracker"),
+    "GRIEVANCE_NAME": os.getenv("GRIEVANCE_NAME", "Grievance Officer, Urban Health"),
     "GRIEVANCE_EMAIL": os.getenv("GRIEVANCE_EMAIL") or os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
     "SUPPORT_EMAIL": os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
     "UPDATED": os.getenv("POLICY_UPDATED", "18 October 2026"),
@@ -368,7 +368,7 @@ def shared_doc(token: str, request: Request, raw: str = ""):
     with _session() as db:
         s, got = shared_file(token, db)
         if not s:
-            return Response("<!doctype html><meta charset=utf-8><title>Link expired</title><body style='font-family:system-ui;padding:40px;max-width:520px;margin:auto'><h2>This link has expired</h2><p>The person who shared it can send a new one from TheHealthTracker.</p>", status_code=404, media_type="text/html; charset=utf-8")
+            return Response("<!doctype html><meta charset=utf-8><title>Link expired</title><body style='font-family:system-ui;padding:40px;max-width:520px;margin:auto'><h2>This link has expired</h2><p>The person who shared it can send a new one from Urban Health.</p>", status_code=404, media_type="text/html; charset=utf-8")
         row, data = got
         if raw == "1":
             s.views += 1
@@ -376,8 +376,8 @@ def shared_doc(token: str, request: Request, raw: str = ""):
         label = _html.escape(s.label or row.name or "Document")
         exp = time.strftime("%d %b %Y, %H:%M", time.localtime(s.expires))
         body = f"<iframe src='/d/{token}?raw=1' title='{label}' style='width:100%;height:80vh;border:0;border-radius:12px;background:#fff'></iframe>" if row.mime == "application/pdf" else f"<img src='/d/{token}?raw=1' alt='{label}' style='max-width:100%;border-radius:12px'>"
-        return Response(f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=robots content=noindex><title>{label} · shared via TheHealthTracker</title>"
-                        f"<body style='font-family:Inter,system-ui,sans-serif;background:#f4f5f8;margin:0;padding:20px'><div style='max-width:900px;margin:auto'><p style='color:#646b7e;font-size:13px;margin:0 0 8px'>Shared via TheHealthTracker · link valid until {exp}</p><h2 style='margin:0 0 14px'>{label}</h2>{body}"
+        return Response(f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=robots content=noindex><title>{label} · shared via Urban Health</title>"
+                        f"<body style='font-family:Inter,system-ui,sans-serif;background:#f4f5f8;margin:0;padding:20px'><div style='max-width:900px;margin:auto'><p style='color:#646b7e;font-size:13px;margin:0 0 8px'>Shared via Urban Health · link valid until {exp}</p><h2 style='margin:0 0 14px'>{label}</h2>{body}"
                         f"<p style='color:#646b7e;font-size:12px'>This document was shared by its owner for medical care. Please do not forward it.</p></div>", media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-store"})
 
 

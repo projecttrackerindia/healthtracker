@@ -28,7 +28,7 @@ from .db import get_db
 from .models import Store
 
 r = APIRouter(prefix="/api/v1")
-UA = "TheHealthTracker/1.0 (+https://thehealthtracker.com; support@thehealthtracker.com)"
+UA = "Urban Health/1.0 (+https://urbanhealth.in; support@urbanhealth.in)"
 NOMINATIM = os.getenv("NOMINATIM_URL", "https://nominatim.openstreetmap.org/reverse")
 OVERPASS = os.getenv("OVERPASS_URL", "https://overpass-api.de/api/interpreter")
 # Places API (New) types per kind; "blood" has no type and goes through text search

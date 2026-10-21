@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SITE = ROOT / "site"
-LOGO = (Path(__file__).resolve().parent / "logo.svg").read_text(encoding="utf-8") if (Path(__file__).resolve().parent / "logo.svg").exists() else "TheHealthTracker"
+LOGO = (Path(__file__).resolve().parent / "logo.svg").read_text(encoding="utf-8") if (Path(__file__).resolve().parent / "logo.svg").exists() else "Urban Health"
 
 CSS = """
 @font-face{font-family:Geist;src:url(/s/fonts/geist.woff2) format("woff2");font-weight:100 900;font-display:swap}
@@ -45,9 +45,9 @@ def page(title, desc, eyebrow, h1, lead, cards, sections, current):
                   (("/", "Home", ' class="hide-s"'), ("/privacy", "Privacy", ""), ("/terms", "Terms", ""), ("/app", "Open the app", "")))
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>{title} · TheHealthTracker</title><meta name="description" content="{desc}"><link rel="icon" href="/icon.svg">
+<title>{title} · Urban Health</title><meta name="description" content="{desc}"><link rel="icon" href="/icon.svg">
 <style>{CSS}</style></head><body>
-<header><div class="bar"><a class="logo" href="/" aria-label="TheHealthTracker home">{LOGO}</a><nav>{nav}</nav></div></header>
+<header><div class="bar"><a class="logo" href="/" aria-label="Urban Health home">{LOGO}</a><nav>{nav}</nav></div></header>
 <div class="hero"><span class="eyebrow">{eyebrow}</span><h1>{h1}</h1><p class="lead">{lead}</p><p class="meta">Last updated: {{{{UPDATED}}}} · Provided by {{{{ENTITY}}}}</p></div>
 <div class="grid"><nav class="toc" aria-label="On this page">{toc}</nav><article><div class="cards">{cards_html}</div>{body}</article></div>
 <footer>© 2026 {{{{ENTITY}}}} · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · In an emergency call <a href="tel:112">112</a> or <a href="tel:108">108</a></footer>
@@ -56,7 +56,7 @@ def page(title, desc, eyebrow, h1, lead, cards, sections, current):
 
 PRIVACY = [
     ("summary", "In short", """
-<p>TheHealthTracker helps you keep your family's health information in one place. We built it so that <b>your health records stay on your own device</b> and leave it only when you choose to share them.</p>
+<p>Urban Health helps you keep your family's health information in one place. We built it so that <b>your health records stay on your own device</b> and leave it only when you choose to share them.</p>
 <ul><li>Without an account, your health card, family profiles, reports, results, medicines, readings, pregnancy logs and Medical ID stay in your browser on your device.</li>
 <li>When you sign in, your family's profiles, results, medicines, readings, cards and settings are encrypted and stored on our servers in India, so each family member you invite sees the same records on their own phone. Photos and PDFs stay on the device where they were added.</li>
 <li>Our servers also keep what is needed to run your account: your name, email, mobile number, sign-in details, plan and payments, and orders when ordering is available in your area.</li>
@@ -90,7 +90,7 @@ PRIVACY = [
 <li>You can switch AI reading off at any time in <b>Family &amp; Privacy → Consent</b>.</li></ul>
 <p class="note warn">AI reading explains results in plain language. It is not a diagnosis. Always discuss results with your doctor.</p>"""),
     ("sharing", "Who we share data with", """
-<p>We share personal data only with service providers that help us run TheHealthTracker, under contracts that require them to protect it and use it only for us:</p>
+<p>We share personal data only with service providers that help us run Urban Health, under contracts that require them to protect it and use it only for us:</p>
 <table><thead><tr><th>Provider type</th><th>What they receive</th></tr></thead><tbody>
 <tr><td>Cloud hosting and database</td><td>Account and order data described above</td></tr>
 <tr><td>Email and SMS delivery</td><td>Your email or mobile number and the one-time code</td></tr>
@@ -128,9 +128,9 @@ PRIVACY = [
 
 TERMS = [
     ("service", "The service", """
-<p>TheHealthTracker is a family health companion: a health card, records kept on your device, medicine reminders, a 3D body for understanding results, pregnancy information, first-aid guidance and an SOS shortcut. By creating an account or using the app you agree to these terms and to our <a href="/privacy">Privacy Policy</a>.</p>"""),
+<p>Urban Health is a family health companion: a health card, records kept on your device, medicine reminders, a 3D body for understanding results, pregnancy information, first-aid guidance and an SOS shortcut. By creating an account or using the app you agree to these terms and to our <a href="/privacy">Privacy Policy</a>.</p>"""),
     ("medical", "Not medical advice", """
-<p class="note warn"><b>TheHealthTracker gives general health information. It is not a medical device and does not diagnose, treat or prevent any condition.</b> Explanations, suggested checks and AI readings are for discussion with a qualified doctor. Never ignore or delay medical advice because of something in the app. In an emergency call 112 or 108 immediately.</p>"""),
+<p class="note warn"><b>Urban Health gives general health information. It is not a medical device and does not diagnose, treat or prevent any condition.</b> Explanations, suggested checks and AI readings are for discussion with a qualified doctor. Never ignore or delay medical advice because of something in the app. In an emergency call 112 or 108 immediately.</p>"""),
     ("account", "Your account", """
 <ul><li>You must be 18 or older. A parent or guardian may manage records for children.</li>
 <li>Give accurate details, keep your sign-in methods safe, and tell us if you think someone else has used your account.</li>
@@ -154,15 +154,15 @@ TERMS = [
 ]
 
 (SITE / "privacy.html").write_text(page(
-    "Privacy Policy", "How TheHealthTracker protects your family's health information.", "Privacy Policy",
+    "Privacy Policy", "How Urban Health protects your family's health information.", "Privacy Policy",
     "Your health data stays yours.", "What we collect, what stays on your device, who we share with, and the rights you have under India's data protection law.",
     [("📱", "Records on your device", "Reports, results and your health card are stored in your browser, not on our servers."),
      ("✋", "You choose what leaves", "Nothing is shared with a doctor, pharmacy or AI reading unless you switch it on."),
      ("🚫", "Never sold", "No ads, no selling of data, no marketing from your health information.")],
     PRIVACY, "/privacy"), encoding="utf-8")
 (SITE / "terms.html").write_text(page(
-    "Terms of Use", "The terms for using TheHealthTracker.", "Terms of Use",
-    "Terms of use", "The rules for using TheHealthTracker, written to be read.",
+    "Terms of Use", "The terms for using Urban Health.", "Terms of Use",
+    "Terms of use", "The rules for using Urban Health, written to be read.",
     [("ℹ️", "Information, not diagnosis", "Use the app to understand and organise. Decide with your doctor."),
      ("🆘", "Emergencies first", "Call 112 or 108. SOS helps you call and alert your family."),
      ("👪", "Your family, your consent", "Add people's details only with their permission.")],

@@ -138,7 +138,7 @@ def _summarise(a: Appointment, db: Session) -> str:
     s = db.get(Store, a.store_id)
     ctx = {"hospital": s.name if s else "", "doctor": a.doctor, "reason": a.why, "when": f"{a.slot_date} {a.slot_time}".strip(),
            "transcript": [f"{x['who']}: {x['text']}" for x in (a.transcript or [])][-120:], "prescription": a.rx}
-    system = ("You write the after-visit summary for a family inside TheHealthTracker, an Indian family health app, from a video consult "
+    system = ("You write the after-visit summary for a family inside Urban Health, an Indian family health app, from a video consult "
               "transcript (speech captions, so expect errors) and the doctor's e-prescription. Write for the patient's family in plain English, "
               "120-220 words, in this shape with these exact headings on their own lines: 'What we discussed', 'What the doctor advised', "
               "'Medicines' (name, how to take, for how long — exactly as prescribed, never change a dose), 'Watch for' (warning signs that need "
@@ -196,7 +196,7 @@ def _doctor(db: Session, u: PartnerUser) -> PartnerUser:
     if u.role != "doctor":
         raise HTTPException(403, "Only doctors run consults.")
     if not u.verified:
-        raise HTTPException(403, "Your registration is being verified by TheHealthTracker; consults open once it is confirmed.")
+        raise HTTPException(403, "Your registration is being verified by Urban Health; consults open once it is confirmed.")
     return u
 
 
@@ -337,7 +337,7 @@ def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict) -> bytes:
     y = max(y + 20, 700)
     page.insert_text((W - M - 200, y), f"Dr {u.name}"[:40], fontsize=11, fontname="hebo", color=INK)
     page.insert_text((W - M - 200, y + 13), f"Reg. no. {u.reg_no} · signed electronically", fontsize=8, fontname="helv", color=MUTE)
-    page.insert_text((W - M - 200, y + 24), f"Issued through TheHealthTracker · {time.strftime('%d/%m/%Y %H:%M', time.localtime(rx['t']))} IST", fontsize=8, fontname="helv", color=MUTE)
+    page.insert_text((W - M - 200, y + 24), f"Issued through Urban Health · {time.strftime('%d/%m/%Y %H:%M', time.localtime(rx['t']))} IST", fontsize=8, fontname="helv", color=MUTE)
     foot = ["This e-prescription was issued after a video consult, in line with the Telemedicine Practice Guidelines, 2020 (Board of Governors, MCI).",
             "It is valid for dispensing by a licensed pharmacy. Verify the doctor's registration on the NMC Indian Medical Register if needed."]
     yy = 842 - 46

@@ -1,6 +1,6 @@
 # Shared settings for the Google Cloud scripts. Edit the first block once; everything else follows.
 # shellcheck shell=bash
-export PROJECT_ID="${PROJECT_ID:-thehealthtracker-prod}"   # must be globally unique
+export PROJECT_ID="${PROJECT_ID:-urbanhealth-prod}"   # must be globally unique
 export REGION="${REGION:-asia-south1}"                      # Mumbai (asia-south2 = Delhi)
 export SERVICE="${SERVICE:-tht}"
 export REPO="${REPO:-tht}"                                  # Artifact Registry repository

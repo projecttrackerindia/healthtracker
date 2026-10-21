@@ -177,7 +177,7 @@ SX.extend('sos',{after(){if(!CH)return '';const auto=[['push',P('App alert on fa
 // (nothing automatic here: a browser cannot send a message without the person's tap)
 
 // ---------------------------------------------------------------- F. Devices: install the way this phone installs
-SX.a2hs=()=>{SX.modal(`<h2>📲 ${P('Install on iPhone')}</h2><ol class="lv-steps" style="padding-left:18px;line-height:1.7"><li>${P('Tap the Share button')} <b>⎙</b> ${P('at the bottom of Safari')}</li><li>${P('Choose')} <b>${P('Add to Home Screen')}</b></li><li>${P('Tap')} <b>${P('Add')}</b> — ${P('TheHealthTracker opens full-screen like an app, with your sign-in kept.')}</li></ol><p class="mute sm">${P('Apple Health sync arrives with the App Store app.')}</p><div class="lv-row-end"><button class="btn p" data-sx="closeModal">${P('Got it')}</button></div>`,{label:'Install'})};
+SX.a2hs=()=>{SX.modal(`<h2>📲 ${P('Install on iPhone')}</h2><ol class="lv-steps" style="padding-left:18px;line-height:1.7"><li>${P('Tap the Share button')} <b>⎙</b> ${P('at the bottom of Safari')}</li><li>${P('Choose')} <b>${P('Add to Home Screen')}</b></li><li>${P('Tap')} <b>${P('Add')}</b> — ${P('Urban Health opens full-screen like an app, with your sign-in kept.')}</li></ol><p class="mute sm">${P('Apple Health sync arrives with the App Store app.')}</p><div class="lv-row-end"><button class="btn p" data-sx="closeModal">${P('Got it')}</button></div>`,{label:'Install'})};
 SX.act.a2hs=()=>SX.a2hs();
 
 // the tab bar keeps its short labels and icons when the nav is rebuilt
