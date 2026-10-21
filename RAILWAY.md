@@ -981,3 +981,28 @@ packed."** Adding Priya Nair with AP/12345 puts her on the roster. The owner cli
 is asked for their own registration number first, then gets the form, which names the prescription-only line
 and says plainly that substitution is not an option. After signing off the row reads *"Checked by Apollo
 Owner AP/99887 · prescriber Dr A Sharma TSMC/55512 · dated 2026-10-19"* and Packed is available.
+
+## Pharmacy slice 2 — the pick list (2026-10-21)
+
+The batching half. A pharmacist with fifteen orders open does not walk the shelves fifteen times, so the list
+comes back **gathered by medicine**, each line carrying the orders it is made of: eighty-five strips off one
+shelf, split into packets at the counter.
+
+- **Prescription lines sort first**, so they are picked while the paperwork is still in hand.
+- **An unchecked order stays on the list, marked waiting**, rather than quietly left out — a picker who
+  cannot see why an order is missing will assume the list is wrong. The quantity it contributes is shown as
+  *held* on its line, so the shelf count is still right if the check comes through.
+- **A packed order leaves the list.** `PICKABLE` is `checking` only; a list that does not shrink as you work
+  it is one nobody trusts by the third batch of the morning.
+- **One bad order does not sink the batch.** Each is put through the same single-order rules; the ones that
+  fail come back named with the reason, and the rest are packed. Rolling everything back because of one
+  unchecked prescription means doing the batch again by hand.
+- Packing twice is a tap, not an error. Another pharmacy's order is refused by id.
+- The view prints: the stylesheet drops the sidebar and controls, because this is a sheet somebody carries
+  down an aisle.
+
+New: `GET /partner/picklist`, `POST /partner/batch/pack`; the Pick list view. 13 new tests, suite at **278**.
+
+### Verified in a browser
+Five orders → 4 ready, 1 waiting, 4 lines: Metformin 6, Amoxicillin 3 (1 held), Paracetamol 10, ORS 6
+(2 held). **Mark picked as packed** → 0 ready, 2 lines, and only Vikram's unchecked order left on the sheet.

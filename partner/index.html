@@ -37,6 +37,7 @@ td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}tr:la
 .empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px}
 .pick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}.pick .btn{background:var(--card)}
 .vrx{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.vrx label{display:block;font-size:12px;font-weight:600;color:var(--mute)}.vrx input{background:var(--card)}
+@media print{aside,.row button,.row select,.row input,.cards,.toast{display:none!important}.app{display:block}main{padding:0;max-width:none}.card{box-shadow:none;border:0;padding:0;margin:0 0 12px}table{font-size:12px}}
 .login{min-height:100vh;display:grid;place-items:center;padding:20px}.login .card{width:min(420px,100%)}.login label{display:block;margin:10px 0 4px;font-size:12.5px;font-weight:600;color:var(--mute)}
 .msg{display:none;margin:10px 0 0;padding:9px 12px;border-radius:10px;font-size:13px}.msg.on{display:block}.msg.err{background:color-mix(in srgb,var(--red) 10%,transparent);color:var(--red)}.msg.ok{background:color-mix(in srgb,var(--green) 10%,transparent);color:var(--green)}
 .chat{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;padding:6px 0}.bub{max-width:70%;padding:9px 12px;border-radius:14px;background:var(--soft);font-size:13.5px}.bub.me{align-self:flex-end;background:color-mix(in srgb,var(--teal) 16%,transparent)}.bub small{display:block;color:var(--mute);font-size:10.5px;margin-top:2px}
@@ -66,7 +67,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
   $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':'orders';render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
  const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
  const isBB=s.kind==='bloodbank',isShop=s.kind==='shop';
- const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,s.kind==='pharmacy'?['team','Pharmacists',0]:null,ME.user.role==='owner'?['earnings','Earnings',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
+ const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,s.kind==='pharmacy'?['team','Pharmacists',0]:null,s.kind==='pharmacy'?['pick','Pick list',0]:null,ME.user.role==='owner'?['earnings','Earnings',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
  if(isBB&&view==='orders')view='blood';
  root.innerHTML=`<div class="app"><aside><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="TheHealthTracker partners"></div><nav>${nav.map(([k,n,b])=>`<button class="${view===k?'on':''}" data-v="${k}">${n}${b?`<em>${b}</em>`:''}</button>`).join('')}</nav>
   <div class="who"><b>${E(s.name)}</b>${E(KINDN[s.kind]||s.kind)} · ${s.verified?'<span class="tag ok">verified</span>':'<span class="tag warn">pending verification</span>'}<br>${ME.user.role==='doctor'?`Dr ${E(ME.user.name)} · `:''}${E(ME.user.email)} · <a href="#" id="out">Sign out</a></div></aside><main id="main"></main></div>`;
@@ -111,6 +112,37 @@ async function openAssign(oid){const box=$(`.asg[data-for="${oid}"]`);if(!box)re
  box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=async()=>{const[id,agent]=b.dataset.pick.split(':');b.disabled=true;
   try{await api(`/orders/${id}/assign`,{method:'POST',body:{agent}});asgOpen='';toast('Assigned · the family has been told who is coming');loadOrders();load()}
   catch(e){toast(e.message);b.disabled=false}})}
+// ---------------- the pick list
+// A pharmacist with fifteen orders open does not walk the shelves fifteen times. The list is gathered by
+// medicine, and each line carries the orders it is made of, so one trip down the aisle splits into packets
+// at the counter. Unchecked prescriptions stay on the list, marked as waiting: a picker who cannot see why
+// an order is missing will assume the list is wrong.
+VIEWS.pick=()=>{$('#main').innerHTML=head('Pick list','Everything waiting to be packed, gathered by medicine. Pick once, split at the counter.',
+  `<button class="btn" id="pkpr">Print</button><button class="btn p" id="pkgo">Mark picked as packed</button>`)
+ +`<div id="pk"><div class="empty">Loading…</div></div>`;
+ $('#pkpr').onclick=()=>window.print();loadPick()};
+let PICK=null;
+async function loadPick(){let r;try{r=await api('/picklist')}catch(e){$('#pk').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ PICK=r;const btn=$('#pkgo');if(btn)btn.disabled=!r.ready;
+ if(!r.orders.length){$('#pk').innerHTML=`<div class="empty">Nothing to pack. Orders appear here once you start checking them.</div>`;return}
+ $('#pk').innerHTML=`<div class="cards">
+   <div class="card kpi"><small>Ready to pack</small><b>${r.ready}</b><span style="color:var(--mute)">order${r.ready===1?'':'s'}</span></div>
+   <div class="card kpi"><small>Waiting on a check</small><b>${r.waiting}</b><span style="color:var(--mute)">${r.waiting?'a pharmacist must sign these off':'nothing held up'}</span></div>
+   <div class="card kpi"><small>Lines to pick</small><b>${r.lines.length}</b><span style="color:var(--mute)">distinct medicines</span></div></div>
+  <div class="card"><table><tr><th>Medicine</th><th style="width:90px">Quantity</th><th>For</th></tr>
+   ${r.lines.map(l=>`<tr><td><b>${E(l.name)}</b>${l.rx?' <span class="tag warn">Rx</span>':''}${l.sku?`<br><small style="color:var(--mute);font-family:var(--mono)">${E(l.sku)}</small>`:''}</td>
+     <td><b style="font-size:17px">${l.qty}</b>${l.waiting?`<br><small style="color:var(--amber)">${l.waiting} held</small>`:''}</td>
+     <td style="color:var(--mute);font-size:12.5px">${l.orders.map(o=>`${E(o.member||'—')} ×${o.qty}${o.waiting?' <span class="tag warn">waiting</span>':''}`).join(' · ')}</td></tr>`).join('')}
+   </table></div>
+  <div class="card"><h3>The orders in this batch</h3><table><tr><th>Order</th><th>For</th><th>Items</th><th>Value</th><th>State</th></tr>
+   ${r.orders.map(o=>`<tr><td><b class="id" style="font-family:var(--mono);font-size:12.5px">THT-${E(o.id)}</b></td><td>${E(o.member||'—')}</td><td>${o.items}</td><td>${money(o.total)}</td>
+     <td>${o.waiting?'<span class="tag warn">prescription not checked</span>':'<span class="tag ok">ready</span>'}</td></tr>`).join('')}
+   </table></div>`;
+ if(btn)btn.onclick=async()=>{const ids=r.orders.filter(o=>o.ready).map(o=>o.id);if(!ids.length){toast('Nothing is ready to pack yet');return}
+  btn.disabled=true;try{const g=await api('/batch/pack',{method:'POST',body:{orders:ids}});
+   toast(`${g.packed.length} packed${g.skipped.length?` · ${g.skipped.length} left`:''}`);
+   if(g.skipped.length)$('#pk').insertAdjacentHTML('afterbegin',`<div class="card" style="border-color:color-mix(in srgb,var(--amber) 45%,transparent)"><h3>Left out of the batch</h3>${g.skipped.map(x=>`<div class="items">THT-${E(x.id)} — ${E(x.why)}</div>`).join('')}</div>`);
+   loadPick();load()}catch(e){toast(e.message);btn.disabled=false}}}
 // ---------------- checking a prescription
 // Rule 65(11-A) forbids substitution outright, so this screen deliberately offers no way to change what was
 // ordered. If something cannot be supplied the choice is to part-supply and tell the family, or to refuse —
