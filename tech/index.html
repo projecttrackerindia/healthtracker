@@ -99,7 +99,7 @@ const E = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;"
 // than fetched so the first screen paints with no network.
 const MARK = `<svg class="mark" viewBox="8 10 52 44" aria-hidden="true"><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="var(--brand)"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="var(--brand)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="var(--brand)"/></svg>`;
 
-let S = { me: null, jobs: [], busy: false, err: "" };
+let S = { me: null, jobs: [], busy: false, err: "", mustChange: false };
 let watchId = null, pinging = null;
 
 function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 2600); }
@@ -142,10 +142,27 @@ function signIn() {
     <h2 style="margin:0 0 4px;font-size:21px;letter-spacing:-.015em">Sign in</h2>
     <p style="color:var(--mute);margin:0;font-size:15px">Use the details your lab gave you.</p>
     <form id="f">
-      <label for="e">Email</label><input id="e" type="email" autocomplete="username" inputmode="email" required>
+      <label for="e">Mobile number</label><input id="e" type="text" autocomplete="username" inputmode="tel" placeholder="The number your lab registered" required>
       <label for="p">Password</label><input id="p" type="password" autocomplete="current-password" required>
       ${S.err ? `<div class="err">${E(S.err)}</div>` : ""}
       <button class="go" type="submit" ${S.busy ? "disabled" : ""}>${S.busy ? '<span class="spin"></span>' : "Sign in"}</button>
+    </form>
+  </div>`;
+}
+
+// The lab handed this person a one-time password across a counter. Until they replace it, that slip of paper
+// is a working sign-in to a screen holding families' addresses and phone numbers.
+function choosePw() {
+  return `<div class="top">${MARK}<div class="grow"><b>Collect</b><small>${E(S.me.store || "")}</small></div></div>
+  <div class="card">
+    <h2 style="margin:0 0 4px;font-size:21px;letter-spacing:-.015em">Choose your password</h2>
+    <p style="color:var(--mute);margin:0;font-size:15px">The one your lab gave you works once. Pick your own before you start — you will see families' addresses and phone numbers in here.</p>
+    <form id="cf">
+      <label for="p0">Password from your lab</label><input id="p0" type="password" autocomplete="current-password" required>
+      <label for="p1">New password</label><input id="p1" type="password" autocomplete="new-password" minlength="10" required>
+      <p style="color:var(--mute);margin:6px 0 0;font-size:14px">At least 10 characters.</p>
+      ${S.err ? `<div class="err">${E(S.err)}</div>` : ""}
+      <button class="go" type="submit" ${S.busy ? "disabled" : ""}>${S.busy ? '<span class="spin"></span>' : "Save and start"}</button>
     </form>
   </div>`;
 }
@@ -184,14 +201,27 @@ function jobs() {
 }
 
 function render() {
-  $("#app").innerHTML = S.me ? jobs() : signIn();
+  $("#app").innerHTML = !S.me ? signIn() : S.mustChange ? choosePw() : jobs();
+  const cf = $("#cf");
+  if (cf) cf.onsubmit = async ev => {
+    ev.preventDefault();
+    const current = $("#p0").value, next = $("#p1").value;      // read before render() empties the inputs
+    if (next.length < 10) { S.err = "Use at least 10 characters."; render(); return; }
+    S.busy = true; S.err = ""; render();
+    try {
+      await api("/partner/password", { body: { current, new: next } });
+      S.mustChange = false;
+      await load();
+    } catch (e) { S.err = e.message || "Could not save that"; }
+    S.busy = false; render();
+  };
   const f = $("#f");
   if (f) f.onsubmit = async ev => {
     ev.preventDefault();
     // Read the fields BEFORE re-rendering: render() rebuilds the form, which empties the inputs, and a
     // technician would have watched their own password be replaced by nothing on the way to the server.
     const email = $("#e").value.trim(), password = $("#p").value;
-    if (!email || !password) { S.err = "Enter your email and password."; render(); return; }
+    if (!email || !password) { S.err = "Enter your mobile number and password."; render(); return; }
     S.busy = true; S.err = ""; render();
     try {
       await api("/partner/login", { body: { email, password } });
@@ -222,7 +252,11 @@ async function load() {
   try {
     const me = await api("/partner/me");
     const u = me.user || me;
-    S.me = { name: u.name || u.email, store: (me.store && me.store.name) || "" };
+    S.me = { name: u.name || u.phone || u.email, store: (me.store && me.store.name) || "" };
+    S.mustChange = !!u.mustChange;
+    // Until they have chosen a password, the one the lab wrote on a slip is the only one there is. Don't
+    // fetch anybody's address until that slip has stopped being a way in.
+    if (S.mustChange) { S.jobs = []; render(); return; }
     const j = await api("/partner/tech/jobs");
     S.jobs = j.jobs || [];
   } catch (e) {

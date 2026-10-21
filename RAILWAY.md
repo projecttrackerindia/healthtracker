@@ -795,3 +795,37 @@ status without appending a timeline entry — an admin fixing something, a migra
 showed the family a step behind reality. It now takes whichever of the two is further along.
 
 10 new tests; full suite 192 passing.
+
+## Lab slice 3 — the lab runs its own collection team (2026-10-21)
+
+Slices 1 and 2 built the technician app and the family's live card. Both were unreachable: **no `PartnerUser`
+with role `tech` could be created anywhere in the system.** Admin's role list was `owner | staff | doctor`, and
+the partner console had no roster screen at all. `GET /partner/techs` would have returned an empty list forever.
+
+- **The lab owner runs the roster, not our admin desk.** A lab with a dozen phlebotomists and ordinary turnover
+  cannot wait on us for every hire, and it is the lab that employs them, pays them and answers for them at a
+  family's door. We gate the store; the store gates its staff. Doctors stay with admin, because a medical
+  council registration is ours to verify. Admin can also create technicians (`role: "tech"`, labs only).
+- **Sign in with the mobile number.** A phlebotomist between houses remembers their phone, not an address the
+  lab invented for them. `find_user()` resolves an identifier without an `@` against the phone; the number is
+  kept unique among active sign-ins at creation, so it cannot match two people. `+91`, a leading zero and
+  spaces all normalise to the last ten digits.
+- **A technician with no email of their own** is keyed by a reserved `@tech.invalid` address (RFC 2606, so it
+  can never reach anybody). It is an internal column value, never displayed and never mailed.
+- **The one-time password opens nothing.** It was handed across a counter and is written on a slip. Until the
+  technician replaces it, `/api/partner/tech/*` returns 403 — behind there are families' addresses and phone
+  numbers. The Collect app shows a "Choose your password" screen as the way out of that 403.
+- **`POST /orders/{oid}/status` now refuses `assigned`.** Clicking "Assign a technician" used to move the
+  booking with nobody attached — the same lie as the old "Phlebotomist assigned" status line. Assignment
+  happens one way, through the picker, which requires a person. `porder()` drops `assigned` from `next` and
+  adds `agent` and `canAssign` instead.
+- **Turning someone off** stops the sign-in but is refused while they are out on a collection: a half-done job
+  still needs finishing. Reassign it first.
+
+New: `POST /partner/techs`, `POST /partner/techs/{uid}/reset`, `POST /partner/techs/{uid}/active`; the
+"Collection team" view and the inline assign picker in the partner console; the password screen in `/tech`.
+18 new tests, suite at **210**.
+
+Verified in a browser end to end: owner adds Ravi Kumar, the one-time password is shown once, the technician
+signs in at `/tech` with `9876512001`, is forced to choose a password, and sees the job with the family's
+address, Call and Directions.

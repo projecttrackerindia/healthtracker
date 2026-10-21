@@ -35,6 +35,7 @@ td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}tr:la
 .ord{display:grid;grid-template-columns:1fr auto;gap:8px 16px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;background:var(--card)}
 .ord b.id{font-family:var(--mono);font-size:13px}.ord .items{color:var(--mute);font-size:12.5px;margin-top:4px}.ord .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start}
 .empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px}
+.pick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}.pick .btn{background:var(--card)}
 .login{min-height:100vh;display:grid;place-items:center;padding:20px}.login .card{width:min(420px,100%)}.login label{display:block;margin:10px 0 4px;font-size:12.5px;font-weight:600;color:var(--mute)}
 .msg{display:none;margin:10px 0 0;padding:9px 12px;border-radius:10px;font-size:13px}.msg.on{display:block}.msg.err{background:color-mix(in srgb,var(--red) 10%,transparent);color:var(--red)}.msg.ok{background:color-mix(in srgb,var(--green) 10%,transparent);color:var(--green)}
 .chat{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;padding:6px 0}.bub{max-width:70%;padding:9px 12px;border-radius:14px;background:var(--soft);font-size:13.5px}.bub.me{align-self:flex-end;background:color-mix(in srgb,var(--teal) 16%,transparent)}.bub small{display:block;color:var(--mute);font-size:10.5px;margin-top:2px}
@@ -64,7 +65,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
   $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':'orders';render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
  const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
  const isBB=s.kind==='bloodbank',isShop=s.kind==='shop';
- const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
+ const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
  if(isBB&&view==='orders')view='blood';
  root.innerHTML=`<div class="app"><aside><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="TheHealthTracker partners"></div><nav>${nav.map(([k,n,b])=>`<button class="${view===k?'on':''}" data-v="${k}">${n}${b?`<em>${b}</em>`:''}</button>`).join('')}</nav>
   <div class="who"><b>${E(s.name)}</b>${E(KINDN[s.kind]||s.kind)} · ${s.verified?'<span class="tag ok">verified</span>':'<span class="tag warn">pending verification</span>'}<br>${ME.user.role==='doctor'?`Dr ${E(ME.user.name)} · `:''}${E(ME.user.email)} · <a href="#" id="out">Sign out</a></div></aside><main id="main"></main></div>`;
@@ -82,11 +83,67 @@ async function loadOrders(){const st=$('#ost')?$('#ost').value:'open';let r;try{
    <div><b>${E(o.member||o.family.name||'Family')}</b> · ${E(o.address||o.family.city||'')}${o.addr&&o.addr.lat?` · <a href="https://www.google.com/maps/dir/?api=1&destination=${o.addr.lat},${o.addr.lng}" target="_blank" rel="noopener">Directions</a>`:''}${o.addr&&o.addr.phone?` · <a href="tel:${E(o.addr.phone)}">${E(o.addr.phone)}</a>`:''}${o.payment==='upi-paid'?' · <span class="tag ok">paid by UPI</span>':''}${o.slot?` · <b>${E(o.slot)}</b>`:''}${o.payment?` · ${o.payment==='cod'?(isLab?'Pay at collection':'Pay on delivery'):E(o.payment)}`:''}</div>
    <div class="items">${o.items.map(i=>`${E(i.name)}${i.qty>1?' × '+i.qty:''}${i.rx?' <span class="tag warn">Rx</span>':''}`).join(' · ')} · <b>${money(o.total)}</b></div>
    ${o.rxShared?`<div class="items">Prescription: ${o.rxFiles.length?o.rxFiles.map((f,i)=>`<a href="/api/partner/orders/${E(o.id)}/rx/${encodeURIComponent(f)}" target="_blank" rel="noopener">open ${i+1} ↗</a>`).join(' · '):'<span class="tag warn">shared, syncing from the family’s phone</span>'}</div>`:o.items.some(i=>i.rx)?`<div class="items"><span class="tag bad">Rx items without a prescription</span> — do not dispense; message the family.</div>`:''}
-   ${(o.timeline||[]).filter(t=>t.note||t.reason).map(t=>`<div class="items">↳ ${E(t.s.replace(/_/g,' '))}: ${E(t.reason||'')} ${E(t.note||'')}</div>`).join('')}</div>
-  <div class="acts">${isLab&&!/cancel/.test(o.status)?`<label class="btn sm ${o.hasReport?'':'p'}">${o.hasReport?'Replace report':'⬆ Upload report'}<input type="file" accept="application/pdf,image/*" hidden data-rep="${E(o.id)}"></label>`:''}${o.next.map(n=>`<button class="btn sm ${n==='cancelled'?'d':''}" data-st="${E(o.id)}:${n}">${E(o.labels[n])}</button>`).join('')}<button class="btn sm" data-msg="${E(o.householdId)}" data-nm="${E(o.member||o.family.name||'Family')}">💬 Message</button></div></div>`).join('');
+   ${o.agent?`<div class="items">Going: <b>${E(o.agent.name)}</b>${o.agent.phone?` · <a href="tel:${E(o.agent.phone)}">${E(o.agent.phone)}</a>`:''}${o.status==='en_route'?' · <span class="tag go">on the way</span>':o.status==='arrived'?' · <span class="tag go">at the door</span>':''}</div>`:o.canAssign?`<div class="items"><span class="tag warn">nobody assigned</span> — the family is waiting to be told who is coming.</div>`:''}
+   ${(o.timeline||[]).filter(t=>(t.note||t.reason)&&t.s!=='assigned').map(t=>`<div class="items">↳ ${E(t.s.replace(/_/g,' '))}: ${E(t.reason||'')} ${E(t.note||'')}</div>`).join('')}<div class="asg" data-for="${E(o.id)}"></div></div>
+  <div class="acts">${o.canAssign?`<button class="btn sm ${o.agent?'':'p'}" data-asg="${E(o.id)}">${o.agent?'Reassign':'Assign a technician'}</button>`:''}${isLab&&!/cancel/.test(o.status)?`<label class="btn sm ${!o.hasReport&&/collected|processing/.test(o.status)?'p':''}">${o.hasReport?'Replace report':'⬆ Upload report'}<input type="file" accept="application/pdf,image/*" hidden data-rep="${E(o.id)}"></label>`:''}${o.next.map(n=>`<button class="btn sm ${n==='cancelled'?'d':''}" data-st="${E(o.id)}:${n}">${E(o.labels[n])}</button>`).join('')}<button class="btn sm" data-msg="${E(o.householdId)}" data-nm="${E(o.member||o.family.name||'Family')}">💬 Message</button></div></div>`).join('');
  $('#ol').querySelectorAll('[data-msg]').forEach(b=>b.onclick=()=>{view='msgs';render();setTimeout(()=>openThreadNew(b.dataset.msg,b.dataset.nm),300)});
  $('#ol').querySelectorAll('[data-st]').forEach(b=>b.onclick=async()=>{const[id,st]=b.dataset.st.split(':');let note='';if(st==='cancelled'||st==='declined')note=prompt('Reason the family will see:')||'';if(st==='cancelled'&&!note)return;try{await api(`/orders/${id}/status`,{method:'POST',body:{status:st,note}});toast('Updated · the family has been told');loadOrders();load()}catch(e){toast(e.message)}});
+ $('#ol').querySelectorAll('[data-asg]').forEach(b=>b.onclick=()=>openAssign(b.dataset.asg));
  $('#ol').querySelectorAll('[data-rep]').forEach(i=>i.onchange=async()=>{const f=i.files[0];if(!f)return;if(f.size>15e6){toast('Up to 15 MB');return}try{await api(`/orders/${i.dataset.rep}/report`,{method:'PUT',raw:true,headers:{'content-type':f.type||'application/pdf','x-file-name':f.name},body:f});toast('Report delivered to the family');loadOrders();load()}catch(e){toast(e.message)}})}
+// The assign picker. It opens under the booking rather than in a modal: the owner is choosing between people
+// by how loaded they already are, and that decision reads better next to the address they are being sent to.
+let asgOpen='';
+async function openAssign(oid){const box=$(`.asg[data-for="${oid}"]`);if(!box)return;
+ if(asgOpen===oid){box.innerHTML='';asgOpen='';return}
+ document.querySelectorAll('.asg').forEach(e=>e.innerHTML='');asgOpen=oid;
+ box.innerHTML='<div class="items">Loading the team…</div>';
+ let r;try{r=await api('/techs')}catch(e){box.innerHTML=`<div class="items">${E(e.message)}</div>`;return}
+ const avail=r.techs.filter(t=>t.active);
+ if(!avail.length){box.innerHTML=`<div class="items">Nobody on the collection team yet. <a href="#" data-goteam>Add a technician</a> — the family needs a name and a number for whoever turns up.</div>`;
+  box.querySelector('[data-goteam]').onclick=e=>{e.preventDefault();view='team';render()};return}
+ box.innerHTML=`<div class="pick">${avail.map(t=>`<button class="btn sm" data-pick="${E(oid)}:${E(t.id)}" ${t.live?'title="Already out on a collection"':''}>
+   <b>${E(t.name)}</b> <span style="color:var(--mute);font-weight:400">${t.live==='en_route'?'· out now':t.live==='arrived'?'· at a door':t.openJobs?`· ${t.openJobs} waiting`:'· free'}</span></button>`).join('')}</div>`;
+ box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=async()=>{const[id,agent]=b.dataset.pick.split(':');b.disabled=true;
+  try{await api(`/orders/${id}/assign`,{method:'POST',body:{agent}});asgOpen='';toast('Assigned · the family has been told who is coming');loadOrders();load()}
+  catch(e){toast(e.message);b.disabled=false}})}
+// ---------------- the collection team (labs)
+// The people who go to a family's door. The lab runs this list itself: it employs them, pays them and answers
+// for them, and a lab that has to email us to add a phlebotomist will simply send an unnamed one instead.
+let TECHS=null;
+const techLine=t=>t.live==='en_route'?'<span class="tag go">out on a collection</span>':t.live==='arrived'?'<span class="tag go">at a door</span>':!t.active?'<span class="tag bad">turned off</span>':t.openJobs?`<span class="tag warn">${t.openJobs} job${t.openJobs>1?'s':''} waiting</span>`:'<span class="tag ok">free</span>';
+VIEWS.team=()=>{const isOwner=ME.user.role==='owner';
+ $('#main').innerHTML=head('Collection team','The phlebotomists who collect at home. The family is shown the name and number of whoever is assigned, so keep both right.',isOwner?`<button class="btn p" id="nt">Add technician</button>`:'')
+  +`<div id="tcreds"></div><div class="card" id="tl">Loading…</div>`
+  +(isOwner?'':`<p class="sub">Only the store owner can add or change the team.</p>`);
+ if(isOwner)$('#nt').onclick=techForm;loadTechs()};
+async function loadTechs(){let r;try{r=await api('/techs')}catch(e){if($('#tl'))$('#tl').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ TECHS=r.techs;if(!$('#tl'))return;const isOwner=ME.user.role==='owner';
+ if(!r.techs.length){$('#tl').innerHTML=`<div class="empty">Nobody on the team yet.${isOwner?' Add the phlebotomists who do home collections — until then, home bookings cannot be assigned to anyone.':''}</div>`;return}
+ $('#tl').innerHTML=`<table><tr><th>Name</th><th>Signs in with</th><th>Right now</th><th>Last signed in</th>${isOwner?'<th></th>':''}</tr>`
+  +r.techs.map(t=>`<tr><td><b>${E(t.name)}</b>${t.mustChange?' <span class="tag warn">not signed in yet</span>':''}</td>
+    <td><a href="tel:${E(t.phone)}">${E(t.phone)}</a>${t.email?`<br><small style="color:var(--mute)">${E(t.email)}</small>`:''}</td>
+    <td>${techLine(t)}</td><td style="color:var(--mute)">${t.lastLogin?fmt(t.lastLogin):'—'}</td>
+    ${isOwner?`<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-trs="${E(t.id)}">Reset password</button> <button class="btn sm ${t.active?'d':''}" data-tac="${E(t.id)}:${t.active?0:1}">${t.active?'Turn off':'Turn on'}</button></td>`:''}</tr>`).join('')+`</table>`;
+ if(!isOwner)return;
+ $('#tl').querySelectorAll('[data-trs]').forEach(b=>b.onclick=async()=>{if(!confirm('Give this technician a new one-time password? Their current one stops working.'))return;
+   try{const g=await api(`/techs/${b.dataset.trs}/reset`,{method:'POST'});showCreds(g,'New one-time password')}catch(e){toast(e.message)}});
+ $('#tl').querySelectorAll('[data-tac]').forEach(b=>b.onclick=async()=>{const[id,on]=b.dataset.tac.split(':');
+   try{await api(`/techs/${id}/active`,{method:'POST',body:{active:on==='1'}});loadTechs()}catch(e){toast(e.message)}})}
+function techForm(){if($('#tf'))return;$('#tcreds').insertAdjacentHTML('afterend',`<div class="card" id="tf"><h3>Add a technician</h3>
+ <form id="tform"><div class="row"><label class="grow">Full name<input name="name" required placeholder="As the family should see it"></label>
+  <label class="grow">Mobile<input name="phone" required inputmode="numeric" placeholder="10 digits"></label>
+  <label class="grow">Email <span style="font-weight:400;color:var(--mute)">(optional)</span><input name="email" type="email" placeholder="If they have one"></label></div>
+ <p class="sub" style="margin:0 0 12px">They sign in at <b>thehealthtracker.com/tech</b> with their mobile number and a one-time password you hand them.</p>
+ <div class="row" style="margin:0"><button class="btn p">Add to the team</button> <button class="btn" type="button" id="tfx">Cancel</button></div></form></div>`);
+ $('#tfx').onclick=()=>$('#tf').remove();
+ $('#tform').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=e.target.querySelector('button');b.disabled=true;
+  try{const g=await api('/techs',{method:'POST',body:{name:f.get('name'),phone:f.get('phone'),email:f.get('email')}});$('#tf').remove();showCreds(g,'Added — hand them this');loadTechs()}
+  catch(err){toast(err.message);b.disabled=false}}}
+function showCreds(g,title){$('#tcreds').innerHTML=`<div class="card" style="border-color:color-mix(in srgb,var(--teal) 40%,transparent)">
+ <h3>${E(title)}${g.name?` — ${E(g.name)}`:''}</h3><p class="sub" style="margin:0 0 10px">Shown once. We do not keep a copy, so write it down or send it to them now.</p>
+ <div class="row" style="margin:0;font-family:var(--mono);font-size:15px"><span>Sign in: <b>${E(g.signIn||'')}</b></span><span>Password: <b>${E(g.tempPassword||'')}</b></span>
+ <button class="btn sm" id="tcx">Done</button></div></div>`;
+ $('#tcx').onclick=()=>$('#tcreds').innerHTML=''}
 // ---------------- visit requests (hospitals)
 VIEWS.appts=()=>{$('#main').innerHTML=head('Visit requests','Confirm a slot, offer another time, or decline with a reason. The family is notified at once.',`<select id="ast"><option value="open">Open</option><option value="all">All</option></select>`)+`<div id="al"><div class="empty">Loading…</div></div>`;$('#ast').onchange=loadAppts;loadAppts()};
 async function loadAppts(){let r;try{r=await api('/appointments?status='+($('#ast')?$('#ast').value:'open'))}catch(e){$('#al').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
