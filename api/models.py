@@ -608,6 +608,38 @@ class Payout(Base):
     paid_by: Mapped[str] = mapped_column(String(160), default="")
 
 
+class Token(Base):
+    """A place in a doctor's queue for one day — the OP counter, in a table.
+
+    Walk-ins are most of Indian outpatient care and they are not appointments: there is no slot, only an
+    order of arrival. A family with a confirmed appointment joins the same queue when they arrive, because
+    one queue the counter can see beats two it has to reconcile in its head.
+
+    The number restarts at 1 for each doctor each day, which is how every OP counter in the country already
+    works and so is the number people will call out and look for on a board."""
+
+    __tablename__ = "tokens"
+    __table_args__ = (Index("ix_tokens_day", "store_id", "doctor_id", "day", "number"),
+                      Index("ix_tokens_open", "store_id", "day", "state"))
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("tk"))
+    store_id: Mapped[str] = mapped_column(ForeignKey("stores.id", ondelete="CASCADE"), index=True)
+    doctor_id: Mapped[str] = mapped_column(String(32), index=True)       # the PartnerUser being queued for
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    member: Mapped[str] = mapped_column(String(80), default="")
+    phone: Mapped[str] = mapped_column(String(20), default="")
+    why: Mapped[str] = mapped_column(String(160), default="")
+    day: Mapped[str] = mapped_column(String(10), default="")             # YYYY-MM-DD, IST
+    number: Mapped[int] = mapped_column(Integer, default=0)
+    kind: Mapped[str] = mapped_column(String(12), default="walkin")      # walkin | appointment
+    appt_id: Mapped[str] = mapped_column(String(32), default="")
+    state: Mapped[str] = mapped_column(String(10), default="waiting", index=True)  # waiting|called|in|done|skipped
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    called_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    started_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    done_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
 class RateHit(Base):
     """Rate-limit counters, shared across containers.
 

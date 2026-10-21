@@ -67,7 +67,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
   $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':'orders';render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
  const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
  const isBB=s.kind==='bloodbank',isShop=s.kind==='shop';
- const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,s.kind==='pharmacy'?['team','Pharmacists',0]:null,s.kind==='pharmacy'?['pick','Pick list',0]:null,ME.user.role==='owner'?['earnings','Earnings',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
+ const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,s.kind==='pharmacy'?['team','Pharmacists',0]:null,s.kind==='pharmacy'?['pick','Pick list',0]:null,ME.user.role==='owner'?['earnings','Earnings',0]:null,isHosp?['queue','OP queue',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
  if(isBB&&view==='orders')view='blood';
  root.innerHTML=`<div class="app"><aside><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="TheHealthTracker partners"></div><nav>${nav.map(([k,n,b])=>`<button class="${view===k?'on':''}" data-v="${k}">${n}${b?`<em>${b}</em>`:''}</button>`).join('')}</nav>
   <div class="who"><b>${E(s.name)}</b>${E(KINDN[s.kind]||s.kind)} · ${s.verified?'<span class="tag ok">verified</span>':'<span class="tag warn">pending verification</span>'}<br>${ME.user.role==='doctor'?`Dr ${E(ME.user.name)} · `:''}${E(ME.user.email)} · <a href="#" id="out">Sign out</a></div></aside><main id="main"></main></div>`;
@@ -255,6 +255,70 @@ function showCreds(g,title){$('#tcreds').innerHTML=`<div class="card" style="bor
  <div class="row" style="margin:0;font-family:var(--mono);font-size:15px"><span>Sign in: <b>${E(g.signIn||'')}</b></span><span>Password: <b>${E(g.tempPassword||'')}</b></span>
  <button class="btn sm" id="tcx">Done</button></div></div>`;
  $('#tcx').onclick=()=>$('#tcreds').innerHTML=''}
+// ---------------- the OP queue
+// A counter screen, not a dashboard. The number being seen is the biggest thing on it, "Call next" is one
+// tap away, and the wait estimate only appears once the doctor's own day can support one — a confident
+// wrong number is why people stop watching the board and crowd the door.
+let QDOC='',QTIMER=null,QSHOWALL=false;
+VIEWS.queue=()=>{$('#main').innerHTML=head('OP queue','Today\'s list, in the order people arrived. Walk-ins and booked visits share one queue, because one list the counter can see beats two it reconciles in its head.',
+  `<select id="qd" style="min-width:190px"></select><button class="btn" id="qadd">Add walk-in</button><button class="btn p" id="qnext">Call next</button>`)
+ +`<div id="ql"><div class="empty">Loading…</div></div>`;
+ loadDoctors()};
+async function loadDoctors(){if(!$('#ql'))return;let r;try{r=await api('/doctors')}catch(e){if($('#ql'))$('#ql').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ if(!$('#ql')||!$('#qd'))return;
+ // Whoever has people waiting comes first, and is what the screen opens on. Alphabetical order means the
+ // counter opens on an empty queue while a room full of people is one dropdown away.
+ const docs=r.doctors.filter(d=>d.active).sort((a,b)=>(b.withNow?1:0)-(a.withNow?1:0)||b.waiting-a.waiting||a.name.localeCompare(b.name));
+ if(!docs.length){$('#ql').innerHTML=`<div class="empty">No doctors on this clinic yet. TheHealthTracker adds them and verifies the registration — write to partner@thehealthtracker.com.</div>`;
+  $('#qd').hidden=true;$('#qnext').hidden=true;$('#qadd').hidden=true;return}
+ if(!QDOC||!docs.some(d=>d.id===QDOC))QDOC=(ME.user.role==='doctor'?ME.user.id:docs[0].id);
+ $('#qd').innerHTML=docs.map(d=>`<option value="${E(d.id)}" ${d.id===QDOC?'selected':''}>${E(d.name)}${d.specialty?' · '+E(d.specialty):''} — ${d.waiting} waiting</option>`).join('');
+ $('#qd').onchange=()=>{QDOC=$('#qd').value;loadQueue()};
+ $('#qnext').onclick=callNext;$('#qadd').onclick=addWalkIn;
+ loadQueue();
+ // The counter leaves this open all morning; a slow refresh keeps it honest without anybody tapping.
+ if(QTIMER)clearInterval(QTIMER);QTIMER=setInterval(()=>{if(view==='queue')loadQueue();else{clearInterval(QTIMER);QTIMER=null}},20000)}
+const QST={waiting:['','Waiting'],called:['go','Called'],in:['ok','With the doctor'],done:['','Seen'],skipped:['bad','Passed over']};
+async function loadQueue(){if(!QDOC||!$('#ql'))return;let q;try{q=await api('/queue?doctor='+encodeURIComponent(QDOC))}catch(e){if($('#ql'))$('#ql').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ if(!$('#ql'))return;        // the counter navigated away while this was in flight
+ const now_=q.tokens.find(t=>t.state==='called'||t.state==='in');
+ // By eleven o'clock the finished rows are most of the list and the live ones are below the fold. The queue
+ // is the point of this screen, so the day's history folds away behind a line.
+ const over=q.tokens.filter(t=>t.state==='done'||t.state==='skipped'),live=q.tokens.filter(t=>!over.includes(t));
+ const show=QSHOWALL?q.tokens:live;
+ $('#ql').innerHTML=`<div class="cards">
+   <div class="card kpi"><small>Now</small><b style="font-size:40px">${now_?now_.number:'—'}</b><span style="color:var(--mute)">${now_?E(now_.member||'')+' · '+E(QST[now_.state][1]):'nobody in the room'}</span></div>
+   <div class="card kpi"><small>Waiting</small><b>${q.waiting}</b><span style="color:var(--mute)">${q.paceMin?`about ${q.waiting*q.paceMin} min to clear`:'pace not known yet'}</span></div>
+   <div class="card kpi"><small>Seen today</small><b>${q.seen}</b><span style="color:var(--mute)">${q.paceMin?`${q.paceMin} min each`:'—'}</span></div></div>
+  <div class="card">${show.length?`<table><tr><th style="width:70px">No.</th><th>Patient</th><th>Reason</th><th>Waiting</th><th>State</th><th></th></tr>
+   ${show.map(t=>`<tr${t.state==='done'||t.state==='skipped'?' style="opacity:.55"':''}>
+     <td><b style="font-size:19px;font-family:var(--mono)">${t.number}</b></td>
+     <td><b>${E(t.member||'—')}</b>${t.phone?`<br><a href="tel:${E(t.phone)}" style="font-size:12px">${E(t.phone)}</a>`:''}${t.kind==='appointment'?' <span class="tag">booked</span>':''}</td>
+     <td style="color:var(--mute)">${E(t.why||'—')}</td>
+     <td style="color:var(--mute)">${t.state==='waiting'?t.waitedMin+' min':'—'}</td>
+     <td><span class="tag ${QST[t.state][0]}">${QST[t.state][1]}</span></td>
+     <td style="text-align:right;white-space:nowrap">${t.state==='waiting'?`<button class="btn sm" data-qm="${E(t.id)}:called">Call</button> <button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
+       :t.state==='called'?`<button class="btn sm p" data-qm="${E(t.id)}:in">Came in</button> <button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
+       :t.state==='in'?`<button class="btn sm p" data-qm="${E(t.id)}:done">Done</button>`:''}</td></tr>`).join('')}
+   </table>`:'<div class="empty">Nobody in the queue. Add a walk-in, or wait for someone to take a number in the app.</div>'}
+   ${over.length?`<p class="sub" style="margin:10px 0 0"><button class="btn sm" id="qall">${QSHOWALL?'Hide':'Show'} the ${over.length} already finished today</button></p>`:''}</div>`;
+ if($('#qall'))$('#qall').onclick=()=>{QSHOWALL=!QSHOWALL;loadQueue()};
+ $('#ql').querySelectorAll('[data-qm]').forEach(b=>b.onclick=async()=>{const[id,to]=b.dataset.qm.split(':');b.disabled=true;
+  try{await api(`/queue/${id}/move`,{method:'POST',body:{to}});loadQueue()}catch(e){toast(e.message);b.disabled=false}})}
+async function callNext(){const b=$('#qnext');b.disabled=true;
+ try{const r=await api('/queue/next?doctor='+encodeURIComponent(QDOC),{method:'POST'});
+  toast(r.called?`Token ${r.called.number} · ${r.called.member||''}`:'Nobody else is waiting');loadQueue()}
+ catch(e){toast(e.message)}finally{b.disabled=false}}
+function addWalkIn(){if($('#qwf'))return;
+ $('#ql').insertAdjacentHTML('beforebegin',`<div class="card" id="qwf"><h3>Add a walk-in</h3>
+  <form id="qwform" class="row" style="margin:0"><input name="member" required placeholder="Name, as the room should call it" style="width:260px">
+   <input name="phone" placeholder="Mobile (optional)" inputmode="numeric" style="width:160px">
+   <input name="why" placeholder="Reason (optional)" style="width:220px">
+   <button class="btn p">Give a number</button><button class="btn" type="button" id="qwx">Cancel</button></form></div>`);
+ $('#qwx').onclick=()=>$('#qwf').remove();
+ $('#qwform').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=e.target.querySelector('button');b.disabled=true;
+  try{const t=await api('/queue/add',{method:'POST',body:{store:ME.store.id,doctor:QDOC,member:f.get('member'),phone:f.get('phone')||'',why:f.get('why')||''}});
+   $('#qwf').remove();toast(`Token ${t.number} · ${t.member}`);loadQueue()}catch(err){toast(err.message);b.disabled=false}}}
 // ---------------- visit requests (hospitals)
 VIEWS.appts=()=>{$('#main').innerHTML=head('Visit requests','Confirm a slot, offer another time, or decline with a reason. The family is notified at once.',`<select id="ast"><option value="open">Open</option><option value="all">All</option></select>`)+`<div id="al"><div class="empty">Loading…</div></div>`;$('#ast').onchange=loadAppts;loadAppts()};
 async function loadAppts(){let r;try{r=await api('/appointments?status='+($('#ast')?$('#ast').value:'open'))}catch(e){$('#al').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
