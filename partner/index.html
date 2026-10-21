@@ -65,7 +65,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
   $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':'orders';render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
  const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
  const isBB=s.kind==='bloodbank',isShop=s.kind==='shop';
- const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
+ const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,ME.user.role==='owner'?['earnings','Earnings',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
  if(isBB&&view==='orders')view='blood';
  root.innerHTML=`<div class="app"><aside><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="TheHealthTracker partners"></div><nav>${nav.map(([k,n,b])=>`<button class="${view===k?'on':''}" data-v="${k}">${n}${b?`<em>${b}</em>`:''}</button>`).join('')}</nav>
   <div class="who"><b>${E(s.name)}</b>${E(KINDN[s.kind]||s.kind)} · ${s.verified?'<span class="tag ok">verified</span>':'<span class="tag warn">pending verification</span>'}<br>${ME.user.role==='doctor'?`Dr ${E(ME.user.name)} · `:''}${E(ME.user.email)} · <a href="#" id="out">Sign out</a></div></aside><main id="main"></main></div>`;
@@ -106,6 +106,29 @@ async function openAssign(oid){const box=$(`.asg[data-for="${oid}"]`);if(!box)re
  box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=async()=>{const[id,agent]=b.dataset.pick.split(':');b.disabled=true;
   try{await api(`/orders/${id}/assign`,{method:'POST',body:{agent}});asgOpen='';toast('Assigned · the family has been told who is coming');loadOrders();load()}
   catch(e){toast(e.message);b.disabled=false}})}
+// ---------------- earnings (owner only)
+// A partner who cannot see what they earned will telephone to ask, every week, and will be right to. The two
+// directions are shown as two columns rather than netted into one number, because they are two different
+// transfers: we send them what we hold, they send us the fee on the cash they took at the door.
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const monthName=k=>{const[y,m]=k.split('-');return `${MON[+m-1]} ${y}`};
+VIEWS.earnings=()=>{$('#main').innerHTML=head('Earnings','Every completed order and report, month by month. Cash you took at the door is already yours — the commission on it is what you owe us.')
+ +`<div id="el"><div class="empty">Loading…</div></div>`;loadEarnings()};
+async function loadEarnings(){let r;try{r=await api('/earnings?months=6')}catch(e){$('#el').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ const cur=r.months[0]||{},any=r.months.some(m=>m.orders);
+ $('#el').innerHTML=`<div class="cards">
+   <div class="card kpi"><small>This month</small><b>${money(cur.gross||0)}</b><span style="color:var(--mute)">${cur.orders||0} completed</span></div>
+   <div class="card kpi"><small>We owe you</small><b>${money(cur.weOweYou||0)}</b><span style="color:var(--mute)">paid online, less ${r.commissionPct}%</span></div>
+   <div class="card kpi"><small>You owe us</small><b>${money(cur.youOweUs||0)}</b><span style="color:var(--mute)">${r.commissionPct}% of cash you took</span></div>
+   <div class="card kpi"><small>Commission</small><b>${r.commissionPct}%</b><span style="color:var(--mute)">on completed orders</span></div></div>
+  <div class="card">${any?`<table>
+   <tr><th>Month</th><th>Completed</th><th>Collected</th><th>Of that, cash</th><th>Commission</th><th>We owe you</th><th>You owe us</th><th>Settled</th></tr>
+   ${r.months.map(m=>`<tr><td><b>${E(monthName(m.month))}</b></td><td>${m.orders||'—'}</td><td>${m.orders?money(m.gross):'—'}</td>
+     <td>${m.orders?money(m.cash):'—'}</td><td>${m.orders?`${money(m.fee)} <small style="color:var(--mute)">${m.feePct}%</small>`:'—'}</td>
+     <td>${m.weOweYou?`<b>${money(m.weOweYou)}</b>`:'—'}</td><td>${m.youOweUs?`<b>${money(m.youOweUs)}</b>`:'—'}</td>
+     <td>${m.settled?`<span class="tag ok">settled ${E(fmt(m.settledAt).split(',')[0])}</span>${m.settledRef?`<br><small style="color:var(--mute)">${E(m.settledRef)}</small>`:''}`:m.orders?'<span class="tag warn">open</span>':'—'}</td></tr>`).join('')}
+   </table>`:`<div class="empty">Nothing completed yet. A booking counts once the report is with the family; a medicine order counts once it is delivered.</div>`}</div>
+  <p class="sub">Refunds are taken out of the month they fall in. Questions about a figure: partner@thehealthtracker.com.</p>`}
 // ---------------- the collection team (labs)
 // The people who go to a family's door. The lab runs this list itself: it employs them, pays them and answers
 // for them, and a lab that has to email us to add a phlebotomist will simply send an unnamed one instead.

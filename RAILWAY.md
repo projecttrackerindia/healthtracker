@@ -864,3 +864,45 @@ switches the tag list to Late / Rushed / Several attempts / Careless with hygien
 switches it back. Submitting posts `{"rating":5,"tags":["On time"],"note":"..."}` to
 `/api/v1/orders/{id}/visit-rating`, the sheet closes and the card goes. In demo mode the write is swallowed,
 which is correct — the demo banner says nothing is saved.
+
+## Lab slice 5 — settlements that can actually be settled (2026-10-21)
+
+The other half of "I'll send amount". A monthly settlement computation already existed in `api/network.py`
+and the direction logic in it was right. Three things were missing.
+
+**Nothing recorded that a payout had happened.** The figures were recomputed from the orders on every page
+load, so a month settled in March looked identical to one nobody had touched, and next month's view showed
+the same number again. A new `Payout` table holds one row per store per month: the figures as they stood at
+the moment of settling, who settled it, when, and against which bank reference. Frozen on purpose — a refund
+or a rate change next week must not quietly rewrite what was paid. A bank reference is asked for because a
+payout nobody can trace is a payout that gets made twice. Unsettling is possible and is logged, with a
+confirmation that says why it is dangerous.
+
+**The commission was global.** `PARTNER_FEE_PCT` applied to everyone. Real contracts differ, so the rate now
+lives on the store (`Store.commission_pct`, nullable) and the env var is only the fallback. Nullable rather
+than defaulting to zero, because a launch partner on 0% is a real contract and "0" and "unset" cannot be the
+same value. Admin sets it by clicking the percentage in the settlements table.
+
+**The partner could not see any of it.** A lab that cannot see what it earned will telephone every week, and
+will be right to. `GET /api/partner/earnings` gives the owner their own statement, six months by default,
+from *the same computation the admin side settles against* — two computations would eventually disagree and
+the partner would be the one who noticed. Owner only: money is the owner's business, not the front desk's.
+
+The two directions stay two columns rather than one netted figure, because they are two different transfers:
+we send them what we hold from online payments, they send us the fee on the cash they took at the door. Most
+of this will be cash to begin with, so a ledger modelling only one direction would be wrong in the common
+case.
+
+New: `POST /api/admin/settlements/{month}/{store}`, `DELETE` the same, `POST /api/admin/stores/{sid}/commission`,
+`GET /api/partner/earnings`; Earnings view in the partner console; Mark settled / undo / rate in the admin
+console; four more CSV columns. 17 new tests, suite at **238**.
+
+### Verified in a browser
+Partner: October ₹5,050 over 4 completed, ₹1,750 of it cash → we owe ₹3,036, they owe ₹140, 8%.
+Admin: same row, **Mark settled** → drawer saying "Pay ₹2,896 to Lucid Diagnostics" → reference recorded →
+row becomes a green ₹2,896 with the UTR under it and an undo.
+
+### Still blocked on a decision
+Paying for a booking at checkout needs a Razorpay merchant account (KYC) for TheHealthTracker. The plumbing
+in `api/payments.py` is already written and used for subscriptions; nothing can be exercised end to end until
+that account exists. The ledger above does not depend on it.

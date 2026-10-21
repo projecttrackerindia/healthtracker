@@ -380,6 +380,43 @@ def assign(oid: str, body: AssignIn, db: Session = Depends(get_db), u: PartnerUs
     return porder(db, o)
 
 
+# ---- what the partner earned -----------------------------------------------------------------------------------------
+@r.get("/earnings")
+def earnings(months: int = 6, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+    """The store's own statement, month by month.
+
+    A partner who cannot see what they earned will telephone to ask, every week, and will be right to. The
+    figures here are the same computation the admin side settles against — not a second, friendlier one.
+
+    Direction is spelled out rather than netted into a single number, because the two are different events: we
+    transfer them what we hold, and they transfer us the fee on the cash they took at the door."""
+    from datetime import datetime
+
+    from .network import IST, fee_for, settlement_rows
+
+    s = my_store(db, u)
+    months = max(1, min(int(months or 6), 24))
+    nowdt = datetime.now(IST)
+    out = []
+    y, m = nowdt.year, nowdt.month
+    for _ in range(months):
+        key = f"{y:04d}-{m:02d}"
+        row = next((x for x in settlement_rows(db, key) if x["storeId"] == s.id), None)
+        out.append({"month": key, "orders": row["orders"] if row else 0, "gross": row["gross"] if row else 0,
+                    "lab": row["lab"] if row else 0, "medicine": row["medicine"] if row else 0,
+                    "cash": row["cod"] if row else 0, "online": row["online"] if row else 0,
+                    "refunds": row["refunds"] if row else 0,
+                    "feePct": row["feePct"] if row else fee_for(s), "fee": row["fee"] if row else 0,
+                    "weOweYou": row["payableToPartner"] if row else 0,
+                    "youOweUs": row["dueFromPartner"] if row else 0,
+                    "settled": bool(row and row["settled"]), "settledAt": row["settledAt"] if row else None,
+                    "settledRef": row["settledRef"] if row else ""})
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
+    return {"store": s.name, "commissionPct": fee_for(s), "months": out}
+
+
 @r.get("/orders/{oid}/rx/{file_id}")
 def read_rx(oid: str, file_id: str, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
     """The prescription the family chose to share with this order; nothing else in their vault is reachable."""
