@@ -86,7 +86,7 @@ def demo() -> bool:
 def _html(code: str, purpose: str) -> str:
     what = {"signup": "finish creating your account", "reset": "reset your password", "step": "finish signing in", "verify": "verify this address"}.get(purpose, "sign in")
     return f"""<div style="font-family:Inter,Segoe UI,Arial,sans-serif;max-width:460px;margin:auto;padding:28px;color:#14151b">
-<p style="font-weight:700;font-size:18px;margin:0 0 18px">the<span style="color:#2F5BFF">health</span>tracker</p>
+<p style="font-weight:700;font-size:18px;margin:0 0 18px">Urban <span style="color:#2F5BFF">Health</span></p>
 <p style="margin:0 0 10px">Use this code to {what}:</p>
 <p style="font:700 34px/1 ui-monospace,Menlo,monospace;letter-spacing:.18em;margin:0 0 16px;color:#2F5BFF">{code}</p>
 <p style="color:#5f6577;font-size:13px;margin:0">It expires in 10 minutes. If you did not ask for it, ignore this email — nobody can sign in without the code.

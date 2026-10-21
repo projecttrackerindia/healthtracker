@@ -72,7 +72,7 @@ function cardHTML(m){const mid=SX.midOf(m.id),blood=mid.blood||(m.bloodUnknown?P
   <div class="lv-card-name">${E(m.name)}</div>
   <div class="lv-card-grid"><div><small>${P('Age')}</small><b>${m.age||'—'}</b></div><div><small>${P('Sex')}</small><b>${m.sex==='female'?P('Female'):P('Male')}</b></div><div><small>${P('Blood')}</small><b class="lv-blood">${E(blood)}</b></div></div>
   <div class="lv-card-ph"><small>${P('Mobile')}</small><b>${E(phShow(m.ph)||'—')}</b>${m.ph?vbadge(pv,'Mobile'):''}</div>
-  <div class="lv-card-id"><small>${P('Health tracker ID')}</small><b>${E(m.htid||'')}</b></div></div>`}
+  <div class="lv-card-id"><small>${P('Urban Health ID')}</small><b>${E(m.htid||'')}</b></div></div>`}
 SX.cardHTML=cardHTML;
 function showCard(m,fresh){const canVerify=m.rel==='You'&&m.ph&&!userPhoneVerified(m);
  SX.modal(`<div class="lv-reveal ${fresh?'fresh':''}">${fresh?`<h2>${P('Your health card is ready')}</h2><p class="mute">${P('You can change these details any time in Family & Privacy.')}</p>`:`<h2>${P('Health card')}</h2>`}${cardHTML(m)}
