@@ -21,7 +21,7 @@ from .admin import Admin, log
 from .admin import me as admin_me
 from .auth import limit
 from .db import get_db
-from .models import Order, PartnerApplication, PartnerUser, Store, now
+from .models import Order, PartnerApplication, PartnerUser, Payout, Store, now
 from .security import hash_pw
 
 r = APIRouter(prefix="/api/v1")
@@ -165,10 +165,20 @@ def set_location(aid: str, body: LocIn, a: Admin = Depends(admin_me), db: Sessio
 
 # ---- settlements ------------------------------------------------------------------------------------------------------------
 def fee_pct() -> float:
+    """The platform default, used by any partner without a rate of their own."""
     try:
         return float(os.getenv("PARTNER_FEE_PCT", "8"))
     except ValueError:
         return 8.0
+
+
+def fee_for(s: Store | None) -> float:
+    """This partner's rate. Contracts differ — a launch partner may be on 0% and a referred one on 12 — so the
+    rate is a property of the store, and the global figure is only the fallback. 0 is a real rate, which is
+    why the column is nullable rather than defaulting to zero."""
+    if s is not None and s.commission_pct is not None:
+        return float(s.commission_pct)
+    return fee_pct()
 
 
 def month_bounds(month: str) -> tuple[int, int]:
@@ -180,8 +190,8 @@ def month_bounds(month: str) -> tuple[int, int]:
 
 def settlement_rows(db: Session, month: str) -> list[dict]:
     lo, hi = month_bounds(month)
-    pct = fee_pct()
     out = []
+    paid = {p.store_id: p for p in db.scalars(select(Payout).where(Payout.month == month)).all()}
     stores = {s.id: s for s in db.scalars(select(Store)).all()}
     orders = db.scalars(select(Order).where(Order.created >= lo, Order.created < hi, Order.status.in_(SETTLED))).all()
     by: dict[str, dict] = {}
@@ -196,14 +206,26 @@ def settlement_rows(db: Session, month: str) -> list[dict]:
         d[o.kind if o.kind in ("medicine", "lab") else "medicine"] += o.total
     for sid, d in by.items():
         s = stores.get(sid)
+        pct = fee_for(s)
         fee = round(d["gross"] * pct / 100)
         # cash-on-delivery money is already with the partner, so the fee on it is owed TO the platform; online money is held by us and paid out less the fee
         payable = d["online"] - round(d["online"] * pct / 100)
         due_from_partner = round(d["cod"] * pct / 100)
+        p = paid.get(sid)
         out.append({"storeId": sid, "store": s.name if s else sid, "kind": s.kind if s else "", "city": s.city if s else "", **d, "feePct": pct, "fee": fee,
-                    "payableToPartner": payable, "dueFromPartner": due_from_partner, "net": payable - due_from_partner})
+                    "payableToPartner": payable, "dueFromPartner": due_from_partner, "net": payable - due_from_partner,
+                    # What was actually settled, if anything. The figures above are recomputed from the orders
+                    # every time; this is the part that cannot be.
+                    "settled": bool(p), "settledAt": p.paid_at if p else None, "settledRef": p.ref if p else "",
+                    "settledNet": p.net if p else None, "settledBy": p.paid_by if p else ""})
     out.sort(key=lambda x: -x["gross"])
     return out
+
+
+def payout_json(p: Payout) -> dict:
+    return {"id": p.id, "storeId": p.store_id, "month": p.month, "orders": p.orders_n, "gross": p.gross,
+            "feePct": p.fee_pct, "fee": p.fee, "payableToPartner": p.payable, "dueFromPartner": p.due_from,
+            "net": p.net, "status": p.status, "ref": p.ref, "note": p.note, "paidAt": p.paid_at, "paidBy": p.paid_by}
 
 
 @ar.get("/settlements")
@@ -216,11 +238,76 @@ def settlements(month: str = "", a: Admin = Depends(admin_me), db: Session = Dep
             "payable": sum(r["payableToPartner"] for r in rows), "dueFromPartners": sum(r["dueFromPartner"] for r in rows), "orders": sum(r["orders"] for r in rows)}}
 
 
+class PayIn(BaseModel):
+    ref: str = ""
+    note: str = ""
+    status: str = "paid"
+
+
+@ar.post("/settlements/{month}/{store_id}")
+def settle(month: str, store_id: str, body: PayIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+    """Record that this month's account with this partner has been settled.
+
+    The figures are taken from the live computation at the moment of settling and frozen into the row, so a
+    later refund or a changed commission rate cannot quietly rewrite what was paid. A bank reference is asked
+    for because a payout nobody can trace is a payout that gets made twice."""
+    if len(month) != 7:
+        raise HTTPException(400, "month as YYYY-MM")
+    s = db.get(Store, store_id)
+    if not s:
+        raise HTTPException(404, "store not found")
+    if db.scalar(select(Payout).where(Payout.store_id == store_id, Payout.month == month)):
+        raise HTTPException(409, f"{month} is already settled for {s.name}.")
+    row = next((r for r in settlement_rows(db, month) if r["storeId"] == store_id), None)
+    if not row:
+        raise HTTPException(400, f"{s.name} has nothing to settle in {month}.")
+    if body.status not in ("paid", "written_off"):
+        raise HTTPException(400, "status is paid or written_off")
+    p = Payout(store_id=store_id, month=month, orders_n=row["orders"], gross=row["gross"], fee_pct=row["feePct"],
+               fee=row["fee"], payable=row["payableToPartner"], due_from=row["dueFromPartner"], net=row["net"],
+               status=body.status, ref=body.ref.strip()[:60], note=body.note.strip()[:300], paid_at=now(), paid_by=a.email)
+    db.add(p)
+    db.flush()
+    log(db, a.email, f"settlement.pay {store_id} {month} net={row['net']} ref={p.ref}")
+    return payout_json(p)
+
+
+@ar.delete("/settlements/{month}/{store_id}")
+def unsettle(month: str, store_id: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+    """Undo a settlement recorded in error. Logged, because unmarking a payout is how one gets made twice."""
+    p = db.scalar(select(Payout).where(Payout.store_id == store_id, Payout.month == month))
+    if not p:
+        raise HTTPException(404)
+    db.delete(p)
+    log(db, a.email, f"settlement.unpay {store_id} {month}")
+    return {"ok": True}
+
+
+class RateIn(BaseModel):
+    pct: float | None = None
+
+
+@ar.post("/stores/{sid}/commission")
+def set_commission(sid: str, body: RateIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+    """This partner's rate, or null to put them back on the platform default."""
+    s = db.get(Store, sid)
+    if not s:
+        raise HTTPException(404)
+    if body.pct is not None and not (0 <= body.pct <= 40):
+        raise HTTPException(400, "A commission between 0 and 40% please.")
+    s.commission_pct = body.pct
+    log(db, a.email, f"store.commission {sid} {'default' if body.pct is None else body.pct}")
+    return {"id": s.id, "name": s.name, "commissionPct": s.commission_pct, "effective": fee_for(s)}
+
+
 @ar.get("/settlements.csv")
 def settlements_csv(month: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
     from fastapi.responses import Response
     month = month or datetime.now(IST).strftime("%Y-%m")
     rows = settlement_rows(db, month)
-    head = "store_id,store,kind,city,orders,gross_inr,medicine_inr,lab_inr,cod_inr,online_inr,refunds_inr,fee_pct,fee_inr,payable_to_partner_inr,due_from_partner_inr,net_inr"
-    lines = [head] + [",".join(str(r[k]).replace(",", " ") for k in ("storeId", "store", "kind", "city", "orders", "gross", "medicine", "lab", "cod", "online", "refunds", "feePct", "fee", "payableToPartner", "dueFromPartner", "net")) for r in rows]
+    head = ("store_id,store,kind,city,orders,gross_inr,medicine_inr,lab_inr,cod_inr,online_inr,refunds_inr,fee_pct,"
+            "fee_inr,payable_to_partner_inr,due_from_partner_inr,net_inr,settled,settled_net_inr,settled_ref,settled_by")
+    cols = ("storeId", "store", "kind", "city", "orders", "gross", "medicine", "lab", "cod", "online", "refunds",
+            "feePct", "fee", "payableToPartner", "dueFromPartner", "net", "settled", "settledNet", "settledRef", "settledBy")
+    lines = [head] + [",".join(("" if r[k] is None else str(r[k])).replace(",", " ") for k in cols) for r in rows]
     return Response("\n".join(lines) + "\n", media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="settlements-{month}.csv"'})

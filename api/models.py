@@ -71,6 +71,9 @@ class Store(Base):
     eta_min: Mapped[int] = mapped_column(Integer, default=60)  # typical delivery / report time in minutes
     home_collection: Mapped[bool] = mapped_column(Boolean, default=False)  # labs
     collection_fee: Mapped[int] = mapped_column(Integer, default=0)
+    # What we keep on this partner's orders. NULL means "whatever the platform default is"; a launch partner on
+    # 0% is a real contract, so 0 and "unset" cannot be the same value.
+    commission_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     owner_email: Mapped[str] = mapped_column(String(120), default="")
@@ -562,6 +565,37 @@ class PartnerUser(Base):
     must_change: Mapped[bool] = mapped_column(Boolean, default=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
     last_login: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class Payout(Base):
+    """One month of one partner's account, as it stood when somebody settled it.
+
+    The monthly figures can always be recomputed from the orders, and `settlement_rows()` does. What cannot be
+    recomputed is whether the money actually moved, when, by whom and against which bank reference — so that
+    is what this table is for. One row per store per month; a month can only be settled once.
+
+    Direction matters and is not cosmetic. Cash taken at a family's door is already in the partner's hands, so
+    on that money the partner owes us the fee. Money paid online is in ours, so on that we owe them the rest.
+    Most of this will be cash to begin with, so a ledger that only modelled one direction would be wrong in the
+    common case."""
+
+    __tablename__ = "payouts"
+    __table_args__ = (Index("ix_payouts_store_month", "store_id", "month", unique=True),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("po"))
+    store_id: Mapped[str] = mapped_column(ForeignKey("stores.id", ondelete="CASCADE"), index=True)
+    month: Mapped[str] = mapped_column(String(7))               # YYYY-MM, IST
+    orders_n: Mapped[int] = mapped_column(Integer, default=0)
+    gross: Mapped[int] = mapped_column(Integer, default=0)      # what families paid, in rupees
+    fee_pct: Mapped[float] = mapped_column(Float, default=0)    # the rate actually applied, frozen here
+    fee: Mapped[int] = mapped_column(Integer, default=0)
+    payable: Mapped[int] = mapped_column(Integer, default=0)    # we hold this and owe it to them
+    due_from: Mapped[int] = mapped_column(Integer, default=0)   # they hold this and owe it to us
+    net: Mapped[int] = mapped_column(Integer, default=0)        # payable - due_from; negative means they pay us
+    status: Mapped[str] = mapped_column(String(12), default="paid")   # paid | written_off
+    ref: Mapped[str] = mapped_column(String(60), default="")    # UTR or other bank reference
+    note: Mapped[str] = mapped_column(String(300), default="")
+    paid_at: Mapped[int] = mapped_column(Integer, default=now)
+    paid_by: Mapped[str] = mapped_column(String(160), default="")
 
 
 class Appointment(Base):
