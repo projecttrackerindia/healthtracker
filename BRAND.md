@@ -1,14 +1,19 @@
 # Urban Health · brand and logo
 
 ## The mark
-A place mark with a medical cross punched out of it: *health* (the cross), *here* (the pin). The cross is a real hole — one
-path with `fill-rule="evenodd"` — so the same glyph works on a coloured tile (the hole shows the tile) and bare on any
-background (the hole shows the page). There is no second colour to pass around and nothing to get wrong in dark mode.
-Built on a 64-unit grid inside a rounded tile (radius 16); the cross sits at y≈25.6, above the geometric centre, because the
-point below pulls the visual weight down.
+A medical cross whose right arm becomes a pulse line and ends in a tracking dot. Three readings in one shape:
+the **cross** is health, the **pulse** is the body's own signal, and the **dot** is that signal being recorded —
+which is the whole product in one glyph.
 
-The wordmark is **Urban Health** — "Urban" in Regular, "Health" in Bold — set in Inter Display and converted to outlines, so
-it looks the same everywhere and needs no font file. Do not re-type it in another face, and do not letterspace it.
+The cross is drawn as a single rounded path carrying only the vertical bar and the left arm, because the right
+arm is where the pulse takes over; the two read as one continuous stroke rather than a symbol with a decoration
+stuck to it. The pulse is stroked rather than filled so its weight stays even through the corners, and it is
+capped and joined round to match the cross's own rounding. Everything sits on a 64-unit grid inside a rounded
+tile (radius 16).
+
+The wordmark is **Urban Health** — "Urban" in Regular, "Health" in Bold — set in Inter Display and converted to
+outlines, so it looks the same everywhere and needs no font file. Do not re-type it in another face, and do not
+letterspace it.
 
 ## One colour per audience
 | Audience | Colour | Files | Where it is used |

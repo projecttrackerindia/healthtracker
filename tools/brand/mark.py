@@ -1,26 +1,34 @@
-# Mark: a place mark whose counter-form is a medical cross — "health, here".
+# Mark: a rounded tile holding a medical cross whose right arm becomes a pulse line ending in a tracking dot.
 #
-# Urban Health's distinctive claim is not that it is health in a city; it is that it closes the distance
-# between a family's home and the city's care — a technician you watch arrive, a queue you join before
-# leaving, an SOS that already knows where you are. The map pin carries that, and it is already the most
-# used shape in the product. The cross is punched out of the pin rather than set beside it, so the whole
-# thing stays one silhouette and survives 16px, which is where marks die.
+# Three readings in one shape: the cross is health, the pulse is the body's own signal, and the dot is the
+# reading being recorded. Drawn on a 64-unit grid inside a rounded tile (radius 16).
 #
-# ONE path, fill-rule evenodd: the cross is a real hole, not a shape filled in the background colour. That
-# means the same glyph works on a coloured tile (the hole shows the tile) and bare on any background
-# (the hole shows the page) — no second colour to pass around and nothing to get wrong on dark mode.
-#
-# Geometry on the same 64 grid as before: pin from (32,6), head radius ~20, tapered to a point at y≈55.
-# Cross span 23, arm 8.2, optically centred at (32, 25.6) — above the geometric centre, because the point
-# below pulls the visual weight down.
-PIN = ("M32 6c-11 0-20 8.8-20 19.6 0 10.6 12.9 24.9 17.7 29.9a3.2 3.2 0 0 0 4.6 0"
-       "C39.1 50.5 52 36.2 52 25.6 52 14.8 43 6 32 6z")
-CROSS = "M27.9 14.1h8.2v7.4h7.4v8.2h-7.4v7.4h-8.2v-7.4h-7.4v-8.2h7.4z"
-VIEW_BARE = "10 4 44 54"          # the pin alone, trimmed
+# The cross is a single rounded path — the vertical bar and the left arm only — because the right arm is where
+# the pulse takes over. The pulse is a stroked path rather than a filled one so its weight stays even through
+# the corners, and it is capped and joined round to match the cross's own rounding.
+VIEW_BARE = "0 0 64 64"
+
+CROSS_D = ("M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13"
+           "a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z")
+PULSE_D = "M32 32h5l3.2-8 4.6 16 3.2-8h0.4"
+PULSE_W = 4.6
+DOT = (55.2, 32, 3.3)
 
 
-def glyph(fg):
-    return f'<path fill-rule="evenodd" d="{PIN}{CROSS}" fill="{fg}"/>'
+def glyph(fg, styled=False):
+    """The mark's three parts.
+
+    `styled` emits style="fill:…" / style="stroke:…" instead of presentation attributes, for the places that
+    colour the mark with a CSS custom property — var() is not valid inside a fill="" attribute."""
+    if styled:
+        f, s = f'style="fill:{fg}"', f'style="stroke:{fg}"'
+    else:
+        f, s = f'fill="{fg}"', f'stroke="{fg}"'
+    cx, cy, r = DOT
+    return (f'<path d="{CROSS_D}" {f}/>'
+            f'<path d="{PULSE_D}" fill="none" {s} stroke-width="{PULSE_W}" '
+            f'stroke-linecap="round" stroke-linejoin="round"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="{r}" {f}/>')
 
 
 def tile(bg, fg='#fff', size=64):

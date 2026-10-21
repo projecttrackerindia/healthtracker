@@ -7,7 +7,7 @@ h=f'''<html><head><meta charset="utf-8"><style>body{{margin:0;background:#f4f5f8
 section{{display:grid;grid-template-columns:190px minmax(0,1fr) minmax(0,1fr) 220px;gap:14px;margin-bottom:14px}}.lab{{display:flex;flex-direction:column;justify-content:center;gap:4px}}.lab b{{font-size:18px}}.lab span{{color:#6b7285;font-size:12.5px}}code{{font:600 12px ui-monospace,monospace;color:#6b7285}}
 .sw{{border-radius:18px;display:flex;align-items:center;justify-content:center;padding:24px;background:#fff;overflow:hidden}}.icons{{gap:16px}}svg{{display:block;max-width:100%}}
 .mono{{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}}</style></head><body>
-<h1>Urban Health · logo system</h1><p>One mark — a medical cross punched out of a place mark — in one colour per audience.</p>
+<h1>Urban Health · logo system</h1><p>One mark — a medical cross whose right arm becomes a pulse line ending in a tracking dot — in one colour per audience.</p>
 {row("Users","People & families · the app",'#2F5BFF','user')}
 {row("Partners","Doctors, hospitals, pharmacies, labs, insurers",'#0B8A7C','partner')}
 {row("Admin","Internal console",'#1C1E26','admin')}

@@ -30,7 +30,7 @@ one("if(msg.type==='peer'){c.peer=msg.present;if(!msg.present&&c.connected){c.co
 HEAD = "</head>\n<body>"
 if s.count(HEAD) != 1:
     sys.exit("head anchor")
-LOGO = '<svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path fill-rule="evenodd" d="M32 6c-11 0-20 8.8-20 19.6 0 10.6 12.9 24.9 17.7 29.9a3.2 3.2 0 0 0 4.6 0C39.1 50.5 52 36.2 52 25.6 52 14.8 43 6 32 6zM27.9 14.1h8.2v7.4h7.4v8.2h-7.4v7.4h-8.2v-7.4h-7.4v-8.2h7.4z" fill="#fff"/></svg>'
+LOGO = '<svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg>'
 # the splash is static markup at the top of <body>, so the logo shows while the rest of the page still parses
 SPLASH = ('<div class="lv15-splash" id="lv15s"><div class="lv15-sl">' + LOGO + '<b>Urban <span>Health</span></b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div>'
           '<script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1"||!matchMedia("(max-width:720px)").matches)s.style.display="none"}catch(e){}})();</script>')
