@@ -320,3 +320,55 @@ def counter_add(body: JoinIn, db: Session = Depends(get_db), u: PartnerUser = De
     db.add(t)
     db.flush()
     return token_json(db, t, counter=True)
+
+
+# ---- the screen in the waiting room ----------------------------------------------------------------------------------
+# A television on a wall, signed in once with a token in its URL. It shows numbers and doctors, never patient
+# names: a waiting room is a public place, the token is shareable by its nature, and a name on a wall beside
+# a specialty says more about somebody than they agreed to.
+@pr.post("/board-token")
+def board_token(db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+    """Make, or replace, the link the waiting-room screen opens. Replacing it blanks the old screen, which is
+    the point: it is how a clinic takes back a link that walked out of the building."""
+    import secrets
+
+    if u.role != "owner":
+        raise HTTPException(403, "Only the owner sets up the waiting-room screen.")
+    s = db.get(Store, u.store_id)
+    if not s:
+        raise HTTPException(404)
+    s.board_token = secrets.token_urlsafe(18)[:32]
+    return {"token": s.board_token, "url": f"/counter?t={s.board_token}"}
+
+
+@pr.get("/board-token")
+def get_board_token(db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+    s = db.get(Store, u.store_id)
+    tok = s.board_token if s else ""
+    return {"token": tok, "url": f"/counter?t={tok}" if tok else ""}
+
+
+@r.get("/board/{token}")
+def board(token: str, db: Session = Depends(get_db)):
+    """What the screen draws. Public by token, read-only, and deliberately thin."""
+    if len(token or "") < 16:
+        raise HTTPException(404)
+    s = db.scalar(select(Store).where(Store.board_token == token, Store.active == True))  # noqa: E712
+    if not s:
+        raise HTTPException(404, "This screen is no longer linked to a clinic.")
+    day = today()
+    docs = db.scalars(select(PartnerUser).where(PartnerUser.store_id == s.id, PartnerUser.role == "doctor",
+                                                PartnerUser.active == True).order_by(PartnerUser.name)).all()  # noqa: E712
+    out = []
+    for d in docs:
+        rows = db.scalars(select(Token).where(Token.doctor_id == d.id, Token.day == day,
+                                              Token.state.in_(OPEN_STATES)).order_by(Token.number)).all()
+        if not rows:
+            continue
+        now_ = next((t for t in rows if t.state in ("called", "in")), None)
+        nxt = [t.number for t in rows if t.state == "waiting"][:4]
+        out.append({"doctor": d.name or "", "specialty": d.specialty or "",
+                    "now": now_.number if now_ else None,
+                    "calling": bool(now_ and now_.state == "called"),
+                    "next": nxt, "waiting": sum(1 for t in rows if t.state == "waiting")})
+    return {"store": s.name, "day": day, "t": now(), "rooms": out}

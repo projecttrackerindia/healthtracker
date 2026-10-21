@@ -74,6 +74,10 @@ class Store(Base):
     # What we keep on this partner's orders. NULL means "whatever the platform default is"; a launch partner on
     # 0% is a real contract, so 0 and "unset" cannot be the same value.
     commission_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # The screen in the waiting room signs in once, with a token in its URL, and then nobody touches it
+    # again. A television that needs an email and a password every morning is a television that gets
+    # switched off in week two.
+    board_token: Mapped[str] = mapped_column(String(32), default="")
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     owner_email: Mapped[str] = mapped_column(String(120), default="")

@@ -350,6 +350,9 @@ async function savePrices(){const isLab=PR.kind==='lab',by={};$('#pl').querySele
  try{const r=await api('/prices',{method:'PUT',body});toast(`Saved · ${r.changed} ${isLab?'tests':'items'} offered`);loadPrices()}catch(e){toast(e.message)}}
 // ---------------- profile
 VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy';$('#main').innerHTML=head('Store profile','What families see: hours, phone, collection or delivery terms. Name, address and licence are changed by TheHealthTracker.')+
+ (s.kind==='hospital'&&ME.user.role==='owner'?`<div class="card" id="bdcard"><h3>Waiting-room screen</h3>
+   <p class="sub" style="margin:0 0 10px">A television or tablet on the wall showing who is being seen. Open the link on it once and leave it; it signs itself in and refreshes every few seconds. It shows numbers and doctors, never patients\' names — a waiting room is a public place.</p>
+   <div id="bdbox" style="color:var(--mute)">Loading…</div></div>`:'')+
  `<div class="card"><h3>${E(s.name)}</h3><p style="color:var(--mute);margin:0 0 12px">${E([s.address,s.area,s.city].filter(Boolean).join(', '))} · Licence ${E(s.licence||'—')} · ★ ${s.rating} (${s.ratingN})</p>
   <form id="pf"><div class="row"><label>Phone <input name="phone" value="${E(s.phone||'')}"></label><label>Hours <input name="hours" value="${E(s.hours||'')}"></label><label><input type="checkbox" name="open24" ${s.open24?'checked':''}> Open 24 hours</label></div>
   ${isLab?`<div class="row"><label><input type="checkbox" name="homeCollection" ${s.homeCollection?'checked':''}> Home collection</label><label>Collection fee ₹ <input type="number" name="collectionFee" value="${s.collectionFee}" style="width:100px"></label><label>Report time (minutes) <input type="number" name="etaMin" value="${s.etaMin}" style="width:110px"></label></div>`:''}
@@ -357,9 +360,21 @@ VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy
   <button class="btn p">Save</button></form></div>
   <div class="card"><h3>Your sign-in</h3>${ME.user.mustChange?'<p class="msg on err">Set your own password now; the one you received was temporary.</p>':''}<form id="pw" class="row"><input type="password" id="pc" placeholder="Current password" autocomplete="current-password" style="width:200px"><input type="password" id="pn" placeholder="New password (10+ characters)" autocomplete="new-password" style="width:240px"><button class="btn">Change password</button></form></div>`;
  $('#pf').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),b={};['phone','hours'].forEach(k=>b[k]=fd.get(k)||'');['open24','homeCollection','delivery'].forEach(k=>{if(e.target[k])b[k]=!!fd.get(k)});['collectionFee','deliveryFee','freeAbove','etaMin','discount'].forEach(k=>{if(fd.get(k)!=null&&fd.get(k)!=='')b[k]=+fd.get(k)});try{await api('/profile',{method:'PUT',body:b});toast('Saved');load()}catch(err){toast(err.message)}};
- $('#pw').onsubmit=async e=>{e.preventDefault();try{await api('/password',{method:'POST',body:{current:$('#pc').value,new:$('#pn').value}});toast('Password changed');load()}catch(err){toast(err.message)}}};
+ $('#pw').onsubmit=async e=>{e.preventDefault();try{await api('/password',{method:'POST',body:{current:$('#pc').value,new:$('#pn').value}});toast('Password changed');load()}catch(err){toast(err.message)}};
+ loadBoard()};
 // ---------------- video consults (doctors)
 let CALL=null;const FREQ={od:'once a day',bd:'twice a day',tds:'three times a day',qid:'four times a day',sos:'when needed',hs:'at bedtime',weekly:'once a week'};
+async function loadBoard(){if(!$('#bdbox'))return;let r;try{r=await api('/board-token')}catch(e){$('#bdbox').textContent=e.message;return}
+ const full=r.token?location.origin+r.url:'';
+ $('#bdbox').innerHTML=r.token
+  ? `<div class="row" style="margin:0"><input id="bdurl" readonly value="${E(full)}" style="flex:1 1 320px;font-family:var(--mono);font-size:12.5px">
+     <button class="btn" id="bdcopy">Copy</button><a class="btn" href="${E(r.url)}" target="_blank" rel="noopener">Open it</a>
+     <button class="btn d" id="bdnew">Replace the link</button></div>
+     <p class="sub" style="margin:8px 0 0">Replacing the link blanks any screen still using the old one — which is how you take back a link that walked out of the building.</p>`
+  : `<div class="row" style="margin:0"><button class="btn p" id="bdnew">Set up the screen</button></div>`;
+ if($('#bdcopy'))$('#bdcopy').onclick=()=>{$('#bdurl').select();document.execCommand('copy');toast('Link copied')};
+ $('#bdnew').onclick=async()=>{if(r.token&&!confirm('Replace the link? Any screen still open on the old one goes blank.'))return;
+  try{await api('/board-token',{method:'POST'});loadBoard();toast('New link ready')}catch(e){toast(e.message)}}}
 VIEWS.consults=()=>{$('#main').innerHTML=head('Video consults','Confirmed video visits for this hospital. Start when you are ready: the family is told and joins from their app. Media goes directly between you; captions are shared live.')+`<div id="cl"><div class="empty">Loading…</div></div><div id="callbox"></div>`;loadConsults()};
 async function loadConsults(){let r;try{r=await api('/consults')}catch(e){$('#cl').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
  const me=r.me;const warn=ME.user.role!=='doctor'?'<p class="msg on err">Only verified doctors run consults. Staff can confirm visits under Visit requests.</p>':(!me.verified?'<p class="msg on err">Your medical council registration is being verified by TheHealthTracker; consults open once it is confirmed.</p>':'');

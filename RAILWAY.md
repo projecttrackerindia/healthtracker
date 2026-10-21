@@ -1068,3 +1068,33 @@ New: `api/queue.py` — family `POST/GET /api/v1/queue`, `/queue/{id}`, `/queue/
 
 Also guarded `loadQueue`/`loadDoctors` against the counter navigating away mid-request: the 20-second
 refresh was writing into an element that no longer existed.
+
+## Doctor slice 2 — the screen on the waiting-room wall (2026-10-21)
+
+The visible half of the queue. `/counter?t=<token>` is a board a clinic opens once on a television and then
+leaves alone.
+
+- **No sign-in.** The token lives in the URL. A television that wants an email and a password every morning
+  is a television that gets switched off in week two. The owner makes the link in Store profile; replacing
+  it blanks any screen still on the old one, which is how a clinic takes back a link that walked out of the
+  building.
+- **Numbers and doctors, never patients' names.** A waiting room is a public place and a shareable link is
+  shareable. A name on a wall beside a specialty says more about somebody than they agreed to. The test
+  asserts the response body contains neither the name nor the phone.
+- **Dark unconditionally, not by preference.** A television reports whatever its browser shipped with, which
+  is nearly always light, so honouring `prefers-color-scheme` would mean the wall display almost never looks
+  like one. A waiting-room board should read like an airport board, and a wall of white light is unkind to
+  people who are already unwell.
+- **One doctor fills the screen** — `:has(.room:only-child)` grows the number to 34vh, because a small
+  clinic is the common case and the number is the whole point.
+- **The only thing that moves is the number being called**, so the movement means something.
+- **A frozen screen admits it.** After three failed polls the footer says how long ago it last changed and
+  to ask at the counter. A board that silently stops is worse than none: people stand up at the wrong number.
+
+New: `counter/index.html`, `/counter`, `GET /api/v1/board/{token}`, `GET|POST /partner/board-token`,
+`Store.board_token`. 13 new tests, suite at **322**.
+
+### Verified in a browser
+Owner sets the link in Store profile → opening it on a 1920×1080 page shows **Dr Rao · General medicine · 5
+· WITH THE DOCTOR · NEXT 6 7 8**, dark, with the clock and a live dot. The first run came out in light mode
+and with the card floating in a third of the screen; both are fixed above.
