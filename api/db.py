@@ -126,6 +126,8 @@ def ensure_indexes() -> None:
     want = [
         ("ix_reminders_sent_t", "reminders_sent", "(t)"),
         ("ix_phrases_pending", "phrases", "(done, tries, created)"),
+        ("ix_task_locks_until", "task_locks", "(until)"),
+        ("ix_rtc_relay_pick", "rtc_relay", "(aid, to_role, id)"),
     ]
     with engine.begin() as c:
         for name, table, cols in want:

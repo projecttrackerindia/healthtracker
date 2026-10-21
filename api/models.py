@@ -440,6 +440,48 @@ class PushSub(Base):
     failures: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class RtcPeer(Base):
+    """Who is on a call and which container their socket is attached to.
+
+    A WebSocket belongs to one process, so the signalling rooms could never be shared between containers —
+    which is the other half of why the service ran with --max-instances 1. Presence lives here instead of in
+    one process's memory, and the relay table below carries messages between containers."""
+
+    __tablename__ = "rtc_peers"
+    aid: Mapped[str] = mapped_column(String(40), primary_key=True)
+    role: Mapped[str] = mapped_column(String(10), primary_key=True)
+    instance: Mapped[str] = mapped_column(String(64), default="")
+    seen: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class RtcRelay(Base):
+    """Signalling messages for a peer attached to a different container.
+
+    Signalling is a few dozen small messages while a call is set up; once the peers are connected, WebRTC is
+    direct and this goes quiet. That volume does not justify Redis."""
+
+    __tablename__ = "rtc_relay"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    aid: Mapped[str] = mapped_column(String(40), index=True)
+    to_role: Mapped[str] = mapped_column(String(10))
+    body: Mapped[str] = mapped_column(Text, default="")
+    at: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class TaskLock(Base):
+    """A lease, so that when several containers are running only one of them performs a scheduled tick.
+
+    Acquiring is one conditional UPDATE: a row is taken only if nobody holds it or the holder's lease has
+    expired. That makes it safe without a second service to run — no Redis, no leader election — and a holder
+    that dies simply loses the lease when it runs out rather than blocking the task forever."""
+
+    __tablename__ = "task_locks"
+    name: Mapped[str] = mapped_column(String(40), primary_key=True)
+    holder: Mapped[str] = mapped_column(String(64), default="")
+    until: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    ran_at: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class ReminderSent(Base):
     """Which reminder went out already (one per member, day, slot, kind)."""
 

@@ -444,22 +444,38 @@ def run_morning(today: date | None = None, force: bool = False) -> int:
     return written
 
 
+def tick() -> dict:
+    """One pass. Called by Cloud Scheduler through /api/v1/tasks/proactive, and by the in-process loop below
+    while that is still switched on. The morning pass is guarded by its own ReminderSent key, so calling this
+    more often than planned cannot send a family two morning notices."""
+    nowi = datetime.now(IST)
+    with session() as db:
+        housekeeping(db, nowi.date())
+    out = {"housekeeping": True, "morning": 0}
+    if 8 <= nowi.hour < 9:
+        k = f"morning:{nowi.date().isoformat()}"
+        with session() as db:
+            done = db.get(ReminderSent, k)
+            if not done:
+                db.add(ReminderSent(key=k))
+        if not done:
+            n = run_morning(nowi.date())
+            out["morning"] = n
+            print(f"[proactive] morning pass wrote {n} notices", flush=True)
+    return out
+
+
 def start() -> None:
+    from api.tasks import in_process_loops
+
+    if not in_process_loops():
+        print("[proactive] in-process loop off; Cloud Scheduler drives /api/v1/tasks/proactive", flush=True)
+        return
+
     def loop():
         while True:
             try:
-                nowi = datetime.now(IST)
-                with session() as db:
-                    housekeeping(db, nowi.date())
-                if 8 <= nowi.hour < 9:
-                    k = f"morning:{nowi.date().isoformat()}"
-                    with session() as db:
-                        done = db.get(ReminderSent, k)
-                        if not done:
-                            db.add(ReminderSent(key=k))
-                    if not done:
-                        n = run_morning(nowi.date())
-                        print(f"[proactive] morning pass wrote {n} notices", flush=True)
+                tick()
             except Exception as e:
                 print("[proactive] failed:", type(e).__name__, str(e)[:200], flush=True)
             time.sleep(600)

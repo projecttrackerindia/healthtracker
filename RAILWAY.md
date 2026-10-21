@@ -573,3 +573,85 @@ label beside a button is what gives way.
 `web/index.html` by then, so the edit never reached the build. `pickTests` falls back to fetching `/labs/tests`,
 which is why nobody noticed. **Editing a `live<N>.js` whose layer is already applied changes nothing** — the
 chain is only re-run for layers that have not been committed yet. New behaviour goes in a new layer.
+
+---
+
+## Phase 0 — the scheduled work and the call rooms leave the web process
+
+Groundwork for the multi-role platform. Nothing user-visible; everything after it was impossible without it.
+
+### Why `--max-instances 1` was load-bearing
+
+Two separate things pinned the service to a single container, and both are fixed here.
+
+**1. Three daemon threads.** `api/reminders.py` (every 60 s), `api/proactive.py` (every 600 s) and the
+`api/i18n.py` translator ran as `while True` threads inside the API process. CPU throttling freezes a thread
+between requests, so `--no-cpu-throttling` was required; and a second container would have sent every reminder
+twice, so `--max-instances 1` was too.
+
+`api/tasks.py` gives each one an endpoint for Cloud Scheduler to call:
+
+```
+POST /api/v1/tasks/reminders    every minute
+POST /api/v1/tasks/proactive    every ten minutes
+POST /api/v1/tasks/i18n         every quarter hour
+GET  /api/v1/tasks/health       when each last ran
+```
+
+* **Authentication fails closed.** No `TASKS_TOKEN` configured → 503, never an open endpoint. The token is read
+  **per call, not at import**, which also stops test import order deciding whether auth works.
+* **A database lease decides who runs a tick.** One conditional `UPDATE … WHERE until < now` — the database
+  picks the winner, so no Redis and no leader election. The lease is released at the end so a minute-by-minute
+  task is not blocked by its own safety margin, and an expired lease is taken over, so a container that dies
+  mid-tick cannot block reminders forever.
+* **`IN_PROCESS_LOOPS` switches the old threads off** (default on). Both on would double every reminder; the
+  flag makes the switch-over reversible. All three modules honour it, and a test asserts that they do.
+* `proactive` gained a callable `tick()`; the morning pass keeps its own `ReminderSent` guard, so calling the
+  endpoint more often than planned cannot send a family two morning notices.
+
+**2. The video call rooms.** `ROOMS` held live `WebSocket` objects in process memory. A socket belongs to one
+process, so two peers on one call landing on two containers simply could not see each other.
+
+Presence and relay now go through the database (`rtc_peers`, `rtc_relay`):
+
+* a peer in **this** process still gets the direct in-memory path — no latency added to the common case;
+* a peer on **another** container gets the message written to `rtc_relay`, and a per-socket pump polls every
+  400 ms and delivers it;
+* presence is a row with a 25-second TTL, heartbeated every 10 s, so a container that vanishes does not leave a
+  call looking connected;
+* undelivered messages older than 120 s are swept.
+
+Polling a table is the right size for this: signalling is a few dozen small messages while a call is set up,
+and once the peers are connected WebRTC is direct and the channel goes quiet. That volume does not justify
+Redis. If group calls or very high volume ever arrive, this is the seam where Redis would go in.
+
+### Still to do before raising `--max-instances`
+
+* `api/auth.py` `_HITS` is an in-memory rate-limit dict — per container, so the limit multiplies by the
+  instance count. It needs to move to the database or accept being per-instance deliberately.
+* The deploy flags themselves: drop `--no-cpu-throttling`, raise `--max-instances`, create the three Cloud
+  Scheduler jobs, set `TASKS_TOKEN`, then set `IN_PROCESS_LOOPS=0` — **in that order**, so there is never a
+  window with nothing running the reminders.
+
+### Regulatory findings that changed the design
+
+Researched before building the clinical modules, and three of them contradicted the architecture as first
+written:
+
+* **Teleprescribing is not keyed to Schedule H.** The Telemedicine Practice Guidelines 2020 use their own
+  lists — Prohibited (Schedule X, NDPS: never), List O (OTC: any mode), List A (**video first consultation
+  only**), List B (**follow-ups only**). The engine keys on *list × consultation mode × first-or-follow-up*.
+* **A pharmacist may not substitute.** Rule 65(11-A) is absolute. There is no substitution flow to build.
+  Rule 65 also requires the dispensing details to be written **back onto the prescription**, no repeat
+  dispensing without the prescriber's authorisation, an automatic prescription register entry, and a separate
+  Schedule H1 register kept three years.
+* **AI may not counsel the patient.** TPG §5.4 — AI/ML platforms may not counsel or prescribe. An intake agent
+  may gather history for the doctor; it may not tell the patient what their symptoms mean.
+* **Doorstep delivery is narrow.** The MoHFW s.26B notification of 26 March 2020 is the only clear route:
+  Form 20/21 holder, Schedule H only (no H1/X/NDPS), **same revenue district**, prescription within 30 days for
+  chronic and 7 for acute. Fulfilment must be district-local, and the catalogue needs a delivery fence separate
+  from the prescribing fence.
+* **Emergency sharing is lawful without consent** — DPDP s.7(f) covers a medical emergency threatening the life
+  of the person or any other individual, provided it stays purpose-bound.
+* **No 108/112 API exists**, and those numbers may never be presented as ours. Integration is a state-level
+  agreement; the SOS button invokes the device dialler.
