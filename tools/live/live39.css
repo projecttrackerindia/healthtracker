@@ -1,0 +1,18 @@
+/* live 39 — the SOS sends, given the size an emergency deserves */
+.lv39{padding-top:4px}
+.lv39-all{display:block;text-align:center;margin:10px 0 8px;padding:15px 16px;border-radius:14px;
+  background:var(--red,#ef3b4f);color:#fff;font-weight:700;font-size:17px;letter-spacing:-.01em;text-decoration:none}
+.lv39-p{display:flex;align-items:center;gap:10px;padding:8px 0;flex-wrap:wrap}
+.lv39-n{flex:1 1 120px;min-width:0;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis}
+.lv39-n i{font-style:normal;font-weight:600;font-size:12px;color:var(--ok,#16a34a)}
+.lv39-b{display:flex;gap:8px;flex:0 0 auto}
+/* 52px tall: this is pressed with a shaking hand, possibly by somebody else's hand */
+.lv39-go{display:inline-flex;align-items:center;justify-content:center;min-height:52px;min-width:104px;padding:0 18px;
+  border-radius:13px;font-weight:700;font-size:16px;text-decoration:none;
+  background:var(--soft,rgba(127,127,127,.12));color:var(--ink);border:1px solid var(--line,rgba(127,127,127,.2))}
+.lv39-go.wa{background:#25D366;color:#06281a;border-color:transparent}
+.lv39-go.tapped{opacity:.55}
+.lv39-go:active{transform:scale(.97)}
+/* the old chips stay as a record of what went out, but stop competing for the eye */
+.lv21-c a.lv39-dim{opacity:.5;font-size:12px}
+@media (max-width:360px){.lv39-go{min-width:88px;padding:0 12px;font-size:15px}}
