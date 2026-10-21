@@ -15,6 +15,7 @@ from . import ai as AI
 CATALOG_RX = {x["id"]: bool(x.get("rx")) for x in AI.CATALOG}
 from .db import get_db
 from .models import AiCache, AiJob, Household, User, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
+from .launch import free_now, plan_of, state as launch_state
 from .security import valid_key
 from .seed import CITIES, TESTS
 
@@ -103,7 +104,8 @@ def config():
             # public: only whether smart reading is available. The provider and model stay server-side (named in the privacy policy).
             "ai": {"engine": "ai" if AI.available() else "local"},
             "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("upi" if _upi_on() else "demo"), "cities": list(CITIES),
-            "maps": {"provider": "google" if os.getenv("GOOGLE_MAPS_KEY") else "osm", "key": os.getenv("GOOGLE_MAPS_KEY", "")}}
+            "maps": {"provider": "google" if os.getenv("GOOGLE_MAPS_KEY") else "osm", "key": os.getenv("GOOGLE_MAPS_KEY", "")},
+            "launch": launch_state()}
 
 
 class Hello(BaseModel):
@@ -148,7 +150,7 @@ def hello(body: Hello, request: Request, db: Session = Depends(get_db), x_dokko_
         h.city = nearest_city(body.lat, body.lng)[0] or h.city
     used = db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t > now() - 30 * 86400)) or 0
     claimed = bool(u) or bool(db.scalar(select(User.id).where(User.household_id == h.id).limit(1)))
-    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "claimed": claimed, "plan": h.plan, "planUntil": h.plan_until, "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(h.plan, 3)}, "orders": len(h.orders)}
+    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "claimed": claimed, "plan": plan_of(h), "planUntil": None if free_now() else h.plan_until, "launch": launch_state(), "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(plan_of(h), 3)}, "orders": len(h.orders)}
 
 
 # ---- partners -------------------------------------------------------------------------------------------------------
@@ -476,7 +478,7 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
-    cap = AI_CAP.get(h.plan, 3)
+    cap = AI_CAP.get(plan_of(h), 3)
     used = db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t > now() - 30 * 86400, AiJob.engine == "claude")) or 0
     data, mime = None, ""
     if file is not None:
@@ -564,6 +566,7 @@ def beacon(body: Beacon, request: Request, db: Session = Depends(get_db)):
 
 
 # daily token budget per family (and a global one for the bill), on top of the monthly per-feature counts
+LAUNCH_DAY_TOKENS = int(os.getenv("AI_DAY_TOKENS_LAUNCH", "400000"))      # per family per day while the launch period runs
 AI_DAY_TOKENS = {"free": int(os.getenv("AI_DAY_TOKENS_FREE", "80000")), "family": int(os.getenv("AI_DAY_TOKENS_FAMILY", "400000")), "plus": int(os.getenv("AI_DAY_TOKENS_PLUS", "1500000"))}
 AI_DAY_TOKENS_ALL = int(os.getenv("AI_DAY_TOKENS_ALL", "40000000"))
 
@@ -577,7 +580,8 @@ def ai_budget(db, h) -> None:
     """429 when this family (or the whole service) has spent today's token allowance. Resets at midnight IST."""
     t0 = _ist_midnight()
     mine = db.scalar(select(func.coalesce(func.sum(AiJob.tin + AiJob.tout), 0)).where(AiJob.household_id == h.id, AiJob.t >= t0)) or 0
-    cap = AI_DAY_TOKENS.get(h.plan, AI_DAY_TOKENS["free"])
+    # while everything is free, one generous daily allowance for every family — an abuse guard, not a plan gate
+    cap = LAUNCH_DAY_TOKENS if free_now() else AI_DAY_TOKENS.get(h.plan, AI_DAY_TOKENS["free"])
     if mine >= cap:
         raise HTTPException(429, "Today's smart-reading allowance for your family is used up; it resets at midnight. Everything you add is still saved and read tomorrow.")
     total = db.scalar(select(func.coalesce(func.sum(AiJob.tin + AiJob.tout), 0)).where(AiJob.t >= t0)) or 0
@@ -591,7 +595,7 @@ def _job(h, kind: str, engine: str, ms: int = 0, ok: bool = True, findings: int 
 
 
 def _ai_quota(db, h, kind: str, caps: dict) -> tuple[int, int]:
-    cap = caps.get(h.plan, list(caps.values())[0])
+    cap = caps.get(plan_of(h), list(caps.values())[0])
     used = db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t > now() - 30 * 86400, AiJob.kind == kind, AiJob.engine == "claude")) or 0
     return used, cap
 
@@ -611,7 +615,7 @@ def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko
     ai_budget(db, h)
     used, cap = _ai_quota(db, h, "ask", agent.ASK_CAP)
     if used >= cap:
-        raise HTTPException(429, f"You have used this month's {cap} questions on the {h.plan} plan. Upgrade in Family & Privacy → Plan for more.")
+        raise HTTPException(429, f"You have used this month's {cap} questions. They reset on the 1st." if free_now() else f"You have used this month's {cap} questions on the {h.plan} plan. Upgrade in Family & Privacy → Plan for more.")
     t0 = time.time()
     try:
         out = agent.ask(q, body.context)
@@ -640,7 +644,7 @@ def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db), x_d
     ai_budget(db, h)
     used, cap = _ai_quota(db, h, "insight", agent.INSIGHT_CAP)
     if used >= cap:
-        raise HTTPException(429, f"This month's insights on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
+        raise HTTPException(429, "This month's insights are used up; they reset on the 1st." if free_now() else f"This month's insights on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
     t0 = time.time()
     try:
         out = agent.insight(body.context)
@@ -684,7 +688,7 @@ def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db
     ai_budget(db, h)
     used, cap = _ai_quota(db, h, "insight", agent.INSIGHT_CAP)
     if used >= cap:
-        raise HTTPException(429, f"This month's checks on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
+        raise HTTPException(429, "This month's checks are used up; they reset on the 1st." if free_now() else f"This month's checks on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
     t0 = time.time()
     try:
         out = AI.medcheck(body.context)
@@ -726,8 +730,10 @@ def plans(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None))
     h = household(db, x_dokko_key, create=False)
     rows = db.scalars(select(Plan).where(Plan.active == True).order_by(Plan.sort)).all()  # noqa: E712
     subs = db.scalars(select(Subscription).where(Subscription.household_id == h.id).order_by(Subscription.started.desc()).limit(12)).all() if h else []
-    return {"plans": [{"code": p.code, "name": p.name, "month": p.price_month, "year": p.price_year, "members": p.members, "features": p.features} for p in rows],
-            "current": h.plan if h else "free", "until": h.plan_until if h else None, "provider": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else (_upi_on() and "upi") or ("soon" if os.getenv("APP_ENV", "production") == "production" else "demo"),
+    L = launch_state()
+    return {"plans": [{"code": p.code, "name": p.name, "month": 0 if L["free"] else p.price_month, "year": 0 if L["free"] else p.price_year,
+                       "members": p.members, "features": p.features, "listMonth": p.price_month, "listYear": p.price_year} for p in rows],
+            "launch": L, "current": plan_of(h), "until": None if L["free"] else (h.plan_until if h else None), "provider": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else (_upi_on() and "upi") or ("soon" if os.getenv("APP_ENV", "production") == "production" else "demo"),
             "keyId": os.getenv("RAZORPAY_KEY_ID", ""),
             "history": [{"id": s.id, "plan": s.plan, "period": s.period, "amount": s.amount, "status": s.status, "started": s.started, "renews": s.renews, "invoice": s.invoice_no, "provider": s.provider} for s in subs]}
 
@@ -749,6 +755,9 @@ def subscribe(body: SubReq, db: Session = Depends(get_db), x_dokko_key: str | No
     p = db.get(Plan, body.plan)
     if not p or not p.active:
         raise HTTPException(404, "plan not found")
+    if free_now():
+        from .launch import label
+        raise HTTPException(400, f"Every feature is free for your family until {label()} — there is nothing to pay for.")
     amount = p.price_year if body.period == "year" else p.price_month
     provider = "demo"
     ref = ""

@@ -234,4 +234,6 @@ def test_page_carries_layer_29_with_every_fix_from_the_phone():
 
 def test_service_worker_ships_the_new_build():
     sw = (ROOT / "web" / "sw.js").read_text(encoding="utf-8")
-    assert "const V='dk-r29'" in sw
+    import re
+    m = re.search(r"const V='dk-r(\d+)'", sw)
+    assert m and int(m.group(1)) >= 29

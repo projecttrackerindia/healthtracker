@@ -121,6 +121,15 @@ section{position:relative}
 .plan h3{font-size:20px}.plan .price{font-size:52px;letter-spacing:-.05em;font-weight:550;margin:14px 0 2px}.plan .price span{font-size:15px;color:var(--mute);letter-spacing:0;font-weight:500}.plan .yr{color:var(--mute);font-size:13px;min-height:20px}
 .plan ul{list-style:none;margin:22px 0 26px;padding:0;display:grid;gap:10px;font-size:14.5px}.plan li{display:flex;gap:10px}.plan li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:color-mix(in srgb,var(--teal) 16%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230B8A7C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12l4 4 8-8'/%3E%3C/svg%3E") center/12px no-repeat}
 .plan .btn{margin-top:auto}
+.free-band{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:28px;padding:34px;border-radius:var(--r);background:var(--card);border:1.5px solid var(--blue);box-shadow:var(--sh)}
+.free-tag{display:inline-block;font:600 11.5px/1 var(--mono,inherit);letter-spacing:.1em;text-transform:uppercase;color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,transparent);padding:7px 12px;border-radius:999px}
+.free-main .price{font-size:72px;letter-spacing:-.05em;font-weight:550;margin:16px 0 2px}
+.free-main .yr{color:var(--mute);font-size:15px;margin-bottom:22px}
+.free-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:12px 22px;font-size:15px;align-content:center}
+.free-list li{display:flex;gap:10px}
+.free-list li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:color-mix(in srgb,var(--blue) 14%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f5bff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 13 4 4L19 7'/%3E%3C/svg%3E") center/11px no-repeat}
+.free-foot{margin:18px 2px 0;color:var(--mute);font-size:14px}
+@media (max-width:900px){.free-band{grid-template-columns:1fr;padding:26px}.free-list{grid-template-columns:1fr}.free-main .price{font-size:58px}}
 @media (max-width:900px){.plans{grid-template-columns:1fr}}
 /* faq */
 .faq{max-width:860px;margin:0 auto}
@@ -209,7 +218,7 @@ b.addEventListener('click',function(){set(!document.body.classList.contains('men
       <div class="chip c3"><span class="ic" style="background:color-mix(in srgb,var(--teal) 14%,transparent)">💊</span><div><b>Doses on time</b><small>Reminders for the whole family</small></div></div>
     </div>
     <div class="facts rv">
-      <div><b>₹0</b><span>to start, for the whole family</span></div>
+      <div><b>₹0</b><span>for the whole family, until March 2027</span></div>
       <div><b>1 tap</b><span>SOS to 112 with your location</span></div>
       <div><b>25</b><span>first-aid videos from St John Ambulance & AHA</span></div>
       <div><b>3</b><span>languages: English, Hindi, Telugu</span></div>
@@ -255,12 +264,26 @@ b.addEventListener('click',function(){set(!document.body.classList.contains('men
 </div></div></section>
 
 <section class="band" id="pricing" style="padding-top:20px"><div class="wrap">
-  <div class="shead rv"><div><span class="eyebrow">Pricing</span><h2 style="margin-top:14px">Free for every family. Upgrade for AI.</h2></div><p>Prices in Indian rupees, including GST. Cancel any time; your records stay on your device either way.</p></div>
-  <div class="plans" id="plans">
-    <div class="plan rv"><h3>Free</h3><div class="price">₹0</div><div class="yr">Forever</div><ul><li>Family profiles and records on your device</li><li>3D body, Heart Lab and Pregnancy</li><li>SOS, first aid and Medical ID</li><li>Medicine and lab price comparison</li><li>AI report analysis: 3 a month</li></ul><a class="btn s" href="/signup" data-auth="signup">Start free</a></div>
-    <div class="plan hot rv"><h3>Family</h3><div class="price">₹39<span>/month</span></div><div class="yr">or ₹390 a year — 2 months free</div><ul><li>Everything in Free</li><li>AI report and prescription analysis: 30 a month</li><li>Order tracking and delivery ratings</li><li>Home sample collection booking</li><li>Seasonal alerts for your city</li><li>Up to 8 family members</li></ul><a class="btn b" href="/signup" data-auth="signup">Choose Family</a></div>
-    <div class="plan rv"><h3>Plus</h3><div class="price">₹99<span>/month</span></div><div class="yr">or ₹990 a year — 2 months free</div><ul><li>Everything in Family</li><li>Unlimited AI analysis</li><li>Priority partner pharmacies and labs</li><li>Shareable doctor summaries</li><li>Up to 12 family members</li><li>Phone support</li></ul><a class="btn s" href="/signup" data-auth="signup">Choose Plus</a></div>
+  <div class="shead rv"><div><span class="eyebrow">Pricing</span><h2 style="margin-top:14px">Free for every family until 31 March 2027.</h2></div><p>No plan to choose, no card to add, nothing to cancel. We earn a small share from the labs and pharmacies you order through — never from you, and never from your records.</p></div>
+  <div class="free-band rv" id="plans">
+    <div class="free-main">
+      <span class="free-tag" id="freeTag">Everything included</span>
+      <div class="price">₹0</div>
+      <div class="yr" id="freeUntil">for your whole family, until 31 March 2027</div>
+      <a class="btn b" href="/signup" data-auth="signup">Create your free account <span class="arr">→</span></a>
+    </div>
+    <ul class="free-list">
+      <li>Family profiles, records and the document vault</li>
+      <li>3D body, Heart Lab and the Pregnancy journey</li>
+      <li>Smart reading of reports and prescriptions</li>
+      <li>Medicine and lab price comparison</li>
+      <li>Home sample collection booking</li>
+      <li>SOS with live location, first aid and Medical ID</li>
+      <li>Doctor summaries you can share by link</li>
+      <li>English, हिन्दी and తెలుగు</li>
+    </ul>
   </div>
+  <p class="free-foot rv">When the free period ends we will say so well in advance, and the records you have added stay yours either way.</p>
 </div></section>
 
 <section class="band" id="app" style="padding-top:20px"><div class="wrap">
@@ -279,8 +302,9 @@ b.addEventListener('click',function(){set(!document.body.classList.contains('men
     <details><summary>Where are my health records stored?</summary><p>Without an account, everything stays in your browser on your device. When you sign in, your family's profiles, results, medicines and cards are encrypted and stored on our servers in India, so each family member sees them on their own phone. Photos and PDFs stay on the device where they were added. A document you analyse with AI is sent for that one reading and not kept.</p></details>
     <details><summary>Does TheHealthTracker diagnose illness?</summary><p>No. It explains results in plain language and suggests questions and checks to discuss with your doctor. It is not a medical device and does not replace professional care. In an emergency call 112 or 108.</p></details>
     <details><summary>What makes a password acceptable here?</summary><p>At least 12 characters with upper- and lower-case letters, a number and a symbol; no three identical characters in a row; no runs like 1234 or qwer; nothing from your name, email or phone; and nothing that appears in common-password lists or known data breaches. The form checks each rule as you type, or can suggest a strong one.</p></details>
-    <details><summary>Can my whole family use one account?</summary><p>Yes. One account holds profiles for everyone you care for, each with their own records, medicines and consent settings. The Free plan covers 5 people, Family 8 and Plus 12.</p></details>
+    <details><summary>Can my whole family use one account?</summary><p>Yes. One account holds profiles for everyone you care for, each with their own records, medicines and consent settings. Up to 12 people, and it is free for everyone until 31 March 2027.</p></details>
     <details><summary>Can I see my watch data here?</summary><p>Yes, through the phone app: Android reads Health Connect (steps, sleep, heart rate, weight, blood pressure, sugar, SpO₂) and iPhone reads Apple Health including Apple Watch ECG recordings. Fitbit links directly from the web. No watch maker lets third-party apps stream a live ECG from the watch itself; for a live ECG in the browser use a Polar H10 or similar chest strap.</p></details>
+    <details><summary>Is it really free? What happens in April 2027?</summary><p>Yes — every feature, for your whole family, with no card and nothing to cancel, until 31 March 2027. We earn a small share from the labs and pharmacies you order through, never from you and never from your records; your health data is not sold to anyone. Before anything changes we will tell you well in advance, and the records you have added stay yours either way.</p></details>
     <details><summary>Can I order medicines or book lab tests?</summary><p>Ordering and lab booking are opening city by city. Every pharmacy and lab is checked by our team, with its licence or NABL number, before it appears. Prices come from their own lists and are confirmed when you order or book.</p></details>
   </div>
 </div></section>
@@ -394,7 +418,13 @@ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.targ
 $$('.rv').forEach((el,i)=>{el.style.transitionDelay=(el.closest('.bento,.steps,.plans')?(i%4)*70:0)+'ms';io.observe(el)});
 setTimeout(()=>$('#frame').classList.add('in'),200);
 // ---------- live plan prices ----------
-fetch('/api/v1/plans').then(r=>r.json()).then(d=>{const cards=$$('#plans .plan');d.plans.forEach((p,i)=>{const c=cards[i];if(!c)return;c.querySelector('h3').textContent=p.name;c.querySelector('.price').innerHTML=p.month?`₹${p.month}<span>/month</span>`:'₹0';c.querySelector('.yr').textContent=p.year?`or ₹${p.year} a year`:'Forever';c.querySelector('ul').innerHTML=p.features.map(f=>`<li>${f.replace(/[<>&]/g,'')}</li>`).join('')})}).catch(()=>{});
+fetch('/api/v1/plans').then(r=>r.json()).then(d=>{const L=d.launch||{};
+  if(L.free&&L.until){const date=new Date(L.until*1000).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    const u=$('#freeUntil');if(u)u.textContent='for your whole family, until '+date;
+    const h=$('#pricing h2');if(h)h.textContent='Free for every family until '+date+'.';return}
+  // the free period is over: show the plans the server is selling
+  const band=$('#plans');if(!band||!d.plans)return;band.className='plans';band.innerHTML=d.plans.map((p,i)=>`<div class="plan${i===1?' hot':''}"><h3>${p.name}</h3><div class="price">${p.month?'₹'+p.month+'<span>/month</span>':'₹0'}</div><div class="yr">${p.year?'or ₹'+p.year+' a year':'Forever'}</div><ul>${p.features.map(f=>`<li>${f.replace(/[<>&]/g,'')}</li>`).join('')}</ul><a class="btn ${i===1?'b':'s'}" href="/signup" data-auth="signup">${p.month?'Choose '+p.name:'Start free'}</a></div>`).join('');
+  const fo=$('.free-foot');if(fo)fo.remove()}).catch(()=>{});
 // ---------- account state in the nav ----------
 let ME=null;const next=new URLSearchParams(location.search).get('next');const NEXT=next&&next.startsWith('/')&&!next.startsWith('//')?next:'/app';
 const JOINM=/^\/join\/([A-Za-z0-9_-]{16,64})$/.exec(location.pathname);let INVITE=JOINM?JOINM[1]:null;try{if(INVITE)sessionStorage.setItem('tht-invite',INVITE);else INVITE=sessionStorage.getItem('tht-invite')}catch(e){}

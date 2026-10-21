@@ -294,7 +294,8 @@ def test_handover_nudge_at_eighteen():
     assert any(i["kind"] == "nudge_handover" for i in items)
 
 
-def test_upi_payment_for_plan_and_order_confirmed_by_admin():
+def test_upi_payment_for_plan_and_order_confirmed_by_admin(monkeypatch):
+    monkeypatch.setenv("FREE_UNTIL", "")          # the paid machinery, as it works once the launch period is over
     f, a = family(), admin()
     acc = f.get("/api/v1/pay/upi/accounts").json()
     assert acc["enabled"] and len(acc["accounts"]) == 3 and acc["accounts"][0]["vpa"].endswith("@axl")
@@ -397,7 +398,8 @@ def test_signup_offers_aadhaar_route_only_when_digilocker_is_live(monkeypatch):
     assert me["verified"] is True and me["dob"] == "1990-05-12"
 
 
-def test_loops_close_on_their_own_plan_expiry_stale_calls_and_alerts():
+def test_loops_close_on_their_own_plan_expiry_stale_calls_and_alerts(monkeypatch):
+    monkeypatch.setenv("FREE_UNTIL", "")          # plans only lapse once there are plans to pay for
     from api import messaging
     f, a = family(), admin()
     hid, uid, d = hospital_with_doctor(a)

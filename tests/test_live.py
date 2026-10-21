@@ -142,6 +142,7 @@ def test_account_name_changes_once_a_week():
 
 
 def test_paid_plan_needs_a_payment_provider(monkeypatch):
+    monkeypatch.setenv("FREE_UNTIL", "")          # how the paid route behaves once the launch period is over
     monkeypatch.delenv("RAZORPAY_KEY_ID", raising=False)
     c = client()
     signup(c)

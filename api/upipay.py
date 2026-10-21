@@ -27,6 +27,8 @@ from .admin import Admin, log
 from .admin import me as admin_me
 from .auth import current_user, limit
 from .db import get_db
+from .launch import free_now as free_launch
+from .launch import label as free_label
 from .inbox import notify
 from .models import Household, Order, Payment, Plan, Subscription, now
 from .routes import household
@@ -90,6 +92,8 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokk
     acc = accounts()
     a = next((x for x in acc if x["id"] == body.account), acc[0])
     if body.kind == "plan":
+        if free_launch():
+            raise HTTPException(400, f"Every feature is free for your family until {free_label()} — there is nothing to pay for.")
         p = db.get(Plan, body.plan)
         if not p or not p.active:
             raise HTTPException(404, "plan not found")
