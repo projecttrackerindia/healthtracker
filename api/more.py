@@ -31,9 +31,12 @@ def hlimit(request: Request, key: str, hid: str, n: int, per: int):
 @r.get("/files")
 def files_list(db: Session = Depends(get_db), u: User = Depends(need_user)):
     h = my_household(db, u)
-    rows = db.scalars(select(StoredFile).where(StoredFile.household_id == h.id)).all()
-    return {"backend": storage.backend(), "files": [{"id": f.file_id, "size": f.size, "mime": f.mime, "name": f.name, "updated": f.updated} for f in rows],
-            "bytes": sum(f.size for f in rows)}
+    # columns only: StoredFile.blob is a LargeBinary and selecting the whole row pulled every document's bytes
+    # into a 1 GiB container just to list their names.
+    rows = db.execute(select(StoredFile.file_id, StoredFile.size, StoredFile.mime, StoredFile.name, StoredFile.updated)
+                      .where(StoredFile.household_id == h.id)).all()
+    return {"backend": storage.backend(), "files": [{"id": r.file_id, "size": r.size, "mime": r.mime, "name": r.name, "updated": r.updated} for r in rows],
+            "bytes": sum(r.size or 0 for r in rows)}
 
 
 @r.put("/files/{file_id}", dependencies=[Depends(csrf)])

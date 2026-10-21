@@ -7,9 +7,10 @@ import time
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from . import ai as AI
 CATALOG_RX = {x["id"]: bool(x.get("rx")) for x in AI.CATALOG}
@@ -150,7 +151,7 @@ def hello(body: Hello, request: Request, db: Session = Depends(get_db), x_dokko_
         h.city = nearest_city(body.lat, body.lng)[0] or h.city
     used = db.scalar(select(func.count(AiJob.id)).where(AiJob.household_id == h.id, AiJob.t > now() - 30 * 86400)) or 0
     claimed = bool(u) or bool(db.scalar(select(User.id).where(User.household_id == h.id).limit(1)))
-    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "claimed": claimed, "plan": plan_of(h), "planUntil": None if free_now() else h.plan_until, "launch": launch_state(), "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(plan_of(h), 3), "today": docs_today(db, h), "dayCap": AI_DAY_DOCS}, "orders": len(h.orders)}
+    return {"id": h.id, "account": ({"name": u.name, "email": u.email, "phone": u.phone} if u else None), "claimed": claimed, "plan": plan_of(h), "planUntil": None if free_now() else h.plan_until, "launch": launch_state(), "city": h.city, "ai": {"used": used, "cap": AI_CAP.get(plan_of(h), 3), "today": docs_today(db, h), "dayCap": AI_DAY_DOCS}, "orders": db.scalar(select(func.count(Order.id)).where(Order.household_id == h.id)) or 0}
 
 
 # ---- partners -------------------------------------------------------------------------------------------------------
@@ -368,7 +369,8 @@ def list_orders(db: Session = Depends(get_db), x_dokko_key: str | None = Header(
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"orders": []}
-    rows = db.scalars(select(Order).where(Order.household_id == h.id).order_by(Order.created.desc()).limit(50)).all()
+    rows = db.scalars(select(Order).options(joinedload(Order.store))
+                      .where(Order.household_id == h.id).order_by(Order.created.desc()).limit(50)).all()
     return {"orders": [order_json(o) for o in rows]}
 
 
@@ -506,22 +508,26 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
             ai_budget(db, h)
         except HTTPException as e:   # out of today's tokens: the basic reader still works, nothing is lost
             capped, budget_note = True, str(e.detail)
-    try:
+    # The reading itself is a synchronous call to the model provider. This handler is `async def`, so running it
+    # here would block the event loop — and with one container that means every other request in flight, the
+    # health check included, waits for one person's document. run_in_threadpool keeps the loop free.
+    def _read():
         if kind == "policy":
             if capped:
-                out = {"engine": "local", "kind": "policy", "readable": False, "ms": 0, "warnings": [budget_note or f"Monthly smart-reading limit reached ({cap}). Enter the key terms yourself."]}
-            else:
-                txt = text or ""
-                if data and (mime.startswith("text/")):
-                    txt = data.decode("utf-8", "ignore")
-                out = AI.analyze_policy(None if mime.startswith("text/") else data, mime, txt)
-        elif kind == "card":
-            out = AI.analyze_card(data, mime)
+                return {"engine": "local", "kind": "policy", "readable": False, "ms": 0, "warnings": [budget_note or f"Monthly smart-reading limit reached ({cap}). Enter the key terms yourself."]}
+            txt = text or ""
+            if data and (mime.startswith("text/")):
+                txt = data.decode("utf-8", "ignore")
+            return AI.analyze_policy(None if mime.startswith("text/") else data, mime, txt)
+        if kind == "card":
             if capped:
-                out = {"engine": "local", "kind": "card", "readable": False, "fields": {}, "ms": 0,
-                       "warnings": [budget_note or f"Monthly smart-reading limit reached ({cap}). Fill in the details yourself."]}
-        else:
-            out = AI.analyze(kind, data, mime, text, ctx, force_local=capped)
+                return {"engine": "local", "kind": "card", "readable": False, "fields": {}, "ms": 0,
+                        "warnings": [budget_note or f"Monthly smart-reading limit reached ({cap}). Fill in the details yourself."]}
+            return AI.analyze_card(data, mime)
+        return AI.analyze(kind, data, mime, text, ctx, force_local=capped)
+
+    try:
+        out = await run_in_threadpool(_read)
         if capped:
             out["warnings"] = list(out.get("warnings", [])) + [budget_note or f"Monthly AI limit reached ({cap}); the basic reader was used."]
     except Exception as e:

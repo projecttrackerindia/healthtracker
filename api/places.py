@@ -68,11 +68,13 @@ def _cached(key: str, ttl: int, make):
 
 def _get(url: str, data: bytes | None = None, timeout: int = 12) -> dict:
     # be polite to OSM: at most ~1 request per second from this process
+    # Reserve the slot under the lock, then sleep outside it. Sleeping while holding a process-wide mutex
+    # serialised every caller at one per second and, worse, parked them in the threadpool while they waited.
     with _LOCK:
         wait = 1.0 - (time.time() - _LAST_CALL["t"])
-        if wait > 0:
-            time.sleep(min(wait, 1.0))
-        _LAST_CALL["t"] = time.time()
+        _LAST_CALL["t"] = time.time() + max(0.0, min(wait, 1.0))
+    if wait > 0:
+        time.sleep(min(wait, 1.0))
     req = urllib.request.Request(url, data=data, headers={"User-Agent": UA, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8", "ignore"))
