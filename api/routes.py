@@ -293,7 +293,13 @@ def _status(o: Order):
     steps = STEPS_LAB if o.kind == "lab" else STEPS_SHOP if o.kind == "shop" else STEPS_MED
     if o.status == "cancelled":
         return steps, -1
-    live = max(i for i, (k, _) in enumerate(steps) if any(t["s"] == k for t in (o.timeline or [])) or i == 0)
+    # Two sources, and the family sees whichever is further along. The timeline is the richer record, but it
+    # is written alongside the status rather than by it — so an order whose status moved without a timeline
+    # entry (an admin fixing something, a migration, a partner integration) would otherwise show the family a
+    # step that is behind reality.
+    seen = max(i for i, (k, _) in enumerate(steps) if any(t["s"] == k for t in (o.timeline or [])) or i == 0)
+    now_at = next((i for i, (k, _) in enumerate(steps) if k == o.status), -1)
+    live = max(seen, now_at)
     i = live
     if os.getenv("APP_ENV", "production") != "production":
         # demo progression on staging only: in production, only the partner (or admin) advances an order

@@ -1,0 +1,27 @@
+/* ---- layer 36: watching your technician come ---- */
+/* #page lays its cards out on a grid, so being first in the DOM is not enough to be first on the screen.
+   Somebody arriving at the family's door outranks the step counter. */
+.lv36{padding:14px 15px;order:-1;grid-column:1/-1;grid-row:1}
+.lv36-hd{display:flex;align-items:center;gap:12px;min-width:0}
+.lv36-hd .grow{flex:1;min-width:0}
+.lv36-hd b{display:block;font-size:16px;line-height:1.25;letter-spacing:-.01em}
+.lv36-hd small{display:block;color:var(--mute);font-size:13px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv36-av{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;
+  background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue)}
+.lv36-call{flex:none;white-space:nowrap}
+
+/* the state of the visit, as four dots rather than a wall of words */
+.lv36-steps{display:flex;gap:5px;margin-top:12px}
+.lv36-steps i{flex:1;height:4px;border-radius:99px;background:var(--line)}
+.lv36-steps i.on{background:var(--blue)}
+
+.lv36-map{margin-top:12px;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.lv36-map .lv6-map{border-radius:0;border:0}
+
+/* a moving technician is the only state that gets a pulse; "assigned" and "arrived" are still */
+.lv36-moving .lv36-av{position:relative}
+.lv36-moving .lv36-av::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--blue);opacity:.45;animation:lv36p 1.9s ease-out infinite}
+@keyframes lv36p{0%{transform:scale(.88);opacity:.5}100%{transform:scale(1.18);opacity:0}}
+.lv36-here .lv36-av{background:color-mix(in srgb,var(--green,#8adf9d) 30%,transparent);color:var(--ink)}
+.lv36-here .lv36-steps i.on{background:var(--ink)}
+@media (prefers-reduced-motion:reduce){.lv36-moving .lv36-av::after{animation:none}}
