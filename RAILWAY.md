@@ -284,3 +284,29 @@ all still work — and switched off behind one check.
 * The site's three price cards become one "Free for every family until 31 March 2027" band, with the date read from the
   API; if the period is ever switched off, the script rebuilds the price cards from `/api/v1/plans`.
 * To end the launch period: set `FREE_UNTIL: ""` in `deploy/gcp/env.yaml` and redeploy. Nothing else changes.
+
+## Round 31 — the shop comes first, and ten documents a day (21 Oct 2026)
+
+**Ten documents a day.** `AI_DAY_DOCS` (default 10) caps how many documents one family can have read by the AI between
+midnights IST — counted on `report`, `prescription`, `card` and `policy` jobs only, so questions and insights keep their
+own limits. The eleventh falls back to the basic reader with a plain message ("that is 10 documents read today"), the
+same graceful path the monthly cap and the token budget already used; nothing errors and nothing is lost. `/hello` and
+every analyse response carry `today` and `dayCap`.
+
+**The shop in front.** Three engines existed and none of them ended anywhere a family could buy:
+
+| Engine | Where it ended before | Where it ends now |
+|---|---|---|
+| `suggestions()` — checks due by age, sex, BMI, conditions and flagged results | a paragraph on Insights | **Due for <name>** at the top of Book a test, each row with a Book button |
+| `/labs/quotes` — per-test prices at nearby labs | a sheet reachable only from a buried action | the page every booking route opens, with the lab preselected |
+| the refill engine (round 24) | `Reorder` dropped a word into a 45-item search | matches the catalogue, adds to the basket and opens it |
+
+* Tabs: **Tests & records** = `Book a test · My reports · Vault · Insights`; **Medicines** = `Order · My medicines · Orders`.
+* New page `labshop` (live layer 31): due-for-you, eight packages, searchable catalogue with a multi-select basket, the
+  "reports come back into the vault" promise, and the map of labs near you (`SX.placesHTML`, folded in from `nearlabs`).
+* `p31.py` exports what the layer needs from the main script: `SX.suggestions`, `SX.medCatalog`, `SX.placesHTML`,
+  `SX.labOpen(codes, lab)`. It also stops the price sheet printing "≈ ₹0" when no lab has quoted yet.
+* Prices on the page are the *typical* market price from the test catalogue, never an invented floor; the real number
+  comes from the lab quotes in the sheet.
+* The morning "repeat this test" nudge now lands on Book a test instead of a list of addresses.
+* Signing out goes to `/signin` (the sign-in sheet, with "Create an account") instead of the marketing page.

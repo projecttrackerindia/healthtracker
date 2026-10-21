@@ -2192,6 +2192,35 @@ input,select,textarea{font-size:max(16px,1em)}   /* iOS zooms into any field sma
 .lv30-note b{display:block;font-size:14px;margin-bottom:3px}
 .lv30-note p{margin:0;color:var(--mute);font-size:13.5px;line-height:1.5}
 </style>
+<style id="live31-css">/* live layer 31: the shop at the front of Tests & records and Medicines */
+.lv31-due .lv31-row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)}
+.lv31-due .lv31-row:last-child{border-bottom:0}
+.lv31-row .grow{min-width:0}
+.lv31-row b{display:block;font-size:15px;line-height:1.25}
+.lv31-row small{display:block;color:var(--mute);font-size:12.5px;line-height:1.4;margin-top:2px}
+.lv31-codes{display:inline-block;margin-top:5px;font-size:11.5px;color:var(--blue);background:color-mix(in srgb,var(--blue) 10%,transparent);padding:3px 8px;border-radius:999px}
+.lv31-row .btn{flex:none;white-space:nowrap}
+.lv31-row .btn small{display:inline;color:inherit;opacity:.8;font-size:11.5px}
+.lv31-none{display:flex;flex-direction:column;gap:2px;padding:14px;border-radius:14px;background:var(--soft);text-align:center}
+.lv31-none small{color:var(--mute)}
+.lv31-packs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.lv31-pack{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:13px 14px;display:flex;flex-direction:column;gap:3px;color:var(--ink);transition:border-color .2s,transform .2s}
+.lv31-pack:hover{border-color:var(--blue);transform:translateY(-2px)}
+.lv31-pack b{font-size:14.5px}
+.lv31-pack small{color:var(--mute);font-size:12.5px;line-height:1.35}
+.lv31-pack span{margin-top:6px;font-weight:600;font-size:12.5px;color:var(--blue)}
+.lv31-tests{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:340px;overflow-y:auto}
+.lv31-test{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);text-align:left}
+.lv31-test.on{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 8%,var(--card))}
+.lv31-test b{font-size:14px;display:block}
+.lv31-test small{color:var(--mute);font-size:11.5px}
+.lv31-test i{font-style:normal;font-weight:600;color:var(--mute);white-space:nowrap}
+.lv31-test.on i{color:var(--blue)}
+.lv31-sel{font-size:12.5px;font-weight:600;color:var(--blue)}
+.lv31-bar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px;position:sticky;bottom:0;padding-top:10px;background:linear-gradient(transparent,var(--card) 40%)}
+.lv31-note b{display:block;margin-bottom:3px}
+@media (max-width:720px){.lv31-packs{grid-template-columns:1fr}.lv31-row{align-items:flex-start}}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -4845,14 +4874,15 @@ SX.act.rate=([id,n])=>{const o=S.liveOrders.find(x=>x.id===id);if(!o)return;let 
  draw()};
 // ---------------------------------------------------------------- lab finder
 let LABQ={codes:[],home:true,sel:'',slot:''},LABS=null;
-SX.act.labs=([codes])=>{LABQ={codes:String(codes||'').split('+').filter(Boolean),home:true,sel:'',slot:''};LABS=null;labSheet();loadLabs()};
+SX.act.labs=([codes,sel])=>{LABQ={codes:String(codes||'').split('+').filter(Boolean),home:true,sel:sel||'',slot:''};LABS=null;labSheet();loadLabs()};
+SX.labOpen=(codes,sel)=>SX.act.labs([Array.isArray(codes)?codes.join('+'):codes,sel]);
 SX.act.labadd=()=>{LABQ={codes:['cbc','lipid','hba1c'],home:true,sel:'',slot:''};LABS=null;labSheet();loadLabs()};
 async function loadLabs(){const g=await SX.geo(false);try{LABS=await SX.api('/labs/quotes',{method:'POST',body:{tests:LABQ.codes,home:LABQ.home,lat:g?g.lat:null,lng:g?g.lng:null},silent:true});if(!LABQ.sel||!LABS.labs.find(l=>l.id===LABQ.sel))LABQ.sel=LABS.recommended||''}catch(e){LABS={error:e.offline?P('No connection to the TheHealthTracker server.'):P('Lab prices are not available right now.')}}labSheet()}
 function labSheet(){const L=LABS,sel=L&&L.labs?L.labs.find(l=>l.id===LABQ.sel):null;
  SX.modal(`<h2>${P('Nearby labs & price estimate')}</h2>
  <div class="chips" style="margin:0 0 8px">${LABQ.codes.map(c=>{const t=L&&L.tests?L.tests.find(x=>x.code===c):null;return `<span class="chip on">${E(t?t.name:c)} <button data-net="rmtest:${c}" aria-label="Remove">✕</button></span>`}).join('')}<button class="chip" data-net="addtest">＋ ${P('Add test')}</button></div>
  <div class="sx-row" style="margin:0 0 10px"><label class="chip"><input type="checkbox" data-net="home" ${LABQ.home?'checked':''} style="width:auto"> 🏠 ${P('Home sample collection')}</label><button class="btn s sm" data-net="geo">📍 ${P('Use my location')}</button></div>
- ${!L?`<div class="sx-livel"><div class="sx-spin sm"></div> ${P('Finding labs…')}</div>`:L.error?`<p class="mute">${E(L.error)}</p>`:`<p class="mute sm">${L.approx?P('Showing')+' '+E(L.city)+' · '+P('typical price for these tests'):E(L.city)+' · '+P('typical price for these tests')} ≈ ${money(L.labs[0]?L.labs[0].typical:0)}</p>
+ ${!L?`<div class="sx-livel"><div class="sx-spin sm"></div> ${P('Finding labs…')}</div>`:L.error?`<p class="mute">${E(L.error)}</p>`:`<p class="mute sm">${L.approx?P('Showing')+' '+E(L.city):E(L.city)}${L.labs[0]&&L.labs[0].typical?' · '+P('typical price for these tests')+' ≈ '+money(L.labs[0].typical):''}</p>
  <div class="sx-stores">${L.labs.slice(0,6).map(l=>`<label class="sx-store ${l.id===LABQ.sel?'on':''} ${l.complete?'':'part'}"><input type="radio" name="lab" ${l.id===LABQ.sel?'checked':''} data-net="lab:${l.id}"><div class="grow"><b>${E(l.name)}</b><small>${l.km} km · ★ ${l.rating} · ${P('report in')} ${l.tatHours<24?l.tatHours+' h':Math.round(l.tatHours/24)+' '+P('day(s)')}${l.home?' · 🏠':''}${l.fasting?' · '+P('fasting needed'):''}</small>${l.tags.length?`<div class="sx-tags">${l.tags.map(t=>`<i class="${/Cheapest|Nearest|Fastest/.test(t)?'hot':''}">${P(t)}</i>`).join('')}</div>`:''}${l.missing.length?`<small class="warn">${P('Not offered')}: ${l.missing.map(E).join(', ')}</small>`:''}</div><div class="sx-storep"><b>${money(l.total)}</b>${l.fee?`<small>${P('incl. collection')} ${money(l.fee)}</small>`:''}${l.subtotal<l.typical?`<small class="ok">${P('save')} ${money(l.typical-l.subtotal)}</small>`:''}</div></label>`).join('')}</div>
  ${sel?`<div class="sx-labsel"><table class="sx-tbl"><tbody>${sel.lines.map(x=>`<tr><td>${E(x.name)}${x.fasting?' <small class="mute">('+P('fasting')+')</small>':''}</td><td style="text-align:right">${money(x.price)}</td></tr>`).join('')}</tbody></table>
  ${LABQ.home&&sel.home&&SX.addrPick?`<p class="sx-h4" style="margin:8px 0 2px">${P('Collection address')}</p>`+SX.addrPick():''}${LABQ.home&&sel.home?`<label class="sx-h4" style="display:block">${P('Collection slot')}<select data-net="slot" style="width:100%;margin-top:6px"><option value="">${P('Choose a time')}</option>${sel.slots.map(s=>`<option ${LABQ.slot===s?'selected':''}>${E(s)}</option>`).join('')}</select></label>`:`<p class="mute sm">${P('Walk in with this estimate; the lab confirms the final price.')}</p>`}
@@ -4955,7 +4985,7 @@ SX.act.pwchg=async()=>{await loadAuthJs();const u=SX.user;SX.modal(`<h2>${u.hasP
  $('#pwn').addEventListener('input',paint);$('#pwg').onclick=()=>{const g=THT.pw.generate();['pwn','pwn2'].forEach(i=>{$('#'+i).value=g;$('#'+i).type='text'});paint()};
  $('#pwf').onsubmit=async e=>{e.preventDefault();const v=$('#pwn').value;const bad=THT.pw.rules(v,ctx).find(r=>!r.ok);if(bad){toast(P('Password')+': '+P(bad.label));return}if(v!==$('#pwn2').value){toast(P('The two passwords do not match.'));return}
   try{await THT.api('/password/change',{current:u.hasPassword?$('#pwc').value:'',new:v});SX.closeModal();toast(P('Password saved'));accRefresh()}catch(err){toast(err.message)}}};
-SX.act.signout=async()=>{try{await loadAuthJs();await THT.api('/logout',{})}catch(e){}location.href='/'};
+SX.act.signout=async()=>{try{await loadAuthJs();await THT.api('/logout',{})}catch(e){}location.href='/signin'};
 SX.act.signoutall=async()=>{SX.modal(`<h2>${P('Sign out everywhere?')}</h2><p class="mute">${P('Every device signed in to your account, including this one, will be signed out.')}</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn s" data-sx="closeModal">${P('Cancel')}</button><button class="btn red" id="soall">${P('Sign out everywhere')}</button></div>`,{label:'Sign out'});
  $('#soall').onclick=async()=>{try{await loadAuthJs();await THT.api('/logout-all',{})}catch(e){}location.href='/signin'}};
 // ---------------------------------------------------------------- boot hooks
@@ -5540,6 +5570,7 @@ SX.reg('insights',{head:()=>['Insights','What changed, what to ask, and which ch
 SX.act.seeres=([id])=>{tOpen=id;tFilter='all';go('tests')};
 SX.act.sugdone=([id])=>{const m=SX.me();S.checks[m.id]=S.checks[m.id]||{};S.checks[m.id][id]=Date.now();SX.save();render();toast('Marked as done')};
 SX.act.sugbook=([id])=>{const m=SX.me(),s=suggestions(m).find(x=>x.id===id);if(!s)return;bookPre={sp:s.sp,why:s.t};go('appts')};
+SX.suggestions=suggestions;
 })();
 
 // ===================== six · Medicines: my medicines, finder, orders =====================
@@ -5680,6 +5711,7 @@ SX.chg.medsave=([id],f)=>{const m=SX.me(),fd=new FormData(f),n=String(fd.get('n'
  const w=cat?SX.medWarn(m,cat):(SX.medInteract?SX.medInteract(m,o.n,id):[]);if(w.length)toast((id?'Saved. ':'Saved. ')+w[0].t.slice(0,140))};
 SX.act.meddel=([id])=>{const m=SX.me();S.meds[m.id]=meds(m).filter(a=>a.id!==id);SX.save();SX.closeModal();render();SX.paintNav();toast('Removed')};
 SX.act.refill=([id])=>{const x=meds(SX.me()).find(a=>a.id===id);if(!x)return;fQ=x.n;fCat='All';go('finder')};
+SX.medCatalog=()=>C;
 
 // ---------------------------------------------------------------- Finder
 let fQ='',fCat='All',fRx='all';
@@ -6935,7 +6967,7 @@ SX.addStrings({'tab.nearlabs':SX.D('Nearby labs','पास की लैब','�
 SX.reg('nearlabs',{head:()=>[P('Nearby labs'),P('Real labs around you. Partners show prices, home collection and booking; others you can call.')],
  render(){const m=SX.me(),need=SX.labFlags(m).slice(0,3);return placesHTML('lab',P('Labs near you'),{partnerAct:'labgo',partnerCta:P('Prices & book'),
   foot:`<div class="lv6-note"><b>${P('How booking works')}</b><p class="mute sm" style="margin:4px 0 0">${P('Partner labs are verified by our team (NABL or state licence) and publish their price list here, so you can compare and book with home collection. Reports from a partner booking arrive in Lab results automatically. Labs that are not partners yet can still be called; ask them to join through partner@thehealthtracker.com.')}</p>${need.length?`<p class="sm" style="margin:6px 0 0"><b>${P('Worth repeating soon:')}</b> ${need.map(f=>E(f.st.L.n)).join(', ')}</p>`:''}</div>`})}});
-SX.act.labgo=()=>{go('tests')};
+SX.placesHTML=placesHTML;SX.act.labgo=()=>{go('tests')};
 SX.extend('book',{after(){return placesHTML('hospital',P('Hospitals and clinics around you'),{partnerAct:'bookat',partnerCta:P('Book a visit'),filter:p=>!SX.bookFilter||SX.bookFilter(p)})}});
 SX.act.bookat=([id])=>{go('appts');setTimeout(()=>{const b=document.querySelector('[data-sx="vadd"]');if(b){b.click();const d=PLACES;const all=Object.values(d).flatMap(x=>x.partners||[]);const p=all.find(x=>x.id===id);const i=document.querySelector('.lv-vform input[name=dh]');if(i&&p)i.value=p.name}},200)};
 SX.extend('sos',{after(){return placesHTML('blood',P('Blood banks near you'),{})}});
@@ -8965,6 +8997,141 @@ function quota(){if(!L())return;document.querySelectorAll('#page .mute.sm').forE
 new MutationObserver(()=>{clearTimeout(window.__lv30t);window.__lv30t=setTimeout(quota,60)}).observe(document.body,{childList:true,subtree:true});
 setTimeout(quota,500);
 SX.launch=L;
+}
+
+/*live-p31*/
+// ===================== live layer 31: the shop comes first — Book a test, Order medicines, and every suggestion ends in a basket =====================
+// Three engines were already in the app and none of them ended anywhere you could buy: the checks-due engine stopped at
+// advice, the lab price comparison was reachable only from a buried sheet, and "Reorder" dropped a word into a search box.
+// This layer puts the shop at the front of Tests & records and Medicines, and wires all three into the basket.
+{
+const P=SX.p,S=SX.S;
+const money=n=>'₹'+Math.round(+n||0).toLocaleString('en-IN');
+
+SX.addPhrases({
+ 'Book a test':['जाँच बुक करें','టెస్ట్ బుక్ చేయండి'],
+ 'Order medicines':['दवाइयाँ मँगाएँ','మందులు ఆర్డర్ చేయండి'],
+ 'Due for':['के लिए अभी ज़रूरी','వీరికి ఇప్పుడు అవసరం'],
+ 'Based on age, sex, conditions and past results. Not a diagnosis — your doctor knows your full history.':
+  ['उम्र, लिंग, स्थितियों और पिछले नतीजों के आधार पर। यह निदान नहीं है — आपके डॉक्टर को पूरा इतिहास पता है।',
+   'వయస్సు, లింగం, పరిస్థితులు, గత ఫలితాల ఆధారంగా. ఇది రోగ నిర్ధారణ కాదు — మీ డాక్టర్‌కు పూర్తి చరిత్ర తెలుసు.'],
+ 'Nothing is due right now':['अभी कुछ ज़रूरी नहीं है','ఇప్పుడు ఏదీ అవసరం లేదు'],
+ 'Your checks are up to date. Book anything else below.':['आपकी जाँचें अप-टू-डेट हैं। नीचे से कुछ और बुक करें।','మీ చెకప్‌లు తాజాగా ఉన్నాయి. కింద నుండి ఇంకేదైనా బుక్ చేయండి.'],
+ 'Book':['बुक करें','బుక్ చేయండి'],
+ 'from':['से','నుండి'],
+ 'Popular packages':['लोकप्रिय पैकेज','ప్రసిద్ధ ప్యాకేజీలు'],
+ 'Panels families book most often.':['परिवार सबसे ज़्यादा यही पैकेज बुक करते हैं।','కుటుంబాలు ఎక్కువగా బుక్ చేసే ప్యానెల్స్.'],
+ 'tests':['जाँचें','టెస్టులు'],
+ 'test':['जाँच','టెస్ట్'],
+ 'about':['लगभग','సుమారు'],
+ 'Typical prices. The labs near you quote the real price before you confirm.':['सामान्य क़ीमतें। पास की लैब पक्का करने से पहले असली क़ीमत बताती हैं।','సాధారణ ధరలు. మీ దగ్గరి ల్యాబ్‌లు నిర్ధారణకు ముందు అసలు ధర చెబుతాయి.'],
+ 'Thyroid profile (T3, T4, TSH)':['थायरॉइड प्रोफ़ाइल (T3, T4, TSH)','థైరాయిడ్ ప్రొఫైల్ (T3, T4, TSH)'],
+ 'Search tests':['जाँच खोजें','టెస్టులు వెతకండి'],
+ 'e.g. thyroid, HbA1c, vitamin D':['जैसे थायरॉइड, HbA1c, विटामिन D','ఉదా. థైరాయిడ్, HbA1c, విటమిన్ D'],
+ 'Selected':['चुनी गई','ఎంచుకున్నవి'],
+ 'Get prices':['क़ीमतें देखें','ధరలు చూడండి'],
+ 'Clear':['हटाएँ','తొలగించు'],
+ 'fasting':['खाली पेट','ఖాళీ కడుపుతో'],
+ 'Reports come back into the vault':['रिपोर्ट सीधे वॉल्ट में आती है','రిపోర్టులు నేరుగా వాల్ట్‌కు వస్తాయి'],
+ 'Partner labs send the report straight into the app, where it is explained in plain words and added to the trends.':
+  ['पार्टनर लैब रिपोर्ट सीधे ऐप में भेजती है, जहाँ वह आसान भाषा में समझाई जाती है और ट्रेंड में जुड़ जाती है।',
+   'భాగస్వామి ల్యాబ్‌లు రిపోర్టును నేరుగా యాప్‌కు పంపుతాయి, అక్కడ సులభ భాషలో వివరించి ట్రెండ్‌లలో చేరుస్తాం.'],
+ 'Reorder':['फिर से मँगाएँ','మళ్లీ ఆర్డర్'],
+ 'Added to the basket':['बास्केट में जोड़ा गया','బాస్కెట్‌లో చేర్చబడింది'],
+ 'Full body checkup':['फुल बॉडी चेकअप','ఫుల్ బాడీ చెకప్'],
+ 'Diabetes panel':['डायबिटीज़ पैनल','డయాబెటిస్ ప్యానెల్'],
+ 'Heart and cholesterol':['हृदय और कोलेस्ट्रॉल','గుండె మరియు కొలెస్ట్రాల్'],
+ 'Thyroid':['थायरॉइड','థైరాయిడ్'],
+ 'Anaemia and vitamins':['एनीमिया और विटामिन','రక్తహీనత మరియు విటమిన్లు'],
+ 'Pregnancy — first visit':['गर्भावस्था — पहली जाँच','గర్భం — మొదటి విజిట్'],
+ 'Seniors — yearly':['बुज़ुर्गों के लिए — सालाना','పెద్దలకు — వార్షికం'],
+ 'Kidney and liver':['किडनी और लिवर','కిడ్నీ మరియు కాలేయం']});
+
+// ---------------------------------------------------------------- A. the shop goes first in both groups
+{const rec=SX.G.find(g=>g.k==='records');
+ if(rec){rec.tabs=['labshop','tests','vault','insights'].filter(t=>t==='labshop'||rec.tabs.includes(t)||t==='tests'||t==='vault'||t==='insights')}
+ const med=SX.G.find(g=>g.k==='meds');
+ if(med&&med.tabs.includes('finder'))med.tabs=['finder','rx','orders'].filter(t=>med.tabs.includes(t));
+ SX.addStrings&&SX.addStrings({'tab.labshop':SX.D('Book a test','जाँच बुक करें','టెస్ట్ బుక్'),
+  'tab.tests':SX.D('My reports','मेरी रिपोर्ट','నా రిపోర్టులు'),'tab.finder':SX.D('Order','मँगाएँ','ఆర్డర్'),
+  'tab.rx':SX.D('My medicines','मेरी दवाइयाँ','నా మందులు')});}
+
+// ---------------------------------------------------------------- B. a suggestion that can be booked knows which tests it means
+const TESTMAP={lipid:['lipid'],sugar:['hba1c','glu_f'],hb:['cbc'],hb2:['cbc','ferr'],tsh:['tsh'],vitd:['vitd'],
+ kidney:['kft','urine'],liver:['lft','usg'],psa:['psa'],cervix:['pap'],'p-early':['cbc','tsh','glu_f','urine'],'p-ogtt':['ogtt'],'p-anom':['usg'],thy:['thy'],b12:['b12']};
+const PACKS=()=>[
+ {k:'full',t:P('Full body checkup'),codes:['cbc','lipid','lft','kft','tsh','glu_f','urine','vitd'],sub:P('Blood count, sugar, cholesterol, thyroid, kidney, liver, vitamin D, urine')},
+ {k:'dia',t:P('Diabetes panel'),codes:['hba1c','glu_f','glu_pp','kft','lipid'],sub:P('HbA1c, fasting and post-meal sugar, kidney, cholesterol')},
+ {k:'heart',t:P('Heart and cholesterol'),codes:['lipid','ecg','echo'],sub:P('Lipid profile, ECG, echo')},
+ {k:'thy',t:P('Thyroid'),codes:['thy','tsh'],sub:P('Thyroid profile (T3, T4, TSH)')},
+ {k:'anae',t:P('Anaemia and vitamins'),codes:['cbc','iron','b12','vitd'],sub:P('Blood count, iron, B12, vitamin D')},
+ {k:'preg',t:P('Pregnancy — first visit'),codes:['cbc','tsh','glu_f','urine'],sub:P('Blood count, thyroid, sugar, urine')},
+ {k:'sr',t:P('Seniors — yearly'),codes:['cbc','lipid','kft','lft','tsh','vitd','b12','urine','ecg'],sub:P('The yearly set, with ECG')},
+ {k:'kl',t:P('Kidney and liver'),codes:['kft','lft','urine'],sub:P('Creatinine, urea, liver enzymes, urine')}];
+
+let TESTS=null,pick=[],q='';
+const have=c=>!TESTS||TESTS.some(t=>t.code===c);
+const nameOf=c=>{const t=TESTS&&TESTS.find(x=>x.code===c);return t?t.name:c.toUpperCase()};
+const typical=codes=>codes.reduce((a,c)=>{const t=TESTS&&TESTS.find(x=>x.code===c);return a+(t?t.typical:0)},0);
+SX.labTestsHave=have;
+async function loadTests(){if(TESTS)return TESTS;try{const r=await SX.api('/labs/tests',{silent:true});TESTS=r.tests||[]}catch(e){TESTS=[]}return TESTS}
+const open=(codes,sel)=>{const cs=(codes||[]).filter(have);if(!cs.length)return toast(P('Nothing found. Try the city name or PIN.'));SX.labOpen?SX.labOpen(cs,sel):SX.act.labs([cs.join('+')])};
+SX.act.labbook=a=>open(String(a[0]||'').split('+'),a[1]);
+SX.act.labpack=([k])=>{const p=PACKS().find(x=>x.k===k);if(p)open(p.codes)};
+SX.act.labpick=([c])=>{pick=pick.includes(c)?pick.filter(x=>x!==c):pick.concat([c]);render()};
+SX.act.labclear=()=>{pick=[];render()};
+SX.act.labgo2=()=>{if(pick.length)open(pick)};
+
+// ---------------------------------------------------------------- C. the Book a test page
+function dueRows(m){const sug=(SX.suggestions?SX.suggestions(m):[]).filter(s=>s.st!=='ok');
+ const rows=sug.map(s=>({s,codes:(TESTMAP[s.id]||[]).filter(have)})).filter(x=>x.codes.length);
+ if(!rows.length)return `<div class="lv31-none"><b>${P('Nothing is due right now')}</b><small>${P('Your checks are up to date. Book anything else below.')}</small></div>`;
+ return rows.map(({s,codes})=>`<div class="lv31-row"><div class="grow"><b>${E(s.t)}</b><small>${E((s.why||'').slice(0,120))}</small>
+  <span class="lv31-codes">${codes.map(c=>E(nameOf(c))).join(' · ')}${typical(codes)?' · '+P('about')+' '+money(typical(codes)):''}</span></div>
+  <button class="btn p sm" data-sx="labbook:${codes.join('+')}">${P('Book')}</button></div>`).join('')}
+
+function packRows(){return PACKS().map(p=>{const cs=p.codes.filter(have);if(!cs.length)return '';
+ return `<button class="lv31-pack" data-sx="labpack:${p.k}"><b>${E(p.t)}</b><small>${E(p.sub)}</small><span>${cs.length} ${cs.length===1?P('test'):P('tests')} · ${P('about')} ${money(typical(cs))}</span></button>`}).join('')}
+
+function searchRows(){const list=(TESTS||[]).filter(t=>!q||(t.name+' '+t.code).toLowerCase().includes(q.toLowerCase())).slice(0,40);
+ return list.map(t=>`<button class="lv31-test ${pick.includes(t.code)?'on':''}" data-sx="labpick:${t.code}"><span class="grow"><b>${E(t.name)}</b>${t.fasting?`<small>${P('fasting')}</small>`:''}</span><i>${money(t.typical)}</i></button>`).join('')||`<p class="mute sm">${P('Nothing found. Try the city name or PIN.')}</p>`}
+
+SX.reg('labshop',{
+ head:()=>[P('Book a test'),P('Prices from labs near you, home collection, and the report back in the app.')],
+ render(){const m=SX.me();
+  return `<div class="card wide lv31-due"><div class="hd"><div><h3>${P('Due for')} ${E(m.name.split(' ')[0])}</h3><small class="mute">${P('Based on age, sex, conditions and past results. Not a diagnosis — your doctor knows your full history.')}</small></div></div>${dueRows(m)}</div>
+  <div class="card wide"><div class="hd"><div><h3>${P('Popular packages')}</h3><small class="mute">${P('Panels families book most often.')} ${P('Typical prices. The labs near you quote the real price before you confirm.')}</small></div></div><div class="lv31-packs">${packRows()}</div></div>
+  <div class="card wide"><div class="hd"><h3>${P('Search tests')}</h3>${pick.length?`<span class="lv31-sel">${P('Selected')}: ${pick.length}</span>`:''}</div>
+   <input id="lv31q" type="search" placeholder="${E(P('e.g. thyroid, HbA1c, vitamin D'))}" value="${E(q)}" autocomplete="off">
+   <div class="lv31-tests">${searchRows()}</div>
+   ${pick.length?`<div class="lv31-bar"><button class="btn s sm" data-sx="labclear">${P('Clear')}</button><button class="btn p" data-sx="labgo2">${P('Get prices')} · ${pick.length}</button></div>`:''}</div>
+  <div class="card wide lv31-note"><b>${P('Reports come back into the vault')}</b><p class="mute sm">${P('Partner labs send the report straight into the app, where it is explained in plain words and added to the trends.')}</p></div>
+  ${SX.placesHTML?SX.placesHTML('lab',P('Labs near you'),{partnerAct:'labgo',partnerCta:P('Prices & book')}):''}`},
+ after(){const i=document.getElementById('lv31q');if(i){i.oninput=()=>{q=i.value;const box=document.querySelector('.lv31-tests');if(box)box.innerHTML=searchRows()}}
+  if(!TESTS)loadTests().then(()=>{if(page==='labshop')render()})}});
+
+// a partner lab card now opens the price sheet with that lab chosen, instead of the old results page
+SX.act.labgo=([id])=>{const m=SX.me(),sug=(SX.suggestions?SX.suggestions(m):[]).filter(s=>s.st!=='ok');
+ const codes=[].concat(...sug.map(s=>(TESTMAP[s.id]||[]))).filter(have);
+ open(codes.length?[...new Set(codes)].slice(0,6):['cbc','lipid','hba1c'],id)};
+
+// the checks-due list on Insights gets the same button
+SX.extend('insights',{mounted(){document.querySelectorAll('#page .sx-sugb').forEach(box=>{if(box.dataset.lv31)return;box.dataset.lv31='1';
+  const b=box.querySelector('[data-sx^="sugbook:"]');const id=b&&b.dataset.sx.split(':')[1];const codes=(TESTMAP[id]||[]).filter(have);
+  if(!codes.length)return;const n=document.createElement('button');n.className='btn p sm';n.dataset.sx='labbook:'+codes.join('+');n.textContent=P('Book');box.prepend(n)})}});
+
+// ---------------------------------------------------------------- D. Reorder puts the medicine in the basket instead of a search box
+SX.act.refill=([id])=>{const m=SX.me(),x=(S.meds[m.id]||[]).find(a=>a.id===id);if(!x)return;
+ const C=SX.medCatalog?SX.medCatalog():[];const n=(x.n||'').toLowerCase(),gen=(x.gen||'').toLowerCase();
+ const hit=C.find(c=>c.n.toLowerCase()===n)||C.find(c=>n.includes(c.n.toLowerCase())||c.n.toLowerCase().includes(n.split(' ')[0]))||(gen?C.find(c=>(c.gen||'').toLowerCase().includes(gen)):null);
+ if(hit){try{SX.act.cartadd([hit.id]);toast(P('Added to the basket')+' · '+hit.n);SX.act.cart&&SX.act.cart();return}catch(e){}}
+ if(SX.fsearch)SX.fsearch(x.n);else go('finder')};
+
+// the running-low card belongs on the order page too, where the basket is
+SX.extend('finder',{before(){const m=SX.me(),low=(S.meds[m.id]||[]).map(x=>({x,d:SX.medDaysLeft?SX.medDaysLeft(x):null})).filter(o=>o.d!==null&&o.d<=7).sort((a,b)=>a.d-b.d);
+ if(!low.length)return '';
+ return `<div class="card lv24-low"><div class="hd"><div><h3>${P('Running low')}</h3><small class="mute">${P('Counted from the doses ticked each day. Order a refill before it runs out.')}</small></div></div>
+  ${low.map(({x,d})=>`<div class="lv24-row ${d<=3?'urgent':''}"><div class="lv24-ic">${SX.ico?SX.ico('pill'):'💊'}</div><div class="grow"><b>${E(x.n)}</b><small>${d<=0?P('none left'):d+' '+P('days left')}</small></div><button class="btn ${d<=3?'p':'s'} sm" data-sx="refill:${E(x.id)}">${P('Reorder')}</button></div>`).join('')}</div>`}});
 }
 
 SX.boot();

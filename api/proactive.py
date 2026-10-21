@@ -146,7 +146,7 @@ def nudges(state: dict, today: date) -> list[dict]:
                 out.append({"key": f"repeat:{mid}:{key}:{today.strftime('%Y-%m')}", "kind": "nudge_test", "member": mid,
                             "title": f"{first}: time to repeat {LAB_NAME.get(key, key)}",
                             "body": f"The last {LAB_NAME.get(key, key)} ({last['val']:g} on {_d(last['date']).strftime('%d/%m/%Y')}) was outside the usual range and is {days} days old. Book it from Nearby labs; the new result goes straight onto the body.",
-                            "url": "/app#page=nearlabs", "ref": {"member": mid, "lab": key}})
+                            "url": "/app#page=labshop", "ref": {"member": mid, "lab": key}})
         # 2. pregnancy milestones (by completed week, once per week)
         preg = ((state.get("preg") or {}).get(mid) or {})
         lmp = _d(preg.get("lmp") or "")
