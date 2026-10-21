@@ -1,8 +1,8 @@
 {
-  "name": "thehealthtracker-mobile",
+  "name": "urbanhealth-mobile",
   "version": "1.0.0",
   "private": true,
-  "description": "TheHealthTracker Android app: the live web app in a native shell with Health Connect sync and native notifications.",
+  "description": "Urban Health Android app: the live web app in a native shell with Health Connect sync and native notifications.",
   "scripts": {
     "sync": "npx cap sync android",
     "open": "npx cap open android",

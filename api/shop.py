@@ -1,4 +1,4 @@
-"""TheHealthTracker's own shop (/api/v1/shop, /api/admin/products): packages and merchandise delivered to the family's
+"""Urban Health's own shop (/api/v1/shop, /api/admin/products): packages and merchandise delivered to the family's
 address — the hospital-bag package first. Products are rows in shop_products; price, MRP and stock sit on the system
 store's StoreItems (same sku) so a purchase is an ordinary order (kind "shop"): receipt PDF, returns, UPI or cash on
 delivery, tracking in Orders, settlements. The team fulfils shop orders from Admin → Orders (or a partner sign-in on
@@ -26,7 +26,7 @@ ar = APIRouter(prefix="/api/admin")
 SHOP_ID = "s_tht_shop"
 BAG_SKU = "bag-complete"
 BAG_INCLUDES = [
-    {"group": "Mother", "name": "Front-open cotton nighties (TheHealthTracker Mother line)", "qty": 3},
+    {"group": "Mother", "name": "Front-open cotton nighties (Urban Health Mother line)", "qty": 3},
     {"group": "Mother", "name": "Maternity pads, extra-long", "qty": 2, "unit": "packs"},
     {"group": "Mother", "name": "Disposable underwear", "qty": 1, "unit": "pack of 10"},
     {"group": "Mother", "name": "Nursing bra + breast pads", "qty": 2},
@@ -45,23 +45,23 @@ BAG_INCLUDES = [
     {"group": "Baby", "name": "Warm blanket", "qty": 1},
     {"group": "Partner", "name": "Snacks & water", "qty": 1},
     {"group": "Partner", "name": "Charger & power bank", "qty": 1},
-    {"group": "TheHealthTracker", "name": "Hospital bag (tote) with document folder for the MCP card, reports and cards", "qty": 1},
-    {"group": "TheHealthTracker", "name": "Mother's recovery journal & baby's first record book", "qty": 1},
-    {"group": "TheHealthTracker", "name": "Laminated emergency card (blood group, contacts, Medical ID QR)", "qty": 1},
+    {"group": "Urban Health", "name": "Hospital bag (tote) with document folder for the MCP card, reports and cards", "qty": 1},
+    {"group": "Urban Health", "name": "Mother's recovery journal & baby's first record book", "qty": 1},
+    {"group": "Urban Health", "name": "Laminated emergency card (blood group, contacts, Medical ID QR)", "qty": 1},
 ]
 
 
 def ensure_shop(db: Session) -> Store:
     s = db.get(Store, SHOP_ID)
     if not s:
-        s = Store(id=SHOP_ID, kind="shop", name="TheHealthTracker Store", brand="TheHealthTracker", address="Hyderabad", area="", city="Hyderabad", lat=17.385, lng=78.4867,
+        s = Store(id=SHOP_ID, kind="shop", name="Urban Health Store", brand="Urban Health", address="Hyderabad", area="", city="Hyderabad", lat=17.385, lng=78.4867,
                   phone=os.getenv("SUPPORT_PHONE", ""), hours="Ships Mon–Sat", verified=True, active=True, delivery=True, delivery_fee=0, free_above=0, eta_min=4 * 1440,
-                  rating=0, rating_n=0, owner_email=os.getenv("LEGAL_EMAIL") or "support@thehealthtracker.com", notes="System store for packages and merchandise.")
+                  rating=0, rating_n=0, owner_email=os.getenv("LEGAL_EMAIL") or "support@urbanhealth.in", notes="System store for packages and merchandise.")
         db.add(s)
         db.flush()
     if not db.get(ShopProduct, BAG_SKU):
         db.add(ShopProduct(sku=BAG_SKU, name="Hospital Bag · Complete", tagline="Everything on the hospital-bag list, packed and delivered before the due date.",
-                           description="One package that covers the mother, the baby and the partner from the checklist in your birth plan, in a TheHealthTracker tote with a document folder for the MCP card, reports and cards. "
+                           description="One package that covers the mother, the baby and the partner from the checklist in your birth plan, in a Urban Health tote with a document folder for the MCP card, reports and cards. "
                                        "Mother's wear comes in your size; baby items are newborn size (0–3 months). Packed in Hyderabad and shipped across India.",
                            includes=BAG_INCLUDES, sizes=["S", "M", "L", "XL", "XXL"], size_note="Mother's nighties and nursing bras — pick your usual size; maternity fit.",
                            badge="Birth plan", ships_in="3–5 days", sort=1, active=True))

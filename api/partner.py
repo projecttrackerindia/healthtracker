@@ -1,4 +1,4 @@
-"""Partner portal API (/api/partner): the lab, pharmacy or hospital side of TheHealthTracker.
+"""Partner portal API (/api/partner): the lab, pharmacy or hospital side of Urban Health.
 
 A partner user signs in (signed HttpOnly cookie, like admin), sees the orders / bookings / visit requests for their store,
 moves them through their statuses, uploads lab reports (encrypted into the family's document store, S3-backed), reads a
@@ -52,7 +52,7 @@ def alert_store(db: Session, store_id: str, subject: str, text: str) -> int:
         tos.add(s.owner_email.strip().lower())
     n = 0
     for t in tos:
-        if messaging.mail(t, f"[TheHealthTracker] {subject}", text + "\n\nOpen the partner portal: https://thehealthtracker.com/partner"):
+        if messaging.mail(t, f"[Urban Health] {subject}", text + "\n\nOpen the partner portal: https://urbanhealth.in/partner"):
             n += 1
     return n
 
@@ -70,7 +70,7 @@ def me(request: Request, db: Session = Depends(get_db)) -> PartnerUser:
 def my_store(db: Session, u: PartnerUser) -> Store:
     s = db.get(Store, u.store_id)
     if not s or not s.active:
-        raise HTTPException(403, "This store is not active. Contact partner@thehealthtracker.com.")
+        raise HTTPException(403, "This store is not active. Contact partner@urbanhealth.in.")
     return s
 
 
@@ -390,7 +390,7 @@ def tech_add(body: TechIn, db: Session = Depends(get_db), u: PartnerUser = Depen
     db.flush()
     if not email.endswith(".invalid"):
         from . import messaging
-        where = "https://thehealthtracker.com/tech" if body.role == "tech" else "https://thehealthtracker.com/partner"
+        where = "https://urbanhealth.in/tech" if body.role == "tech" else "https://urbanhealth.in/partner"
         messaging.mail(email, f"Your sign-in · {s.name}",
                        f"Hello {name},\n\n{s.name} has added you as a {spec['label']}.\n\n"
                        f"Sign in: {where}\nUse your mobile {digits} or this email\n"

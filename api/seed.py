@@ -179,14 +179,14 @@ def seed_videos(db):
 
 
 def seed_admin(db):
-    email = os.getenv("ADMIN_EMAIL", "admin@thehealthtracker.com").strip().lower()
+    email = os.getenv("ADMIN_EMAIL", "admin@urbanhealth.in").strip().lower()
     pw = os.getenv("ADMIN_PASSWORD", "")
     a = db.scalar(select(Admin).where(Admin.email == email))
     if a is None:
         if not pw:  # never ship a known default password: make one and print it once to the deploy logs
             import secrets
             pw = secrets.token_urlsafe(12)
-            print(f"[TheHealthTracker] First admin created: {email} / {pw}  (set ADMIN_PASSWORD to choose your own)", flush=True)
+            print(f"[Urban Health] First admin created: {email} / {pw}  (set ADMIN_PASSWORD to choose your own)", flush=True)
         a = Admin(email=email, pw_hash=hash_pw(pw), role="owner")
         db.add(a)
     elif pw:

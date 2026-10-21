@@ -187,7 +187,7 @@ def push_test(request: Request, db: Session = Depends(get_db), u: User = Depends
     subs = db.scalars(select(PushSub).where(PushSub.user_id == u.id)).all()
     sent = 0
     for s in subs:
-        ok, status, note = PUSH.send(s.sub, {"title": "TheHealthTracker", "body": "Phone notifications are on. Medicine reminders will arrive like this.", "url": "/app", "tag": "test"})
+        ok, status, note = PUSH.send(s.sub, {"title": "Urban Health", "body": "Phone notifications are on. Medicine reminders will arrive like this.", "url": "/app", "tag": "test"})
         if ok:
             sent += 1
         elif status in (404, 410):

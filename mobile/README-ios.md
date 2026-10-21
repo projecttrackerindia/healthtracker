@@ -3,7 +3,7 @@
 ## Lock-screen Health Card (Live Activity)
 Files: `ios/App/App/HealthCardPlugin.swift` (Capacitor plugin `HealthCard`), `ios/App/App/HealthCardAttributes.swift` (shared model),
 `ios/HealthCardWidget/HealthCardWidget.swift` + `Info.plist` (the widget extension). `Info.plist` of the app already has
-`NSSupportsLiveActivities` and the `thehealthtracker://` URL scheme.
+`NSSupportsLiveActivities` and the `urbanhealth://` URL scheme.
 
 One-time in Xcode (cannot be scripted reliably):
 1. File → New → Target → **Widget Extension**, name `HealthCardWidget`, untick "Include Configuration Intent", tick **Include Live Activity**.

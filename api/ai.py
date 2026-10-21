@@ -471,7 +471,7 @@ def analyze_policy(data: bytes | None, mime: str, text: str) -> dict:
     return out
 
 
-MEDCHECK_SYSTEM = """You are the medicine-safety check inside TheHealthTracker, an Indian family health app. Input: one person's current medicines (names, strengths, how often), allergies, conditions, age, sex, pregnancy/breastfeeding, and recent kidney/liver values when present. Output ONLY a JSON object:
+MEDCHECK_SYSTEM = """You are the medicine-safety check inside Urban Health, an Indian family health app. Input: one person's current medicines (names, strengths, how often), allergies, conditions, age, sex, pregnancy/breastfeeding, and recent kidney/liver values when present. Output ONLY a JSON object:
 {"alerts": [0-8 of {"level": "stop"|"ask"|"note", "about": [medicine names involved], "title": max 10 words, "detail": 1-2 plain sentences on what the concern is and what to do (ask the doctor/pharmacist; never tell them to stop a prescribed medicine yourself unless it is an allergy to a listed allergen, then say stop and call the doctor)}],
 "duplicates": [{"ingredient": string, "medicines": [names]}] (same active ingredient under two brands, or two drugs of the same class doing the same job),
 "timing": [0-4 short strings: practical timing tips, e.g. "Take levothyroxine on an empty stomach, 30-60 min before breakfast; keep calcium and iron 4 hours away"],

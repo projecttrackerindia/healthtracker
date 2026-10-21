@@ -1,7 +1,7 @@
 import sys,os,json;sys.path.insert(0,'.')
-from mark import glyph
+from mark import VIEW_BARE, glyph
 from word import run
-V={'user':('#2F5BFF','TheHealthTracker','for people & families'),'partner':('#0B8A7C','Partners','doctors · hospitals · pharmacies · labs · insurers'),'admin':('#1C1E26','Admin','internal console')}
+V={'user':('#2F5BFF','Urban Health','for people & families'),'partner':('#0B8A7C','Partners','doctors · hospitals · pharmacies · labs · insurers'),'admin':('#1C1E26','Admin','internal console')}
 OUT='out';os.makedirs(OUT+'/svg',exist_ok=True);os.makedirs(OUT+'/png',exist_ok=True)
 def tile(bg,fg='#fff',size=None):
     sz=f' width="{size}" height="{size}"' if size else ''
@@ -9,8 +9,8 @@ def tile(bg,fg='#fff',size=None):
 def maskable(bg,fg='#fff'):  # Android adaptive icon: full bleed, glyph inside the 80% safe zone
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="{bg}"/><g transform="translate(32 32) scale(.72) translate(-32 -32)">{glyph(fg)}</g></svg>'
 def bare(fg):
-    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 10 52 44">{glyph(fg)}</svg>'
-WD,WW=run([('the','Regular'),('health','Bold'),('tracker','Regular')],44)
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{VIEW_BARE}">{glyph(fg)}</svg>'
+WD,WW=run([('Urban ','Regular'),('Health','Bold')],44)
 def lockup(col,label=None,reverse=False):
     tile_bg,tile_fg,txt=(('#fff',col,'#fff') if reverse else (col,'#fff',col))
     x0=64+16;w=x0+WW

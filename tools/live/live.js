@@ -68,7 +68,7 @@ SX.chg.lvcard=(a,f)=>{const fd=new FormData(f),err=f.querySelector('.lv-err'),sa
  showCard(m,true)};
 // the card itself (also opened from Home and Family)
 function cardHTML(m){const mid=SX.midOf(m.id),blood=mid.blood||(m.bloodUnknown?P('Not known'):'—'),pv=userPhoneVerified(m);
- return `<div class="lv-card" role="group" aria-label="${E(P('Health card'))}"><div class="lv-card-top"><span class="lv-card-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-5 3 10 2-5h7"/></svg>thehealthtracker</span><span class="lv-card-k">${P('HEALTH CARD')}</span></div>
+ return `<div class="lv-card" role="group" aria-label="${E(P('Health card'))}"><div class="lv-card-top"><span class="lv-card-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-5 3 10 2-5h7"/></svg>urbanhealth</span><span class="lv-card-k">${P('HEALTH CARD')}</span></div>
   <div class="lv-card-name">${E(m.name)}</div>
   <div class="lv-card-grid"><div><small>${P('Age')}</small><b>${m.age||'—'}</b></div><div><small>${P('Sex')}</small><b>${m.sex==='female'?P('Female'):P('Male')}</b></div><div><small>${P('Blood')}</small><b class="lv-blood">${E(blood)}</b></div></div>
   <div class="lv-card-ph"><small>${P('Mobile')}</small><b>${E(phShow(m.ph)||'—')}</b>${m.ph?vbadge(pv,'Mobile'):''}</div>

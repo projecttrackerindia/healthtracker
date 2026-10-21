@@ -20,7 +20,7 @@ admin admin123 administrator welcome welcome1 welcome123 letmein monkey dragon m
 baseball superman batman trustno1 abc123 abcd1234 aa123456 india india123 india@123 bharat hyderabad bangalore mumbai delhi
 chennai krishna sairam omsairam ganesh lakshmi jaishriram jaihind mother father family health healthy doctor hospital
 changeme secret login default guest test test123 demo demo123 user user123 root toor pass pass123 pass@123 hello hello123
-whatever freedom computer internet google facebook instagram samsung iphone apple microsoft windows linux thehealthtracker
+whatever freedom computer internet google facebook instagram samsung iphone apple microsoft windows linux urbanhealth
 healthtracker tracker dokko dokko123 qwerty@123 admin@123 welcome@123 india@1234 password@1 Password@123 Password@1234
 """.lower().split())
 SEQS = ["abcdefghijklmnopqrstuvwxyz", "0123456789", "qwertyuiop", "asdfghjkl", "zxcvbnm"]
@@ -68,7 +68,7 @@ def pwned(pw: str) -> int:
         return 0
     h = hashlib.sha1(pw.encode()).hexdigest().upper()
     try:
-        req = urllib.request.Request(f"https://api.pwnedpasswords.com/range/{h[:5]}", headers={"Add-Padding": "true", "User-Agent": "TheHealthTracker"})
+        req = urllib.request.Request(f"https://api.pwnedpasswords.com/range/{h[:5]}", headers={"Add-Padding": "true", "User-Agent": "Urban Health"})
         with urllib.request.urlopen(req, timeout=3) as r:
             for line in r.read().decode().splitlines():
                 suf, _, n = line.partition(":")

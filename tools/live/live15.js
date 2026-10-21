@@ -4,7 +4,7 @@ const P=SX.p,S=SX.S;
 const phone=()=>matchMedia('(max-width:720px)').matches;
 const native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const A=(path,body)=>fetch('/api/v1/auth'+path,{method:'POST',headers:{'content-type':'application/json','x-tht':'1'},credentials:'same-origin',body:JSON.stringify(body||{})}).then(async r=>{let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(typeof j.detail==='string'?j.detail:(Array.isArray(j.detail)?j.detail[0].msg:'Something went wrong')),{status:r.status});return j});
-const LOGO=`<svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg>`;
+const LOGO=`<svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path fill-rule="evenodd" d="M32 6c-11 0-20 8.8-20 19.6 0 10.6 12.9 24.9 17.7 29.9a3.2 3.2 0 0 0 4.6 0C39.1 50.5 52 36.2 52 25.6 52 14.8 43 6 32 6zM27.9 14.1h8.2v7.4h7.4v8.2h-7.4v7.4h-8.2v-7.4h-7.4v-8.2h7.4z" fill="#fff"/></svg>`;
 
 // ---------------------------------------------------------------- A. splash on phones and in the app, then a full-screen sign-in when nobody is signed in
 const wantsAppFlow=()=>native||phone();
@@ -15,7 +15,7 @@ function authScreen(){if(document.getElementById('lv15auth'))return;const el=doc
 function closeAuth(){const el=document.getElementById('lv15auth');if(el)el.remove();document.body.classList.remove('lv15-locked')}
 let mode='in',flow=null,flowKind='',pending=null;
 function paint(m){mode=m;const el=document.getElementById('lv15auth');if(!el)return;
- const head=`<div class="lv15-ah">${LOGO}<b>the<span>health</span>tracker</b></div>`;
+ const head=`<div class="lv15-ah">${LOGO}<b>Urban <span>Health</span></b></div>`;
  const seg=`<div class="lv15-seg"><button class="${mode==='in'?'on':''}" data-m="in">${P('Sign in')}</button><button class="${mode==='up'?'on':''}" data-m="up">${P('Create account')}</button></div>`;
  let body='';
  if(mode==='code')body=`<h2>${E(pending.title)}</h2><p class="mute">${E(pending.sub)}</p><form id="lv15f"><input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" class="lv15-code" required autofocus>${pending.demo?`<p class="lv15-demo">${P('Demo code')}: <b>${E(pending.demo)}</b></p>`:''}<p class="lv15-err" hidden></p><button class="btn p lv15-main">${P('Verify')}</button><button type="button" class="lv15-link" data-m="${pending.back||'in'}">${P('Back')}</button></form>`;

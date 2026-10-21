@@ -143,10 +143,10 @@ if os.path.exists('six/core.js'):
     assert '</script' not in code
     k=s.rindex('</script></body>')
     s=s[:k]+'</script>\n<script id="six-js">'+code+'\n'+s[k:]
-# ---- brand: TheHealthTracker (thehealthtracker.com). Keep the X-DoKKo-Key header and storage keys unchanged so installs keep their data.
+# ---- brand: Urban Health (urbanhealth.in). Keep the X-DoKKo-Key header and storage keys unchanged so installs keep their data.
 s=s.replace('DoKKo Heart Institute','Apex Heart Institute').replace('DoKKo Digestive Clinic','Lotus Digestive Clinic')
-s=s.replace('<title>DoKKo · Advanced Anatomy Lab</title>','<title>TheHealthTracker · Family health, in 3D</title>')
-s=s.replace('class="logo"><i>+</i>DoKKo</div>','class="logo">'+open('/home/claude/work/brand/out/svg/user-logo.svg').read().replace('<svg ','<svg class="thl" role="img" aria-label="TheHealthTracker" ',1)+'</div>')
-s=re.sub(r'DoKKo(?!-Key)','TheHealthTracker',s)
+s=s.replace('<title>DoKKo · Advanced Anatomy Lab</title>','<title>Urban Health · Family health, in 3D</title>')
+s=s.replace('class="logo"><i>+</i>DoKKo</div>','class="logo">'+open('/home/claude/work/brand/out/svg/user-logo.svg').read().replace('<svg ','<svg class="thl" role="img" aria-label="Urban Health" ',1)+'</div>')
+s=re.sub(r'DoKKo(?!-Key)','Urban Health',s)
 open('new.html','w').write(s)
 print('ok',len(s))

@@ -18,7 +18,7 @@ FOCUS = {"heart", "lungs", "liver", "kidneys", "pancreas", "thyroid", "stomach",
 ASK_CAP = {"free": 20, "family": 300, "plus": 100000}
 INSIGHT_CAP = {"free": 10, "family": 200, "plus": 100000}
 
-ASK_SYSTEM = """You are the health assistant inside TheHealthTracker, an Indian family health app. You answer questions about the
+ASK_SYSTEM = """You are the health assistant inside Urban Health, an Indian family health app. You answer questions about the
 family's OWN records, which the app sends you as JSON context (profile, readings, lab results with flags and dates, medicines,
 allergies, pregnancy or cycle trackers, vaccines). The person asking is a family member, not a clinician.
 
@@ -38,7 +38,7 @@ Output ONLY a JSON object: {"answer": string, "sources": [short strings naming t
   args by type — book_lab: {"tests": [test names]}; request_visit: {"kind": "visit"|"video", "why": short reason}; add_reminder: {"text": string, "days": integer days from today};
   add_reading: {"field": "bp"|"glu"|"w"|"spo2"|"hr"|"temp"}; open: {"page": one of meds, vax, preg, careplan, nearlabs, cards, appts, vault}]}"""
 
-INSIGHT_SYSTEM = """You write a short daily insight for one person inside TheHealthTracker, an Indian family health app, from the JSON
+INSIGHT_SYSTEM = """You write a short daily insight for one person inside Urban Health, an Indian family health app, from the JSON
 context the app sends (profile, readings with dates, lab results with flags, medicines and adherence, trackers, vaccines).
 Rules: never diagnose or name a condition the person "has"; use "suggests", "may", "discuss with your doctor". Prefer trends over
 single values (compare dates). Mention what is going well first when something is. No fetal sex, no doses, no vendor or model names.

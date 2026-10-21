@@ -68,7 +68,7 @@ SX.act.finvite=([id])=>{const m=SX.member(id);if(!m)return;if(!SX.user){location
   <div class="full lv-row-end"><button class="btn s" type="button" data-sx="closeModal">${P('Cancel')}</button><button class="btn p" type="submit">${P('Create invite link')}</button></div></form>`,{label:P('Invite')})};
 SX.chg.finvite2=async([id],f)=>{const m=SX.member(id),err=f.querySelector('.lv-err'),c=String(new FormData(f).get('c')||'').trim();
  try{const r=await J('/family/invite','POST',{member_id:id,name:m.name,contact:c});if(c&&!m.ph&&r.channel==='phone'){m.ph=SX.phoneNorm(c)||m.ph;SX.save()}await loadInvites();
-  const msg=`${(SX.user.name||'').split(' ')[0]} ${P('added you to the family on TheHealthTracker. Create your account here (link valid 7 days):')} ${r.link}`;
+  const msg=`${(SX.user.name||'').split(' ')[0]} ${P('added you to the family on Urban Health. Create your account here (link valid 7 days):')} ${r.link}`;
   SX.modal(`<h2>${P('Share the invite')}</h2><p class="mute">${r.sent?P('An email has been sent. You can also share the link yourself.'):P('Send this link to')+' '+E(m.name)+'.'}</p><p class="lv3-link">${E(r.link)}</p>
    <div class="row"><a class="btn p" href="https://wa.me/${m.ph?E(m.ph.replace(/\\D/g,'')):''}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">💬 WhatsApp</a>${navigator.share?`<button class="btn s" data-sx="fshare:${encodeURIComponent(msg)}">${P('Share…')}</button>`:''}<button class="btn s" data-sx="fcopy:${encodeURIComponent(r.link)}">${P('Copy link')}</button></div>
    <div class="lv-row-end"><button class="btn s" data-sx="closeModal">${P('Done')}</button></div>`,{label:P('Invite')});render()}

@@ -428,7 +428,7 @@ def test_loops_close_on_their_own_plan_expiry_stale_calls_and_alerts(monkeypatch
     proactive.run_morning(date(2026, 10, 19))
     assert f.get(f"/api/v1/consults/{ap['id']}").json()["status"] == "done"
     # the hospital was emailed about the visit request (logged even without a transport), the admin sees attention counts
-    assert any(m["subject"].startswith("[TheHealthTracker] Visit request") for m in messaging.SENT_LOG)
+    assert any(m["subject"].startswith("[Urban Health] Visit request") for m in messaging.SENT_LOG)
     st = a.get("/api/admin/stats").json()
     assert set(st["attention"]) >= {"payments", "applications", "doctors", "stores", "visits", "orders"}
 

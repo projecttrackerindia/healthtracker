@@ -348,8 +348,8 @@ def partner_user_add(sid: str, body: PartnerUserIn, a: Admin = Depends(me), db: 
     db.flush()
     log(db, a.email, f"partner.user.add {sid} {email} {role}")
     from . import messaging
-    sent = messaging.mail(email, f"Your TheHealthTracker partner sign-in · {s.name}",
-                          f"Hello {body.name or ''},\n\nA sign-in was created for you at {s.name}{' as a doctor' if role == 'doctor' else ''}.\n\nPortal: https://thehealthtracker.com/partner\nEmail: {email}\nOne-time password: {temp}\n\n"
+    sent = messaging.mail(email, f"Your Urban Health partner sign-in · {s.name}",
+                          f"Hello {body.name or ''},\n\nA sign-in was created for you at {s.name}{' as a doctor' if role == 'doctor' else ''}.\n\nPortal: https://urbanhealth.in/partner\nEmail: {email}\nOne-time password: {temp}\n\n"
                           f"You will set your own password on first sign-in.{' Video consults open once your registration number is verified by our team.' if role == 'doctor' else ''}")
     return {"id": u.id, "email": email, "tempPassword": temp, "portal": "/partner", "role": role, "emailed": sent}
 

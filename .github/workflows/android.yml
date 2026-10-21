@@ -48,7 +48,7 @@ jobs:
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: TheHealthTracker-debug-apk
+          name: Urban Health-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
       - name: Release APK (signed, when a keystore is configured)
         if: ${{ env.HAS_KEYSTORE == 'true' }}
@@ -83,7 +83,7 @@ jobs:
           kw = {"region_name": os.getenv("S3_REGION") or "auto", "aws_access_key_id": os.environ["S3_ACCESS_KEY"], "aws_secret_access_key": os.environ["S3_SECRET_KEY"]}
           if os.getenv("S3_ENDPOINT"): kw["endpoint_url"] = os.environ["S3_ENDPOINT"]
           s3 = boto3.client("s3", **kw); b = os.environ["S3_BUCKET"]
-          s3.put_object(Bucket=b, Key="releases/thehealthtracker.apk", Body=data, ContentType="application/vnd.android.package-archive")
+          s3.put_object(Bucket=b, Key="releases/urbanhealth.apk", Body=data, ContentType="application/vnd.android.package-archive")
           meta = {"version": ver, "versionCode": code, "size": len(data), "sha256": hashlib.sha256(data).hexdigest(), "built": int(time.time()), "commit": os.getenv("GITHUB_SHA", "")[:12], "variant": "release" if "release" in apk else "debug"}
           s3.put_object(Bucket=b, Key="releases/android.json", Body=json.dumps(meta).encode(), ContentType="application/json")
           print("published", meta)
@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
-          name: TheHealthTracker Android (latest build)
+          name: Urban Health Android (latest build)
           body: "Latest Android build from main. Debug-signed unless the keystore secrets are configured. Install: open the APK on the phone and allow installing from this source once."
           files: |
             mobile/android/app/build/outputs/apk/debug/app-debug.apk
@@ -114,5 +114,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ env.HAS_KEYSTORE == 'true' }}
         with:
-          name: TheHealthTracker-release-aab
+          name: Urban Health-release-aab
           path: mobile/android/app/build/outputs/bundle/release/app-release.aab

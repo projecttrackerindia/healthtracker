@@ -1,4 +1,4 @@
-# Running TheHealthTracker on Google Cloud (Mumbai)
+# Running Urban Health on Google Cloud (Mumbai)
 
 Nothing here touches production. Railway keeps serving until you do the cut-over in section 6.
 
@@ -31,7 +31,7 @@ Why one instance: video-call rooms and the daily jobs run inside the app process
 cd deploy/gcp
 cp .env.example .env            # fill in values from Railway:  railway variables --kv
 export BILLING_ACCOUNT=XXXXXX-XXXXXX-XXXXXX
-export PROJECT_ID=thehealthtracker-prod      # must be unique worldwide; pick another if taken
+export PROJECT_ID=urbanhealth-prod      # must be unique worldwide; pick another if taken
 ./setup.sh
 ```
 
@@ -71,17 +71,17 @@ Then test on the `*.run.app` URL with a real account: sign in, open a record wit
 
 ## 5. Domain
 
-Attach `thehealthtracker.com` to Cloud Run:
+Attach `urbanhealth.in` to Cloud Run:
 
 ```bash
-gcloud beta run domain-mappings create --service tht --domain thehealthtracker.com --region asia-south1
-gcloud beta run domain-mappings create --service tht --domain www.thehealthtracker.com --region asia-south1
-gcloud beta run domain-mappings describe --domain thehealthtracker.com --region asia-south1   # shows the DNS records to add
+gcloud beta run domain-mappings create --service tht --domain urbanhealth.in --region asia-south1
+gcloud beta run domain-mappings create --service tht --domain www.urbanhealth.in --region asia-south1
+gcloud beta run domain-mappings describe --domain urbanhealth.in --region asia-south1   # shows the DNS records to add
 ```
 
 Add the records at your DNS provider (the certificate is issued automatically, usually within 15–60 minutes). If the command says domain mappings are not available in the region, use a global external Application Load Balancer with a serverless NEG instead (about US$18/month extra); the console wizard "Cloud Run → Add custom domain" covers both.
 
-Keep `RP_ID=thehealthtracker.com` (already in `env.yaml`). Passkeys made on the Railway address will not work on the custom domain — that is how passkeys are bound — so families create them again once, and the app offers it after sign-in.
+Keep `RP_ID=urbanhealth.in` (already in `env.yaml`). Passkeys made on the Railway address will not work on the custom domain — that is how passkeys are bound — so families create them again once, and the app offers it after sign-in.
 
 ## 6. Cut-over (about 15–20 minutes of downtime)
 

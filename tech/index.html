@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Collect · TheHealthTracker</title>
+<title>Collect · Urban Health</title>
 <meta name="theme-color" content="#0B8A7C">
 <link rel="manifest" href="/tech/manifest.webmanifest">
 <link rel="icon" href="/brand/svg/partner-icon.svg">
@@ -16,7 +16,7 @@
   /* Same system as the family app — same greys, same radii, same shadow language, same type. The only thing
      that changes is the accent, and that is not a free choice: BRAND.md assigns Care Teal #0B8A7C to
      partners (doctors, hospitals, pharmacies, labs) and Signal Blue to families. A technician glancing down
-     should see TheHealthTracker in the partner colour, not a different product. */
+     should see Urban Health in the partner colour, not a different product. */
   --bg:#e8e9eb; --shell:#f1f1f2; --card:#ffffff; --soft:#f7f7f8;
   --ink:#0e1424; --mute:#6a7385; --line:#dcdde1;
   --brand:#0B8A7C; --brand-ink:#ffffff; --brand-soft:#e4f2f0;
@@ -97,7 +97,7 @@ const $ = s => document.querySelector(s);
 const E = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // The partner lock-up from web/brand — the cross whose arm becomes a heartbeat, in Care Teal. Inlined rather
 // than fetched so the first screen paints with no network.
-const MARK = `<svg class="mark" viewBox="8 10 52 44" aria-hidden="true"><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="var(--brand)"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="var(--brand)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="var(--brand)"/></svg>`;
+const MARK = `<svg class="mark" viewBox="10 4 44 54" aria-hidden="true"><path fill-rule="evenodd" d="M32 6c-11 0-20 8.8-20 19.6 0 10.6 12.9 24.9 17.7 29.9a3.2 3.2 0 0 0 4.6 0C39.1 50.5 52 36.2 52 25.6 52 14.8 43 6 32 6zM27.9 14.1h8.2v7.4h7.4v8.2h-7.4v7.4h-8.2v-7.4h-7.4v-8.2h7.4z" fill="var(--brand)"/></svg>`;
 
 let S = { me: null, jobs: [], busy: false, err: "", mustChange: false };
 let watchId = null, pinging = null;
@@ -137,7 +137,7 @@ function stopSharing() {
 
 // ---- screens ----------------------------------------------------------------------------------------------
 function signIn() {
-  return `<div class="top">${MARK}<div class="grow"><b>Collect</b><small>TheHealthTracker for partners</small></div></div>
+  return `<div class="top">${MARK}<div class="grow"><b>Collect</b><small>Urban Health for partners</small></div></div>
   <div class="card">
     <h2 style="margin:0 0 4px;font-size:21px;letter-spacing:-.015em">Sign in</h2>
     <p style="color:var(--mute);margin:0;font-size:15px">Use the details your lab gave you.</p>

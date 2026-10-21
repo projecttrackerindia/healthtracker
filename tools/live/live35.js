@@ -52,7 +52,7 @@ async function pharmFallback(box){
   const x=items.find(i=>String(i.id)===b.dataset.lv35ph);if(!x)return;
   const m=SX.me&&SX.me(),lines=(S.cart||[]).map(c=>'• '+(c.name||c.id)+(c.q>1?' ×'+c.q:''));
   const body=[`Hello ${x.name},`,'',`I would like these medicines${m?' for '+m.name:''}:`,...lines,'',
-   S.addr?`Deliver to: ${S.addr}`:'','Please confirm stock and the total.','','Sent from TheHealthTracker'].filter(Boolean).join('\n');
+   S.addr?`Deliver to: ${S.addr}`:'','Please confirm stock and the total.','','Sent from Urban Health'].filter(Boolean).join('\n');
   const n=(x.phone||'').replace(/[^0-9+]/g,'').replace(/^\+/,'');
   const url=n?`https://wa.me/${n}?text=${encodeURIComponent(body)}`:`https://wa.me/?text=${encodeURIComponent(body)}`;
   try{window.open(url,'_blank','noopener')}catch(e){location.href=url}})}

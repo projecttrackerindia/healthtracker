@@ -24,7 +24,7 @@ Also usually included: Google Cloud Skills Boost training, a Google for Startups
 ## Information to have ready
 
 * Legal company name, CIN/LLPIN, incorporation date, registered address
-* Website: https://thehealthtracker.com (a public landing page is required — it exists)
+* Website: https://urbanhealth.in (a public landing page is required — it exists)
 * Company email on your own domain (not Gmail) and the founders' LinkedIn profiles
 * Funding stage and investors (if any), team size
 * Google Cloud billing account id and project id (after `deploy/gcp/setup.sh`)
@@ -34,13 +34,13 @@ Also usually included: Google Cloud Skills Boost training, a Google for Startups
 ## Ready-to-paste answers (edit the placeholders in [brackets])
 
 **One-line description**
-TheHealthTracker is a family health record for India: reports, prescriptions, medicines, vaccines, pregnancy and emergency information for every family member in one secure place, with doctor video visits, lab and pharmacy ordering, and SOS.
+Urban Health is a family health record for India: reports, prescriptions, medicines, vaccines, pregnancy and emergency information for every family member in one secure place, with doctor video visits, lab and pharmacy ordering, and SOS.
 
 **What problem do you solve?**
-Indian families keep health records as paper, WhatsApp photos and scattered PDFs. Reports get lost, medicines are missed, and in an emergency nobody can find allergies or blood groups. TheHealthTracker keeps one encrypted record per family member, reads uploaded reports and prescriptions into structured data, reminds people about medicines, vaccines and follow-up tests, and gives doctors a consented summary during video visits.
+Indian families keep health records as paper, WhatsApp photos and scattered PDFs. Reports get lost, medicines are missed, and in an emergency nobody can find allergies or blood groups. Urban Health keeps one encrypted record per family member, reads uploaded reports and prescriptions into structured data, reminds people about medicines, vaccines and follow-up tests, and gives doctors a consented summary during video visits.
 
 **Stage and traction**
-[Live in production at thehealthtracker.com since [month year]. Families: [number]. Partners onboarded: [number of labs / pharmacies / hospitals / doctors]. Paid plans: [yes/no].]
+[Live in production at urbanhealth.in since [month year]. Families: [number]. Partners onboarded: [number of labs / pharmacies / hospitals / doctors]. Paid plans: [yes/no].]
 
 **Business model**
 Family subscription plans; partner commissions on lab and pharmacy orders; consultation fees for verified doctors; a hospital-bag merchandise package.

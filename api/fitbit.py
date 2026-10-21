@@ -1,11 +1,11 @@
-"""Fitbit (cloud) → TheHealthTracker (/api/v1/fitbit). For people on the web without the phone app, or with a Fitbit.
+"""Fitbit (cloud) → Urban Health (/api/v1/fitbit). For people on the web without the phone app, or with a Fitbit.
 
 Google Fit's REST API was retired in 2025 and Garmin/Samsung require partner programmes, so Fitbit's public Web API
 is the one wearable cloud a small Indian app can use today. OAuth 2.0 with PKCE; tokens are sealed with the data key
 per family profile. `sync` pulls the last 7 days (steps per day, sleep hours, resting heart rate, SpO₂, weight) in the
 same shape as the phone's Health Connect / HealthKit plugin, and the app merges it into the person's readings.
 Register at https://dev.fitbit.com (Personal app type reads intraday too; Server type for several users),
-callback https://thehealthtracker.com/api/v1/fitbit/callback, then set FITBIT_CLIENT_ID and FITBIT_CLIENT_SECRET.
+callback https://urbanhealth.in/api/v1/fitbit/callback, then set FITBIT_CLIENT_ID and FITBIT_CLIENT_SECRET.
 """
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)
     links = db.scalars(select(DeviceLink).where(DeviceLink.household_id == h.id, DeviceLink.provider == "fitbit")).all() if h else []
     return {"enabled": enabled(), "links": [link_json(l) for l in links],
             "sunset": "2026-10-30",
-            "message": "" if enabled() else "Fitbit's cloud service for apps closes on 30 October 2026 (Google is replacing it). Fitbit readings reach TheHealthTracker through the phone app — Fitbit shares with Health Connect on Android."}
+            "message": "" if enabled() else "Fitbit's cloud service for apps closes on 30 October 2026 (Google is replacing it). Fitbit readings reach Urban Health through the phone app — Fitbit shares with Health Connect on Android."}
 
 
 @r.post("/start")

@@ -1,9 +1,9 @@
-# Deploy TheHealthTracker on Railway
+# Deploy Urban Health on Railway
 
-1. **Repository.** Unzip, then push the `thehealthtracker` folder to a new GitHub repository (the folder is the repo root).
+1. **Repository.** Unzip, then push the `urbanhealth` folder to a new GitHub repository (the folder is the repo root).
    ```
-   cd thehealthtracker && git init && git add . && git commit -m "TheHealthTracker" && git branch -M main
-   git remote add origin https://github.com/<you>/thehealthtracker.git && git push -u origin main
+   cd urbanhealth && git init && git add . && git commit -m "Urban Health" && git branch -M main
+   git remote add origin https://github.com/<you>/urbanhealth.git && git push -u origin main
    ```
 2. **Project.** railway.app → New Project → Deploy from GitHub repo → pick the repository. Nixpacks detects Python and uses
    the start command and `/healthz` health check from `railway.json`.
@@ -12,13 +12,13 @@
 
 ```
 SECRET_KEY=<64 hex characters>
-ADMIN_EMAIL=admin@thehealthtracker.com
+ADMIN_EMAIL=admin@urbanhealth.in
 ADMIN_PASSWORD=<12+ characters>
 DATABASE_URL=${{Postgres.DATABASE_URL}}
-RP_ID=thehealthtracker.com
-APP_ORIGIN=https://thehealthtracker.com,https://www.thehealthtracker.com
+RP_ID=urbanhealth.in
+APP_ORIGIN=https://urbanhealth.in,https://www.urbanhealth.in
 RESEND_API_KEY=
-MAIL_FROM=TheHealthTracker <no-reply@thehealthtracker.com>
+MAIL_FROM=Urban Health <no-reply@urbanhealth.in>
 MSG91_AUTH_KEY=
 MSG91_TEMPLATE_ID=
 ANTHROPIC_API_KEY=
@@ -31,8 +31,8 @@ OTP_DEMO=0
 ```
 
 > **First deploy on the `*.up.railway.app` address, before your domain is connected:** set `RP_ID` to that host
-> (e.g. `thehealthtracker-production.up.railway.app`) and `APP_ORIGIN` to `https://` + that host. Passkeys are bound to
-> `RP_ID`: passkeys created on the Railway address will not work on thehealthtracker.com, so switch both variables to the
+> (e.g. `urbanhealth-production.up.railway.app`) and `APP_ORIGIN` to `https://` + that host. Passkeys are bound to
+> `RP_ID`: passkeys created on the Railway address will not work on urbanhealth.in, so switch both variables to the
 > real domain before inviting users. If no email/SMS provider is set yet, you can set `OTP_DEMO=1` **for your own testing
 > only** — codes then appear on screen and anyone could create accounts; set it back to `0` before launch.
 
@@ -52,7 +52,7 @@ OTP_DEMO=0
 | `PWNED_CHECK` | no | `1` (default) rejects passwords found in known breaches using Have I Been Pwned's k-anonymity API. |
 | `OTP_DEMO` | no | `1` shows codes on screen instead of sending them. Testing only. |
 | `DOKKO_REGION` | no | `IN`. |
-| `LEGAL_ENTITY`, `LEGAL_ADDRESS` | yes before launch | Shown on /privacy and /terms (registered name and address of the business). Defaults: `TheHealthTracker`, `Hyderabad, Telangana, India`. |
+| `LEGAL_ENTITY`, `LEGAL_ADDRESS` | yes before launch | Shown on /privacy and /terms (registered name and address of the business). Defaults: `Urban Health`, `Hyderabad, Telangana, India`. |
 | `GRIEVANCE_NAME`, `GRIEVANCE_EMAIL` | yes before launch | Grievance Officer shown in the privacy policy (DPDP Act). `GRIEVANCE_EMAIL` falls back to `SUPPORT_EMAIL`, then `ADMIN_EMAIL`. |
 | `SUPPORT_EMAIL` | recommended | Contact address on /terms. |
 | `POLICY_UPDATED` | no | Date shown on the policy pages, e.g. `18 October 2026`. |
@@ -60,7 +60,7 @@ OTP_DEMO=0
 | `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | for phone notifications | Reminders and missed-dose alerts when the app is closed. Generate once: `python -c "from api.push import make_keys; print(make_keys())"` and paste `VAPID_PRIVATE_KEY`; `VAPID_SUBJECT` is `mailto:support@yourdomain`. Changing the key signs every phone out of notifications. |
 | `S3_BUCKET`, `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` | recommended | Where families' documents (encrypted) are kept: Cloudflare R2, AWS S3 (ap-south-1, Mumbai) or Backblaze B2. Without a bucket, documents are stored encrypted in Postgres (fine for a small launch; `FILES_CAP_MB` per family, default 2048). |
 | `APP_ENV` | staging only | `staging` shows a ribbon in the app and sends `noindex` headers. |
-| `CANONICAL_HOST` | recommended | e.g. `thehealthtracker.com`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
+| `CANONICAL_HOST` | recommended | e.g. `urbanhealth.in`. Sends www.… visitors to this address so the sign-in cookie is always the same. Set it only after both addresses open the site. |
 | `PORT`, `RAILWAY_GIT_COMMIT_SHA` | — | Set by Railway. Do not add them. |
 
 ### Round 16 (part 1) — merged late (2026-10-20)
@@ -135,9 +135,9 @@ The server sends the compressed copy of a page (`index.html.br` / `.gz`) when th
 `python tools/compress.py --check` fails if any copy is stale. The server also refuses to send a stale copy (it falls back
 to the uncompressed file and prints a warning in the deploy log), so a forgotten step costs speed, not correctness.
 
-5. **Domain.** Service → Settings → Networking → Custom Domain → `thehealthtracker.com` (and `www`). Add the CNAME record Railway
+5. **Domain.** Service → Settings → Networking → Custom Domain → `urbanhealth.in` (and `www`). Add the CNAME record Railway
    shows at your domain registrar. HTTPS is issued automatically.
-6. **Check.** `https://thehealthtracker.com/healthz` returns `{"ok":true}`. The landing page is `/`, sign-in `/signin`, sign-up `/signup`, the app `/app`, the admin panel `/admin`.
+6. **Check.** `https://urbanhealth.in/healthz` returns `{"ok":true}`. The landing page is `/`, sign-in `/signin`, sign-up `/signup`, the app `/app`, the admin panel `/admin`.
    Create your own account, add a passkey (Settings → Account & security), sign out and sign back in with it.
 7. **After launch.** In `/admin`: change seed partners to real ones, verify them, review plans (Free / ₹39 / ₹99), seasonal advisories and videos.
 
@@ -145,7 +145,7 @@ to the uncompressed file and prints a warning in the deploy log), so a forgotten
 
 1. In the same Railway project: **New → GitHub repo → this repository**, branch `staging`. Add a second Postgres plugin for it.
 2. Variables: copy from production, then set `APP_ENV=staging`, `OTP_DEMO=1` (codes on screen; never on production), a different `SECRET_KEY` and `DATA_KEY`, and **no** Razorpay live keys. Leave `S3_BUCKET` empty or use a separate bucket.
-3. Generate a domain for it (for example `staging-thehealthtracker.up.railway.app`) and set `RP_ID` / `APP_ORIGIN` to that address.
+3. Generate a domain for it (for example `staging-urbanhealth.up.railway.app`) and set `RP_ID` / `APP_ORIGIN` to that address.
 4. Workflow: merge pull requests into `staging` first, click through, then into `main`. The orange STAGING ribbon tells you which one you are looking at.
 
 ## Identity and the health assistant (round 5)
@@ -193,7 +193,7 @@ Variables: none required (Google STUN is used). For calls across strict mobile n
 
 **Payments by UPI (until Razorpay).** Plan upgrades and orders show a QR / one-tap UPI link for one of our accounts (`api/data/upi.json`, override with `UPI_ACCOUNTS` JSON) with the exact amount and a reference (THT00001…). The person enters the UTR; **Admin → UPI payments** matches it against the bank statement and confirms — only then does the plan switch (invoice issued) or the order show as paid. `UPI_PAY=0` switches the route off. Razorpay keys, when added, take over automatically.
 
-**Identity from Aadhaar (DigiLocker).** There is no public Aadhaar login for apps; UIDAI e-KYC is only for licensed AUA/KUAs. The sanctioned route is DigiLocker: register at <https://partners.digilocker.gov.in> (Requester, OAuth 2.0; redirect URI `https://thehealthtracker.com/api/v1/digilocker/callback`; documents: Aadhaar e-KYC) and set `DIGILOCKER_CLIENT_ID`, `DIGILOCKER_CLIENT_SECRET`. Then sign-up offers *Verify with Aadhaar via DigiLocker* instead of the mobile code (email code stays), the account name and date of birth come from Aadhaar and lock, the masked Aadhaar card (last 4, demographics, photo) is kept encrypted in Cards, and the verified badge accepts Aadhaar in place of the mobile code. Mobile numbers still need our own OTP (MSG91) — e-KYC does not return the mobile.
+**Identity from Aadhaar (DigiLocker).** There is no public Aadhaar login for apps; UIDAI e-KYC is only for licensed AUA/KUAs. The sanctioned route is DigiLocker: register at <https://partners.digilocker.gov.in> (Requester, OAuth 2.0; redirect URI `https://urbanhealth.in/api/v1/digilocker/callback`; documents: Aadhaar e-KYC) and set `DIGILOCKER_CLIENT_ID`, `DIGILOCKER_CLIENT_SECRET`. Then sign-up offers *Verify with Aadhaar via DigiLocker* instead of the mobile code (email code stays), the account name and date of birth come from Aadhaar and lock, the masked Aadhaar card (last 4, demographics, photo) is kept encrypted in Cards, and the verified badge accepts Aadhaar in place of the mobile code. Mobile numbers still need our own OTP (MSG91) — e-KYC does not return the mobile.
 
 **ABHA / ABDM.** `api/abdm.py` implements the v3 flows (session token, public certificate, Aadhaar-OTP enrolment, login by ABHA) behind `ABDM_CLIENT_ID`, `ABDM_CLIENT_SECRET`, `ABDM_ENV=sandbox|production`. Register at <https://sandbox.abdm.gov.in>. Until then the ABHA card says linking is coming and accepts a photo.
 
@@ -207,13 +207,13 @@ Variables: none required (Google STUN is used). For calls across strict mobile n
 
 **Devices tab (round 11).** Home → Devices shows where readings come from: the phone app (Health Connect on Android, Apple Health on iPhone — including Apple Watch ECG recordings, imported as strips), **Fitbit** linked from the web (`FITBIT_CLIENT_ID/SECRET`, callback `/api/v1/fitbit/callback`; register at dev.fitbit.com), Bluetooth devices in the browser, and **live ECG from a Polar H10/H9** (PMD service over Web Bluetooth; 30-second strips are saved as records with rate and RR variation, readable by the assistant). No watch maker exposes a live ECG to third-party apps; Google Fit's API is gone, which is why Fitbit is the one cloud connector.
 
-**App downloads.** `GET /api/v1/app/android` and `/download/android` serve the APK that GitHub Actions publishes to the bucket (`releases/thehealthtracker.apk` + `android.json`) when the `S3_*` repository secrets exist; an admin can also upload one at `PUT /api/admin/app/android`. `PLAY_STORE_URL`, `APPSTORE_URL`, `TESTFLIGHT_URL` switch the site's buttons when the store listings exist. `mobile/ios` is the iOS project (HealthKit plugin, `ios.yml` builds on a macOS runner; signing needs an Apple Developer account and the `IOS_*` secrets).
+**App downloads.** `GET /api/v1/app/android` and `/download/android` serve the APK that GitHub Actions publishes to the bucket (`releases/urbanhealth.apk` + `android.json`) when the `S3_*` repository secrets exist; an admin can also upload one at `PUT /api/admin/app/android`. `PLAY_STORE_URL`, `APPSTORE_URL`, `TESTFLIGHT_URL` switch the site's buttons when the store listings exist. `mobile/ios` is the iOS project (HealthKit plugin, `ios.yml` builds on a macOS runner; signing needs an Apple Developer account and the `IOS_*` secrets).
 
 **Loops that close on their own.** Paid plans end when `plan_until` passes (notice + Free plan) with one renewal nudge 5 days before; a video call nobody ended closes after 3 hours; partners get an email for every new order and visit request (`owner_email` + their sign-ins); applicants and new doctor sign-ins receive their one-time password by email; `ADMIN_ALERT_EMAIL` receives UPI claims and new applications; the admin dashboard shows a **Needs attention** row (payments to confirm, applications, doctors to verify, stores awaiting verification, visits unanswered > 24 h, orders not picked up > 4 h). All email goes through the existing transport (`RESEND_API_KEY` or `SMTP_*`); without one, nothing is sent and the admin pages carry the same information.
 
 **Round 12.** *Shop*: `api/shop.py` seeds a system store (`s_tht_shop`) and the **Hospital Bag · Complete** package (placeholder price ₹2,999 / MRP ₹3,999, stock 50 — edit in Admin → Shop, upload a photo); families buy it from the birth plan with a saved address and UPI QR or cash on delivery; orders are kind `shop` and are fulfilled from Admin → Orders. *Blood network*: donors opt in from Medical ID (`PUT /donor`, consent + rough location); only hospitals, blood banks (new store kind `bloodbank`) and verified doctors raise requests from the partner portal; compatible, eligible donors within the radius get a push; offer → accept → live position every 20 s → arrived → donated (updates the donor's eligibility). Organs are never requested (THOTA 1994) — only the NOTTO pledge. *Medical ID* is an ID card first (contacts tap-to-call, blood group, allergies, pledge badges) with details folded below.
 
-**Round 13.** *Phone shell*: at ≤720px the app has a bottom tab bar (Home · Records · Medicines · Care · More), a one-row app bar, sub-tabs that scroll, sheet-style modals, denser cards and the 3D body only on the Body tab. *Google Maps*: set `GOOGLE_MAPS_KEY` (browser key restricted to thehealthtracker.com; Maps JavaScript + Places + Directions enabled) and every map switches to Google with road routes and ETAs on blood journeys and Places autocomplete on addresses; without it OpenStreetMap stays. *APK*: every Android build also attaches the APK to the `android-latest` GitHub release; Admin → System shows the publish state and lets you upload an APK by hand; `ANDROID_RELEASE_PUBLIC=1` uses the GitHub asset as the site's link when the repo is public.
+**Round 13.** *Phone shell*: at ≤720px the app has a bottom tab bar (Home · Records · Medicines · Care · More), a one-row app bar, sub-tabs that scroll, sheet-style modals, denser cards and the 3D body only on the Body tab. *Google Maps*: set `GOOGLE_MAPS_KEY` (browser key restricted to urbanhealth.in; Maps JavaScript + Places + Directions enabled) and every map switches to Google with road routes and ETAs on blood journeys and Places autocomplete on addresses; without it OpenStreetMap stays. *APK*: every Android build also attaches the APK to the `android-latest` GitHub release; Admin → System shows the publish state and lets you upload an APK by hand; `ANDROID_RELEASE_PUBLIC=1` uses the GitHub asset as the site's link when the repo is public.
 
 **Round 14.** *Deep links*: the app's address is `/app/<person>/<profile>/<page>` with opaque hashed ids (never names or raw ids); reload, back/forward and sharing a link land on the same page and profile. *Idle sign-out*: sessions end after 30 minutes without a request (`SESSION_IDLE_MINUTES`); the app warns a minute before and signs out, landing on `/signin?idle=1`. *Care that fits the person*: cycle and pregnancy only for women of the right age, growth & vaccines only for under-18s, and Care shows "nothing to manage" until a report, a doctor's e-prescription note (offered as a suggestion) or the person sets up a plan. *Phone*: greeting + collapsing title, swipe between sub-tabs, pull to refresh, tab bar hides while scrolling down, haptics.
 
@@ -221,7 +221,7 @@ Variables: none required (Google STUN is used). For calls across strict mobile n
 
 **Signed-out lock (round 16a).** Nothing of a family's record is painted while nobody is signed in — on the website, in the installed web app and in the native shells. An expired or idle session shows the full-screen sign-in with the record hidden; a device that has ever seen an account stays locked offline too. The only way to see sample data is to ask for the demo (the "See a demo with a sample family" link on the sign-in screen, or `/app?demo=1` from the website): a fictional family in memory only, never saved to the device, and the server refuses every write from a `demo-…` key (403) except `/hello` and `/beacon`; housekeeping deletes demo households after an hour.
 
-**Passkeys and the domain.** Passkeys are bound to the domain the app is opened on. `RP_ID` names the canonical domain; when the app is opened on any other host that serves it (the `*.up.railway.app` address before the custom domain is attached, a staging host), that host is used as the relying party automatically — otherwise every passkey call fails with a browser SecurityError. A passkey made on one domain does not work on another, so attach the custom domain (Railway → service → Settings → Networking → Custom domain) before asking families to create passkeys, and keep `RP_ID=thehealthtracker.com`. The in-app sign-in offers "Sign in with a passkey" and the automatic (autofill) prompt; after a sign-in on a device with a platform authenticator the app offers to create one (once per 30 days if declined).
+**Passkeys and the domain.** Passkeys are bound to the domain the app is opened on. `RP_ID` names the canonical domain; when the app is opened on any other host that serves it (the `*.up.railway.app` address before the custom domain is attached, a staging host), that host is used as the relying party automatically — otherwise every passkey call fails with a browser SecurityError. A passkey made on one domain does not work on another, so attach the custom domain (Railway → service → Settings → Networking → Custom domain) before asking families to create passkeys, and keep `RP_ID=urbanhealth.in`. The in-app sign-in offers "Sign in with a passkey" and the automatic (autofill) prompt; after a sign-in on a device with a platform authenticator the app offers to create one (once per 30 days if declined).
 
 **Round 17 — phone shell v2.** One app bar (person avatar · page title · bell · account); the greeting lives in Today. The **Health Card banner** (blood group · name · allergies/conditions · SOS) is pinned under the bar on every screen and can only be switched off in Safety → Medical ID; while it is on, the floating SOS bubble is hidden. Sub-tabs live in the bar as one strip (never repeated below the 3D stage). The assistant is full-height with the input docked above the keyboard and the tab bar stepping aside while typing. Body and Heart Lab show the viewer first with tools in a bottom row; heart labels are on demand ("Labels"). Bottom bar is a floating, icon-only pill. Pull-to-refresh is gone (it fired on ordinary iOS scrolls). In the Android app the Health Card is also an **ongoing notification** (`@capacitor/local-notifications`, id 7001) with an SOS action, removed when the banner is switched off; iOS gets the equivalent (Live Activity) with the App Store build.
 
@@ -725,7 +725,7 @@ Worth remembering: an API test proves the endpoint. It does not prove the screen
 the family's view; full suite 182 passing.
 
 
-### Follow-up: the technician app is TheHealthTracker, in the partner colour
+### Follow-up: the technician app is Urban Health, in the partner colour
 
 The first cut invented a teal palette and drew its own test-tube glyph. `BRAND.md` already answers both:
 
@@ -737,7 +737,7 @@ The first cut invented a teal palette and drew its own test-tube glyph. `BRAND.m
 
 So the technician app now uses the real partner mark from `web/brand/svg/partner-mark.svg`, Care Teal, the
 family app's greys, radii, shadow and type stack, and the `partner-icon` PNGs in its manifest. It reads as
-TheHealthTracker in the partner colour rather than as a different product, which is what a technician glancing
+Urban Health in the partner colour rather than as a different product, which is what a technician glancing
 down should see.
 
 The rule this sets for the five roles still to come: **a role gets an accent, not a look.** One design system,
@@ -903,7 +903,7 @@ Admin: same row, **Mark settled** → drawer saying "Pay ₹2,896 to Lucid Diagn
 row becomes a green ₹2,896 with the UTR under it and an undo.
 
 ### Still blocked on a decision
-Paying for a booking at checkout needs a Razorpay merchant account (KYC) for TheHealthTracker. The plumbing
+Paying for a booking at checkout needs a Razorpay merchant account (KYC) for Urban Health. The plumbing
 in `api/payments.py` is already written and used for subscriptions; nothing can be exercised end to end until
 that account exists. The ledger above does not depend on it.
 
@@ -1112,7 +1112,7 @@ actually ship, which is what decides whether a family's phone picks up new front
 
 One public URL now answers "did that land?":
 
-    curl -s https://thehealthtracker.com/api/health
+    curl -s https://urbanhealth.in/api/health
 
 4 new tests, suite at **326**.
 

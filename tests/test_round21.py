@@ -99,7 +99,7 @@ def test_page_carries_layer_21():
     assert "lv21-ring" in html and "/sos/start" in html and "wa.me/" in html
     assert "Counts down from 3, then calls" in html
     assert "const V='dk-r" in (ROOT / "web" / "sw.js").read_text(encoding="utf-8")
-    kt = (ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "thehealthtracker" / "app" / "SosPlugin.kt").read_text()
+    kt = (ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "urbanhealth" / "app" / "SosPlugin.kt").read_text()
     assert "ACTION_CALL" in kt and "ACTION_DIAL" in kt
     assert "CALL_PHONE" in (ROOT / "mobile" / "android" / "app" / "src" / "main" / "AndroidManifest.xml").read_text()
     assert sos.message is not None

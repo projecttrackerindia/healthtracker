@@ -45,5 +45,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ env.HAS_CERT == 'true' }}
         with:
-          name: TheHealthTracker-ios-ipa
+          name: Urban Health-ios-ipa
           path: mobile/ios/App/build/ipa/*.ipa

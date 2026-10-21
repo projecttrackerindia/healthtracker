@@ -15,7 +15,7 @@ if "/*live-p25*/" not in s:
 if MARK in s:
     sys.exit("already applied")
 # the My-data page said there was no server copy; there is (encrypted record + 30 days of history)
-old_txt = "There is no TheHealthTracker server account in this build: nothing here leaves your device unless you export or share it."
+old_txt = "There is no Urban Health server account in this build: nothing here leaves your device unless you export or share it."
 if s.count(old_txt) != 1:
     sys.exit("data page anchor")
 s = s.replace(old_txt, "When you are signed in, the record is also kept encrypted on our servers (with 30 days of history) so every family member sees the same thing; documents live in the vault. Nothing is shared unless you share it.")

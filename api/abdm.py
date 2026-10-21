@@ -105,7 +105,7 @@ def _auth_hdr() -> dict:
 @r.get("/status")
 def status():
     return {"enabled": enabled(), "env": env() if enabled() else "", "scope": ["create-by-aadhaar", "login-by-abha"] if enabled() else [],
-            "message": "" if enabled() else "ABHA linking opens once TheHealthTracker's ABDM registration is live. Until then, add your ABHA card in Cards by photo."}
+            "message": "" if enabled() else "ABHA linking opens once Urban Health's ABDM registration is live. Until then, add your ABHA card in Cards by photo."}
 
 
 class AadhaarIn(BaseModel):

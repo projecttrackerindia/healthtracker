@@ -55,7 +55,7 @@ def _redirect(request: Request) -> str:
 @r.get("/status")
 def status():
     return {"enabled": enabled(), "provider": "DigiLocker (MeitY) · Aadhaar e-KYC",
-            "message": "" if enabled() else "Aadhaar verification through DigiLocker opens once TheHealthTracker's DigiLocker partner registration is approved. Until then, enter your name exactly as on Aadhaar."}
+            "message": "" if enabled() else "Aadhaar verification through DigiLocker opens once Urban Health's DigiLocker partner registration is approved. Until then, enter your name exactly as on Aadhaar."}
 
 
 @r.post("/start")

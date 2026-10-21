@@ -43,12 +43,12 @@ def send_backup(db: Session, h: Household, state: dict | None = None, why: str =
     if len(data) > MAX_ATTACH:
         return {"sent": 0, "reason": "record too large to attach"}
     stamp = time.strftime("%Y-%m-%d")
-    name = f"thehealthtracker-backup-{stamp}.zip"
-    text = (f"Your family's TheHealthTracker record, as of {time.strftime('%d %b %Y, %H:%M')} IST.\n\n"
+    name = f"urbanhealth-backup-{stamp}.zip"
+    text = (f"Your family's Urban Health record, as of {time.strftime('%d %b %Y, %H:%M')} IST.\n\n"
             "Inside: record.json (profiles, readings, results, medicines, cards, trackers, consents), orders, appointments, messages, notices and a README. "
             "Documents are not attached — they stay safe in your vault; a full copy with every file is one tap away in the app: Family & Privacy → My data → Download a copy.\n\n"
             f"This copy was sent because {'it is the first of the month' if why == 'monthly' else 'you asked for it'}. Keep it somewhere safe; anyone with the file can read it.\n\n"
-            "— TheHealthTracker")
+            "— Urban Health")
     sent = 0
     for u in to:
         try:

@@ -18,8 +18,8 @@ import urllib.parse
 import urllib.request
 from email.message import EmailMessage
 
-APP = "TheHealthTracker"
-UA = f"{APP}/1.0 (+https://thehealthtracker.com)"  # a default urllib User-Agent gets blocked by some providers' bot protection (e.g. Cloudflare)
+APP = "Urban Health"
+UA = f"{APP}/1.0 (+https://urbanhealth.in)"  # a default urllib User-Agent gets blocked by some providers' bot protection (e.g. Cloudflare)
 
 
 def email_ready() -> bool:
@@ -94,7 +94,7 @@ Our team will never ask you for this code.</p></div>"""
 
 
 def send_email(to: str, code: str, purpose: str) -> None:
-    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
+    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@urbanhealth.in>")
     subject = f"{code} is your {APP} code"
     text = f"Your {APP} code is {code}. It expires in 10 minutes. Never share it with anyone."
     if _use_resend():
@@ -126,7 +126,7 @@ def send_email(to: str, code: str, purpose: str) -> None:
 
 def send_mail_attachment(to: str, subject: str, text: str, filename: str, data: bytes, mime: str = "application/zip") -> None:
     """A transactional email with one attachment (monthly backup). SMTP transport; with Resend the attachment goes base64 in the payload."""
-    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
+    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@urbanhealth.in>")
     if _use_resend():
         payload = {"from": sender, "to": [to], "subject": subject, "text": text, "attachments": [{"filename": filename, "content": base64.b64encode(data).decode()}]}
         req = urllib.request.Request("https://api.resend.com/emails", method="POST", data=json.dumps(payload).encode(),
@@ -203,7 +203,7 @@ def send_sms(to: str, code: str) -> None:
 
 def send_invite_email(to: str, by: str, name: str, link: str) -> None:
     """Invitation to create an account for an existing family profile (email only; SMS in India needs a DLT template)."""
-    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
+    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@urbanhealth.in>")
     subject = f"{by} added you to the family on {APP}"
     text = (f"{by} has set up a profile for {name or 'you'} on {APP}, the family health app.\n\n"
             f"Create your account with this link to see your own records and your family's: {link}\n\n"
@@ -241,7 +241,7 @@ def send_invite_email(to: str, by: str, name: str, link: str) -> None:
 
 def send_mail(to: str, subject: str, text: str, html: str = "") -> None:
     """Any transactional email (partner alerts, welcome mails, admin attention). Same transport as the codes."""
-    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@thehealthtracker.com>")
+    sender = os.getenv("MAIL_FROM", f"{APP} <no-reply@urbanhealth.in>")
     html = html or "<div style=\"font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f1220;white-space:pre-line\">" + text.replace("&", "&amp;").replace("<", "&lt;") + "</div>"
     if _use_resend():
         req = urllib.request.Request("https://api.resend.com/emails", method="POST",

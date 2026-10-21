@@ -32,7 +32,7 @@ from .models import SosAlert, now
 from .routes import household
 
 r = APIRouter()
-APP = "TheHealthTracker"
+APP = "Urban Health"
 
 
 class Contact(BaseModel):

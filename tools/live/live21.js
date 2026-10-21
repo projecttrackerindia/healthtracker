@@ -57,7 +57,7 @@ async function fire(m){const t=callTarget(m),cs=SX.contactsOf(m.id).filter(c=>c.
  if(A.id){A.timer=setInterval(async()=>{if(!A||!A.active)return;const f=await locate(8000);if(f&&(!A.loc||Math.abs(f.lat-A.loc.lat)>1e-5||Math.abs(f.lng-A.loc.lng)>1e-5)){A.loc=f;try{const r=await J('/sos/'+A.id+'/loc','POST',{loc:{lat:f.lat,lng:f.lng,acc:f.acc}});if(r.sent)A.sent=r.sent}catch(e){}paint(m)}},30000)}
  else if(!loc){const f=await locate(15000);if(f){A.loc=f;A.msg=offlineMsg(m,f);paint(m)}}
  hospitals(m)}
-function offlineMsg(m,loc){return [`EMERGENCY: ${m.name} needs help.`,loc?`Location: https://maps.google.com/?q=${loc.lat.toFixed(6)},${loc.lng.toFixed(6)}`:'Location: not available. Please call them.',SX.medSummary(m),'Call them or 112 now. Sent from TheHealthTracker SOS.'].join('\n')}
+function offlineMsg(m,loc){return [`EMERGENCY: ${m.name} needs help.`,loc?`Location: https://maps.google.com/?q=${loc.lat.toFixed(6)},${loc.lng.toFixed(6)}`:'Location: not available. Please call them.',SX.medSummary(m),'Call them or 112 now. Sent from Urban Health SOS.'].join('\n')}
 async function hospitals(m){if(!A||!A.loc||A.hosp)return;try{const r=await J(`/places?kind=hospital&lat=${A.loc.lat}&lng=${A.loc.lng}&radius=6000`);A.hosp=(r.items||[]).slice(0,3);paint(m)}catch(e){A.hosp=[]}}
 
 // ---------------------------------------------------------------- the active sheet

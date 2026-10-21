@@ -1,9 +1,9 @@
 """Hand-written Hindi / Telugu for the phrases a family sees first. Key = English as it appears in P('…').
 Each value: [Hindi, Telugu]. These win over anything the Gemini pipeline (translate.py) produces."""
 
-RULES = ("You translate short UI strings for an Indian family health app (TheHealthTracker) from English into Hindi and Telugu. "
+RULES = ("You translate short UI strings for an Indian family health app (Urban Health) from English into Hindi and Telugu. "
          "Register: respectful spoken (आप / మీరు), simple words a parent or grandparent uses; keep medical abbreviations familiar in India as they are (BP, ECG, SpO₂, HbA1c, OTP, SMS, UPI, PIN). "
-         "Keep numbers, units, symbols, punctuation, ellipses, arrows and anything in braces or angle brackets exactly. Keep product names (TheHealthTracker, Health Connect, Apple Health, Fitbit, WhatsApp, Aadhaar, DigiLocker, ABHA, NOTTO) in English. "
+         "Keep numbers, units, symbols, punctuation, ellipses, arrows and anything in braces or angle brackets exactly. Keep product names (Urban Health, Health Connect, Apple Health, Fitbit, WhatsApp, Aadhaar, DigiLocker, ABHA, NOTTO) in English. "
          "Strings that start or end mid-sentence (lower-case start, trailing ':' or '…', leading '’s') are fragments joined to other text: translate them as fragments. "
          "Return ONLY a JSON object mapping each English string exactly as given to a two-element array [Hindi, Telugu]. No commentary.")
 

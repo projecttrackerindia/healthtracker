@@ -74,7 +74,7 @@ async function pickTests(p){let T=(SX.labCatalogue&&SX.labCatalogue())||[];
 function msg(p,sel,T){const m=SX.me(),names=T.filter(t=>sel.includes(t.code)).map(t=>'• '+t.name);
  return [`Hello ${p.name},`,'',`I would like to book these tests${m?' for '+m.name:''}:`,...names,'',
   S.net.where?`Area: ${[S.net.where.place,S.net.where.city].filter(Boolean).join(', ')}`:'',
-  'Please tell me the price, the slot and whether home collection is possible.','',`Sent from TheHealthTracker`].filter(Boolean).join('\n')}
+  'Please tell me the price, the slot and whether home collection is possible.','',`Sent from Urban Health`].filter(Boolean).join('\n')}
 function send(p,sel,T){const t=encodeURIComponent(msg(p,sel,T));const n=digits(p.phone);
  plan(p,sel,T);
  const url=n?`https://wa.me/${n.replace(/^\+/,'')}?text=${t}`:`https://wa.me/?text=${t}`;

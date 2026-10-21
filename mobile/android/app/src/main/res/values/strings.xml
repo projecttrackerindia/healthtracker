@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">TheHealthTracker</string>
-    <string name="title_activity_main">TheHealthTracker</string>
-    <string name="package_name">com.thehealthtracker.app</string>
-    <string name="custom_url_scheme">com.thehealthtracker.app</string>
+    <string name="app_name">Urban Health</string>
+    <string name="title_activity_main">Urban Health</string>
+    <string name="package_name">com.urbanhealth.app</string>
+    <string name="custom_url_scheme">com.urbanhealth.app</string>
 </resources>

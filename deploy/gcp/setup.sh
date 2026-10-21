@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time Google Cloud setup for TheHealthTracker. Safe to re-run: every step checks first.
+# One-time Google Cloud setup for Urban Health. Safe to re-run: every step checks first.
 #   gcloud auth login && gcloud config set account YOU@gmail.com
 #   export BILLING_ACCOUNT=XXXXXX-XXXXXX-XXXXXX     # gcloud billing accounts list
 #   cp .env.example .env  &&  edit .env              # values from Railway
@@ -14,7 +14,7 @@ say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 exists() { "$@" >/dev/null 2>&1; }
 
 say "Project $PROJECT_ID"
-exists gcloud projects describe "$PROJECT_ID" || gcloud projects create "$PROJECT_ID" --name="TheHealthTracker"
+exists gcloud projects describe "$PROJECT_ID" || gcloud projects create "$PROJECT_ID" --name="Urban Health"
 gcloud beta billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT" >/dev/null
 gcloud config set project "$PROJECT_ID" >/dev/null
 
@@ -23,8 +23,8 @@ gcloud services enable run.googleapis.com sqladmin.googleapis.com artifactregist
   cloudbuild.googleapis.com storage.googleapis.com iamcredentials.googleapis.com cloudscheduler.googleapis.com logging.googleapis.com monitoring.googleapis.com
 
 say "Service accounts"
-exists gcloud iam service-accounts describe "$RUN_SA" || gcloud iam service-accounts create "${SERVICE}-run" --display-name="TheHealthTracker app"
-exists gcloud iam service-accounts describe "$DEPLOY_SA" || gcloud iam service-accounts create "${SERVICE}-deploy" --display-name="TheHealthTracker deploys (GitHub)"
+exists gcloud iam service-accounts describe "$RUN_SA" || gcloud iam service-accounts create "${SERVICE}-run" --display-name="Urban Health app"
+exists gcloud iam service-accounts describe "$DEPLOY_SA" || gcloud iam service-accounts create "${SERVICE}-deploy" --display-name="Urban Health deploys (GitHub)"
 for r in roles/cloudsql.client roles/secretmanager.secretAccessor roles/logging.logWriter roles/monitoring.metricWriter; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$RUN_SA" --role="$r" --condition=None >/dev/null
 done
@@ -41,7 +41,7 @@ done
 
 say "Artifact Registry"
 exists gcloud artifacts repositories describe "$REPO" --location="$REGION" || \
-  gcloud artifacts repositories create "$REPO" --repository-format=docker --location="$REGION" --description="TheHealthTracker images"
+  gcloud artifacts repositories create "$REPO" --repository-format=docker --location="$REGION" --description="Urban Health images"
 
 say "Cloud SQL (Postgres 16, $REGION, daily backups + point-in-time recovery)"
 if ! exists gcloud sql instances describe "$SQL_INSTANCE"; then

@@ -2,7 +2,7 @@
 
 The family switches it on per person from Safety. The app sends the few fields the person chose to show (blood group,
 allergies, conditions, current medicines, emergency contacts, donor wish, doctor), the server seals them with the data
-key, and publishes a page at thehealthtracker.com/m/<token> plus a QR code to print or set as the phone's lock screen.
+key, and publishes a page at urbanhealth.in/m/<token> plus a QR code to print or set as the phone's lock screen.
 No sign-in is needed to read it (that is the point), so the page shows only what was chosen, counts views, and the
 family can rotate the link or switch it off any time.
 """
@@ -72,7 +72,7 @@ def mid_json(m: MedicalId, base: str) -> dict:
 
 
 def _base(request: Request) -> str:
-    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "thehealthtracker.com"
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "urbanhealth.in"
     proto = request.headers.get("x-forwarded-proto") or request.url.scheme
     return f"{proto}://{host.split(',')[0].strip()}"
 
@@ -192,7 +192,7 @@ h1{{font-size:24px;margin:0 0 4px}}.card{{background:#fff;border:1px solid #e5e7
 .row{{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #f1f5f9}}.row:last-child{{border:0}}.row small{{flex:0 0 110px;color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding-top:3px}}
 .big{{font-size:26px;color:#dc2626}}.red{{color:#b91c1c}}.call{{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#111827;color:#fff;text-decoration:none;border-radius:12px;padding:12px 14px;margin:8px 0}}.call b{{font-size:17px}}
 .sos{{display:block;text-align:center;background:#dc2626;color:#fff;font-weight:800;font-size:18px;text-decoration:none;border-radius:14px;padding:14px}}footer{{color:#6b7280;font-size:12px;margin-top:14px;text-align:center}}</style></head>
-<body><main><div class="hd"><span class="pill">MEDICAL ID</span><small style="color:#6b7280">Shown by the person's choice · TheHealthTracker</small></div>
+<body><main><div class="hd"><span class="pill">MEDICAL ID</span><small style="color:#6b7280">Shown by the person's choice · Urban Health</small></div>
 <h1>{who}</h1><div class="card">{body or "<p>No details shared.</p>"}</div>
 {f"<div class='card'><small style='color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.04em'>Emergency contacts</small>{contacts}</div>" if contacts else ""}
 <a class="sos" href="tel:112">Call 112 · Emergency</a>

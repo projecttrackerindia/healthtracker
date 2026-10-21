@@ -18,7 +18,7 @@ def _auth():
 
 def create_order(amount_inr: int, receipt: str) -> dict:
     kid, _, auth = _auth()
-    body = json.dumps({"amount": int(amount_inr * 100), "currency": "INR", "receipt": receipt[:40], "notes": {"app": "TheHealthTracker"}}).encode()
+    body = json.dumps({"amount": int(amount_inr * 100), "currency": "INR", "receipt": receipt[:40], "notes": {"app": "Urban Health"}}).encode()
     req = urllib.request.Request("https://api.razorpay.com/v1/orders", data=body, method="POST",
                                  headers={"Authorization": auth, "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as r:

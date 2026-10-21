@@ -53,8 +53,8 @@ async function nativeCard(){try{const C=window.Capacitor;if(!C||!C.isNativePlatf
  await LN.schedule({notifications:[{id:7001,title:`${d.blood?d.blood+' · ':''}${m.name}`,body:(al.length?P('Allergic')+': '+al.join(', '):P('No allergies on record'))+(d.conditions&&d.conditions.length?' · '+d.conditions.join(', '):''),ongoing:true,autoCancel:false,actionTypeId:'hc',iconColor:'#E11D48',extra:{kind:'hc'}}]});
  if(!window.__lv17ln){window.__lv17ln=1;LN.addListener('localNotificationActionPerformed',ev=>{if(ev.actionId==='sos')SX.openSOS();else go('mid')})}}catch(e){}}
 
-// lock-screen card taps arrive as thehealthtracker://sos or thehealthtracker://medical-id
-try{const C=window.Capacitor,AP=C&&C.Plugins&&C.Plugins.App;if(AP&&AP.addListener)AP.addListener('appUrlOpen',ev=>{const u=String(ev&&ev.url||'');if(u.startsWith('thehealthtracker://sos'))setTimeout(()=>SX.openSOS(),300);else if(u.startsWith('thehealthtracker://medical-id'))setTimeout(()=>go('mid'),300)})}catch(e){}
+// lock-screen card taps arrive as urbanhealth://sos or urbanhealth://medical-id
+try{const C=window.Capacitor,AP=C&&C.Plugins&&C.Plugins.App;if(AP&&AP.addListener)AP.addListener('appUrlOpen',ev=>{const u=String(ev&&ev.url||'');if(u.startsWith('urbanhealth://sos'))setTimeout(()=>SX.openSOS(),300);else if(u.startsWith('urbanhealth://medical-id'))setTimeout(()=>go('mid'),300)})}catch(e){}
 // ---------------------------------------------------------------- wiring
 function refresh(){title();tabs();banner();greet()}
 new MutationObserver(()=>setTimeout(refresh,0)).observe(document.body,{attributes:true,attributeFilter:['data-page']});
