@@ -133,4 +133,4 @@ def test_the_layer_is_in_the_page():
     from pathlib import Path
     page = Path("web/index.html").read_text(encoding="utf-8")
     assert "/*live-p38*/" in page and "lv38" in page
-    assert "dk-r38" in Path("web/sw.js").read_text(encoding="utf-8")
+    assert "dk-r3" in Path("web/sw.js").read_text(encoding="utf-8")   # bumped by each later layer

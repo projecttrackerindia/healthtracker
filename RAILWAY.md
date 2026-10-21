@@ -1142,3 +1142,41 @@ endpoint refused it at the front. The default is gone and the save now refuses a
 from the known set; the form's dropdown starts on "— how often —" instead of pre-selecting a dose.
 
 13 new tests, suite at **339**.
+
+## SOS — the sends you can actually see (2026-10-21)
+
+Reported from a real alert on an iPhone: *"it didn't send any messages, it just showed a popup to call."*
+
+It was working as built, which was the problem.
+
+**Why nothing was texted.** `fan_out()` drives every channel the server can drive. `messaging.alert_sms_ready()`
+and `whatsapp.ready()` both return false in production, so SMS and WhatsApp are skipped; email and the
+family's app alert went. The code for both is written and tested — it is waiting on credentials, nothing
+else:
+
+- **SMS** — `MSG91_AUTH_KEY` + `MSG91_SOS_FLOW_ID` (a DLT-registered transactional template), or Twilio.
+- **WhatsApp** — `WA_TOKEN`, `WA_PHONE_ID`, and an approved utility template in `WA_TEMPLATE_SOS`.
+
+A web page on a phone cannot send an SMS or a WhatsApp on somebody's behalf; `sms:` and `wa.me` only open
+the composer. So "no tap" is reachable only from the server.
+
+**What was ours to fix.** One tap is defensible; hiding that tap in a small grey chip below the fold, beside
+status text that looks identical, is not. Layer 39 lifts the sends to directly under the call buttons:
+"Text everyone · 2" as a full-width bar (one `sms:` with every number is a real single tap on both
+platforms), then 52px-tall WhatsApp and SMS buttons per contact — pressed with a shaking hand, possibly
+somebody else's. The old chips stay, dimmed, as the record of what went out. The whole block **removes
+itself** once `/sos/channels` reports both channels live, so configuring the accounts needs no code change.
+
+**The siren that sounded once.** It kept its `AudioContext` in a closure, so when iOS suspended the context
+— phone locked, or the person switched to WhatsApp — nothing could reach in and resume it. Layer 39 replaces
+`SX.siren` with the same interface (`start/mute/stop/on`) over a context it can wake on `visibilitychange`,
+`focus`, `pageshow` and the next touch. A muted siren stays muted: taking that choice back because somebody
+tapped the screen would be its own kind of broken.
+
+**A promise the phone could not keep.** The panel said "a siren sounds and your phone buzzes until you tap
+I'm safe". `navigator.vibrate` does not exist on iOS Safari, so on an iPhone the buzzing half was never
+true. It now says what the device can do. (iOS also silences Web Audio when the ring/silent switch is off —
+only the Capacitor build can override that.)
+
+10 new tests, suite at **349**. `test_rx_transparency` pinned `dk-r38` exactly; loosened, since every later
+layer bumps it.
