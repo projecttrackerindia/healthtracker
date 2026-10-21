@@ -176,6 +176,17 @@ def my_registration(body: RegIn, db: Session = Depends(get_db), u: PartnerUser =
 
 
 # ---- orders and bookings ---------------------------------------------------------------------------------------------
+def rx_age_days(d: str) -> int | None:
+    """How old the prescription was, in days, from the date written on it. None when it was not recorded."""
+    from datetime import date
+
+    try:
+        y, m, dd = (int(x) for x in (d or "").split("-"))
+        return max(0, (date.today() - date(y, m, dd)).days)
+    except Exception:
+        return None
+
+
 def _order(db: Session, u: PartnerUser, oid: str) -> Order:
     o = db.get(Order, oid)
     if not o or o.store_id != u.store_id:
@@ -202,7 +213,8 @@ def porder(db: Session, o: Order) -> dict:
         j["needsVerify"] = bool(rx) and not o.verified_at
         j["verified"] = {"by": v.name or v.email if v else "", "regNo": v.reg_no if v else "",
                          "at": o.verified_at, "doctor": o.rx_doctor, "doctorReg": o.rx_reg_no,
-                         "rxDate": o.rx_date, "note": o.verify_note} if o.verified_at else None
+                         "rxDate": o.rx_date, "rxAgeDays": rx_age_days(o.rx_date),
+                         "note": o.verify_note} if o.verified_at else None
     j["hasReport"] = bool(db.get(StoredFile, (o.household_id, f"labrep_{o.id}")))
     if o.kind == "lab":
         a = db.get(PartnerUser, o.agent_id) if o.agent_id else None
@@ -458,6 +470,20 @@ def _pharmacist(u: PartnerUser = Depends(me)) -> PartnerUser:
     if u.must_change:
         raise HTTPException(403, "Choose your own password first.")
     return u
+
+
+# Doorstep delivery under MoHFW s.26B (26 March 2020) asks for a prescription no older than 30 days for a
+# repeat of a chronic medicine and 7 days for an acute course. It is a flag here, never a block: the
+# registered pharmacist is the professional, and software substituting its judgement for theirs is exactly
+# what the Telemedicine Practice Guidelines forbid. We state the fact; they decide.
+RX_AGE = {"chronicDays": 30, "acuteDays": 7,
+          "note": "Doorstep delivery asks for a prescription no older than 30 days for a repeat, 7 for an acute course. "
+                  "You are the registered pharmacist — this is a note, not a refusal."}
+
+
+@r.get("/rx-rules")
+def rx_rules(u: PartnerUser = Depends(me)):
+    return RX_AGE
 
 
 class VerifyIn(BaseModel):

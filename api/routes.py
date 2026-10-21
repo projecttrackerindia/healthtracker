@@ -319,7 +319,26 @@ def order_json(o: Order):
             "visitRating": o.visit_rating, "visitTags": o.visit_tags,
             # Asked once the sample is in the bag and the person is still fresh in mind — not days later when
             # the report lands, by which time the family is rating the report and calling it the visit.
-            "canRateVisit": bool(o.kind == "lab" and o.agent_id and o.done_at and o.visit_rating is None)}
+            "canRateVisit": bool(o.kind == "lab" and o.agent_id and o.done_at and o.visit_rating is None),
+            # Who checked the prescription, shown to the family. A registration number is a public
+            # professional credential, and showing it is most of what separates a pharmacy from a website
+            # that posts medicines.
+            "checkedBy": _checked_by(o)}
+
+
+def _checked_by(o: Order) -> dict | None:
+    """The pharmacist's own session, not a new one: order_json runs in a loop over a family's orders, and
+    opening a connection per row is how a list of twelve becomes twelve round-trips to the database."""
+    if o.kind != "medicine" or not o.verified_at:
+        return None
+    from sqlalchemy.orm import object_session
+
+    from api.models import PartnerUser
+
+    db = object_session(o)
+    p = db.get(PartnerUser, o.verified_by) if (db and o.verified_by) else None
+    return {"name": (p.name or "Our pharmacist") if p else "Our pharmacist",
+            "regNo": (p.reg_no or "") if p else "", "at": o.verified_at}
 
 
 @r.post("/orders")

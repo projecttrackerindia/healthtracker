@@ -1,0 +1,4 @@
+/* live 38 — the pharmacist's sign-off, on the family's order */
+.lv38{display:block;margin-top:4px;color:var(--ok,#16a34a);font-size:12px;font-weight:600;letter-spacing:-.005em}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .lv38{color:#4ade80}}
+:root[data-theme=dark] .lv38{color:#4ade80}
