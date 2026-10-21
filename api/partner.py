@@ -525,6 +525,89 @@ def refuse_rx(oid: str, body: RefuseIn, db: Session = Depends(get_db), u: Partne
     return porder(db, o)
 
 
+# ---- picking several orders at once ----------------------------------------------------------------------------------
+# The list is what still needs picking, so an order leaves it the moment it is packed. Including "packing"
+# here would leave every finished batch on the screen, and a list that does not shrink as you work it is one
+# nobody trusts by the third batch of the morning.
+PICKABLE = ("checking",)
+
+
+@r.get("/picklist")
+def picklist(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Everything waiting to be packed, gathered by medicine rather than by order.
+
+    A pharmacist with fifteen orders open does not walk the shelves fifteen times. They want to know that
+    eighty-five strips of Amoxicillin come off one shelf, and which orders those eighty-five are for. So the
+    lines come back aggregated, each carrying the orders that make it up.
+
+    Orders whose prescription has not been checked are still listed, and said to be waiting, rather than
+    quietly left out: a picker who cannot see why an order is missing will assume the list is wrong."""
+    s = my_store(db, u)
+    if s.kind != "pharmacy":
+        raise HTTPException(400, "Pick lists are for pharmacies.")
+    rows = db.scalars(select(Order).where(Order.store_id == s.id, Order.kind == "medicine",
+                                          Order.status.in_(PICKABLE)).order_by(Order.created)).all()
+    lines: dict[str, dict] = {}
+    orders = []
+    for o in rows:
+        rx = [i for i in (o.items or []) if i.get("rx")]
+        waiting = bool(rx) and not o.verified_at
+        orders.append({"id": o.id, "member": o.member or "", "status": o.status, "created": o.created,
+                       "items": len(o.items or []), "total": o.total, "waiting": waiting,
+                       "ready": not waiting})
+        for i in (o.items or []):
+            key = i.get("sku") or i.get("name") or "?"
+            ln = lines.setdefault(key, {"sku": i.get("sku", ""), "name": i.get("name") or key,
+                                        "rx": bool(i.get("rx")), "qty": 0, "orders": [], "waiting": 0})
+            q = int(i.get("qty") or 1)
+            ln["qty"] += q
+            ln["orders"].append({"id": o.id, "member": o.member or "", "qty": q, "waiting": waiting})
+            if waiting:
+                ln["waiting"] += q
+    out = sorted(lines.values(), key=lambda x: (not x["rx"], -x["qty"], x["name"]))
+    return {"lines": out, "orders": orders,
+            "ready": sum(1 for o in orders if o["ready"]), "waiting": sum(1 for o in orders if o["waiting"])}
+
+
+class BatchIn(BaseModel):
+    orders: list[str]
+
+
+@r.post("/batch/pack")
+def batch_pack(body: BatchIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Mark a picked batch packed, in one action.
+
+    Each order is still put through the same single-order rules, and one that fails them does not stop the
+    others — it comes back named, with the reason. A batch action that rolls everything back because one
+    prescription is unchecked means the pharmacist does the whole batch again by hand."""
+    from .routes import order_json
+
+    s = my_store(db, u)
+    done, skipped = [], []
+    for oid in body.orders[:100]:
+        o = db.get(Order, oid)
+        if not o or o.store_id != s.id or o.kind != "medicine":
+            skipped.append({"id": oid, "why": "not one of your orders"})
+            continue
+        cur = order_json(o)["status"]
+        if cur == "packing":
+            done.append(o.id)                      # already there; a second tap is a tap
+            continue
+        if cur != "checking":
+            skipped.append({"id": o.id, "why": f"it is at '{LABEL.get(cur, cur)}', not checking"})
+            continue
+        if any(i.get("rx") for i in (o.items or [])) and not o.verified_at:
+            skipped.append({"id": o.id, "why": "the prescription has not been checked"})
+            continue
+        o.status = "packing"
+        o.timeline = (o.timeline or []) + [{"s": "packing", "t": now(), "by": u.email, "note": "picked in a batch"}]
+        notify(db, o.household_id, "order", f"{s.name}: {LABEL.get('packing', 'Packing')}",
+               "Your medicines are being packed.", {"order": o.id, "status": "packing", "kind": "medicine",
+                                                    "store": s.name}, o.member_id or "", "/app")
+        done.append(o.id)
+    return {"packed": done, "skipped": skipped}
+
+
 # ---- what the partner earned -----------------------------------------------------------------------------------------
 @r.get("/earnings")
 def earnings(months: int = 6, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
