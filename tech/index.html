@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Collect</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="/tech/manifest.webmanifest">
+<link rel="icon" href="/tech/icon.svg">
+<style>
+/* One screen at a time, one decision per screen. This is read at arm's length, in sunlight, by someone
+   holding a bag in the other hand — so: 17px floor on body text, 56px floor on anything tappable, and no
+   control that needs precision. The palette is its own: a technician who glances down should never wonder
+   which app they are in. */
+:root{
+  --bg:#f3f5f6; --card:#ffffff; --ink:#0d1b1a; --mute:#5c6f6d; --line:#dfe6e5;
+  --brand:#0f766e; --brand-ink:#ffffff; --brand-soft:#e3f1ef;
+  --go:#0f766e; --warn:#b45309; --bad:#b91c1c; --ok:#15803d;
+  --r:18px; --sh:0 10px 30px -18px rgba(8,30,28,.45);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0b1211; --card:#121d1c; --ink:#e7f0ef; --mute:#8ba5a2; --line:#1e2e2c;
+  --brand:#2dd4bf; --brand-ink:#04211e; --brand-soft:#14312d; --sh:none; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:17px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer}
+.wrap{max-width:560px;margin:0 auto;padding:12px 14px 120px}
+
+/* header */
+.top{display:flex;align-items:center;gap:10px;padding:8px 2px 14px}
+.mark{width:34px;height:34px;flex:none}
+.top b{font-size:17px;letter-spacing:-.01em}
+.top small{display:block;color:var(--mute);font-size:12.5px}
+.top .grow{flex:1;min-width:0}
+.pill{flex:none;font-size:12.5px;padding:6px 11px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:600;white-space:nowrap}
+
+/* a job */
+.job{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:12px}
+.job h2{margin:0 0 2px;font-size:20px;line-height:1.2;letter-spacing:-.015em}
+.job .addr{color:var(--mute);margin:6px 0 0;font-size:15.5px}
+.slot{display:inline-block;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--brand);background:var(--brand-soft);padding:5px 10px;border-radius:999px}
+.tests{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.tests i{font-style:normal;font-size:13.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+.state{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;margin-bottom:10px}
+.state::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.s-assigned{color:var(--mute)} .s-en_route{color:var(--go)} .s-arrived{color:var(--warn)}
+
+/* the big controls */
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:64px;margin-top:14px;
+  border-radius:16px;background:var(--brand);color:var(--brand-ink);font-size:19px;font-weight:700;letter-spacing:-.01em}
+.go:active{transform:scale(.99)}
+.go[disabled]{opacity:.5}
+.row2{display:flex;gap:10px;margin-top:10px}
+.row2 a,.row2 button{flex:1 1 0;min-width:0;min-height:56px;display:flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px;font-weight:600;
+  text-decoration:none;white-space:nowrap}
+.sharing{display:flex;align-items:center;gap:9px;margin-top:12px;font-size:13.5px;color:var(--mute)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none;animation:p 1.8s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* sign in */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px}
+label{display:block;font-size:13.5px;color:var(--mute);margin:14px 0 6px;font-weight:600}
+input{width:100%;min-height:54px;padding:0 14px;border-radius:13px;border:1px solid var(--line);background:var(--bg)}
+input:focus{outline:2px solid var(--brand);outline-offset:1px}
+.empty{text-align:center;color:var(--mute);padding:54px 20px}
+.empty b{display:block;color:var(--ink);font-size:19px;margin-bottom:6px}
+.err{background:#fff1f1;border:1px solid #f5c2c2;color:#8a1c1c;border-radius:12px;padding:11px 13px;font-size:14.5px;margin-top:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .err{background:#2a1414;border-color:#5b2020;color:#f3b4b4}}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,24px);
+  background:var(--ink);color:var(--card);padding:13px 20px;border-radius:999px;opacity:0;transition:.22s;pointer-events:none;z-index:9;font-size:15px;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.spin{width:18px;height:18px;border:2.5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:r .7s linear infinite;display:inline-block}
+@keyframes r{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const E = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MARK = `<svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="var(--brand)"/><path d="M13 11h14M15 11v9.5a5 5 0 0 0 10 0V11" stroke="var(--brand-ink)" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="20" cy="27" r="3.2" fill="var(--brand-ink)"/></svg>`;
+
+let S = { me: null, jobs: [], busy: false, err: "" };
+let watchId = null, pinging = null;
+
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 2600); }
+
+async function api(path, opt = {}) {
+  const r = await fetch("/api" + path, {
+    method: opt.body ? "POST" : "GET",
+    headers: opt.body ? { "content-type": "application/json" } : {},
+    body: opt.body ? JSON.stringify(opt.body) : undefined,
+    credentials: "same-origin", cache: "no-store"
+  });
+  let j = {}; try { j = await r.json() } catch (e) {}
+  if (!r.ok) throw Object.assign(new Error(j.detail || ("Error " + r.status)), { status: r.status });
+  return j;
+}
+
+// ---- position sharing -------------------------------------------------------------------------------------
+// Runs only while a job is en route or at the door, and stops the moment it is not. The screen says so while
+// it is happening: somebody's location is being shared and they should be able to see that at a glance.
+function startSharing(job) {
+  stopSharing();
+  if (!navigator.geolocation) return;
+  const send = pos => {
+    const c = pos.coords;
+    api(`/partner/tech/jobs/${job.id}/ping`, { body: { lat: c.latitude, lng: c.longitude, accuracy: c.accuracy || 0, heading: Number.isFinite(c.heading) ? c.heading : null } })
+      .catch(() => {});   // a dropped ping is not worth interrupting the technician for
+  };
+  watchId = navigator.geolocation.watchPosition(send, () => {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+  pinging = setInterval(() => navigator.geolocation.getCurrentPosition(send, () => {}, { enableHighAccuracy: true, maximumAge: 15000 }), 15000);
+}
+function stopSharing() {
+  if (watchId != null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  if (pinging) { clearInterval(pinging); pinging = null; }
+}
+
+// ---- screens ----------------------------------------------------------------------------------------------
+function signIn() {
+  return `<div class="top">${MARK}<div class="grow"><b>Collect</b><small>Sample collection</small></div></div>
+  <div class="card">
+    <h2 style="margin:0 0 4px;font-size:21px;letter-spacing:-.015em">Sign in</h2>
+    <p style="color:var(--mute);margin:0;font-size:15px">Use the details your lab gave you.</p>
+    <form id="f">
+      <label for="e">Email</label><input id="e" type="email" autocomplete="username" inputmode="email" required>
+      <label for="p">Password</label><input id="p" type="password" autocomplete="current-password" required>
+      ${S.err ? `<div class="err">${E(S.err)}</div>` : ""}
+      <button class="go" type="submit" ${S.busy ? "disabled" : ""}>${S.busy ? '<span class="spin"></span>' : "Sign in"}</button>
+    </form>
+  </div>`;
+}
+
+const STATE_TEXT = { assigned: "Not started", en_route: "On the way", arrived: "At the door" };
+
+function jobCard(j) {
+  const maps = j.lat && j.lng
+    ? `https://www.google.com/maps/dir/?api=1&destination=${j.lat},${j.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(j.address || "")}`;
+  const next = j.status === "assigned" ? ["start", "Start — I'm on the way"]
+    : j.status === "en_route" ? ["arrived", "I've arrived"]
+    : ["collected", "Collected the sample"];
+  return `<div class="job">
+    ${j.slot ? `<span class="slot">${E(j.slot)}</span>` : ""}
+    <div class="state s-${E(j.status)}">${E(STATE_TEXT[j.status] || j.status)}</div>
+    <h2>${E(j.member || "Patient")}</h2>
+    <p class="addr">${E(j.address || "No address given")}${j.landmark ? `<br>Near ${E(j.landmark)}` : ""}</p>
+    ${j.tests && j.tests.length ? `<div class="tests">${j.tests.map(t => `<i>${E(t)}</i>`).join("")}</div>` : ""}
+    <button class="go" data-do="${next[0]}" data-id="${E(j.id)}">${E(next[1])}</button>
+    <div class="row2">
+      ${j.phone ? `<a href="tel:${E(j.phone)}">Call</a>` : `<span class="row2-x" style="flex:1 1 0"></span>`}
+      <a href="${E(maps)}" target="_blank" rel="noopener">Directions</a>
+    </div>
+    ${j.status === "en_route" || j.status === "arrived"
+      ? `<div class="sharing"><span class="dot"></span> Sharing your location with this family until the sample is collected</div>` : ""}
+  </div>`;
+}
+
+function jobs() {
+  const open = S.jobs;
+  return `<div class="top">${MARK}<div class="grow"><b>${E(S.me.name || "Collect")}</b><small>${E(S.me.store || "")}</small></div>
+    <span class="pill">${open.length} ${open.length === 1 ? "job" : "jobs"}</span></div>
+  ${open.length ? open.map(jobCard).join("")
+    : `<div class="empty"><b>Nothing assigned</b>Your lab will send jobs here. Pull down to refresh.</div>`}`;
+}
+
+function render() {
+  $("#app").innerHTML = S.me ? jobs() : signIn();
+  const f = $("#f");
+  if (f) f.onsubmit = async ev => {
+    ev.preventDefault();
+    // Read the fields BEFORE re-rendering: render() rebuilds the form, which empties the inputs, and a
+    // technician would have watched their own password be replaced by nothing on the way to the server.
+    const email = $("#e").value.trim(), password = $("#p").value;
+    if (!email || !password) { S.err = "Enter your email and password."; render(); return; }
+    S.busy = true; S.err = ""; render();
+    try {
+      await api("/partner/login", { body: { email, password } });
+      await load();
+    } catch (e) { S.err = e.message || "Could not sign in"; }
+    S.busy = false; render();
+  };
+  document.querySelectorAll("[data-do]").forEach(b => b.onclick = () => move(b.dataset.id, b.dataset.do, b));
+
+  // share position for whichever job is live; stop when none is
+  const live = S.jobs.find(j => j.status === "en_route" || j.status === "arrived");
+  if (live) startSharing(live); else stopSharing();
+}
+
+async function move(id, what, btn) {
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    await api(`/partner/tech/jobs/${id}/${what}`, { body: { note: "" } });
+    if (what === "collected") toast("Sample collected. The family has been told.");
+    await load();
+  } catch (e) {
+    toast(e.message || "Could not do that");
+    btn.disabled = false; render();
+  }
+}
+
+async function load() {
+  try {
+    const me = await api("/partner/me");
+    const u = me.user || me;
+    S.me = { name: u.name || u.email, store: (me.store && me.store.name) || "" };
+    const j = await api("/partner/tech/jobs");
+    S.jobs = j.jobs || [];
+  } catch (e) {
+    if (e.status === 401) { S.me = null; stopSharing(); }
+    else if (e.status === 403) { S.err = e.message; S.me = null; }
+  }
+  render();
+}
+
+// refresh when the screen comes back, and every half minute while it is open
+document.addEventListener("visibilitychange", () => { if (!document.hidden && S.me) load(); });
+setInterval(() => { if (!document.hidden && S.me) load(); }, 30000);
+load();
+})();
+</script>
+</body>
+</html>

@@ -655,3 +655,71 @@ written:
   of the person or any other individual, provided it stays purpose-bound.
 * **No 108/112 API exists**, and those numbers may never be presented as ours. Integration is a state-level
   agreement; the SOS button invokes the device dialler.
+
+---
+
+## Lab, slice 1 — the booking gains a person
+
+The first vertical slice of the platform. Chosen because the lab flow already half-existed, and what it was
+missing is exactly the thing the whole platform turns on: a named human doing the job, whose phone drives the
+state and whose position the family can watch.
+
+### What was already there, and what was a lie
+
+`Store`, `PartnerUser`, `Order` and the partner console already existed, with a lab state machine
+`placed → confirmed → collected → processing → ready`. So this slice **extended** that rather than building a
+`ServiceRequest` table beside it, which is a change from what the architecture document first proposed —
+having read the code, overloading `Order` is less code, no migration, and works with the existing console from
+day one. The discipline that matters is the transition map and the stamped timeline, not the table's name.
+
+One thing had to go. `confirmed` was labelled **"Phlebotomist assigned"** on the family's screen, when no
+phlebotomist had been assigned and no such record existed. The label was a promise the product could not keep.
+Assignment is now a state of its own with a named person behind it.
+
+### The states
+
+```
+placed → confirmed → assigned → en_route → arrived → collected → processing → ready
+```
+
+`confirmed → collected` is still legal: a family that walks into the lab never had anyone travelling to them.
+
+### The technician app
+
+A new surface at **`/tech`**, with its own name (*Collect*), icon, teal palette and manifest, so it installs on
+a phone as a separate app — while being the same codebase, the same auth cookie and the same deploy. This is
+the "one codebase, six apps" idea from the architecture, proven on the first role rather than asserted.
+
+Designed for someone between houses: 17px body text floor, 56px tap-target floor, one decision per screen,
+and the two secondary actions (Call, Directions) given equal width so neither can collapse. Four taps —
+**Start**, **I've arrived**, **Collected the sample** — and nothing else.
+
+* `POST /api/partner/tech/jobs/{id}/start|arrived|collected` are **idempotent**: a technician whose tap times
+  out and taps again gets a tap, not an error.
+* A technician sees **only their own jobs**, and the job in hand stays pinned to the top of the list — a list
+  that reorders itself when somebody taps Start is how the wrong job gets opened.
+* `job_json` is deliberately narrow: the family's first name, address, landmark, phone and the tests. Not the
+  household, not their records, not last month's bookings.
+
+### Position sharing
+
+`TrackPing` rows are written **only** while a job is `en_route` or `arrived`. A ping outside that window is
+accepted and discarded, so a phone left running cannot keep broadcasting someone. The trail is swept 24 hours
+after the job. The technician's screen says *"Sharing your location with this family until the sample is
+collected"* while it is happening — a position trail belongs to an employee, and they should be able to see
+that it is on without reading terms.
+
+`GET /api/v1/orders/{id}/track` is the family's side, scoped to their own booking, and it degrades honestly:
+live map → "last seen N seconds ago" → no map, call them. A stationary pin pretending to be live reads as
+broken and is worse than an honest gap.
+
+### A bug found only by running the UI
+
+The sign-in form called `render()` **before** reading its own fields, so the inputs were rebuilt empty and the
+login posted `{"email":"","password":""}`. The tests passed; curl worked; only a screenshot run against the
+real page caught it. Every technician would have seen "Wrong email or password" with the right password typed.
+
+Worth remembering: an API test proves the endpoint. It does not prove the screen.
+
+9 new tests covering assignment, the four taps, cross-lab and cross-technician isolation, the ping window and
+the family's view; full suite 182 passing.

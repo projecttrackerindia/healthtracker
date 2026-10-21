@@ -1,0 +1,12 @@
+{
+  "name": "Collect — TheHealthTracker",
+  "short_name": "Collect",
+  "description": "Sample collection jobs for lab technicians.",
+  "start_url": "/tech",
+  "scope": "/tech",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f5f6",
+  "theme_color": "#0f766e",
+  "icons": [{ "src": "/tech/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

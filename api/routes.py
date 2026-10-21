@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, joinedload
 from . import ai as AI
 CATALOG_RX = {x["id"]: bool(x.get("rx")) for x in AI.CATALOG}
 from .db import get_db
-from .models import AiCache, AiJob, Household, User, LabTest, Order, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
+from .models import AiCache, AiJob, Household, User, LabTest, Order, PartnerUser, Plan, Seasonal, Store, StoreItem, Subscription, Video, now
 from .launch import free_now, plan_of, state as launch_state
 from .security import valid_key
 from .seed import CITIES, TESTS
@@ -238,8 +238,12 @@ def _eta_text(m):
 # ---- orders ---------------------------------------------------------------------------------------------------------
 STEPS_MED = [("placed", "Order placed"), ("checking", "Pharmacist checking"), ("packing", "Packing"), ("out", "Out for delivery"), ("delivered", "Delivered")]
 STEPS_SHOP = [("placed", "Order placed"), ("checking", "Confirmed"), ("packing", "Packed"), ("out", "Shipped"), ("delivered", "Delivered")]
-STEPS_LAB = [("placed", "Booked"), ("confirmed", "Phlebotomist assigned"), ("collected", "Sample collected"), ("processing", "In the lab"), ("ready", "Report ready")]
-DEMO_SECONDS = [0, 20, 60, 120, 240]  # demo clock: how the status advances when no partner app is connected
+# "confirmed" used to be labelled "Phlebotomist assigned", which was a promise the product could not keep: no
+# person was attached to the booking. The assignment is now a state of its own, with a named technician.
+STEPS_LAB = [("placed", "Booked"), ("confirmed", "Lab confirmed"), ("assigned", "Technician assigned"),
+             ("en_route", "On the way"), ("arrived", "At your door"), ("collected", "Sample collected"),
+             ("processing", "In the lab"), ("ready", "Report ready")]
+DEMO_SECONDS = [0, 20, 40, 70, 95, 120, 180, 300]  # demo clock: how the status advances when no partner app is connected
 
 
 class OrderReq(BaseModel):
@@ -362,6 +366,25 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
     except Exception as e:
         print("[orders] store alert failed:", str(e)[:120], flush=True)
     return order_json(o)
+
+
+@r.get("/orders/{oid}/track")
+def order_track(oid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    """Where the technician is, for this family's own booking and only while someone is actually travelling."""
+    from api.tech import track_for_family
+
+    h = household(db, x_dokko_key, create=False)
+    if not h:
+        raise HTTPException(404)
+    o = db.get(Order, oid)
+    if not o or o.household_id != h.id:
+        raise HTTPException(404)
+    out = track_for_family(db, o)
+    if o.agent_id:
+        t = db.get(PartnerUser, o.agent_id)
+        if t:
+            out["agent"] = {"name": t.name or "Your technician", "phone": t.phone}
+    return out
 
 
 @r.get("/orders")

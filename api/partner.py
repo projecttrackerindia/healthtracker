@@ -29,10 +29,16 @@ COOKIE = "dk_partner"
 FAILS: dict[str, list[float]] = {}
 NEXT_MED = {"placed": ["checking", "cancelled"], "checking": ["packing", "cancelled"], "packing": ["out", "cancelled"], "out": ["delivered"], "delivered": [],
             "return_requested": ["returned", "refunded", "delivered"], "returned": ["refunded"], "refunded": [], "cancelled": []}
-NEXT_LAB = {"placed": ["confirmed", "cancelled"], "confirmed": ["collected", "cancelled"], "collected": ["processing"], "processing": ["ready"], "ready": [],
+# A lab booking now has a person attached to it, so the walk from "confirmed" to "collected" is no longer one
+# step. "assigned" names a technician; "en_route" is them setting off, which is what turns the family's live
+# map on; "arrived" freezes it. Going straight from confirmed to collected is still allowed, because a family
+# that walks into the lab never had a technician travelling to them.
+NEXT_LAB = {"placed": ["confirmed", "cancelled"], "confirmed": ["assigned", "collected", "cancelled"],
+            "assigned": ["en_route", "collected", "cancelled"], "en_route": ["arrived", "collected", "cancelled"],
+            "arrived": ["collected", "cancelled"], "collected": ["processing"], "processing": ["ready"], "ready": [],
             "return_requested": ["processing", "refunded", "ready"], "refunded": [], "cancelled": []}
 LABEL = dict(STEPS_MED + STEPS_LAB + [("cancelled", "Cancelled"), ("return_requested", "Return requested"), ("returned", "Returned"), ("refunded", "Refunded")])
-ACTION = {"checking": "Start checking", "packing": "Packed", "out": "Out for delivery", "delivered": "Delivered", "confirmed": "Confirm booking", "collected": "Sample collected",
+ACTION = {"assigned": "Assign a technician", "en_route": "On the way", "arrived": "At the door", "checking": "Start checking", "packing": "Packed", "out": "Out for delivery", "delivered": "Delivered", "confirmed": "Confirm booking", "collected": "Sample collected",
           "processing": "In the lab", "ready": "Report ready", "cancelled": "Cancel", "returned": "Return received", "refunded": "Refund done"}
 
 
@@ -183,6 +189,49 @@ def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: Partn
                "ready": "Your report is in Lab results. Tap Analyse to read it in plain words.", "cancelled": body.note or "The partner cancelled this order.",
                "refunded": "Refund initiated; 5-7 working days.", "returned": "Return received."}.get(body.status, body.note or f"Order THT-{o.id}")
     notify(db, o.household_id, "order", title, bodytxt, {"order": o.id, "status": body.status, "kind": o.kind, "store": s.name}, o.member_id or "", "/app")
+    return porder(db, o)
+
+
+class AssignIn(BaseModel):
+    agent: str
+
+
+@r.get("/techs")
+def techs(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """The lab's own technicians, for the assign picker."""
+    rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == u.store_id,
+                                                PartnerUser.role == "tech").order_by(PartnerUser.name)).all()
+    out = []
+    for t in rows:
+        live = db.scalar(select(func.count(Order.id)).where(Order.agent_id == t.id,
+                                                            Order.status.in_(("assigned", "en_route", "arrived")))) or 0
+        out.append({"id": t.id, "name": t.name or t.email, "phone": t.phone, "active": t.active,
+                    "verified": t.verified, "openJobs": live})
+    return {"techs": out}
+
+
+@r.post("/orders/{oid}/assign")
+def assign(oid: str, body: AssignIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Name the person who is going. The family is told who to expect, which is most of what a home visit
+    needs — a stranger at the door with no name is the complaint every home-collection service gets."""
+    o = _order(db, u, oid)
+    if o.kind != "lab":
+        raise HTTPException(400, "Only lab bookings have a technician.")
+    t = db.get(PartnerUser, body.agent)
+    if not t or t.store_id != u.store_id or t.role != "tech":
+        raise HTTPException(404, "Not one of your technicians.")
+    if not t.active:
+        raise HTTPException(400, "That technician is not active.")
+    if o.status not in ("confirmed", "assigned"):
+        raise HTTPException(400, "Confirm the booking first.")
+    o.agent_id = t.id
+    if o.status != "assigned":
+        o.status = "assigned"
+    o.timeline = (o.timeline or []) + [{"s": "assigned", "t": now(), "by": u.email, "note": t.name or ""}]
+    s = my_store(db, u)
+    notify(db, o.household_id, "order", f"{s.name}: {t.name or 'Your technician'} is assigned",
+           f"{t.name or 'A technician'} will collect your sample. You can call them from the app.",
+           {"order": o.id, "status": "assigned", "kind": "lab", "agent": t.name or ""}, o.member_id or "", "/app")
     return porder(db, o)
 
 
