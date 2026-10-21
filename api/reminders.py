@@ -156,8 +156,13 @@ def tick(now_dt: datetime | None = None) -> int:
 
 
 def start() -> None:
+    from api.tasks import in_process_loops
+
     if not PUSH.ready():
         print("[reminders] VAPID_PRIVATE_KEY not set; server-side reminders are off", flush=True)
+        return
+    if not in_process_loops():
+        print("[reminders] in-process loop off; Cloud Scheduler drives /api/v1/tasks/reminders", flush=True)
         return
 
     def loop():

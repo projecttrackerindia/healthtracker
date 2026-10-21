@@ -117,7 +117,9 @@ app.include_router(consult_api.r)
 app.include_router(consult_api.pr)
 app.include_router(consult_api.ws)
 from api import proactive as proactive_api  # noqa: E402
+from api import tasks as tasks_api  # noqa: E402
 app.include_router(proactive_api.r)
+app.include_router(tasks_api.r)
 from api import abdm as abdm_api, export as export_api, medid as medid_api, network as network_api  # noqa: E402
 app.include_router(medid_api.r)
 app.include_router(export_api.r)

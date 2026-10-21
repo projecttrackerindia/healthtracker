@@ -192,6 +192,10 @@ def kick() -> None:
     """Start the translator once per burst (the thread drains everything pending, then exits)."""
     if not os.getenv("GEMINI_API_KEY") or os.getenv("I18N_AUTO", "1") != "1":
         return
+    from api.tasks import in_process_loops
+
+    if not in_process_loops():
+        return   # Cloud Scheduler drives /api/v1/tasks/i18n; the phrases wait for the next run
     t = _BG.get("thread")
     if t and t.is_alive():
         return

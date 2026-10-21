@@ -16,9 +16,12 @@ import io
 import json
 import os
 import time
+import socket as socket_mod
+import uuid as _uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, WebSocket, WebSocketDisconnect
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -378,6 +381,60 @@ class Room:
 ROOMS: dict[str, Room] = {}
 RELAY = {"offer", "answer", "ice", "caption", "hangup", "context", "mute", "ping"}
 
+# A socket lives in one process, so two peers on one call can land on two containers. Presence and the few
+# dozen setup messages go through the database; a peer in this process still gets the direct path.
+INSTANCE = f"{socket_mod.gethostname()[:40]}:{_uuid.uuid4().hex[:8]}"
+PEER_TTL = 25          # a peer not heard from in this long is treated as gone
+RELAY_TTL = 120        # undelivered messages are rubbish after this
+
+
+def _rtc_seen(aid: str, role: str) -> None:
+    from api.models import RtcPeer
+
+    with session() as db:
+        row = db.get(RtcPeer, (aid, role))
+        if row is None:
+            db.add(RtcPeer(aid=aid, role=role, instance=INSTANCE, seen=int(time.time())))
+        else:
+            row.instance, row.seen = INSTANCE, int(time.time())
+
+
+def _rtc_gone(aid: str, role: str) -> None:
+    from api.models import RtcPeer
+
+    with session() as db:
+        row = db.get(RtcPeer, (aid, role))
+        if row is not None and row.instance == INSTANCE:
+            db.delete(row)
+
+
+def _rtc_present(aid: str, role: str) -> bool:
+    from api.models import RtcPeer
+
+    with session() as db:
+        row = db.get(RtcPeer, (aid, role))
+        return bool(row and int(time.time()) - row.seen < PEER_TTL)
+
+
+def _rtc_post(aid: str, to_role: str, msg: dict) -> None:
+    from api.models import RtcRelay
+
+    with session() as db:
+        db.add(RtcRelay(aid=aid, to_role=to_role, body=json.dumps(msg), at=int(time.time())))
+
+
+def _rtc_take(aid: str, role: str, after: int) -> tuple[int, list[str]]:
+    """Messages for this peer written by another container, oldest first."""
+    from api.models import RtcRelay
+
+    cut = int(time.time()) - RELAY_TTL
+    with session() as db:
+        rows = (db.query(RtcRelay)
+                .filter(RtcRelay.aid == aid, RtcRelay.to_role == role, RtcRelay.id > after, RtcRelay.at > cut)
+                .order_by(RtcRelay.id).limit(50).all())
+        db.query(RtcRelay).filter(RtcRelay.at < cut).delete()
+        return (rows[-1].id if rows else after), [x.body for x in rows]
+
 
 def _auth_ws(aid: str, key: str | None, cookie: str | None) -> str | None:
     """Who is this socket? 'family' (household key owns the appointment) or 'doctor' (partner cookie for the store)."""
@@ -413,12 +470,30 @@ async def call_socket(socket: WebSocket, aid: str):
         except Exception:
             pass
     other = "doctor" if role == "family" else "family"
-    await socket.send_text(json.dumps({"type": "hello", "you": role, "peerPresent": other in room.peers, "ice": ice_servers()}))
+    await run_in_threadpool(_rtc_seen, aid, role)
+    here = await run_in_threadpool(_rtc_present, aid, other)
+    await socket.send_text(json.dumps({"type": "hello", "you": role, "peerPresent": here, "ice": ice_servers()}))
     if other in room.peers:
         try:
             await room.peers[other].send_text(json.dumps({"type": "peer", "present": True, "who": role}))
         except Exception:
             pass
+    async def pump():
+        """Deliver anything another container wrote for this peer, and keep our presence row warm."""
+        after, beat = 0, 0.0
+        try:
+            while True:
+                await asyncio.sleep(0.4)
+                after, bodies = await run_in_threadpool(_rtc_take, aid, role, after)
+                for b in bodies:
+                    await socket.send_text(b)
+                if time.time() - beat > 10:
+                    beat = time.time()
+                    await run_in_threadpool(_rtc_seen, aid, role)
+        except Exception:
+            pass
+
+    pumping = asyncio.create_task(pump())
     try:
         while True:
             raw = await socket.receive_text()
@@ -434,20 +509,28 @@ async def call_socket(socket: WebSocket, aid: str):
             if t == "ping":
                 await socket.send_text('{"type":"pong"}')
                 continue
-            peer = room.peers.get(other)
-            if peer is None:
-                await socket.send_text(json.dumps({"type": "peer", "present": False, "who": other}))
-                continue
             msg["from"] = role
-            try:
-                await peer.send_text(json.dumps(msg))
-            except Exception:
-                room.peers.pop(other, None)
+            peer = room.peers.get(other)
+            if peer is not None:
+                try:
+                    await peer.send_text(json.dumps(msg))
+                except Exception:
+                    room.peers.pop(other, None)
+                continue
+            if await run_in_threadpool(_rtc_present, aid, other):
+                await run_in_threadpool(_rtc_post, aid, other, msg)   # they are on another container
+            else:
+                await socket.send_text(json.dumps({"type": "peer", "present": False, "who": other}))
     except WebSocketDisconnect:
         pass
     except Exception:
         pass
     finally:
+        pumping.cancel()
+        try:
+            await run_in_threadpool(_rtc_gone, aid, role)
+        except Exception:
+            pass
         if room.peers.get(role) is socket:
             room.peers.pop(role, None)
             peer = room.peers.get(other)
