@@ -12,6 +12,7 @@ from __future__ import annotations
 import gzip
 import os
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -201,7 +202,9 @@ async def headers(request: Request, call_next):
     resp: Response = await call_next(request)
     for k, v in SECURITY.items():
         resp.headers.setdefault(k, v)
-    if os.getenv("APP_ENV", "production") != "production":
+    # Only the canonical address is allowed into a search index. The Cloud Run URL answers the same content, and if
+    # Google indexes both, the two compete and the run.app one usually wins on crawl history — so it is told not to.
+    if os.getenv("APP_ENV", "production") != "production" or (CANONICAL and host != CANONICAL):
         resp.headers["X-Robots-Tag"] = "noindex, nofollow"
     if request.url.path.startswith("/api/"):
         resp.headers.setdefault("Cache-Control", "no-store")
@@ -334,6 +337,80 @@ def _send(p: Path, request: Request, cache: str):
 @app.api_route("/join/{token}", methods=["GET", "HEAD"], include_in_schema=False)
 def landing(request: Request, token: str = ""):
     return _send(SITE / "index.html", request, "no-cache")
+
+
+# --------------------------------------------------------------------------------------------------
+# Search engines
+# --------------------------------------------------------------------------------------------------
+# Three pages are public and worth indexing: the landing page, the privacy policy and the terms. Everything else is
+# either a signed-in surface or the same landing HTML under another path (/signin, /signup, /reset, /join/<token>),
+# which is duplicate content — those carry a canonical back to "/" as well, but keeping crawlers out is cheaper than
+# relying on it. The sitemap is generated rather than written by hand so a new public page cannot be forgotten here.
+PUBLIC_PAGES = ("/", "/privacy", "/terms")
+CRAWL_BLOCKED = ("/app", "/partner", "/admin", "/counter", "/tech", "/api/", "/signin", "/signup",
+                 "/reset", "/join/", "/d/", "/healthz")
+
+
+def _origin(request: Request) -> str:
+    """The address to publish in robots.txt and the sitemap — the canonical one once it is configured."""
+    if CANONICAL:
+        return f"https://{CANONICAL}"
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(":")[0]
+    scheme = request.headers.get("x-forwarded-proto") or request.url.scheme
+    return f"{scheme}://{host}" if host else str(request.base_url).rstrip("/")
+
+
+@app.api_route("/robots.txt", methods=["GET", "HEAD"], include_in_schema=False)
+def robots(request: Request):
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(":")[0].lower()
+    # Anything that is not the canonical address — the Cloud Run URL, a preview revision — is closed to crawlers
+    # entirely, so there is only ever one copy of this site in an index.
+    if (CANONICAL and host != CANONICAL) or os.getenv("APP_ENV", "production") != "production":
+        body = "User-agent: *\nDisallow: /\n"
+    else:
+        lines = ["User-agent: *"]
+        lines += [f"Disallow: {p}" for p in CRAWL_BLOCKED]
+        lines += ["", f"Sitemap: {_origin(request)}/sitemap.xml", ""]
+        body = "\n".join(lines)
+    return Response(body, media_type="text/plain; charset=utf-8", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.api_route("/.well-known/security.txt", methods=["GET", "HEAD"], include_in_schema=False)
+def security_txt(request: Request):
+    """RFC 9116. It tells somebody who finds a hole in a health app where to send it instead of selling it.
+
+    Served only when there is a real address behind it: a security.txt naming a mailbox nobody reads is worse than
+    none, because a finder who gets a bounce usually stops trying. Expires is required by the spec, and a date in
+    the past makes the file invalid, so it is always a year out from the request."""
+    contact = (os.getenv("SECURITY_EMAIL") or os.getenv("SUPPORT_EMAIL") or "").strip()
+    if not contact:
+        raise HTTPException(404)
+    expires = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(days=365)
+    body = (f"Contact: mailto:{contact}\n"
+            f"Expires: {expires.isoformat().replace('+00:00', 'Z')}\n"
+            f"Preferred-Languages: en, hi\n"
+            f"Canonical: {_origin(request)}/.well-known/security.txt\n")
+    return Response(body, media_type="text/plain; charset=utf-8",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
+def sitemap(request: Request):
+    import xml.sax.saxutils as _x
+    origin = _origin(request)
+    # lastmod is the file's own mtime: it changes when the page changes and not when the server restarts, which is
+    # exactly what the spec asks for. A wrong lastmod is worse than none — Google stops trusting the field.
+    def entry(path: str) -> str:
+        f = SITE / ("index.html" if path == "/" else path.strip("/") + ".html")
+        when = datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc).date().isoformat() if f.exists() else ""
+        mod = f"<lastmod>{when}</lastmod>" if when else ""
+        pri = "1.0" if path == "/" else "0.3"
+        return f"<url><loc>{_x.escape(origin + path)}</loc>{mod}<priority>{pri}</priority></url>"
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+           + "".join(entry(p) for p in PUBLIC_PAGES) + "</urlset>")
+    return Response(xml, media_type="application/xml; charset=utf-8",
+                    headers={"Cache-Control": "public, max-age=3600"})
 
 
 # privacy policy and terms: legal details come from Railway variables so they can change without a code change
