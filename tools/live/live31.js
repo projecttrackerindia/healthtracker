@@ -72,6 +72,7 @@ const have=c=>!TESTS||TESTS.some(t=>t.code===c);
 const nameOf=c=>{const t=TESTS&&TESTS.find(x=>x.code===c);return t?t.name:c.toUpperCase()};
 const typical=codes=>codes.reduce((a,c)=>{const t=TESTS&&TESTS.find(x=>x.code===c);return a+(t?t.typical:0)},0);
 SX.labTestsHave=have;
+SX.labCatalogue=()=>TESTS||[];
 async function loadTests(){if(TESTS)return TESTS;try{const r=await SX.api('/labs/tests',{silent:true});TESTS=r.tests||[]}catch(e){TESTS=[]}return TESTS}
 const open=(codes,sel)=>{const cs=(codes||[]).filter(have);if(!cs.length)return toast(P('Nothing found. Try the city name or PIN.'));SX.labOpen?SX.labOpen(cs,sel):SX.act.labs([cs.join('+')])};
 SX.act.labbook=a=>open(String(a[0]||'').split('+'),a[1]);

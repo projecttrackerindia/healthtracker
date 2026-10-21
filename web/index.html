@@ -2221,6 +2221,191 @@ input,select,textarea{font-size:max(16px,1em)}   /* iOS zooms into any field sma
 .lv31-note b{display:block;margin-bottom:3px}
 @media (max-width:720px){.lv31-packs{grid-template-columns:1fr}.lv31-row{align-items:flex-start}}
 </style>
+<style id="live32-css">/* live layer 32: one location — the permission sheet, the chip, the settings card */
+.sx-modal.lv32-m .sx-sheet{max-width:440px;padding:0!important;overflow:hidden}
+.lv32-ask{padding:22px 20px calc(18px + env(safe-area-inset-bottom));text-align:center}
+.lv32-art{width:150px;height:132px;display:block;margin:2px auto 6px}
+.lv32-art .lv32-pin{fill:color-mix(in srgb,var(--blue) 16%,transparent);stroke:var(--blue);stroke-width:4;stroke-linejoin:round}
+.lv32-art .lv32-pinin{fill:var(--card);stroke:var(--blue);stroke-width:4}
+.lv32-art .lv32-ring1{fill:none;stroke:color-mix(in srgb,var(--blue) 14%,transparent);stroke-width:2;stroke-dasharray:4 9;animation:lv32spin 22s linear infinite;transform-origin:80px 66px}
+.lv32-art .lv32-ring2{fill:none;stroke:color-mix(in srgb,var(--blue) 10%,transparent);stroke-width:1.5}
+.lv32-art .lv32-dot{fill:color-mix(in srgb,var(--blue) 22%,transparent)}
+.lv32-art .lv32-dot.b{fill:color-mix(in srgb,#ff7a59 35%,transparent)}
+.lv32-art .lv32-shadow{fill:rgba(16,24,48,.08)}
+@keyframes lv32spin{to{transform:rotate(360deg)}}
+.lv32-ask h2{margin:4px 0 6px;font-size:clamp(20px,5vw,25px);letter-spacing:-.02em}
+.lv32-lead{margin:0 0 16px;color:var(--mute);font-size:13.5px;line-height:1.5}
+.lv32-mods{display:flex;flex-direction:column;gap:8px;text-align:left;margin:0 0 16px;max-height:40vh;overflow-y:auto;padding:2px}
+.lv32-mod,.lv32-row{display:flex;gap:11px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.lv32-mod{cursor:pointer}
+.lv32-mod.req,.lv32-row.req{background:color-mix(in srgb,var(--blue) 6%,var(--card));border-color:color-mix(in srgb,var(--blue) 20%,var(--line))}
+.lv32-mi{flex:none;width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,var(--blue) 10%,transparent);display:grid;place-items:center;color:var(--blue)}
+.lv32-mi svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lv32-mod b,.lv32-row b{display:block;font-size:14px;line-height:1.25}
+.lv32-mod small,.lv32-row small{display:block;color:var(--mute);font-size:12px;line-height:1.4;margin-top:2px}
+.lv32-req{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,transparent);padding:2px 7px;border-radius:999px;vertical-align:1px}
+.lv32-mod input,.lv32-row input{position:absolute;opacity:0;width:0;height:0}
+.lv32-sw{flex:none;width:42px;height:25px;border-radius:999px;background:var(--line);position:relative;transition:background .2s}
+.lv32-sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+input:checked + .lv32-sw{background:var(--blue)}
+input:checked + .lv32-sw::after{transform:translateX(17px)}
+input:disabled + .lv32-sw{opacity:.55}
+.lv32-lock{opacity:.5;font-size:15px}
+.lv32-go{width:100%;height:50px;border-radius:15px;font-size:15.5px;justify-content:center}
+.lv32-later{display:block;width:100%;margin:10px 0 0;background:none;border:0;color:var(--mute);font:600 14px Inter,sans-serif;padding:8px}
+.lv32-pickbtn{width:100%;margin-top:8px;justify-content:center}
+.lv32-fine{margin:12px 0 0;color:var(--mute);font-size:11.5px;line-height:1.5}
+.lv32-err{margin:0 0 10px;color:var(--red);font-size:13px;line-height:1.45}
+.lv32-small{text-align:center}.lv32-small .lv32-art{width:110px;height:96px}
+.lv32-small h2{font-size:19px;margin:2px 0 6px}
+/* the chip in the app bar */
+#lv32chip{display:flex;min-width:0}
+.lv32-chip{display:inline-flex;align-items:center;gap:7px;max-width:46vw;height:34px;padding:0 10px 0 8px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 13px Inter,sans-serif}
+.lv32-chip.on{border-color:color-mix(in srgb,#16a34a 45%,transparent);background:color-mix(in srgb,#16a34a 8%,var(--card))}
+.lv32-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv32-cp{flex:none;display:grid;place-items:center;width:20px;height:20px;color:#16a34a}
+.lv32-cp svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.lv32-chip:not(.on) .lv32-cp{color:var(--mute)}
+.lv32-cv{font-size:11px;opacity:.55;font-weight:700}
+.lv32-chip.live{border-color:var(--red);background:color-mix(in srgb,var(--red) 10%,var(--card))}
+.lv32-livedot{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--red);padding:2px 7px;border-radius:999px;animation:lv32pulse 1.4s ease-in-out infinite}
+@keyframes lv32pulse{50%{opacity:.5}}
+/* the card on Today and Book a test */
+.lv32-card{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;background:var(--card);border:1px solid var(--line);margin:0 0 12px;grid-column:1/-1;order:-9}
+.lv32-mini{position:relative;width:88px;height:72px;border-radius:14px;overflow:hidden;flex:none;background:var(--soft)}
+.lv32-mini .lv6-map,.lv32-mini .lv13-gmap{height:72px!important;min-height:0!important;border-radius:0}
+.lv32-dot2{position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 6px color-mix(in srgb,var(--blue) 18%,transparent)}
+.lv32-card .grow{min-width:0}
+.lv32-card small{display:block;color:var(--mute);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+.lv32-card b{display:block;font-size:15.5px;line-height:1.2;margin:1px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv32-card .mute.sm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+/* settings */
+.lv32-rows{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.lv32-row{cursor:pointer}
+.lv32-sosneed{border:1px solid color-mix(in srgb,var(--red) 35%,transparent);background:color-mix(in srgb,var(--red) 7%,var(--card))}
+.lv32-sn{display:flex;gap:11px;align-items:flex-start;margin-bottom:10px}
+.lv32-sn i{font-style:normal;font-size:20px}
+.lv32-sn b{display:block;font-size:15px}
+.lv32-sn small{display:block;color:var(--mute);font-size:12.5px;line-height:1.45;margin-top:2px}
+.lv32-sosneed .btn{width:100%;justify-content:center}
+</style>
+<style id="live33-css">/* live layer 33: the Heart Lab studio, Today's dashboard cards, and an assistant that is a chat first */
+
+/* ---- A. the heart on a studio stage (light by default, deep in dark mode) ---- */
+.stage.hst.lv33{background:radial-gradient(120% 95% at 50% 22%,#ffffff 0%,#f3f5fa 45%,#e6eaf2 100%)}
+.stage.hst.lv33::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 55% at 50% 48%,transparent 40%,rgba(18,24,44,.1) 100%)}
+.hst.lv33 .pvtop .seg,.hst.lv33 .tools,.hst.lv33 .htime,.hst.lv33 #hwin,.hst.lv33 #hmode{background:rgba(255,255,255,.72)!important;border:1px solid rgba(17,24,39,.07)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -16px rgba(16,24,48,.45)}
+.hst.lv33 .pvtop .seg button,.hst.lv33 .tools button,.hst.lv33 .htime,.hst.lv33 #hwin button,.hst.lv33 #hmode button{color:#2a2f3a!important}
+.hst.lv33 .seg button.on,.hst.lv33 .tools button.on,.hst.lv33 #hwin button.on,.hst.lv33 #hmode button.on{background:#e11d48!important;color:#fff!important}
+.hst.lv33 .hphase{background:rgba(255,255,255,.8)!important;color:#1b2030;border:1px solid rgba(17,24,39,.07)!important;backdrop-filter:blur(14px)}
+.hst.lv33 .hphase b{color:#e11d48}
+.hst.lv33 .cr{color:#8b93a7}
+.hst.lv33 #hld{color:#6b7280}
+.hst.lv33 #lv29hx{background:rgba(255,255,255,.8);border-color:rgba(17,24,39,.08);color:#2a2f3a}
+.hst.lv33 #lv29hx.on{background:#e11d48;color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage.hst.lv33{background:radial-gradient(120% 95% at 50% 22%,#241019 0%,#140810 52%,#070407 100%)}}
+:root[data-theme="dark"] .stage.hst.lv33{background:radial-gradient(120% 95% at 50% 22%,#241019 0%,#140810 52%,#070407 100%)}
+/* callout labels, like a clinical diagram */
+.hst.lv33 .plbl{background:rgba(255,255,255,.94)!important;color:#171b26!important;border:1px solid rgba(17,24,39,.07)!important;border-left:3px solid #e11d48!important;border-radius:11px!important;padding:6px 10px!important;font-weight:600;box-shadow:0 12px 30px -14px rgba(16,24,48,.5)!important;letter-spacing:-.01em}
+.hst.lv33 #hlines{stroke:rgba(225,29,72,.5);fill:#e11d48;stroke-width:1.2}
+/* the readings beside the heart */
+.lv33-hud{position:absolute;left:12px;top:58px;z-index:6;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.lv33-hcard{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.86);border:1px solid rgba(17,24,39,.06);border-radius:14px;padding:7px 11px 7px 8px;box-shadow:0 12px 30px -18px rgba(16,24,48,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.lv33-hi{width:28px;height:28px;border-radius:9px;background:rgba(225,29,72,.1);display:grid;place-items:center;font-size:14px}
+.lv33-hcard small{display:block;font-size:10.5px;color:#6b7280;letter-spacing:.04em;text-transform:uppercase}
+.lv33-hcard b{display:block;font-size:15px;color:#141824;line-height:1.15}
+.lv33-hcard b i{font-style:normal;font-size:11px;color:#6b7280;font-weight:600}
+@media (max-width:720px){.lv33-hud{left:10px;top:54px;gap:6px}.lv33-hcard{padding:5px 9px 5px 6px}.lv33-hcard b{font-size:13.5px}}
+:root[data-theme="dark"] .lv33-hcard{background:rgba(32,14,22,.8);border-color:rgba(255,190,205,.12)}
+:root[data-theme="dark"] .lv33-hcard b{color:#ffe7ec}
+:root[data-theme="dark"] .lv33-hcard small{color:#c9a3ad}
+
+/* ---- B. Today's tiles read like a dashboard ---- */
+.lv22-tile{position:relative;overflow:hidden}
+.lv33-spark{position:absolute;left:0;right:0;bottom:0;width:100%;height:34px;opacity:.5}
+.lv33-spark polyline{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.lv22-tile.hi .lv33-spark{opacity:.65;color:#fff}
+.lv22-tile:not(.hi) .lv33-spark{color:var(--blue)}
+
+/* ---- C. the assistant: chat first ---- */
+body.lv33-chat .lv22-orbwrap{display:none!important}
+body.lv33-empty .lv22-orb{width:104px!important;height:104px!important;margin-bottom:6px!important}
+body.lv33-empty .lv22-orbwrap{padding:14px 0 10px}
+body.lv33-empty .lv22-orbwrap b{font-size:23px;max-width:270px}
+body.lv33-empty .lv22-orbwrap small{font-size:13.5px}
+.lv33-bar{display:flex;align-items:center;gap:10px;padding:0 2px 10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.lv33-mini{flex:none;width:36px;height:36px;display:block}
+.lv33-mini .lv29-mark{filter:drop-shadow(0 6px 12px rgba(47,91,255,.3))}
+.lv33-bar .grow{min-width:0}
+.lv33-bar b{display:block;font-size:14.5px;line-height:1.2}
+.lv33-bar small{display:block;color:var(--mute);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv33-new{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;line-height:1}
+body[data-page=assist] #lv22add{display:none!important}
+body.lv33-chat[data-page=assist] .lv5-chat{flex:1;min-height:40vh;overflow-y:auto;padding-right:2px}
+body.lv33-chat[data-page=assist] .lv5-sugg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+body.lv33-chat[data-page=assist] .lv5-sugg::-webkit-scrollbar{display:none}
+body.lv33-chat[data-page=assist] .lv5-sugg button{flex:none}
+body[data-page=assist] form.lv5-ask{position:sticky;bottom:0;background:var(--bg);padding:8px 0 calc(6px + env(safe-area-inset-bottom));z-index:3}
+body[data-page=assist] form.lv5-ask .btn.p{min-width:76px;justify-content:center}
+
+.hst.lv33 #lv17lbl{background:rgba(255,255,255,.82)!important;border:1px solid rgba(17,24,39,.08)!important;color:#2a2f3a!important;backdrop-filter:blur(12px)}
+.hst.lv33 #lv17lbl.on,.hst.lv33 #lv17lbl[aria-pressed=true]{background:#e11d48!important;color:#fff!important}
+</style>
+<style id="live34-css">/* live layer 34: places you can use — a readable row, a sheet, and no shaking */
+.lv6-pl{align-items:flex-start!important;gap:11px!important;padding:12px!important;transition:border-color .18s,background .18s}
+.lv6-pl.on{border-color:var(--blue)!important;background:color-mix(in srgb,var(--blue) 6%,transparent)}
+.lv6-pl .grow{min-width:0}
+.lv6-pl b{display:block;font-size:14.5px;line-height:1.25;margin-bottom:2px}
+.lv6-pl small{font-size:12.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lv6-pla{flex:none!important;flex-wrap:nowrap!important;align-self:center}
+.lv6-pla .btn,.lv34-rb{white-space:nowrap!important;min-width:68px;justify-content:center;flex:none}
+.lv34-open{color:#15803d;font-weight:700}
+.lv34-shut{color:#b45309;font-weight:700}
+/* the sheet */
+.sx-modal.lv34-m .sx-sheet{max-width:460px}
+.lv34-sheet h2{margin:0 0 2px;font-size:20px;line-height:1.25;letter-spacing:-.02em}
+.lv34-top{display:flex;gap:10px;align-items:flex-start}
+.lv34-meta{margin:0;color:var(--mute);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lv34-badge{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,transparent);padding:4px 9px;border-radius:999px}
+.lv34-addr{margin:10px 0 0;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.lv34-hrs{margin:10px 0 0}
+.lv34-hrs summary{font-size:13px;font-weight:600;color:var(--mute);cursor:pointer}
+.lv34-hrs ul{margin:8px 0 0;padding-left:18px;color:var(--mute);font-size:12.5px;line-height:1.7}
+.lv34-acts{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.lv34-acts .btn.p,.lv34-book{height:48px;border-radius:14px;justify-content:center;font-size:15px}
+.lv34-row2{display:flex;gap:8px;flex-wrap:nowrap}
+.lv34-row2 .btn{flex:1 1 0;justify-content:center;white-space:nowrap;min-width:0;height:42px;border-radius:12px;padding:0 8px;font-size:13.5px;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.lv34-row2 .btn{font-size:12.5px;padding:0 6px}}
+.lv34-note{margin:12px 0 0;color:var(--mute);font-size:12.5px;line-height:1.5}
+/* the test picker */
+.lv34-pick h2{margin:0 0 2px;font-size:19px}
+.lv34-tests{display:flex;flex-direction:column;gap:6px;margin:12px 0 0;max-height:46vh;overflow-y:auto}
+.lv34-t{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);text-align:left}
+.lv34-t span{flex:1;font-size:14px}
+.lv34-t i{font-style:normal;color:var(--mute);font-weight:600;font-size:13px}
+.lv34-t.on{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 8%,var(--card))}
+.lv34-t.on i{color:var(--blue)}
+.lv34-sum{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px}
+.lv34-sum span{color:var(--mute)}
+/* planned tests */
+.lv34-prow{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)}
+.lv34-prow:last-child{border-bottom:0}
+.lv34-prow .grow{min-width:0}
+.lv34-prow b{display:block;font-size:14.5px}
+.lv34-prow small{display:block;color:var(--mute);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv34-prow .btn{flex:none;white-space:nowrap}
+/* nothing animates while a finger is on the screen */
+body.lv34-scroll .lv29-mark,body.lv34-scroll .lv32-livedot,body.lv34-scroll .lv22-orb{animation-play-state:paused!important}
+body.lv34-scroll *{transition:none!important}
+.lv34-fb{margin:10px 0 2px}
+.lv34-fbl{display:flex;flex-direction:column;gap:7px}
+.lv34-fbr{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card,#fff);border:1px solid rgba(17,24,39,.09);border-radius:14px;padding:10px 11px;cursor:pointer}
+.lv34-fbr:active{transform:scale(.995)}
+.lv34-fbr .grow{flex:1;min-width:0}
+.lv34-fbr b{display:block;font-size:14.5px;line-height:1.25}
+.lv34-fbr small{display:block;color:var(--mute,#6b7280);font-size:12px;margin-top:2px}
+.lv34-fbr .btn{flex:0 0 auto;white-space:nowrap}
+</style>
 </head>
 <body>
 <div class="lv15-splash" id="lv15s"><div class="lv15-sl"><svg viewBox="0 0 64 64" width="96" height="96" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg><b>the<span>health</span>tracker</b><small>Your family’s health, in one living view.</small></div><div class="lv15-sdot"><i></i><i></i><i></i></div></div><script>(function(){var s=document.getElementById("lv15s");s.dataset.t=Date.now();try{if(sessionStorage.getItem("tht.splashed")==="1")s.style.display="none"}catch(e){}})();</script>
@@ -4351,7 +4536,7 @@ function focusPart(q){if(!AT.ready)return;const s=q.toLowerCase().replace(/left 
 
 window.HLX={AT,setWin,applyAtlas,focusPart,O:()=>O,cut:m=>setCut(m),UI,G,S,R,setPlay:v=>{}};const HL={ok:true,UI,cam:k=>{const p=PRE[k];O.gth=p[0];O.gph=p[1];O.gd=p[2];O.gt.set(0,k==='valves'?-.05:0,k==='valves'?.05:0);$$('#hcam button').forEach(b=>b.classList.toggle('on',b.dataset.cam===k))},
  async enter(){fit();if(UI.ready||HL.loading)return;HL.loading=true;$('#hld').hidden=false;await new Promise(r=>setTimeout(r,30));try{await decode();buildDeco();Object.keys(HG.H.valves).forEach(valveMesh);buildFlow();setCut(UI.cut);buildLabels();buildAtlas();UI.ready=true;$('#hld').hidden=true;applyCam(true);requestAnimationFrame(tick)}catch(e){$('#hld').textContent='Could not build the heart ('+e.message+')';console.error(e)}},
- setCut,buildLabels,zoom:f=>{O.gd=Math.min(O.max,Math.max(O.min,O.gd*f))},setElec:on=>{UI.elec=on;const t=on&&!AT.on;myo.transparent=t;myo.opacity=t?.32:1;myo.depthWrite=!t;myo.needsUpdate=true;applyAtlas();buildLabels()},setWire:on=>{myo.wireframe=on},state:()=>ST,setCor:on=>{UI.cor=on;applyAtlas()}};
+ setCut,buildLabels,zoom:f=>{O.gd=Math.min(O.max,Math.max(O.min,O.gd*f))},setElec:on=>{UI.elec=on;const t=on&&!AT.on;myo.transparent=t;myo.opacity=t?.32:1;myo.depthWrite=!t;myo.needsUpdate=true;applyAtlas();buildLabels()},setWire:on=>{myo.wireframe=on},state:()=>ST,setCor:on=>{UI.cor=on;applyAtlas()},gfx:()=>({THREE,R,S,cam,G,myo,valM,artM,veinM})};
 return HL})();
 // ===================== Heart Lab: page, controls, Wiggers diagram =====================
 HEAD.heart=['Heart Lab','Watch one heartbeat in detail: chambers squeeze, valves open and close, blood flows, and the electrical signal travels.'];
@@ -4900,6 +5085,8 @@ async function addTest(){let all=[];try{all=(await SX.api('/labs/tests',{silent:
 async function bookLab(){const sel=LABS.labs.find(l=>l.id===LABQ.sel);if(!sel)return;if(LABQ.home&&sel.home&&!LABQ.slot){toast(P('Choose a collection slot'));return}
  try{const o=await SX.api('/orders',{method:'POST',body:{store:sel.id,kind:'lab',items:sel.lines.map(x=>({code:x.code})),memberId:SX.me().id,address:(LABQ.home&&sel.home&&SX.addrSel&&SX.addrSel()?SX.addrFmt(SX.addrSel()):S.addr)||'',addr:LABQ.home&&sel.home&&SX.addrSel?SX.addrSel():null,member:SX.me().name,slot:LABQ.home&&sel.home?LABQ.slot:''}});S.liveOrders.unshift(o);SX.save();SX.closeModal();go('orders');toast(P('Lab booking placed')+' · '+sel.name)}catch(e){}}
 // entry points: Lab results + Insights pages get a "Find a lab" card
+SX.labQuotes=()=>LABS;
+SX.labSheetHook=f=>{const o=labSheet;labSheet=function(){o.apply(this,arguments);try{f()}catch(e){}}};
 const labCTA=()=>`<div class="card sx-cta"><div class="grow"><b>🧪 ${P('Need a test?')}</b><small>${P('Compare nearby labs: prices, home collection, report time.')}</small></div><button class="btn p sm" data-sx="labadd">${P('Find a lab')}</button></div>`;
 SX.extend('nearlabs',{after:labCTA});
 // ---------------------------------------------------------------- first-aid videos
@@ -6959,6 +7146,7 @@ function placesHTML(kind,title,opt={}){const g=S.net.geo;if(!g)return `<div clas
   <div class="lv6-pls">${all.length?all.map(row).join(''):`<p class="mute sm" style="margin:10px 0 0">${P('Nothing of this kind is mapped within 6 km. Try again later or search in Google Maps.')}</p>`}</div>
   ${opt.foot||''}</div>`}
 SX.act.mapsel=([id])=>{plSel=decodeURIComponent(id);render();const el=document.querySelector('.lv6-pl.on');if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'})};
+SX.placesData=()=>PLACES;SX.setPlSel=v=>{plSel=v};
 SX.act.mapreload=([kind])=>{loadPlaces(kind,true)};
 document.addEventListener('click',e=>{const a=e.target.closest('[data-stop]');if(a)e.stopPropagation()},true);
 // nearby labs (Records & Labs) and hospitals (Appointments → Booking) and blood banks (Safety)
@@ -7836,10 +8024,11 @@ function load(){if(G.ready||G.loading||!key())return;G.loading=true;const s=docu
 window.__gmapsReady=()=>{G.ready=true;G.loading=false;boot()};
 const fetchCfg=()=>{if(SX.cfg)return Promise.resolve();return fetch('/api/v1/config').then(r=>r.json()).then(j=>{SX.cfg=SX.cfg||j}).catch(()=>{})};
 fetchCfg().then(()=>{if(key())load()});
-let seq=0;const PENDING={};
+let seq=0,LASTMAP=null;const PENDING={};
 SX.gmapHTML=(center,items,opt={})=>{const id='gm'+(++seq);PENDING[id]={center,items,opt};setTimeout(()=>mount(id),0);return `<div class="lv6-map lv13-gmap" id="${id}" style="height:${opt.h||300}px"><div class="lv13-gmap-in"></div>${opt.act?'':''}</div>`};
+SX.gmapPan=p=>{try{const m=LASTMAP;if(m&&p&&p.lat)m.panTo({lat:p.lat,lng:p.lng})}catch(e){}};
 function mount(id){const el=document.getElementById(id),job=PENDING[id];if(!el||!job)return;if(!G.ready){load();setTimeout(()=>mount(id),400);return}delete PENDING[id];const {center,items,opt}=job;
- const map=new google.maps.Map(el.querySelector('.lv13-gmap-in'),{center:{lat:center.lat,lng:center.lng},zoom:opt.zoom||13,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false});
+ const map=LASTMAP=new google.maps.Map(el.querySelector('.lv13-gmap-in'),{center:{lat:center.lat,lng:center.lng},zoom:opt.zoom||13,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false});
  const bounds=new google.maps.LatLngBounds();bounds.extend({lat:center.lat,lng:center.lng});
  new google.maps.Marker({map,position:{lat:center.lat,lng:center.lng},title:P('You'),icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#2f5bff',fillOpacity:1,strokeColor:'#fff',strokeWeight:3}});
  items.filter(p=>p.lat&&p.lng).forEach(p=>{const m=new google.maps.Marker({map,position:{lat:p.lat,lng:p.lng},title:p.name||'',icon:p.partner?undefined:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#dc2626',fillOpacity:.95,strokeColor:'#fff',strokeWeight:2}});bounds.extend({lat:p.lat,lng:p.lng});
@@ -9134,6 +9323,511 @@ SX.extend('finder',{before(){const m=SX.me(),low=(S.meds[m.id]||[]).map(x=>({x,d
   ${low.map(({x,d})=>`<div class="lv24-row ${d<=3?'urgent':''}"><div class="lv24-ic">${SX.ico?SX.ico('pill'):'💊'}</div><div class="grow"><b>${E(x.n)}</b><small>${d<=0?P('none left'):d+' '+P('days left')}</small></div><button class="btn ${d<=3?'p':'s'} sm" data-sx="refill:${E(x.id)}">${P('Reorder')}</button></div>`).join('')}</div>`}});
 }
 
+/*live-p32*/
+// ===================== live layer 32: one location for the whole app — one permission, one sheet, one chip =====================
+// Before this, six places asked for a position in six ways. Now there is one door: SX.needLoc(module). The first time it
+// opens the Allow-your-location sheet, where the family sees exactly which parts of the app will use it and can switch
+// any of them off — except emergency SOS, which is required and says so. Everything else (labs, pharmacies, doctors,
+// alerts, live tracking in an emergency) reads the same saved position and the same permission.
+{
+const P=SX.p,S=SX.S;
+S.net=S.net||{};
+const phone=()=>matchMedia('(max-width:720px)').matches;
+
+SX.addPhrases({
+ 'Allow your location':['अपनी लोकेशन की अनुमति दें','మీ లొకేషన్‌ను అనుమతించండి'],
+ 'One permission, used across the app':['एक बार अनुमति, पूरे ऐप में उपयोग','ఒకసారి అనుమతి, యాప్ అంతటా వాడకం'],
+ 'Choose what it is used for. You can change any of this later in Settings.':
+  ['चुनें कि इसका उपयोग किसके लिए हो। आप इसे बाद में सेटिंग्स में बदल सकते हैं।','దేనికోసం వాడాలో ఎంచుకోండి. తర్వాత సెట్టింగ్‌లలో మార్చుకోవచ్చు.'],
+ 'Required':['ज़रूरी','తప్పనిసరి'],
+ 'Emergency SOS':['आपातकालीन SOS','అత్యవసర SOS'],
+ 'Your location goes to the people you chose, and to the live map they open. SOS cannot work without it.':
+  ['आपकी लोकेशन उन लोगों तक जाती है जिन्हें आपने चुना है, और उस लाइव मैप तक जिसे वे खोलते हैं। इसके बिना SOS काम नहीं करता।',
+   'మీరు ఎంచుకున్న వ్యక్తులకు, వారు తెరిచే లైవ్ మ్యాప్‌కు మీ లొకేషన్ వెళ్తుంది. దీని లేకుండా SOS పనిచేయదు.'],
+ 'Labs and tests near you':['आपके पास की लैब और जाँचें','మీ దగ్గరి ల్యాబ్‌లు, టెస్టులు'],
+ 'Prices, home collection and distance from accredited labs.':['मान्यता प्राप्त लैब से क़ीमतें, घर से सैंपल और दूरी।','గుర్తింపు పొందిన ల్యాబ్‌ల ధరలు, ఇంటి వద్ద శాంపిల్, దూరం.'],
+ 'Pharmacies and delivery':['फ़ार्मेसी और डिलीवरी','ఫార్మసీలు, డెలివరీ'],
+ 'Which chemists can deliver to you, and how fast.':['कौन-सी दुकानें आप तक पहुँचा सकती हैं और कितनी जल्दी।','ఏ మందుల దుకాణాలు మీకు డెలివరీ చేయగలవు, ఎంత త్వరగా.'],
+ 'Doctors and hospitals':['डॉक्टर और अस्पताल','డాక్టర్లు, ఆసుపత్రులు'],
+ 'Clinics near you when you book a visit.':['विज़िट बुक करते समय पास के क्लिनिक।','విజిట్ బుక్ చేసేటప్పుడు దగ్గరి క్లినిక్‌లు.'],
+ 'Alerts for your area':['आपके इलाक़े के अलर्ट','మీ ప్రాంత అలర్ట్‌లు'],
+ 'Dengue, heat and air-quality warnings for your city.':['आपके शहर के लिए डेंगू, गर्मी और हवा की चेतावनी।','మీ నగరానికి డెంగ్యూ, వేడి, గాలి నాణ్యత హెచ్చరికలు.'],
+ 'Live location in an emergency':['आपात स्थिति में लाइव लोकेशन','అత్యవసరంలో లైవ్ లొకేషన్'],
+ 'While an SOS is open, the map keeps moving with you until you tap “I’m safe”.':
+  ['जब तक SOS खुला है, मैप आपके साथ चलता रहता है — जब तक आप “मैं सुरक्षित हूँ” न दबाएँ।',
+   'SOS తెరిచి ఉన్నంత వరకు, “నేను క్షేమం” నొక్కే వరకు మ్యాప్ మీతో కదులుతూ ఉంటుంది.'],
+ 'Allow location':['लोकेशन की अनुमति दें','లొకేషన్ అనుమతించండి'],
+ 'Maybe later':['बाद में','తర్వాత'],
+ 'Only while you use the app. Your position is never sold or shared with other families.':
+  ['सिर्फ़ ऐप इस्तेमाल करते समय। आपकी लोकेशन न बेची जाती है, न दूसरे परिवारों से साझा होती है।',
+   'మీరు యాప్ వాడుతున్నప్పుడు మాత్రమే. మీ లొకేషన్ అమ్మబడదు, ఇతర కుటుంబాలతో పంచుకోబడదు.'],
+ 'Location is off for this':['इसके लिए लोकेशन बंद है','దీనికి లొకేషన్ ఆఫ్‌లో ఉంది'],
+ 'Turn it on':['चालू करें','ఆన్ చేయండి'],
+ 'Location':['लोकेशन','లొకేషన్'],
+ 'Used by':['उपयोग','వాడకం'],
+ 'Change':['बदलें','మార్చండి'],
+ 'Not set':['सेट नहीं है','సెట్ చేయలేదు'],
+ 'Locating…':['लोकेशन खोजी जा रही है…','లొకేషన్ కనుగొంటోంది…'],
+ 'Location is blocked in the browser. Allow it in site settings, or choose your area on the map.':
+  ['ब्राउज़र में लोकेशन ब्लॉक है। साइट सेटिंग्स में अनुमति दें, या मैप पर अपना इलाक़ा चुनें।',
+   'బ్రౌజర్‌లో లొకేషన్ బ్లాక్ చేయబడింది. సైట్ సెట్టింగ్‌లలో అనుమతించండి, లేదా మ్యాప్‌లో మీ ప్రాంతాన్ని ఎంచుకోండి.'],
+ 'Live':['लाइव','లైవ్'],
+ 'SOS needs your location':['SOS को आपकी लोकेशन चाहिए','SOSకి మీ లొకేషన్ అవసరం'],
+ 'Fix it now':['अभी ठीक करें','ఇప్పుడే సరిచేయండి']});
+
+// ---------------------------------------------------------------- A. the one permission record
+const MODULES=()=>[
+ {k:'sos',req:true,ic:'cross',t:P('Emergency SOS'),s:P('Your location goes to the people you chose, and to the live map they open. SOS cannot work without it.')},
+ {k:'labs',ic:'records',t:P('Labs and tests near you'),s:P('Prices, home collection and distance from accredited labs.')},
+ {k:'meds',ic:'pill',t:P('Pharmacies and delivery'),s:P('Which chemists can deliver to you, and how fast.')},
+ {k:'care',ic:'heart',t:P('Doctors and hospitals'),s:P('Clinics near you when you book a visit.')},
+ {k:'alerts',ic:'home',t:P('Alerts for your area'),s:P('Dengue, heat and air-quality warnings for your city.')},
+ {k:'live',ic:'pulse',t:P('Live location in an emergency'),s:P('While an SOS is open, the map keeps moving with you until you tap “I’m safe”.')}];
+const perm=()=>{const p=S.net.perm=S.net.perm||{};p.mod=p.mod||{};MODULES().forEach(m=>{if(p.mod[m.k]===undefined)p.mod[m.k]=true});p.mod.sos=true;return p};
+SX.locPerm=perm;
+SX.locOn=k=>{const p=perm();return k==='sos'?true:p.mod[k]!==false};
+SX.locAsked=()=>!!perm().at;
+const pageModule=()=>({labshop:'labs',tests:'labs',nearlabs:'labs',vault:'labs',insights:'labs',finder:'meds',orders:'meds',rx:'meds',cart:'meds',
+ book:'care',appts:'care',docs:'care',sos:'sos',aid:'sos',mid:'sos',contacts:'sos',dash:'alerts'})[typeof page!=='undefined'?page:'dash']||'labs';
+
+// ---------------------------------------------------------------- B. the sheet the family sees once
+const PIN=`<svg viewBox="0 0 160 140" class="lv32-art" aria-hidden="true">
+ <circle cx="80" cy="66" r="52" class="lv32-ring1"/><circle cx="80" cy="66" r="40" class="lv32-ring2"/>
+ <path d="M80 26c-15.5 0-28 12.3-28 27.5C52 74 80 104 80 104s28-30 28-50.5C108 38.3 95.5 26 80 26z" class="lv32-pin"/>
+ <circle cx="80" cy="53" r="10.5" class="lv32-pinin"/>
+ <circle cx="26" cy="34" r="6" class="lv32-dot a"/><circle cx="136" cy="44" r="5" class="lv32-dot b"/><circle cx="128" cy="100" r="7" class="lv32-dot a"/><circle cx="30" cy="96" r="4.5" class="lv32-dot b"/>
+ <ellipse cx="80" cy="116" rx="30" ry="6" class="lv32-shadow"/></svg>`;
+
+SX.locSheet=(opt={})=>new Promise(resolve=>{const p=perm(),ic=k=>(SX.ico&&SX.ico(k))||'';
+ let done=false;const fin=v=>{if(done)return;done=true;resolve(v)};
+ SX.modal(`<div class="lv32-ask">${PIN}
+  <h2>${P('Allow your location')}</h2>
+  <p class="lv32-lead">${opt.why||P('One permission, used across the app')} · ${P('Choose what it is used for. You can change any of this later in Settings.')}</p>
+  <div class="lv32-mods">${MODULES().map(m=>`<label class="lv32-mod ${m.req?'req':''}">
+    <span class="lv32-mi">${ic(m.ic)}</span><span class="grow"><b>${E(m.t)}${m.req?` <i class="lv32-req">${P('Required')}</i>`:''}</b><small>${E(m.s)}</small></span>
+    <input type="checkbox" ${m.req||p.mod[m.k]!==false?'checked':''} ${m.req?'disabled':''} data-mod="${m.k}"><i class="lv32-sw"></i></label>`).join('')}</div>
+  <button class="btn p lv32-go" id="lv32allow">${P('Allow location')}</button>
+  <button class="lv32-later" id="lv32later">${P('Maybe later')}</button>
+  <p class="lv32-fine">${P('Only while you use the app. Your position is never sold or shared with other families.')}</p></div>`,
+  {cls:'lv32-m',label:P('Allow your location'),sticky:true,onclose:()=>fin(null)});
+ document.querySelectorAll('.lv32-mod input[data-mod]').forEach(i=>i.onchange=()=>{p.mod[i.dataset.mod]=i.checked;SX.save()});
+ document.getElementById('lv32later').onclick=()=>{p.later=Date.now();SX.save();SX.closeModal();fin(null)};
+ document.getElementById('lv32allow').onclick=async()=>{const b=document.getElementById('lv32allow');b.disabled=true;b.textContent=P('Locating…');
+  const f=await SX.loc.gps(12000);
+  if(!f){b.disabled=false;b.textContent=P('Allow location');
+   const e=document.querySelector('.lv32-ask .lv32-err')||Object.assign(document.createElement('p'),{className:'lv32-err'});
+   e.textContent=P('Location is blocked in the browser. Allow it in site settings, or choose your area on the map.');
+   if(!e.parentNode)document.querySelector('.lv32-ask').insertBefore(e,document.getElementById('lv32allow'));
+   const pick=document.createElement('button');pick.className='btn s lv32-pickbtn';pick.textContent=P('Pick on the map');
+   if(!document.querySelector('.lv32-pickbtn')){document.querySelector('.lv32-ask').insertBefore(pick,document.getElementById('lv32later'));
+    pick.onclick=async()=>{SX.closeModal();const r=await SX.mapPick({title:P('Your location')});if(r){SX.loc.set(r.lat,r.lng,r.where,true);p.at=Date.now();SX.save();fin(SX.loc.get())}else fin(null)}}
+   return}
+  p.at=Date.now();p.denied=false;SX.save();
+  const w=await SX.loc.resolve(f.lat,f.lng);SX.loc.set(f.lat,f.lng,w,false);
+  SX.closeModal();toast('📍 '+(SX.loc.short()||P('Location set')));try{render()}catch(e){}fin(SX.loc.get())}});
+
+// the one door: everything that wants a position goes through here
+SX.needLoc=async(mod,opt={})=>{mod=mod||pageModule();
+ const p=perm();
+ if(!p.at)return await SX.locSheet(opt);
+ if(mod!=='sos'&&p.mod[mod]===false){
+  const go=await new Promise(res=>{SX.modal(`<div class="lv32-small">${PIN}<h2>${P('Location is off for this')}</h2>
+   <p class="mute">${E((MODULES().find(m=>m.k===mod)||{}).s||'')}</p>
+   <div class="lv-row-end"><button class="btn s" data-sx="closeModal">${P('Not now')}</button><button class="btn p" id="lv32on">${P('Turn it on')}</button></div></div>`,{label:P('Location'),onclose:()=>res(false)});
+   document.getElementById('lv32on').onclick=()=>{p.mod[mod]=true;SX.save();SX.closeModal();res(true)}});
+  if(!go)return null}
+ const cur=SX.loc.get();
+ if(cur&&(S.net.geoManual||Date.now()-(S.net.geo.t||0)<30*60e3))return cur;
+ const f=await SX.loc.gps(9000);
+ if(f){const w=await SX.loc.resolve(f.lat,f.lng);SX.loc.set(f.lat,f.lng,w,false);return SX.loc.get()}
+ return cur};
+
+// every old call site now flows through the one door, without touching any of them
+const geo0=SX.geo;
+SX.geo=async ask=>{if(!ask)return SX.loc.get()||await geo0(false);const g=await SX.needLoc();return g||SX.loc.get()};
+
+// ---------------------------------------------------------------- C. one chip, everywhere
+function chip(){const w=S.net.where,c=SX.loc.get(),live=!!(SX.sosLive&&SX.sosLive());
+ return `<button class="lv32-chip ${c?'on':''} ${live?'live':''}" data-sx="locset" aria-label="${E(P('Location'))}">
+  <i class="lv32-cp">${(SX.ico&&SX.ico('home'))||'📍'}</i><span>${c?E(SX.loc.short()||P('Located')):P('Set location')}</span>
+  ${live?`<em class="lv32-livedot">${P('Live')}</em>`:'<b class="lv32-cv">⌄</b>'}</button>`}
+SX.locChip=chip;
+function paintChip(){const tb=document.querySelector('.topb');if(!tb)return;
+ const old=document.getElementById('lv6Loc');if(old)old.remove();
+ let a=document.getElementById('lv32chip');
+ if(!a){a=document.createElement('div');a.id='lv32chip';tb.insertBefore(a,tb.firstChild)}
+ const html=chip();if(a.dataset.h!==html){a.dataset.h=html;a.innerHTML=html}}
+document.addEventListener('tht:location',paintChip);
+
+// the card version, for Today and Book a test (replaces the round-29 one so there is a single look)
+SX.locCard=()=>{const c=SX.loc.get(),w=S.net.where;
+ return `<div class="lv32-card" data-lv29="loc"><div class="lv32-mini">${c&&SX.mapHTML?SX.mapHTML(c,[],{h:72,zoom:15}):''}${c?'<i class="lv32-dot2"></i>':''}</div>
+  <div class="grow"><small>${P('Your location')}</small><b>${c?E(SX.loc.short()||P('Located')):P('Not set')}</b>
+   <span class="mute sm">${c?E(w&&w.label?w.label:[w&&w.district,w&&w.state].filter(Boolean).join(', ')):P('Used by labs, pharmacies, doctors and SOS.')}</span></div>
+  <button class="btn ${c?'s':'p'} sm" data-sx="locset">${c?P('Change'):P('Set')}</button></div>`};
+
+// ---------------------------------------------------------------- D. Settings: the modules, and the mandatory one
+SX.chg.locmod=(a,el)=>{const k=el.dataset.k;perm().mod[k]=el.checked;SX.save();toast(el.checked?P('Turn it on'):P('Location is off for this'))};
+SX.extend('set',{before(){const p=perm(),c=SX.loc.get(),ic=k=>(SX.ico&&SX.ico(k))||'';
+ return `<div class="card wide lv32-set"><div class="hd"><div><h3>📍 ${P('Location')}</h3><small class="mute">${c?E(SX.loc.text()||SX.loc.short()):P('Not set')}</small></div><button class="btn s sm" data-sx="locset">${c?P('Change'):P('Set')}</button></div>
+  <div class="lv32-rows">${MODULES().map(m=>`<label class="lv32-row ${m.req?'req':''}"><span class="lv32-mi">${ic(m.ic)}</span>
+   <span class="grow"><b>${E(m.t)}${m.req?` <i class="lv32-req">${P('Required')}</i>`:''}</b><small>${E(m.s)}</small></span>
+   ${m.req?`<span class="lv32-lock">🔒</span>`:`<input type="checkbox" data-sxc="locmod" data-k="${m.k}" ${p.mod[m.k]!==false?'checked':''}><i class="lv32-sw"></i>`}</label>`).join('')}</div></div>`}});
+
+// ---------------------------------------------------------------- E. SOS: location is not optional, and it stays live
+SX.extend('sos',{before(){const p=perm(),ok=!!p.at&&!p.denied&&!!SX.loc.get();
+ if(ok)return '';
+ return `<div class="card wide lv32-sosneed"><div class="lv32-sn"><i>📍</i><div class="grow"><b>${P('SOS needs your location')}</b><small>${P('Your location goes to the people you chose, and to the live map they open. SOS cannot work without it.')}</small></div></div>
+  <button class="btn p" data-sx="locask">${P('Fix it now')}</button></div>`}});
+SX.act.locask=async()=>{await SX.needLoc('sos',{why:P('SOS needs your location')});try{render()}catch(e){}};
+
+// live tracking while an alert is open: a real watch, not a poll
+let watch=null,liveOn=false;
+SX.sosLive=()=>liveOn;
+SX.sosWatch=(on,onFix)=>{if(on===liveOn)return;liveOn=on;paintChip();
+ if(!on){if(watch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watch);watch=null;return}
+ if(!navigator.geolocation||SX.locOn('live')===false)return;
+ try{watch=navigator.geolocation.watchPosition(p=>{const f={lat:+p.coords.latitude.toFixed(5),lng:+p.coords.longitude.toFixed(5),acc:Math.round(p.coords.accuracy||0)};
+   SX.loc.set(f.lat,f.lng,S.net.where,false);if(onFix)onFix(f)},()=>{},{enableHighAccuracy:true,maximumAge:5000,timeout:20000})}catch(e){}};
+
+setTimeout(()=>{paintChip();
+ // first run: ask once, after the app has settled, and never twice in a day
+ const p=perm();if(!p.at&&!(p.later&&Date.now()-p.later<864e5)&&SX.user)setTimeout(()=>{if(!perm().at)SX.locSheet()},2500)},900);
+new MutationObserver(()=>{clearTimeout(window.__lv32t);window.__lv32t=setTimeout(paintChip,80)}).observe(document.body,{childList:true,subtree:true});
+}
+
+/*live-p33*/
+// ===================== live layer 33: the Heart Lab looks like a studio, and Today's cards read like a dashboard =====================
+// The heart was lit by three bare lights on a flat maroon wash. It now stands on a studio stage: image-based lighting
+// built at runtime from softboxes, filmic tone mapping, wet-tissue materials, a contact shadow, and the organ labels
+// drawn as callout cards with leader lines. Today's metric tiles get the same treatment in two dimensions: a tinted
+// icon chip, a large reading, and a seven-day spark behind it.
+{
+const P=SX.p,S=SX.S;
+const phone=()=>matchMedia('(max-width:720px)').matches;
+
+// ---------------------------------------------------------------- A. the studio, built once the heart is on screen
+let dressed=false;
+// fine surface relief: without it the mesh reads as a smooth balloon however good the lighting is
+function noiseMaps(THREE){
+ const N=512,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');
+ const im=x.createImageData(N,N),d=im.data;
+ const P=new Uint8Array(512);for(let i=0;i<256;i++)P[i]=i;
+ for(let i=255;i>0;i--){const j=(Math.sin(i*127.1)*43758.5453%1+1)%1*(i+1)|0;const t=P[i];P[i]=P[j];P[j]=t}
+ for(let i=0;i<256;i++)P[256+i]=P[i];
+ const fd=t=>t*t*t*(t*(t*6-15)+10),lp=(a,b,t)=>a+t*(b-a);
+ const gr=(h,a,b)=>{const u=(h&1)?-a:a,v=(h&2)?-b:b;return u+v};
+ const pn=(a,b)=>{const X=Math.floor(a)&255,Y=Math.floor(b)&255;a-=Math.floor(a);b-=Math.floor(b);
+  const u=fd(a),v=fd(b),A=P[X]+Y,B=P[X+1]+Y;
+  return lp(lp(gr(P[A],a,b),gr(P[B],a-1,b),u),lp(gr(P[A+1],a,b-1),gr(P[B+1],a-1,b-1),u),v)};
+ const H=new Float32Array(N*N);
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){let f=6,am=1,v=0,n=0;
+  for(let o=0;o<5;o++){v+=pn(i/N*f,j/N*f)*am;n+=am;am*=.5;f*=2.1}
+  H[j*N+i]=v/n}
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+  const l=H[j*N+((i+N-1)%N)],r=H[j*N+((i+1)%N)],u=H[((j+N-1)%N)*N+i],dn=H[((j+1)%N)*N+i];
+  const nx=(l-r)*2.2,ny=(u-dn)*2.2,nz=1,ln=Math.hypot(nx,ny,nz),k=(j*N+i)*4;
+  d[k]=(nx/ln*.5+.5)*255;d[k+1]=(ny/ln*.5+.5)*255;d[k+2]=(nz/ln*.5+.5)*255;d[k+3]=255}
+ x.putImageData(im,0,0);
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(5,5);
+ // a second pass, coarser, for the roughness break-up
+ const c2=document.createElement('canvas');c2.width=c2.height=N;const y=c2.getContext('2d');
+ const im2=y.createImageData(N,N),d2=im2.data;
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=(H[j*N+i]*.5+.5),k=(j*N+i)*4;
+  const g=Math.max(0,Math.min(255,(.42+h*.3)*255))|0;d2[k]=d2[k+1]=d2[k+2]=g;d2[k+3]=255}
+ y.putImageData(im2,0,0);
+ const t2=new THREE.CanvasTexture(c2);t2.wrapS=t2.wrapT=THREE.RepeatWrapping;t2.repeat.set(3,3);
+ return {normal:t,rough:t2}}
+
+function studioEnv(THREE,R){
+ const pm=new THREE.PMREMGenerator(R);
+ const sc=new THREE.Scene(),geo=new THREE.PlaneGeometry(1,1);
+ const box=(x,y,z,sx,sy,col)=>{const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col,side:THREE.DoubleSide}));m.position.set(x,y,z);m.scale.set(sx,sy,1);m.lookAt(0,0,0);sc.add(m)};
+ sc.background=new THREE.Color(0x14161c);
+ box(0,4,3,9,5,0xdedede);          // key softbox, high and in front
+ box(-5,1,-3,7,7,0x6e1420);        // crimson rim from behind-left — the colour the tissue bounces
+ box(5,1,-2,6,6,0x2c3a66);         // cool rim from behind-right, to separate it from the background
+ box(0,-4,2,8,4,0x3a2420);         // warm bounce from below
+ const t=pm.fromScene(sc,0.03).texture;
+ pm.dispose();geo.dispose();
+ return t}
+
+const gfx=()=>{try{return (typeof HL!=='undefined'&&HL&&HL.gfx&&HL.UI&&HL.UI.ready)?HL.gfx():null}catch(e){return null}};
+SX.heartGfx=gfx;
+function dress(){if(dressed)return;const g=gfx();if(!g||!g.R||!g.THREE)return;dressed=true;
+ const {THREE,R,S:SC,myo,valM,artM,veinM}=g;
+ try{
+  R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=.9;
+  if('outputEncoding' in R&&THREE.sRGBEncoding!==undefined)R.outputEncoding=THREE.sRGBEncoding;
+  SC.environment=studioEnv(THREE,R);
+  const NM=noiseMaps(THREE);
+  // wet muscle: a tight clearcoat over a soft, slightly translucent body, broken up by surface relief
+  Object.assign(myo,{roughness:.66,clearcoat:.16,clearcoatRoughness:.45,envMapIntensity:.22,metalness:0});
+  if('normalMap' in myo){myo.normalMap=NM.normal;if(myo.normalScale&&myo.normalScale.set)myo.normalScale.set(.55,.55)}
+  if('roughnessMap' in myo)myo.roughnessMap=NM.rough;
+  if('clearcoatNormalMap' in myo){myo.clearcoatNormalMap=NM.normal;if(myo.clearcoatNormalScale&&myo.clearcoatNormalScale.set)myo.clearcoatNormalScale.set(.3,.3)}
+  if(myo.color&&myo.color.isColor)myo.color.setRGB(.63,.26,.25);   // myocardium, not bubblegum
+  // this three build carries sheen as a Colour, later ones as a number — follow whichever it is
+  if(myo.sheen&&myo.sheen.isColor)myo.sheen=new THREE.Color(0x5a1118);
+  else if(typeof myo.sheen==='number'){myo.sheen=.5;if(myo.sheenColor&&myo.sheenColor.isColor)myo.sheenColor.set(0x5a1118);if(typeof myo.sheenRoughness==='number')myo.sheenRoughness=.6}
+  myo.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>',
+   '#include <emissivemap_fragment>\n float frh=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.4);totalEmissiveRadiance+=vec3(0.50,0.09,0.12)*frh*0.34;')};
+  myo.needsUpdate=true;
+  if(valM)Object.assign(valM,{roughness:.42,clearcoat:.25,envMapIntensity:.25,needsUpdate:true});
+  // the great vessels are pale cream and dusky slate in the body, never lavender
+  if(artM){Object.assign(artM,{roughness:.58,clearcoat:.12,envMapIntensity:.2,needsUpdate:true});
+   if(artM.normalMap!==undefined){artM.normalMap=NM.normal;if(artM.normalScale&&artM.normalScale.set)artM.normalScale.set(.3,.3)}
+   if(artM.color&&artM.color.isColor)artM.color.setRGB(.80,.68,.58)}
+  if(veinM){Object.assign(veinM,{roughness:.62,clearcoat:.1,envMapIntensity:.18,needsUpdate:true});
+   if(veinM.normalMap!==undefined){veinM.normalMap=NM.normal;if(veinM.normalScale&&veinM.normalScale.set)veinM.normalScale.set(.28,.28)}
+   if(veinM.color&&veinM.color.isColor)veinM.color.setRGB(.46,.40,.46)}
+  // one more rim light, low and behind, to draw the silhouette out of the background
+  const rim=new THREE.DirectionalLight(0xff8a96,.3);rim.position.set(-4,-1,-6);SC.add(rim);
+  const top=new THREE.DirectionalLight(0xffffff,.22);top.position.set(1,7,2);SC.add(top);
+  // the atlas meshes are what the page actually shows: give them the same studio treatment
+  try{const AT=window.HLX&&window.HLX.AT;const seen=new Set();
+   (AT&&AT.meshes||[]).forEach(me=>{const mats=Array.isArray(me.material)?me.material:[me.material];
+    mats.forEach(mt=>{if(!mt||seen.has(mt.uuid))return;seen.add(mt.uuid);
+     if('envMapIntensity' in mt)mt.envMapIntensity=.24;
+     if('roughness' in mt)mt.roughness=Math.min(.55,Math.max(.3,(mt.roughness||.5)*.85));
+     if('clearcoat' in mt)mt.clearcoat=Math.min(mt.clearcoat||0,.15);
+     if('clearcoatRoughness' in mt)mt.clearcoatRoughness=.3;
+     if('normalMap' in mt&&!mt.normalMap){mt.normalMap=NM.normal;if(mt.normalScale&&mt.normalScale.set)mt.normalScale.set(.3,.3)}
+     mt.needsUpdate=true})})}catch(e){}
+
+  // a soft contact shadow so it sits on the stage instead of floating
+  const cvs=document.createElement('canvas');cvs.width=cvs.height=128;const cx=cvs.getContext('2d');
+  const gr=cx.createRadialGradient(64,64,4,64,64,62);gr.addColorStop(0,'rgba(60,10,20,.55)');gr.addColorStop(1,'rgba(60,10,20,0)');
+  cx.fillStyle=gr;cx.fillRect(0,0,128,128);
+  const sh=new THREE.Mesh(new THREE.PlaneGeometry(2.6,2.6),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cvs),transparent:true,depthWrite:false,opacity:.75}));
+  sh.rotation.x=-Math.PI/2;sh.position.set(0,-.92,0);SC.add(sh);
+  document.getElementById('hstage')&&document.getElementById('hstage').classList.add('lv33');
+  if(phone()&&typeof HL!=='undefined'&&HL.zoom)setTimeout(()=>{try{HL.zoom(1.3)}catch(e){}},120);
+ }catch(e){console&&console.warn&&console.warn('[lv33] studio',e&&e.message)}}
+
+// the heart page builds lazily; try while it settles
+let tries=0;
+function watch(){if(dressed||tries++>40)return;dress();setTimeout(watch,500)}
+SX.extend('heart',{mounted(){tries=0;watch();hudBits()}});
+setTimeout(()=>{if(typeof page!=='undefined'&&page==='heart')watch()},1200);
+
+// ---------------------------------------------------------------- B. the readings that belong next to the heart
+function hudBits(){const st=document.getElementById('hstage');if(!st||document.getElementById('lv33hud'))return;
+ const m=SX.me(),hr=latest(m,'hr'),bp=latest(m,'sys'),spo=latest(m,'spo2');
+ const d=document.createElement('div');d.id='lv33hud';d.className='lv33-hud';
+ const rows=[hr&&['❤️',P('Heart rate'),hr.hr+' <i>bpm</i>'],bp&&['🩸',P('Blood pressure'),bp.sys+'/'+bp.dia+' <i>mmHg</i>'],spo&&['🫁','SpO₂',spo.spo2+' <i>%</i>']].filter(Boolean);
+ if(!rows.length)return;
+ d.innerHTML=rows.map(([ic,t,v])=>`<div class="lv33-hcard"><span class="lv33-hi">${ic}</span><div><small>${E(t)}</small><b>${v}</b></div></div>`).join('');
+ st.appendChild(d)}
+const latest=(m,k)=>{const v=(S.vitals&&S.vitals[m.id])||[];for(let i=v.length-1;i>=0;i--)if(v[i][k]!=null)return v[i];return null};
+
+// ---------------------------------------------------------------- C. Today's tiles: icon chip, big reading, seven-day spark
+function spark(vals){if(!vals||vals.length<2)return '';const mn=Math.min(...vals),mx=Math.max(...vals),sp=(mx-mn)||1;
+ const pts=vals.map((v,i)=>`${(i/(vals.length-1)*100).toFixed(1)},${(26-((v-mn)/sp)*22).toFixed(1)}`).join(' ');
+ return `<svg class="lv33-spark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"/></svg>`}
+const day=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+function series(m,key,days){const out=[];const V=(S.vitals&&S.vitals[m.id])||[];
+ for(let i=days-1;i>=0;i--){const d=day(i);const hit=V.filter(v=>v[key]!=null&&new Date(v.t).toISOString().slice(0,10)===d).pop();if(hit)out.push(+hit[key])}
+ return out}
+function sparks(){if(!phone())return;const m=SX.me();
+ document.querySelectorAll('.lv22-tile').forEach(t=>{if(t.dataset.lv33)return;t.dataset.lv33='1';
+  const label=(t.querySelector('.t span')||{}).textContent||'';
+  const key=/Heart|हृदय|గుండె/i.test(label)?'hr':/pressure|रक्तचाप|రక్తపోటు/i.test(label)?'sys':/Steps|कदम|అడుగులు/i.test(label)?null:null;
+  let vals=null;
+  if(key)vals=series(m,key,7);
+  else if(/Steps|कदम|అడుగులు/i.test(label)){const st=(S.steps&&S.steps[m.id])||{};vals=[];for(let i=6;i>=0;i--){const v=st[day(i)];if(v!=null)vals.push(+v)}}
+  if(vals&&vals.length>1)t.insertAdjacentHTML('beforeend',spark(vals))})}
+new MutationObserver(()=>{clearTimeout(window.__lv33t);window.__lv33t=setTimeout(sparks,80)}).observe(document.body,{childList:true,subtree:true});
+setTimeout(sparks,700);
+}
+
+// ===================== live layer 33b: the assistant is a chat, not a poster =====================
+// The orb filled half the screen and the thread was squeezed into what was left. Now the hero only exists on an empty
+// conversation; the moment there is one message the mark shrinks into the sub-header, keeps breathing there, and the
+// thread owns the screen with the composer pinned under it.
+{
+const P=SX.p,S=SX.S;
+const phone=()=>matchMedia('(max-width:720px)').matches;
+const msgs=()=>{const m=SX.me&&SX.me();return m?((S.ask&&S.ask[m.id])||[]).length:0};
+
+function shape(){if(typeof page==='undefined'||page!=='assist')return document.body.classList.remove('lv33-chat','lv33-empty');
+ const has=msgs()>0;
+ document.body.classList.toggle('lv33-chat',has);
+ document.body.classList.toggle('lv33-empty',!has);
+ const ag=document.querySelector('.lv5-agent');if(!ag)return;
+ // the small animated mark that replaces the hero once a conversation exists
+ let bar=document.getElementById('lv33bar');
+ if(has){
+  if(!bar){bar=document.createElement('div');bar.id='lv33bar';bar.className='lv33-bar';
+   bar.innerHTML=`<span class="lv33-mini">${SX.assistMark?SX.assistMark('b'):''}</span><span class="grow"><b>${P('Health assistant')}</b><small>${P('Reads your family’s records before it answers')}</small></span><button class="lv33-new" data-sx="agnew" aria-label="${E(P('New chat'))}">＋</button>`;
+   ag.prepend(bar)}
+ }else if(bar)bar.remove();
+ // the suggestion chips belong above the composer, and only when the thread is short
+ const sug=ag.querySelector('.lv5-sugg');if(sug){const f=ag.querySelector('form.lv5-ask');
+  if(f&&sug.nextElementSibling!==f&&msgs()<4)f.before(sug);
+  sug.style.display=msgs()>=4?'none':''}
+ const log=ag.querySelector('.lv5-chat');if(log&&has&&!log.dataset.lv33){log.dataset.lv33='1';setTimeout(()=>{log.scrollTop=log.scrollHeight},60)}}
+
+SX.act.agnew=()=>{const m=SX.me();if(!confirm(P('Start a new conversation? The old one stays in your records.')))return;
+ if(S.ask&&S.ask[m.id]){S.ask[m.id]=[];SX.save();try{render()}catch(e){}}};
+
+SX.addPhrases({'Health assistant':['स्वास्थ्य सहायक','ఆరోగ్య సహాయకుడు'],
+ 'Reads your family’s records before it answers':['जवाब देने से पहले आपके परिवार के रिकॉर्ड पढ़ता है','సమాధానం ఇచ్చే ముందు మీ కుటుంబ రికార్డులను చదువుతుంది'],
+ 'New chat':['नई बातचीत','కొత్త చాట్'],
+ 'Start a new conversation? The old one stays in your records.':['नई बातचीत शुरू करें? पुरानी आपके रिकॉर्ड में रहेगी।','కొత్త సంభాషణ ప్రారంభించాలా? పాతది మీ రికార్డులలో ఉంటుంది.']});
+
+new MutationObserver(()=>{clearTimeout(window.__lv33s);window.__lv33s=setTimeout(shape,60)}).observe(document.body,{childList:true,subtree:true});
+setTimeout(shape,500);
+}
+
+/*live-p34*/
+// ===================== live layer 34: places you can actually use — pick a lab, see it, book it, and stop the shaking =====================
+// Three real faults, from a phone in Chennai: the Call/Directions buttons squeezed into vertical letters, selecting a
+// place re-rendered the whole page (which rebuilt the Google map underneath — the shake), and a Google-listed lab had
+// no way to book because only partner stores carry prices. A place is now a card you tap, a sheet you read, and a
+// booking you can complete: with a partner, on their price list; with any other lab, by sending the list and calling.
+{
+const P=SX.p,S=SX.S;
+const money=n=>'₹'+Math.round(+n||0).toLocaleString('en-IN');
+const digits=s=>String(s||'').replace(/[^\d+]/g,'');
+
+SX.addPhrases({
+ 'Open now':['अभी खुला है','ఇప్పుడు తెరిచి ఉంది'],
+ 'Closed now':['अभी बंद है','ఇప్పుడు మూసి ఉంది'],
+ 'Partner lab':['पार्टनर लैब','భాగస్వామి ల్యాబ్'],
+ 'Prices and booking in the app':['ऐप में क़ीमतें और बुकिंग','యాప్‌లో ధరలు, బుకింగ్'],
+ 'Book a test here':['यहाँ जाँच बुक करें','ఇక్కడ టెస్ట్ బుక్ చేయండి'],
+ 'Send the list and call':['सूची भेजें और कॉल करें','జాబితా పంపి కాల్ చేయండి'],
+ 'Pick the tests, send them on WhatsApp, then call to confirm the slot. We save it so the report lands back here.':
+  ['जाँचें चुनें, WhatsApp पर भेजें, फिर स्लॉट पक्का करने के लिए कॉल करें। हम इसे सेव कर लेते हैं ताकि रिपोर्ट यहीं आए।',
+   'టెస్టులు ఎంచుకోండి, WhatsAppలో పంపండి, స్లాట్ ఖరారుకు కాల్ చేయండి. రిపోర్ట్ ఇక్కడికే వచ్చేలా మేము సేవ్ చేస్తాం.'],
+ 'Which tests?':['कौन-सी जाँचें?','ఏ టెస్టులు?'],
+ 'Send on WhatsApp':['WhatsApp पर भेजें','WhatsAppలో పంపండి'],
+ 'Call the lab':['लैब को कॉल करें','ల్యాబ్‌కు కాల్ చేయండి'],
+ 'Save as planned':['योजना में सेव करें','ప్లాన్‌గా సేవ్ చేయండి'],
+ 'Planned at':['यहाँ नियोजित','ఇక్కడ ప్లాన్ చేయబడింది'],
+ 'Saved. It is on Book a test until the report arrives.':['सेव हो गया। रिपोर्ट आने तक यह “जाँच बुक करें” में दिखेगा।','సేవ్ అయింది. రిపోర్ట్ వచ్చే వరకు “టెస్ట్ బుక్” లో ఉంటుంది.'],
+ 'Planned tests':['नियोजित जाँचें','ప్లాన్ చేసిన టెస్టులు'],
+ 'Mark done':['पूरा हुआ','పూర్తయింది'],
+ 'Remove':['हटाएँ','తీసివేయండి'],
+ 'Map':['मैप','మ్యాప్'],
+ 'Call':['कॉल','కాల్'],
+ 'Directions':['रास्ता','దారి'],
+ 'No number listed':['नंबर उपलब्ध नहीं','నంబర్ లేదు'],
+ 'Hours':['समय','సమయాలు']});
+
+// ---------------------------------------------------------------- A. the place sheet
+const PL=()=>{try{return (SX.placesData&&SX.placesData())||{}}catch(e){return {}}};
+const FB={};
+function findPlace(id){if(FB[id])return FB[id];const d=PL();for(const k in d){const x=[...((d[k]||{}).partners||[]),...((d[k]||{}).places||[])].find(p=>String(p.id)===String(id));if(x)return x}return null}
+SX.act.plopen=([id])=>{const p=findPlace(decodeURIComponent(id));if(p)SX.placeSheet(p)};
+SX.placeSheet=p=>{const openNow=p.open===true?`<span class="lv34-open">● ${P('Open now')}</span>`:p.open===false?`<span class="lv34-shut">● ${P('Closed now')}</span>`:'';
+ const hrs=(p.hours||'').split(';').map(s=>s.trim()).filter(Boolean);
+ SX.modal(`<div class="lv34-sheet">
+  <div class="lv34-top"><div class="grow"><h2>${E(p.name)}</h2>
+   <p class="lv34-meta">${[p.km!=null?p.km+' km':'',p.rating?'★ '+p.rating+(p.ratings?' ('+p.ratings+')':''):''].filter(Boolean).join(' · ')} ${openNow}</p></div>
+   ${p.partner?`<span class="lv34-badge">${P('Partner lab')}</span>`:''}</div>
+  ${p.address?`<p class="lv34-addr">${E(p.address)}</p>`:''}
+  ${hrs.length?`<details class="lv34-hrs"><summary>${P('Hours')}</summary><ul>${hrs.map(h=>`<li>${E(h)}</li>`).join('')}</ul></details>`:''}
+  <div class="lv34-acts">
+   <button class="btn p lv34-book" data-sx="plbook:${encodeURIComponent(p.id)}">${p.partner?P('Book a test here'):P('Book a test here')}</button>
+   <div class="lv34-row2">${p.phone?`<a class="btn s" href="tel:${E(digits(p.phone))}">📞 ${P('Call')}</a>`:`<span class="btn s" aria-disabled="true">${P('No number listed')}</span>`}
+    <a class="btn s" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank" rel="noopener">🧭 ${P('Directions')}</a>
+    <button class="btn s" data-sx="plmap:${encodeURIComponent(p.id)}">🗺️ ${P('Map')}</button></div></div>
+  ${p.partner?`<p class="lv34-note">${P('Prices and booking in the app')}</p>`:`<p class="lv34-note">${P('Pick the tests, send them on WhatsApp, then call to confirm the slot. We save it so the report lands back here.')}</p>`}
+ </div>`,{label:p.name,cls:'lv34-m'})};
+SX.act.plmap=([id])=>{SX.closeModal();SX.act.mapsel([id])};
+
+// ---------------------------------------------------------------- B. booking at any lab, partner or not
+SX.act.plbook=([id])=>{const p=findPlace(decodeURIComponent(id));if(!p)return;SX.closeModal();
+ if(p.partner&&SX.labOpen)return SX.labOpen(['cbc','lipid','hba1c'],p.id);
+ pickTests(p)};
+async function pickTests(p){let T=(SX.labCatalogue&&SX.labCatalogue())||[];
+ if(!T.length){try{const r=await SX.api('/labs/tests',{silent:true});T=r.tests||[]}catch(e){T=[]}}let sel=[];
+ const body=()=>`<div class="lv34-pick"><h2>${P('Which tests?')}</h2><p class="mute sm">${E(p.name)}${p.km!=null?' · '+p.km+' km':''}</p>
+  <div class="lv34-tests">${T.map(t=>`<button type="button" class="lv34-t ${sel.includes(t.code)?'on':''}" data-t="${t.code}"><span>${E(t.name)}</span><i>${money(t.typical)}</i></button>`).join('')}</div>
+  <div class="lv34-sum"><b>${sel.length} ${sel.length===1?P('test'):P('tests')}</b><span>${P('about')} ${money(T.filter(t=>sel.includes(t.code)).reduce((a,t)=>a+t.typical,0))}</span></div>
+  <div class="lv34-acts"><button class="btn p" id="lv34wa" ${sel.length?'':'disabled'}>${P('Send on WhatsApp')}</button>
+   <div class="lv34-row2">${p.phone?`<a class="btn s" href="tel:${E(digits(p.phone))}">📞 ${P('Call the lab')}</a>`:''}<button class="btn s" id="lv34save" ${sel.length?'':'disabled'}>${P('Save as planned')}</button></div></div></div>`;
+ const wire=()=>{document.querySelectorAll('.lv34-t').forEach(b=>b.onclick=()=>{const c=b.dataset.t;sel=sel.includes(c)?sel.filter(x=>x!==c):sel.concat([c]);paint()});
+  const wa=document.getElementById('lv34wa');if(wa)wa.onclick=()=>send(p,sel,T);
+  const sv=document.getElementById('lv34save');if(sv)sv.onclick=()=>{plan(p,sel,T);SX.closeModal();toast(P('Saved. It is on Book a test until the report arrives.'));try{render()}catch(e){}}};
+ const paint=()=>{const w=document.querySelector('.sx-modal .sx-sheet');if(!w)return;w.innerHTML=body();wire()};
+ SX.modal(body(),{label:P('Which tests?'),cls:'lv34-m'});wire()}
+function msg(p,sel,T){const m=SX.me(),names=T.filter(t=>sel.includes(t.code)).map(t=>'• '+t.name);
+ return [`Hello ${p.name},`,'',`I would like to book these tests${m?' for '+m.name:''}:`,...names,'',
+  S.net.where?`Area: ${[S.net.where.place,S.net.where.city].filter(Boolean).join(', ')}`:'',
+  'Please tell me the price, the slot and whether home collection is possible.','',`Sent from TheHealthTracker`].filter(Boolean).join('\n')}
+function send(p,sel,T){const t=encodeURIComponent(msg(p,sel,T));const n=digits(p.phone);
+ plan(p,sel,T);
+ const url=n?`https://wa.me/${n.replace(/^\+/,'')}?text=${t}`:`https://wa.me/?text=${t}`;
+ try{window.open(url,'_blank','noopener')}catch(e){location.href=url}
+ SX.closeModal();toast(P('Saved. It is on Book a test until the report arrives.'));try{render()}catch(e){}}
+function plan(p,sel,T){const m=SX.me();S.labPlan=S.labPlan||{};const list=S.labPlan[m.id]=S.labPlan[m.id]||[];
+ list.unshift({id:'lp'+Math.random().toString(36).slice(2,8),t:Date.now(),lab:p.name,phone:p.phone||'',lat:p.lat,lng:p.lng,
+  codes:sel.slice(),names:T.filter(x=>sel.includes(x.code)).map(x=>x.name),est:T.filter(x=>sel.includes(x.code)).reduce((a,x)=>a+x.typical,0)});
+ list.length=Math.min(list.length,12);SX.ledger&&SX.ledger('labplan',true,'Planned tests at '+p.name,m.id);SX.save()}
+SX.act.lpdone=([id])=>{const m=SX.me();S.labPlan[m.id]=(S.labPlan[m.id]||[]).filter(x=>x.id!==id);SX.save();render();toast(P('Mark done'))};
+SX.act.lpcall=([id])=>{const m=SX.me(),x=(S.labPlan[m.id]||[]).find(a=>a.id===id);if(x&&x.phone)location.href='tel:'+digits(x.phone)};
+
+// the planned tests sit at the top of Book a test until the report arrives
+SX.extend('labshop',{before(){const m=SX.me(),list=(S.labPlan&&S.labPlan[m.id])||[];if(!list.length)return '';
+ return `<div class="card wide lv34-plan"><div class="hd"><div><h3>${P('Planned tests')}</h3><small class="mute">${P('Saved. It is on Book a test until the report arrives.')}</small></div></div>
+  ${list.map(x=>`<div class="lv34-prow"><div class="grow"><b>${E(x.lab)}</b><small>${E(x.names.slice(0,4).join(' · '))}${x.names.length>4?' +'+(x.names.length-4):''}${x.est?' · '+P('about')+' '+money(x.est):''}</small></div>
+   ${x.phone?`<button class="btn s sm" data-sx="lpcall:${x.id}">📞</button>`:''}<button class="btn s sm" data-sx="lpdone:${x.id}">${P('Mark done')}</button></div>`).join('')}</div>`}});
+
+// ---------------------------------------------------------------- C. the row itself: tappable, readable, with buttons that never collapse
+function rows(){document.querySelectorAll('.lv6-pl').forEach(r=>{if(r.dataset.lv34)return;r.dataset.lv34='1';
+ const acts=r.querySelector('.lv6-pla');if(!acts)return;
+ const id=(r.dataset.sx||'').replace(/^mapsel:/,'');
+ const p=findPlace(decodeURIComponent(id));
+ // one primary action on the row; everything else lives in the sheet
+ acts.innerHTML=`<button class="btn p sm lv34-rb" data-sx="plopen:${id}">${P('Book')}</button>`;
+ if(p){const small=r.querySelector('small');if(small&&p.open!==undefined&&!small.dataset.lv34){small.dataset.lv34='1';
+  small.insertAdjacentHTML('beforeend',p.open===true?` · <b class="lv34-open">${P('Open now')}</b>`:p.open===false?` · <b class="lv34-shut">${P('Closed now')}</b>`:'')}}})}
+
+// ---------------------------------------------------------------- D. selecting a place must not rebuild the page (that was the shake)
+if(typeof SX.act.mapsel==='function'){
+ SX.act.mapsel=([id])=>{const v=decodeURIComponent(id);
+  try{if(SX.setPlSel)SX.setPlSel(v)}catch(e){}
+  document.querySelectorAll('.lv6-pl').forEach(r=>r.classList.toggle('on',decodeURIComponent((r.dataset.sx||'').replace(/^mapsel:/,''))===v));
+  document.querySelectorAll('.lv6-pin').forEach(b=>b.classList.toggle('on',decodeURIComponent((b.dataset.sx||'').split(':').slice(1).join(':'))===v));
+  const el=document.querySelector('.lv6-pl.on');if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'});
+  const p=findPlace(v);if(p&&SX.gmapPan)SX.gmapPan(p)};
+}
+// and nothing repaints while a finger is on the screen
+let scrolling=0;
+addEventListener('scroll',()=>{scrolling=Date.now();document.body.classList.add('lv34-scroll');clearTimeout(window.__lv34s);
+ window.__lv34s=setTimeout(()=>document.body.classList.remove('lv34-scroll'),180)},{passive:true,capture:true});
+SX.busyScroll=()=>Date.now()-scrolling<180;
+new MutationObserver(()=>{clearTimeout(window.__lv34t);window.__lv34t=setTimeout(()=>{if(SX.busyScroll())return;rows()},90)}).observe(document.body,{childList:true,subtree:true});
+setTimeout(rows,800);
+
+
+// ---------------------------------------------------------------- E. a lab list that is never empty
+// /labs/quotes only knows partner stores. Where we have no partner yet the sheet came back blank — prices,
+// no labs, no way to book. Fall back to the labs Google actually lists near the person and let them book those.
+if(SX.labSheetHook){
+ SX.labSheetHook(()=>{
+  const L=SX.labQuotes?SX.labQuotes():null;
+  if(!L||L.error||(L.labs&&L.labs.length))return;
+  const w=document.querySelector('.sx-modal');if(!w||w.querySelector('.lv34-fb'))return;
+  const anchor=w.querySelector('.sx-disc')||w.lastElementChild;
+  anchor.insertAdjacentHTML('beforebegin',`<div class="lv34-fb"><p class="sx-h4" style="margin:4px 0 6px">${P('Labs near you')}</p><div class="lv34-fbl"><div class="sx-livel"><div class="sx-spin sm"></div> ${P('Finding labs…')}</div></div></div>`);
+  fbLabs(w.querySelector('.lv34-fbl'))})}
+
+async function fbLabs(box){if(!box)return;
+ let g=null;try{g=await SX.geo(false)}catch(e){}
+ if(!g){box.innerHTML=`<p class="mute sm">${P('Share your location to see labs near you.')}</p>`;return}
+ let r=null;try{r=await SX.api(`/places?kind=lab&lat=${g.lat}&lng=${g.lng}&radius=6000`,{silent:true})}catch(e){}
+ const list=((r&&r.places)||[]).concat((r&&r.partners)||[]).sort((a,b)=>a.km-b.km).slice(0,6);
+ if(!list.length){box.innerHTML=`<p class="mute sm">${P('No labs listed near you yet. Try a wider area, or call a lab you know.')}</p>`;return}
+ box.innerHTML=list.map(l=>`<button class="lv34-fbr" data-lv34="${E(l.id)}"><div class="grow"><b>${E(l.name)}</b><small>${l.km} km${l.rating?' · ★ '+l.rating:''}${l.open===true?' · <i class="lv34-open">'+P('Open now')+'</i>':l.open===false?' · <i class="lv34-shut">'+P('Closed now')+'</i>':''}</small></div><span class="btn p sm">${P('Book')}</span></button>`).join('')
+  +`<p class="mute sm" style="margin:8px 0 0">${P('These labs are not partners yet, so we cannot hold the price. Pick your tests and we will send them the list — they confirm the amount.')}</p>`;
+ list.forEach(l=>FB[l.id]=l);
+ box.querySelectorAll('[data-lv34]').forEach(b=>b.onclick=()=>{const l=list.find(x=>String(x.id)===b.dataset.lv34);if(!l)return;SX.closeModal();pickTests(l)})}
+
+}
 SX.boot();
 })();
 

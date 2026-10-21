@@ -1,0 +1,54 @@
+/* live layer 34: places you can use — a readable row, a sheet, and no shaking */
+.lv6-pl{align-items:flex-start!important;gap:11px!important;padding:12px!important;transition:border-color .18s,background .18s}
+.lv6-pl.on{border-color:var(--blue)!important;background:color-mix(in srgb,var(--blue) 6%,transparent)}
+.lv6-pl .grow{min-width:0}
+.lv6-pl b{display:block;font-size:14.5px;line-height:1.25;margin-bottom:2px}
+.lv6-pl small{font-size:12.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lv6-pla{flex:none!important;flex-wrap:nowrap!important;align-self:center}
+.lv6-pla .btn,.lv34-rb{white-space:nowrap!important;min-width:68px;justify-content:center;flex:none}
+.lv34-open{color:#15803d;font-weight:700}
+.lv34-shut{color:#b45309;font-weight:700}
+/* the sheet */
+.sx-modal.lv34-m .sx-sheet{max-width:460px}
+.lv34-sheet h2{margin:0 0 2px;font-size:20px;line-height:1.25;letter-spacing:-.02em}
+.lv34-top{display:flex;gap:10px;align-items:flex-start}
+.lv34-meta{margin:0;color:var(--mute);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lv34-badge{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,transparent);padding:4px 9px;border-radius:999px}
+.lv34-addr{margin:10px 0 0;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.lv34-hrs{margin:10px 0 0}
+.lv34-hrs summary{font-size:13px;font-weight:600;color:var(--mute);cursor:pointer}
+.lv34-hrs ul{margin:8px 0 0;padding-left:18px;color:var(--mute);font-size:12.5px;line-height:1.7}
+.lv34-acts{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.lv34-acts .btn.p,.lv34-book{height:48px;border-radius:14px;justify-content:center;font-size:15px}
+.lv34-row2{display:flex;gap:8px;flex-wrap:nowrap}
+.lv34-row2 .btn{flex:1 1 0;justify-content:center;white-space:nowrap;min-width:0;height:42px;border-radius:12px;padding:0 8px;font-size:13.5px;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.lv34-row2 .btn{font-size:12.5px;padding:0 6px}}
+.lv34-note{margin:12px 0 0;color:var(--mute);font-size:12.5px;line-height:1.5}
+/* the test picker */
+.lv34-pick h2{margin:0 0 2px;font-size:19px}
+.lv34-tests{display:flex;flex-direction:column;gap:6px;margin:12px 0 0;max-height:46vh;overflow-y:auto}
+.lv34-t{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);text-align:left}
+.lv34-t span{flex:1;font-size:14px}
+.lv34-t i{font-style:normal;color:var(--mute);font-weight:600;font-size:13px}
+.lv34-t.on{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 8%,var(--card))}
+.lv34-t.on i{color:var(--blue)}
+.lv34-sum{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px}
+.lv34-sum span{color:var(--mute)}
+/* planned tests */
+.lv34-prow{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)}
+.lv34-prow:last-child{border-bottom:0}
+.lv34-prow .grow{min-width:0}
+.lv34-prow b{display:block;font-size:14.5px}
+.lv34-prow small{display:block;color:var(--mute);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv34-prow .btn{flex:none;white-space:nowrap}
+/* nothing animates while a finger is on the screen */
+body.lv34-scroll .lv29-mark,body.lv34-scroll .lv32-livedot,body.lv34-scroll .lv22-orb{animation-play-state:paused!important}
+body.lv34-scroll *{transition:none!important}
+.lv34-fb{margin:10px 0 2px}
+.lv34-fbl{display:flex;flex-direction:column;gap:7px}
+.lv34-fbr{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card,#fff);border:1px solid rgba(17,24,39,.09);border-radius:14px;padding:10px 11px;cursor:pointer}
+.lv34-fbr:active{transform:scale(.995)}
+.lv34-fbr .grow{flex:1;min-width:0}
+.lv34-fbr b{display:block;font-size:14.5px;line-height:1.25}
+.lv34-fbr small{display:block;color:var(--mute,#6b7280);font-size:12px;margin-top:2px}
+.lv34-fbr .btn{flex:0 0 auto;white-space:nowrap}
