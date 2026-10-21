@@ -129,9 +129,9 @@ def me_json(db: Session, u: PartnerUser) -> dict:
     open_orders = db.scalar(select(func.count(Order.id)).where(Order.store_id == u.store_id, Order.status.notin_(("delivered", "ready", "cancelled", "refunded", "returned")))) or 0
     pending_appts = db.scalar(select(func.count(Appointment.id)).where(Appointment.store_id == u.store_id, Appointment.status == "requested")) or 0
     unread = db.scalar(select(func.count(Message.id)).where(Message.store_id == u.store_id, Message.sender == "family", Message.read_partner == False)) or 0  # noqa: E712
-    return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith("@tech.invalid") else u.email,
+    return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith(".invalid") else u.email,
                      "phone": u.phone, "role": u.role, "mustChange": u.must_change,
-                     "rating": u.rating or 0, "ratingN": u.rating_n or 0},
+                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or ""},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
                       "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct} if s else None,
@@ -158,6 +158,23 @@ def password(body: PwIn, db: Session = Depends(get_db), u: PartnerUser = Depends
     return {"ok": True}
 
 
+class RegIn(BaseModel):
+    regNo: str
+
+
+@r.post("/my-registration")
+def my_registration(body: RegIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """A pharmacy owner who is themselves the registered pharmacist records their own number here. It is set
+    once by the person it belongs to and is shown beside every prescription they sign off."""
+    if u.role not in ("owner", "pharmacist"):
+        raise HTTPException(403, "Only a pharmacist records a registration number.")
+    reg = body.regNo.strip().upper()[:40]
+    if len(reg) < 4:
+        raise HTTPException(400, "Enter your State Pharmacy Council registration number.")
+    u.reg_no = reg
+    return {"ok": True, "regNo": reg}
+
+
 # ---- orders and bookings ---------------------------------------------------------------------------------------------
 def _order(db: Session, u: PartnerUser, oid: str) -> Order:
     o = db.get(Order, oid)
@@ -178,6 +195,14 @@ def porder(db: Session, o: Order) -> dict:
     j["next"] = [k for k in (NEXT_LAB if o.kind == "lab" else NEXT_MED).get(j["status"], []) if k != "assigned"]
     j["labels"] = {k: ACTION.get(k, LABEL.get(k, k)) for k in j["next"]}
     j["canAssign"] = o.kind == "lab" and j["status"] in ("confirmed", "assigned")
+    if o.kind == "medicine":
+        rx = [i for i in (o.items or []) if i.get("rx")]
+        v = db.get(PartnerUser, o.verified_by) if o.verified_by else None
+        j["rxItems"] = [i.get("name") for i in rx]
+        j["needsVerify"] = bool(rx) and not o.verified_at
+        j["verified"] = {"by": v.name or v.email if v else "", "regNo": v.reg_no if v else "",
+                         "at": o.verified_at, "doctor": o.rx_doctor, "doctorReg": o.rx_reg_no,
+                         "rxDate": o.rx_date, "note": o.verify_note} if o.verified_at else None
     j["hasReport"] = bool(db.get(StoredFile, (o.household_id, f"labrep_{o.id}")))
     if o.kind == "lab":
         a = db.get(PartnerUser, o.agent_id) if o.agent_id else None
@@ -215,6 +240,10 @@ def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: Partn
         raise HTTPException(400, f"From '{LABEL.get(cur, cur)}' you can go to: {', '.join(LABEL.get(a, a) for a in allowed) or 'nothing'}.")
     if body.status == "ready" and not db.get(StoredFile, (o.household_id, f"labrep_{o.id}")):
         raise HTTPException(400, "Upload the report first; 'Report ready' sends it to the family.")
+    if body.status == "packing" and o.kind == "medicine" and not o.verified_at and any(i.get("rx") for i in (o.items or [])):
+        # The family's status line has said "Pharmacist checking" since the first version of this. Until a
+        # registered pharmacist has actually signed the prescription off, it is a sentence we are making up.
+        raise HTTPException(400, "A registered pharmacist must check the prescription before this is packed.")
     o.status = body.status
     o.timeline = (o.timeline or []) + [{"s": body.status, "t": now(), "by": u.email, "note": body.note[:200]}]
     s = my_store(db, u)
@@ -249,12 +278,29 @@ def tech_json(db: Session, t: PartnerUser) -> dict:
     on = next((o for o in jobs if o.status in ("en_route", "arrived")), None)
     # A technician added without an address of their own is keyed by a reserved .invalid one (RFC 2606, so it
     # can never reach anybody). It is an internal key, not an address, and is never shown or written to.
-    real = "" if t.email.endswith("@tech.invalid") else t.email
+    real = "" if t.email.endswith(".invalid") else t.email
     return {"id": t.id, "name": t.name or real or t.phone, "email": real, "phone": t.phone, "active": t.active,
             "openJobs": len(jobs), "lastLogin": t.last_login, "mustChange": t.must_change,
             "rating": t.rating or 0, "ratingN": t.rating_n or 0,
             # What the owner needs to know before handing somebody another job: are they out on one already?
             "live": on.status if on else "", "liveOrder": on.id if on else ""}
+
+
+# Roles a store may create for itself, and what each one needs before it can be created. A pharmacist's
+# registration number is not paperwork: dispensing a prescription without a registered pharmacist is the
+# offence, and the number is what makes a named person answerable for it. A technician needs a phone because
+# the family is given it. Doctors are absent on purpose — a medical council registration is ours to verify.
+SELF_ROLES = {
+    "tech": {"kinds": ("lab",), "label": "technician", "reg": False, "team": "Collection team"},
+    "pharmacist": {"kinds": ("pharmacy",), "label": "pharmacist", "reg": True, "team": "Pharmacists"},
+}
+
+
+def _role_spec(role: str) -> dict:
+    spec = SELF_ROLES.get(role)
+    if not spec:
+        raise HTTPException(404, "unknown role")
+    return spec
 
 
 @r.get("/techs")
@@ -265,10 +311,26 @@ def techs(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
     return {"techs": [tech_json(db, t) for t in rows]}
 
 
+@r.get("/pharmacists")
+def pharmacists(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Who at this pharmacy may sign off a prescription."""
+    rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == u.store_id,
+                                                PartnerUser.role == "pharmacist").order_by(PartnerUser.name)).all()
+    return {"pharmacists": [staff_json(db, t) for t in rows]}
+
+
+def staff_json(db: Session, t: PartnerUser) -> dict:
+    real = "" if t.email.endswith(".invalid") else t.email
+    return {"id": t.id, "name": t.name or real or t.phone, "email": real, "phone": t.phone, "role": t.role,
+            "regNo": t.reg_no or "", "active": t.active, "lastLogin": t.last_login, "mustChange": t.must_change}
+
+
 class TechIn(BaseModel):
     name: str
     phone: str
     email: str = ""
+    regNo: str = ""
+    role: str = "tech"
 
 
 @r.post("/techs")
@@ -280,13 +342,19 @@ def tech_add(body: TechIn, db: Session = Depends(get_db), u: PartnerUser = Depen
     import secrets
 
     s = my_store(db, u)
-    if s.kind != "lab":
-        raise HTTPException(400, "Collection teams belong to labs.")
+    spec = _role_spec(body.role)
+    if s.kind not in spec["kinds"]:
+        raise HTTPException(400, f"A {spec['label']} belongs to a {' or '.join(spec['kinds'])}.")
     name, digits = body.name.strip(), phone10(body.phone)
     if len(name) < 2:
-        raise HTTPException(400, "Enter the technician's full name — the family is shown it.")
+        raise HTTPException(400, f"Enter the {spec['label']}'s full name.")
     if len(digits) != 10 or digits[0] not in "6789":
-        raise HTTPException(400, "Enter a 10-digit Indian mobile number — the family calls it.")
+        raise HTTPException(400, "Enter a 10-digit Indian mobile number.")
+    reg = body.regNo.strip().upper()[:40]
+    if spec["reg"] and len(reg) < 4:
+        # Not paperwork. Dispensing a prescription without a registered pharmacist is the offence, and this
+        # number is what puts a named, registered person behind every order that goes out.
+        raise HTTPException(400, "A pharmacist needs their State Pharmacy Council registration number.")
     # The phone is a sign-in identifier, so it has to point at one person.
     clash = [x for x in db.scalars(select(PartnerUser).where(PartnerUser.active == True,  # noqa: E712
                                                              PartnerUser.phone.like(f"%{digits}")).limit(20)).all()
@@ -302,19 +370,20 @@ def tech_add(body: TechIn, db: Session = Depends(get_db), u: PartnerUser = Depen
     else:
         # No address of their own: the account is still keyed by one, because that column is the primary
         # sign-in everywhere else in the portal. They never type it — they sign in with their phone.
-        email = f"{digits}@tech.invalid"
+        email = f"{digits}@{body.role}.invalid"
     temp = secrets.token_urlsafe(6)
-    t = PartnerUser(store_id=u.store_id, email=email, name=name[:80], phone=digits, role="tech",
-                    pw_hash=hash_pw(temp), must_change=True, active=True)
+    t = PartnerUser(store_id=u.store_id, email=email, name=name[:80], phone=digits, role=body.role,
+                    reg_no=reg, pw_hash=hash_pw(temp), must_change=True, active=True)
     db.add(t)
     db.flush()
-    if not email.endswith("@tech.invalid"):
+    if not email.endswith(".invalid"):
         from . import messaging
-        messaging.mail(email, f"Your Collect sign-in · {s.name}",
-                       f"Hello {name},\n\n{s.name} has added you to their home-collection team.\n\n"
-                       f"App: https://thehealthtracker.com/tech\nSign in with your mobile {digits} or this email\n"
+        where = "https://thehealthtracker.com/tech" if body.role == "tech" else "https://thehealthtracker.com/partner"
+        messaging.mail(email, f"Your sign-in · {s.name}",
+                       f"Hello {name},\n\n{s.name} has added you as a {spec['label']}.\n\n"
+                       f"Sign in: {where}\nUse your mobile {digits} or this email\n"
                        f"One-time password: {temp}\n\nYou will choose your own password the first time you sign in.")
-    out = tech_json(db, t)
+    out = tech_json(db, t) if body.role == "tech" else staff_json(db, t)
     # Shown once, on the owner's screen, for them to pass on. It is never stored in the clear.
     out["tempPassword"] = temp
     out["signIn"] = digits
@@ -327,8 +396,8 @@ def tech_reset(uid: str, db: Session = Depends(get_db), u: PartnerUser = Depends
     import secrets
 
     t = db.get(PartnerUser, uid)
-    if not t or t.store_id != u.store_id or t.role != "tech":
-        raise HTTPException(404, "Not one of your technicians.")
+    if not t or t.store_id != u.store_id or t.role not in SELF_ROLES:
+        raise HTTPException(404, "Not one of your team.")
     temp = secrets.token_urlsafe(6)
     t.pw_hash, t.must_change, t.active = hash_pw(temp), True, True
     return {"id": t.id, "name": t.name, "tempPassword": temp, "signIn": t.phone}
@@ -343,14 +412,14 @@ def tech_active(uid: str, body: TechOff, db: Session = Depends(get_db), u: Partn
     """Someone leaves, or is off sick. Turning them off stops them signing in; it does not touch work already
     in their hands, because a half-collected job still needs finishing."""
     t = db.get(PartnerUser, uid)
-    if not t or t.store_id != u.store_id or t.role != "tech":
-        raise HTTPException(404, "Not one of your technicians.")
+    if not t or t.store_id != u.store_id or t.role not in SELF_ROLES:
+        raise HTTPException(404, "Not one of your team.")
     if not body.active:
         live = db.scalars(select(Order).where(Order.agent_id == t.id, Order.status.in_(("en_route", "arrived")))).all()
         if live:
             raise HTTPException(400, f"They are out on a collection right now (THT-{live[0].id}). Reassign it first.")
     t.active = bool(body.active)
-    return tech_json(db, t)
+    return tech_json(db, t) if t.role == "tech" else staff_json(db, t)
 
 
 @r.post("/orders/{oid}/assign")
@@ -375,6 +444,84 @@ def assign(oid: str, body: AssignIn, db: Session = Depends(get_db), u: PartnerUs
     notify(db, o.household_id, "order", f"{s.name}: {t.name or 'Your technician'} is assigned",
            f"{t.name or 'A technician'} will collect your sample. You can call them from the app.",
            {"order": o.id, "status": "assigned", "kind": "lab", "agent": t.name or ""}, o.member_id or "", "/app")
+    return porder(db, o)
+
+
+# ---- dispensing a prescription ---------------------------------------------------------------------------------------
+def _pharmacist(u: PartnerUser = Depends(me)) -> PartnerUser:
+    """Who may sign a prescription off. An owner who is themselves the registered pharmacist qualifies; a
+    counter assistant does not, which is the entire point of the registration number."""
+    if u.role not in ("pharmacist", "owner"):
+        raise HTTPException(403, "Only a registered pharmacist can check a prescription.")
+    if not (u.reg_no or "").strip():
+        raise HTTPException(403, "Add your State Pharmacy Council registration number before checking prescriptions.")
+    if u.must_change:
+        raise HTTPException(403, "Choose your own password first.")
+    return u
+
+
+class VerifyIn(BaseModel):
+    doctor: str = ""          # prescriber's name, as written on the prescription
+    regNo: str = ""           # their medical council registration
+    rxDate: str = ""          # the date on the prescription
+    note: str = ""
+
+
+@r.post("/orders/{oid}/verify")
+def verify_rx(oid: str, body: VerifyIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_pharmacist)):
+    """A named, registered pharmacist signs this prescription off.
+
+    What is recorded is who checked it, when, and the three things about the prescription that make it
+    checkable afterwards: the prescriber, their registration number, and its date. Nothing about the order's
+    contents is editable here, because Rule 65(11-A) forbids substitution outright — if a prescribed medicine
+    cannot be supplied, the order is refused or part-supplied, never quietly swapped."""
+    o = _order(db, u, oid)
+    if o.kind != "medicine":
+        raise HTTPException(400, "Only medicine orders carry a prescription.")
+    if not any(i.get("rx") for i in (o.items or [])):
+        raise HTTPException(400, "Nothing on this order needs a prescription.")
+    if not o.rx_shared or not (o.rx_files or []):
+        raise HTTPException(400, "The family has not shared a prescription yet. Message them to ask for it.")
+    if o.verified_at:
+        raise HTTPException(409, "This prescription has already been checked.")
+    doctor, reg = body.doctor.strip()[:120], body.regNo.strip().upper()[:40]
+    if len(doctor) < 3:
+        raise HTTPException(400, "Enter the prescriber's name as written on the prescription.")
+    if len(reg) < 4:
+        raise HTTPException(400, "Enter the prescriber's registration number from the prescription.")
+    o.verified_by, o.verified_at = u.id, now()
+    o.rx_doctor, o.rx_reg_no, o.rx_date, o.verify_note = doctor, reg, body.rxDate.strip()[:10], body.note.strip()[:400]
+    o.timeline = (o.timeline or []) + [{"s": "checking", "t": now(), "by": u.email,
+                                        "note": f"Checked by {u.name or u.email} (Reg {u.reg_no})"}]
+    s = my_store(db, u)
+    notify(db, o.household_id, "order", f"{s.name}: prescription checked",
+           f"{u.name or 'Our pharmacist'} has checked your prescription. Your order is being packed.",
+           {"order": o.id, "status": "checking", "kind": "medicine"}, o.member_id or "", "/app")
+    return porder(db, o)
+
+
+class RefuseIn(BaseModel):
+    reason: str
+
+
+@r.post("/orders/{oid}/refuse")
+def refuse_rx(oid: str, body: RefuseIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_pharmacist)):
+    """The pharmacist will not dispense this. The family is told plainly why, because "cancelled" with no
+    reason sends them to another pharmacy to try the same prescription again."""
+    o = _order(db, u, oid)
+    if o.kind != "medicine":
+        raise HTTPException(400, "Only medicine orders carry a prescription.")
+    if o.status in ("out", "delivered", "cancelled"):
+        raise HTTPException(400, "Too late to refuse this one.")
+    reason = body.reason.strip()[:300]
+    if len(reason) < 5:
+        raise HTTPException(400, "Tell the family why — they will otherwise take the same prescription elsewhere.")
+    o.status = "cancelled"
+    o.timeline = (o.timeline or []) + [{"s": "cancelled", "t": now(), "by": u.email, "reason": reason,
+                                        "note": f"Refused by {u.name or u.email} (Reg {u.reg_no})"}]
+    s = my_store(db, u)
+    notify(db, o.household_id, "order", f"{s.name}: prescription not dispensed", reason,
+           {"order": o.id, "status": "cancelled", "kind": "medicine"}, o.member_id or "", "/app")
     return porder(db, o)
 
 

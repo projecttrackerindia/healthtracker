@@ -302,7 +302,7 @@ class PartnerUserIn(BaseModel):
     email: str
     name: str = ""
     phone: str = ""
-    role: str = "staff"       # owner | staff | doctor | tech
+    role: str = "staff"       # owner | staff | doctor | tech | pharmacist
     regNo: str = ""           # doctors only: medical council registration number
     specialty: str = ""
 
@@ -328,9 +328,14 @@ def partner_user_add(sid: str, body: PartnerUserIn, a: Admin = Depends(me), db: 
     email = body.email.strip().lower()
     if "@" not in email or db.scalar(select(PartnerUser.id).where(PartnerUser.email == email)):
         raise HTTPException(400, "A valid, unused email is needed.")
-    role = body.role if body.role in ("owner", "staff", "doctor", "tech") else "staff"
+    role = body.role if body.role in ("owner", "staff", "doctor", "tech", "pharmacist") else "staff"
     if role == "tech" and s.kind != "lab":
         raise HTTPException(400, "Collection technicians belong to labs.")
+    if role == "pharmacist":
+        if s.kind != "pharmacy":
+            raise HTTPException(400, "Pharmacists belong to pharmacies.")
+        if len(body.regNo.strip()) < 4:
+            raise HTTPException(400, "A pharmacist needs their State Pharmacy Council registration number.")
     if role == "doctor":
         if s.kind != "hospital":
             raise HTTPException(400, "Doctors sign in under a hospital or clinic.")

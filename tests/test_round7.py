@@ -58,6 +58,7 @@ def partner(a, sid):
     assert p.post("/api/partner/login", json={"email": r.json()["email"], "password": "wrong"}).status_code == 401
     me = p.post("/api/partner/login", json={"email": r.json()["email"], "password": r.json()["tempPassword"]})
     assert me.status_code == 200 and me.json()["user"]["mustChange"] is True
+    p.temp_password = r.json()["tempPassword"]
     return p
 
 
@@ -99,7 +100,18 @@ def test_pharmacy_sees_only_the_shared_prescription():
     assert lst["rxFiles"] == ["v_rx1"] and lst["items"][0]["rx"] is True
     assert p.get(f"/api/partner/orders/{o['id']}/rx/v_rx1").status_code == 200
     assert p.get(f"/api/partner/orders/{o['id']}/rx/v_secret").status_code == 404
-    for st in ("checking", "packing", "out", "delivered"):
+    assert p.post(f"/api/partner/orders/{o['id']}/status", json={"status": "checking"}).status_code == 200
+    # Since the pharmacist slice, a prescription order cannot be packed until a registered pharmacist has
+    # actually signed it off — the family's "Pharmacist checking" line used to be a claim nobody made. The
+    # partner fixture signs in as the store owner, so they record their own registration number first.
+    assert p.post(f"/api/partner/orders/{o['id']}/status", json={"status": "packing"}).status_code == 400
+    # ...and a one-time password handed across a counter does not sign legal records, so they choose their own
+    # first. That is the same rule the technician app enforces.
+    assert p.post("/api/partner/password", json={"current": p.temp_password, "new": "MyOwnPass#2026"}).status_code == 200
+    assert p.post("/api/partner/my-registration", json={"regNo": "AP/40021"}).status_code == 200
+    assert p.post(f"/api/partner/orders/{o['id']}/verify",
+                  json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": "2026-10-19"}).status_code == 200
+    for st in ("packing", "out", "delivered"):
         assert p.post(f"/api/partner/orders/{o['id']}/status", json={"status": st}).status_code == 200, st
     assert p.get("/api/partner/orders").json()["orders"] == [] and p.get("/api/partner/orders?status=closed").json()["orders"][0]["status"] == "delivered"
     assert f.get("/api/v1/orders").json()["orders"][0]["status"] == "delivered"

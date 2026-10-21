@@ -943,3 +943,41 @@ a 429 from a limiter working exactly as intended — which is how this was found
 3. Set `IN_PROCESS_LOOPS=0`.
 4. Only then drop `--no-cpu-throttling` and raise `--max-instances`. The limiter above is what makes step 4
    safe; it was the remaining per-container state.
+
+## Pharmacy slice 1 — "Pharmacist checking" becomes true (2026-10-21)
+
+The family's medicine status line has read **"Pharmacist checking"** since the first version of this app.
+No pharmacist was named, registered or recorded anywhere. Exactly the shape of the lab's old "Phlebotomist
+assigned", and exactly the same fix: make it true or stop saying it.
+
+- **A registered pharmacist is a role the pharmacy creates itself** (`role="pharmacist"`), like the lab's
+  technicians. The roster code is now one role-aware implementation rather than two that would drift:
+  `SELF_ROLES` says which store kinds may create which role and what each one needs.
+- **The State Pharmacy Council registration number is required.** Not paperwork — dispensing a prescription
+  without a registered pharmacist *is* the offence, and the number is what puts a named, answerable person
+  behind every order that goes out. A pharmacy owner who is themselves the registered pharmacist records
+  their own number once, through `POST /partner/my-registration`.
+- **Packing is gated.** `POST /orders/{oid}/status` refuses `packing` on any medicine order that has a
+  prescription-only line and no sign-off. A counter assistant (`role="staff"`) cannot sign one off; nor can
+  anybody still on the one-time password they were handed across a counter.
+- **What is recorded** is who checked it, when, and the three things that make a prescription checkable
+  afterwards: the prescriber, their registration number, and its date — plus a free note for anything queried.
+- **No substitution, by construction.** Rule 65(11-A) forbids it outright, so the check screen offers no way
+  to change what was ordered. If a medicine cannot be supplied the choice is to part-supply and message the
+  family, or to refuse.
+- **Refusing says why.** "Cancelled" with no reason simply sends the family to the next pharmacy with the
+  same prescription; the reason is shown to them verbatim.
+
+New: `GET /partner/pharmacists`, `POST /partner/orders/{oid}/verify`, `POST /partner/orders/{oid}/refuse`,
+`POST /partner/my-registration`; a Pharmacists roster and an inline check form in the partner console; admin
+may create the role too. 16 new tests, suite at **266**.
+
+`tests/test_round7.py` needed updating: it walked a prescription order straight to packed. The fixture now
+chooses a password and records a registration first, with the reason written into the test.
+
+### Verified in a browser
+Order row shows **"prescription not checked — a registered pharmacist must check it before this can be
+packed."** Adding Priya Nair with AP/12345 puts her on the roster. The owner clicking **Check prescription**
+is asked for their own registration number first, then gets the form, which names the prescription-only line
+and says plainly that substitution is not an option. After signing off the row reads *"Checked by Apollo
+Owner AP/99887 · prescriber Dr A Sharma TSMC/55512 · dated 2026-10-19"* and Packed is available.
