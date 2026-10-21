@@ -75,6 +75,30 @@ def my_store(db: Session, u: PartnerUser) -> Store:
     return s
 
 
+def phone10(v: str | None) -> str:
+    """The last ten digits, which is the part of an Indian mobile number that identifies it whether it was
+    typed bare, with +91, with a leading 0, or with spaces in it."""
+    return "".join(c for c in (v or "") if c.isdigit())[-10:]
+
+
+def find_user(db: Session, ident: str) -> PartnerUser | None:
+    """Who is signing in. A phlebotomist between houses remembers their phone number, not an email address the
+    lab invented for them, so an identifier without an "@" is matched against the phone instead. The phone is
+    kept unique among active sign-ins when one is added, so this cannot match two people."""
+    ident = (ident or "").strip().lower()
+    if not ident:
+        return None
+    if "@" in ident:
+        return db.scalar(select(PartnerUser).where(PartnerUser.email == ident))
+    digits = phone10(ident)
+    if len(digits) < 10:
+        return None
+    rows = db.scalars(select(PartnerUser).where(PartnerUser.active == True,
+                                                PartnerUser.phone.like(f"%{digits}")).limit(20)).all()  # noqa: E712
+    hits = [u for u in rows if phone10(u.phone) == digits]
+    return hits[0] if len(hits) == 1 else None
+
+
 class Login(BaseModel):
     email: str
     password: str
@@ -86,7 +110,7 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
     recent = [t for t in FAILS.get(ip, []) if t > time.time() - 900]
     if len(recent) >= 8:
         raise HTTPException(429, "Too many attempts; try again in 15 minutes.")
-    u = db.scalar(select(PartnerUser).where(PartnerUser.email == body.email.strip().lower()))
+    u = find_user(db, body.email)
     if not u or not u.active or not check_pw(body.password, u.pw_hash):
         FAILS[ip] = recent + [time.time()]
         raise HTTPException(401, "Wrong email or password.")
@@ -107,7 +131,8 @@ def me_json(db: Session, u: PartnerUser) -> dict:
     open_orders = db.scalar(select(func.count(Order.id)).where(Order.store_id == u.store_id, Order.status.notin_(("delivered", "ready", "cancelled", "refunded", "returned")))) or 0
     pending_appts = db.scalar(select(func.count(Appointment.id)).where(Appointment.store_id == u.store_id, Appointment.status == "requested")) or 0
     unread = db.scalar(select(func.count(Message.id)).where(Message.store_id == u.store_id, Message.sender == "family", Message.read_partner == False)) or 0  # noqa: E712
-    return {"user": {"id": u.id, "name": u.name, "email": u.email, "role": u.role, "mustChange": u.must_change},
+    return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith("@tech.invalid") else u.email,
+                     "phone": u.phone, "role": u.role, "mustChange": u.must_change},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
                       "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct} if s else None,
@@ -149,9 +174,15 @@ def porder(db: Session, o: Order) -> dict:
     j["memberId"] = o.member_id or ""
     j["householdId"] = o.household_id
     j["rxFiles"] = [f for f in (o.rx_files or []) if db.get(StoredFile, (o.household_id, f))] if o.rx_shared else []
-    j["next"] = (NEXT_LAB if o.kind == "lab" else NEXT_MED).get(j["status"], [])
+    # "assigned" is deliberately not a plain status button: it needs a person, so the console gets its own
+    # Assign control instead and posts to /assign.
+    j["next"] = [k for k in (NEXT_LAB if o.kind == "lab" else NEXT_MED).get(j["status"], []) if k != "assigned"]
     j["labels"] = {k: ACTION.get(k, LABEL.get(k, k)) for k in j["next"]}
+    j["canAssign"] = o.kind == "lab" and j["status"] in ("confirmed", "assigned")
     j["hasReport"] = bool(db.get(StoredFile, (o.household_id, f"labrep_{o.id}")))
+    if o.kind == "lab":
+        a = db.get(PartnerUser, o.agent_id) if o.agent_id else None
+        j["agent"] = {"id": a.id, "name": a.name or a.email, "phone": a.phone} if a else None
     return j
 
 
@@ -177,6 +208,10 @@ def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: Partn
     o = _order(db, u, oid)
     cur = order_json(o)["status"]
     allowed = (NEXT_LAB if o.kind == "lab" else NEXT_MED).get(cur, [])
+    if body.status == "assigned":
+        # Moving a booking to "assigned" without naming anybody is how the family's status line came to say
+        # "Phlebotomist assigned" when no phlebotomist had been. Assignment happens one way: through the picker.
+        raise HTTPException(400, "Choose the technician who is going — use Assign on the booking.")
     if body.status not in allowed:
         raise HTTPException(400, f"From '{LABEL.get(cur, cur)}' you can go to: {', '.join(LABEL.get(a, a) for a in allowed) or 'nothing'}.")
     if body.status == "ready" and not db.get(StoredFile, (o.household_id, f"labrep_{o.id}")):
@@ -196,18 +231,126 @@ class AssignIn(BaseModel):
     agent: str
 
 
+# ---- the collection team ---------------------------------------------------------------------------------------------
+# A lab with a dozen phlebotomists and ordinary turnover cannot wait on our admin desk for every hire, and it is
+# the lab — not us — that employs them, pays them and answers for them at a family's door. So the lab owner runs
+# their own roster: we gate the store, the store gates its staff. Doctors stay with admin, because a medical
+# council registration is ours to verify and nobody else's.
+LIVE_JOB = ("assigned", "en_route", "arrived")
+
+
+def _owner(u: PartnerUser = Depends(me)) -> PartnerUser:
+    if u.role != "owner":
+        raise HTTPException(403, "Only the store owner manages the team.")
+    return u
+
+
+def tech_json(db: Session, t: PartnerUser) -> dict:
+    jobs = db.scalars(select(Order).where(Order.agent_id == t.id, Order.status.in_(LIVE_JOB))).all()
+    on = next((o for o in jobs if o.status in ("en_route", "arrived")), None)
+    # A technician added without an address of their own is keyed by a reserved .invalid one (RFC 2606, so it
+    # can never reach anybody). It is an internal key, not an address, and is never shown or written to.
+    real = "" if t.email.endswith("@tech.invalid") else t.email
+    return {"id": t.id, "name": t.name or real or t.phone, "email": real, "phone": t.phone, "active": t.active,
+            "openJobs": len(jobs), "lastLogin": t.last_login, "mustChange": t.must_change,
+            # What the owner needs to know before handing somebody another job: are they out on one already?
+            "live": on.status if on else "", "liveOrder": on.id if on else ""}
+
+
 @r.get("/techs")
 def techs(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
-    """The lab's own technicians, for the assign picker."""
+    """The collection team, for the assign picker and the roster screen."""
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == u.store_id,
                                                 PartnerUser.role == "tech").order_by(PartnerUser.name)).all()
-    out = []
-    for t in rows:
-        live = db.scalar(select(func.count(Order.id)).where(Order.agent_id == t.id,
-                                                            Order.status.in_(("assigned", "en_route", "arrived")))) or 0
-        out.append({"id": t.id, "name": t.name or t.email, "phone": t.phone, "active": t.active,
-                    "verified": t.verified, "openJobs": live})
-    return {"techs": out}
+    return {"techs": [tech_json(db, t) for t in rows]}
+
+
+class TechIn(BaseModel):
+    name: str
+    phone: str
+    email: str = ""
+
+
+@r.post("/techs")
+def tech_add(body: TechIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+    """Add somebody to the collection team and hand them a one-time password.
+
+    Name and phone are both required and neither is decoration: the family is told who to expect and is given
+    that number to call, which is the whole difference between a home visit and a stranger at the door."""
+    import secrets
+
+    s = my_store(db, u)
+    if s.kind != "lab":
+        raise HTTPException(400, "Collection teams belong to labs.")
+    name, digits = body.name.strip(), phone10(body.phone)
+    if len(name) < 2:
+        raise HTTPException(400, "Enter the technician's full name — the family is shown it.")
+    if len(digits) != 10 or digits[0] not in "6789":
+        raise HTTPException(400, "Enter a 10-digit Indian mobile number — the family calls it.")
+    # The phone is a sign-in identifier, so it has to point at one person.
+    clash = [x for x in db.scalars(select(PartnerUser).where(PartnerUser.active == True,  # noqa: E712
+                                                             PartnerUser.phone.like(f"%{digits}")).limit(20)).all()
+             if phone10(x.phone) == digits]
+    if clash:
+        raise HTTPException(400, "That mobile number already signs in here.")
+    email = body.email.strip().lower()
+    if email:
+        if "@" not in email:
+            raise HTTPException(400, "That email address does not look right.")
+        if db.scalar(select(PartnerUser.id).where(PartnerUser.email == email)):
+            raise HTTPException(400, "That email already signs in here.")
+    else:
+        # No address of their own: the account is still keyed by one, because that column is the primary
+        # sign-in everywhere else in the portal. They never type it — they sign in with their phone.
+        email = f"{digits}@tech.invalid"
+    temp = secrets.token_urlsafe(6)
+    t = PartnerUser(store_id=u.store_id, email=email, name=name[:80], phone=digits, role="tech",
+                    pw_hash=hash_pw(temp), must_change=True, active=True)
+    db.add(t)
+    db.flush()
+    if not email.endswith("@tech.invalid"):
+        from . import messaging
+        messaging.mail(email, f"Your Collect sign-in · {s.name}",
+                       f"Hello {name},\n\n{s.name} has added you to their home-collection team.\n\n"
+                       f"App: https://thehealthtracker.com/tech\nSign in with your mobile {digits} or this email\n"
+                       f"One-time password: {temp}\n\nYou will choose your own password the first time you sign in.")
+    out = tech_json(db, t)
+    # Shown once, on the owner's screen, for them to pass on. It is never stored in the clear.
+    out["tempPassword"] = temp
+    out["signIn"] = digits
+    return out
+
+
+@r.post("/techs/{uid}/reset")
+def tech_reset(uid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+    """A forgotten password on a doorstep is a job that does not happen. The owner can fix it in a tap."""
+    import secrets
+
+    t = db.get(PartnerUser, uid)
+    if not t or t.store_id != u.store_id or t.role != "tech":
+        raise HTTPException(404, "Not one of your technicians.")
+    temp = secrets.token_urlsafe(6)
+    t.pw_hash, t.must_change, t.active = hash_pw(temp), True, True
+    return {"id": t.id, "name": t.name, "tempPassword": temp, "signIn": t.phone}
+
+
+class TechOff(BaseModel):
+    active: bool
+
+
+@r.post("/techs/{uid}/active")
+def tech_active(uid: str, body: TechOff, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+    """Someone leaves, or is off sick. Turning them off stops them signing in; it does not touch work already
+    in their hands, because a half-collected job still needs finishing."""
+    t = db.get(PartnerUser, uid)
+    if not t or t.store_id != u.store_id or t.role != "tech":
+        raise HTTPException(404, "Not one of your technicians.")
+    if not body.active:
+        live = db.scalars(select(Order).where(Order.agent_id == t.id, Order.status.in_(("en_route", "arrived")))).all()
+        if live:
+            raise HTTPException(400, f"They are out on a collection right now (THT-{live[0].id}). Reassign it first.")
+    t.active = bool(body.active)
+    return tech_json(db, t)
 
 
 @r.post("/orders/{oid}/assign")

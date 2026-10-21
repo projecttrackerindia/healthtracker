@@ -34,6 +34,10 @@ def _tech(u: PartnerUser = Depends(me)) -> PartnerUser:
     """Only a technician's own sign-in reaches these endpoints. A lab owner uses the console."""
     if u.role not in ("tech", "owner"):
         raise HTTPException(403, "This is the technician app.")
+    if u.must_change:
+        # The lab handed this password across a counter and it is written on a slip somewhere. Behind here are
+        # families' addresses and phone numbers, so the slip stops being a way in before the addresses appear.
+        raise HTTPException(403, "Choose your own password before you start.")
     return u
 
 
