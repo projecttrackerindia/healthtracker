@@ -26,6 +26,7 @@ from . import ai as AI
 from .db import get_db, session
 from .family import decrypt
 from .inbox import notify
+from .launch import free_now as free_launch
 from .models import AiCache, Household, HouseholdState, ReminderSent, now
 from .routes import household
 
@@ -374,7 +375,8 @@ def housekeeping(db, today: date) -> int:
             n += 1
         except Exception:
             pass
-    for h in db.scalars(select(Household).where(Household.plan != "free", Household.plan_until != None)).all():  # noqa: E711
+    # nothing is sold during the launch period, so no plan lapses and nothing renews
+    for h in ([] if free_launch() else db.scalars(select(Household).where(Household.plan != "free", Household.plan_until != None)).all()):  # noqa: E711
         if h.plan_until < t:
             old = h.plan
             h.plan, h.plan_until = "free", None

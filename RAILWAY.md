@@ -264,3 +264,23 @@ server side:
   translated too; dates follow the language; the table is fetched `no-store` with a `__v` version. Anything still untranslated
   is posted to `POST /api/v1/i18n/missing`, stored in the new `phrases` table, translated in the background with Gemini and
   served to every device by `GET /api/v1/i18n` — the app's coverage now grows by itself.
+
+## Round 30 — free for every family until 31 March 2027 (21 Oct 2026)
+
+Growth before revenue: nothing in the app is sold to families for now, and the money comes from lab bookings, medicine
+orders and the shop instead. The subscription machinery is untouched — plans, invoices, Razorpay, UPI and settlements
+all still work — and switched off behind one check.
+
+* `api/launch.py` is the whole switch: `FREE_UNTIL` (default `2027-03-31`, IST; empty ends the period). `free_now()`,
+  `plan_of(household)` → `plus` while it runs, `state()` → `{free, until, label}` for the app and the site.
+* Quotas read `plan_of()`, not the stored plan, so every family gets the top tier: unlimited smart readings, questions
+  and insights. The only guard left is a per-family daily token allowance (`AI_DAY_TOKENS_LAUNCH`, 400,000) and the
+  service-wide cap — abuse guards, not plan gates.
+* `/api/v1/plans` prices every plan at ₹0 while the period runs and carries `launch` plus `listMonth`/`listYear` (the
+  future prices, kept on file). `/subscribe` and the UPI plan flow refuse politely; order payments are unaffected.
+* No plan lapses and no renewal notice goes out during the period (`housekeeping`).
+* The app's Plan page becomes one card (live layer 30): what is included, how we earn, what happens after the date, and
+  a day counter. The old page — prices, subscribe buttons, invoices — returns on its own when `FREE_UNTIL` passes.
+* The site's three price cards become one "Free for every family until 31 March 2027" band, with the date read from the
+  API; if the period is ever switched off, the script rebuilds the price cards from `/api/v1/plans`.
+* To end the launch period: set `FREE_UNTIL: ""` in `deploy/gcp/env.yaml` and redeploy. Nothing else changes.
