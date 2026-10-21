@@ -222,5 +222,6 @@ def test_the_technician_app_is_its_own_installable_app():
     m = c.get("/tech/manifest.webmanifest")
     assert m.status_code == 200
     j = m.json()
-    assert j["short_name"] == "Collect" and j["start_url"] == "/tech" and j["theme_color"] != "#1f4fff"
-    assert c.get("/tech/icon.svg").status_code == 200
+    assert j["short_name"] == "Collect" and j["start_url"] == "/tech"
+    assert j["theme_color"] == "#0B8A7C", "the partner colour is set in BRAND.md, not invented per app"
+    assert "partner-icon" in j["icons"][0]["src"], "use the brand partner icon, not a one-off"

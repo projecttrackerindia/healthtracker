@@ -256,12 +256,6 @@ def tech_manifest():
                         headers={"Cache-Control": "public, max-age=3600"})
 
 
-@app.api_route("/tech/icon.svg", methods=["GET", "HEAD"], include_in_schema=False)
-def tech_icon():
-    return FileResponse(ROOT / "tech" / "icon.svg", media_type="image/svg+xml",
-                        headers={"Cache-Control": "public, max-age=86400"})
-
-
 @app.api_route("/partner", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/partner/{rest:path}", methods=["GET", "HEAD"], include_in_schema=False)
 def partner_page(rest: str = ""):
