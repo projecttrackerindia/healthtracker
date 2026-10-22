@@ -58,6 +58,27 @@ def test_the_commit_comes_from_the_environment_the_deploy_sets():
 def test_the_deploy_script_stamps_the_commit_before_it_builds():
     """Stamping after the build would name whatever HEAD had become by then."""
     sh = Path("deploy/gcp/deploy.sh").read_text(encoding="utf-8")
-    assert sh.index("APP_VERSION") < sh.index("gcloud builds submit")
+    assert sh.index("stamp-env.sh") < sh.index("gcloud builds submit")
     assert "rev-parse" in sh
     assert subprocess.run(["bash", "-n", "deploy/gcp/deploy.sh"]).returncode == 0
+
+
+def test_both_deploy_paths_stamp_the_commit():
+    """Cloud Run and the VM must set APP_VERSION the same way.
+
+    The VM release shipped without stamping at all: /api/health reported "dev", so release.sh compared the
+    commit against the literal string "dev" and could only ever pass. A verification step that cannot fail
+    is worse than none, because it is believed. One shared script, and this test asserting both callers
+    use it, is what stops the two drifting apart again."""
+    stamp = Path("deploy/gcp/stamp-env.sh")
+    assert stamp.exists(), "the shared stamping script is gone"
+    assert "APP_VERSION" in stamp.read_text(encoding="utf-8")
+    assert subprocess.run(["bash", "-n", str(stamp)]).returncode == 0
+
+    assert "stamp-env.sh" in Path("deploy/gcp/deploy.sh").read_text(encoding="utf-8")
+
+    wf = Path(".github/workflows/gcp-deploy.yml").read_text(encoding="utf-8")
+    vm = wf.index("Release to the VM")
+    assert "stamp-env.sh" in wf[vm:], "the VM release does not stamp the commit"
+    assert wf.index("stamp-env.sh", vm) < wf.index("compute scp", vm), \
+        "env.yaml is copied to the VM before it is stamped, so the stamp never arrives"
