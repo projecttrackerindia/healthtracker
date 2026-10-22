@@ -9,29 +9,22 @@ undo once a crawler has seen them.
 
 ---
 
-## 0. The decision that comes first: how the domain reaches Cloud Run
+## 0. How the domain reaches the app — decided
 
-**Cloud Run domain mapping does not work here.** It is not available in `asia-south1`, which is the region the
-service runs in, and Google lists it as Preview and not recommended for production regardless. So the choice is
-between two real options.
+**A Compute Engine VM, not Cloud Run.** The reasoning and the scripts are in
+[`deploy/vm/README.md`](deploy/vm/README.md); the short version:
 
-| | **Global external Application Load Balancer** | **Firebase Hosting in front of Cloud Run** |
-| --- | --- | --- |
-| Works with `asia-south1` | Yes | **Confirm before relying on this.** Hosting rewrites to Cloud Run were `us-central1`-only for a long time and the region list has moved; the docs page is too large to quote from reliably, so treat it as unverified. |
-| Cost | A forwarding rule is roughly **₹1,500–2,000/month** before traffic | Free tier covers a launch |
-| TLS | Google-managed certificate, renews itself | Included |
-| Apex domain (`urbanhealth.in` with no `www`) | Static anycast IP → a normal `A` record. This matters: DNS does not allow a `CNAME` at the apex | Handled by Firebase's own A records |
-| WAF | **Cloud Armor** attaches directly — rate limiting, geo rules, OWASP rules | None |
-| Contract | Covered by the Google Cloud Terms of Service | **Not** covered by Google Cloud ToS — worth a thought for a health product under the DPDP Act |
+Cloud Run has no IP address, so a custom domain needs a domain mapping (not available in `asia-south1`, and
+Preview-only) or a load balancer at roughly ₹1,500–2,000 a month. Meanwhile the Cloud Run service was already
+pinned to `--min-instances 1 --max-instances 1 --no-cpu-throttling` — one always-on container that never
+scales, because the video rooms and daily jobs live in the process. We were paying a premium for elasticity
+we had switched off, on the one product that cannot take a domain.
 
-**Recommendation: the load balancer.** For a health app holding family medical records, Cloud Armor and being
-inside the Google Cloud contract are worth ₹2,000 a month. Firebase Hosting is the right answer if the priority is
-getting live at zero marginal cost and the region question checks out — but then Cloud Armor is not available, and
-the WAF layer in step 7 has to come from somewhere else.
+So: one VM in `asia-south1`, Caddy for TLS, the same container image, and the domain becomes an `A` record.
 
-Everything from step 1 onward is the same either way, except the DNS values in step 3.
-
----
+A load balancer can be added later without rebuilding anything — the VM stays and the load balancer goes in
+front of it. Worth doing when Cloud Armor, Cloud CDN or a second VM are actually wanted. The reserved address
+and the pre-opened health-check firewall ranges are already in place for that day.
 
 ## 1. Create the mailboxes first
 
@@ -57,25 +50,26 @@ Do this first because the Google Cloud certificate step in the next section want
 
 ---
 
-## 3. Point the DNS at Google
+## 3. Point the DNS at the VM
 
-In Hostinger: **Domains → urbanhealth.in → DNS / Nameservers**.
+Run `cd deploy/vm && ./provision.sh` first — it prints the reserved address and touches nothing that is
+currently serving.
 
-With the load balancer, after reserving a global static IP and attaching the serverless NEG:
+Then in Hostinger: **Domains → urbanhealth.in → DNS / Nameservers**.
 
-| Type | Name | Value | Notes |
+| Type | Name | Value | TTL |
 | --- | --- | --- | --- |
-| `A` | `@` | the reserved IPv4 | the apex; a `CNAME` is not legal here |
-| `AAAA` | `@` | the reserved IPv6 | add it — IPv6-only mobile networks are common in India |
-| `A` | `www` | the same IPv4 | the app 308-redirects `www` → apex itself |
-| `AAAA` | `www` | the same IPv6 | |
+| `A` | `@` | the reserved IPv4 | 300 |
+| `A` | `www` | the same IPv4 | 300 |
 
-Delete any Hostinger parking or redirect records for `@` and `www` first, or they will fight these.
+Delete Hostinger's parking records for `@` and `www` first, or they will fight these.
 
-The Google-managed certificate only starts issuing **after** the records resolve, and it can take 15–60 minutes.
-Until it finishes the site answers with a certificate error; that is expected, not a fault.
+**Keep the TTL at 300 for the first week.** It makes the cutover quick and, more to the point, makes the
+rollback quick: while Cloud Run is still running, moving these records back is the entire rollback procedure.
+Raise the TTL once it has carried real traffic through a weekday.
 
----
+Caddy requests the certificate on the first request after DNS resolves, so the site answers with a
+certificate warning for a minute or two and then stops. That is Let's Encrypt working, not a fault.
 
 ## 4. CAA — say which authorities may issue a certificate for you
 
@@ -125,17 +119,21 @@ Already shipped, no action needed: HSTS, a content-security policy, `X-Content-T
 `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `frame-ancestors 'none'`, and a two-layer rate limiter on
 authentication that survives a container restart.
 
-Add at the edge, if the load balancer route is taken:
-* **Cloud Armor** — a rate-limit rule on `/api/v1/auth/*`, and the preconfigured OWASP rule sets in preview mode
-  first so a false positive does not lock out real families before the logs are read.
+On the VM: Caddy is the only thing listening publicly and the app binds to `127.0.0.1`, so nothing but Caddy
+can reach it even from inside the VPC. Debian's unattended security upgrades are on by default.
+
+These two arrive with the load balancer, and are the main reason to add one:
+* **Cloud Armor** — a rate-limit rule on `/api/v1/auth/*`, and the preconfigured OWASP rule sets in preview
+  mode first, so a false positive does not lock out real families before the logs are read.
 * **Cloud CDN** on `/s/*` and `/brand/*` only. Never on `/api/*`.
 
 ---
 
 ## 8. Environment variables at cutover
 
-Set these on the Cloud Run service in the same change, not before — several of them break the site while the
-domain is still resolving elsewhere.
+These live in `deploy/gcp/env.yaml`, which the VM reads on every service start (secrets come from Secret
+Manager the same way). Most are already correct in the repo; the point of this table is that they only become
+*true* once DNS resolves to the VM, so check them in the same change rather than before.
 
 | Variable | Value | Why it matters |
 | --- | --- | --- |
@@ -190,8 +188,8 @@ card renders, and run the landing page through PageSpeed Insights and the Rich R
 
 ## Still open
 
-* **`site/img/app-desktop.webp`** — the hero screenshot on the marketing page still shows the old name in its
-  sidebar. It needs re-shooting against seeded demo data; the guest route renders the sign-in card on an empty
-  database, so it could not be recaptured. This is the first thing a visitor sees, so it should not ship.
-* Whether Firebase Hosting can rewrite to `asia-south1`, if the cheap route is preferred over the load balancer.
-* The registered legal entity name and address for `LEGAL_ENTITY` / `LEGAL_ADDRESS`.
+* The registered legal entity name and address for `LEGAL_ENTITY` / `LEGAL_ADDRESS`. The defaults are a
+  guess, and the privacy policy prints them.
+* The mailboxes in step 1. Nothing else here should ship before they exist.
+* Workload Identity for GitHub Actions: run `deploy/gcp/wif.sh` once, then add the two secrets and two
+  variables it prints. Until that is done, every merge builds and tests but cannot deploy.
