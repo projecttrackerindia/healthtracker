@@ -54,6 +54,19 @@ else
   echo "   already there"
 fi
 
+say "Waiting for SSH"
+# `instances create` returns as soon as the API has the VM, which is a good half-minute before sshd is
+# listening. The first run of this script got "connection refused" on port 22 and died with the VM running
+# but nothing installed on it — the worst outcome, because re-running looked risky when it was simply
+# unfinished. Poll instead of guessing at a sleep.
+for i in $(seq 1 30); do
+  if gcloud compute ssh "$VM" --zone "$ZONE" --quiet --command true 2>/dev/null; then
+    echo "   ready after $((i*10))s"; break
+  fi
+  [ "$i" = 30 ] && { echo "   sshd never came up. Check: gcloud compute instances get-serial-port-output $VM --zone $ZONE"; exit 1; }
+  sleep 10
+done
+
 say "Bootstrap"
 gcloud compute scp --zone "$ZONE" bootstrap.sh urbanhealth-env release.sh Caddyfile "$VM":/tmp/ --quiet
 gcloud compute ssh "$VM" --zone "$ZONE" --quiet --command "
