@@ -1,0 +1,5 @@
+# Test-only dependencies. Deliberately not in requirements.txt: the production image should not ship a test
+# runner. CI installs both files; the container installs only requirements.txt.
+-r requirements.txt
+pytest==9.1.1
+httpx==0.28.1          # fastapi.testclient.TestClient is built on it

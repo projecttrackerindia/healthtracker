@@ -12,7 +12,13 @@ gcloud config set project "$PROJECT_ID" >/dev/null
 # verified by eye instead of by asking.
 SHA=$(git -C ../.. rev-parse --short=10 HEAD 2>/dev/null || echo unknown)
 BUILT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-for k in "APP_VERSION:$SHA" "APP_BUILT:$BUILT"; do
+# S3_BUCKET and GOOGLE_MAPS_KEY were being sed-ed into env.yaml by hand before every deploy, from a value held
+# in one person's Cloud Shell home directory. A deploy that depends on remembering two sed commands is a deploy
+# that is wrong the first time somebody else runs it. BUCKET already derives from PROJECT_ID, so it is simply
+# correct; the Maps browser key is passed in by the caller (a GitHub variable in CI) and left alone if unset.
+STAMPS=("APP_VERSION:$SHA" "APP_BUILT:$BUILT" "S3_BUCKET:$BUCKET")
+[ -n "${GOOGLE_MAPS_KEY:-}" ] && STAMPS+=("GOOGLE_MAPS_KEY:$GOOGLE_MAPS_KEY")
+for k in "${STAMPS[@]}"; do
   n=${k%%:*}; v=${k#*:}
   if grep -q "^${n}:" env.yaml; then sed -i "s|^${n}:.*|${n}: \"${v}\"|" env.yaml
   else printf '%s: "%s"\n' "$n" "$v" >> env.yaml; fi
@@ -32,5 +38,17 @@ gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" --service-accou
   --env-vars-file env.yaml --set-secrets "$SECRETS" --quiet
 URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
 echo "Deployed: $URL"
-for i in 1 2 3 4 5 6; do curl -fsS "$URL/api/health" && echo && exit 0 || sleep 5; done
-echo "Health check failed — gcloud run services logs read $SERVICE --region $REGION --limit 50"; exit 1
+
+# Verify the commit, not just that something answers. The old loop accepted any 200 from /api/health, so a deploy
+# that never ran still "passed" — the previous revision was alive and answering the whole time. Two deploys failed
+# on an unselected gcloud account and were reported as successful for half an hour because of exactly this.
+for i in $(seq 1 24); do
+  LIVE=$(curl -fsS --max-time 10 "$URL/api/health" 2>/dev/null | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  [ "$LIVE" = "$SHA" ] && { echo "Verified: /api/health reports $LIVE"; exit 0; }
+  [ -n "$LIVE" ] && echo "  serving $LIVE, waiting for $SHA ($i/24)" || echo "  no answer yet ($i/24)"
+  sleep 5
+done
+echo "FAILED: $URL/api/health still does not report $SHA after two minutes."
+echo "The service may be serving the previous revision. Check:"
+echo "  gcloud run services logs read $SERVICE --region $REGION --limit 50"
+exit 1

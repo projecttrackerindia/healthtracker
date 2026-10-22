@@ -1,4 +1,4 @@
-# TheHealthTracker — one container: FastAPI + the static app, site, admin and partner portals.
+# Urban Health — one container: FastAPI + the static app, site, admin and partner portals.
 # Runs the same on Cloud Run, any container host, or locally:  docker build -t tht . && docker run -p 8080:8080 tht
 FROM python:3.12-slim
 

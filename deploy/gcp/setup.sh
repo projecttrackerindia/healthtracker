@@ -104,8 +104,11 @@ GitHub → Settings → Secrets and variables → Actions, add:
   Secrets:    GCP_WIF_PROVIDER = $WIF
               GCP_DEPLOY_SA    = $DEPLOY_SA
   Variables:  GCP_PROJECT_ID   = $PROJECT_ID     GCP_REGION = $REGION
+  Variables:  GOOGLE_MAPS_KEY  = <the browser key, HTTP-referrer restricted>   # optional
+
+Once those four are set, merging to main deploys on its own and the run goes red unless
+/api/health comes back reporting that exact commit. Nothing needs to be typed into Cloud Shell.
 Next:
-  1. ./deploy.sh                     # builds the image and deploys to Cloud Run (a *.run.app address)
-  2. ./migrate_data.sh               # rehearse copying Railway's database + documents (safe: read-only on Railway)
-  3. See GOOGLE_CLOUD.md             # test, then the cut-over window and DNS
+  1. Merge anything to main          # the workflow builds, deploys and verifies
+  2. See LAUNCH.md                   # the domain cut-over: DNS, certificate, Search Console
 MSG

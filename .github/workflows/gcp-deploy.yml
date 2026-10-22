@@ -1,8 +1,19 @@
 name: Deploy to Google Cloud Run
 
-# Manual on purpose: production stays on Railway until the cut-over in deploy/gcp/GOOGLE_CLOUD.md is done.
-# After the cut-over, add `push: branches: [main]` here so merges deploy automatically.
+# Merging to main deploys. The cut-over this file was waiting for is done — Railway is gone and Google Cloud is
+# the only hosting — and deploying by hand through a browser driving Cloud Shell has failed on extension blocks,
+# transferred sessions, renderer timeouts and, twice in one evening, a gcloud config that came back with no
+# account selected. Both of those failures were silent: the script is backgrounded, so the terminal says nothing,
+# and the previous revision keeps answering. Merged code sat undeployed for half an hour each time.
+#
+# Paths are filtered because a README change should not restart a container that is serving families.
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - ".github/workflows/android.yml"
+      - ".github/workflows/ios.yml"
   workflow_dispatch:
     inputs:
       note:
@@ -20,9 +31,29 @@ concurrency:
 env:
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   REGION: ${{ vars.GCP_REGION || 'asia-south1' }}
+  # The Maps browser key. It ships in the HTML and is restricted by HTTP referrer, so it is a variable rather
+  # than a secret — calling it a secret would only hide it from the people who need to check it. Unset is fine:
+  # deploy.sh then leaves whatever env.yaml already holds.
+  GOOGLE_MAPS_KEY: ${{ vars.GOOGLE_MAPS_KEY }}
 
 jobs:
+  # Nothing in CI ran the suite before this. The deploy workflow would have shipped a red build without
+  # comment, and the only thing standing between a broken main and production was somebody remembering to run
+  # pytest locally first.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"        # same as the Dockerfile base
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -47,5 +78,21 @@ jobs:
           docker push "$TAG:latest"
           echo "IMAGE=$TAG:${GITHUB_SHA}" >> "$GITHUB_ENV"
 
-      - name: Deploy to Cloud Run
+      - name: Deploy to Cloud Run and verify the commit is live
+        # deploy.sh exits non-zero unless /api/health reports this exact commit, so a deploy that silently did
+        # not happen turns the run red instead of green.
         run: PREBUILT=1 ./deploy/gcp/deploy.sh
+
+      - name: Say what is live
+        if: always()
+        run: |
+          URL=$(gcloud run services describe tht --region "$REGION" --format='value(status.url)' 2>/dev/null || true)
+          {
+            echo "### ${{ job.status == 'success' && 'Deployed' || 'Deploy failed' }}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| commit | \`${GITHUB_SHA::10}\` |"
+            echo "| service | $URL |"
+            [ -n "$URL" ] && echo "| /api/health | \`$(curl -fsS --max-time 10 "$URL/api/health" 2>/dev/null || echo unreachable)\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
