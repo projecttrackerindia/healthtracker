@@ -1,0 +1,28 @@
+# TLS and nothing else. Caddy gets certificates from Let's Encrypt on first request and renews them on its
+# own; there is no cron job and no certificate to remember.
+#
+# Deliberately no `encode` directive. The app ships pre-built .br and .gz next to every static file and picks
+# the right one itself — compressing again here would waste CPU on already-compressed bytes, and on a shared
+# 2-vCPU machine that is CPU we would rather give to requests.
+#
+# When a load balancer is added in front, this whole block becomes `:80 { reverse_proxy ... }`: the load
+# balancer terminates TLS and talks plain HTTP to the VM. That is the only change on this side.
+{
+	email {$ADMIN_EMAIL}
+}
+
+{$DOMAINS} {
+	reverse_proxy 127.0.0.1:8080 {
+		# The app reads these to know its real address: CANONICAL_HOST drives the www -> apex redirect and
+		# decides which host is allowed into a search index.
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}

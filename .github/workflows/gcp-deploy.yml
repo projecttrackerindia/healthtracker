@@ -79,9 +79,28 @@ jobs:
           echo "IMAGE=$TAG:${GITHUB_SHA}" >> "$GITHUB_ENV"
 
       - name: Deploy to Cloud Run and verify the commit is live
+        if: vars.DEPLOY_TARGET != 'vm' 
         # deploy.sh exits non-zero unless /api/health reports this exact commit, so a deploy that silently did
         # not happen turns the run red instead of green.
         run: PREBUILT=1 ./deploy/gcp/deploy.sh
+
+      - name: Release to the VM and verify the commit is live
+        # Set the repository variable DEPLOY_TARGET=vm once deploy/vm/provision.sh has run. Until then this
+        # is skipped and Cloud Run stays the target, so the switch is one variable and no code change.
+        if: vars.DEPLOY_TARGET == 'vm'
+        run: |
+          set -euo pipefail
+          source deploy/vm/config.sh
+          SHA=$(git rev-parse --short=10 HEAD)
+          # env.yaml and secrets.txt travel with the release so the settings on the box match the commit.
+          gcloud compute scp --zone "$ZONE" --quiet \
+            deploy/gcp/env.yaml deploy/gcp/secrets.txt "$VM":/tmp/
+          gcloud compute ssh "$VM" --zone "$ZONE" --quiet --command "
+            set -e
+            sudo install -d -m 0755 /opt/urbanhealth/repo/deploy/gcp
+            sudo install -m 0644 /tmp/env.yaml /tmp/secrets.txt /opt/urbanhealth/repo/deploy/gcp/
+            sudo urbanhealth-release '${IMAGE%:*}:${GITHUB_SHA}' '$SHA'
+          "
 
       - name: Say what is live
         if: always()
