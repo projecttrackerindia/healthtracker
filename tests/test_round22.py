@@ -40,7 +40,7 @@ const S={members:[{id:'d1',name:'Meera Raghavan',rel:'You'},{id:'d2',name:'Vikra
 const SX={p:s=>s,S,extend(){},me:()=>S.members[0],avatar:(m,s)=>'<div class="av">'+m.name[0]+'</div>',modal(){},closeModal(){},user:null};
 const E=s=>String(s);
 new Function('SX','S','E','P',src)(SX,S,E,SX.p);
-if(document.documentElement.dataset.theme!==undefined)throw new Error('with nothing saved the attribute must be absent so the phone decides, got '+document.documentElement.dataset.theme);
+if(document.documentElement.dataset.theme!=='light')throw new Error('with nothing saved the theme must be light, because that is what this product ships as; a dark phone must not decide for someone who never opened Settings. got '+document.documentElement.dataset.theme);
 const t=SX.lv22.tiles(S.members[0]);
 if(!/6,420/.test(t)||!/64% of goal/.test(t))throw new Error('steps tile: '+t.slice(0,200));
 if(!/142\/91/.test(t)||!/high · discuss with your doctor/.test(t))throw new Error('bp tile');

@@ -63,19 +63,29 @@ one("const paint=()=>{const w=document.querySelector('.sx-modal .sx-sheet');if(!
 
 # ---- dark mode was switched off for everybody ---------------------------------------------------------------
 # Two places wrote data-theme="light" whenever the saved value was not exactly "dark". The dark rules are
-# guarded by :root:not([data-theme="light"]), so an explicit "light" overrides the phone's own setting: a
-# device in dark mode still got the light app, and the "System" button in Settings did nothing because a
-# MutationObserver put the attribute straight back. No attribute at all is what lets the phone decide.
+# guarded by :root:not([data-theme="light"]), so an explicit "light" overrides the phone's own setting.
+#
+# Three states, not two. An earlier version of this layer made "System" work by removing the attribute
+# whenever nothing was stored — which also made the phone decide for someone who had never opened Settings,
+# so every visitor with a dark phone got a dark app. The product is light by default; dark is a choice.
+#
+#   stored "light" / "dark"  -> that, explicitly
+#   stored "system"          -> no attribute, the phone decides
+#   nothing stored           -> light, because that is the default this product ships with
 one('<script>try{document.documentElement.dataset.theme=localStorage.getItem("tht.theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>',
     '<script>try{var _t=localStorage.getItem("tht.theme");'
     'if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t;'
-    'else document.documentElement.removeAttribute("data-theme")}catch(e){}</script>',
-    "theme boot: follow the phone")
+    'else if(_t==="system")document.documentElement.removeAttribute("data-theme");'
+    'else document.documentElement.dataset.theme="light"}'
+    'catch(e){document.documentElement.dataset.theme="light"}</script>',
+    "theme boot: light unless the person chose otherwise")
 
 one("{const r=document.documentElement,saved=ls('tht.theme');r.dataset.theme=saved==='dark'?'dark':'light';\n"
     " new MutationObserver(()=>{const t=r.dataset.theme;if(t==='dark'||t==='light')ls('tht.theme',t);else{r.dataset.theme='light';ls('tht.theme','light')}}).observe(r,{attributes:true,attributeFilter:['data-theme']})}",
     "{const r=document.documentElement,saved=ls('tht.theme');\n"
-    " if(saved==='dark'||saved==='light')r.dataset.theme=saved;else r.removeAttribute('data-theme');\n"
+    " if(saved==='dark'||saved==='light')r.dataset.theme=saved;\n"
+    " else if(saved==='system')r.removeAttribute('data-theme');\n"
+    " else r.dataset.theme='light';\n"
     " new MutationObserver(()=>{const t=r.dataset.theme;if(t==='dark'||t==='light')ls('tht.theme',t);else ls('tht.theme','system')}).observe(r,{attributes:true,attributeFilter:['data-theme']})}",
     "theme persistence: System is a real choice")
 
