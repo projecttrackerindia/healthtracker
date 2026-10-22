@@ -1,5 +1,12 @@
 import os
 import glob as _glob
+
+# Every test writes sqlite:///./data/test_<name>.db, and /data/ is git-ignored — so it does not exist in a
+# fresh clone and SQLite cannot create a file inside a directory that is not there. The suite passed for
+# everyone who had run the app locally and failed for everyone who had not, which is the worst way for a test
+# suite to behave: green on the machine that wrote it, red on CI and on a new contributor's first morning.
+os.makedirs("./data", exist_ok=True)
+
 for _old in _glob.glob("./data/test_*.db*"):  # every run starts from an empty store (fixed UTRs, stock counts and the like must not carry over)
     try:
         os.remove(_old)
