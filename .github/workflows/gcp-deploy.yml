@@ -85,14 +85,30 @@ jobs:
 
       - name: Say what is live
         if: always()
+        continue-on-error: true    # a summary must never be the thing that fails a run
         run: |
-          URL=$(gcloud run services describe tht --region "$REGION" --format='value(status.url)' 2>/dev/null || true)
+          # When the auth step fails, setup-gcloud is skipped and there is no gcloud on the runner at all. The
+          # first version of this step called it anyway, so a failed deploy produced two red steps and no
+          # summary — unreadable exactly when something has gone wrong and you need to read it.
+          if command -v gcloud >/dev/null 2>&1; then
+            URL=$(gcloud run services describe tht --region "$REGION" --format='value(status.url)' 2>/dev/null || true)
+          else
+            URL=""
+          fi
           {
             echo "### ${{ job.status == 'success' && 'Deployed' || 'Deploy failed' }}"
             echo ""
             echo "| | |"
             echo "|---|---|"
             echo "| commit | \`${GITHUB_SHA::10}\` |"
-            echo "| service | $URL |"
-            [ -n "$URL" ] && echo "| /api/health | \`$(curl -fsS --max-time 10 "$URL/api/health" 2>/dev/null || echo unreachable)\` |"
+            if [ -n "$URL" ]; then
+              echo "| service | $URL |"
+              echo "| /api/health | \`$(curl -fsS --max-time 10 "$URL/api/health" 2>/dev/null || echo unreachable)\` |"
+            else
+              echo "| service | not reached |"
+              echo ""
+              echo "The Google login step failed, so nothing was built or deployed and production is untouched."
+              echo "Run \`deploy/gcp/wif.sh\` once, then add \`GCP_WIF_PROVIDER\` and \`GCP_DEPLOY_SA\` as secrets"
+              echo "and \`GCP_PROJECT_ID\` as a variable under Settings → Secrets and variables → Actions."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
