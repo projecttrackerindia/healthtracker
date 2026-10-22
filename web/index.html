@@ -1841,7 +1841,7 @@ window.__pkHow=how;window.__pkName=function(){return 'Sign in with '+how};window
 .lv21-setup .lv21-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.lv21-setup .lv21-row b{display:block;font-size:14.5px}.lv21-setup .lv21-row small{color:var(--mute);font-size:12.5px;line-height:1.4}
 .lv21-sel{max-width:46%;border-radius:12px;min-height:40px}.lv21-ok{width:32px;height:32px;border-radius:50%;background:#dcf8e6;color:#0f5132;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
 </style>
-<script>try{var _t=localStorage.getItem("tht.theme");if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t;else document.documentElement.removeAttribute("data-theme")}catch(e){}</script>
+<script>try{var _t=localStorage.getItem("tht.theme");if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t;else if(_t==="system")document.documentElement.removeAttribute("data-theme");else document.documentElement.dataset.theme="light"}catch(e){document.documentElement.dataset.theme="light"}</script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
 <style id="live22-css">/* ===================== live layer 22: the phone design system — light first, one icon set, display type, glass cards, floating tab bar ===================== */
 @media (max-width:720px){
@@ -8643,7 +8643,9 @@ const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null
 
 // ---------------------------------------------------------------- A. theme: light unless the person chose dark; the choice sticks
 {const r=document.documentElement,saved=ls('tht.theme');
- if(saved==='dark'||saved==='light')r.dataset.theme=saved;else r.removeAttribute('data-theme');
+ if(saved==='dark'||saved==='light')r.dataset.theme=saved;
+ else if(saved==='system')r.removeAttribute('data-theme');
+ else r.dataset.theme='light';
  new MutationObserver(()=>{const t=r.dataset.theme;if(t==='dark'||t==='light')ls('tht.theme',t);else ls('tht.theme','system')}).observe(r,{attributes:true,attributeFilter:['data-theme']})}
 
 // ---------------------------------------------------------------- B. one icon set (24-unit stroke icons)
