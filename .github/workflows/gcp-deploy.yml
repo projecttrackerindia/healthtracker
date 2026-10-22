@@ -92,6 +92,9 @@ jobs:
           set -euo pipefail
           source deploy/vm/config.sh
           SHA=$(git rev-parse --short=10 HEAD)
+          # Stamp first. Without this the VM serves APP_VERSION=dev and the verification below compares a
+          # commit against the literal string "dev" forever — a check that cannot fail is not a check.
+          ( cd deploy/gcp && ./stamp-env.sh "$SHA" )
           # env.yaml and secrets.txt travel with the release so the settings on the box match the commit.
           gcloud compute scp --zone "$ZONE" --quiet \
             deploy/gcp/env.yaml deploy/gcp/secrets.txt "$VM":/tmp/

@@ -11,18 +11,8 @@ gcloud config set project "$PROJECT_ID" >/dev/null
 # URL. It has reported "dev" since the move off Railway, which is how several deploys this week were
 # verified by eye instead of by asking.
 SHA=$(git -C ../.. rev-parse --short=10 HEAD 2>/dev/null || echo unknown)
-BUILT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-# S3_BUCKET and GOOGLE_MAPS_KEY were being sed-ed into env.yaml by hand before every deploy, from a value held
-# in one person's Cloud Shell home directory. A deploy that depends on remembering two sed commands is a deploy
-# that is wrong the first time somebody else runs it. BUCKET already derives from PROJECT_ID, so it is simply
-# correct; the Maps browser key is passed in by the caller (a GitHub variable in CI) and left alone if unset.
-STAMPS=("APP_VERSION:$SHA" "APP_BUILT:$BUILT" "S3_BUCKET:$BUCKET")
-[ -n "${GOOGLE_MAPS_KEY:-}" ] && STAMPS+=("GOOGLE_MAPS_KEY:$GOOGLE_MAPS_KEY")
-for k in "${STAMPS[@]}"; do
-  n=${k%%:*}; v=${k#*:}
-  if grep -q "^${n}:" env.yaml; then sed -i "s|^${n}:.*|${n}: \"${v}\"|" env.yaml
-  else printf '%s: "%s"\n' "$n" "$v" >> env.yaml; fi
-done
+./stamp-env.sh "$SHA"
+
 echo "Deploying $SHA"
 [ "${PREBUILT:-0}" = "1" ] || gcloud builds submit ../.. --tag "$IMAGE" --region "$REGION" --quiet
 CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
