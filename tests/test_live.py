@@ -86,7 +86,7 @@ def test_stale_compressed_copy_is_never_served(tmp_path):
     try:
         alt.write_bytes(brotli.compress(b"OLD BUILD"))
         server.VARIANTS = server._verified_variants()
-        r = client().get("/app", headers={"accept-encoding": "br"})
+        r = client().get("/classic", headers={"accept-encoding": "br"})   # the previous app; /app is now uh.html
         assert b"OLD BUILD" not in r.content and r.content.startswith(src.read_bytes()[:50])
     finally:
         alt.write_bytes(keep)

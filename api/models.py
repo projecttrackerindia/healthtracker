@@ -941,3 +941,72 @@ class Phrase(Base):
     tries: Mapped[int] = mapped_column(Integer, default=0)
 
     __table_args__ = (Index("ix_phrases_pending", "done", "tries", "created"),)   # the pending-work scan on every /i18n call
+
+
+# ---- Phase 0: per-person health records with server-side access control ----------------------------------------------
+# The household blob above gives every signed-in member the whole family. These tables give each person their own
+# record and decide, on the server, what anyone else may read: an adult owns their profile and grants others a level
+# (Medical ID / Summary / Everything); women's health is a separate switch; dependents (no phone) are run by guardians.
+class Person(Base):
+    __tablename__ = "people"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("p"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    owner_user: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)   # the adult's own login; None for a dependent
+    name: Mapped[str] = mapped_column(String(80), default="")
+    color: Mapped[str] = mapped_column(String(9), default="#0A84FF")
+    blob: Mapped[bytes] = mapped_column(LargeBinary)          # encrypted profile: dob, sex, blood, height, weight, donated, allergies...
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now, onupdate=now)
+    removed: Mapped[int | None] = mapped_column(Integer, nullable=True)   # dependents removed are kept 30 days
+
+
+class Guardian(Base):
+    __tablename__ = "person_guardians"
+    person_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(32), primary_key=True, index=True)
+
+
+class Grant(Base):
+    """What one adult lets another household member see. No row means Medical ID only."""
+    __tablename__ = "person_grants"
+    person_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(32), primary_key=True, index=True)
+    level: Mapped[str] = mapped_column(String(10), default="medid")      # medid | summary | all
+    womens: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated: Mapped[int] = mapped_column(Integer, default=now, onupdate=now)
+
+
+class HealthRecord(Base):
+    """One encrypted item about one person: a report, a medicine, a dose, an emergency contact, pregnancy, a kick
+    session, a cycle day. `kind` decides which access level may read it."""
+    __tablename__ = "health_records"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("r"))
+    person_id: Mapped[str] = mapped_column(String(32), index=True)
+    kind: Mapped[str] = mapped_column(String(12), index=True)
+    blob: Mapped[bytes] = mapped_column(LargeBinary)
+    file_id: Mapped[str] = mapped_column(String(40), default="")
+    day: Mapped[str] = mapped_column(String(10), default="", index=True)   # YYYY-MM-DD for dated items (doses, kicks, cycle)
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now, onupdate=now)
+
+
+class HouseholdInvite(Base):
+    __tablename__ = "household_invites"
+    token: Mapped[str] = mapped_column(String(48), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    contact: Mapped[str] = mapped_column(String(160), default="")
+    relation: Mapped[str] = mapped_column(String(40), default="")
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    expires: Mapped[int] = mapped_column(Integer)
+    used_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+
+class AccessLog(Base):
+    __tablename__ = "access_log"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    person_id: Mapped[str] = mapped_column(String(32), index=True)
+    user_id: Mapped[str] = mapped_column(String(32))
+    what: Mapped[str] = mapped_column(String(60))
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)

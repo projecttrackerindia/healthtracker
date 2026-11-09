@@ -530,8 +530,10 @@ def test_idle_session_expires_and_deep_link_shell():
             s.last_seen -= A.IDLE_SECONDS + 5
     assert f.get("/api/v1/auth/me").json()["user"] is None
     pub = TestClient(server.app)
-    r = pub.get("/app/abc123/def456/mid")
+    r = pub.get("/classic/abc123/def456/mid")
     assert r.status_code == 200 and "live-p13" in r.text
+    r = pub.get("/app/records")                       # the Phase 0 app answers every deep link with its own shell
+    assert r.status_code == 200 and "/api/v2/me" in r.text
 
 
 def select_sessions(db):

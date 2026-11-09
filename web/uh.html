@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F5F5F7">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Urban Health">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/brand/png/user-icon-180.png">
+<title>Urban Health</title>
+<style>
+@font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
+:root{--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#8E8E93;--bg:#F5F5F7;--blue:#0071E3;--ai:#5E5CE6;--red:#E5352B;--green:#1A7F37;--amber:#9A5B00;--rose:#E5577A;
+--glass:rgba(255,255,255,.62);--stroke:rgba(255,255,255,.75);--shadow:0 8px 32px rgba(0,0,0,.10),0 1px 2px rgba(0,0,0,.05);--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Geist,-apple-system,"SF Pro Text",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+input{font:inherit}
+.glass{background:var(--glass);backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);border:1px solid var(--stroke);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.9)}
+#app{position:fixed;inset:0;overflow:hidden}
+#bg{position:fixed;inset:0;background:radial-gradient(80% 55% at 50% 34%,#FFFFFF 0%,#F2F3F7 55%,#E9EBF0 100%);transition:background .8s var(--ease)}
+body.preg #bg{background:radial-gradient(80% 55% at 50% 34%,#FFFFFF 0%,#FBF1F4 55%,#F4E6EB 100%)}
+#gl{position:fixed;left:0;right:0;top:0;height:74vh;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+#scroll{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;pointer-events:none}
+#scroll::-webkit-scrollbar{display:none}
+#scroll>*{pointer-events:auto}
+.spacer{height:66vh;pointer-events:none!important}
+/* header */
+.top{position:fixed;top:0;left:0;right:0;z-index:20;padding:max(14px,env(safe-area-inset-top)) 18px 0;display:flex;align-items:flex-start;gap:12px;pointer-events:none}
+.top>*{pointer-events:auto}
+.ttl{flex:1;min-width:0}
+.eyebrow{font-size:13px;font-weight:600;color:var(--ink2);letter-spacing:.01em;margin:6px 0 0;transition:color .5s}
+.big{font-size:34px;font-weight:700;letter-spacing:-.03em;margin:0;line-height:1.1}
+.line{font-size:16px;line-height:1.38;margin:6px 0 0;max-width:300px;color:var(--ink);animation:in .6s var(--ease) both}
+.line b{font-weight:600}
+.round{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;flex:none}
+.av{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
+.sos{height:44px;padding:0 16px;border-radius:22px;color:var(--red);font-weight:700;font-size:14px;letter-spacing:.02em}
+/* labels */
+#labels{position:fixed;inset:0;pointer-events:none;z-index:5}
+.lab{position:absolute;pointer-events:auto;border-radius:16px;padding:9px 12px 10px;min-width:118px;transform:translate(-50%,-50%);transition:opacity .4s,transform .5s var(--ease);animation:pop .55s var(--ease) both}
+.lab small{display:block;font-size:12px;color:var(--ink2);font-weight:500}
+.lab .v{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.lab .u{font-size:13px;color:var(--ink3);font-weight:500;margin-left:2px}
+.lab.dot{min-width:0;width:22px;height:22px;padding:0;border-radius:11px;background:var(--c);border:3px solid #fff;box-shadow:0 0 0 6px color-mix(in srgb,var(--c) 25%,transparent),0 4px 10px rgba(0,0,0,.15)}
+#lines{position:fixed;inset:0;pointer-events:none;z-index:4}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;margin-top:4px}
+.ok{background:#E3F5E8;color:var(--green)}.warn{background:#FFF1DC;color:var(--amber)}.bad{background:#FDE7E5;color:#B42318}.info{background:#EEEEFE;color:#4B49C8}.pink{background:#FDE7EE;color:#B8325A}
+/* content sheet */
+.sheet{position:relative;z-index:6;margin:0 10px;padding:8px 8px 200px;border-radius:30px 30px 0 0;min-height:60vh}
+.h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:18px 10px 10px;display:flex;align-items:center}
+.h2 a{margin-left:auto;font-size:15px;font-weight:500;color:var(--blue);text-decoration:none}
+.card{background:#fff;border-radius:22px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);animation:in .5s var(--ease) both}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cat{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600}
+.cat .t{margin-left:auto;font-size:12px;color:var(--ink3);font-weight:400}
+.num{font-size:30px;font-weight:700;letter-spacing:-.03em;margin:10px 0 0}
+.num span{font-size:15px;color:var(--ink3);font-weight:500;margin-left:3px}
+.sub{font-size:13px;color:var(--ink2);margin:2px 0 0}
+.row{display:flex;align-items:center;gap:12px}
+.list{background:#fff;border-radius:22px;overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:56px;border-bottom:1px solid #F0F0F3;width:100%;text-align:left;font-size:16px}
+.li:last-child{border-bottom:0}
+.li .end{margin-left:auto;color:var(--ink3);font-size:15px;display:flex;align-items:center;gap:6px}
+.cap{font-size:13px;color:var(--ink2);line-height:1.4;margin:8px 12px 0}
+.sect{font-size:13px;font-weight:600;color:var(--ink2);margin:20px 12px 8px;letter-spacing:.02em}
+.btn{height:50px;border-radius:25px;padding:0 22px;font-weight:600;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s var(--ease)}
+.btn:active{transform:scale(.97)}
+.pri{background:var(--blue);color:#fff}.sec{background:#E8E8ED}.dark{background:#1D1D1F;color:#fff}
+.sw{margin-left:auto;width:51px;height:31px;border-radius:16px;background:#E9E9EB;position:relative;flex:none;transition:background .3s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15);transition:transform .35s var(--ease)}
+.sw.on{background:#34C759}.sw.on::after{transform:translateX(20px)}
+.radio{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid #C7C7CC;flex:none;transition:all .3s}
+.radio.on{border:7px solid var(--blue)}
+/* bottom bar */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:0 16px max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.dock>*{pointer-events:auto}
+.acc{height:56px;border-radius:28px;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;transition:all .45s var(--ease);overflow:hidden}
+.acc .tx{flex:1;min-width:0;font-size:15px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc .tx small{display:block;color:var(--ink2);font-size:12px}
+.acc .go{height:40px;border-radius:20px;padding:0 16px;background:var(--ink);color:#fff;font-weight:600;font-size:14px;flex:none}
+.barrow{display:flex;gap:10px;align-items:center}
+.tabs{flex:1;height:64px;border-radius:32px;display:flex;padding:4px;transition:all .45s var(--ease)}
+.tab{flex:1;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:600;color:#404044;transition:all .35s var(--ease)}
+.tab svg{width:24px;height:24px}
+.tab.on{background:rgba(0,0,0,.06);color:var(--blue)}
+body.preg .tab.on{color:var(--rose)}
+.orb{width:64px;height:64px;border-radius:32px;flex:none;display:flex;align-items:center;justify-content:center;position:relative}
+.orb i{position:absolute;inset:10px;border-radius:50%;background:conic-gradient(from 0deg,#5E5CE6,#BF5AF2,#FF6482,#64D2FF,#5E5CE6);filter:blur(6px);opacity:.85;animation:spin 6s linear infinite}
+.orb b{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ECEBFF 45%,#C9C6FF)}
+.orb svg{position:relative;width:20px;height:20px}
+body.mini .tabs .tab:not(.on){width:0;flex:0;opacity:0;padding:0}
+body.mini .tabs{flex:0 0 auto;width:64px}
+body.mini .barrow{align-items:center}
+body.mini .acc{flex:1}
+/* popover / sheets */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.18);animation:fade .3s both}
+.pop{position:fixed;z-index:41;right:14px;top:66px;width:300px;border-radius:26px;padding:8px;animation:drop .4s var(--ease) both;transform-origin:top right}
+.pop .li{background:transparent;border-color:rgba(0,0,0,.06);border-radius:0}
+.modal{position:fixed;z-index:41;left:8px;right:8px;bottom:8px;border-radius:34px;padding:22px 18px 18px;max-height:88vh;overflow:auto;animation:up .5s var(--ease) both;background:rgba(246,246,248,.86)}
+.x{width:32px;height:32px;border-radius:16px;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;margin-left:auto}
+.bubble{background:var(--blue);color:#fff;border-radius:20px 20px 6px 20px;padding:10px 14px;font-size:15px;margin-left:auto;width:fit-content;max-width:80%}
+.aitext{font-size:17px;line-height:1.5;margin:14px 2px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{height:36px;padding:0 14px;border-radius:18px;background:#fff;font-size:14px;font-weight:500;border:1px solid rgba(0,0,0,.06)}
+.chip.on{background:var(--ink);color:#fff}
+/* SOS */
+#sos{position:fixed;inset:0;z-index:60;background:#D7261E;color:#fff;display:flex;flex-direction:column;padding:max(56px,env(safe-area-inset-top)) 24px 30px;gap:12px;animation:fade .3s both}
+.ringp{width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;margin:auto;animation:pulse 1.6s ease-in-out infinite}
+.hold{position:fixed;inset:0;z-index:59;background:rgba(215,38,30,.08);display:flex;align-items:center;justify-content:center}
+.lock{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:26px 18px}
+/* week scrubber */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--rose) var(--p),#F2D5DE var(--p))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;margin-top:-11px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#load{position:fixed;left:50%;top:38vh;transform:translate(-50%,-50%);font-size:13px;color:var(--ink3);z-index:3}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%)}}
+@keyframes drop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+@keyframes up{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+/* desktop */
+@media (min-width:980px){
+ #gl{left:260px;right:380px;height:100vh}
+ #scroll{left:auto;right:0;width:400px;pointer-events:auto}
+ .spacer{height:96px}
+ .sheet{margin:0 16px 0 0;border-radius:30px;padding-bottom:40px}
+ .top{left:260px;right:400px}
+ .dock{left:0;top:0;bottom:0;right:auto;width:260px;padding:20px 14px;justify-content:flex-start}
+ .barrow{flex-direction:column;align-items:stretch}
+ .tabs{flex-direction:column;height:auto;border-radius:24px;padding:8px;gap:2px}
+ .tab{flex-direction:row;justify-content:flex-start;gap:12px;font-size:15px;padding:12px 14px;border-radius:14px}
+ .orb{width:100%;height:56px;border-radius:28px;background:var(--glass)}
+ .orb i,.orb b{inset:auto;width:30px;height:30px;left:16px;top:13px}
+ .orb::after{content:"Ask Urban Health";position:relative;margin-left:30px;font-weight:600;font-size:15px}
+ .acc{order:3;height:auto;padding:14px;border-radius:22px;align-items:flex-start;flex-direction:column}
+ .acc .tx{white-space:normal}
+ .brand{display:flex!important}
+ body.mini .tabs .tab:not(.on){width:auto;flex:1;opacity:1;padding:12px 14px}
+ body.mini .tabs{width:auto}
+ .pop{right:400px}
+}
+.brand{display:none;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.02em;padding:6px 8px 14px}
+.brand i{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0A84FF,#5E5CE6)}
+.page{position:fixed;inset:0;z-index:45;background:#F2F2F7;overflow-y:auto;animation:up .45s var(--ease) both}
+.pbar{position:sticky;top:0;z-index:2;padding:max(12px,env(safe-area-inset-top)) 12px 6px;background:rgba(242,242,247,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.pback{display:flex;align-items:center;gap:2px;color:var(--blue);font-size:17px;height:44px}
+.pin{padding:0 16px 60px;max-width:680px;margin:0 auto}
+.ib{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none}
+.inp2{width:100%;height:52px;border-radius:14px;border:0;padding:0 16px;font-size:16px;background:#fff;color:var(--ink)}
+body.flat .spacer{height:118px}body.flat #gl,body.flat #labels,body.flat #lines{opacity:0;pointer-events:none}#gl{transition:opacity .4s}
+@media (min-width:980px){body.flat .spacer{height:110px}}
+@keyframes scanl{from{top:12%}to{top:86%}}
+@media (min-width:980px){.page{left:260px}}
+.page{position:fixed;inset:0;z-index:45;background:#F2F2F7;overflow-y:auto;animation:up .45s var(--ease) both}
+.pbar{position:sticky;top:0;z-index:2;padding:max(12px,env(safe-area-inset-top)) 12px 6px;background:rgba(242,242,247,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.pback{display:flex;align-items:center;gap:2px;color:var(--blue);font-size:17px;height:44px}
+.pin{padding:0 16px 80px;max-width:680px;margin:0 auto}
+.ib{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none}
+.inp2{width:100%;height:52px;border-radius:14px;border:0;padding:0 16px;font-size:16px;background:#fff;color:var(--ink);font-family:inherit;-webkit-appearance:none;appearance:none}
+select.inp2{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238E8E93' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 16px center}
+.inp2:focus{outline:2px solid var(--blue);outline-offset:0}
+.seg{display:flex;background:#E3E3E8;border-radius:12px;padding:3px;gap:2px}
+.seg button{flex:1;height:38px;border-radius:10px;font-size:14px;font-weight:500;color:var(--ink)}
+.seg button.on{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.1);font-weight:600}
+button:disabled{opacity:.5}
+.btn{text-decoration:none}
+body.flat .spacer{height:118px}body.flat #gl,body.flat #labels,body.flat #lines{opacity:0;pointer-events:none}#gl{transition:opacity .4s}
+@media (min-width:980px){body.flat .spacer{height:110px}}
+@keyframes scanl{from{top:12%}to{top:86%}}
+@media (min-width:980px){.page{left:260px}}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<canvas id="gl" aria-label="3D body. Drag to turn."></canvas>
+<svg id="lines" aria-hidden="true"></svg>
+<div id="labels"></div>
+<div id="load">Loading…</div>
+<header class="top" id="top"></header>
+<main id="scroll"><div class="spacer"></div><section class="sheet" id="sheet"></section></main>
+<nav class="dock" id="dock"></nav>
+<div id="layer"></div>
+<script src="/a/three.9274bbce.js"></script>
+<script>
+"use strict";
+const ic=(p,c='currentColor',s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const I={sum:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',rec:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',pill:'<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/>',fam:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 1.8 6 5.5"/>',
+spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',check:'<path d="M5 12l5 5 9-10"/>',phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/>',chev:'<path d="M9 6l6 6-6 6"/>',baby:'<circle cx="12" cy="7" r="3.5"/><path d="M6 21c0-4 2.7-7 6-7s6 3 6 7"/>',heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',drop:'<path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/>',id:'<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="12" r="2.5"/><path d="M14 10h4M14 14h3"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
+I.gear='<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>';I.shield='<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>';I.down='<path d="M12 4v12M6 10l6 6 6-6M4 20h16"/>';I.eye='<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+const ORGCOL={heart:0xFF375F,liver:0xB9785A,pancreas:0xFF9F0A,thyroid:0xBF5AF2,kidney:0x30D158,lung:0x9CC9FF,gut:0xE9B9A6,uterus:0xFF8FAB,other:0xDCCBC4};
+const $=s=>document.querySelector(s);
+
+/* ---------- 3D ---------- */
+const canvas=$('#gl');
+const R=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(26,1,.1,100);
+scene.add(new THREE.HemisphereLight(0xffffff,0xcfd6e2,.95));
+const key=new THREE.DirectionalLight(0xffffff,.75);key.position.set(3,5,6);scene.add(key);
+const rim=new THREE.DirectionalLight(0xbfd4ff,.55);rim.position.set(-5,2,-6);scene.add(rim);
+const root=new THREE.Group();scene.add(root);
+const MODELS={};let cur=null;
+async function gunz(u){const r=await fetch(u);if(!r.ok)throw Error(u);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
+async function loadSet(bin,names){const [buf,n]=await Promise.all([gunz(bin),fetch(names).then(r=>r.json())]);const jl=new DataView(buf).getUint32(0,true);return{buf,meta:JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base:4+jl,names:n}}
+function geom(S0,p){const q=new Uint16Array(S0.buf,S0.base+p.o,p.v*3),ix=new Uint16Array(S0.buf,S0.base+p.o+p.v*6,p.i),b=p.b,pos=new Float32Array(p.v*3);
+ for(let j=0;j<p.v;j++){pos[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);pos[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);pos[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));g.computeVertexNormals();return g}
+function organKey(n){n=n.toLowerCase();
+ if(/uter|ovar|fallop|placent/.test(n))return 'uterus';if(/thyroid gland|lobe of thyroid|isthmus of thyroid/.test(n))return 'thyroid';
+ if(/kidney|renal (cortex|pelvis|papill|pyramid)/.test(n)&&!/arter|vein|impression/.test(n))return 'kidney';
+ if(/pancrea/.test(n))return 'pancreas';if(/liver/.test(n)&&!/impression|ligament/.test(n))return 'liver';
+ if(/atri|ventric|cardiac|heart|myocard|papillary|valve|leaflet|cusp|chordae|interventricular/.test(n)&&!/fourth ventricle|lateral ventricle|third ventricle|arter|vein|conduction/.test(n))return 'heart';
+ if(/lung|bronch/.test(n)&&!/arter|vein/.test(n))return 'lung';
+ if(/stomach|intestin|colon|jejun|ileum|duoden|cecum|caecum|rectum|esophag|oesophag|appendix|spleen|gallbladder|bladder/.test(n))return 'gut';
+ return null}
+function mergeGeoms(list){let nv=0,ni=0;list.forEach(g=>{nv+=g.attributes.position.count;ni+=g.index.count});const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3),idx=new Uint32Array(ni);let vo=0,io=0;
+ list.forEach(g=>{pos.set(g.attributes.position.array,vo*3);nor.set(g.attributes.normal.array,vo*3);const ix=g.index.array;for(let j=0;j<ix.length;j++)idx[io+j]=ix[j]+vo;vo+=g.attributes.position.count;io+=ix.length;g.dispose()});
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('normal',new THREE.BufferAttribute(nor,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeBoundingBox();return g}
+async function buildModel(sex){
+ const set=sex==='male'?await loadSet('/a/body-lite.e9802745.bin','/a/names.f459bcee.json'):await loadSet('/a/female.ab5cf751.bin','/a/names-f.a07a3541.json');
+ const grp=new THREE.Group(),skinG=[],org={};
+ set.meta.parts.forEach((p,k)=>{const l=p.l??1,n=set.names[k];
+  if(l===0){if(/^skin/i.test(n))skinG.push(geom(set,p));return}
+  if(l!==3)return;const key=organKey(n);if(!key)return;(org[key]=org[key]||[]).push(geom(set,p))});
+ const skinGeo=mergeGeoms(skinG);
+ const skinMat=new THREE.MeshPhysicalMaterial({color:0xDCE4EF,roughness:.32,metalness:0,transparent:true,opacity:.42,depthWrite:false,clearcoat:.6,clearcoatRoughness:.3,side:THREE.FrontSide});
+ const skin=new THREE.Mesh(skinGeo,skinMat);skin.renderOrder=2;
+ const back=new THREE.Mesh(skinGeo,new THREE.MeshBasicMaterial({color:0xB8C4D6,transparent:true,opacity:.22,side:THREE.BackSide,depthWrite:false}));back.renderOrder=1;
+ grp.add(back,skin);
+ const organs={};
+ for(const k in org){const g=mergeGeoms(org[k]);const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:ORGCOL[k],roughness:.45,metalness:.05,transparent:true,opacity:.9,emissive:ORGCOL[k],emissiveIntensity:0}));m.renderOrder=0;grp.add(m);
+  const c=new THREE.Vector3();g.boundingBox.getCenter(c);organs[k]={mesh:m,center:c,base:new THREE.Color(ORGCOL[k])}}
+ // pregnancy: belly morph + womb + baby
+ const P0=skinGeo.attributes.position.array.slice();
+ const uc=organs.uterus?organs.uterus.center.clone():new THREE.Vector3(0,-.55,.1);
+ const womb=new THREE.Mesh(new THREE.SphereGeometry(1,48,32),new THREE.MeshPhysicalMaterial({color:0xFFB3C6,roughness:.25,transparent:true,opacity:.38,depthWrite:false,clearcoat:1}));
+ const baby=new THREE.Group();const bm=new THREE.MeshStandardMaterial({color:0xF7A1B5,roughness:.5});
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.42,32,24),bm);head.position.set(0,.36,.05);
+ const torso=new THREE.Mesh(new THREE.SphereGeometry(.5,32,24),bm);torso.scale.set(.8,1,.78);torso.position.set(.05,-.22,-.02);
+ const leg=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.6,16),bm);leg.position.set(.22,-.45,.25);leg.rotation.x=1.3;
+ const arm=leg.clone();arm.position.set(-.18,.02,.3);arm.rotation.set(1.1,0,.4);arm.scale.setScalar(.7);
+ baby.add(head,torso,leg,arm);baby.rotation.z=-.5;
+ const wombG=new THREE.Group();wombG.add(womb,baby);wombG.visible=false;grp.add(wombG);
+ MODELS[sex]={grp,skin,skinGeo,P0,organs,wombG,womb,baby,uc};return MODELS[sex]}
+function setBelly(M,amt){const P=M.skinGeo.attributes.position,a=P.array,o=M.P0,cx=M.uc.x,cy=M.uc.y+.25;
+ for(let i=0;i<a.length;i+=3){const x=o[i],y=o[i+1],z=o[i+2];if(z>M.uc.z-.02&&amt>0){const dx=(x-cx)/.5,dy=(y-cy)/.62,f=Math.exp(-(dx*dx+dy*dy)*2.2);a[i+2]=z+amt*f}else a[i+2]=z}
+ P.needsUpdate=true;M.skinGeo.computeVertexNormals()}
+let target={rx:0,ry:0},rot={rx:0,ry:0},drag=null,idle=0,pulseKey=null,camZ=17,camY=0,camTZ=17,camTY=0;
+function fit(){const desk=innerWidth>=980,w=desk?innerWidth-640:innerWidth,h=desk?innerHeight:innerHeight*.74;R.setSize(w,h,false);canvas.style.width=w+'px';canvas.style.height=h+'px';cam.aspect=w/h;cam.updateProjectionMatrix()}
+addEventListener('resize',()=>{fit();drawLabels()});
+canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,ry:target.ry,rx:target.rx};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;target.ry=drag.ry+(e.clientX-drag.x)*.012;target.rx=Math.max(-.35,Math.min(.35,drag.rx+(e.clientY-drag.y)*.004));idle=0});
+canvas.addEventListener('pointerup',()=>{drag=null});
+const clock=new THREE.Clock();
+function frame(){const dt=Math.min(clock.getDelta(),.05),tt=clock.elapsedTime;idle+=dt;
+ if(!drag&&idle>2.5)target.ry+=dt*.12;
+ rot.ry+=(target.ry-rot.ry)*Math.min(1,dt*6);rot.rx+=(target.rx-rot.rx)*Math.min(1,dt*6);root.rotation.set(rot.rx,rot.ry,0);
+ camZ+=(camTZ-camZ)*Math.min(1,dt*3);camY+=(camTY-camY)*Math.min(1,dt*3);cam.position.set(0,camY,camZ);cam.lookAt(0,camY,0);
+ if(cur&&pulseKey&&cur.organs[pulseKey]){const m=cur.organs[pulseKey].mesh.material;m.emissiveIntensity=.18+.22*(.5+.5*Math.sin(tt*3.2))}
+ if(cur){for(const k in cur.organs)if(k!==pulseKey)cur.organs[k].mesh.material.emissiveIntensity=0}
+ if(cur&&cur.wombG.visible){cur.baby.rotation.y=Math.sin(tt*.8)*.15;cur.womb.material.opacity=.32+.06*Math.sin(tt*1.6)}
+ if(!document.body.classList.contains('flat')&&!document.hidden&&!document.querySelector('#layer .page')){R.render(scene,cam);placeLabels()}requestAnimationFrame(frame)}
+const v3=new THREE.Vector3();
+function placeLabels(){if(!LABS.length){$('#lines').innerHTML='';return}const r=canvas.getBoundingClientRect();let svg='';
+ LABS.forEach((o,i)=>{const p=o.k==='womb'?cur.wombG.position:cur.organs[o.k].center;v3.copy(p).applyMatrix4(root.matrixWorld).project(cam);
+  const x=r.left+(v3.x*.5+.5)*r.width,y=r.top+(-v3.y*.5+.5)*r.height;
+  if(o.dot){o.el.style.left=x+'px';o.el.style.top=y+'px';return}const lx=Math.max(78,Math.min(r.left+r.width-78,x+o.side*Math.min(130,r.width*.3))),ly=Math.max(r.top+170,Math.min(r.bottom-60,y-24+i*8));
+  o.el.style.left=lx+'px';o.el.style.top=ly+'px';
+  svg+=`<line x1="${x}" y1="${y}" x2="${lx-o.side*56}" y2="${ly}" stroke="rgba(29,29,31,.28)" stroke-width="1"/><circle cx="${x}" cy="${y}" r="4" fill="#fff" stroke="rgba(29,29,31,.5)" stroke-width="1.5"/>`});
+ $('#lines').innerHTML=svg}
+
+
+/* ================= Urban Health · Phase 0 app (real data, /api/v2) ================= */
+let LABS=[];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function API(path,o={}){const h={'x-tht':'1'};if(o.json)h['content-type']='application/json';if(o.key&&ME&&ME.hkey)h['X-DoKKo-Key']=ME.hkey;
+ const r=await fetch(path,{method:o.method||(o.json||o.body?'POST':'GET'),headers:h,body:o.json?JSON.stringify(o.json):o.body,credentials:'same-origin'});
+ let d=null;try{d=await r.json()}catch(_){}
+ if(!r.ok){let m=d&&d.detail;if(m&&typeof m==='object')m=m.message||m.msg||(Array.isArray(m)&&m[0]&&m[0].msg)||JSON.stringify(m);const e=new Error(m||'Something went wrong. Try again.');e.status=r.status;throw e}return d}
+const today=()=>new Date().toISOString().slice(0,10);
+const fmtDate=s=>{if(!s)return'';const d=new Date(s.length===10?s+'T00:00':s);return isNaN(d)?s:d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:d.getFullYear()===new Date().getFullYear()?undefined:'numeric'})};
+let ME=null;const S={person:null,tab:'summary',focus:0,mini:false,week:null};const REC={};
+const P=id=>ME.people.find(p=>p.id===(id||S.person));
+const isMe=p=>p&&p.self;
+const nameOf=p=>p?(p.self?'You':p.name):'';
+const can=(p,l)=>({none:0,medid:1,summary:2,all:3,guardian:4,owner:5})[p.access]>=({medid:1,summary:2,all:3})[l];
+const writer=p=>p&&(p.access==='owner'||p.access==='guardian');
+function preg(p){p=p||P();return p&&p.pregnancy&&p.pregnancy.stage==='pregnant'?p.pregnancy:null}
+const WEEKS=[[4,'a poppy seed','The pregnancy is just beginning.'],[6,'a sweet pea','Heartbeat can be seen on a scan.'],[10,'a strawberry','All major organs have started forming.'],[14,'a lemon','Second trimester. Energy often returns.'],[18,'a sweet potato','First flutters may be felt.'],[20,'a banana','Anomaly scan is due around now.'],[24,'an ear of corn','Baby can hear your voice.'],[27,'a cauliflower','Glucose test (GTT) is usually due before week 28.'],[30,'a cabbage','Check-ups usually move to every two weeks.'],[34,'a pineapple','Baby is gaining weight quickly.'],[37,'a winter melon','Full term. Keep the hospital bag ready.'],[40,'a small pumpkin','Due around now.']];
+const wkInfo=w=>{let x=WEEKS[0];WEEKS.forEach(k=>{if(w>=k[0])x=k});return x};
+/* report value code -> organ on the body */
+const CODE_ORG={tc:'heart',ldl:'heart',hdl:'heart',tg:'heart',sbp:'heart',glu_f:'pancreas',glu_pp:'pancreas',glu_r:'pancreas',hba1c:'pancreas',alt:'liver',ast:'liver',alp:'liver',bili:'liver',alb:'liver',creat:'kidney',urea:'kidney',uric:'kidney',egfr:'kidney',na:'kidney',k:'kidney',tsh:'thyroid',t3:'thyroid',t4:'thyroid',hb:'heart',wbc:'heart',plt:'heart',rbc:'heart',mcv:'heart',pcv:'heart',ferr:'heart',spo2:'lung'};
+const ORG_NAME={heart:'Heart & blood',pancreas:'Pancreas',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',uterus:'Uterus'};
+const FLAGCLS={high:'bad',low:'warn',normal:'ok',unknown:'info'},FLAGTXT={high:'High',low:'Low',normal:'In range',unknown:'Check'};
+function findings(pid){const reps=(REC[pid]||[]).filter(r=>r.kind==='report').sort((a,b)=>(b.day||'').localeCompare(a.day||''));const seen=new Set(),out=[];
+ reps.forEach(r=>(r.findings||[]).forEach(f=>{const key=(f.code||f.test||'').toLowerCase();if(!key||seen.has(key))return;seen.add(key);out.push({...f,org:CODE_ORG[f.code]||null,rid:r.id,date:r.day,rep:r.title})}));
+ out.sort((a,b)=>((a.flag==='normal'||!a.flag)-(b.flag==='normal'||!b.flag)));return out}
+async function loadRecords(pid){const p=P(pid);if(!p||!can(p,'summary')){REC[pid]=[];return}try{REC[pid]=await API(`/api/v2/people/${pid}/records`)}catch(e){REC[pid]=[]}}
+async function refreshMe(){ME=await API('/api/v2/me');if(!P(S.person))S.person=ME.me}
+/* ---------------- 3D ---------------- */
+async function showModel(){const p=P();if(!p){return}
+ const female=p.sex==='female',sex=female?'female':'male';$('#load').style.display=MODELS[sex]?'none':'block';
+ let M;try{M=MODELS[sex]||await buildModel(sex)}catch(e){$('#load').textContent='The 3D body could not load. Check your connection.';return}
+ $('#load').style.display='none';if(cur!==M){if(cur)root.remove(cur.grp);root.add(M.grp);cur=M}
+ const locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id),f=fs[S.focus];document.body.classList.toggle('preg',!!pg);
+ pulseKey=(!locked&&!pg&&f&&f.org&&M.organs[f.org])?f.org:null;
+ for(const k in M.organs){const o=M.organs[k],mt=o.mesh.material;o.mesh.visible=!locked;mt.color.copy(o.base);
+  if(pg)mt.opacity=k==='uterus'?0:.22;else if(pulseKey){mt.opacity=k===pulseKey?1:.38;if(k!==pulseKey)mt.color.lerp(new THREE.Color(0xB9C0CC),.6)}else mt.opacity=.85}
+ M.skin.material.opacity=locked?.6:pg?.42:.4;M.skin.material.color.set(pg?0xF6D9E2:0xDCE4EF);
+ const wk=S.week||(pg&&pg.week)||0;M.wombG.visible=!!pg;const t=wk/40;
+ if(pg){const r=.08+.30*t;M.wombG.position.set(M.uc.x,M.uc.y+.06+.30*t,M.uc.z+.04+.14*t);M.womb.scale.set(r,r*1.12,r*.95);M.baby.scale.setScalar(.04+.36*t);setBelly(M,.02+.26*t)}else setBelly(M,0);
+ if(pg){camTZ=9.5;camTY=M.uc.y+.6}else if(pulseKey){camTZ=12.5;camTY=M.organs[pulseKey].center.y*.7}else{camTZ=17;camTY=0}
+ drawLabels()}
+function drawLabels(){const L=$('#labels');L.innerHTML='';LABS=[];const p=P();if(!cur||!p||S.tab!=='summary'||!can(p,'summary'))return;
+ const pg=preg(p);if(pg){const w=S.week||pg.week;const el=document.createElement('button');el.className='lab glass';el.innerHTML=`<small>Week ${w} · baby</small><span class="v">${wkInfo(w)[1].replace(/^an? /,'')}</span><br><span class="pill pink">${w<14?'1st':w<28?'2nd':'3rd'} trimester</span>`;el.onclick=openPregnancy;L.appendChild(el);LABS.push({el,k:'womb',side:1});return}
+ findings(p.id).forEach((f,i)=>{if(!f.org||!cur.organs[f.org]||LABS.some(x=>x.k===f.org&&!x.dot&&i!==S.focus))return;const on=i===S.focus;if(!on&&f.flag==='normal')return;const el=document.createElement('button');
+  el.className=on?'lab glass':'lab dot';el.setAttribute('aria-label',`${f.test} ${f.value}`);
+  if(on)el.innerHTML=`<small>${esc(ORG_NAME[f.org])} · ${esc(f.test)}</small><span class="v">${esc(f.value)}</span><span class="u">${esc(f.unit||'')}</span><br><span class="pill ${FLAGCLS[f.flag]||'info'}">${FLAGTXT[f.flag]||'Check'}</span>`;
+  else el.style.setProperty('--c','#'+ORGCOL[f.org].toString(16).padStart(6,'0'));
+  el.onclick=()=>on?openReport(f.rid):(S.focus=i,renderAll());L.appendChild(el);LABS.push({el,k:f.org,side:1,dot:!on})})}
+/* ---------------- shell ---------------- */
+function renderTop(){const p=P(),pg=preg(p),locked=!can(p,'summary'),fs=findings(p.id);
+ const T={summary:pg?'Week '+(S.week||pg.week):'Summary',records:'Records',meds:'Medicines',family:'Family'};
+ let line='';if(S.tab==='summary'){const bad=fs.filter(f=>f.flag&&f.flag!=='normal');
+  if(locked)line=`<b>${esc(p.name)}</b> shares only the Medical ID with you.`;
+  else if(pg){const w=wkInfo(S.week||pg.week);line=`Baby is about the size of <b>${w[1]}</b>. ${w[2]}`}
+  else if(bad.length)line=`<b>${bad.length} result${bad.length>1?'s':''} worth discussing</b>: ${bad.slice(0,2).map(f=>esc(f.test)+' is '+(f.flag==='high'?'high':'low')).join(', ')}.`;
+  else if(fs.length)line=`Latest results are <b>in range</b>.`;else line=writer(p)?'Add a report and it will appear on the body.':'No reports shared yet.'}
+ $('#top').innerHTML=`<div class="ttl"><p class="eyebrow" style="color:${pg?'var(--rose)':''}">${esc(nameOf(p).toUpperCase())}${p.self?'':' · '+(p.dependent?'YOU LOOK AFTER':locked?'PRIVATE':'SHARED WITH YOU')}</p><h1 class="big">${T[S.tab]}</h1>${line?`<p class="line">${line}</p>`:''}</div>
+ <button class="sos glass" id="sosb" aria-label="Emergency SOS. Hold for one second.">SOS</button><button class="round glass" id="who" aria-label="Choose person and settings"><span class="av" style="background:${p.color}">${esc(p.name[0]||'?')}</span></button>`;
+ $('#who').onclick=openPeople;let ht;const sb=$('#sosb');sb.onpointerdown=()=>{sb.style.transform='scale(.9)';ht=setTimeout(()=>{sb.style.transform='';startSOS()},900)};sb.onpointerup=sb.onpointerleave=()=>{clearTimeout(ht);sb.style.transform=''};sb.onkeydown=e=>{if(e.key==='Enter')startSOS()}}
+function dosePlan(pid){const meds=(REC[pid]||[]).filter(r=>r.kind==='med'&&r.active!==false),doses=(REC[pid]||[]).filter(r=>r.kind==='dose'&&r.day===today()),out=[];
+ meds.forEach(m=>(m.times&&m.times.length?m.times:['09:00']).forEach(t=>{const d=doses.find(x=>x.med===m.id&&x.time===t);out.push({m,t,done:d})}));return out.sort((a,b)=>a.t.localeCompare(b.t))}
+function renderDock(){const p=P(),pg=preg(p),locked=!can(p,'summary'),fs=findings(p.id),f=fs[S.focus];let acc='';
+ const plan=can(p,'all')?dosePlan(p.id):[],next=plan.find(x=>!x.done);
+ if(locked)acc=`<div class="tx">Only ${esc(p.name)} can share more<small>From their own Settings</small></div>`;
+ else if(pg)acc=`<div class="tx" style="white-space:normal"><small>Preview week ${S.week||pg.week} · drag</small><input id="wk" type="range" min="4" max="40" value="${S.week||pg.week}" style="--p:${((S.week||pg.week)-4)/36*100}%" aria-label="Preview pregnancy week"></div>`;
+ else if(next&&(S.tab==='meds'||!f||f.flag==='normal'))acc=`<div class="tx">${esc(next.m.name)}<small>Next dose · ${next.t}</small></div><button class="go" id="accgo">Taken</button>`;
+ else if(f&&f.flag&&f.flag!=='normal')acc=`<div class="tx"><span style="color:var(--ai)">✦</span> ${esc(f.test)} ${esc(f.value)} ${esc(f.unit||'')} · ${FLAGTXT[f.flag]}<small>Tap to see what it means</small></div>`;
+ const T=[['summary','Summary',I.sum],['records','Records',I.rec],['meds','Medicines',I.pill],['family','Family',I.fam]];
+ $('#dock').innerHTML=`<div class="brand"><img src="/brand/svg/user-icon.svg" alt="" width="28" height="28" style="border-radius:8px">Urban Health</div>${acc?`<div class="acc glass" id="acc">${acc}</div>`:''}
+ <div class="barrow"><div class="tabs glass" role="tablist">${T.map(t=>`<button class="tab ${S.tab===t[0]?'on':''}" data-t="${t[0]}" role="tab" aria-selected="${S.tab===t[0]}">${ic(t[2])}<span>${t[1]}</span></button>`).join('')}</div>
+ <button class="orb glass" id="orb" aria-label="Ask Urban Health"><i></i><b></b>${ic(I.spark,'#5E5CE6',20)}</button></div>`;
+ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;history.replaceState(null,'','/app/'+S.tab);renderAll();$('#scroll').scrollTop=0});
+ $('#orb').onclick=openAI;const ag=$('#accgo');if(ag)ag.onclick=e=>{e.stopPropagation();toggleDose(p.id,next.m.id,next.t,null)};
+ const a=$('#acc');if(a&&f&&!pg&&!next)a.onclick=()=>openReport(f.rid);
+ const w=$('#wk');if(w)w.oninput=e=>{S.week=+e.target.value;e.target.style.setProperty('--p',(S.week-4)/36*100+'%');showModel();renderTop()}}
+function lockCard(p){return`<div class="card lock"><div class="round" style="background:#F2F2F7">${ic(I.lock,'#3A3A3C',24)}</div><div style="font-size:17px;font-weight:600">${esc(p.name)} keeps this private</div><div class="sub" style="font-size:15px;line-height:1.45">You can see their Medical ID. Only ${esc(p.name)} can share more, from Settings → Who can see my health.</div></div>`}
+function medIdCard(p){const m=p.medicalId||{};const pg=m.pregnancy&&m.pregnancy.stage==='pregnant'?m.pregnancy:null;
+ return`<div class="card" style="background:#1D1D1F;color:#fff;padding:20px"><div class="row" style="justify-content:space-between"><span style="font-size:13px;opacity:.65">Medical ID · ${esc(p.name)}</span>${ic(I.id,'rgba(255,255,255,.6)',18)}</div>
+ <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px">${[['Blood',m.blood],['Age',m.age],['Height',m.height?m.height+' cm':''],['Weight',m.weight?m.weight+' kg':''],['Last donated',m.donated?fmtDate(m.donated):''],['Allergies',m.allergies]].map(x=>`<div><div style="font-size:12px;opacity:.55">${x[0]}</div><div style="font-size:17px;font-weight:700;margin-top:2px">${esc(x[1]||'—')}</div></div>`).join('')}</div>
+ ${m.conditions?`<div style="margin-top:14px;font-size:14px"><span style="opacity:.55">Conditions </span>${esc(m.conditions)}</div>`:''}
+ ${pg?`<div style="margin-top:14px;padding:10px 12px;border-radius:14px;background:rgba(229,87,122,.25);font-size:14px;font-weight:600">Pregnant · ${pg.week} weeks · due ${fmtDate(pg.due)}</div>`:''}
+ <div style="margin-top:16px;font-size:12px;opacity:.55">EMERGENCY CONTACTS</div>${(m.contacts||[]).map(c=>`<a href="tel:${esc(c.phone)}" class="row" style="margin-top:8px;font-size:15px;color:#fff;text-decoration:none"><span style="flex:1">${esc(c.name)}</span><span style="opacity:.6">${esc(c.relation||'')}</span>${ic(I.phone,'#34C759',18)}</a>`).join('')||'<div class="sub" style="color:#aaa;margin-top:6px">None added</div>'}</div>`}
+function renderSheet(){const p=P(),locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id);let h='';
+ if(S.tab==='summary'){
+  if(locked)h=lockCard(p)+`<div class="sect">MEDICAL ID</div>`+medIdCard(p);
+  else{if(pg){const kicks=(REC[p.id]||[]).filter(r=>r.kind==='kick').sort((a,b)=>b.created-a.created)[0];
+    h+=`<div class="grid"><button class="card" style="text-align:left;outline:2px solid #F6C3D2" onclick="openKicks()"><div class="cat" style="color:var(--rose)">Kick counter</div><div class="num">${kicks?kicks.count:'—'}<span>${kicks?'in '+kicks.minutes+' min':''}</span></div><div class="sub">${kicks?fmtDate(kicks.day):'Tap to start counting'}</div></button>
+    <button class="card" style="text-align:left" onclick="openPregnancy()"><div class="cat" style="color:var(--rose)">Due date</div><div class="num" style="font-size:24px">${fmtDate(pg.due)}</div><div class="sub">Week ${pg.week} of 40</div></button></div>`}
+   if(fs.length)h+=`<div class="grid" style="margin-top:10px">${fs.slice(0,6).map((f,i)=>`<button class="card" style="text-align:left;outline:${i===S.focus?'2px solid var(--ink)':'none'}" onclick="S.focus=${i};renderAll()"><div class="cat" style="color:${f.org?'#'+ORGCOL[f.org].toString(16).padStart(6,'0'):'var(--ink2)'}">${esc(f.test)}<span class="t">${fmtDate(f.date)}</span></div><div class="num">${esc(f.value)}<span>${esc(f.unit||'')}</span></div><span class="pill ${FLAGCLS[f.flag]||'info'}">${FLAGTXT[f.flag]||'Check'}</span></button>`).join('')}</div>`;
+   else if(writer(p))h+=`<button class="card row" style="width:100%;text-align:left" onclick="pickReport()">${ic(I.cam,'#0071E3',26)}<div><div style="font-weight:600">Add your first report</div><div class="sub">PDF or photo. It is read for you and shown on the body.</div></div></button>`;
+   const lastRep=(REC[p.id]||[]).filter(r=>r.kind==='report'&&r.summary).sort((a,b)=>(b.day||'').localeCompare(a.day||''))[0];
+   if(lastRep)h+=`<div class="h2">Highlights</div><button class="card" style="text-align:left;width:100%" onclick="openReport('${lastRep.id}')"><div class="cat" style="color:var(--ai)">${ic(I.spark,'#5E5CE6',16)} ${esc(lastRep.title)}</div><p style="font-size:16px;line-height:1.45;margin:8px 0 0">${esc(lastRep.summary)}</p><p class="sub" style="margin-top:8px">Not a diagnosis. Discuss with your doctor.</p></button>`;
+   h+=`<div class="sect">MEDICAL ID</div>`+medIdCard(p)}}
+ if(S.tab==='records'){if(locked)h=lockCard(p);else{const reps=(REC[p.id]||[]).filter(r=>r.kind==='report').sort((a,b)=>(b.day||'').localeCompare(a.day||''));
+  h=reps.length?`<div class="list">${reps.map(r=>{const w=(r.findings||[]).find(f=>f.flag==='high')||(r.findings||[]).find(f=>f.flag==='low');return`<button class="li" onclick="openReport('${r.id}')">${ic(r.doc==='prescription'?I.pill:I.rec,'#0071E3',20)}<div style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</div><div class="sub">${fmtDate(r.day)}${r.doctor?' · '+esc(r.doctor):''}</div></div>${w?`<span class="pill ${FLAGCLS[w.flag]}">${esc(w.test)} ${FLAGTXT[w.flag].toLowerCase()}</span>`:(r.findings||[]).length?'<span class="pill ok">In range</span>':''}</button>`}).join('')}</div>`:`<div class="card lock">${ic(I.rec,'#8E8E93',30)}<div style="font-weight:600;font-size:17px">No reports yet</div><div class="sub">Lab reports, prescriptions and scans for ${esc(nameOf(p))} live here.</div></div>`;
+  if(writer(p))h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn dark" onclick="pickReport('report')">${ic(I.cam,'#fff',20)} Add report</button><button class="btn sec" onclick="pickReport('prescription')">Prescription</button></div><p class="cap">PDFs and photos are stored encrypted. Reading is done only when you add a file.</p>`}}
+ if(S.tab==='meds'){if(!can(p,'all'))h=lockCard(p);else{const plan=dosePlan(p.id),t=plan.filter(x=>x.done).length,c=2*Math.PI*44,meds=(REC[p.id]||[]).filter(r=>r.kind==='med');
+  if(!meds.length)h=`<div class="card lock">${ic(I.pill,'#8E8E93',30)}<div style="font-weight:600;font-size:17px">No medicines</div><div class="sub">Add them by hand or scan a prescription.</div></div>`;
+  else{h=`<div class="card row" style="gap:18px;padding:18px"><svg width="96" height="96" viewBox="0 0 104 104" aria-hidden="true"><circle cx="52" cy="52" r="44" stroke="#E3F7E8" stroke-width="12" fill="none"/><circle cx="52" cy="52" r="44" stroke="#30D158" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="${plan.length?c*t/plan.length:0} ${c}" transform="rotate(-90 52 52)" style="transition:stroke-dasharray .9s var(--ease)"/><text x="52" y="60" text-anchor="middle" font-size="24" font-weight="700" fill="#1D1D1F" font-family="Geist,Inter,system-ui">${t}/${plan.length}</text></svg><div><div style="font-size:19px;font-weight:700;letter-spacing:-.02em">${t===plan.length?'All done today':plan.length-t+' left today'}</div><div class="sub" style="font-size:14px;margin-top:4px">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div></div></div>
+  <div class="sect">TODAY</div>${plan.map(x=>`<div class="card row" style="margin-bottom:8px;opacity:${x.done?.55:1}"><div style="width:4px;align-self:stretch;border-radius:2px;background:${x.m.color||'#30D158'}"></div><div style="flex:1"><div style="font-weight:600;font-size:16px">${esc(x.m.name)}</div><div class="sub">${x.t} · ${x.done?'Taken':esc(x.m.note||x.m.dose||'')}</div></div><button aria-label="${x.done?'Mark not taken':'Mark taken'}" onclick="toggleDose('${p.id}','${x.m.id}','${x.t}','${x.done?x.done.id:''}')" class="round" style="background:${x.done?'#30D158':'#F2F2F7'};color:${x.done?'#fff':'#8E8E93'}">${ic(I.check)}</button></div>`).join('')}
+  <div class="sect">ALL MEDICINES</div><div class="list">${meds.map(m=>`<button class="li" onclick="${writer(p)?`openMed('${m.id}')`:''}"><div style="flex:1"><div style="font-weight:600">${esc(m.name)}</div><div class="sub">${esc([m.dose,(m.times||[]).join(', ')].filter(Boolean).join(' · '))}</div></div>${m.active===false?'<span class="pill info">Stopped</span>':''}</button>`).join('')}</div>`}
+  if(writer(p))h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn pri" onclick="openMed()">${ic(I.plus,'#fff',18)} Add medicine</button><button class="btn sec" onclick="pickReport('prescription')">${ic(I.cam,'#1D1D1F',18)} Scan Rx</button></div>`}}
+ if(S.tab==='family')h=familyView();
+ $('#sheet').innerHTML=h}
+function familyView(){const mine=P(ME.me);let h=`<div class="list">${ME.people.map(p=>`<button class="li" onclick="openPerson('${p.id}')"><span class="av" style="background:${p.color}">${esc(p.name[0])}</span><div style="flex:1"><div style="font-weight:600">${esc(p.name)}${p.self?' (you)':''}</div><div class="sub">${p.self?'Your health':p.dependent?(p.access==='guardian'?'You look after them':'Dependent'):'Own login'}</div></div><span class="pill ${p.self?'info':p.access==='guardian'?'warn':p.access==='medid'?'info':'ok'}">${p.self?'You':{guardian:'Guardian',medid:'Medical ID',summary:'Summary',all:'Everything'}[p.access]}</span></button>`).join('')}
+ ${ME.invites.map(i=>`<div class="li"><span class="av" style="background:#AEAEB2">${esc((i.contact||'?')[0])}</span><div style="flex:1"><div style="font-weight:600">${esc(i.contact)}</div><div class="sub">${esc(i.relation||'Invited')} · waiting to join</div></div><span class="pill warn">Invited</span></div>`).join('')}</div>
+ <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:12px"><button class="btn pri" onclick="openInvite()">Invite by mobile or email</button><button class="btn sec" onclick="openDependent()" aria-label="Add someone without a phone">${ic(I.plus)}</button></div>
+ <p class="cap">Adults sign in with their own account and choose what you can see. Children and elders without a phone are added as dependents you look after.</p>
+ <div class="sect">WHO CAN SEE MY HEALTH</div><button class="li list" style="width:100%" onclick="openSharing()">${ic(I.lock,'#3A3A3C')}<span style="flex:1">Sharing and women's health</span><span class="end">${ic(I.chev,'#C7C7CC',18)}</span></button>
+ <button class="btn sec" style="width:100%;margin-top:18px;color:#C4291C" onclick="leaveHousehold()">Leave this family</button>`;return h}
+function renderAll(){if(!ME||!P())return;document.body.classList.toggle('flat',S.tab!=='summary');renderTop();renderDock();renderSheet();showModel()}
+async function selectPerson(id){S.person=id;S.focus=0;S.week=null;closeL();if(!REC[id])await loadRecords(id);renderAll()}
+/* ---------------- actions ---------------- */
+async function toggleDose(pid,med,time,doneId){try{if(doneId){await API('/api/v2/records/'+doneId,{method:'DELETE'})}else{await API(`/api/v2/people/${pid}/records`,{json:{kind:'dose',day:today(),data:{med,time,at:Date.now()}}})}await loadRecords(pid);renderAll()}catch(e){toast(e.message)}}
+let PICK='report';function pickReport(kind){PICK=kind||'report';let f=$('#filepick');if(!f){f=document.createElement('input');f.type='file';f.id='filepick';f.accept='application/pdf,image/*';f.hidden=true;f.onchange=()=>{if(f.files[0])uploadReport(f.files[0]);f.value=''};document.body.appendChild(f)}f.click()}
+async function uploadReport(file){const p=P();if(file.size>15*1024*1024)return toast('Files up to 15 MB');
+ page('Reading your '+(PICK==='prescription'?'prescription':'report'),`<div class="card" style="margin-top:16px;height:200px;background:#1D1D1F;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden"><div style="color:#fff;opacity:.8">${esc(file.name)}</div><div style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#5E5CE6,transparent);top:45%;box-shadow:0 0 20px #5E5CE6;animation:scanl 1.6s ease-in-out infinite alternate"></div></div><p class="cap" style="text-align:center;margin-top:14px">Saving securely and reading the values. This takes a few seconds.</p>`,esc(nameOf(p)).toUpperCase());
+ const fd=new FormData();fd.append('file',file);fd.append('doc',PICK);fd.append('read','1');
+ try{const r=await API(`/api/v2/people/${p.id}/reports`,{method:'POST',body:fd});await loadRecords(p.id);
+  if(PICK==='prescription'&&(r.medicines||[]).length){openRxImport(r)}else openReport(r.id);renderAll()}catch(e){closeL();toast(e.message)}}
+function openRxImport(r){const p=P();page('Add these medicines?',`<p class="line">Read from ${esc(r.doctor||'the prescription')}. Check each one before adding.</p><div class="list" style="margin-top:14px">${r.medicines.map((m,i)=>`<label class="li"><input type="checkbox" checked data-i="${i}" style="width:22px;height:22px"><div style="flex:1"><div style="font-weight:600">${esc(m.name)} ${esc(m.strength||'')}</div><div class="sub">${esc([m.frequency,m.duration,m.instructions].filter(Boolean).join(' · '))}</div></div></label>`).join('')}</div>
+ <button class="btn pri" style="width:100%;margin-top:16px" id="rxadd">Add selected</button><button class="btn sec" style="width:100%;margin-top:10px" onclick="openReport('${r.id}')">Skip</button>`,'MEDICINES');
+ $('#rxadd').onclick=async()=>{const sel=[...document.querySelectorAll('[data-i]')].filter(x=>x.checked).map(x=>r.medicines[+x.dataset.i]);
+  for(const m of sel){const f=(m.frequency||'').toLowerCase(),times=/three|tds|thrice|1-1-1/.test(f)?['08:00','14:00','21:00']:/twice|bd|1-0-1/.test(f)?['08:00','21:00']:/night|hs|0-0-1/.test(f)?['21:00']:['08:00'];
+   await API(`/api/v2/people/${p.id}/records`,{json:{kind:'med',data:{name:(m.name+' '+(m.strength||'')).trim(),dose:m.form||'',times,note:m.instructions||'',from:r.id,active:true}}})}
+  await loadRecords(p.id);closeL();S.tab='meds';renderAll();toast(sel.length+' medicines added')}}
+function openReport(rid){const p=P(),r=(REC[p.id]||[]).find(x=>x.id===rid);if(!r)return;
+ page(r.title||'Report',`<p class="sub" style="font-size:15px;margin-top:4px">${fmtDate(r.day)}${r.doctor?' · '+esc(r.doctor):''}</p>
+ ${r.summary?`<div class="card" style="margin-top:14px;background:linear-gradient(135deg,#F4F3FF,#fff)"><div class="cat" style="color:var(--ai)">${ic(I.spark,'#5E5CE6',16)} In plain words</div><p style="font-size:16px;line-height:1.5;margin:8px 0 0">${esc(r.summary)}</p><p class="sub" style="margin-top:8px">Not a diagnosis. Discuss with your doctor.</p></div>`:''}
+ ${(r.warnings||[]).length?`<div class="card" style="margin-top:10px;border:1.5px solid #FBD0C9">${r.warnings.map(w=>`<p style="margin:4px 0;font-size:15px">${esc(w)}</p>`).join('')}</div>`:''}
+ ${(r.findings||[]).length?`<div class="list" style="margin-top:14px">${r.findings.map(f=>`<div class="li" style="padding:10px 16px;align-items:flex-start"><div style="flex:1"><div style="font-weight:600">${esc(f.test)}</div><div class="sub">${f.ref?'Range '+esc(f.ref):''}</div>${f.plain?`<div class="sub" style="margin-top:4px;line-height:1.4">${esc(f.plain)}</div>`:''}</div><div style="text-align:right"><div style="font-weight:700;font-size:17px">${esc(f.value)} <span class="sub">${esc(f.unit||'')}</span></div><span class="pill ${FLAGCLS[f.flag]||'info'}">${FLAGTXT[f.flag]||'Check'}</span></div></div>`).join('')}</div>`:'<p class="cap">No values were read from this file.</p>'}
+ ${(r.questions||[]).length?`<div class="sect">QUESTIONS FOR THE DOCTOR</div><div class="list">${r.questions.map(q=>`<div class="li" style="font-size:15px;padding:12px 16px">${esc(q)}</div>`).join('')}</div>`:''}
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">${r.file?`<button class="btn sec" onclick="window.open('/api/v2/records/${r.id}/file','_blank')">View file</button>`:''}${writer(p)?`<button class="btn sec" style="color:#C4291C" onclick="delRecord('${r.id}')">Delete</button>`:''}</div>`,esc(nameOf(p)).toUpperCase()+' · RECORDS')}
+async function delRecord(id){if(!confirm('Delete this permanently?'))return;try{await API('/api/v2/records/'+id,{method:'DELETE'});await loadRecords(S.person);closeL();renderAll()}catch(e){toast(e.message)}}
+function openMed(mid){const p=P(),m=mid?(REC[p.id]||[]).find(x=>x.id===mid):{times:['08:00']};
+ page(mid?'Edit medicine':'Add medicine',`<form id="medf"><div class="sect">NAME AND STRENGTH</div><input class="inp2" name="name" required value="${esc(m.name||'')}" placeholder="Metformin 500 mg">
+ <div class="sect">HOW (OPTIONAL)</div><input class="inp2" name="dose" value="${esc(m.dose||'')}" placeholder="1 tablet after food">
+ <div class="sect">TIMES</div><div class="chips" id="times">${['06:00','08:00','09:00','13:00','14:00','18:00','20:00','21:00','22:00'].map(t=>`<button type="button" class="chip ${(m.times||[]).includes(t)?'on':''}" data-t="${t}">${t}</button>`).join('')}</div>
+ <div class="sect">NOTE</div><input class="inp2" name="note" value="${esc(m.note||'')}" placeholder="With lunch, not with tea">
+ <button class="btn pri" style="width:100%;margin-top:18px">Save</button>${mid?`<button type="button" class="btn sec" style="width:100%;margin-top:10px" id="stopm">${m.active===false?'Restart':'Stop'} this medicine</button>`:''}</form>`,'MEDICINES · '+esc(nameOf(p)).toUpperCase());
+ document.querySelectorAll('#times .chip').forEach(c=>c.onclick=()=>c.classList.toggle('on'));
+ const save=async(extra={})=>{const f=new FormData($('#medf'));const data={name:f.get('name').trim(),dose:f.get('dose').trim(),note:f.get('note').trim(),times:[...document.querySelectorAll('#times .chip.on')].map(c=>c.dataset.t),active:m.active!==false,...extra};
+  if(!data.times.length)return toast('Pick at least one time');try{if(mid)await API('/api/v2/records/'+mid,{method:'PUT',json:{kind:'med',data}});else await API(`/api/v2/people/${p.id}/records`,{json:{kind:'med',data}});await loadRecords(p.id);closeL();renderAll()}catch(e){toast(e.message)}};
+ $('#medf').onsubmit=e=>{e.preventDefault();save()};const st=$('#stopm');if(st)st.onclick=()=>save({active:m.active===false})}
+/* ---------------- people / family ---------------- */
+function openPeople(){layer(`<div class="pop glass">${ME.people.map(p=>`<button class="li" onclick="selectPerson('${p.id}')"><span class="av" style="background:${p.color}">${esc(p.name[0])}</span><div style="flex:1"><div style="font-weight:600">${esc(p.name)}${p.self?' (you)':''}</div><div class="sub">${p.self?'Your health':p.access==='guardian'?'You look after them':p.access==='medid'?'Medical ID only':'Shared with you'}</div></div>${p.access==='medid'?ic(I.lock,'#8E8E93',18):S.person===p.id?ic(I.check,'#0071E3',20):''}</button>`).join('')}
+ <button class="li" onclick="openSettings()">${ic(I.gear,'#636366')}Settings</button></div>`)}
+function openPerson(id){const p=P(id);if(p.self)return openSettings();
+ layer(`<div class="modal glass"><div class="row"><span class="av" style="background:${p.color};width:48px;height:48px;border-radius:24px;font-size:18px">${esc(p.name[0])}</span><div><div style="font-weight:700;font-size:19px">${esc(p.name)}</div><div class="sub">${p.dependent?'Dependent · no login':'Adult · own login'}</div></div><button class="x" onclick="closeL()" aria-label="Close">${ic(I.x,'#3A3A3C',16)}</button></div>
+ <div class="list" style="margin-top:16px"><div class="li">You can see<span class="end" style="color:var(--ink)">${{guardian:'Everything (guardian)',medid:'Medical ID',summary:'Summary and reports',all:'Everything'}[p.access]}</span></div>${p.womens&&!p.dependent?'<div class="li">Women\'s health<span class="end" style="color:var(--ink)">Shared with you</span></div>':''}</div>
+ <button class="btn pri" style="width:100%;margin-top:14px" onclick="S.tab='summary';selectPerson('${p.id}')">Open ${esc(p.name)}</button>
+ ${p.access==='guardian'?`<button class="btn sec" style="width:100%;margin-top:10px" onclick="addGuardian('${p.id}')">Add another guardian</button><button class="btn sec" style="width:100%;margin-top:10px;color:#C4291C" onclick="removeDependent('${p.id}')">Remove ${esc(p.name)}</button>`:''}
+ ${!p.dependent&&ME.user.role==='admin'?`<button class="btn sec" style="width:100%;margin-top:10px;color:#C4291C" onclick="removeMember('${p.id}')">Remove from family</button><p class="cap">${esc(p.name)} keeps all their records in their own account. Sharing ends both ways.</p>`:''}</div>`)}
+async function addGuardian(pid){const others=ME.members.filter(m=>!m.you);if(!others.length)return toast('Invite another adult first');
+ layer(`<div class="modal glass"><div class="row"><div style="font-weight:700;font-size:19px">Choose a guardian</div><button class="x" onclick="closeL()">${ic(I.x,'#3A3A3C',16)}</button></div><div class="list" style="margin-top:14px">${others.map(m=>`<button class="li" onclick="doGuardian('${pid}','${m.id}')">${esc(m.name)}</button>`).join('')}</div><p class="cap">Guardians see and manage everything for this person, and can receive their reminders.</p></div>`)}
+async function doGuardian(pid,uid){try{await API(`/api/v2/people/${pid}/guardians`,{json:{user_id:uid}});closeL();toast('Guardian added');await refreshMe();renderAll()}catch(e){toast(e.message)}}
+async function removeDependent(pid){if(!confirm('Remove? Their records are kept for 30 days in case you change your mind.'))return;try{await API('/api/v2/people/'+pid,{method:'DELETE'});closeL();await refreshMe();S.person=ME.me;renderAll()}catch(e){toast(e.message)}}
+async function removeMember(pid){const p=P(pid),m=ME.members.find(x=>x.name===p.name&&!x.you);if(!m)return toast('Could not find their account');if(!confirm('Remove '+p.name+' from the family?'))return;
+ try{await API('/api/v2/household/remove',{json:{user_id:m.id}});closeL();await refreshMe();S.person=ME.me;renderAll()}catch(e){toast(e.message)}}
+async function leaveHousehold(){if(!confirm('Leave this family? Your records stay with you; sharing ends both ways.'))return;try{await API('/api/v2/household/leave',{method:'POST'});await refreshMe();S.person=ME.me;renderAll();toast('You left the family')}catch(e){toast(e.message)}}
+function openInvite(){layer(`<div class="modal glass"><div class="row"><div style="font-weight:700;font-size:20px">Invite to your family</div><button class="x" onclick="closeL()">${ic(I.x,'#3A3A3C',16)}</button></div>
+ <form id="invf"><div class="sect" style="margin:16px 4px 6px">MOBILE NUMBER OR EMAIL</div><input class="inp2" name="c" required placeholder="+91 or name@gmail.com" autocomplete="off"><div class="sect" style="margin:12px 4px 6px">RELATIONSHIP</div><input class="inp2" name="rel" placeholder="Wife, Brother…">
+ <p class="cap">They get a link, sign in with their own account, then choose what to share. Nothing of theirs is visible to you until they do.</p><button class="btn pri" style="width:100%;margin-top:14px">Send invite</button></form></div>`);
+ $('#invf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);try{const r=await API('/api/v2/household/invite',{json:{contact:f.get('c'),relation:f.get('rel')}});await refreshMe();
+  if(!r.sent&&navigator.share){try{await navigator.share({title:'Join our family on Urban Health',url:r.link})}catch(_){}}else if(!r.sent){try{await navigator.clipboard.writeText(r.link);toast('Invite link copied. Send it on WhatsApp.')}catch(_){prompt('Send this link',r.link)}}else toast('Invite sent');closeL();renderAll()}catch(err){toast(err.message)}}}
+function profileForm(pr,opts={}){pr=pr||{};const bl=['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'];return`
+ ${opts.name!==false?`<div class="sect">NAME</div><input class="inp2" name="name" required value="${esc(opts.nameVal||'')}" autocomplete="name">`:''}
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label><div class="sect">DATE OF BIRTH</div><input class="inp2" type="date" name="dob" required value="${esc(pr.dob||'')}" max="${today()}"></label>
+ <label><div class="sect">SEX</div><select class="inp2" name="sex" required>${['','female','male','other'].map(s=>`<option value="${s}" ${pr.sex===s?'selected':''}>${s?s[0].toUpperCase()+s.slice(1):'Choose'}</option>`).join('')}</select></label>
+ <label><div class="sect">BLOOD GROUP</div><select class="inp2" name="blood" required>${['',...bl].map(s=>`<option ${pr.blood===s?'selected':''} value="${s}">${s||'Choose'}</option>`).join('')}</select></label>
+ <label><div class="sect">LAST BLOOD DONATION</div><input class="inp2" type="date" name="donated" value="${esc(pr.donated||'')}" max="${today()}"></label>
+ <label><div class="sect">HEIGHT (CM)</div><input class="inp2" name="height" inputmode="numeric" value="${esc(pr.height||'')}"></label>
+ <label><div class="sect">WEIGHT (KG)</div><input class="inp2" name="weight" inputmode="decimal" value="${esc(pr.weight||'')}"></label></div>
+ <div class="sect">ALLERGIES</div><input class="inp2" name="allergies" value="${esc(pr.allergies||'')}" placeholder="None, or e.g. Penicillin">
+ <div class="sect">CONDITIONS</div><input class="inp2" name="conditions" value="${esc(pr.conditions||'')}" placeholder="None, or e.g. Type 2 diabetes">`}
+const formProfile=f=>({dob:f.get('dob'),sex:f.get('sex'),blood:f.get('blood'),donated:f.get('donated')||'',height:f.get('height')||'',weight:f.get('weight')||'',allergies:f.get('allergies')||'',conditions:f.get('conditions')||''});
+function openDependent(){page('Add someone without a phone',`<p class="line">A child or an elder you look after. You manage their records, medicines and reminders.</p><form id="depf">${profileForm({})}<button class="btn pri" style="width:100%;margin-top:18px">Add</button></form>`,'FAMILY');
+ $('#depf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);try{const p=await API('/api/v2/people',{json:{name:f.get('name').trim(),dependent:true,profile:formProfile(f)}});await refreshMe();closeL();toast(p.name+' added');selectPerson(p.id)}catch(err){toast(err.message)}}}
+/* ---------------- settings ---------------- */
+const ROW=(icon,col,t,end,on)=>`<button class="li" onclick="${on}"><span class="ib" style="background:${col}">${ic(icon,'#fff',18)}</span><span style="flex:1">${t}</span><span class="end">${end||''}${ic(I.chev,'#C7C7CC',18)}</span></button>`;
+function openSettings(){const me=P(ME.me),u=ME.user;page('Settings',`<button class="card row" style="width:100%;text-align:left;margin-top:14px" onclick="openProfile()"><span class="av" style="background:${me.color};width:60px;height:60px;border-radius:30px;font-size:24px">${esc(me.name[0])}</span><div style="flex:1"><div style="font-size:20px;font-weight:700">${esc(me.name)}</div><div class="sub">${esc(u.phone||u.email||'')} · Health profile</div></div>${ic(I.chev,'#C7C7CC')}</button>
+ <div class="list" style="margin-top:18px">${ROW(I.id,'#FF3B30','Medical ID','',"openMedId()")}${ROW(I.phone,'#34C759','Emergency contacts',(me.medicalId.contacts||[]).length+'',"openContacts()")}${ROW(I.lock,'#636366','Who can see my health','',"openSharing()")}</div>
+ ${me.sex==='female'?`<div class="list" style="margin-top:18px">${ROW(I.drop,'#E5577A','Cycle','Private',"openCycle()")}${ROW(I.baby,'#E5577A','Pregnancy',me.pregnancy&&me.pregnancy.stage==='pregnant'?'Week '+me.pregnancy.week:'Off',"openPregnancy()")}</div>`:''}
+ <div class="list" style="margin-top:18px">${ROW(I.eye||I.lock,'#5E5CE6','Who opened my records','',"openAccessLog()")}${ROW(I.shield,'#30B0C7','Sign-in and security','',"openSecurity()")}${ROW(I.down,'#8E8E93','Your data','Export, delete',"openData()")}</div>
+ <button class="btn sec" style="width:100%;margin-top:22px" onclick="signOut()">Sign out</button><p class="cap" style="text-align:center">Urban Health · urbanhealth.in · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>`)}
+function openProfile(){const me=P(ME.me);page('Health profile',`<form id="pf">${profileForm(me.profile,{nameVal:me.name})}<button class="btn pri" style="width:100%;margin-top:18px">Save</button></form><p class="cap">This builds your Medical ID and the 3D body.</p>`,'SETTINGS');
+ $('#pf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);try{await API('/api/v2/people/'+me.id,{method:'PUT',json:{name:f.get('name').trim(),profile:formProfile(f)}});await refreshMe();closeL();renderAll();toast('Saved')}catch(err){toast(err.message)}}}
+function openMedId(){const me=P(ME.me);page('Medical ID',`<div style="margin-top:14px">${medIdCard(me)}</div><p class="cap">Everyone in your family can always see this, and it is sent with SOS. Add it to your phone's own Medical ID or lock screen as well.</p><button class="btn sec" style="width:100%;margin-top:12px" onclick="openProfile()">Edit details</button>`,'SETTINGS')}
+function contactsBody(me){return`<div class="list" style="margin-top:14px">${(me.medicalId.contacts||[]).map((c,i)=>`<div class="li"><span class="av" style="background:#AEAEB2">${esc(c.name[0])}</span><div style="flex:1"><div style="font-weight:600">${esc(c.name)} · ${esc(c.relation||'')}</div><div class="sub">${esc(c.phone)}</div></div><span class="pill ${i?'info':'ok'}">${i?'#'+(i+1):'Called first'}</span><button class="x" style="margin-left:6px" aria-label="Remove" onclick="delContact('${c.id}')">${ic(I.x,'#C4291C',14)}</button></div>`).join('')||'<div class="li sub">No contacts yet</div>'}</div>
+ <form id="ecf" class="card" style="margin-top:14px"><div class="cat">Add a contact</div><input class="inp2" style="background:#F2F2F7;margin-top:10px" name="name" required placeholder="Name"><input class="inp2" style="background:#F2F2F7;margin-top:8px" name="relation" placeholder="Relationship"><input class="inp2" style="background:#F2F2F7;margin-top:8px" name="phone" required inputmode="tel" placeholder="+91 98765 43210"><button class="btn pri" style="width:100%;margin-top:10px">Add</button></form>
+ <p class="cap">SOS calls the first contact and sends your location and Medical ID to all of them.</p>`}
+function bindContacts(after){$('#ecf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),me=P(ME.me);try{await API(`/api/v2/people/${me.id}/records`,{json:{kind:'contact',data:{name:f.get('name').trim(),relation:f.get('relation').trim(),phone:f.get('phone').trim(),order:(me.medicalId.contacts||[]).length+1}}});await refreshMe();after()}catch(err){toast(err.message)}}}
+function openContacts(){page('Emergency contacts',contactsBody(P(ME.me)),'SETTINGS');bindContacts(openContacts)}
+async function delContact(id){const me=P(ME.me);if((me.medicalId.contacts||[]).length<=1)return toast('Keep at least one emergency contact');try{await API('/api/v2/records/'+id,{method:'DELETE'});await refreshMe();openContacts()}catch(e){toast(e.message)}}
+async function openSharing(){const me=P(ME.me);let rows=[];try{rows=await API(`/api/v2/people/${me.id}/sharing`)}catch(e){}
+ page('Who can see my health',rows.length?rows.map(r=>`<div class="sect">${esc(r.name).toUpperCase()}</div><div class="list">${r.level==='guardian'?'<div class="li">Guardian</div>':['medid','summary','all'].map(l=>`<button class="li" onclick="setShare('${r.userId}','${l}',${r.womens})"><div><div>${{medid:'Medical ID only',summary:'Summary and reports',all:'Everything'}[l]}</div><div class="sub">${{medid:'Blood group, allergies, emergency contacts',summary:'Also reports, results and the 3D body',all:'Also medicines and doses'}[l]}</div></div><span class="radio ${r.level===l?'on':''}"></span></button>`).join('')+(me.sex==='female'?`<button class="li" onclick="setShare('${r.userId}','${r.level}',${!r.womens})">${ic(I.drop,'#E5577A')}<div style="flex:1"><div>Women's health</div><div class="sub">Cycle, pregnancy and kick counts</div></div><span class="sw ${r.womens?'on':''}"></span></button>`:'')}</div>`).join('')+`<p class="cap">Nothing beyond your Medical ID is shared unless you choose it here. Women's health is off unless you turn it on for that person.</p>`:`<p class="line">Nobody else is in your family yet.</p><button class="btn pri" style="margin-top:14px" onclick="openInvite()">Invite someone</button>`,'SETTINGS')}
+async function setShare(uid,level,womens){const me=P(ME.me);try{await API(`/api/v2/people/${me.id}/sharing`,{method:'PUT',json:{user_id:uid,level,womens}});openSharing()}catch(e){toast(e.message)}}
+async function openAccessLog(){const me=P(ME.me);let rows=[];try{rows=await API(`/api/v2/people/${me.id}/access-log`)}catch(e){}
+ page('Who opened my records',`<div class="list" style="margin-top:14px">${rows.map(x=>`<div class="li" style="font-size:15px"><div style="flex:1">${esc(x.who)} opened ${esc(x.what)}</div><span class="sub">${new Date(x.t*1000).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span></div>`).join('')||'<div class="li sub">Nobody has opened your records.</div>'}</div>`,'SETTINGS')}
+async function openSecurity(){let pk=[],ss=[];try{pk=await API('/api/v1/auth/passkeys')}catch(e){}try{ss=await API('/api/v1/auth/sessions')}catch(e){}pk=pk.passkeys||pk||[];ss=ss.sessions||ss||[];
+ page('Sign-in and security',`<div class="sect">PASSKEYS</div><div class="list">${pk.map(p=>`<div class="li">${esc(p.name||'Passkey')}<span class="end">${p.created?new Date(p.created*1000).toLocaleDateString('en-IN'):''}</span></div>`).join('')}<button class="li" style="color:var(--blue);font-weight:600" onclick="addPasskey()">${ic(I.plus,'#0071E3')} Add a passkey (face or fingerprint)</button></div>
+ <div class="sect">SIGNED IN ON</div><div class="list">${ss.map(s=>`<div class="li" style="font-size:15px"><div style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((s.ua||'Device').slice(0,60))}</div><span class="end">${s.current?'This device':''}</span></div>`).join('')}</div>
+ <button class="btn sec" style="width:100%;margin-top:12px" onclick="API('/api/v1/auth/logout-all',{method:'POST'}).then(()=>location.reload())">Sign out everywhere</button><p class="cap">You are signed out automatically after 30 minutes without use.</p>`,'SETTINGS')}
+const b64u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),ub64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((s.length+3)%4)),c=>c.charCodeAt(0));
+async function addPasskey(){try{const o=await API('/api/v1/auth/passkey/register/options',{json:{}});const opt=o.options||o;opt.challenge=ub64(opt.challenge);opt.user.id=ub64(opt.user.id);(opt.excludeCredentials||[]).forEach(c=>c.id=ub64(c.id));
+ const c=await navigator.credentials.create({publicKey:opt});const res={id:c.id,rawId:b64u(c.rawId),type:c.type,response:{clientDataJSON:b64u(c.response.clientDataJSON),attestationObject:b64u(c.response.attestationObject),transports:c.response.getTransports?c.response.getTransports():[]}};
+ await API('/api/v1/auth/passkey/register/verify',{json:{credential:res,name:navigator.platform||'This device',...(o.flow?{flow:o.flow}:{})}});toast('Passkey added');openSecurity()}catch(e){toast(e.message||'Passkey not added')}}
+function openData(){page('Your data',`<div class="list" style="margin-top:14px"><button class="li" onclick="exportData()">${ic(I.down,'#0A84FF')}<span style="flex:1">Download everything I can see</span></button></div>
+ <div class="sect">DELETE</div><div class="list"><button class="li" style="color:#C4291C" onclick="deleteAccount()">Delete my account and data</button></div><p class="cap">Deleting removes your login, profile, reports and files. Hand over anyone you look after first. Under the DPDP Act you can also write to the Grievance Officer listed in the privacy policy.</p>`,'SETTINGS')}
+async function exportData(){const out={exported:new Date().toISOString(),people:[]};for(const p of ME.people){await loadRecords(p.id);out.people.push({...p,records:REC[p.id]})}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='urban-health-export.json';a.click()}
+async function deleteAccount(){const pw=prompt('This cannot be undone. Type DELETE to confirm.');if(pw!=='DELETE')return;try{await API('/api/v1/auth/account/delete',{json:{confirm:true}});location.href='/'}catch(e){toast(e.message)}}
+async function signOut(){try{await API('/api/v1/auth/logout',{method:'POST'})}catch(_){}location.href='/app'}
+/* ---------------- women's health ---------------- */
+async function openPregnancy(){const me=P(ME.me);if(!me.sex||me.sex!=='female')return;await loadRecords(me.id);const cur0=me.pregnancy||{};
+ page('Pregnancy',`<p class="line">Private to you. Share it with someone from Who can see my health.</p><form id="pgf"><div class="sect">STAGE</div><div class="seg" id="stg">${[['trying','Trying'],['pregnant','Pregnant'],['after','After birth']].map(s=>`<button type="button" data-s="${s[0]}" class="${(cur0.stage||'pregnant')===s[0]?'on':''}">${s[1]}</button>`).join('')}</div>
+ <div class="sect">FIRST DAY OF LAST PERIOD</div><input class="inp2" type="date" name="lmp" value="${esc(cur0.lmp||'')}" max="${today()}"><div class="sect">DOCTOR</div><input class="inp2" name="doctor" value="${esc(cur0.doctor||'')}" placeholder="Dr …"><div class="sect">HOSPITAL FOR DELIVERY</div><input class="inp2" name="hospital" value="${esc(cur0.hospital||'')}">
+ <button class="btn pri" style="width:100%;margin-top:18px">Save</button></form>${cur0.stage==='pregnant'?`<button class="btn sec" style="width:100%;margin-top:10px" onclick="openKicks()">Kick counter</button><button class="btn sec" style="width:100%;margin-top:10px" onclick="babyArrived()">The baby has arrived</button>`:''}
+ <p class="cap">Week and due date are worked out from your last period. Urban Health never shows or guesses the baby's sex.</p>`,'WOMEN\'S HEALTH','var(--rose)');
+ document.querySelectorAll('#stg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#stg button').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
+ $('#pgf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),stage=document.querySelector('#stg .on').dataset.s;if(stage==='pregnant'&&!f.get('lmp'))return toast('Add the first day of your last period');
+  const data={stage,lmp:f.get('lmp'),doctor:f.get('doctor'),hospital:f.get('hospital')};try{if(cur0.id)await API('/api/v2/records/'+cur0.id,{method:'PUT',json:{kind:'preg',data}});else await API(`/api/v2/people/${me.id}/records`,{json:{kind:'preg',data}});await refreshMe();closeL();S.person=me.id;S.week=null;renderAll();toast('Saved')}catch(err){toast(err.message)}}}
+async function babyArrived(){const me=P(ME.me),pg=me.pregnancy;const name=prompt("Baby's name (you can change it later)",'Baby');if(name===null)return;
+ try{await API('/api/v2/records/'+pg.id,{method:'PUT',json:{kind:'preg',data:{...pg,stage:'after',born:today()}}});const b=await API('/api/v2/people',{json:{name:name||'Baby',dependent:true,profile:{dob:today(),sex:'',blood:''}}});await refreshMe();closeL();toast('Welcome, '+b.name+'. Add vaccines from their profile.');selectPerson(b.id)}catch(e){toast(e.message)}}
+let KC=null;
+async function openKicks(){const me=P(ME.me);await loadRecords(me.id);if(!KC)KC={n:0,start:Date.now()};const hist=(REC[me.id]||[]).filter(r=>r.kind==='kick').sort((a,b)=>b.created-a.created).slice(0,7).reverse();
+ page('Kick counter',`<p class="line">Tap the circle each time you feel the baby move. Most babies reach <b>10 movements within 2 hours</b>.</p>
+ <div style="display:flex;justify-content:center;margin:24px 0 10px"><button id="kick" aria-label="Log a movement" style="width:220px;height:220px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFF,#FDE7EE 55%,#F9C9D7);box-shadow:0 20px 50px rgba(229,87,122,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .15s"><span style="font-size:72px;font-weight:700;letter-spacing:-.04em" id="kn">${KC.n}</span><span style="font-size:15px;color:#B8325A;font-weight:600">of 10 · tap</span></button></div>
+ <p class="cap" style="text-align:center" id="kt">Started ${new Date(KC.start).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}</p>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"><button class="btn pri" id="ksave">Save session</button><button class="btn sec" id="kreset">Start over</button></div>
+ ${hist.length?`<div class="sect">RECENT · MINUTES TO 10</div><div class="card"><svg width="100%" height="110" viewBox="0 0 320 110" aria-hidden="true">${hist.map((k,i)=>{const v=Math.min(120,k.minutes||0);return`<rect x="${12+i*44}" y="${100-v*.7}" width="26" rx="8" height="${v*.7}" fill="${(k.count||0)<10?'#FF9F0A':'#F6C3D2'}"/><text x="${25+i*44}" y="${94-v*.7}" text-anchor="middle" font-size="11" fill="#6E6E73">${k.minutes}</text>`}).join('')}</svg></div>`:''}
+ <div class="card" style="margin-top:10px;border:1.5px solid #FBD0C9"><div class="cat" style="color:#B42318">If movements slow down</div><p style="margin:6px 0 12px;font-size:15px;line-height:1.45">Fewer than 10 in 2 hours, or a big change from usual: call your doctor or hospital now. Don't wait until tomorrow.</p>${(me.medicalId.contacts||[])[0]?`<a class="btn" style="background:#D7261E;color:#fff;height:44px;text-decoration:none" href="tel:${esc(me.medicalId.contacts[0].phone)}">${ic(I.phone,'#fff',18)} Call ${esc(me.medicalId.contacts[0].name)}</a>`:''}</div>`,'PREGNANCY','var(--rose)');
+ $('#kick').onclick=()=>{KC.n=Math.min(99,KC.n+1);$('#kn').textContent=KC.n;const b=$('#kick');b.style.transform='scale(.94)';setTimeout(()=>b.style.transform='',140);if(navigator.vibrate)navigator.vibrate(15);if(KC.n===10)toast('10 movements in '+Math.max(1,Math.round((Date.now()-KC.start)/60000))+' min')};
+ $('#kreset').onclick=()=>{KC=null;openKicks()};
+ $('#ksave').onclick=async()=>{if(!KC.n)return toast('Tap the circle first');try{await API(`/api/v2/people/${me.id}/records`,{json:{kind:'kick',day:today(),data:{count:KC.n,minutes:Math.max(1,Math.round((Date.now()-KC.start)/60000)),start:KC.start}}});KC=null;toast('Saved');openKicks()}catch(e){toast(e.message)}}}
+async function openCycle(){const me=P(ME.me);await loadRecords(me.id);const starts=(REC[me.id]||[]).filter(r=>r.kind==='cycle').map(r=>r.day).sort();const last=starts[starts.length-1];
+ let avg=28;if(starts.length>1){const d=starts.slice(1).map((s,i)=>(new Date(s)-new Date(starts[i]))/864e5).filter(x=>x>15&&x<60);if(d.length)avg=Math.round(d.reduce((a,b)=>a+b,0)/d.length)}
+ const day=last?Math.floor((new Date(today())-new Date(last))/864e5)+1:null,next=last?new Date(new Date(last).getTime()+avg*864e5):null;
+ page('Cycle',`<p class="line">${day?`Day <b>${day}</b> of your cycle. Next period around <b>${next.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</b>.`:'Log the first day of your period to start.'}</p>
+ <button class="btn pri" style="width:100%;margin-top:16px" id="cyst">My period started today</button><div class="sect">PAST PERIODS · AVERAGE ${avg} DAYS</div><div class="list">${starts.slice(-6).reverse().map(s=>`<div class="li">${fmtDate(s)}</div>`).join('')||'<div class="li sub">None logged</div>'}</div><p class="cap">Private to you unless you share women's health with someone.</p>`,'WOMEN\'S HEALTH','var(--rose)');
+ $('#cyst').onclick=async()=>{try{await API(`/api/v2/people/${me.id}/records`,{json:{kind:'cycle',day:today(),data:{start:true}}});openCycle()}catch(e){toast(e.message)}}}
+/* ---------------- AI ---------------- */
+function openAI(){const p=P(),fs=findings(p.id),pg=preg(p);
+ const sug=!can(p,'summary')?[]:pg?[`Is week ${pg.week} going well?`,'What should I avoid eating?','What tests are due this trimester?']:fs.length?[`What does ${fs[0].test} ${fs[0].value} mean?`,'What should we ask the doctor?','What can we do at home?']:['How do I add a report?','What should a yearly check-up include?'];
+ layer(`<div class="modal glass"><div class="row"><div class="orb" style="width:40px;height:40px;background:none;border:0;box-shadow:none"><i style="inset:4px"></i><b style="inset:7px"></b></div><div style="font-weight:600;font-size:17px">Ask about ${esc(p.self?'your health':p.name)}</div><button class="x" onclick="closeL()" aria-label="Close">${ic(I.x,'#3A3A3C',16)}</button></div>
+ <div id="chat" style="margin-top:12px"></div><div class="chips" style="margin-top:12px">${sug.map(s=>`<button class="chip" onclick="ask(this.textContent)">${esc(s)}</button>`).join('')}</div>
+ <form id="askf" class="glass row" style="margin-top:14px;height:52px;border-radius:26px;padding:0 6px 0 18px"><input name="q" placeholder="Ask anything" style="flex:1;border:0;background:none;outline:0;font-size:16px" autocomplete="off"><button class="round" style="width:40px;height:40px;background:#5E5CE6" aria-label="Send">${ic('<path d="M5 12h14M13 6l6 6-6 6"/>','#fff',18)}</button></form><p class="cap">Answers use only what you can see here. Not a diagnosis.</p></div>`);
+ $('#askf').onsubmit=e=>{e.preventDefault();const q=e.target.q.value.trim();if(q){ask(q);e.target.q.value=''}}}
+async function ask(q){const p=P(),ch=$('#chat');ch.insertAdjacentHTML('beforeend',`<div class="bubble" style="margin-top:10px">${esc(q)}</div><p class="aitext" id="pending">Thinking…</p>`);
+ const ctx={person:{name:p.name,age:p.age,sex:p.sex,medicalId:p.medicalId},results:findings(p.id).slice(0,30),medicines:(REC[p.id]||[]).filter(r=>r.kind==='med').map(m=>m.name),pregnancy:preg(p)||null};
+ try{const r=await API('/api/v1/ai/ask',{json:{question:q,context:ctx,member:p.id},key:true});$('#pending').outerHTML=`<p class="aitext">${esc(r.answer||r.text||'')}</p>`}catch(e){$('#pending').outerHTML=`<p class="aitext" style="color:#B42318">${esc(e.message)}</p>`}}
+/* ---------------- SOS ---------------- */
+let SOSA=null,WATCH=null;
+async function startSOS(){const me=P(ME.me),c=me.medicalId.contacts||[];if(navigator.vibrate)navigator.vibrate([200,80,200]);
+ layer(`<div id="sos"><div class="eyebrow" style="color:rgba(255,255,255,.8)">EMERGENCY SOS · ${esc(me.name.toUpperCase())}</div><h1 class="big" style="font-size:38px">Alerting your contacts</h1><p style="margin:0;font-size:16px;opacity:.92;line-height:1.45" id="sosl">Getting your location…</p>
+ <div style="background:rgba(255,255,255,.14);border-radius:22px;padding:4px 16px;margin-top:6px" id="sosr">${c.map(x=>`<div class="row" style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.15)"><span style="flex:1">${esc(x.name)} · ${esc(x.relation||'')}</span><b>Sending…</b></div>`).join('')}</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto">${c[0]?`<a class="btn" style="background:#fff;color:#D7261E;text-decoration:none" href="tel:${esc(c[0].phone)}">${ic(I.phone,'#D7261E',18)} Call ${esc(c[0].name)}</a>`:''}<a class="btn" style="background:#fff;color:#D7261E;text-decoration:none" href="tel:108">${ic(I.phone,'#D7261E',18)} Call 108</a></div>
+ <button class="btn" style="background:rgba(255,255,255,.2);color:#fff" onclick="endSOS()">I'm safe — end alert</button></div>`);
+ const loc=await new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>res(null),{enableHighAccuracy:true,timeout:6000})});
+ const m=me.medicalId,pg=m.pregnancy&&m.pregnancy.stage==='pregnant'?`; pregnant ${m.pregnancy.week} weeks`:'';
+ try{SOSA=await API('/api/v1/sos/start',{key:true,json:{member:me.id,name:me.name,phone:ME.user.phone||'',blood:m.blood||'',summary:`Blood ${m.blood||'?'}; allergies ${m.allergies||'none'}; conditions ${m.conditions||'none'}${pg}`,loc,contacts:c.map(x=>({n:x.name,ph:x.phone}))}});
+  $('#sosl').textContent=loc?'Your live location and Medical ID were sent. The page your contacts open follows you while this is on.':'Alert sent. Location is not available yet; it will follow as soon as your phone finds it.';
+  $('#sosr').innerHTML=c.map(x=>`<div class="row" style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.15)"><span style="flex:1">${esc(x.name)}</span><b>Sent</b></div>`).join('')+`<div class="row" style="padding:12px 0"><span style="flex:1">Live page</span><b>${esc((SOSA.url||'').replace(/^https?:\/\//,'').slice(0,26))}…</b></div>`;
+  if(navigator.geolocation)WATCH=navigator.geolocation.watchPosition(p=>API(`/api/v1/sos/${SOSA.id}/loc`,{key:true,json:{loc:{lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}}}).catch(()=>{}),()=>{},{enableHighAccuracy:true})}
+ catch(e){$('#sosl').textContent='Could not reach the server: '+e.message+'. Call directly with the buttons below.'}}
+async function endSOS(){if(WATCH!=null)navigator.geolocation.clearWatch(WATCH);WATCH=null;if(SOSA)try{await API(`/api/v1/sos/${SOSA.id}/end`,{key:true,method:'POST'})}catch(_){}SOSA=null;closeL();toast('Alert ended. Your contacts were told you are safe.')}
+/* ---------------- auth + onboarding ---------------- */
+function authPage(mode){mode=mode||'signin';layer(`<div class="page" style="left:0"><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px">
+ <img src="/brand/svg/user-logo.svg" alt="Urban Health" height="34" style="margin-bottom:26px"><h1 class="big">${mode==='signin'?'Welcome back':'Create your account'}</h1><p class="line">${mode==='signin'?'Sign in with your mobile number or email.':'Your own login. Your family sees only what you share.'}</p>
+ <div class="seg" style="margin-top:18px"><button class="${mode==='signin'?'on':''}" onclick="authPage('signin')">Sign in</button><button class="${mode==='signup'?'on':''}" onclick="authPage('signup')">Create account</button></div>
+ <form id="af" style="margin-top:6px">${mode==='signin'?`<div class="sect">MOBILE OR EMAIL</div><input class="inp2" name="id" required autocomplete="username" inputmode="email" placeholder="98765 43210 or name@gmail.com">
+ <div class="sect">PASSWORD (OR LEAVE EMPTY FOR A CODE)</div><input class="inp2" type="password" name="pw" autocomplete="current-password">`
+ :`<div class="sect">FULL NAME</div><input class="inp2" name="name" required autocomplete="name"><div class="sect">MOBILE</div><input class="inp2" name="phone" required inputmode="tel" autocomplete="tel" placeholder="98765 43210"><div class="sect">EMAIL</div><input class="inp2" name="email" type="email" required autocomplete="email"><div class="sect">PASSWORD</div><input class="inp2" type="password" name="pw" required minlength="12" autocomplete="new-password"><p class="cap">12+ characters with upper and lower case, a number and a symbol.</p>
+ <label class="row" style="margin:12px 4px;font-size:14px;gap:10px"><input type="checkbox" name="terms" required style="width:20px;height:20px"> I agree to the <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a></label>`}
+ <button class="btn pri" style="width:100%;margin-top:18px" id="ab">${mode==='signin'?'Continue':'Create account'}</button></form>
+ ${mode==='signin'?'<button class="btn ghost" style="width:100%;margin-top:8px;color:var(--blue)" onclick="passkeyLogin()">Sign in with a passkey</button>':''}</div></div>`);
+ $('#af').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=$('#ab');b.disabled=true;try{
+  if(mode==='signin'){if(f.get('pw')){const r=await API('/api/v1/auth/password/login',{json:{id:f.get('id'),password:f.get('pw')}});if(r.step)return codePage('step',r);return boot()}
+   const r=await API('/api/v1/auth/otp/start',{json:{id:f.get('id'),purpose:'signin'}});if(r.firebase)return toast('Use your password or a passkey to sign in on this device');codePage('otp',r)}
+  else{const r=await API('/api/v1/auth/signup/start',{json:{name:f.get('name'),phone:f.get('phone'),email:f.get('email'),password:f.get('pw'),terms:!!f.get('terms')}});codePage('signup',r)}}catch(err){toast(err.message)}finally{b.disabled=false}}}
+function codePage(kind,r){layer(`<div class="page" style="left:0"><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px"><h1 class="big">Enter the code</h1><p class="line">We sent a 6-digit code to ${esc(r.sentTo||'you')}.</p>
+ <form id="cf"><input class="inp2" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="8" style="font-size:28px;letter-spacing:.3em;text-align:center;margin-top:18px" value="${esc(r.demo||'')}"><button class="btn pri" style="width:100%;margin-top:18px">Verify</button></form></div></div>`);
+ $('#cf').onsubmit=async e=>{e.preventDefault();const code=new FormData(e.target).get('code').trim();try{const url={otp:'/api/v1/auth/otp/verify',step:'/api/v1/auth/step/verify',signup:'/api/v1/auth/signup/verify'}[kind];await API(url,{json:{flow:r.flow||r.step,code}});boot()}catch(err){toast(err.message)}}}
+async function passkeyLogin(){try{const o=await API('/api/v1/auth/passkey/login/options',{json:{}});const opt=o.options||o;opt.challenge=ub64(opt.challenge);(opt.allowCredentials||[]).forEach(c=>c.id=ub64(c.id));
+ const c=await navigator.credentials.get({publicKey:opt});const res={id:c.id,rawId:b64u(c.rawId),type:c.type,response:{clientDataJSON:b64u(c.response.clientDataJSON),authenticatorData:b64u(c.response.authenticatorData),signature:b64u(c.response.signature),userHandle:c.response.userHandle?b64u(c.response.userHandle):null}};
+ await API('/api/v1/auth/passkey/login/verify',{json:{credential:res,...(o.flow?{flow:o.flow}:{})}});boot()}catch(e){toast(e.message||'Passkey sign-in failed')}}
+function onboard(step){const me=ME.me&&P(ME.me);step=step||(!me?1:!(me.medicalId.contacts||[]).length?2:3);
+ const bar=`<div class="row" style="gap:6px;margin-bottom:18px">${[1,2,3].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=step?'#0071E3':'#D1D1D6'}"></div>`).join('')}</div><p class="eyebrow">STEP ${step} OF 3</p>`;
+ const wrap=b=>layer(`<div class="page" style="left:0"><div class="pin" style="padding-top:max(30px,env(safe-area-inset-top))">${bar}${b}</div></div>`);
+ if(step===1){wrap(`<h1 class="big">About you</h1><p class="line">This builds your health card, Medical ID and 3D body.</p><form id="of">${profileForm(me&&me.profile,{nameVal:(me&&me.name)||ME.user.name})}<button class="btn pri" style="width:100%;margin-top:20px">Continue</button></form>`);
+  $('#of').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);try{if(me)await API('/api/v2/people/'+me.id,{method:'PUT',json:{name:f.get('name').trim(),profile:formProfile(f)}});else await API('/api/v2/people',{json:{name:f.get('name').trim(),profile:formProfile(f)}});await refreshMe();onboard(2)}catch(err){toast(err.message)}}}
+ if(step===2){wrap(`<h1 class="big">Emergency contacts</h1><p class="line">SOS calls these people first and sends them your location and Medical ID. At least one is required.</p>${contactsBody(me)}<button class="btn pri" style="width:100%;margin-top:18px" id="on2" ${(me.medicalId.contacts||[]).length?'':'disabled style="opacity:.4;width:100%;margin-top:18px"'}>Continue</button>`);
+  bindContacts(()=>onboard(2));$('#on2').onclick=()=>{if((P(ME.me).medicalId.contacts||[]).length)onboard(3)}}
+ if(step===3){wrap(`<h1 class="big">Add your family</h1><p class="line">Invite adults to join with their own login, or add a child or elder who has no phone.</p><div class="list" style="margin-top:16px">${ME.people.filter(p=>!p.self).map(p=>`<div class="li">${esc(p.name)}<span class="end">${p.dependent?'Dependent':'Joined'}</span></div>`).join('')}${ME.invites.map(i=>`<div class="li">${esc(i.contact)}<span class="end">Invited</span></div>`).join('')}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn sec" onclick="openInvite()">Invite adult</button><button class="btn sec" onclick="openDependent()">Add dependent</button></div><button class="btn pri" style="width:100%;margin-top:22px" onclick="finishOnboarding()">Open Urban Health</button>`)}}
+async function finishOnboarding(){closeL();S.person=ME.me;await loadRecords(ME.me);renderAll();if(!localStorage.getItem('uh-a2hs'))installHint()}
+function installHint(){try{localStorage.setItem('uh-a2hs','1')}catch(_){}if(matchMedia('(display-mode: standalone)').matches)return;const ios=/iphone|ipad/i.test(navigator.userAgent);
+ if(DEFERRED){DEFERRED.prompt();DEFERRED=null;return}layer(`<div class="modal glass"><div class="row"><div style="font-weight:700;font-size:19px">Add Urban Health to your home screen</div><button class="x" onclick="closeL()">${ic(I.x,'#3A3A3C',16)}</button></div><p style="font-size:16px;line-height:1.5;margin:14px 2px">${ios?'Tap the Share button in Safari, then <b>Add to Home Screen</b>.':'Open the browser menu (⋮), then <b>Install app</b> or <b>Add to Home screen</b>.'} It opens full screen like an app, and SOS is one tap away.</p><button class="btn pri" style="width:100%" onclick="closeL()">OK</button></div>`)}
+let DEFERRED=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e});
+/* ---------------- boot ---------------- */
+async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);if(m){try{sessionStorage.setItem('uh-join',m[1])}catch(_){}history.replaceState(null,'','/app')}
+ try{await refreshMe()}catch(e){if(e.status===401)return authPage(sessionStorage.getItem('uh-join')?'signup':'signin');$('#load').textContent='Could not connect. Check your internet and reload.';return}
+ const jt=sessionStorage.getItem('uh-join');if(jt){try{await API('/api/v2/household/join',{json:{token:jt}});toast('You joined the family')}catch(e){toast(e.message)}sessionStorage.removeItem('uh-join');await refreshMe()}
+ closeL();if(!ME.me||!ME.onboarded)return onboard();
+ const t=location.pathname.split('/')[2];if(['summary','records','meds','family'].includes(t))S.tab=t;S.person=S.person&&P(S.person)?S.person:ME.me;
+ await Promise.all(ME.people.map(p=>loadRecords(p.id)));renderAll()}
+let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
+function layer(html){$('#layer').innerHTML=`<div class="scrim" onclick="closeL()"></div>${html}`}
+function closeL(){$('#layer').innerHTML=''}
+function page(title,body,eyebrow,tint){layer(`<div class="page"><div class="pbar"><button class="pback" onclick="closeL()">${ic('<path d="M15 6l-6 6 6 6"/>','#0071E3',22)}<span>Back</span></button></div><div class="pin">${eyebrow?`<p class="eyebrow" style="color:${tint||'var(--blue)'}">${eyebrow}</p>`:''}<h1 class="big">${title}</h1>${body}</div></div>`)}
+$('#scroll').addEventListener('scroll',e=>{const m=e.target.scrollTop>60;if(m!==S.mini){S.mini=m;document.body.classList.toggle('mini',m)}},{passive:true});
+setInterval(()=>{if(ME&&document.visibilityState==='visible')refreshMe().catch(e=>{if(e.status===401)authPage()})},5*60*1000);
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+fit();frame();boot();
+
+</script>
+</body>
+</html>

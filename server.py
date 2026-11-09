@@ -157,6 +157,8 @@ app.include_router(blood_api.pr)
 from api import queue as queue_api  # noqa: E402
 app.include_router(queue_api.r)
 app.include_router(queue_api.pr)
+from api import people as people_api  # noqa: E402
+app.include_router(people_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)
@@ -257,7 +259,7 @@ TYPES = {
     ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".woff": "font/woff", ".ttf": "font/ttf", ".pdf": "application/pdf", ".apk": "application/vnd.android.package-archive",
 }
 COMPRESSIBLE = {".html", ".js", ".css", ".json", ".svg", ".webmanifest", ".txt"}
-NO_CACHE = {"index.html", "sw.js", "manifest.webmanifest"}
+NO_CACHE = {"index.html", "uh.html", "sw.js", "manifest.webmanifest"}
 
 
 def _safe(rel: str) -> Path:
@@ -462,7 +464,16 @@ def shared_doc(token: str, request: Request, raw: str = ""):
 @app.api_route("/app/", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/app/{rest:path}", methods=["GET", "HEAD"], include_in_schema=False)
 def app_shell(request: Request, rest: str = ""):
-    """Deep links: /app/<person>/<profile>/<page> — opaque ids, resolved by the app itself; the shell is the same."""
+    """The Phase 0 app (per-person records, /api/v2). Deep links (/app/records, /app/join/<token>) share one shell.
+    APP_SHELL=classic serves the previous household-blob app instead, as an instant rollback."""
+    shell = "index.html" if os.getenv("APP_SHELL", "") == "classic" else "uh.html"
+    return _send(WEB / shell, request, "no-cache")
+
+
+@app.api_route("/classic", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/classic/{rest:path}", methods=["GET", "HEAD"], include_in_schema=False)
+def classic_shell(request: Request, rest: str = ""):
+    """The previous app, kept reachable while families move their data across."""
     return _send(WEB / "index.html", request, "no-cache")
 
 
