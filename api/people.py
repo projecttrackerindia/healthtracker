@@ -643,3 +643,19 @@ def remove_dependent(pid: str, u: User = Depends(need_user), db: Session = Depen
     p.removed = now()   # kept 30 days; the purge job deletes it with its files after that
     db.commit()
     return {"ok": True, "purgeAfter": now() + 30 * 86400}
+
+
+# ---- orders (labs, medicines) belong to a person too -----------------------------------------------------------------
+def order_allowed(db: Session, u: User | None, member_id: str | None, write: bool = False) -> bool:
+    """A lab booking or medicine order made for a Phase 0 person is health information about that person: only those
+    who may read their reports see it, and only their owner or guardian may place one. Orders for the old
+    household-blob members keep the old household-wide behaviour."""
+    if not member_id:
+        return True
+    p = db.get(Person, member_id)
+    if not p:
+        return True
+    if not u:
+        return False
+    a = access(db, u, p)
+    return a.writer if write else a.can("summary")

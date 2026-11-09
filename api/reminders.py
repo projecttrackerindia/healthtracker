@@ -150,8 +150,87 @@ def tick(now_dt: datetime | None = None) -> int:
                                 db.delete(s)
                             else:
                                 s.failures += 1
+        tick_people(db, now_dt)    # counted on its own: tick() keeps reporting the household reminders it always did
         # keep the dedupe table small
         db.query(ReminderSent).filter(ReminderSent.t < int(time.time()) - 3 * 86400).delete()
+    return sent
+
+
+def tick_people(db, now_dt: datetime) -> int:
+    """Reminders for Phase 0 per-person medicines (/api/v2).
+
+    At each dose time the person is reminded on their own phone; a dependent's guardians are reminded instead.
+    An hour later, anything still unticked goes to the person and to the guardians. Nobody else is told: a medicine
+    list is private unless shared, so reminders follow the same rule as reading it.
+    """
+    from .models import Guardian, HealthRecord, Person
+    day = now_dt.strftime("%Y-%m-%d")
+    minute = now_dt.hour * 60 + now_dt.minute
+    subs_by_user: dict[str, list] = {}
+    for s in db.scalars(select(PushSub)).all():
+        subs_by_user.setdefault(s.user_id, []).append(s)
+    if not subs_by_user:
+        return 0
+    sent = 0
+    meds = db.scalars(select(HealthRecord).where(HealthRecord.kind == "med")).all()
+    by_person: dict[str, list] = {}
+    for x in meds:
+        by_person.setdefault(x.person_id, []).append(x)
+    for pid, rows in by_person.items():
+        p = db.get(Person, pid)
+        if not p or p.removed:
+            continue
+        guardians = db.scalars(select(Guardian.user_id).where(Guardian.person_id == pid)).all() if p.owner_user is None else []
+        owner = [p.owner_user] if p.owner_user else []
+        if not any(u in subs_by_user for u in owner + list(guardians)):
+            continue
+        taken = set()
+        for d in db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind == "dose", HealthRecord.day == day)):
+            try:
+                dd = decrypt(d.blob)
+                taken.add((dd.get("med"), dd.get("time")))
+            except Exception:
+                continue
+        at_time: dict[str, list[str]] = {}
+        for x in rows:
+            try:
+                m = decrypt(x.blob)
+            except Exception:
+                continue
+            if m.get("active") is False:
+                continue
+            for t in m.get("times") or []:
+                if (x.id, t) not in taken:
+                    at_time.setdefault(t, []).append(m.get("name") or "medicine")
+        first = (p.name or "").split(" ")[0]
+        for t, names in at_time.items():
+            try:
+                hh, mm = t.split(":")
+                at = int(hh) * 60 + int(mm)
+            except ValueError:
+                continue
+            for kind, start, end in (("due", at, at + 45), ("missed", at + MISSED_AFTER_MIN, at + MISSED_AFTER_MIN + 45)):
+                if not (start <= minute <= end):
+                    continue
+                key = f"v2:{pid}:{day}:{t}:{kind}"
+                if db.get(ReminderSent, key):
+                    continue
+                db.add(ReminderSent(key=key))
+                if kind == "due":
+                    to = owner or list(guardians)
+                    msg = lambda own: {"title": f"Time for your {t} medicines" if own else f"{first}: {t} medicines", "body": ", ".join(names), "url": "/app/meds", "tag": f"dose-{pid}-{t}"}
+                else:
+                    to = owner + list(guardians)
+                    msg = lambda own: {"title": "Still to take" if own else f"{first} has not taken the {t} medicines", "body": ", ".join(names) + (" · an hour past the reminder" if not own else ""), "url": "/app/meds", "tag": f"missed-{pid}-{t}"}
+                for uid in to:
+                    for s in subs_by_user.get(uid, []):
+                        ok, status, _ = PUSH.send(s.sub, msg(uid == p.owner_user))
+                        if ok:
+                            sent += 1
+                        elif status in (404, 410):
+                            db.delete(s)
+                        else:
+                            s.failures += 1
     return sent
 
 

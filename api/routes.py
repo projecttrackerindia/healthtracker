@@ -342,10 +342,14 @@ def _checked_by(o: Order) -> dict | None:
 
 
 @r.post("/orders")
-def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
+    from .auth import current_user
+    from .people import order_allowed
+    if not order_allowed(db, current_user(request, db), body.memberId, write=True):
+        raise HTTPException(403, "Only they, or someone who looks after them, can book this.")
     s = db.get(Store, body.store)
     if not s or not s.active:
         raise HTTPException(404, "store not found")
@@ -398,15 +402,17 @@ def create_order(body: OrderReq, db: Session = Depends(get_db), x_dokko_key: str
 
 
 @r.get("/orders/{oid}/track")
-def order_track(oid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def order_track(oid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     """Where the technician is, for this family's own booking and only while someone is actually travelling."""
     from api.tech import track_for_family
 
+    from .auth import current_user
+    from .people import order_allowed
     h = household(db, x_dokko_key, create=False)
     if not h:
         raise HTTPException(404)
     o = db.get(Order, oid)
-    if not o or o.household_id != h.id:
+    if not o or o.household_id != h.id or not order_allowed(db, current_user(request, db), o.member_id):
         raise HTTPException(404)
     out = track_for_family(db, o)
     if o.agent_id:
@@ -417,13 +423,16 @@ def order_track(oid: str, db: Session = Depends(get_db), x_dokko_key: str | None
 
 
 @r.get("/orders")
-def list_orders(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def list_orders(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"orders": []}
+    from .auth import current_user
+    from .people import order_allowed
+    u = current_user(request, db)
     rows = db.scalars(select(Order).options(joinedload(Order.store))
                       .where(Order.household_id == h.id).order_by(Order.created.desc()).limit(50)).all()
-    return {"orders": [order_json(o) for o in rows]}
+    return {"orders": [order_json(o) for o in rows if order_allowed(db, u, o.member_id)]}
 
 
 class RateReq(BaseModel):
@@ -433,10 +442,12 @@ class RateReq(BaseModel):
 
 
 @r.post("/orders/{oid}/rate")
-def rate(oid: str, body: RateReq, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def rate(oid: str, body: RateReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     o = db.get(Order, oid)
-    if not h or not o or o.household_id != h.id:
+    from .auth import current_user as _cu
+    from .people import order_allowed as _oa
+    if not h or not o or o.household_id != h.id or not _oa(db, _cu(request, db), o.member_id, write=True):
         raise HTTPException(404)
     steps, i = _status(o)
     if i < len(steps) - 1:
@@ -468,7 +479,7 @@ class VisitRateReq(BaseModel):
 
 
 @r.post("/orders/{oid}/visit-rating")
-def rate_visit(oid: str, body: VisitRateReq, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def rate_visit(oid: str, body: VisitRateReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     """How the home collection itself went. Separate from the store rating, which is about the report.
 
     A family has a clear and immediate opinion about the person who stood at their door with a needle, and it
@@ -478,7 +489,9 @@ def rate_visit(oid: str, body: VisitRateReq, db: Session = Depends(get_db), x_do
 
     h = household(db, x_dokko_key, create=False)
     o = db.get(Order, oid)
-    if not h or not o or o.household_id != h.id:
+    from .auth import current_user as _cu
+    from .people import order_allowed as _oa
+    if not h or not o or o.household_id != h.id or not _oa(db, _cu(request, db), o.member_id, write=True):
         raise HTTPException(404)
     if o.kind != "lab" or not o.agent_id:
         raise HTTPException(400, "There was no home visit on this booking.")
@@ -499,10 +512,12 @@ def rate_visit(oid: str, body: VisitRateReq, db: Session = Depends(get_db), x_do
 
 
 @r.post("/orders/{oid}/cancel")
-def cancel(oid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def cancel(oid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     o = db.get(Order, oid)
-    if not h or not o or o.household_id != h.id:
+    from .auth import current_user as _cu
+    from .people import order_allowed as _oa
+    if not h or not o or o.household_id != h.id or not _oa(db, _cu(request, db), o.member_id, write=True):
         raise HTTPException(404)
     steps, i = _status(o)
     if i >= 3:

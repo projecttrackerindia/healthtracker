@@ -167,3 +167,57 @@ def test_report_upload_stored_and_downloadable():
     f = c.get(f"/api/v2/records/{rid}/file")
     assert f.status_code == 200 and f.content.startswith(b"%PDF")
     assert c.post(f"/api/v2/people/{c.pid}/reports", files={"file": ("x.exe", b"MZ", "application/octet-stream")}).status_code == 415
+
+
+def test_v2_reminders_go_to_owner_and_guardians_only(monkeypatch):
+    from datetime import datetime
+    from api import push as PUSH, reminders
+    pr, si, amma = family()
+    pr.post(f"/api/v2/people/{amma}/records", json={"kind": "med", "data": {"name": "Metformin", "times": ["08:00"], "active": True}})
+    si.post(f"/api/v2/people/{si.pid}/records", json={"kind": "med", "data": {"name": "Iron", "times": ["08:00"], "active": True}})
+    from api.db import session
+    from api.models import PushSub
+    with session() as db:
+        db.add(PushSub(user_id=pr.uid, household_id="h", endpoint="https://p/" + pr.uid, sub={"endpoint": "https://p/" + pr.uid}))
+        db.add(PushSub(user_id=si.uid, household_id="h", endpoint="https://p/" + si.uid, sub={"endpoint": "https://p/" + si.uid}))
+    got = []
+    monkeypatch.setattr(PUSH, "send", lambda sub, data, ttl=3600: (got.append((sub["endpoint"], data["body"])) or (True, 201, "")))
+    with session() as db:
+        reminders.tick_people(db, datetime(2026, 11, 10, 8, 5, tzinfo=reminders.IST))
+    to_pr = [b for e, b in got if e.endswith(pr.uid)]
+    to_si = [b for e, b in got if e.endswith(si.uid)]
+    assert "Metformin" in to_pr and "Iron" not in " ".join(to_pr)       # Sita's medicines never reach Prasanna
+    assert "Iron" in to_si and "Metformin" not in " ".join(to_si)
+    got.clear()
+    with session() as db:   # same window again: no repeat
+        reminders.tick_people(db, datetime(2026, 11, 10, 8, 10, tzinfo=reminders.IST))
+    assert not [g for g in got if "Metformin" in g[1] or "Iron" in g[1]]
+    with session() as db:   # leave no test phones subscribed for the tests that run after this one
+        db.query(PushSub).filter(PushSub.user_id.in_([pr.uid, si.uid])).delete()
+
+
+def test_lab_orders_follow_person_privacy():
+    pr, si, amma = family()
+    key = pr.get("/api/v2/me").json()["hkey"]
+    assert key == si.get("/api/v2/me").json()["hkey"]
+    from api.db import session
+    from api.models import LabTest, Store
+    with session() as db:
+        lab = Store(kind="lab", name="Test Lab", city="Hyderabad", area="Gachibowli", lat=26.9124, lng=75.7873, home_collection=True, verified=True, active=True)   # its own city, away from other tests' labs
+        db.add(lab)
+        db.flush()
+        db.add(LabTest(store_id=lab.id, code="hba1c", name="HbA1c", price=450, tat_hours=24, fasting=False))
+    code = "hba1c"
+    q = si.post("/api/v1/labs/quotes", json={"tests": [code], "home": True, "lat": 26.9124, "lng": 75.7873}, headers={"X-DoKKo-Key": key}).json()
+    store = next((x for x in q.get("labs", []) if x["lines"] and x["name"] == "Test Lab"), None)
+    assert store, "the test database seeds labs; without one this test proves nothing"
+    def book(c, who):
+        return c.post("/api/v1/orders", json={"store": store["id"], "kind": "lab", "items": [{"code": code}], "memberId": who, "member": "x", "slot": store["slots"][0], "payment": "cod"}, headers={"X-DoKKo-Key": key})
+    assert book(pr, si.pid).status_code == 403                # cannot book for an adult who has not shared
+    o = book(si, si.pid)
+    assert o.status_code == 200, o.text
+    assert book(pr, amma).status_code == 200                  # guardian books for a dependent
+    mine = [x["id"] for x in pr.get("/api/v1/orders", headers={"X-DoKKo-Key": key}).json()["orders"]]
+    assert o.json()["id"] not in mine                         # Sita's booking is hers
+    assert pr.get(f"/api/v1/orders/{o.json()['id']}/track", headers={"X-DoKKo-Key": key}).status_code == 404
+    assert o.json()["id"] in [x["id"] for x in si.get("/api/v1/orders", headers={"X-DoKKo-Key": key}).json()["orders"]]
