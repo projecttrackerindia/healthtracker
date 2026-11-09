@@ -17,21 +17,57 @@ from .routes import household
 r = APIRouter(prefix="/api/v1")
 
 
-def notify(db: Session, household_id: str, kind: str, title: str, body: str = "", ref: dict | None = None, member_id: str = "", url: str = "/app") -> Notice:
-    """One notice row + a push to every phone in the family (when push is configured)."""
-    n = Notice(household_id=household_id, member_id=member_id or "", kind=kind, title=title[:160], body=body[:400], ref=ref or {})
+CATEGORY = {"order": "orders", "lab": "orders", "report": "reports", "prescription": "reports", "consult": "reports",
+            "family": "family", "sharing": "family", "sos": "safety", "blood": "safety", "insight": "insights", "reminder": "meds"}
+ALWAYS = {"safety"}       # emergencies are never muted
+
+
+def audience(db: Session, household_id: str, member_id: str = "", to_user: str = "") -> set[str] | None:
+    """Accounts allowed to hear about this notice. None means the old household-wide behaviour.
+    A notice about a per-person member goes only to those who may read that person's reports."""
+    if to_user:
+        return {to_user}
+    if not member_id:
+        return None
+    from .models import Person, User
+    p = db.get(Person, member_id)
+    if not p:
+        return None
+    from .people import access
+    return {u.id for u in db.scalars(select(User).where(User.household_id == household_id)) if access(db, u, p).can("summary")}
+
+
+def wants_push(db: Session, user_id: str, kind: str) -> bool:
+    from .models import NoticePref
+    cat = CATEGORY.get(kind, "other")
+    if cat in ALWAYS:
+        return True
+    pr = db.get(NoticePref, user_id)
+    return not pr or (pr.prefs or {}).get(cat, True) is not False
+
+
+def notify(db: Session, household_id: str, kind: str, title: str, body: str = "", ref: dict | None = None, member_id: str = "", url: str = "/app", to_user: str = "") -> Notice:
+    """One notice row + a push to the phones allowed to see it (when push is configured)."""
+    n = Notice(household_id=household_id, member_id=member_id or "", kind=kind, title=title[:160], body=body[:400], ref=ref or {}, to_user=to_user or "")
     db.add(n)
+    who = audience(db, household_id, member_id or "", to_user or "")
     try:
         from . import whatsapp as WA
         if WA.ready() and kind in WA.KINDS:
             from .models import User
             for u in db.scalars(select(User).where(User.household_id == household_id, User.phone_verified == True)).all():  # noqa: E712
-                if u.phone and (not member_id or not u.member_id or u.member_id == member_id):
+                if who is not None and u.id not in who:
+                    continue
+                if u.phone and (who is not None or not member_id or not u.member_id or u.member_id == member_id):
                     WA.send(u.phone, f"{title}\n{body}\n\nurbanhealth.in/app")
     except Exception as e:
         print("[inbox] whatsapp failed:", str(e)[:120], flush=True)
     if PUSH.ready():
-        for s in db.scalars(select(PushSub).where(PushSub.household_id == household_id)).all():
+        subs = db.scalars(select(PushSub).where(PushSub.household_id == household_id)).all() if who is None else \
+            db.scalars(select(PushSub).where(PushSub.user_id.in_(list(who) or [""]))).all()
+        for s in subs:
+            if s.user_id and not wants_push(db, s.user_id, kind):
+                continue
             try:
                 ok, status, _ = PUSH.send(s.sub, {"title": title[:80], "body": body[:160], "url": url, "tag": kind})
                 if not ok and status in (404, 410):
@@ -46,11 +82,14 @@ def notice_json(n: Notice) -> dict:
 
 
 @r.get("/inbox")
-def inbox(since: int = 0, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def inbox(request: Request, since: int = 0, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"notices": [], "appointments": [], "unreadMessages": 0, "t": now()}
-    rows = db.scalars(select(Notice).where(Notice.household_id == h.id, Notice.t > since).order_by(Notice.t.desc(), Notice.id.desc()).limit(100)).all()
+    from .auth import current_user
+    u = current_user(request, db)
+    rows = [n for n in db.scalars(select(Notice).where(Notice.household_id == h.id, Notice.t > since).order_by(Notice.t.desc(), Notice.id.desc()).limit(100)).all()
+            if (who := audience(db, h.id, n.member_id, n.to_user)) is None or (u is not None and u.id in who)]
     ap = db.scalars(select(Appointment).where(Appointment.household_id == h.id).order_by(Appointment.created.desc()).limit(60)).all()
     unread = db.scalar(select(func.count(Message.id)).where(Message.household_id == h.id, Message.sender == "partner", Message.read_family == False)) or 0  # noqa: E712
     return {"notices": [notice_json(n) for n in rows], "appointments": [appt_json(db, a) for a in ap], "unreadMessages": unread, "t": now()}

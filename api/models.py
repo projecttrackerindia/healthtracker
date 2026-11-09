@@ -701,6 +701,7 @@ class Notice(Base):
     ref: Mapped[dict] = mapped_column(JSON, default=dict)
     t: Mapped[int] = mapped_column(Integer, default=now, index=True)
     read: Mapped[bool] = mapped_column(Boolean, default=False)
+    to_user: Mapped[str] = mapped_column(String(32), default="")   # set: only this account sees it (sharing changed, you were removed)
 
 
 class Message(Base):
@@ -1010,3 +1011,19 @@ class AccessLog(Base):
     user_id: Mapped[str] = mapped_column(String(32))
     what: Mapped[str] = mapped_column(String(60))
     t: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class NoticeMark(Base):
+    """Per-account read / cleared state, so one person clearing their bell does not clear everyone's."""
+    __tablename__ = "notice_marks"
+    user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    notice_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    read: Mapped[bool] = mapped_column(Boolean, default=False)
+    cleared: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class NoticePref(Base):
+    """Which kinds of notification an account wants on the phone. The inbox always keeps them."""
+    __tablename__ = "notice_prefs"
+    user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    prefs: Mapped[dict] = mapped_column(JSON, default=dict)

@@ -222,7 +222,10 @@ def tick_people(db, now_dt: datetime) -> int:
                 else:
                     to = owner + list(guardians)
                     msg = lambda own: {"title": "Still to take" if own else f"{first} has not taken the {t} medicines", "body": ", ".join(names) + (" · an hour past the reminder" if not own else ""), "url": "/app/meds", "tag": f"missed-{pid}-{t}"}
+                from .inbox import wants_push
                 for uid in to:
+                    if not wants_push(db, uid, "reminder"):
+                        continue
                     for s in subs_by_user.get(uid, []):
                         ok, status, _ = PUSH.send(s.sub, msg(uid == p.owner_user))
                         if ok:

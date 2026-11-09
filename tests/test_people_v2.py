@@ -221,3 +221,48 @@ def test_lab_orders_follow_person_privacy():
     assert o.json()["id"] not in mine                         # Sita's booking is hers
     assert pr.get(f"/api/v1/orders/{o.json()['id']}/track", headers={"X-DoKKo-Key": key}).status_code == 404
     assert o.json()["id"] in [x["id"] for x in si.get("/api/v1/orders", headers={"X-DoKKo-Key": key}).json()["orders"]]
+
+
+def test_inbox_is_per_person_and_per_account(monkeypatch):
+    from api import push as PUSH
+    from api.db import session
+    from api.inbox import notify
+    from api.models import PushSub
+    pr, si, amma = family()
+    hid = pr.get("/api/v2/me").json()["household"]
+    with session() as db:
+        db.add(PushSub(user_id=pr.uid, household_id=hid, endpoint="https://p/i" + pr.uid, sub={"endpoint": "x"}))
+        db.add(PushSub(user_id=si.uid, household_id=hid, endpoint="https://p/i" + si.uid, sub={"endpoint": "y"}))
+    pushed = []
+    monkeypatch.setattr(PUSH, "ready", lambda: True)
+    monkeypatch.setattr(PUSH, "send", lambda sub, data, ttl=3600: (pushed.append((sub["endpoint"], data["title"])) or (True, 201, "")))
+    with session() as db:
+        notify(db, hid, "order", "Sita's lab test confirmed", member_id=si.pid)
+        notify(db, hid, "order", "Amma's medicines delivered", member_id=amma)
+    assert [t for e, t in pushed if e == "x"] == ["Amma's medicines delivered"]         # Prasanna: not Sita's
+    assert "Sita's lab test confirmed" in [t for e, t in pushed if e == "y"]
+    t_pr = [x["title"] for x in pr.get("/api/v2/inbox").json()["items"]]
+    assert "Sita's lab test confirmed" not in t_pr and "Amma's medicines delivered" in t_pr
+    # sharing change goes to the one person it concerns
+    si.put(f"/api/v2/people/{si.pid}/sharing", json={"user_id": pr.uid, "level": "summary"})
+    assert any("now shares the summary" in x["title"] for x in pr.get("/api/v2/inbox").json()["items"])
+    assert not any("now shares" in x["title"] for x in si.get("/api/v2/inbox").json()["items"])
+    # read and clear are per account
+    box = pr.get("/api/v2/inbox").json()
+    assert box["unread"] >= 2
+    assert pr.post("/api/v2/inbox/read", json={"all": True}).status_code == 200
+    assert pr.get("/api/v2/inbox").json()["unread"] == 0
+    assert si.get("/api/v2/inbox").json()["unread"] >= 1
+    nid = pr.get("/api/v2/inbox").json()["items"][0]["id"]
+    pr.post("/api/v2/inbox/clear", json={"ids": [nid]})
+    assert nid not in [x["id"] for x in pr.get("/api/v2/inbox").json()["items"]]
+    # muting a category stops pushes, keeps the inbox; emergencies cannot be muted
+    assert pr.put("/api/v2/notify-prefs", json={"key": "orders", "on": False}).status_code == 200
+    assert pr.put("/api/v2/notify-prefs", json={"key": "safety", "on": False}).status_code == 400
+    pushed.clear()
+    with session() as db:
+        notify(db, hid, "order", "Amma's test booked", member_id=amma)
+    assert not [1 for e, t in pushed if e == "x"]
+    assert "Amma's test booked" in [x["title"] for x in pr.get("/api/v2/inbox").json()["items"]]
+    with session() as db:
+        db.query(PushSub).filter(PushSub.user_id.in_([pr.uid, si.uid])).delete()

@@ -28,7 +28,7 @@ from . import messaging
 from .auth import csrf, limit, need_user
 from .db import get_db
 from .family import decrypt, encrypt
-from .models import (AccessLog, Grant, Guardian, HealthRecord, Household, HouseholdInvite, Person, User, new_id, now)
+from .models import (AccessLog, Grant, Guardian, HealthRecord, Household, HouseholdInvite, Notice, NoticeMark, NoticePref, Person, User, new_id, now)
 
 r = APIRouter(prefix="/api/v2", dependencies=[Depends(csrf)])
 
@@ -305,8 +305,13 @@ def set_sharing(pid: str, body: GrantIn, u: User = Depends(need_user), db: Sessi
     if not other or other.household_id != p.household_id or other.id == p.owner_user:
         raise HTTPException(400, "Not in this household")
     g = db.get(Grant, (p.id, other.id)) or Grant(person_id=p.id, user_id=other.id)
+    before = (g.level, g.womens) if g.updated else ("medid", False)
     g.level, g.womens = body.level, bool(body.womens)
     db.merge(g)
+    if before != (g.level, g.womens):
+        what = {"medid": "only the Medical ID", "summary": "the summary and reports", "all": "everything"}[g.level]
+        _note(db, p.household_id, "sharing", f"{p.name} now shares {what} with you" + (", including women's health" if g.womens else ""),
+              "", {"person": p.id}, to_user=other.id)
     db.commit()
     return {"ok": True}
 
@@ -447,6 +452,10 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
            "focus": reading.get("focus", []), "followups": reading.get("followups", []) + reading.get("tests_needed", []),
            "questions": reading.get("questions_for_doctor", []), "warnings": reading.get("warnings", []),
            "engine": reading.get("engine", ""), "mime": mime, "name": (file.filename or "")[:120], "checked": False}
+    flagged = [f for f in rec["findings"] if (f.get("flag") or "normal") not in ("normal", "unknown")]
+    _note(db, p.household_id, "report", f"{p.name}: {rec['title']} read" if p.owner_user != u.id else f"Your {rec['title']} is read",
+          (f"{len(flagged)} result{'s' if len(flagged) != 1 else ''} worth discussing" if flagged else "Results are in range") if rec["findings"] else "Saved. Add the values if needed.",
+          {"person": p.id}, member_id=p.id)
     x = HealthRecord(person_id=p.id, kind="report", blob=encrypt(rec), file_id=fid, day=(rec["date"] or "")[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", rec["date"] or "") else _dt.date.today().isoformat(), by_user=u.id)
     db.add(x)
     db.commit()
@@ -528,6 +537,7 @@ def join(body: JoinIn, u: User = Depends(need_user), db: Session = Depends(get_d
     if mine:
         mine.household_id = i.household_id
     i.used_by = u.id
+    _note(db, i.household_id, "family", f"{u.name or 'Someone'} joined the family", "They chose what to share from their own Settings.", {"user": u.id})
     db.commit()
     return {"ok": True}
 
@@ -600,10 +610,13 @@ def remove_member(body: UserRef, u: User = Depends(need_user), db: Session = Dep
     h = Household(key=secrets.token_hex(16), name=(m.name.split(" ")[0] + "'s family") if m.name else "Family")
     db.add(h)
     db.flush()
+    old = u.household_id
     m.household_id, m.role = h.id, "admin"
     mine = my_person(db, m)
     if mine:
         mine.household_id = h.id
+    _note(db, h.id, "family", "You were removed from a family", f"{u.name or 'The owner'} removed you. All your records are still yours.", to_user=m.id)
+    _note(db, old, "family", f"{m.name or 'A member'} is no longer in the family")
     db.commit()
     return {"ok": True}
 
@@ -617,6 +630,7 @@ def add_guardian(pid: str, body: UserRef, u: User = Depends(need_user), db: Sess
     if not m or m.household_id != p.household_id:
         raise HTTPException(400, "Not in this household")
     db.merge(Guardian(person_id=p.id, user_id=m.id))
+    _note(db, p.household_id, "family", f"You now look after {p.name}", f"{u.name or 'A guardian'} added you. You will get {p.name}'s medicine reminders.", {"person": p.id}, to_user=m.id)
     db.commit()
     return {"ok": True}
 
@@ -659,3 +673,107 @@ def order_allowed(db: Session, u: User | None, member_id: str | None, write: boo
         return False
     a = access(db, u, p)
     return a.writer if write else a.can("summary")
+
+
+# ---- notifications: one bell per account -----------------------------------------------------------------------------
+CATEGORIES = [("meds", "Medicine reminders", "At dose time, and when a dose is missed"),
+              ("orders", "Lab tests and orders", "Booked, confirmed, technician on the way, delivered"),
+              ("reports", "Reports and prescriptions", "When a report is ready or a doctor sends a prescription"),
+              ("family", "Family", "Someone joins, leaves, or changes what they share with you"),
+              ("insights", "Health insights", "At most one a day"),
+              ("safety", "Emergencies", "SOS and urgent blood requests. Always on.")]
+
+
+def _visible(db: Session, u: User, n: Notice, people: dict) -> bool:
+    if n.to_user:
+        return n.to_user == u.id
+    if n.member_id and n.member_id in people:
+        return people[n.member_id].can("summary")
+    if n.member_id:
+        mine = db.get(Person, n.member_id)
+        if mine:
+            return False                          # a person from another household
+    return True
+
+
+def _note(db: Session, household_id: str, kind: str, title: str, body: str = "", ref: dict | None = None, member_id: str = "", to_user: str = "", url: str = "/app"):
+    try:
+        from .inbox import notify
+        notify(db, household_id, kind, title, body, ref or {}, member_id, url, to_user)
+    except Exception as e:                       # a notice must never break the action that caused it
+        print("[people] notice failed:", type(e).__name__, str(e)[:120], flush=True)
+
+
+@r.get("/inbox")
+def inbox(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    if not u.household_id:
+        return {"items": [], "unread": 0}
+    people = {p.id: access(db, u, p) for p in db.scalars(select(Person).where(Person.household_id == u.household_id))}
+    marks = {m.notice_id: m for m in db.scalars(select(NoticeMark).where(NoticeMark.user_id == u.id))}
+    names = {p.id: p.name for p in db.scalars(select(Person).where(Person.household_id == u.household_id))}
+    out = []
+    for n in db.scalars(select(Notice).where(Notice.household_id == u.household_id).order_by(Notice.t.desc(), Notice.id.desc()).limit(300)):
+        mk = marks.get(n.id)
+        if (mk and mk.cleared) or not _visible(db, u, n, people):
+            continue
+        from .inbox import CATEGORY
+        out.append({"id": n.id, "kind": n.kind, "cat": CATEGORY.get(n.kind, "other"), "title": n.title, "body": n.body, "ref": n.ref or {},
+                    "t": n.t, "read": bool(mk and mk.read), "person": n.member_id if n.member_id in names else "", "personName": names.get(n.member_id, "")})
+        if len(out) >= 150:
+            break
+    return {"items": out, "unread": sum(1 for x in out if not x["read"])}
+
+
+class MarkIn(BaseModel):
+    ids: list[int] = []
+    all: bool = False
+
+
+def _mark(db: Session, u: User, body: MarkIn, field: str):
+    ids = body.ids[:500]
+    if body.all:
+        ids = [x["id"] for x in inbox(u, db)["items"]]
+    for i in ids:
+        n = db.get(Notice, i)
+        if not n or n.household_id != u.household_id:
+            continue
+        m = db.get(NoticeMark, (u.id, i)) or NoticeMark(user_id=u.id, notice_id=i)
+        setattr(m, field, True)
+        if field == "cleared":
+            m.read = True
+        db.merge(m)
+    db.commit()
+    return {"ok": True}
+
+
+@r.post("/inbox/read")
+def inbox_read(body: MarkIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    return _mark(db, u, body, "read")
+
+
+@r.post("/inbox/clear")
+def inbox_clear(body: MarkIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    return _mark(db, u, body, "cleared")
+
+
+@r.get("/notify-prefs")
+def get_prefs(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    pr = db.get(NoticePref, u.id)
+    p = (pr.prefs if pr else {}) or {}
+    return [{"key": k, "title": t, "sub": d, "on": True if k == "safety" else p.get(k, True) is not False, "locked": k == "safety"} for k, t, d in CATEGORIES]
+
+
+class PrefIn(BaseModel):
+    key: str
+    on: bool
+
+
+@r.put("/notify-prefs")
+def set_prefs(body: PrefIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    if body.key not in {k for k, _, _ in CATEGORIES} or body.key == "safety":
+        raise HTTPException(400, "This one cannot be changed")
+    pr = db.get(NoticePref, u.id) or NoticePref(user_id=u.id, prefs={})
+    pr.prefs = {**(pr.prefs or {}), body.key: bool(body.on)}
+    db.merge(pr)
+    db.commit()
+    return {"ok": True}

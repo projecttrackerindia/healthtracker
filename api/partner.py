@@ -200,7 +200,7 @@ def porder(db: Session, o: Order) -> dict:
     j["family"] = {"name": h.name if h else "", "city": h.city if h else ""}
     j["memberId"] = o.member_id or ""
     j["householdId"] = o.household_id
-    j["rxFiles"] = [f for f in (o.rx_files or []) if db.get(StoredFile, (o.household_id, f))] if o.rx_shared else []
+    j["rxFiles"] = [f for f in (o.rx_files or []) if db.get(StoredFile, (o.household_id, f)) or (o.member_id and db.get(StoredFile, (o.member_id, f)))] if o.rx_shared else []
     # "assigned" is deliberately not a plain status button: it needs a person, so the console gets its own
     # Assign control instead and posts to /assign.
     j["next"] = [k for k in (NEXT_LAB if o.kind == "lab" else NEXT_MED).get(j["status"], []) if k != "assigned"]
@@ -677,7 +677,7 @@ def read_rx(oid: str, file_id: str, db: Session = Depends(get_db), u: PartnerUse
     o = _order(db, u, oid)
     if not o.rx_shared or file_id not in (o.rx_files or []):
         raise HTTPException(404, "not shared")
-    got = storage.get(db, o.household_id, file_id)
+    got = storage.get(db, o.household_id, file_id) or (storage.get(db, o.member_id, file_id) if o.member_id else None)   # per-person files live under the person
     if not got:
         raise HTTPException(404, "not synced yet")
     row, data = got
