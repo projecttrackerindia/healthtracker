@@ -104,6 +104,8 @@ def _init_db():
             print("[shop] seed failed:", str(e)[:160], flush=True)
     reminders.start()
     proactive_api.start()
+    from api import people as _people
+    _people.start_purge()
 
 
 app.include_router(public_api.r)

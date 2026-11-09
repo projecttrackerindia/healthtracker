@@ -777,3 +777,79 @@ def set_prefs(body: PrefIn, u: User = Depends(need_user), db: Session = Depends(
     db.merge(pr)
     db.commit()
     return {"ok": True}
+
+
+# ---- deletion and retention --------------------------------------------------------------------------------------------
+def purge_person(db: Session, p: Person) -> None:
+    """Everything about one person: records, files in storage, sharing, guardians, access log, notices about them."""
+    from . import storage
+    try:
+        storage.delete_household(db, p.id)          # per-person files live under the person's id
+    except Exception as e:
+        print("[people] file purge failed:", type(e).__name__, str(e)[:120], flush=True)
+    for model, col in ((HealthRecord, HealthRecord.person_id), (Grant, Grant.person_id), (Guardian, Guardian.person_id), (AccessLog, AccessLog.person_id)):
+        db.query(model).filter(col == p.id).delete(synchronize_session=False)
+    db.query(Notice).filter(Notice.member_id == p.id).delete(synchronize_session=False)
+    db.delete(p)
+
+
+def delete_user_data(db: Session, u: User) -> None:
+    """Called when an account is deleted. Their own profile goes with every record and file. People they look after go too
+    when no one else can look after them; if another adult in the family is a guardian, those people stay with that adult.
+    Raises 409 when a dependent would be left with no guardian although other adults could take over."""
+    deps = []
+    for g in db.scalars(select(Guardian).where(Guardian.user_id == u.id)).all():
+        p = db.get(Person, g.person_id)
+        if not p:
+            continue
+        others = db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id, Guardian.user_id != u.id)).all()
+        if not others:
+            deps.append(p)
+    adults = db.scalar(select(User.id).where(User.household_id == u.household_id, User.id != u.id)) if u.household_id else None
+    if deps and adults:
+        raise HTTPException(409, f"Make another adult the guardian of {', '.join(p.name for p in deps)} first (Family → their name).")
+    for p in deps:
+        purge_person(db, p)
+    mine = my_person(db, u)
+    if mine:
+        purge_person(db, mine)
+    db.query(Grant).filter(Grant.user_id == u.id).delete(synchronize_session=False)
+    db.query(Guardian).filter(Guardian.user_id == u.id).delete(synchronize_session=False)
+    db.query(NoticeMark).filter(NoticeMark.user_id == u.id).delete(synchronize_session=False)
+    db.query(NoticePref).filter(NoticePref.user_id == u.id).delete(synchronize_session=False)
+    db.query(Notice).filter(Notice.to_user == u.id).delete(synchronize_session=False)
+    db.query(AccessLog).filter(AccessLog.user_id == u.id).delete(synchronize_session=False)
+
+
+def purge(db: Session) -> dict:
+    """Daily: dependents removed more than 30 days ago, invites expired a month ago, access log older than two years."""
+    t = now()
+    gone = db.scalars(select(Person).where(Person.removed.is_not(None), Person.removed < t - 30 * 86400)).all()
+    for p in gone:
+        purge_person(db, p)
+    inv = db.query(HouseholdInvite).filter(HouseholdInvite.expires < t - 30 * 86400).delete(synchronize_session=False)
+    old = db.query(AccessLog).filter(AccessLog.t < t - 730 * 86400).delete(synchronize_session=False)
+    return {"people": len(gone), "invites": inv, "accessLog": old}
+
+
+def start_purge() -> None:
+    import threading
+    import time as _t
+
+    from .db import session
+    from .tasks import in_process_loops
+    if not in_process_loops():
+        return
+
+    def loop():
+        while True:
+            try:
+                with session() as db:
+                    out = purge(db)
+                if any(out.values()):
+                    print("[people] purge", out, flush=True)
+            except Exception as e:
+                print("[people] purge failed:", type(e).__name__, str(e)[:160], flush=True)
+            _t.sleep(6 * 3600)
+
+    threading.Thread(target=loop, name="people-purge", daemon=True).start()

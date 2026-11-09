@@ -112,6 +112,19 @@ def task_reminders(x_task_token: str | None = Header(None)):
     return _run("reminders", 55, lambda: {"sent": reminders.tick()})
 
 
+@r.post("/tasks/purge", include_in_schema=False)
+def task_purge(x_task_token: str | None = Header(None)):
+    """Daily: removed dependents after 30 days, old invites, access log after two years."""
+    _auth(x_task_token)
+    from api import people
+    from api.db import session as _s
+
+    def go():
+        with _s() as db:
+            return people.purge(db)
+    return _run("purge", 600, go)
+
+
 @r.post("/tasks/proactive", include_in_schema=False)
 def task_proactive(x_task_token: str | None = Header(None)):
     """Every ten minutes. Housekeeping always; the morning pass only inside its hour, guarded by its own

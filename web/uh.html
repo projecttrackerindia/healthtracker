@@ -192,6 +192,9 @@ body.flat .spacer{height:118px}body.flat #gl,body.flat #labels,body.flat #lines{
 <script src="/a/three.9274bbce.js"></script>
 <script>
 "use strict";
+/* send crashes to the admin panel (Client errors), once per message per session */
+(()=>{const seen=new Set();const send=(m,st)=>{m=String(m||'').slice(0,300);if(!m||seen.has(m)||seen.size>20)return;seen.add(m);try{fetch('/api/v1/client-error',{method:'POST',headers:{'content-type':'application/json','x-tht':'1'},body:JSON.stringify({message:m,stack:String(st||'').slice(0,2000),page:'app2:'+location.pathname,version:'uh-p0'}),keepalive:true})}catch(_){}};
+ addEventListener('error',e=>send(e.message,e.error&&e.error.stack));addEventListener('unhandledrejection',e=>{const r=e.reason||{};if(r.status)return;send('Unhandled: '+(r.message||r),r.stack)})})();
 const ic=(p,c='currentColor',s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={sum:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',rec:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',pill:'<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/>',fam:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 1.8 6 5.5"/>',
 spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',check:'<path d="M5 12l5 5 9-10"/>',phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/>',chev:'<path d="M9 6l6 6-6 6"/>',baby:'<circle cx="12" cy="7" r="3.5"/><path d="M6 21c0-4 2.7-7 6-7s6 3 6 7"/>',heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',drop:'<path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/>',id:'<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="12" r="2.5"/><path d="M14 10h4M14 14h3"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
@@ -493,7 +496,7 @@ function openData(){page('Your data',`<div class="list" style="margin-top:14px">
  <div class="sect">DELETE</div><div class="list"><button class="li" style="color:#C4291C" onclick="deleteAccount()">Delete my account and data</button></div><p class="cap">Deleting removes your login, profile, reports and files. Hand over anyone you look after first. Under the DPDP Act you can also write to the Grievance Officer listed in the privacy policy.</p>`,'SETTINGS')}
 async function exportData(){const out={exported:new Date().toISOString(),people:[]};for(const p of ME.people){await loadRecords(p.id);out.people.push({...p,records:REC[p.id]})}
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='urban-health-export.json';a.click()}
-async function deleteAccount(){const pw=prompt('This cannot be undone. Type DELETE to confirm.');if(pw!=='DELETE')return;try{await API('/api/v1/auth/account/delete',{json:{confirm:true}});location.href='/'}catch(e){toast(e.message)}}
+async function deleteAccount(){const pw=prompt('This cannot be undone. Type DELETE to confirm.');if(pw!=='DELETE')return;try{await API('/api/v1/auth/account/delete',{json:{confirm:'DELETE'}});location.href='/'}catch(e){toast(e.message)}}
 async function signOut(){try{await API('/api/v1/auth/logout',{method:'POST'})}catch(_){}location.href='/app'}
 async function enablePush(){const ios=/iphone|ipad/i.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
  if(ios&&!standalone)return toast('On iPhone, add Urban Health to your Home Screen first, then turn reminders on from there.');
@@ -700,11 +703,24 @@ function authPage(mode){mode=mode||'signin';layer(`<div class="page" style="left
  ${mode==='signin'?'<button class="btn ghost" style="width:100%;margin-top:8px;color:var(--blue)" onclick="passkeyLogin()">Sign in with a passkey</button>':''}</div></div>`);
  $('#af').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=$('#ab');b.disabled=true;try{
   if(mode==='signin'){if(f.get('pw')){const r=await API('/api/v1/auth/password/login',{json:{id:f.get('id'),password:f.get('pw')}});if(r.step)return codePage('step',r);return boot()}
-   const r=await API('/api/v1/auth/otp/start',{json:{id:f.get('id'),purpose:'signin'}});if(r.firebase)return toast('Use your password or a passkey to sign in on this device');codePage('otp',r)}
+   const r=await API('/api/v1/auth/otp/start',{json:{id:f.get('id'),purpose:'signin'}});codePage('otp',r)}
   else{const r=await API('/api/v1/auth/signup/start',{json:{name:f.get('name'),phone:f.get('phone'),email:f.get('email'),password:f.get('pw'),terms:!!f.get('terms')}});codePage('signup',r)}}catch(err){toast(err.message)}finally{b.disabled=false}}}
-function codePage(kind,r){layer(`<div class="page" style="left:0"><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px"><h1 class="big">Enter the code</h1><p class="line">We sent a 6-digit code to ${esc(r.sentTo||'you')}.</p>
- <form id="cf"><input class="inp2" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="8" style="font-size:28px;letter-spacing:.3em;text-align:center;margin-top:18px" value="${esc(r.demo||'')}"><button class="btn pri" style="width:100%;margin-top:18px">Verify</button></form></div></div>`);
- $('#cf').onsubmit=async e=>{e.preventDefault();const code=new FormData(e.target).get('code').trim();try{const url={otp:'/api/v1/auth/otp/verify',step:'/api/v1/auth/step/verify',signup:'/api/v1/auth/signup/verify'}[kind];await API(url,{json:{flow:r.flow||r.step,code}});boot()}catch(err){toast(err.message)}}}
+/* Firebase Phone Authentication: when the server says {firebase:true}, Google sends the SMS and the browser hands back an ID token */
+let FBA=null,FBC=null;
+const loadJS=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load sign-in. Check your connection.'));document.head.appendChild(s)});
+async function fbSend(phone){const cfg=(await API('/api/v1/auth/config')).firebase;if(!cfg||!cfg.apiKey)throw new Error('Mobile codes are not set up yet. Use your password or email.');
+ if(!window.firebase){await loadJS('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');await loadJS('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js')}
+ if(!FBA){firebase.initializeApp(cfg);FBA=firebase.auth();FBA.useDeviceLanguage()}
+ if(!window.__rv){let d=$('#fbcap');if(!d){d=document.createElement('div');d.id='fbcap';document.body.appendChild(d)}window.__rv=new firebase.auth.RecaptchaVerifier('fbcap',{size:'invisible'})}
+ FBC=await FBA.signInWithPhoneNumber(phone,window.__rv)}
+async function fbToken(code){const r=await FBC.confirm(code);const t=await r.user.getIdToken();try{await FBA.signOut()}catch(_){}return t}
+async function codePage(kind,r){if(r.firebase){toast('Sending a code to '+(r.sentTo||r.phone)+'…');try{await fbSend(r.phone)}catch(e){return toast(e.message||'Could not send the code')}}
+ layer(`<div class="page" style="left:0"><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px"><h1 class="big">Enter the code</h1><p class="line">We sent a 6-digit code to ${esc(r.sentTo||r.phone||'you')}.</p>
+ <form id="cf"><input class="inp2" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="8" style="font-size:28px;letter-spacing:.3em;text-align:center;margin-top:18px" value="${esc(r.demo||'')}"><button class="btn pri" style="width:100%;margin-top:18px" id="cfb">Verify</button></form>
+ <button class="btn ghost" style="width:100%;margin-top:8px;color:var(--blue)" onclick="authPage()">Start again</button></div></div>`);
+ $('#cf').onsubmit=async e=>{e.preventDefault();const code=new FormData(e.target).get('code').trim(),b=$('#cfb');b.disabled=true;try{const url={otp:'/api/v1/auth/otp/verify',step:'/api/v1/auth/step/verify',signup:'/api/v1/auth/signup/verify'}[kind];
+  const body={flow:r.flow||r.step};if(r.firebase){try{body.firebaseToken=await fbToken(code)}catch(_){throw new Error('That code is not right. Check it and try again.')}}else body.code=code;
+  const out=await API(url,{json:body});if(out&&out.step&&kind!=='step')return codePage('step',out);boot()}catch(err){b.disabled=false;toast(err.message)}}}
 async function passkeyLogin(){try{const o=await API('/api/v1/auth/passkey/login/options',{json:{}});const opt=o.options||o;opt.challenge=ub64(opt.challenge);(opt.allowCredentials||[]).forEach(c=>c.id=ub64(c.id));
  const c=await navigator.credentials.get({publicKey:opt});const res={id:c.id,rawId:b64u(c.rawId),type:c.type,response:{clientDataJSON:b64u(c.response.clientDataJSON),authenticatorData:b64u(c.response.authenticatorData),signature:b64u(c.response.signature),userHandle:c.response.userHandle?b64u(c.response.userHandle):null}};
  await API('/api/v1/auth/passkey/login/verify',{json:{credential:res,...(o.flow?{flow:o.flow}:{})}});boot()}catch(e){toast(e.message||'Passkey sign-in failed')}}

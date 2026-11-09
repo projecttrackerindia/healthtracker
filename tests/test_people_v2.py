@@ -266,3 +266,37 @@ def test_inbox_is_per_person_and_per_account(monkeypatch):
     assert "Amma's test booked" in [x["title"] for x in pr.get("/api/v2/inbox").json()["items"]]
     with session() as db:
         db.query(PushSub).filter(PushSub.user_id.in_([pr.uid, si.uid])).delete()
+
+
+def test_delete_account_removes_everything_and_protects_dependents():
+    from api.db import session
+    from api.models import HealthRecord, Person, StoredFile
+    pr, si, amma = family()
+    r = si.post(f"/api/v2/people/{si.pid}/reports", files={"file": ("cbc.pdf", b"%PDF-1.4 x", "application/pdf")}, data={"read": "0"})
+    assert r.status_code == 200
+    assert si.post("/api/v1/auth/account/delete", json={"confirm": "DELETE"}).status_code == 200
+    with session() as db:
+        assert db.get(Person, si.pid) is None
+        assert not db.query(HealthRecord).filter(HealthRecord.person_id == si.pid).count()
+        assert not db.query(StoredFile).filter(StoredFile.household_id == si.pid).count()
+    # Prasanna is Amma's only guardian but no other adult remains: deleting takes Amma's records too
+    pr2, si2, amma2 = family()
+    assert pr2.post(f"/api/v2/people/{amma2}/guardians", json={"user_id": si2.uid}).status_code == 200
+    assert pr2.post("/api/v1/auth/account/delete", json={"confirm": "DELETE"}).status_code == 200
+    assert si2.get(f"/api/v2/people/{amma2}").json()["access"] == "guardian"     # Amma stays with Sita
+    pr3, si3, amma3 = family()
+    assert pr3.post("/api/v1/auth/account/delete", json={"confirm": "DELETE"}).status_code == 409   # Sita could take over: hand over first
+
+
+def test_purge_removes_dependents_after_30_days():
+    from api import people
+    from api.db import session
+    from api.models import Person
+    pr, si, amma = family()
+    assert pr.delete(f"/api/v2/people/{amma}").status_code == 200
+    with session() as db:
+        db.get(Person, amma).removed -= 31 * 86400
+        db.flush()
+        people.purge(db)
+    with session() as db:
+        assert db.get(Person, amma) is None

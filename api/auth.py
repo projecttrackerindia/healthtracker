@@ -853,6 +853,8 @@ def account_delete(body: DeleteAccount, request: Request, response: Response, db
     if body.confirm.strip().upper() != "DELETE":
         raise HTTPException(400, 'Type DELETE to confirm.')
     from .models import Household, HouseholdState, Invite
+    from .people import delete_user_data
+    delete_user_data(db, u)          # per-person profile, records and files; 409 if a dependent would be left alone
     if u.household_id:
         h = db.get(Household, u.household_id)
         if h:  # orders and invoices stay for pharmacy and tax law, without personal details
