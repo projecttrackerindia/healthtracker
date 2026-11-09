@@ -376,7 +376,7 @@ def masked(kind: str, v: str) -> str:
 def config(request: Request):
     host, origin = rp(request)
     return {"passkeys": True, "email": messaging.email_ready(), "sms": messaging.sms_ready(), "demo": messaging.demo(), "rpId": host,
-            "policy": {"min": 12, "max": 128}, "firebase": messaging.firebase_web_config()}
+            "policy": {"min": 12, "max": 128}, "firebase": messaging.firebase_web_config(), "google": os.getenv("GOOGLE_CLIENT_ID", "") or None}
 
 
 @r.get("/me")
@@ -877,3 +877,57 @@ def account_delete(body: DeleteAccount, request: Request, response: Response, db
     db.delete(u)
     response.delete_cookie(COOKIE, path="/")
     return {"deleted": True}
+
+
+# ---- Sign in with Google ----------------------------------------------------------------------------------------------
+class GoogleIn(BaseModel):
+    credential: str
+    terms: bool = False
+
+
+def google_claims(credential: str) -> dict:
+    """Check a Google Identity Services ID token with Google and return its claims, or {} when it is not for us."""
+    import json
+    import urllib.parse
+    import urllib.request
+    cid = os.getenv("GOOGLE_CLIENT_ID", "")
+    if not cid or not credential or len(credential) > 4096:
+        return {}
+    try:
+        with urllib.request.urlopen("https://oauth2.googleapis.com/tokeninfo?" + urllib.parse.urlencode({"id_token": credential}), timeout=8) as r:
+            c = json.loads(r.read().decode())
+    except Exception:
+        return {}
+    if c.get("aud") != cid or c.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
+        return {}
+    if str(c.get("email_verified")).lower() != "true" or int(c.get("exp", 0)) < now():
+        return {}
+    return c
+
+
+@r.post("/google", dependencies=[Depends(csrf)])
+def google_signin(body: GoogleIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    """One tap: an existing account with this Gmail signs in; a new one is created (terms required). Google has already
+    verified the address, so it counts as a verified email. A mobile number is asked for during setup."""
+    limit(request, "google", 20, 600)
+    if not os.getenv("GOOGLE_CLIENT_ID"):
+        raise HTTPException(503, "Google sign-in is not set up on this server yet.")
+    c = google_claims(body.credential)
+    if not c:
+        raise HTTPException(400, "Google could not confirm this account. Try again.")
+    email = c["email"].strip().lower()
+    u = db.scalar(select(User).where(User.email == email))
+    new = False
+    if u:
+        if u.disabled:
+            raise HTTPException(403, "This account is disabled. Contact support.")
+        u.email_verified = True
+    else:
+        if not body.terms:
+            raise HTTPException(400, "Please agree to the Terms and Privacy Policy to create your account.")
+        u = User(name=(c.get("name") or email.split("@")[0])[:80], email=email, email_verified=True)
+        db.add(u)
+        db.flush()
+        new = True
+    out = start_session(request, response, db, u, "google")
+    return {**out, "new": new}

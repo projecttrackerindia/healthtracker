@@ -5,6 +5,8 @@
 #   bash deploy/vm/set-keys.sh vapid           # phone notifications (generated here, nothing to paste)
 #   bash deploy/vm/set-keys.sh maps            # Google Maps browser key (live tracking, SOS map)
 #   bash deploy/vm/set-keys.sh firebase        # mobile number sign-in codes via Firebase
+#   bash deploy/vm/set-keys.sh google          # "Continue with Google" sign-in button
+#   bash deploy/vm/set-keys.sh msg91           # SOS SMS without a tap (after DLT registration)
 #   bash deploy/vm/set-keys.sh datakey         # checks DATA_KEY exists; creates it only if it never existed
 #
 # Keys are never printed, never written to the repo, and never sent anywhere but Secret Manager.
@@ -60,6 +62,28 @@ firebase() {
   echo "  (Firebase becomes the SMS channel automatically once FIREBASE_WEB_API_KEY is set, unless MSG91 keys are added later.)"
 }
 
+msg91() {
+  echo "SOS text messages that leave without a tap (MSG91, after DLT registration)"
+  echo "  1. Register your entity and a header (e.g. URBHLT) on a DLT portal (Jio, Vodafone Idea, Airtel). Takes a few days."
+  echo "  2. Register the SOS template there, then in MSG91 → Flows create a flow using it and note its Flow ID."
+  echo "  Note: once MSG91_AUTH_KEY and MSG91_TEMPLATE_ID are set, sign-in codes also go by MSG91 instead of Firebase."
+  for n in MSG91_AUTH_KEY MSG91_SOS_FLOW_ID MSG91_TEMPLATE_ID; do
+    if has "$n"; then echo "  ✓ $n already set"; continue; fi
+    v=$(ask "$n (Enter to skip)"); [[ -n "$v" ]] && { put "$n" "$v"; CHANGED=1; } || echo "  skipped $n"
+  done
+}
+
+google() {
+  echo "Sign in with Google"
+  echo "  Console → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application."
+  echo "  Authorised JavaScript origins: https://urbanhealth.in and https://www.urbanhealth.in (no redirect URIs needed)."
+  echo "  OAuth consent screen: app name Urban Health, your logo, support email, and the privacy/terms links."
+  if has GOOGLE_CLIENT_ID; then echo "  ✓ GOOGLE_CLIENT_ID already set"; return; fi
+  read -r -p "  Paste the Client ID (ends with .apps.googleusercontent.com): " v
+  [[ "$v" == *.apps.googleusercontent.com ]] || { echo "  that does not look like a Google client ID — skipped"; return; }
+  put GOOGLE_CLIENT_ID "$v"; CHANGED=1
+}
+
 datakey() {
   echo "Health data encryption key"
   if has DATA_KEY; then echo "  ✓ DATA_KEY is set. Never change it: records encrypted with it could not be read again."; return; fi
@@ -71,9 +95,9 @@ datakey() {
 }
 
 case "${1:-all}" in
-  vapid) vapid ;; maps) maps ;; firebase) firebase ;; datakey) datakey ;;
-  all) datakey; vapid; maps; firebase ;;
-  *) echo "usage: $0 [vapid|maps|firebase|datakey]"; exit 2 ;;
+  vapid) vapid ;; maps) maps ;; firebase) firebase ;; google) google ;; msg91) msg91 ;; datakey) datakey ;;
+  all) datakey; vapid; maps; firebase; google ;;
+  *) echo "usage: $0 [vapid|maps|firebase|google|msg91|datakey]"; exit 2 ;;
 esac
 
 if [[ "$CHANGED" == 1 ]]; then

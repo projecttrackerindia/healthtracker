@@ -300,3 +300,26 @@ def test_purge_removes_dependents_after_30_days():
         people.purge(db)
     with session() as db:
         assert db.get(Person, amma) is None
+
+
+def test_google_signin_creates_then_signs_in(monkeypatch):
+    from api import auth
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "x.apps.googleusercontent.com")
+    em = f"g{uuid.uuid4().hex[:8]}@gmail.com"
+    monkeypatch.setattr(auth, "google_claims", lambda c: {"email": em, "name": "Gita", "email_verified": "true"} if c == "good" else {})
+    c = TestClient(server.app)
+    c.__enter__()
+    c.headers.update(H)
+    assert c.get("/api/v1/auth/config").json()["google"] == "x.apps.googleusercontent.com"
+    assert c.post("/api/v1/auth/google", json={"credential": "bad", "terms": True}).status_code == 400
+    assert c.post("/api/v1/auth/google", json={"credential": "good"}).status_code == 400          # new account needs the terms
+    r = c.post("/api/v1/auth/google", json={"credential": "good", "terms": True})
+    assert r.status_code == 200 and r.json()["new"] is True
+    assert c.get("/api/v2/me").json()["user"]["email"] == em
+    c2 = TestClient(server.app)
+    c2.__enter__()
+    c2.headers.update(H)
+    r = c2.post("/api/v1/auth/google", json={"credential": "good"})                                 # existing: no terms needed
+    assert r.status_code == 200 and r.json()["new"] is False
+    monkeypatch.delenv("GOOGLE_CLIENT_ID")
+    assert c2.post("/api/v1/auth/google", json={"credential": "good"}).status_code == 503
