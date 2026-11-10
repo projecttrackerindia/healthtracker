@@ -1013,6 +1013,19 @@ class HouseholdInvite(Base):
     rel_ok: Mapped[int] = mapped_column(Integer, default=0)             # the joiner confirmed the relation
 
 
+class DoctorShare(Base):
+    """A time-limited page for a doctor: chosen reports, trends, medicines and the Medical ID of one person."""
+    __tablename__ = "doctor_shares"
+    token: Mapped[str] = mapped_column(String(48), primary_key=True)
+    person_id: Mapped[str] = mapped_column(String(32), index=True)
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    scope: Mapped[dict] = mapped_column(JSON, default=dict)
+    expires: Mapped[int] = mapped_column(Integer)
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+
+
 class SecurityEvent(Base):
     """Sign-ins, wrong passwords, lockouts, contact changes. Kept 400 days (CERT-In asks for 180). No health data."""
     __tablename__ = "security_events"

@@ -144,3 +144,33 @@ def test_lockout_events_and_ops():
     assert c.post("/api/v2/client-error", json={"where": "uh.html:12", "message": "TypeError x for a@b.com"}).status_code == 204
     assert c.post("/api/v2/usage", json={"screen": "records"}).status_code == 204
     assert c.post("/api/v2/usage", json={"screen": "<script>"}).status_code == 204
+
+
+def test_doctor_share_summary_refill_and_family_nudge():
+    import datetime as dt
+    from tests.test_people_v2 import TestClient, server
+    c = person("Meena")
+    c.post(f"/api/v2/people/{c.pid}/records", json={"kind": "report", "day": "2026-09-01", "data": {"title": "Sugar", "findings": [{"test": "HbA1c", "value": "6.4", "unit": "%", "flag": "high"}]}})
+    c.post(f"/api/v2/people/{c.pid}/records", json={"kind": "report", "day": "2026-11-01", "data": {"title": "Sugar", "lab": "Vijaya", "findings": [{"test": "HbA1c", "value": "5.9", "unit": "%", "flag": "normal"}]}})
+    m = c.post(f"/api/v2/people/{c.pid}/records", json={"kind": "med", "data": {"name": "Metformin 500", "times": ["08:00", "20:00"], "stock": 6, "stockDay": (dt.date.today() - dt.timedelta(days=1)).isoformat()}}).json()
+    s = c.post(f"/api/v2/people/{c.pid}/doctor-share", json={"hours": 24}).json()
+    tok = s["url"].rsplit("/", 1)[1]
+    anon = TestClient(server.app); anon.__enter__()
+    page = anon.get(f"/s/{tok}")
+    assert page.status_code == 200 and "Meena" in page.text and "6.4 → 5.9" in page.text and "Metformin" in page.text and "noindex" in page.headers.get("x-robots-tag", "")
+    assert c.get(f"/api/v2/doctor-shares/{s['token']}/qr.svg").headers["content-type"].startswith("image/svg")
+    assert c.get(f"/api/v2/people/{c.pid}/doctor-shares").json()[0]["views"] == 1
+    assert c.delete(f"/api/v2/doctor-shares/{s['token']}").status_code == 200
+    assert anon.get(f"/s/{tok}").status_code == 404
+    assert "Visit summary" in c.get(f"/api/v2/people/{c.pid}/summary").text
+    assert anon.get(f"/api/v2/people/{c.pid}/summary").status_code == 401
+    # 9 a.m.: refill notice (6 tablets, 2 a day, started yesterday → 2 days left)
+    from api import reminders
+    from api.db import SessionLocal
+    from api.models import Notice, ReminderSent
+    from datetime import datetime
+    with SessionLocal() as db:
+        db.add(ReminderSent(key=f"v2:{c.pid}:{dt.date.today().isoformat()}:08:00:missed")); db.add(ReminderSent(key=f"v2:{c.pid}:{(dt.date.today()-dt.timedelta(days=1)).isoformat()}:20:00:missed")); db.commit()
+        reminders.daily_people(db, datetime.now(reminders.IST).replace(hour=9, minute=5)); db.commit()
+        titles = [n.title for n in db.query(Notice).all()]
+    assert any("Metformin 500 runs out in 2 days" in t for t in titles)

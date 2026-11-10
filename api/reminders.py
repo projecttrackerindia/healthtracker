@@ -76,9 +76,15 @@ def refill_text(items: list[dict]) -> str:
 
 
 def tick(now_dt: datetime | None = None) -> int:
+    now_dt = now_dt or datetime.now(IST)
+    try:
+        with session() as db:
+            daily_people(db, now_dt)
+            db.commit()
+    except Exception as e:  # a daily check must never stop the dose reminders
+        print("[reminders] daily:", type(e).__name__, str(e)[:120], flush=True)
     if not PUSH.ready():
         return 0
-    now_dt = now_dt or datetime.now(IST)
     day = now_dt.strftime("%Y-%m-%d")
     minute = now_dt.hour * 60 + now_dt.minute
     sent = 0
@@ -235,6 +241,58 @@ def tick_people(db, now_dt: datetime) -> int:
                         else:
                             s.failures += 1
     return sent
+
+
+def daily_people(db, now_dt: datetime) -> int:
+    """Once a day (9 a.m. IST): medicines running out within 5 days, and a gentle note to family members who can
+    see the medicines when someone has missed two or more doses since yesterday morning. In-app notice + push."""
+    from .inbox import notify
+    from .models import Grant, Guardian, HealthRecord, Person
+    if not (9 * 60 <= now_dt.hour * 60 + now_dt.minute < 10 * 60):
+        return 0
+    day = now_dt.strftime("%Y-%m-%d")
+    yday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+    done = 0
+    meds: dict[str, list] = {}
+    for x in db.scalars(select(HealthRecord).where(HealthRecord.kind == "med")).all():
+        meds.setdefault(x.person_id, []).append(x)
+    for pid, rows in meds.items():
+        p = db.get(Person, pid)
+        if not p or p.removed:
+            continue
+        first = (p.name or "").split(" ")[0]
+        # refill
+        for x in rows:
+            try:
+                m = decrypt(x.blob)
+            except Exception:
+                continue
+            if m.get("active") is False or not m.get("stock") or not m.get("stockDay"):
+                continue
+            per = max(1, len(m.get("times") or []) or 1)
+            try:
+                gone = (now_dt.date() - datetime.fromisoformat(m["stockDay"]).date()).days * per
+                left_days = (float(m["stock"]) - gone) / per
+            except Exception:
+                continue
+            key = f"refill:{x.id}:{m['stockDay']}"
+            if left_days <= 5 and not db.get(ReminderSent, key):
+                db.add(ReminderSent(key=key))
+                left = max(0, int(left_days))
+                notify(db, p.household_id, "meds", f"{m.get('name')} {'runs out today' if left == 0 else f'runs out in {left} day' + ('s' if left != 1 else '')}",
+                       "Reorder now so there is no gap.", {"person": pid, "med": x.id}, member_id=pid, url="/app/meds")
+                done += 1
+        # two or more missed doses since yesterday → tell the people allowed to see the medicines
+        missed = db.query(ReminderSent).filter(ReminderSent.key.like(f"v2:{pid}:{yday}:%:missed") | ReminderSent.key.like(f"v2:{pid}:{day}:%:missed")).count()
+        key = f"family:{pid}:{day}"
+        if missed >= 2 and not db.get(ReminderSent, key):
+            db.add(ReminderSent(key=key))
+            fam = [g.user_id for g in db.scalars(select(Grant).where(Grant.person_id == pid, Grant.level == "all"))]
+            fam += list(db.scalars(select(Guardian.user_id).where(Guardian.person_id == pid)))
+            for uid in set(fam) - {p.owner_user}:
+                notify(db, p.household_id, "meds", f"{first} missed {missed} doses since yesterday", "A gentle call might help. Nothing else is shared.", {"person": pid}, member_id=pid, url="/app/meds", to_user=uid)
+                done += 1
+    return done
 
 
 def start() -> None:

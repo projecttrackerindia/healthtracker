@@ -110,7 +110,9 @@ def _init_db():
 
 app.include_router(public_api.r)
 from api import ops as _ops  # noqa: E402
+from api import share2 as _share2  # noqa: E402
 app.include_router(_ops.r)
+app.include_router(_share2.r)
 app.include_router(auth_api.r)
 app.include_router(family_api.r)
 app.include_router(more_api.r)
@@ -360,7 +362,7 @@ def landing(request: Request, token: str = ""):
 # relying on it. The sitemap is generated rather than written by hand so a new public page cannot be forgotten here.
 PUBLIC_PAGES = ("/", "/privacy", "/terms")
 CRAWL_BLOCKED = ("/app", "/partner", "/admin", "/counter", "/tech", "/api/", "/signin", "/signup",
-                 "/reset", "/join/", "/d/", "/healthz")
+                 "/reset", "/join/", "/d/", "/s/", "/healthz")
 
 
 def _origin(request: Request) -> str:
@@ -444,6 +446,14 @@ def legal_page(request: Request):
     for k, v in LEGAL.items():
         s = s.replace("{{" + k + "}}", _html.escape(v))
     return Response(s, media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache"})
+
+
+@app.api_route("/s/{token}", methods=["GET", "HEAD"], include_in_schema=False)
+def doctor_share(token: str):
+    """A person's health summary shared with a doctor; the link ends by itself."""
+    from api.db import session as _session
+    with _session() as db:
+        return _share2.public(token, db)
 
 
 @app.api_route("/d/{token}", methods=["GET", "HEAD"], include_in_schema=False)
