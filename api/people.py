@@ -908,6 +908,13 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
             reading = ai.analyze("prescription" if doc == "prescription" else "report", data, mime, "", {"age": age(pr.get("dob", "")), "sex": pr.get("sex", ""), "allergies": pr.get("allergies", ""), "pregnant": bool(preg and preg.get("stage") == "pregnant")})
         except Exception as e:                            # the file is safe in storage; the person can enter values by hand
             reading = {"engine": "none", "warnings": ["The report was saved but could not be read automatically. Add the values yourself."], "error": type(e).__name__}
+    if reading.get("not_medical") and not reading.get("findings") and not reading.get("medicines"):
+        from .models import StoredFile
+        f0 = db.get(StoredFile, (p.id, fid))
+        if f0:
+            db.delete(f0)
+        db.commit()
+        raise HTTPException(422, "This doesn't look like a medical report or prescription, so it was not saved.")
     first = (reading.get("findings") or [{}])[0] if reading.get("findings") else {}
     stem = re.sub(r"[_-]+", " ", (file.filename or "").rsplit(".", 1)[0]).strip()
     generic = not stem or re.fullmatch(r"(?i)(img|image|scan|document|doc|photo|pxl|file|report|download)?[\s\d()]*", stem)
@@ -921,6 +928,9 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     rec.update({"patient": reading.get("patient") or {}, "lab": reading.get("lab", ""), "recheck": reading.get("recheck", []),
                 "doctorPhone": reading.get("doctor_phone", "")})
     rec["patient"].update({k: v for k, v in _patient_from_text(reading).items() if not rec["patient"].get(k)})
+    for f in rec["findings"]:
+        f["sure"] = f.get("sure") is not False
+    rec["unreadable"] = reading.get("readable") is False or (read == "1" and reading.get("engine") == "none")
     rec["suggest"] = suggestions(db, p, rec, reading)
     rec["compare"] = compare_findings(db, p.id, rec["findings"], rec["date"] or _dt.date.today().isoformat())
     rec["other"] = other_person(db, u, p, rec["patient"])
@@ -928,10 +938,73 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
         rec["medChanges"] = med_changes(db, p.id, rec["medicines"])
     flagged = [f for f in rec["findings"] if (f.get("flag") or "normal") not in ("normal", "unknown")]
     _note(db, p.household_id, "report", f"{p.name}: {rec['title']} read" if p.owner_user != u.id else f"Your {rec['title']} is read",
-          (_compare_line(rec["compare"]) or (f"{len(flagged)} result{'s' if len(flagged) != 1 else ''} worth discussing" if flagged else "Results are in range")) if rec["findings"] else "Saved. Add the values if needed.",
+          ("Couldn't read it clearly. Retake the photo in good light." if rec["unreadable"] and not rec["findings"] else
+           (_compare_line(rec["compare"]) or (f"{len(flagged)} value{'s' if len(flagged) != 1 else ''} need attention" if flagged else "Everything is in range"))
+           + (f" · check {sum(1 for f in rec['findings'] if not f['sure'])} value(s) we weren't sure of" if any(not f["sure"] for f in rec["findings"]) else "")) if rec["findings"] or rec["unreadable"] else "Saved. Add the values if needed.",
           {"person": p.id}, member_id=p.id)
     x = HealthRecord(person_id=p.id, kind="report", blob=encrypt(rec), file_id=fid, day=(rec["date"] or "")[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", rec["date"] or "") else _dt.date.today().isoformat(), by_user=u.id)
     db.add(x)
+    db.flush()
+    index_record(db, x, rec)
+    db.commit()
+    return rec_json(x)
+
+
+def flag_from_ref(value, ref: str, old: str) -> str:
+    """Re-decide high / low / normal after a person corrects a number, using the lab's own printed range."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return old or "unknown"
+    t = (ref or "").replace(",", "").replace("–", "-").replace(" to ", "-")
+    m = re.search(r"(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)", t)
+    if m:
+        lo, hi = float(m.group(1)), float(m.group(2))
+        return "low" if v < lo else "high" if v > hi else "normal"
+    m = re.search(r"(<|≤|up to|upto|below)\s*(\d+(?:\.\d+)?)", t, re.I)
+    if m:
+        return "high" if v > float(m.group(2)) else "normal"
+    m = re.search(r"(>|≥|above)\s*(\d+(?:\.\d+)?)", t, re.I)
+    if m:
+        return "low" if v < float(m.group(2)) else "normal"
+    return old or "unknown"
+
+
+class FindingFix(BaseModel):
+    i: int
+    value: str | float | None = None   # None = "the value we read is right"
+
+
+@r.post("/records/{rid}/finding")
+def fix_finding(rid: str, body: FindingFix, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    x = db.get(HealthRecord, rid)
+    if not x or x.kind != "report":
+        raise HTTPException(404, "Not found")
+    p, a = person_or_404(db, u, x.person_id)
+    if not a.writer:
+        raise HTTPException(403, "Only they can change this report")
+    rec = decrypt(x.blob)
+    fs = rec.get("findings") or []
+    if not 0 <= body.i < len(fs):
+        raise HTTPException(400, "No such value")
+    f = fs[body.i]
+    if body.value is not None and str(body.value).strip() != "":
+        raw = str(body.value).strip().replace(",", "")
+        if len(raw) > 20 or not re.fullmatch(r"-?\d+(\.\d+)?|[A-Za-z +/-]{1,20}", raw):
+            raise HTTPException(400, "Enter the number exactly as printed, e.g. 7.2")
+        try:
+            num = float(raw)
+            if num < 0 or num > 1_000_000:
+                raise HTTPException(400, "That number is out of range for a lab value")
+            f["value"] = num
+        except ValueError:
+            f["value"] = raw
+        f["flag"] = flag_from_ref(f["value"], f.get("ref", ""), f.get("flag", ""))
+        f["edited"] = True
+    f["sure"] = True
+    rec["checked"] = all(z.get("sure", True) for z in fs)
+    rec["compare"] = compare_findings(db, p.id, fs, rec.get("date") or x.day)
+    x.blob = encrypt(rec)
     db.flush()
     index_record(db, x, rec)
     db.commit()

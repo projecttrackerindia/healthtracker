@@ -203,8 +203,10 @@ def tick_people(db, now_dt: datetime) -> int:
                 m = decrypt(x.blob)
             except Exception:
                 continue
-            if m.get("active") is False:
-                continue
+            if m.get("active") is False or (m.get("until") and str(m["until"]) < str(day)):
+                continue   # a finished course stops reminding by itself
+            if m.get("weekly") is not None and _dt_weekday(day) != int(m["weekly"]):
+                continue   # once-a-week medicines remind on their own day only
             for t in m.get("times") or []:
                 if (x.id, t) not in taken:
                     at_time.setdefault(t, []).append(m.get("name") or "medicine")
@@ -267,7 +269,7 @@ def daily_people(db, now_dt: datetime) -> int:
                 m = decrypt(x.blob)
             except Exception:
                 continue
-            if m.get("active") is False or not m.get("stock") or not m.get("stockDay"):
+            if m.get("active") is False or not m.get("stock") or not m.get("stockDay") or m.get("until"):   # a fixed course is not refilled
                 continue
             per = max(1, len(m.get("times") or []) or 1)
             try:
@@ -315,3 +317,9 @@ def start() -> None:
 
     threading.Thread(target=loop, name="reminders", daemon=True).start()
     print("[reminders] server-side reminders on", flush=True)
+
+
+def _dt_weekday(day: str) -> int:
+    """0 = Sunday … 6 = Saturday, the way the app stores a weekly medicine's day."""
+    import datetime as _d
+    return (_d.date.fromisoformat(str(day)[:10]).weekday() + 1) % 7

@@ -174,3 +174,12 @@ def test_doctor_share_summary_refill_and_family_nudge():
         reminders.daily_people(db, datetime.now(reminders.IST).replace(hour=9, minute=5)); db.commit()
         titles = [n.title for n in db.query(Notice).all()]
     assert any("Metformin 500 runs out in 2 days" in t for t in titles)
+
+
+def test_after_upload_fix_value_and_flags():
+    from api.people import flag_from_ref
+    assert flag_from_ref(7.2, "4.0 - 5.6", "") == "high"
+    assert flag_from_ref(5.0, "4.0–5.6", "") == "normal"
+    assert flag_from_ref(250, "< 200", "") == "high"
+    assert flag_from_ref(20, "> 30", "") == "low"
+    assert flag_from_ref("abc", "", "high") == "high"
