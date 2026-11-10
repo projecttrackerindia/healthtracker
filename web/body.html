@@ -555,12 +555,14 @@ async function swap(sex){$('#load').style.display='block';STATE.sex=sex;SET=awai
 async function detail(){const want=U.hd||(!(navigator.connection||{}).saveData&&(navigator.connection||{}).type==='wifi');if(want===!!STATE.hd||!SRC[STATE.sex].hd){if(MODE==='settings')mode('settings');return}
  STATE.hd=want;await swap(STATE.sex);mode(MODE)}
 /* ---- 8 · search, quiz, cross-section, hologram ---- */
-function mSearch(){shape();CAM(10.5,1.0,-.2);head(who()+' · '+T('body').toUpperCase(),T('search'),'');
+let ONTO=null;function onto(){if(ONTO)return Promise.resolve(ONTO);return fetch('/a/onto.df440074.json').then(r=>r.json()).then(j=>(ONTO=j)).catch(()=>(ONTO={}))}
+function ontoOf(nm){const o=ONTO||{};const c=clean(nm).toLowerCase();return o[c]||o[c.replace(/^(left|right) /,'')]||null}
+function mSearch(){onto();shape();CAM(10.5,1.0,-.2);head(who()+' · '+T('body').toUpperCase(),T('search'),'');
  $('#extra').innerHTML=`<div class="srch glass" style="pointer-events:auto"><span>⌕</span><input id="q" placeholder="Heart, femur, vagus nerve…" autocomplete="off" style="flex:1;border:0;background:none;font:inherit;outline:0"></div><div class="res glass" id="res" style="pointer-events:auto;display:none"></div>`;
- const q=$('#q');q.focus();q.oninput=()=>{const s=q.value.trim().toLowerCase();const r=$('#res');if(s.length<2){r.style.display='none';return}const hits=[];SET.names.forEach((n,k)=>{if(n.toLowerCase().includes(s)&&hits.length<6&&!hits.some(h=>clean(SET.names[h])===clean(n)))hits.push(k)});
+ const q=$('#q');q.focus();q.oninput=()=>{const s=q.value.trim().toLowerCase();const r=$('#res');if(s.length<2){r.style.display='none';return}const hits=[];SET.names.forEach((n,k)=>{const oo=ontoOf(n);if((n.toLowerCase().includes(s)||(oo&&oo[1]&&oo[1].some(y=>y.toLowerCase().includes(s))))&&hits.length<6&&!hits.some(h=>clean(SET.names[h])===clean(n)))hits.push(k)});
   r.style.display=hits.length?'':'none';r.innerHTML=hits.map(k=>`<div onclick="findPart(${k})">${esc(clean(SET.names[k]))} · ${esc(infoP(SET.meta.parts[k],SET.names[k])[0])}</div>`).join('')}}
 function findPart(k){const p=SET.meta.parts[k],l=p.l??1;const key=(LAYERS.find(x=>x[2]===l)||LAYERS[0])[0];setLayer(key);clearGlows();const nm=SET.names[k];glow(new RegExp('^'+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$'),0x0A84FF,l,1);$('#res').style.display='none';
- const [sys,desc]=infoP(p,nm);sheet(`<div class="cn">${esc(clean(nm))}</div><div class="eb" style="margin:2px 0 0">${esc(sys)}</div><p class="cd">${esc(cap(desc.replace(/^[^:]+:\s*/,'')))}</p>`);
+ const [sys,desc]=infoP(p,nm);sheet(`<div class="cn">${esc(clean(nm))}</div><div class="eb" style="margin:2px 0 0">${esc(sys)}</div><p class="cd">${esc(cap(desc.replace(/^[^:]+:\s*/,'')))}</p>${(()=>{const o=ontoOf(nm);return o?`${o[0]?`<p class="cd" style="opacity:.75">${esc(cap(o[0]))}</p>`:''}${o[1]&&o[1].length?`<div class="eb">Also called · ${esc(o[1].slice(0,3).join(', '))}</div>`:''}`:''})()}`);
  const c=new THREE.Box3().setFromBufferAttribute(new THREE.BufferAttribute(partPos(SET,p),3)).getCenter(new THREE.Vector3());goalY=c.y*.8+.4;goalZ=Math.max(6.5,HOME.z*.62)}
 const QUIZ=[['the organ that makes insulin','pancreas'],['the organ that filters blood to make urine','kidney'],['the organ that makes bile','liver'],['the organ that pumps blood','heart'],['where food is mixed with acid','stomach'],['the gland in the neck that sets your metabolism','thyroid'],['the organs where oxygen enters the blood','lung'],['the organ that stores urine','bladder']];
 let QZ=null;
@@ -718,7 +720,7 @@ function exGo(k){EX.clear();clearGlows();tags([]);closeCard();LAYK=k;subLayers()
  if(k==='skinx'){const g=SKINX();g.scale.setScalar(2.4);g.rotation.set(.35,-.6,0);EX.G.add(g);const c=new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3());g.position.sub(c);CAM(17,0);line='Draft model. Outer skin, dermis with hair roots, oil and sweat glands, vessels and a nerve; fat underneath.'}
  if(k==='hair'){skinSolid();EX.hair();const c=EX.boxOf(/frontal bone|parietal bone|mandible/i);if(c)CAM(4,c.getCenter(new THREE.Vector3()).y*body.scale.y+body.position.y,.5);line='Draft model.'}
  EX.show();const t=(EXTRA.find(e=>e[0]===k)||[])[1];head(who()+' · BODY SYSTEMS',t+(/^(skinx|hair)$/.test(k)?' · draft':''),'');$('#ln').textContent=line}
-function mCredits(){shape();head(who()+' · BODY','Credits','');sheet(`<div class="cd" style="margin-top:0;line-height:1.5">
+function mCredits(){shape();head(who()+' · BODY','Credits','');sheet(`<div class="cd" style="margin-top:0;line-height:1.5">Part descriptions and other names: Uberon anatomy ontology (CC BY 3.0).<br>
  <p><b>Body, bones, muscles, vessels, nerves, organs and lymph nodes</b>: Z-Anatomy, based on BodyParts3D © The Database Center for Life Science (DBCLS), licensed CC BY-SA. Changed by Urban Health: shaped to your height and weight, recoloured, simplified for phones.</p>
  <p><b>Female body</b>: HuBMAP Human Reference Atlas 3D reference objects, CC BY 4.0.</p>
  <p><b>Lymph vessels, thoracic duct, fat, fascia, chest detail, skin layers</b>: built by Urban Health on the models above, shared under the same CC BY-SA licence.</p>

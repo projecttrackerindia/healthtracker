@@ -44,10 +44,12 @@ def render(db: Session, p: Person, scope: dict, note: str) -> str:
     meds = [m for m in meds if m.get("active") is not False]
     # every numeric test across the chosen reports, oldest to newest, for the trend table
     trend: dict[str, list] = {}
-    for x in sorted(reports, key=lambda x: x.day or ""):
+    allrep = [x for x in recs if x.kind == "report"]
+    want = {f.get("test") for x in reports for f in ((decrypt(x.blob) or {}).get("findings") or [])}
+    for x in sorted(allrep, key=lambda x: x.day or ""):
         for f in (decrypt(x.blob) or {}).get("findings") or []:
             k = f.get("test") or ""
-            if k:
+            if k and k in want:
                 trend.setdefault(k, []).append((x.day, f.get("value"), f.get("unit") or "", f.get("flag") or ""))
     flag = lambda f: {"high": "<b style='color:#C4291C'>High</b>", "low": "<b style='color:#B35C00'>Low</b>"}.get(f, "")
     rows = "".join(f"<tr><td>{E(k)}</td><td>{' → '.join(E(str(v)) for _, v, _, _ in vs[-4:])} {E(vs[-1][2])}</td><td>{flag(vs[-1][3])}</td><td class=m>{E(_fmt(vs[-1][0]))}</td></tr>" for k, vs in trend.items())
@@ -56,7 +58,7 @@ def render(db: Session, p: Person, scope: dict, note: str) -> str:
     a = age(pr.get("dob", ""))
     return f"""<!doctype html><html lang=en><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=robots content=noindex>
 <title>{E(p.name)} · health summary</title><style>body{{font-family:Inter,system-ui,sans-serif;color:#1D1D1F;background:#F2F2F7;margin:0;padding:20px}}main{{max-width:820px;margin:auto;background:#fff;border-radius:18px;padding:28px}}
-h1{{font-size:26px;margin:0}}h2{{font-size:15px;letter-spacing:.04em;color:#6E6E73;margin:26px 0 8px;text-transform:uppercase}}.m{{color:#6E6E73;font-size:13px}}.id{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}}
+h1{{font-size:26px;margin:0}}h2{{font-size:15px;letter-spacing:.04em;color:#6E6E73;margin:26px 0 8px;text-transform:uppercase}}.m{{color:#6E6E73;font-size:13px}}.id{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}}@media(max-width:560px){{.id{{grid-template-columns:1fr 1fr}}main{{padding:20px}}}}
 .id div{{background:#F5F5F7;border-radius:12px;padding:10px}}.id small{{display:block;color:#6E6E73;font-size:11px}}table{{width:100%;border-collapse:collapse;font-size:14px}}td{{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}}
 ul{{padding-left:18px}}li{{margin:6px 0}}.note{{font-size:12px;color:#6E6E73;margin-top:22px}}@media print{{body{{background:#fff;padding:0}}main{{padding:0}}.np{{display:none}}}}</style>
 <main><div class=m>{E(note)}</div><h1>{E(p.name)}</h1><div class=m>{'Age ' + str(a) + ' · ' if a is not None else ''}{E((pr.get('sex') or '').title())}</div>
