@@ -86,7 +86,7 @@ def make(pid: str, body: ShareIn, request: Request, u: User = Depends(need_user)
     s = DoctorShare(token=secrets.token_urlsafe(24), person_id=p.id, by_user=u.id, scope={"reports": body.reports[:50], "meds": body.meds, "since": since}, expires=now() + max(1, min(168, body.hours)) * 3600)
     db.add(s)
     db.commit()
-    return {"url": f"{_origin(request)}/s/{s.token}", "expires": s.expires, "token": s.token[:8]}
+    return {"url": f"{_origin(request)}/dr/{s.token}", "expires": s.expires, "token": s.token[:8]}
 
 
 @r.get("/people/{pid}/doctor-shares")
@@ -150,5 +150,5 @@ def share_qr(ref: str, request: Request, u: User = Depends(need_user), db: Sessi
     if not a.writer:
         raise HTTPException(403, "Not yours")
     b = io.BytesIO()
-    qrcode.make(f"{_origin(request)}/s/{s.token}", image_factory=qrcode.image.svg.SvgPathImage, box_size=12, border=2).save(b)
+    qrcode.make(f"{_origin(request)}/dr/{s.token}", image_factory=qrcode.image.svg.SvgPathImage, box_size=12, border=2).save(b)
     return Response(b.getvalue(), media_type="image/svg+xml", headers={"Cache-Control": "private, no-store"})

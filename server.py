@@ -362,7 +362,7 @@ def landing(request: Request, token: str = ""):
 # relying on it. The sitemap is generated rather than written by hand so a new public page cannot be forgotten here.
 PUBLIC_PAGES = ("/", "/privacy", "/terms")
 CRAWL_BLOCKED = ("/app", "/partner", "/admin", "/counter", "/tech", "/api/", "/signin", "/signup",
-                 "/reset", "/join/", "/d/", "/s/", "/healthz")
+                 "/reset", "/join/", "/d/", "/s/", "/dr/", "/healthz")
 
 
 def _origin(request: Request) -> str:
@@ -448,7 +448,7 @@ def legal_page(request: Request):
     return Response(s, media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache"})
 
 
-@app.api_route("/s/{token}", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/dr/{token}", methods=["GET", "HEAD"], include_in_schema=False)
 def doctor_share(token: str):
     """A person's health summary shared with a doctor; the link ends by itself."""
     from api.db import session as _session

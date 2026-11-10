@@ -156,12 +156,12 @@ def test_doctor_share_summary_refill_and_family_nudge():
     s = c.post(f"/api/v2/people/{c.pid}/doctor-share", json={"hours": 24}).json()
     tok = s["url"].rsplit("/", 1)[1]
     anon = TestClient(server.app); anon.__enter__()
-    page = anon.get(f"/s/{tok}")
+    page = anon.get(f"/dr/{tok}")
     assert page.status_code == 200 and "Meena" in page.text and "6.4 → 5.9" in page.text and "Metformin" in page.text and "noindex" in page.headers.get("x-robots-tag", "")
     assert c.get(f"/api/v2/doctor-shares/{s['token']}/qr.svg").headers["content-type"].startswith("image/svg")
     assert c.get(f"/api/v2/people/{c.pid}/doctor-shares").json()[0]["views"] == 1
     assert c.delete(f"/api/v2/doctor-shares/{s['token']}").status_code == 200
-    assert anon.get(f"/s/{tok}").status_code == 404
+    assert anon.get(f"/dr/{tok}").status_code == 404
     assert "Visit summary" in c.get(f"/api/v2/people/{c.pid}/summary").text
     assert anon.get(f"/api/v2/people/{c.pid}/summary").status_code == 401
     # 9 a.m.: refill notice (6 tablets, 2 a day, started yesterday → 2 days left)
