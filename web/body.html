@@ -242,6 +242,7 @@ function pregSet(w){const P=PG||pregBuild();P.w=w;const u=P.uc,L=.30+1.15*sst(8,
  A.needsUpdate=true;LAY[0].geometry.computeVertexNormals();
  // organs make room: the gut is shown faded and nudged up and out of the way
  if(LAY[3]){LAY[3].material.transparent=true;LAY[3].material.opacity=.07;LAY[3].material.depthWrite=false}for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;LAY[0].visible=true;LAY[0].material.opacity=.42;LAY[0].material.color.set(0xF2C9D3);LAY[0].material.depthWrite=false
+ if(!window.BABY_MODEL){P.baby.g.visible=false;P.cord.visible=false;P.fluid.material.opacity=.32;P.wall.material.opacity=.5}
  STATE.motion=w<8?'Heartbeat only':w<12?'Tiny twitches':w<16?'Stretching and turning':w<24?'Kicks and somersaults':w<32?'Strong kicks and hiccups':w<37?'Rolls and stretches · less room':'Head down · strong, slow pushes'}
 function pregAnimate(t,dt){if(!PG||!BABYON)return;const P=PG,w=P.w,b=P.baby,amp=w<8?0:w<12?.12:w<16?.25:w<24?.55:w<32?.65:.35;
  b.heart.material.color.setHSL(.97,1,.45+.15*Math.sin(t*Math.PI*2*2.4));b.heart.scale.setScalar(1+.25*Math.max(0,Math.sin(t*Math.PI*2*2.4)));
@@ -256,7 +257,7 @@ function pregAnimate(t,dt){if(!PG||!BABYON)return;const P=PG,w=P.w,b=P.baby,amp=
  const A=LAY[0].geometry.attributes.position;if(P.kick>.05&&w>=20){if(!P.bump)P.bump=new THREE.Mesh(new THREE.SphereGeometry(.09,20,14),new THREE.MeshPhysicalMaterial({color:0xF6D0D9,transparent:true,opacity:.0,depthWrite:false}));}
  // cord from belly to placenta
  const from=new THREE.Vector3(0,-.05,.3).applyMatrix4(b.g.matrixWorld),to=P.plac.position.clone();body.worldToLocal(from);const mid=from.clone().lerp(to,.5).add(new THREE.Vector3(.12*Math.sin(t),.1,.08));
- P.cord.geometry.dispose();P.cord.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3([from,from.clone().lerp(mid,.5).add(new THREE.Vector3(.05,-.05,.05)),mid,mid.clone().lerp(to,.5).add(new THREE.Vector3(-.06,.04,0)),to]),40,.028*Math.max(.6,P.r[0]),8);P.cord.visible=w>=10}
+ P.cord.geometry.dispose();P.cord.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3([from,from.clone().lerp(mid,.5).add(new THREE.Vector3(.05,-.05,.05)),mid,mid.clone().lerp(to,.5).add(new THREE.Vector3(-.06,.04,0)),to]),40,.028*Math.max(.6,P.r[0]),8);P.cord.visible=w>=10&&!!window.BABY_MODEL}
 var BABYON=false;
 function pregView2(w){document.body.classList.add('preg');setLayer('organs');tags([]);BABYON=true;pregSet(w);
  const u=PG.c;goalZ=5.2+2.6*sst(8,40,w);goalY=u.y+.15;HOME={z:goalZ,y:goalY};goal.y=-.95;goal.x=.08;
