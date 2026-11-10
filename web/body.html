@@ -707,7 +707,7 @@ window.SKINX=function(){const g=new THREE.Group(),W=2,D=1.2,ep=.12,de=.6,fa=1.0,
  return g};
 })();
 
-const EXTRA=[['lymph','Lymph system','139 node groups, vessels and the thoracic duct'],['fat','Fat and fascia','The fat under the skin and the sheath around muscles'],['chest','Chest and breast','Areola, nipple, and the gland underneath'],['skinx','Skin layers','Draft · cross-section'],['hair','Hair','Draft']];
+const EXTRA=[['lymph','Lymph system','139 node groups, vessels and the thoracic duct'],['fat','Fat and fascia','The fat under the skin and the sheath around muscles'],['chest','Chest and breast','Areola, nipple, and the gland underneath'],['skinx','Skin layers','Draft · cross-section']];
 function exGo(k){EX.clear();clearGlows();tags([]);closeCard();LAYK=k;subLayers();for(const l in LAY)LAY[l].visible=false;const sk=LAY[0];body.position.x=0;
  const skinSolid=()=>{sk.visible=true;sk.material.color.set(0xD9A285).convertSRGBToLinear();sk.material.opacity=1;sk.material.transparent=false;sk.material.depthWrite=true;sk.material.onBeforeCompile=()=>{};sk.material.needsUpdate=true};
  const skinGlass=(o=.14)=>{sk.visible=true;sk.material.color.set(0xE6ECF4);sk.material.opacity=o;sk.material.transparent=true;sk.material.depthWrite=false;sk.material.onBeforeCompile=FRESNEL;sk.material.needsUpdate=true};
@@ -721,7 +721,7 @@ function exGo(k){EX.clear();clearGlows();tags([]);closeCard();LAYK=k;subLayers()
 function mCredits(){shape();head(who()+' · BODY','Credits','');sheet(`<div class="cd" style="margin-top:0;line-height:1.5">
  <p><b>Body, bones, muscles, vessels, nerves, organs and lymph nodes</b>: Z-Anatomy, based on BodyParts3D © The Database Center for Life Science (DBCLS), licensed CC BY-SA. Changed by Urban Health: shaped to your height and weight, recoloured, simplified for phones.</p>
  <p><b>Female body</b>: HuBMAP Human Reference Atlas 3D reference objects, CC BY 4.0.</p>
- <p><b>Lymph vessels, thoracic duct, fat, fascia, chest detail, skin layers and hair</b>: built by Urban Health on the models above, shared under the same CC BY-SA licence.</p>
+ <p><b>Lymph vessels, thoracic duct, fat, fascia, chest detail, skin layers</b>: built by Urban Health on the models above, shared under the same CC BY-SA licence.</p>
  <p style="margin-bottom:0">Not a medical device. For learning and for understanding your reports with your doctor.</p></div>`)}
 /* ---- boot ---- */
 let HOME0={z:16,y:0};
