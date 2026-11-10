@@ -177,6 +177,22 @@ body.flat .spacer{height:118px}body.flat #gl,body.flat #labels,body.flat #lines{
 @media (min-width:980px){body.flat .spacer{height:110px}}
 @keyframes scanl{from{top:12%}to{top:86%}}
 @media (min-width:980px){.page{left:260px}}
+@media (min-width:980px){
+ body.flat #scroll{left:260px;right:0;width:auto}
+ body.flat .sheet{max-width:880px;margin:0 auto;border-radius:30px}
+ body.flat .top{right:0;left:260px;max-width:none}
+ body.flat .spacer{height:132px}
+ .page.auth{left:0}
+ .page.auth .pin{margin-left:max(52%,540px);margin-right:auto;max-width:440px}
+ .authart{display:flex!important}
+}
+.authart{display:none;position:fixed;left:0;top:0;bottom:0;width:48%;min-width:500px;flex-direction:column;justify-content:center;padding:0 7vw;color:#fff;
+ background:radial-gradient(90% 70% at 30% 40%,#2B5FD9 0%,#1B2B6B 55%,#0E1430 100%);overflow:hidden}
+.authart h2{font-size:44px;line-height:1.08;letter-spacing:-.03em;margin:0 0 18px;font-weight:700}
+.authart p{font-size:17px;line-height:1.5;opacity:.85;margin:0 0 28px;max-width:440px}
+.authart .pt{display:flex;gap:14px;align-items:flex-start;margin:0 0 18px;font-size:15.5px;line-height:1.45;max-width:420px}.authart .pt b{display:block;font-size:16px}
+.authart .pt span.i{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex:none}
+.authart::after{content:"";position:absolute;right:-120px;bottom:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),rgba(255,255,255,0) 70%)}
 </style>
 </head>
 <body>
@@ -730,7 +746,10 @@ async function startSOS(){const me=P(ME.me),c=me.medicalId.contacts||[];if(navig
  catch(e){$('#sosl').textContent='Could not reach the server: '+e.message+'. Call directly with the buttons below.'}}
 async function endSOS(){if(WATCH!=null)navigator.geolocation.clearWatch(WATCH);WATCH=null;if(SOSA)try{await API(`/api/v1/sos/${SOSA.id}/end`,{key:true,method:'POST'})}catch(_){}SOSA=null;closeL();toast('Alert ended. Your contacts were told you are safe.')}
 /* ---------------- auth + onboarding ---------------- */
-function authPage(mode){mode=mode||'signin';layer(`<div class="page" style="left:0"><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px">
+function authPage(mode){mode=mode||'signin';layer(`<div class="page auth" style="left:0"><div class="authart"><h2>Your family's health,<br>in one calm place.</h2><p>Reports read for you, medicines on time, and help one tap away.</p>
+ <div class="pt"><span class="i">${ic(I.lock,'#fff',18)}</span><div><b>Private for each person</b>Everyone signs in with their own account and chooses what to share.</div></div>
+ <div class="pt"><span class="i">${ic(I.sum,'#fff',18)}</span><div><b>Results on a 3D body</b>See what a report means, on the organ it is about.</div></div>
+ <div class="pt"><span class="i">${ic(I.phone,'#fff',18)}</span><div><b>SOS to your family</b>Live location and Medical ID to your emergency contacts.</div></div></div><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px">
  <img src="/brand/svg/user-logo.svg" alt="Urban Health" height="34" style="margin-bottom:26px"><h1 class="big">${mode==='signin'?'Welcome back':'Create your account'}</h1><p class="line">${mode==='signin'?'Sign in with your mobile number or email.':'Your own login. Your family sees only what you share.'}</p>
  <div class="seg" style="margin-top:18px"><button class="${mode==='signin'?'on':''}" onclick="authPage('signin')">Sign in</button><button class="${mode==='signup'?'on':''}" onclick="authPage('signup')">Create account</button></div>
  <form id="af" style="margin-top:6px">${mode==='signin'?`<div class="sect">MOBILE OR EMAIL</div><input class="inp2" name="id" required autocomplete="username" inputmode="email" placeholder="98765 43210 or name@gmail.com">
