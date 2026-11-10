@@ -105,3 +105,57 @@ def test_console_today_board_search():
     sr = c.get("/api/admin/console/search?q=board", headers=H).json()
     assert sr["groups"][0]["items"][0]["title"] == "Board Lab"
     assert TestClient(server.app).get("/api/admin/console/today").status_code == 401
+
+
+def test_phase2_rx_approvals_refund_complaints():
+    import server, time
+    from api.db import SessionLocal
+    from api.models import Admin, Household, Store, Order, User
+    from api.security import hash_pw
+    c1 = TestClient(server.app).__enter__(); c2 = TestClient(server.app)
+    H1 = {"x-tht": "1", "x-forwarded-for": "10.5.0.1"}; H2 = {"x-tht": "1", "x-forwarded-for": "10.5.0.2"}
+    with SessionLocal() as db:
+        db.add_all([Admin(email="p2a@x.in", pw_hash=hash_pw("Right-password-99"), role="owner"), Admin(email="p2b@x.in", pw_hash=hash_pw("Right-password-99"), role="owner")])
+        h = Household(key="kp2", name="Kiran S"); s = Store(kind="pharmacy", name="P2 Pharmacy", city="Hyd", lat=17.4, lng=78.4, verified=True)
+        db.add_all([h, s]); db.flush()
+        rx = Order(household_id=h.id, store_id=s.id, kind="medicine", items=[{"name": "Alprazolam 0.25", "rx": True, "qty": 1}], status="placed", total=120, rx_shared=True, rx_files=["f1"])
+        big = Order(household_id=h.id, store_id=s.id, kind="lab", items=[{"name": "Full body"}], status="ready", total=7000)
+        small = Order(household_id=h.id, store_id=s.id, kind="lab", items=[{"name": "CBC"}], status="ready", total=300)
+        db.add_all([rx, big, small]); db.commit(); rid, bid, sid_, hid = rx.id, big.id, small.id, h.id
+    assert c1.post("/api/admin/login", json={"email": "p2a@x.in", "password": "Right-password-99"}, headers=H1).status_code == 200
+    assert c2.post("/api/admin/login", json={"email": "p2b@x.in", "password": "Right-password-99"}, headers=H2).status_code == 200
+    q = c1.get("/api/admin/rx", headers=H1).json()
+    row = [r for r in q["rows"] if r["id"] == rid][0]
+    assert row["flag"] and any("Habit-forming" in x["text"] for x in row["checks"])
+    old = time.strftime("%Y-%m-%d", time.gmtime(time.time() - 60 * 86400))
+    body = {"decision": "approve", "doctor": "Dr A Mehta", "regNo": "TSMC 61204", "rxDate": old, "pharmacist": "S Reddy", "pharmacistReg": "TSPC 22814"}
+    assert "30 days" in c1.post(f"/api/admin/rx/{rid}", json=body, headers=H1).json()["detail"]
+    body["rxDate"] = time.strftime("%Y-%m-%d")
+    assert c1.post(f"/api/admin/rx/{rid}", json=body, headers=H1).status_code == 200
+    assert c1.post(f"/api/admin/rx/{rid}", json=body, headers=H1).status_code == 409
+    # small refund goes through, big one needs a second admin, asker can't approve
+    assert c1.post(f"/api/admin/orders/{sid_}/refund", json={"amount": 300, "reason": "no-show tech"}, headers=H1).json()["ok"]
+    r = c1.post(f"/api/admin/orders/{bid}/refund", json={"amount": 7000, "reason": "lab lost sample"}, headers=H1).json()
+    ap = r["approval"]
+    assert c1.post(f"/api/admin/approvals/{ap}", json={"approve": True}, headers=H1).status_code == 403
+    assert c2.post(f"/api/admin/approvals/{ap}", json={"approve": True}, headers=H2).json()["status"] == "approved"
+    with SessionLocal() as db:
+        assert db.get(Order, bid).status == "refunded"
+    # complaint from a family, answered by admin
+    with SessionLocal() as db:
+        u = User(email="fam2@x.in", household_id=hid, pw_hash="x"); db.add(u); db.commit(); uid = u.id
+    import api.auth as A
+    orig = A.current_user
+    A.current_user = lambda req, db: db.get(User, uid)
+    try:
+        f = TestClient(server.app)
+        assert f.post("/api/v2/complaints", json={"orderId": rid, "kind": "wrong_medicine", "text": "got 1000 instead of 500"}, headers={"x-tht": "1"}).status_code == 200
+        assert f.post("/api/v2/complaints", json={"orderId": bid, "kind": "nonsense", "text": "abcdef"}, headers={"x-tht": "1"}).status_code == 400
+    finally:
+        A.current_user = orig
+    cs = c1.get("/api/admin/complaints", headers=H1).json()["rows"]
+    cm = [x for x in cs if x["orderId"] == rid][0]
+    assert cm["left"] <= 120 and "te" in cm["replies"] and cm["who"].startswith("K")
+    assert c1.post(f"/api/admin/complaints/{cm['id']}", json={"text": cm["replies"]["en"], "resolve": True}, headers=H1).json()["status"] == "resolved"
+    td = c1.get("/api/admin/console/today", headers=H1).json()
+    assert isinstance(td["needs"], list)

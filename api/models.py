@@ -1128,3 +1128,39 @@ class NoticePref(Base):
     __tablename__ = "notice_prefs"
     user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
     prefs: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class Approval(Base):
+    """A risky admin action waiting for a second admin. The asker can never approve their own request."""
+    __tablename__ = "approvals"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ap"))
+    kind: Mapped[str] = mapped_column(String(16), index=True)            # refund | export | role | payout
+    ref: Mapped[str] = mapped_column(String(64), default="")
+    amount: Mapped[int] = mapped_column(Integer, default=0)
+    payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    title: Mapped[str] = mapped_column(String(200), default="")
+    reason: Mapped[str] = mapped_column(String(400), default="")
+    asked_by: Mapped[str] = mapped_column(String(120), default="")
+    status: Mapped[str] = mapped_column(String(12), default="waiting", index=True)   # waiting | approved | declined | expired
+    decided_by: Mapped[str] = mapped_column(String(120), default="")
+    decided_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    note: Mapped[str] = mapped_column(String(400), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    expires: Mapped[int] = mapped_column(Integer, default=lambda: now() + 86400)
+
+
+class Complaint(Base):
+    """A family's complaint about an order. The deadline is set by the kind of problem, not by who is free."""
+    __tablename__ = "complaints"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("cm"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    user_id: Mapped[str] = mapped_column(String(32), default="")
+    order_id: Mapped[str] = mapped_column(String(32), default="", index=True)
+    kind: Mapped[str] = mapped_column(String(24), default="other")
+    text: Mapped[str] = mapped_column(Text, default="")
+    lang: Mapped[str] = mapped_column(String(4), default="en")
+    status: Mapped[str] = mapped_column(String(12), default="open", index=True)      # open | answered | resolved
+    due: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    thread: Mapped[list | None] = mapped_column(JSON, nullable=True)                 # [{by, text, t}]
+    resolved_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
