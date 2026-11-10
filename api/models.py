@@ -1013,6 +1013,16 @@ class HouseholdInvite(Base):
     rel_ok: Mapped[int] = mapped_column(Integer, default=0)             # the joiner confirmed the relation
 
 
+class SearchToken(Base):
+    """Blind search index: keyed hashes of word prefixes, never the words. Lets search scale without decrypting records."""
+    __tablename__ = "search_tokens"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    person_id: Mapped[str] = mapped_column(String(32), index=True)
+    record_id: Mapped[str] = mapped_column(String(32), index=True)
+    tok: Mapped[str] = mapped_column(String(24), index=True)
+    __table_args__ = (Index("ix_search_person_tok", "person_id", "tok"),)
+
+
 class ProfileChange(Base):
     """Who changed identity details, when and from which device. Field names only, never the values (DPDP audit)."""
     __tablename__ = "profile_changes"

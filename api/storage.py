@@ -7,6 +7,7 @@ database table `files` (fine for a small launch; move to a bucket before files g
 from __future__ import annotations
 
 import os
+import re
 import secrets
 
 from .family import _key, open_with_keys
@@ -92,6 +93,77 @@ def checked(data: bytes, name: str) -> tuple[str, str]:
         raise HTTPException(415, "Only PDF or photo files (JPG, PNG, WebP, HEIC) can be uploaded")
     clean = "".join(ch for ch in (name or "file") if ch.isprintable() and ch not in '\\/:*?"<>|')[:120] or "file"
     return real, clean
+
+
+PDF_DANGER = (b"/JavaScript", b"/JS", b"/OpenAction", b"/Launch", b"/EmbeddedFile", b"/RichMedia", b"/XFA", b"/AA", b"/SubmitForm", b"/GoToR", b"/ImportData")
+MAX_PAGES = 50
+
+
+def safe_document(data: bytes, mime: str) -> bytes:
+    """Refuse PDFs that can run anything or are locked; re-save photos as plain pixels (drops hidden payloads and
+    the GPS location in camera metadata). Returns the bytes to store."""
+    from fastapi import HTTPException
+    if mime == "application/pdf":
+        body = re.sub(rb"#([0-9A-Fa-f]{2})", lambda m: bytes([int(m.group(1), 16)]), data)   # /J#61vaScript tricks
+        for k in PDF_DANGER:
+            if re.search(re.escape(k) + rb"(?![A-Za-z])", body):
+                raise HTTPException(415, "This PDF contains scripts or attachments, so it was not accepted. Print it to PDF again, or upload a photo of it.")
+        if b"/Encrypt" in body:
+            raise HTTPException(415, "This PDF is password-protected. Save an unlocked copy and upload that.")
+        pages = len(re.findall(rb"/Type\s*/Page(?![s\w])", body))
+        if pages > MAX_PAGES:
+            raise HTTPException(413, f"PDFs up to {MAX_PAGES} pages")
+        return data
+    if mime == "image/heic":
+        return data                      # decoded only by the reader; never served as anything but a download
+    try:
+        import io
+        from PIL import Image, ImageOps
+        Image.MAX_IMAGE_PIXELS = 60_000_000
+        im = Image.open(io.BytesIO(data))
+        im.verify()
+        im = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
+        if min(im.size) < 40:
+            raise HTTPException(415, "This image is too small to read. Take a clearer photo.")
+        out = io.BytesIO()
+        im.save(out, "JPEG", quality=88, optimize=True)
+        return out.getvalue()
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(415, "This image could not be opened. Take the photo again.")
+
+
+def virus_scan(data: bytes) -> None:
+    """ClamAV over clamd when CLAMD_HOST is set (INSTREAM). A hit refuses the file; an unreachable scanner does not
+    block uploads but is logged."""
+    host = os.getenv("CLAMD_HOST")
+    if not host:
+        return
+    import socket
+    import struct
+    from fastapi import HTTPException
+    try:
+        with socket.create_connection((host, int(os.getenv("CLAMD_PORT", "3310"))), timeout=8) as s:
+            s.sendall(b"zINSTREAM\0")
+            for i in range(0, len(data), 65536):
+                c = data[i:i + 65536]
+                s.sendall(struct.pack("!L", len(c)) + c)
+            s.sendall(struct.pack("!L", 0))
+            r = s.recv(512)
+        if b"FOUND" in r:
+            raise HTTPException(415, "This file was flagged by the virus scan and was not saved.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("[upload] virus scan unavailable:", type(e).__name__, flush=True)
+
+
+MEDICAL_WORDS = re.compile(r"(?i)\b(test|result|report|range|reference|patient|doctor|dr\.?|hospital|clinic|diagnos|lab|laborator|pathology|specimen|sample|mg|mg/dl|g/dl|mmol|iu|rx|tab|tablet|cap|syrup|dose|blood|urine|serum|scan|x-?ray|mri|ct|ultrasound|ecg|prescription|medicine|sign)")
+
+
+def looks_medical(text: str) -> bool:
+    return len(MEDICAL_WORDS.findall(text or "")) >= 3
 
 
 def put(db, household_id: str, file_id: str, data: bytes, mime: str, name: str, by: str) -> int:

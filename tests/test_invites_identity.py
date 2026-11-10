@@ -83,3 +83,14 @@ def test_meds_abha_handover_relation_dupes():
     w = c.post("/api/v2/household/invite", json={"contact": "9988776655", "relation": "Wife"}).json()
     assert c.get("/api/v2/household/invites/" + w["invite"]["ref"] + "/qr.svg").headers["content-type"].startswith("image/svg")
     assert c.get("/api/v2/household/duplicates").status_code == 200
+
+
+def test_blind_search():
+    c = person("Suresh")
+    c.post(f"/api/v2/people/{c.pid}/records", json={"kind": "med", "data": {"name": "Pan 40"}})
+    c.post(f"/api/v2/people/{c.pid}/records", json={"kind": "report", "day": "2026-03-14", "data": {"title": "Lipid profile", "doctor": "Dr. Rao", "findings": [{"test": "HbA1c", "value": "6.1"}]}})
+    assert [x["title"] for x in c.get("/api/v2/search?q=hba").json()["items"]] == ["Lipid profile"]
+    assert c.get("/api/v2/search?q=pan").json()["items"][0]["name"] == "Pan 40"
+    assert c.get("/api/v2/search?q=rao lipid").json()["items"] and not c.get("/api/v2/search?q=rao zzz").json()["items"]
+    other = person("Stranger")
+    assert other.get("/api/v2/search?q=lipid").json()["items"] == []

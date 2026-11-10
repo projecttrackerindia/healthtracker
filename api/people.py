@@ -15,6 +15,7 @@ Rules (each one is enforced here, never in the app):
 from __future__ import annotations
 
 import datetime as _dt
+import os
 import re
 import secrets
 
@@ -30,7 +31,7 @@ from .db import get_db
 from .family import decrypt, encrypt
 import hashlib
 
-from .models import (ProfileChange, AccessLog, Grant, Guardian, HealthRecord, Household, HouseholdInvite, Notice, NoticeMark, NoticePref, Person, User, new_id, now)
+from .models import (SearchToken, ProfileChange, AccessLog, Grant, Guardian, HealthRecord, Household, HouseholdInvite, Notice, NoticeMark, NoticePref, Person, User, new_id, now)
 
 r = APIRouter(prefix="/api/v2", dependencies=[Depends(csrf)])
 
@@ -563,8 +564,83 @@ def add_record(pid: str, body: RecordIn, request: Request, u: User = Depends(nee
                 raise HTTPException(409, f"{d.get('name')} is already in the medicines list. Edit it instead of adding it again.")
     x = HealthRecord(person_id=p.id, kind=body.kind, blob=encrypt(body.data), day=body.day, by_user=u.id)
     db.add(x)
+    db.flush()
+    index_record(db, x, body.data)
     db.commit()
     return rec_json(x)
+
+
+# ---- search: a blind index (HMAC of word prefixes) so the server finds records without reading them ----------------
+SEARCH_KINDS = ("report", "med", "vital", "contact")
+
+
+def _skey() -> bytes:
+    import hmac as _h
+    from .security import SECRET
+    k = os.getenv("DATA_KEY") or SECRET
+    return _h.new(k.encode() if isinstance(k, str) else k, b"uh-search-v1", hashlib.sha256).digest()
+
+
+def _tok(w: str) -> str:
+    import hmac as _h
+    return _h.new(_skey(), w.encode(), hashlib.sha256).hexdigest()[:24]
+
+
+def _words(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z0-9]+", (text or "").lower()) if len(w) >= 2}
+
+
+def _prefixes(words: set[str]) -> set[str]:
+    out = set()
+    for w in words:
+        for n in range(2, min(len(w), 12) + 1):
+            out.add(w[:n])
+    return out
+
+
+def index_record(db: Session, x: HealthRecord, d: dict | None = None):
+    db.execute(delete(SearchToken).where(SearchToken.record_id == x.id))
+    if x.kind not in SEARCH_KINDS:
+        return
+    d = d if d is not None else (decrypt(x.blob) or {})
+    parts = [x.kind, "lab" if d.get("doc") == "report" else "", "prescription rx" if d.get("doc") == "prescription" else "",
+             d.get("title"), d.get("doctor"), d.get("lab"), d.get("name"), d.get("summary", "")[:400], d.get("relation"), d.get("type")]
+    parts += [f.get("test", "") for f in d.get("findings", []) or []]
+    parts += [m.get("name", "") for m in d.get("medicines", []) or []]
+    for t in _prefixes(_words(" ".join(str(v) for v in parts if v))):
+        db.add(SearchToken(person_id=x.person_id, record_id=x.id, tok=_tok(t)))
+
+
+def _ensure_index(db: Session, pid: str):
+    if db.scalar(select(SearchToken.id).where(SearchToken.person_id == pid).limit(1)):
+        return
+    for x in db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind.in_(SEARCH_KINDS))):
+        index_record(db, x)
+    db.commit()
+
+
+@r.get("/search")
+def search(q: str = "", page: int = 0, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    from sqlalchemy import func
+    words = [w[:12] for w in _words(q)][:6]
+    if not words or not u.household_id:
+        return {"items": [], "more": False}
+    people = {}
+    for p in db.scalars(select(Person).where(Person.household_id == u.household_id, Person.removed.is_(None))):
+        a = access(db, u, p)
+        if a.can("summary"):
+            people[p.id] = (p, a)
+            _ensure_index(db, p.id)
+    if not people:
+        return {"items": [], "more": False}
+    toks = [_tok(w) for w in words]
+    hits = db.execute(select(SearchToken.record_id).where(SearchToken.person_id.in_(list(people)), SearchToken.tok.in_(toks))
+                      .group_by(SearchToken.record_id).having(func.count(func.distinct(SearchToken.tok)) == len(set(toks)))).scalars().all()
+    recs = [x for x in (db.get(HealthRecord, i) for i in hits) if x and people[x.person_id][1].can_kind(x.kind)]
+    recs.sort(key=lambda x: (x.day or "", x.created), reverse=True)
+    size = 20
+    chunk = recs[page * size:(page + 1) * size]
+    return {"items": [{**rec_json(x), "person": x.person_id, "personName": people[x.person_id][0].name} for x in chunk], "more": len(recs) > (page + 1) * size}
 
 
 @r.put("/records/{rid}")
@@ -577,6 +653,7 @@ def edit_record(rid: str, body: RecordIn, u: User = Depends(need_user), db: Sess
         raise HTTPException(403 if not a.writer else 400, "Only they can change this" if not a.writer else "Kind cannot change")
     _check_record(body.kind, body.data, body.day)
     x.blob, x.day = encrypt(body.data), body.day or x.day
+    index_record(db, x, body.data)
     db.commit()
     return rec_json(x)
 
@@ -595,6 +672,7 @@ def delete_record(rid: str, u: User = Depends(need_user), db: Session = Depends(
             storage.delete(db, p.id, x.file_id)
         except Exception:
             pass
+    db.execute(delete(SearchToken).where(SearchToken.record_id == x.id))
     db.delete(x)
     db.commit()
     return {"ok": True}
@@ -617,6 +695,18 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     from . import storage
     fid = new_id("f")
     mime, fname = storage.checked(data, file.filename or "report")
+    data = storage.safe_document(data, mime)
+    if mime not in ("application/pdf", "image/heic"):
+        mime = "image/jpeg"
+    storage.virus_scan(data)
+    if mime == "application/pdf":
+        try:
+            from . import ai
+            txt = ai.text_from(data, mime)
+        except Exception:
+            txt = ""
+        if txt and len(txt) > 200 and not storage.looks_medical(txt):
+            raise HTTPException(422, "This doesn't look like a medical report or prescription, so it was not saved.")
     storage.put(db, p.id, fid, data, mime, fname, u.id)
     reading = {}
     if read == "1":
@@ -643,6 +733,8 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
           {"person": p.id}, member_id=p.id)
     x = HealthRecord(person_id=p.id, kind="report", blob=encrypt(rec), file_id=fid, day=(rec["date"] or "")[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", rec["date"] or "") else _dt.date.today().isoformat(), by_user=u.id)
     db.add(x)
+    db.flush()
+    index_record(db, x, rec)
     db.commit()
     return rec_json(x)
 
