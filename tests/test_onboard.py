@@ -80,3 +80,28 @@ def test_admin_login_errors_lockout_and_reset(capsys):
     pw = [l for l in capsys.readouterr().out.splitlines() if l.startswith("Password:")][0].split()[-1]
     with SessionLocal() as db:
         a = db.query(Admin).filter_by(email="lock@x.in").one(); assert a.locked_until == 0 and a.fails == 0
+
+
+def test_console_today_board_search():
+    import server, time
+    from api.db import SessionLocal
+    from api.models import Admin, Household, Store, Order
+    from api.security import hash_pw
+    from api.console import late_by
+    c = TestClient(server.app).__enter__(); H = {"x-tht": "1", "x-forwarded-for": "10.6.0.1"}
+    with SessionLocal() as db:
+        db.add(Admin(email="con@x.in", pw_hash=hash_pw("Right-password-99"), role="owner"))
+        h = Household(key="kcon1", name="Asha Rao"); s = Store(kind="lab", name="Board Lab", city="Hyd", lat=17.4, lng=78.4, verified=True)
+        db.add_all([h, s]); db.flush(); t = int(time.time())
+        o = Order(household_id=h.id, store_id=s.id, kind="lab", items=[{"name": "CBC"}], status="en_route", timeline=[{"s": "en_route", "t": t - 3600}], created=t - 4000, member="Asha")
+        db.add(o); db.commit(); oid = o.id
+        assert late_by(o, t) >= 40
+    assert c.post("/api/admin/login", json={"email": "con@x.in", "password": "Right-password-99"}, headers=H).status_code == 200
+    d = c.get("/api/admin/console/today", headers=H).json()
+    assert any("late" in n["title"] for n in d["needs"]) and d["now"]["late"] >= 1
+    b = c.get("/api/admin/console/board", headers=H).json()
+    card = [x for x in b["lanes"]["way"] if x["id"] == oid][0]
+    assert card["late"] > 0 and card["who"] == "A••••" and "Asha" not in str(card)
+    sr = c.get("/api/admin/console/search?q=board", headers=H).json()
+    assert sr["groups"][0]["items"][0]["title"] == "Board Lab"
+    assert TestClient(server.app).get("/api/admin/console/today").status_code == 401

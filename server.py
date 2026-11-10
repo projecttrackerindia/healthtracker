@@ -121,6 +121,8 @@ from api import onboard as _onboard  # noqa: E402
 app.include_router(_onboard.ar)
 app.include_router(_onboard.pr)
 app.include_router(_onboard.pub)
+from api import console as _console  # noqa: E402
+app.include_router(_console.r)
 from api import places as places_api, billing as billing_api, inbox as inbox_api, partner as partner_api  # noqa: E402
 app.include_router(places_api.r)
 app.include_router(billing_api.r)
