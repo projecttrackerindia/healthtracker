@@ -29,6 +29,9 @@ done < "$SRC/secrets.txt"
 grep -q '^DATABASE_URL=' "$TMP" || { echo "urbanhealth-env: DATABASE_URL is missing — refusing to start"; exit 1; }
 grep -q '^SECRET_KEY='   "$TMP" || { echo "urbanhealth-env: SECRET_KEY is missing — refusing to start"; exit 1; }
 
+# Uploads are virus-scanned only when the ClamAV container runs (see release.sh)
+grep -q '^CLAMAV=1' /etc/urbanhealth/release.env 2>/dev/null && echo "CLAMD_HOST=clamav" >> "$TMP"
+
 # A secret overrides the same name from env.yaml (e.g. GOOGLE_MAPS_KEY: "" there, the real key in Secret Manager):
 # keep only the last line for each name, so docker --env-file sees one value.
 tac "$TMP" | awk -F= '!seen[$1]++' | tac > "$TMP.d" && cat "$TMP.d" > "$TMP" && rm -f "$TMP.d"

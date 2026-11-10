@@ -1561,7 +1561,8 @@ def purge(db: Session) -> dict:
         purge_person(db, p)
     inv = db.query(HouseholdInvite).filter(HouseholdInvite.expires < t - 30 * 86400).delete(synchronize_session=False)
     old = db.query(AccessLog).filter(AccessLog.t < t - 730 * 86400).delete(synchronize_session=False)
-    return {"people": len(gone), "invites": inv, "accessLog": old}
+    from . import ops
+    return {"people": len(gone), "invites": inv, "accessLog": old, **ops.purge(db)}
 
 
 def start_purge() -> None:

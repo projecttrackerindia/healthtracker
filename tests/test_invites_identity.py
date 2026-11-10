@@ -121,3 +121,26 @@ def test_report_learns_and_compares():
         assert o["to"] == amma["id"]
         assert people.other_person(db, u, p, {"name": "Mr. RAMESH"}) is None
         assert people._patient_from_text({"findings": [{"test": "ABO Blood Group", "value": "O"}, {"test": "Rh Type", "value": "Positive"}]})["blood_group"] == "O+"
+
+
+def test_lockout_events_and_ops():
+    import uuid
+    from tests.test_people_v2 import TestClient, server, H
+    c = TestClient(server.app); c.__enter__(); c.headers.update(H)
+    u = uuid.uuid4().hex[:8]
+    r = c.post("/api/v1/auth/signup/start", json={"name": "Lock Test", "email": f"{u}@example.com", "phone": "9" + str(uuid.uuid4().int)[-9:].zfill(9), "password": "Zq!8vB#2mLp@9xT", "terms": True}).json()
+    c.post("/api/v1/auth/signup/verify", json={"flow": r["flow"], "code": r["demo"]})
+    c.post("/api/v1/auth/logout")
+    d = TestClient(server.app); d.__enter__(); d.headers.update(H)
+    for _ in range(5):
+        assert d.post("/api/v1/auth/password/login", json={"id": f"{u}@example.com", "password": "wrong-Password-1"}).status_code == 400
+    assert d.post("/api/v1/auth/password/login", json={"id": f"{u}@example.com", "password": "Zq!8vB#2mLp@9xT"}).status_code == 429
+    from api.db import SessionLocal
+    from api.models import SecurityEvent, User
+    with SessionLocal() as db:
+        uid = db.query(User).filter(User.email == f"{u}@example.com").one().id
+        kinds = [e.kind for e in db.query(SecurityEvent).filter(SecurityEvent.user_id == uid)]
+    assert "locked" in kinds and kinds.count("password:wrong") == 5 and any(k.startswith("signin:") for k in kinds)
+    assert c.post("/api/v2/client-error", json={"where": "uh.html:12", "message": "TypeError x for a@b.com"}).status_code == 204
+    assert c.post("/api/v2/usage", json={"screen": "records"}).status_code == 204
+    assert c.post("/api/v2/usage", json={"screen": "<script>"}).status_code == 204

@@ -23,11 +23,13 @@ echo "== Build"
 gcloud builds submit ../.. --tag "$TAG" --region "$REGION" --quiet
 
 echo "== Release"
-gcloud compute scp --zone "$ZONE" --quiet ../gcp/env.yaml ../gcp/secrets.txt "$VM":/tmp/
+gcloud compute scp --zone "$ZONE" --quiet ../gcp/env.yaml ../gcp/secrets.txt release.sh urbanhealth-env "$VM":/tmp/
 gcloud compute ssh "$VM" --zone "$ZONE" --quiet --command "
   set -e
   sudo install -d -m 0755 /opt/urbanhealth/repo/deploy/gcp
   sudo install -m 0644 /tmp/env.yaml /tmp/secrets.txt /opt/urbanhealth/repo/deploy/gcp/
+  sudo install -m 0755 /tmp/release.sh /usr/local/bin/urbanhealth-release
+  sudo install -m 0755 /tmp/urbanhealth-env /usr/local/bin/urbanhealth-env
   sudo urbanhealth-release '$TAG' '$SHA'
 "
 

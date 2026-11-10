@@ -97,11 +97,13 @@ jobs:
           ( cd deploy/gcp && ./stamp-env.sh "$SHA" )
           # env.yaml and secrets.txt travel with the release so the settings on the box match the commit.
           gcloud compute scp --zone "$ZONE" --quiet \
-            deploy/gcp/env.yaml deploy/gcp/secrets.txt "$VM":/tmp/
+            deploy/gcp/env.yaml deploy/gcp/secrets.txt deploy/vm/release.sh deploy/vm/urbanhealth-env "$VM":/tmp/
           gcloud compute ssh "$VM" --zone "$ZONE" --quiet --command "
             set -e
             sudo install -d -m 0755 /opt/urbanhealth/repo/deploy/gcp
             sudo install -m 0644 /tmp/env.yaml /tmp/secrets.txt /opt/urbanhealth/repo/deploy/gcp/
+            sudo install -m 0755 /tmp/release.sh /usr/local/bin/urbanhealth-release
+            sudo install -m 0755 /tmp/urbanhealth-env /usr/local/bin/urbanhealth-env
             sudo urbanhealth-release '${IMAGE%:*}:${GITHUB_SHA}' '$SHA'
           "
 

@@ -109,6 +109,8 @@ def _init_db():
 
 
 app.include_router(public_api.r)
+from api import ops as _ops  # noqa: E402
+app.include_router(_ops.r)
 app.include_router(auth_api.r)
 app.include_router(family_api.r)
 app.include_router(more_api.r)
@@ -203,7 +205,12 @@ async def headers(request: Request, call_next):
     if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.url.path.startswith("/api/v1/") and (request.headers.get("x-dokko-key") or "").startswith("demo-"):
         if request.url.path not in ("/api/v1/hello", "/api/v1/beacon"):
             return JSONResponse({"detail": "This is the demo — sign in to do this for your own family."}, status_code=403)
-    resp: Response = await call_next(request)
+    try:
+        resp: Response = await call_next(request)
+    except Exception as exc:  # a crash is recorded and alerted once an hour; the person sees a calm message
+        from api.ops import server_error
+        server_error(request, exc)
+        resp = JSONResponse({"detail": "Something went wrong on our side. Please try again."}, status_code=500)
     for k, v in SECURITY.items():
         resp.headers.setdefault(k, v)
     # Only the canonical address is allowed into a search index. The Cloud Run URL answers the same content, and if

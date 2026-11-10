@@ -1013,6 +1013,39 @@ class HouseholdInvite(Base):
     rel_ok: Mapped[int] = mapped_column(Integer, default=0)             # the joiner confirmed the relation
 
 
+class SecurityEvent(Base):
+    """Sign-ins, wrong passwords, lockouts, contact changes. Kept 400 days (CERT-In asks for 180). No health data."""
+    __tablename__ = "security_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(32), default="", index=True)
+    kind: Mapped[str] = mapped_column(String(24), index=True)
+    ip_hash: Mapped[str] = mapped_column(String(24), default="")
+    device: Mapped[str] = mapped_column(String(80), default="")
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class ErrorEvent(Base):
+    """A crash in the app or on the server: where, what, how often. Never request bodies or health data."""
+    __tablename__ = "error_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    sig: Mapped[str] = mapped_column(String(40), index=True)
+    side: Mapped[str] = mapped_column(String(8), default="web")
+    where: Mapped[str] = mapped_column(String(120), default="")
+    message: Mapped[str] = mapped_column(String(300), default="")
+    count: Mapped[int] = mapped_column(Integer, default=1)
+    first: Mapped[int] = mapped_column(Integer, default=now)
+    last: Mapped[int] = mapped_column(Integer, default=now)
+    alerted: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class UsageDay(Base):
+    """Which screens are opened, counted per day. No user, no device, no health data."""
+    __tablename__ = "usage_days"
+    day: Mapped[str] = mapped_column(String(10), primary_key=True)
+    screen: Mapped[str] = mapped_column(String(32), primary_key=True)
+    n: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class SearchToken(Base):
     """Blind search index: keyed hashes of word prefixes, never the words. Lets search scale without decrypting records."""
     __tablename__ = "search_tokens"

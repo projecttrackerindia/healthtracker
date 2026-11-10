@@ -285,6 +285,8 @@ def start_session(request: Request, response: Response, db: Session, u: User, me
     db.add(AuthSession(id=tok_hash(t), user_id=u.id, expires=now() + SESSION_DAYS * 86400, method=method,
                        ua=request.headers.get("user-agent", "")[:200], ip=(request.client.host if request.client else "")[:64]))
     u.last_login, u.failed, u.locked_until = now(), 0, None
+    from .ops import security
+    security(db, "signin:" + method[:14], u.id, request)
     response.set_cookie(COOKIE, t, max_age=SESSION_DAYS * 86400, httponly=True, secure=secure(request), samesite="lax", path="/")
     return me_json(u)
 
@@ -516,9 +518,24 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
     if u.locked_until and u.locked_until > now():
         raise HTTPException(429, f"Too many wrong passwords. Try again in {max(1, (u.locked_until - now()) // 60)} min, or sign in with a code or passkey.")
     if not passwords.verify_pw(body.password, u.pw_hash):
+        from .ops import security
         u.failed += 1
+        security(db, "password:wrong", u.id, request)
         if u.failed >= 5:
-            u.locked_until, u.failed = now() + 900, 0
+            # each new lock in a day lasts longer: 15 min, 1 h, then 24 h
+            from .models import SecurityEvent
+            recent = db.scalar(select(func.count()).select_from(SecurityEvent).where(
+                SecurityEvent.user_id == u.id, SecurityEvent.kind == "locked", SecurityEvent.t > now() - 86400)) or 0
+            u.locked_until, u.failed = now() + (900, 3600, 86400)[min(recent, 2)], 0
+            security(db, "locked", u.id, request)
+            warn = "Urban Health: someone entered a wrong password for your account 5 times, so password sign-in is paused. If this wasn't you, sign in with a code and change your password."
+            try:
+                if u.email:
+                    messaging.mail(u.email, "Your Urban Health account was locked", warn)
+                elif u.phone:
+                    messaging.send_text_sms(u.phone, warn)
+            except Exception:
+                pass
         db.commit()
         raise bad
     if u.two_step:
@@ -855,6 +872,8 @@ def contact_verify(body: FlowCode, request: Request, db: Session = Depends(get_d
     else:
         u.phone, u.phone_verified = d["target"], True
     if old and old != d["target"]:
+        from .ops import security
+        security(db, "contact:" + d["kind"], u.id, request)
         u.contact_changed, u.contact_changed_kind = now(), d["kind"]
         alert_old_contact(d["kind"], old)
     from .models import ProfileChange
