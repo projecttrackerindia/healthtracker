@@ -64,6 +64,7 @@ async def file_put(file_id: str, request: Request, db: Session = Depends(get_db)
             pass
     name = name[:160]
     try:
+        mime, name = storage.checked(data, name)
         n = storage.put(db, h.id, file_id, data, mime, name, u.id)
     except Exception as e:
         print("[storage] put failed:", type(e).__name__, str(e)[:200], flush=True)

@@ -59,6 +59,17 @@ def client_ip(request: Request) -> str:
             or (request.client.host if request.client else "?"))
 
 
+
+TERMS_VERSION = os.getenv("TERMS_VERSION", "2026-11")
+
+
+def record_consent(db, request: Request, u, via: str) -> None:
+    """Sign-up consent, kept as evidence: terms, privacy notice and processing of health data (DPDP Act 2023)."""
+    from .models import ConsentLog
+    iph = hashlib.sha256((client_ip(request) + os.getenv("SECRET_KEY", "")).encode()).hexdigest()
+    for k in ("terms", "privacy", "health_data"):
+        db.add(ConsentLog(user_id=u.id, kind=k, version=TERMS_VERSION, granted=True, via=via, ip_hash=iph))
+
 def _local(k: str, n: int, per: int) -> bool:
     """The per-container view. True when this container alone has already seen too many."""
     q, t = _HITS[k], time.time()
@@ -467,6 +478,7 @@ def signup_verify(body: FlowCode, request: Request, response: Response, db: Sess
     db.add(u)
     db.delete(f)
     db.flush()
+    record_consent(db, request, u, "password")
     out = start_session(request, response, db, u, "otp")
     if d.get("verify") == "aadhaar" and d["kind"] == "email":
         # the person chose Aadhaar instead of a mobile code: the next step is DigiLocker; name and date of birth then come from Aadhaar
@@ -928,6 +940,7 @@ def google_signin(body: GoogleIn, request: Request, response: Response, db: Sess
         u = User(name=(c.get("name") or email.split("@")[0])[:80], email=email, email_verified=True)
         db.add(u)
         db.flush()
+        record_consent(db, request, u, "google")
         new = True
     out = start_session(request, response, db, u, "google")
     return {**out, "new": new}

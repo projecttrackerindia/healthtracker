@@ -14,4 +14,4 @@ USER tht
 
 EXPOSE 8080
 # one worker on purpose: video-call rooms and the daily jobs live in this process (see GOOGLE_CLOUD.md)
-CMD ["sh", "-c", "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1 --no-access-log --proxy-headers --forwarded-allow-ips='*'"]
+CMD ["sh", "-c", "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080} --workers ${WEB_CONCURRENCY:-3} --no-access-log --proxy-headers --forwarded-allow-ips='*'"]

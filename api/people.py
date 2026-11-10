@@ -432,7 +432,8 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
         raise HTTPException(415, "PDF or photo only")
     from . import storage
     fid = new_id("f")
-    storage.put(db, p.id, fid, data, mime, (file.filename or "report")[:120], u.id)
+    mime, fname = storage.checked(data, file.filename or "report")
+    storage.put(db, p.id, fid, data, mime, fname, u.id)
     reading = {}
     if read == "1":
         try:

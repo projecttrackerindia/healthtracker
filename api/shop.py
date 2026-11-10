@@ -161,8 +161,9 @@ async def admin_image(sku: str, file: UploadFile = File(...), a: Admin = Depends
     if not s3:
         raise HTTPException(503, "No bucket configured (S3_BUCKET).")
     data = await file.read()
-    mime = (file.content_type or "image/jpeg").split(";")[0]
-    if not mime.startswith("image/") or len(data) > 4 * 1024 * 1024:
+    from .storage import sniff
+    mime = sniff(data) or ""
+    if not mime.startswith("image/") or mime == "image/heic" or len(data) > 4 * 1024 * 1024:
         raise HTTPException(415, "An image up to 4 MB.")
     key = f"shop/{sku}.{ 'png' if 'png' in mime else 'webp' if 'webp' in mime else 'jpg'}"
     s3.put_object(Bucket=os.getenv("S3_BUCKET"), Key=key, Body=data, ContentType=mime)

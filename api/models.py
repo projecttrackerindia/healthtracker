@@ -1004,6 +1004,20 @@ class HouseholdInvite(Base):
     used_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
 
+class ConsentLog(Base):
+    """What each account agreed to, which version, when, and how (DPDP Act 2023 s.6: consent must be demonstrable).
+    Rows are never edited; a withdrawal is a new row."""
+    __tablename__ = "consent_log"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(32), index=True)
+    kind: Mapped[str] = mapped_column(String(24))          # terms | privacy | health_data | marketing
+    version: Mapped[str] = mapped_column(String(16))
+    granted: Mapped[bool] = mapped_column(Boolean, default=True)
+    via: Mapped[str] = mapped_column(String(16), default="")   # password | google | app
+    ip_hash: Mapped[str] = mapped_column(String(64), default="")
+    t: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
 class AccessLog(Base):
     __tablename__ = "access_log"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

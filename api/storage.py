@@ -68,6 +68,32 @@ def unseal(blob: bytes) -> bytes:
     return open_with_keys(blob[14:], blob[2:14], b"tht-file-v1")
 
 
+def sniff(data: bytes) -> str | None:
+    """The real type from the first bytes. Only documents and photos are accepted anywhere in the app."""
+    if data[:5] == b"%PDF-":
+        return "application/pdf"
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data[4:12] in (b"ftypheic", b"ftypheix", b"ftypmif1", b"ftypmsf1", b"ftypheis", b"ftyphevc"):
+        return "image/heic"
+    return None
+
+
+def checked(data: bytes, name: str) -> tuple[str, str]:
+    """For anything a person or partner uploads: the real type from the bytes (never the browser's label) and a
+    clean file name. Anything that is not a PDF or a photo is refused."""
+    from fastapi import HTTPException
+    real = sniff(data)
+    if not real:
+        raise HTTPException(415, "Only PDF or photo files (JPG, PNG, WebP, HEIC) can be uploaded")
+    clean = "".join(ch for ch in (name or "file") if ch.isprintable() and ch not in '\\/:*?"<>|')[:120] or "file"
+    return real, clean
+
+
 def put(db, household_id: str, file_id: str, data: bytes, mime: str, name: str, by: str) -> int:
     from .models import StoredFile, now
 

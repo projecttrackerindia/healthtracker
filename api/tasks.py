@@ -43,10 +43,26 @@ def _token() -> str:
 WHO = f"{socket.gethostname()[:40]}:{uuid.uuid4().hex[:8]}"
 
 
+_LEADER: list = []
+
+
 def in_process_loops() -> bool:
-    """True while the old daemon threads should still run. Set IN_PROCESS_LOOPS=0 once Cloud Scheduler is
-    calling these endpoints; leaving both on would double every reminder."""
-    return os.getenv("IN_PROCESS_LOOPS", "1") == "1"
+    """True while the old daemon threads should still run, and only in ONE worker process. With several uvicorn
+    workers each would otherwise start its own loops and every reminder would go out several times; the first
+    worker to take the lock runs them. Set IN_PROCESS_LOOPS=0 once Cloud Scheduler calls the endpoints."""
+    if os.getenv("IN_PROCESS_LOOPS", "1") != "1":
+        return False
+    if _LEADER:
+        return _LEADER[0] is not None
+    try:
+        import fcntl
+        f = open(os.getenv("LOOP_LOCK", "/tmp/urbanhealth-loops.lock"), "w")
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _LEADER.append(f)            # keep the file open: the lock lives as long as this process
+        return True
+    except OSError:
+        _LEADER.append(None)
+        return False
 
 
 def _auth(token: str | None) -> None:

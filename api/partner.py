@@ -699,6 +699,7 @@ async def upload_report(oid: str, request: Request, db: Session = Depends(get_db
     s = my_store(db, u)
     name = request.headers.get("x-file-name", "")[:120] or f"{s.name} report {time.strftime('%d-%m-%Y')}"
     try:
+        mime, name = storage.checked(data, name)
         storage.put(db, o.household_id, f"labrep_{o.id}", data, mime, name, "partner:" + u.id)
         db.flush()
     except Exception as e:
