@@ -40,6 +40,7 @@ body.preg #bg{background:radial-gradient(80% 60% at 50% 40%,#FFFFFF 0%,#FBF1F4 5
 .vit{position:fixed;z-index:4;border-radius:18px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}.vit small{font-size:11.5px;color:#6E6E73}.vit b{font-size:28px;letter-spacing:-.02em}.vit i{font-style:normal;font-size:13px;color:#8E8E93;margin-left:3px}
 .srch{position:fixed;top:190px;left:16px;right:16px;height:48px;border-radius:24px;display:flex;align-items:center;gap:10px;padding:0 18px;font-size:17px;z-index:5}
 .res{position:fixed;top:246px;left:16px;right:16px;border-radius:20px;padding:6px;z-index:5}.res div{padding:12px 14px;border-radius:14px;font-size:15px}.res div.on{background:rgba(10,132,255,.1);color:#0A84FF;font-weight:600}
+body.real #bg{background:radial-gradient(70% 60% at 50% 45%,#3A3A3C 0%,#1C1C1E 75%)}body.real .big,body.real .eb,body.real .line{color:#F5F5F7}body.real .chip:not(.on){background:rgba(255,255,255,.12);color:#F5F5F7;border-color:transparent}
 body.holo #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 70%)}body.holo .big,body.holo .eb,body.holo .line{color:#CFF4FF}
 #extra{position:fixed;inset:0;pointer-events:none;z-index:4}
 </style></head><body>
@@ -127,7 +128,7 @@ const LAYERS=[['organs','Organs',3],['muscle','Muscles',1],['skeleton','Skeleton
 const R=new THREE.WebGLRenderer({canvas:$('#gl'),antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;
 R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(24,1,.1,100);
-scene.add(new THREE.HemisphereLight(0xffffff,0xd6dce6,.85));
+scene.add(new THREE.HemisphereLight(0xfff8f2,0x8a7f78,.6));
 const kl=new THREE.DirectionalLight(0xfff6ee,1.05);kl.position.set(3,6,7);scene.add(kl);
 const fl=new THREE.DirectionalLight(0xdfe9ff,.45);fl.position.set(-6,1,4);scene.add(fl);
 const rl=new THREE.DirectionalLight(0xbfd4ff,.75);rl.position.set(-2,4,-7);scene.add(rl);
@@ -139,6 +140,9 @@ async function load(sex){const [buf,names]=await Promise.all([gunz(sex==='female
 function partPos(S,p){const q=new Uint16Array(S.buf,S.base+p.o,p.v*3),b=p.b,o=new Float32Array(p.v*3);for(let j=0;j<p.v;j++){o[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);o[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);o[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}return o}
 function partIdx(S,p){return new Uint16Array(S.buf,S.base+p.o+p.v*6,p.i)}
 const FRESNEL=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nfloat frs=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.2);totalEmissiveRadiance+=vec3(0.72,0.84,1.0)*frs*.55;diffuseColor.a=max(diffuseColor.a,frs*.55);')};
+const TISSUE=(kind)=>sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;').replace('#include <begin_vertex>','#include <begin_vertex>\nvOP=position;');
+ sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;\nfloat h3(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}\nfloat n3(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x),mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x),f.y),mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x),mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x),f.y),f.z);}')
+ .replace('#include <color_fragment>','#include <color_fragment>\n'+(kind===1?'float fb=n3(vec3(vOP.x*90.,vOP.y*6.,vOP.z*90.));float fn=n3(vOP*40.);diffuseColor.rgb*=0.78+0.32*fb*fb+0.08*fn;':kind===2?'float pr=n3(vOP*60.);float pr2=n3(vOP*14.);diffuseColor.rgb*=0.86+0.1*pr2+0.06*smoothstep(.55,.8,pr);':kind===3?'float mo=n3(vOP*22.);diffuseColor.rgb*=0.9+0.16*mo;':'float mo=n3(vOP*30.);diffuseColor.rgb*=0.94+0.08*mo;'))};
 const ORGPAL=[[/myocard|ventric|atri(um|al)|heart|papillary|interventricular|valve|cusp/i,0xB8323F],[/liver|hepat/i,0x8E3B2C],[/spleen/i,0x6E2A40],[/kidney|renal/i,0x7E2C2C],[/pancrea/i,0xE6B45C],[/gallbladder|bile|cystic/i,0x5F8F45],
  [/stomach|gastric/i,0xE3A08A],[/duoden|jejun|ileum|small intestine/i,0xF0B39A],[/colon|caecum|cecum|rectum|append/i,0xD69580],[/esophag|oesophag/i,0xD38C82],[/lung|pulmonary|bronch|pleura/i,0xE9A5AE],[/trachea|laryn|cartilage/i,0xE5D6CC],
  [/bladder|urethr|ureter/i,0xE2BE73],[/uter|ovar|fallop|vagin|cervi/i,0xE3718D],[/prostat|testis|seminal|penis|scrot/i,0xCC7E8E],[/brain|cerebr|cerebell|pons|medulla|thalam|hippocamp/i,0xE9C6C2],[/thyroid|parathyroid/i,0xC24C5A],
@@ -149,8 +153,8 @@ function colOf(p,l,nm){const n=nm||'';let c;
  else if(l===1)c=/tendon|aponeuros|fascia|retinacul|linea/i.test(n)?0xE6D8C2:0xA9372F;
  else if(l===2)c=/cartilage|disc|menisc|ligament|labrum|capsule/i.test(n)?0xCFE0E4:0xEFE5CF;
  else if(l===4)c=/vein|venous|sinus|vena/i.test(n)?0x3A57D6:/lymph|thoracic duct/i.test(n)?0x7CC36B:0xCF2538;
- else if(l===5)c=0xF0C440;else c=0xE6ECF4;
- const col=new THREE.Color(c),v=hsh(n)-.5;col.offsetHSL(0,0,v*(l===1?.10:.06));return col}
+ else if(l===5)c=/white matter|corpus callosum|capsule|fornix|commissure|tract|radiation|fascicul|funicul|spinal cord|cauda|conus/i.test(n)?0xEADFCF:/sulcus|fissure/i.test(n)?0x8E5A55:/gyrus|lobe|pole|cuneus|uncus|insula|cortex|operculum|lingula|cerebell|vermis|flocc|lobule|tonsil of cerebellum/i.test(n)&&!/nerve|branch/i.test(n)?0xC98F88:/nucleus|thalam|putamen|caudate|pallid|amygdal|hippocamp|claustrum|substantia|pons|medulla|midbrain|peduncle|hypothal|pituitary|pineal|olive|colliculus|mammillary/i.test(n)&&!/nerve|branch/i.test(n)?0xB98078:/falx|tentorium|dura|arachnoid|pia mater|mening/i.test(n)&&!/nerve|branch/i.test(n)?0xCDBBA2:0xE8BE3C;else c=0xE6ECF4;
+ const col=new THREE.Color(c),v=hsh(n)-.5;col.offsetHSL(0,0,v*(l===1?.10:.06));return col.convertSRGBToLinear()}
 const HIDE_ORG=/mammary|adipose|unnamed|fat body|fat pad|subcutaneous|areola|nipple/i;
 function build(S){LAY={};PICK=[];body.clear();
  const per={};S.meta.parts.forEach((p,k)=>{const l=p.l??1;(per[l]=per[l]||[]).push(k)});
@@ -159,7 +163,7 @@ function build(S){LAY={};PICK=[];body.clear();
   ks.forEach(k=>{const p=S.meta.parts[k],P=partPos(S,p),I=partIdx(S,p),c=colOf(p,+l,S.names[k]);pos.set(P,vo*3);for(let j=0;j<p.v;j++){col[(vo+j)*3]=c.r;col[(vo+j)*3+1]=c.g;col[(vo+j)*3+2]=c.b}for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;ranges.push([io/3,(io+I.length)/3,k,vo,p.v,io,I.length]);vo+=p.v;io+=I.length});
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();
   let m;if(+l===0){m=new THREE.MeshPhysicalMaterial({color:0xE6ECF4,roughness:.35,transparent:true,opacity:.18,depthWrite:false,clearcoat:.6});m.onBeforeCompile=FRESNEL}
-  else m=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:+l===2?.62:.42,metalness:0,clearcoat:+l===3?.6:+l===1?.3:.15,clearcoatRoughness:.3,transparent:true,opacity:1});
+  else{m=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:+l===2?.7:+l===1?.5:.38,metalness:0,clearcoat:+l===3?.55:+l===1?.35:.1,clearcoatRoughness:.35,sheen:0,transparent:true,opacity:1});m.onBeforeCompile=TISSUE(+l)}
   const mesh=new THREE.Mesh(g,m);mesh.renderOrder=+l===0?5:1;mesh.userData={l:+l,ranges};body.add(mesh);LAY[l]=mesh;PICK.push(mesh)}}
 function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];
  for(const ls in LAY){const l=+ls,m=LAY[ls],mt=m.material;
@@ -271,7 +275,7 @@ function untint(){const m=LAY[3],c=m.geometry.attributes.color;m.userData.ranges
 var GLOWS=[];
 function glow(re,hex,l=3,op=.9){const m=LAY[l],src=m.geometry,rs=partsOf(re,l);if(!rs.length)return null;let n=0;rs.forEach(r=>n+=r[6]);const idx=new Uint32Array(n);let o=0;rs.forEach(r=>{idx.set(src.index.array.subarray(r[5],r[5]+r[6]),o);o+=r[6]});
  const g=new THREE.BufferGeometry();g.setAttribute('position',src.attributes.position);g.setAttribute('normal',src.attributes.normal);g.setIndex(new THREE.BufferAttribute(idx,1));g.computeBoundingBox();
- const mesh=new THREE.Mesh(g,new THREE.MeshPhysicalMaterial({color:hex,emissive:hex,emissiveIntensity:.45,roughness:.35,clearcoat:1,transparent:op<1,opacity:op}));mesh.renderOrder=6;
+ const mesh=new THREE.Mesh(g,new THREE.MeshPhysicalMaterial({color:new THREE.Color(hex).convertSRGBToLinear(),emissive:new THREE.Color(hex).convertSRGBToLinear(),emissiveIntensity:.45,roughness:.35,clearcoat:1,transparent:op<1,opacity:op}));mesh.renderOrder=6;
  const c=g.boundingBox.getCenter(new THREE.Vector3());const piv=new THREE.Group();piv.position.copy(c);mesh.position.copy(c).multiplyScalar(-1);piv.add(mesh);body.add(piv);GLOWS.push(piv);piv.userData.c=c;return piv}
 function clearGlows(){GLOWS.forEach(g=>body.remove(g));GLOWS=[];PULSE=null;BREATH=null}
 var PULSE=null,BREATH=null;
@@ -288,7 +292,7 @@ const FHEX={high:0xFF453A,low:0xFF9F0A,normal:0x30D158,unknown:0x8E8E93},FCLS={h
 /* ---- language ---- */
 const TX={
  en:{heart:'Heart',pancreas:'Pancreas',kidney:'Kidneys',liver:'Liver',lung:'Lungs',stomach:'Stomach',gut:'Intestines',uterus:'Uterus',thyroid:'Thyroid',brain:'Brain',bladder:'Bladder',spleen:'Spleen',gall:'Gallbladder',
-  body:'Body',explore:'Explore',timeline:'Timeline',hurt:'Where it hurts',meds:'Medicines',heartv:'Heart',vitals:'Vitals',search:'Search',quiz:'Quiz',cut:'Cut',holo:'Hologram',baby:'Baby',settings:'Display',
+  body:'Body',explore:'Explore',real:'Realistic',timeline:'Timeline',hurt:'Where it hurts',meds:'Medicines',heartv:'Heart',vitals:'Vitals',search:'Search',quiz:'Quiz',cut:'Cut',holo:'Hologram',baby:'Baby',settings:'Display',
   high:'High',low:'Low',normal:'In range',unknown:'Check',ask:'✦ Ask about this',book:'Book a recheck',tapline:'Tap any part to learn what it does.',results:n=>n?`${n} result${n>1?'s':''} worth discussing. Tap an organ to learn more.`:'All recent results are in range. Tap any part to learn what it does.',noresults:'No reports yet. Add a report and the body will show what it means.'},
  te:{heart:'గుండె',pancreas:'క్లోమం',kidney:'మూత్రపిండాలు',liver:'కాలేయం',lung:'ఊపిరితిత్తులు',stomach:'జీర్ణాశయం',gut:'పేగులు',uterus:'గర్భాశయం',thyroid:'థైరాయిడ్',brain:'మెదడు',bladder:'మూత్రాశయం',spleen:'ప్లీహం',gall:'పిత్తాశయం',
   body:'శరీరం',explore:'చూడండి',timeline:'కాలక్రమం',hurt:'ఎక్కడ నొప్పి',meds:'మందులు',heartv:'గుండె',vitals:'వైటల్స్',search:'వెతకండి',quiz:'క్విజ్',cut:'కోత',holo:'హోలోగ్రామ్',baby:'బిడ్డ',settings:'డిస్ప్లే',
@@ -312,11 +316,11 @@ function orgFindings(){const by={};latest().forEach(f=>{if(!f.org||!ORGRE[f.org]
 function head(eb,t,ln){$('#eb').textContent=eb;$('#eb').style.color='';$('#ttl').textContent=t;$('#ln').innerHTML=ln||''}
 function sheet(html){$('#card').innerHTML='<div class="grab"></div>'+html;$('#card').classList.add('on')}
 const CAM=(z,y,ry=0,rx=0)=>{goalZ=z;goalY=y;HOME={z,y};goal.y=ry;goal.x=rx};
-function modes(){const pg=DATA&&DATA.person.pregnancy;const M=[...(pg?['baby']:[]),'explore','timeline','hurt','meds','heartv','vitals','search','quiz','cut','holo','settings'];
+function modes(){const pg=DATA&&DATA.person.pregnancy;const M=[...(pg?['baby']:[]),'explore','real','timeline','hurt','meds','heartv','vitals','search','quiz','cut','holo','settings'];
  $('#modes').innerHTML=M.map(m=>`<button class="chip ${MODE===m?'on':''}" onclick="mode('${m}')">${m==='settings'?'Aa':T(m)}</button>`).join('')}
-function reset(){closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo');BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
+function reset(){closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');if(LAY[0])LAY[0].material.color.set(0xE6ECF4);BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
  if(HOLO)unholo();R.localClippingEnabled=false;for(const l in LAY){LAY[l].material.clippingPlanes=[];LAY[l].material.side=THREE.FrontSide}$('#sub').innerHTML='';$('#extra').innerHTML='';body.position.x=0;setLayer('organs');QZ=null;HURT=null}
-async function mode(m){MODE=m;modes();reset();({baby:mBaby,explore:mExplore,timeline:mTimeline,hurt:mHurt,meds:mMeds,heartv:mHeart,vitals:mVitals,search:mSearch,quiz:mQuiz,cut:mCut,holo:mHolo,settings:mSettings})[m]()}
+async function mode(m){MODE=m;modes();reset();({baby:mBaby,explore:mExplore,real:mReal,timeline:mTimeline,hurt:mHurt,meds:mMeds,heartv:mHeart,vitals:mVitals,search:mSearch,quiz:mQuiz,cut:mCut,holo:mHolo,settings:mSettings})[m]()}
 /* ---- bodies that match the person: proportions by age ---- */
 let SHAPED=null;
 /* bodies that match the person: height sets the size, weight (BMI) the build, age the proportions */
@@ -508,6 +512,22 @@ let HOLO=null;
 function mHolo(){shape();CAM(HOME0.z,HOME0.y,-.2);head(who()+' · '+T('holo').toUpperCase(),T('holo'),'');document.body.classList.add('holo');HOLO={};
  for(const l in LAY){const m=LAY[l];HOLO[l]={mat:m.material,vis:m.visible};m.visible=[0,2,3,4].includes(+l);m.material=new THREE.MeshBasicMaterial({color:+l===4?0xff4d6d:+l===2?0x9fe7ff:0x5ad1ff,wireframe:+l===0,transparent:true,opacity:+l===0?.12:.35,blending:THREE.AdditiveBlending,depthWrite:false})}}
 function unholo(){for(const l in HOLO){if(!LAY[l])continue;LAY[l].material.dispose();LAY[l].material=HOLO[l].mat;LAY[l].visible=HOLO[l].vis}HOLO=null}
+
+/* realistic: every layer solid at once, true colours, dark stage, optional half cut (like the Z-Anatomy atlas) */
+let REAL=null;
+async function mReal(){if(STATE.sex!=='male'){REAL={back:STATE.base};await swap('male')}shape();document.body.classList.add('real');
+ for(const l in LAY){const m=LAY[l],mt=m.material;m.visible=+l!==0;mt.transparent=false;mt.opacity=1;mt.depthWrite=true;mt.side=THREE.DoubleSide;mt.clearcoat=.25;mt.roughness=.55}
+ LAY[0].visible=false;
+ R.localClippingEnabled=true;CUTP=new THREE.Plane(new THREE.Vector3(-1,0,0),0);for(const l in LAY)LAY[l].material.clippingPlanes=[CUTP];
+ CAM(HOME0.z*.62,HOME0.y+1.6*body.scale.y,-1.35);goal.x=0;
+ head(who()+' · REALISTIC','Inside the body','Skin, muscle, bone, organs, vessels and nerves together. Slide to cut.');
+ sheet(`<div class="q" style="margin-top:0">Cut</div><input type="range" min="-60" max="60" value="0" style="width:100%" oninput="CUTP.constant=this.value/100" aria-label="Cut position">
+ <div class="chips2" style="margin-top:10px"><span class="on" onclick="cutAxis(this,-1,0,0)">Side view</span><span onclick="cutAxis(this,0,0,-1)">Front view</span><span onclick="CUTP.constant=99;this.parentNode.querySelectorAll('span').forEach(s=>s.classList.toggle('on',s===this))">Whole body</span></div>`)}
+
+/* calm: a natural body; only what matters right now comes forward, in true colour */
+function calm(focus){shape();document.body.classList.remove('real');setLayer('organs');for(const l in LAY){const m=LAY[l];m.visible=+l===0||+l===3}
+ const sk=LAY[0].material;sk.color.set(0xC8987A).convertSRGBToLinear();sk.opacity=focus&&focus.length?.42:.97;sk.transparent=true;sk.depthWrite=!(focus&&focus.length);sk.onBeforeCompile=()=>{};sk.needsUpdate=true;sk.roughness=.55;sk.clearcoat=.15;
+ LAY[3].visible=false;clearGlows();(focus||[]).forEach(f=>{const g=glow(f.re,f.hex,3,1);if(g){const mm=g.children[0];mm.material.emissiveIntensity=.06;mm.material.onBeforeCompile=TISSUE(3);mm.renderOrder=10;mm.material.depthTest=false;mm.material.depthWrite=false;if(f.beat)PULSE={g,bpm:f.beat}}})}
 /* ---- boot ---- */
 let HOME0={z:16,y:0};
 function parseSet(buf,names){const dv=new DataView(buf),n=dv.getUint32(0,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,n)));return{buf,base:4+n,meta,names}}
