@@ -52,7 +52,13 @@ body.holo #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 7
 #zbar{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;border-radius:16px;overflow:hidden}
 #zbar button{width:40px;height:40px;border:0;background:transparent;font:500 20px Geist,Inter,sans-serif;color:var(--ink)}#zbar button+button{border-top:1px solid rgba(0,0,0,.06)}
 @media(pointer:coarse){#zbar{display:none}}body.focus #zbar button,body.real #zbar button,body.holo #zbar button{color:#fff}body.focus #zbar,body.real #zbar,body.holo #zbar{background:rgba(255,255,255,.12);border-color:transparent}
-#modes{flex-wrap:nowrap}
+#modes{flex-wrap:nowrap;align-items:center;gap:8px}
+.seg3{flex:1;display:grid;grid-template-columns:repeat(3,1fr);background:rgba(255,255,255,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:12px;padding:3px;border:1px solid rgba(0,0,0,.05);box-shadow:0 2px 12px rgba(0,0,0,.05);min-width:0}
+.seg3 button{border:0;background:none;height:32px;border-radius:9px;font:600 13.5px Geist,Inter,sans-serif;color:#3A3A3C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}.seg3 .on{background:#1D1D1F;color:#fff}
+.chip.more{padding:0 12px;letter-spacing:.08em}body.focus .seg3{display:none}
+.gbar{height:6px;border-radius:3px;background:#E5E5EA;overflow:hidden;margin-top:7px}.gbar i{display:block;height:100%;border-radius:3px;background:#34C759}
+.mlist .mi{display:flex;gap:12px;padding:11px 0;border-bottom:.5px solid rgba(0,0,0,.08);align-items:flex-start;cursor:pointer}.mlist .mi:last-child{border:0}.mi .dot{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;color:#fff;font-weight:700}
+.prog{display:flex;justify-content:space-between;padding:9px 0;border-bottom:.5px solid rgba(0,0,0,.08);font-size:14.5px}.prog:last-child{border:0}
 </style></head><body>
 <div id="bg"></div><canvas id="gl"></canvas><svg id="lines"></svg><div id="tags"></div><div id="load">Loading anatomy…</div>
 <header class="top"><div class="row" style="justify-content:space-between"><p class="eb" id="eb"></p><button class="x" onclick="send('close')" aria-label="Close" style="pointer-events:auto">✕</button></div><h1 class="big" id="ttl">Body</h1><p class="line" id="ln"></p><div class="chips" id="modes"></div><div class="chips" id="sub" style="margin-top:0"></div><div id="chips" hidden></div></header>
@@ -224,14 +230,18 @@ function frame(){const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle
  R.render(scene,cam);placeTags();requestAnimationFrame(frame)}
 /* tags: report findings pinned to organs + atlas labels */
 function centerOf(re){if(!SET)return null;const b=new THREE.Box3();let n=0;SET.meta.parts.forEach((p,k)=>{if((p.l??1)===3&&re.test(SET.names[k])){const c=p.b;b.expandByPoint(new THREE.Vector3(c[0],c[1],c[2]));b.expandByPoint(new THREE.Vector3(c[3],c[4],c[5]));n++}});return n?b.getCenter(new THREE.Vector3()):null}
-function placeTags(){const r=$('#gl').getBoundingClientRect();let svg='';
- document.querySelectorAll('.tag').forEach(t=>{const c=t._c;if(!c){t.style.display='none';return}v3.copy(c).applyMatrix4(body.matrixWorld).project(cam);
-  const x=r.left+(v3.x*.5+.5)*r.width,y=r.top+(-v3.y*.5+.5)*r.height,side=+t.dataset.side,lx=x+side*(t.dataset.big?96:70),ly=y+(+t.dataset.dy||0);
-  const W=r.width,clx=Math.max(side>0?8:150,Math.min(W-(side>0?150:8),lx)),cly=Math.max(210,Math.min(r.height-90,ly));t.style.display=v3.z<1?'':'none';t.style.left=clx+'px';t.style.top=cly+'px';t.style.transform=`translate(${side>0?'0':'-100%'},-50%)`;
-  svg+=`<line x1="${x}" y1="${y}" x2="${Math.max(side>0?8:150,Math.min(r.width-(side>0?150:8),lx))}" y2="${Math.max(210,Math.min(r.height-90,ly))}" stroke="rgba(29,29,31,.35)" stroke-width="1"/><circle cx="${x}" cy="${y}" r="3.5" fill="${t.dataset.col}" stroke="#fff" stroke-width="1.5"/>`});
+function placeTags(){const r=$('#gl').getBoundingClientRect(),W=r.width,top=Math.max(150,(document.querySelector('#modes .seg3,#modes')?document.querySelector('#modes .seg3,#modes').getBoundingClientRect().bottom+14:200),($('#sub')&&$('#sub').innerHTML?$('#sub').getBoundingClientRect().bottom+10:0)),card=$('#card'),bot=(card&&card.classList.contains('on')?card.getBoundingClientRect().top:r.height)-12;let svg='';const P=[];
+ document.querySelectorAll('.tag').forEach(t=>{const c=t._c;if(!c){t.style.display='none';return}v3.copy(c).applyMatrix4(body.matrixWorld).project(cam);if(v3.z>=1){t.style.display='none';return}t.style.display='';
+  const x=r.left+(v3.x*.5+.5)*W,y=r.top+(-v3.y*.5+.5)*r.height,side=+t.dataset.side,w=t.offsetWidth||140,h=t.offsetHeight||28;
+  let lx=x+side*(t.dataset.big?60:46);lx=side>0?Math.min(W-8-w,Math.max(8,lx)):Math.max(8+w,Math.min(W-8,lx));P.push({t,x,y,side,w,h,lx,ly:y+(+t.dataset.dy||0)})});
+ // keep tags inside the free space and off each other, per side
+ [1,-1].forEach(sd=>{const L=P.filter(p=>p.side===sd).sort((a,b)=>a.ly-b.ly);let last=-1e9;L.forEach(p=>{p.ly=Math.max(p.ly,top+p.h/2,last+p.h/2+8);last=p.ly+p.h/2});
+  for(let k=L.length-1,lim=bot;k>=0;k--){const p=L[k];if(p.ly+p.h/2>lim)p.ly=lim-p.h/2;lim=p.ly-p.h/2-8}});
+ P.forEach(p=>{p.t.style.left=p.lx+'px';p.t.style.top=p.ly+'px';p.t.style.transform=`translate(${p.side>0?'0':'-100%'},-50%)`;
+  svg+=`<line x1="${p.x}" y1="${p.y}" x2="${p.lx}" y2="${p.ly}" stroke="rgba(29,29,31,.3)" stroke-width="1"/><circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${p.t.dataset.col}" stroke="#fff" stroke-width="1.5"/>`});
  $('#lines').innerHTML=svg}
 function tags(list){$('#tags').innerHTML='';list.forEach(t=>{const el=document.createElement('button');el.className='tag'+(t.big?' big':'');el.dataset.side=t.side;el.dataset.dy=t.dy||0;el.dataset.col=t.col;if(t.big)el.dataset.big=1;
- el.innerHTML=t.big?`<small>${t.org} · ${t.test}</small><b>${t.val}<i>${t.unit}</i></b><span class="pill ${t.cls}">${t.flag}</span>`:`<span class="dot" style="background:${t.col}"></span>${t.org}`;el._c=t.all?centerOfAll(t.re):centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
+ el.innerHTML=t.big?`<small>${t.org}${t.test?' · '+t.test:''}</small>${t.val!==''&&t.val!=null?`<b>${t.val}<i>${t.unit||''}</i></b>`:''}<span class="pill ${t.cls}">${t.flag}</span>`:`<span class="dot" style="background:${t.col}"></span>${t.org}`;el._c=t.all?centerOfAll(t.re):centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
 
 /* ===== pregnancy: growing uterus, belly shaped around it, a baby that changes shape and moves by week ===== */
 const sst=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
@@ -340,15 +350,20 @@ let DATA=null,MODE='explore';
 const send=(act,x={})=>parent.postMessage({type:'uh-body-act',act,...x},location.origin);
 const who=()=>DATA?DATA.person.name.toUpperCase():'';
 const ageBand=a=>a==null?'adult':a<2?'baby':a<13?'child':a>=60?'elder':'adult';
+function hist(f){const k=(f.code||f.test||'').toLowerCase();return(DATA.findings||[]).filter(x=>(x.code||x.test||'').toLowerCase()===k&&x.date).sort((a,b)=>a.date.localeCompare(b.date))}
+function prevOf(f){const h=hist(f).filter(x=>x.date<f.date);return h[h.length-1]||null}
+function trend(f){const p=prevOf(f);if(!p)return null;const a=parseFloat(p.value),b=parseFloat(f.value);if(isNaN(a)||isNaN(b)||a===b)return{p,dir:'same'};
+ const better=(p.flag!=='normal'&&f.flag==='normal')||(f.flag==='high'&&b<a)||(f.flag==='low'&&b>a);const worse=(p.flag==='normal'&&f.flag!=='normal')||(f.flag==='high'&&b>a)||(f.flag==='low'&&b<a);return{p,dir:better?'better':worse?'worse':'changed'}}
+function helpers(o){return(DATA.meds||[]).filter(m=>{const d=(DRUGS.find(x=>x[0].test(m.name))||[])[1];return d&&d.works.some(w=>w[0]===o)})}
 function latest(){const seen={},out=[];(DATA.findings||[]).forEach(f=>{const k=(f.code||f.test||'').toLowerCase();if(!k||seen[k])return;seen[k]=1;out.push(f)});return out}
 function orgFindings(){const by={};latest().forEach(f=>{if(!f.org||!ORGRE[f.org])return;const b=by[f.org];const rank={high:3,low:2,unknown:1,normal:0};if(!b||rank[f.flag]>rank[b.flag])by[f.org]=f});return by}
 /* ---- shell ---- */
 function head(eb,t,ln){$('#eb').textContent=eb;$('#eb').style.color='';$('#ttl').textContent=t;$('#ln').innerHTML=ln||''}
 function sheet(html){$('#card').innerHTML='<div class="grab"></div>'+html;$('#card').classList.add('on')}
 const CAM=(z,y,ry=0,rx=0)=>{goalZ=z;goalY=y;HOME={z,y};goal.y=ry;goal.x=rx};
-function modes(){const pg=DATA&&DATA.person.pregnancy;const MAIN=[...(pg?['baby']:[]),'explore','hurt','meds'];const MORE=['timeline','real','heartv','vitals','search','quiz','cut','holo','settings'];
- $('#modes').innerHTML=MAIN.map(m=>`<button class="chip ${MODE===m?'on':''}" onclick="mode('${m}')">${T(m)}</button>`).join('')+`<button class="chip ${MORE.includes(MODE)?'on':''}" onclick="moreSheet()">${MORE.includes(MODE)?(MODE==='settings'?'Display':T(MODE))+' ▾':'More ▾'}</button>`}
-const MORE_I={timeline:['Timeline','How your results changed, report by report'],real:['Realistic','All layers in true colour, with a cut'],heartv:['Heart','Chambers, valves and your results'],vitals:['Vitals','Heart and lungs at your real rates'],search:['Search','Find any part by name'],quiz:['Quiz','Learn where organs are'],cut:['Cross-section','Slice through the body'],holo:['Hologram','A see-through view'],settings:['Display','Language, detail and motion']};
+function modes(){const pg=DATA&&DATA.person.pregnancy;const MAIN=[['explore','Results'],['meds',T('meds')],['timeline','Over time']];const MORE=Object.keys(MORE_I);
+ $('#modes').innerHTML=(pg?`<button class="chip ${MODE==='baby'?'on':''}" onclick="mode('baby')">${T('baby')}</button>`:'')+`<div class="seg3" role="tablist">${MAIN.map(([m,l])=>`<button role="tab" aria-selected="${MODE===m}" class="${MODE===m?'on':''}" onclick="mode('${m}')">${l}</button>`).join('')}</div><button class="chip more ${MORE.includes(MODE)?'on':''}" aria-label="More views" onclick="moreSheet()">${MORE.includes(MODE)?(MODE==='settings'?'Display':T(MODE)):'•••'}</button>`}
+const MORE_I={hurt:['Symptoms','Tap where it hurts'],real:['Realistic','All layers in true colour, with a cut'],heartv:['Heart','Chambers, valves and your results'],vitals:['Vitals','Heart and lungs at your real rates'],search:['Search','Find any part by name'],quiz:['Quiz','Learn where organs are'],cut:['Cross-section','Slice through the body'],holo:['Hologram','A see-through view'],settings:['Display','Language, detail and motion']};
 function moreSheet(){const d=document.createElement('div');d.className='msheet';d.innerHTML=`<div class="ms"><div class="grab"></div>${Object.entries(MORE_I).map(([k,v])=>`<button class="mrowb ${MODE===k?'on':''}" data-k="${k}"><b>${v[0]}</b><small>${v[1]}</small></button>`).join('')}</div>`;document.body.appendChild(d);
  d.onclick=e=>{const b=e.target.closest('[data-k]');if(b)mode(b.dataset.k);d.remove()}}
 function reset(){if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');if(LAY[0])LAY[0].material.color.set(0xE6ECF4);BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
@@ -388,17 +403,19 @@ function organTags(){const by=orgFindings(),out=[];let side=1;
 function lineFor(){const n=Object.values(orgFindings()).filter(f=>f.flag!=='normal').length;return latest().length?T('results')(n):T('noresults')}
 const NATURAL={heart:0xB8323F,liver:0x8E3B2C,pancreas:0xD9963A,kidney:0x7E2C2C,lung:0xD99AA2,thyroid:0xB8404E,stomach:0xD98F78,gut:0xD69580,uterus:0xD0607A,brain:0xC98F88,bladder:0xD8B060,spleen:0x6E2A40,gall:0x5F8F45};
 /* explore = the calm body: a natural person; only organs with a result to discuss come forward, in true colour */
-function mExplore(){shape();LAYK='organs';head(who()+' · '+T('body').toUpperCase(),T('body'),lineFor());subLayers();
- const bad=Object.entries(orgFindings()).filter(([o,f])=>f.flag!=='normal'&&ORGRE[o]&&centerOf(ORGRE[o]));
- calm(bad.map(([o])=>({re:ORGRE[o],hex:NATURAL[o]||0xB8323F,beat:o==='heart'&&DATA.vitals&&+DATA.vitals.hr&&!U.still?+DATA.vitals.hr:0})));
- const anyBad=bad.length;if(anyBad)CAM(HOME0.z*.92,HOME0.y+.2);else CAM(16.5,.15);
- let side=1;tags(bad.map(([o,f])=>{const t={org:T(o),test:f.test,val:f.value,unit:f.unit||'',flag:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o],side,dy:side>0?-30:30,col:OCOL[o],big:1,onTap:()=>focusOrgan(o)};side=-side;return t}))}
-function organCard(o){const f=orgFindings()[o];const fs=latest().filter(x=>x.org===o);const k=SET.meta.parts.findIndex((p,i)=>(p.l??1)===3&&ORGRE[o].test(SET.names[i]));const [sys,desc]=k>=0?infoP(SET.meta.parts[k],SET.names[k]):['',''];
+function mExplore(){shape();LAYK='organs';head(who()+' · '+T('body').toUpperCase(),'Your body',lineFor());
+ const by=Object.entries(orgFindings()).filter(([o])=>ORGRE[o]&&centerOf(ORGRE[o]));CAM(HOME0.z*.9,HOME0.y+.15);
+ by.forEach(([o,f])=>{const g=glow(ORGRE[o],f.flag==='normal'?0x34C759:0xFF9F0A,3,.35);if(g&&o==='heart'&&DATA.vitals&&+DATA.vitals.hr&&!U.still)PULSE={g,bpm:+DATA.vitals.hr}});
+ let side=1;tags(by.map(([o,f])=>{const tr=trend(f);const t={org:T(o)+' · '+f.test.split(/[(,]/)[0].trim(),val:f.value,unit:f.unit||'',flag:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:T(f.flag),cls:tr&&tr.dir==='better'?(f.flag==='normal'?'ok':'warn'):FCLS[f.flag]||'info',re:ORGRE[o],side,dy:side>0?-30:30,col:OCOL[o],big:1,onTap:()=>focusOrgan(o)};side=-side;return t}));
+ const rank={high:3,low:2,unknown:1,normal:0},worst=by.sort((a,b)=>rank[b[1].flag]-rank[a[1].flag])[0];
+ if(worst){const rows=by.slice(0,4);sheet(`<div class="eb" style="margin:0 0 2px">${rows.filter(r=>r[1].flag!=='normal').length?'WORTH A LOOK':'ALL IN RANGE'}</div><div class="mlist">${rows.map(([o,f])=>{const tr=trend(f);return`<div class="mi" onclick="focusOrgan('${o}')" style="align-items:center"><span class="dot" style="background:${OCOL[o]};width:12px;height:12px;border-radius:6px"></span><div style="flex:1;min-width:0"><b style="font-size:15px">${esc(T(o))}</b><div class="eb" style="margin:1px 0 0;text-transform:none;letter-spacing:0;font-weight:500">${esc(f.test.split(/[(,]/)[0].trim())} ${tr&&tr.dir!=='same'?esc(tr.p.value)+' → ':''}<b style="color:#1D1D1F">${esc(f.value)}</b> ${esc(f.unit||'')}</div></div><span class="pill ${tr&&tr.dir==='better'&&f.flag!=='normal'?'warn':FCLS[f.flag]||'info'}">${tr&&tr.dir==='better'?(f.flag==='normal'?'Back in range':'Better'):esc(T(f.flag))}</span><span style="color:#C7C7CC;margin-left:4px">›</span></div>`}).join('')}</div>`)}else sheet(`<p class="cd" style="margin-top:0">${T('noresults')}</p><button class="btn pri" style="width:100%;margin-top:12px" onclick="send('addReport')">Add a report</button>`)}
+function organCard(o,still){const f=orgFindings()[o];const fs=latest().filter(x=>x.org===o);const k=SET.meta.parts.findIndex((p,i)=>(p.l??1)===3&&ORGRE[o].test(SET.names[i]));const [sys,desc]=k>=0?infoP(SET.meta.parts[k],SET.names[k]):['',''];
  sheet(`<div class="row" style="gap:12px;align-items:flex-start"><span class="sw" style="background:${OCOL[o]}"></span><div style="flex:1"><div class="cn">${esc(T(o))}</div>${sys?`<div class="eb" style="margin:2px 0 0">${esc(sys)}</div>`:''}</div><button class="x" onclick="closeCard()" aria-label="Close">✕</button></div>
  ${desc?`<p class="cd">${esc(cap(desc.replace(/^[^:]+:\s*/,'')))}</p>`:''}
- ${fs.map(x=>`<div class="fx"><div><small>${esc(x.rep||'Report')} · ${esc(fmtD(x.date))}</small><div class="fv">${esc(x.test)} <b>${esc(x.value)}</b> ${esc(x.unit||'')}</div></div><span class="pill ${FCLS[x.flag]||'info'}">${esc(T(x.flag||'unknown'))}</span></div>`).join('')}
+ ${fs.map(x=>{const tr=trend(x);return`<div class="fx"><div><small>${esc(x.rep||'Report')} · ${esc(fmtD(x.date))}</small><div class="fv">${esc(x.test)} ${tr&&tr.dir!=='same'?`<span style="color:#8E8E93">${esc(tr.p.value)} →</span> `:''}<b>${esc(x.value)}</b> ${esc(x.unit||'')}</div></div><span class="pill ${tr&&tr.dir==='better'&&x.flag!=='normal'?'warn':FCLS[x.flag]||'info'}">${tr&&tr.dir==='better'?(x.flag==='normal'?'Back in range':'Better'):esc(T(x.flag||'unknown'))}</span></div>`}).join('')}
+ ${helpers(o).map(m=>`<div class="fx"><div><small>Medicine</small><div class="fv">Helping: <b>${esc(m.name)}</b></div></div><span class="pill ok">${m.expected?Math.round(100*m.taken/m.expected)+'% taken':'Taking'}</span></div>`).join('')}
  <div class="row" style="gap:10px;margin-top:14px"><button class="btn pri" style="flex:1" onclick="send('ask',{q:'Explain my ${esc(TX.en[o])} results in simple words'})">${T('ask')}</button>${f&&f.flag!=='normal'&&DATA.canWrite?`<button class="btn sec" style="flex:1" onclick="send('book',{codes:${esc(JSON.stringify(fs.map(x=>x.code).filter(Boolean)))}})">${T('book')}</button>`:`<button class="btn sec" style="flex:1" onclick="mode('timeline')">${T('timeline')}</button>`}</div>`);
- const c=centerOf(ORGRE[o]);if(c){goalY=c.y*.8+.4;goalZ=Math.max(6.5,HOME.z*.62)}}
+ if(still)return;const c=centerOf(ORGRE[o]);if(c){goalY=c.y*.8+.4;goalZ=Math.max(6.5,HOME.z*.62)}}
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 const fmtD=d=>{if(!d)return'';const x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})};
 /* tap on any part, in any mode that allows it */
@@ -427,7 +444,7 @@ function tlShow(){untint();const r=TLR[TLI],by={};const rank={high:3,low:2,unkno
   const a=vs[0],b=vs[vs.length-1],last=pts[pts.length-1];note=`${esc(pts[0].test)} went from ${a} to ${b} ${esc(last.unit||'')}${last.flag==='normal'?', now in range.':last.flag==='high'?', still above range.':'.'}`}
  sheet(`<div class="row" style="justify-content:space-between"><div><div class="cn" style="font-size:19px">${esc(fmtD(r.date))}</div><div class="eb" style="margin:2px 0 0">${esc(r.rep||'Report')}</div></div><span class="pill info">Report ${TLI+1} of ${TLR.length}</span></div>
  ${TLR.length>1?`<input type="range" min="0" max="${TLR.length-1}" value="${TLI}" style="width:100%;margin-top:14px" oninput="TLI=+this.value;tlShow()" aria-label="Choose report"><div class="row" style="justify-content:space-between;font-size:11px;color:#8E8E93"><span>${esc(fmtD(TLR[0].date))}</span><span>${esc(fmtD(TLR[TLR.length-1].date))}</span></div>`:''}
- ${chart}${note?`<p class="cd" style="margin-top:4px">✦ ${note}</p>`:''}`)}
+ ${chart}${note?`<p class="cd" style="margin-top:4px">✦ ${note}</p>`:''}${(()=>{const L=latest(),b=L.filter(f=>trend(f)&&trend(f).dir==='better').map(f=>f.test.split(/[(,]/)[0].trim()),w=L.filter(f=>trend(f)&&trend(f).dir==='worse').map(f=>f.test.split(/[(,]/)[0].trim());return b.length||w.length?`<div style="margin-top:8px">${b.length?`<div class="prog"><span>Improved</span><b style="color:#30A14E">${esc(b.slice(0,3).join(', '))}</b></div>`:''}${w.length?`<div class="prog"><span>Needs attention</span><b style="color:#E5484D">${esc(w.slice(0,3).join(', '))}</b></div>`:''}</div>`:''})()}`)}
 /* ---- 2 · where does it hurt ---- */
 let HURT=null;
 function mHurt(){shape();CAM(HOME0.z*.82,HOME0.y*.6,0);head(who()+' · SYMPTOM CHECK',T('hurt')+'?','Tap the body where it hurts. Front or back: turn the body first.');
@@ -480,12 +497,21 @@ const DRUGS=[
  [/calcium|shelcal|vitamin d|cholecalciferol|uprise/i,{works:[['kidney','Keeps bones strong (absorbed in the gut)']],side:[['stomach','Constipation or gas']],watch:[['kidney','Vitamin D and calcium levels yearly']],avoid:'Taking with thyroid tablets or iron.'}],
  [/salbutamol|asthalin|budesonide|formoterol|foracort|montelukast/i,{works:[['lung','Opens the airways']],side:[['heart','Fast heartbeat or shaky hands']],watch:[['lung','Use a spacer; rinse mouth after steroid inhalers']],avoid:'Running out; keep a spare.'}]];
 let MEDI=0;
-function mMeds(){shape();const meds=DATA.meds||[];head(who()+' · '+T('meds').toUpperCase(),meds.length?esc(meds[MEDI]?.name||''):T('meds'),meds.length?'Where it works, and where side effects show up.':'');
+const MCOL=['#5E5CE6','#30B0C7','#FF9F0A','#FF375F','#34C759','#AF52DE'];
+function mMeds(){if(MEDI>=0&&(DATA.meds||[])[MEDI]&&MEDONE)return mMed1();shape();const meds=DATA.meds||[];head(who()+' · '+T('meds').toUpperCase(),'Your body',meds.length?'Where each medicine works.':'');
+ if(!meds.length){sheet(`<p class="cd" style="margin-top:0">${DATA.canSeeMeds===false?'Medicines are private for this person.':'No medicines yet. Add one and the body shows where it works.'}</p>`);return}
+ CAM(HOME0.z*.9,HOME0.y+.15);const tg=[];let side=1;
+ meds.forEach((m,i)=>{const d=(DRUGS.find(x=>x[0].test(m.name))||[])[1];if(!d)return;const w=d.works[0];glow(ORGRE[w[0]],new THREE.Color(MCOL[i%6]).getHex(),3,.6);if(!tg.some(t=>t.k===w[0])){tg.push({k:w[0],org:T(w[0]),test:'',val:m.name.split(' ')[0],unit:'',flag:w[1].replace(/^(Liver|Pancreas|Heart|Kidneys?) /,''),cls:'info',re:ORGRE[w[0]],side,dy:side>0?-30:30,col:MCOL[i%6],big:1});side=-side}});tags(tg);
+ sheet(`<div class="eb" style="margin:0 0 4px;color:#5E5CE6">TODAY · ${meds.length} MEDICINE${meds.length>1?'S':''}</div><div class="mlist">${meds.map((m,i)=>{const d=(DRUGS.find(x=>x[0].test(m.name))||[])[1];const pct=m.expected?Math.round(100*m.taken/m.expected):null;
+  const linked=d?d.works.map(w=>latest().find(f=>f.org===w[0]&&trend(f)&&trend(f).dir==='better')).find(Boolean):null;
+  return`<div class="mi" onclick="MEDI=${i};MEDONE=1;mode('meds')"><span class="dot" style="background:${MCOL[i%6]}">${esc(m.name[0])}</span><div style="flex:1;min-width:0"><b>${esc(m.name)}</b><div class="eb" style="margin:1px 0 0;text-transform:none;letter-spacing:0;font-weight:500">${d?esc(T(d.works[0][0]))+' → '+esc(d.works[0][1].toLowerCase()):'Tap to learn what it does'}</div>${pct!=null?`<div class="gbar"><i style="width:${pct}%;background:${pct>=80?'#34C759':pct>=50?'#FF9F0A':'#FF453A'}"></i></div><div class="eb" style="margin:4px 0 0;text-transform:none;letter-spacing:0;font-weight:500">Taken ${m.taken} of ${m.expected} doses this month${linked?' · '+esc(linked.test)+' '+esc(trend(linked).p.value)+' → '+esc(linked.value):''}</div>`:''}</div></div>`}).join('')}</div><p class="eb" style="margin-top:8px">General information. Follow your doctor's advice.</p>`)}
+let MEDONE=0;
+function mMed1(){shape();const meds=DATA.meds||[];head(who()+' · '+T('meds').toUpperCase(),esc(meds[MEDI]?.name||''),'Where it works, and where side effects show up.');
  if(!meds.length){sheet(`<p class="cd" style="margin-top:0">${DATA.canSeeMeds===false?'Medicines are private for this person.':'No medicines yet. Add one and the body shows where it works.'}</p>`);return}
  const m=meds[MEDI],d=(DRUGS.find(x=>x[0].test(m.name))||[])[1];CAM(9.8,1.1,-.1);
  const rows=[];if(d){const put=(arr,hex,col,lbl)=>arr.forEach(([o,t])=>{glow(ORGRE[o],hex,3,.85);rows.push({o,t,col,lbl})});put(d.works,0x30D158,'#30D158','Works on');put(d.side,0xFF9F0A,'#FF9F0A','Side effects');put(d.watch,0x0A84FF,'#0A84FF','Watch')}
  let side=-1;const seen={};tags(rows.filter(r=>!seen[r.o]&&(seen[r.o]=1)).map(r=>{side=-side;return{org:T(r.o)+' · '+r.lbl.toLowerCase(),re:ORGRE[r.o],side,dy:side>0?-30:30,col:r.col}}));
- sheet(`<div class="chips2" style="flex-wrap:nowrap;overflow-x:auto">${meds.map((x,i)=>`<span class="${i===MEDI?'on':''}" onclick="MEDI=${i};mode('meds')" style="white-space:nowrap">${esc(x.name)}</span>`).join('')}</div>
+ sheet(`<div class="row" style="justify-content:space-between;margin-bottom:6px"><button class="btn sec" style="height:34px;font-size:13.5px" onclick="MEDONE=0;mode('meds')">‹ All medicines</button></div>
  ${d?[['Works on','#30D158',d.works],['Side effects','#FF9F0A',d.side],['Watch','#0A84FF',d.watch]].map(([l,c,a])=>`<div class="mrow"><span style="background:${c}"></span><div><b>${l}</b> ${a.map(x=>esc(x[1])).join('. ')}.</div></div>`).join('')+`<div class="mrow"><span style="background:#FF453A"></span><div><b>Avoid</b> ${esc(d.avoid)}</div></div><p class="eb" style="margin-top:10px">General information. Follow your doctor's advice.</p>`
  :`<p class="cd">We don't have a body map for ${esc(m.name)} yet.</p><button class="btn pri" style="width:100%;margin-top:12px" onclick="send('ask',{q:${esc(JSON.stringify('What is '+m.name+' for, how does it work, and what side effects should I watch for?'))}})">✦ Ask what it does</button>`}`)}
 /* ---- 4 · organ detail: the heart ---- */
@@ -604,7 +630,7 @@ async function boot(d){DATA=d;document.documentElement.lang=U.lang;const sex=d.p
  SET=await loadSex(sex,false);build(SET);shape();HOME0={z:HOME.z,y:HOME.y};$('#load').style.display='none';
  modes();const st=d.start||'';if(st.startsWith('focus:')){await mode('explore');focusOrgan(st.slice(6))}
  else if(!st){const rank={high:2,low:1};const worst=Object.entries(orgFindings()).filter(([o,f])=>rank[f.flag]&&FOCUS[o]).sort((a,b)=>rank[b[1].flag]-rank[a[1].flag])[0];
-  await mode('explore');if(worst&&!d.person.pregnancy)focusOrgan(worst[0],`${worst[1].test} is ${worst[1].flag==='high'?'high':'low'}. Tap Whole body to see everything.`)}
+  await mode('explore')}
  else await mode(st);
  if((navigator.connection||{}).type==='wifi'||U.hd)setTimeout(detail,1500)}
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-data')return;boot(e.data.data)});

@@ -378,7 +378,7 @@ def verify_code(db: Session, target: str, purpose: str, body: "FlowCode") -> boo
 def masked(kind: str, v: str) -> str:
     if kind == "email":
         a, _, d = v.partition("@")
-        return a[:2] + "•" * max(1, len(a) - 2) + "@" + d
+        return a[:2] + "•••" + "@" + d
     return v[:3] + " ••••• " + v[-3:]
 
 
