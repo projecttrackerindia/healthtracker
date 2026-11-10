@@ -1184,3 +1184,46 @@ class QualityFlag(Base):
     file_hash: Mapped[str] = mapped_column(String(64), default="", index=True)
     status: Mapped[str] = mapped_column(String(12), default="open", index=True)   # open | resolved
     created: Mapped[int] = mapped_column(Integer, default=now, index=True)
+
+
+class CatalogMed(Base):
+    """The one shared medicine list every pharmacy prices against. Facts and photos are checked once, here."""
+    __tablename__ = "catalog_meds"
+    sku: Mapped[str] = mapped_column(String(40), primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    salt: Mapped[str] = mapped_column(String(160), default="")
+    form: Mapped[str] = mapped_column(String(120), default="")       # "500 mg tablets · strip of 15"
+    cat: Mapped[str] = mapped_column(String(40), default="")
+    maker: Mapped[str] = mapped_column(String(120), default="")
+    mrp: Mapped[int] = mapped_column(Integer, default=0)
+    rx: Mapped[bool] = mapped_column(Boolean, default=False)
+    schedule: Mapped[str] = mapped_column(String(8), default="")     # "", H, H1, X
+    storage: Mapped[str] = mapped_column(String(120), default="")
+    photos: Mapped[list | None] = mapped_column(JSON, nullable=True)  # [{id, side}]
+    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class CatalogTest(Base):
+    __tablename__ = "catalog_tests"
+    code: Mapped[str] = mapped_column(String(40), primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    values: Mapped[int] = mapped_column(Integer, default=1)
+    sample: Mapped[str] = mapped_column(String(40), default="Blood")
+    fasting: Mapped[bool] = mapped_column(Boolean, default=False)
+    tat_hours: Mapped[int] = mapped_column(Integer, default=24)
+    about: Mapped[str] = mapped_column(String(240), default="")
+    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class Package(Base):
+    __tablename__ = "packages"
+    code: Mapped[str] = mapped_column(String(40), primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    who: Mapped[str] = mapped_column(String(240), default="")
+    tests: Mapped[list] = mapped_column(JSON, default=list)
+    color: Mapped[str] = mapped_column(String(20), default="blue")
+    icon: Mapped[str] = mapped_column(String(20), default="heart")
+    price: Mapped[int] = mapped_column(Integer, default=0)
+    active: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated: Mapped[int] = mapped_column(Integer, default=now)

@@ -114,7 +114,7 @@ def card(db: Session, s: Store, full: bool = False) -> dict:
             "commission": s.commission_pct, "profile": {k: p.get(k) for k in PROFILE_KEYS if k in p},
             "photos": [{k: x.get(k) for k in ("id", "slot", "label", "t", "acc", "by", "far")} for x in (s.photos or [])],
             "slots": [{"slot": k, "label": v, "needed": k in NEEDED} for k, v in PHOTO_SLOTS],
-            "checks": ck, "steps": STEPS,
+            "checks": ck, "steps": STEPS, "publicPath": __import__("api.public_pages", fromlist=["path_of"]).path_of(s) if s.verified and s.active else "",
             "items": db.scalar(select(func.count(StoreItem.id)).where(StoreItem.store_id == s.id)) or 0,
             "team": [{"name": u.name, "email": u.email, "role": u.role, "verified": u.verified, "active": u.active, "lastLogin": u.last_login} for u in users],
         })

@@ -103,7 +103,9 @@ def test_the_sitemap_is_well_formed_and_lists_the_public_pages(live):
     root = ET.fromstring(r.text)
     ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
     locs = [e.text for e in root.findall(".//s:loc", ns)]
-    assert locs == [f"https://{CANON}/", f"https://{CANON}/privacy", f"https://{CANON}/terms"]
+    assert locs[:3] == [f"https://{CANON}/", f"https://{CANON}/privacy", f"https://{CANON}/terms"]
+    # anything after the fixed pages is a live partner's public page or its city/area list
+    assert all(re.match(rf"https://{re.escape(CANON)}/(labs|pharmacies|hospitals)/", u) for u in locs[3:])
 
 
 def test_every_page_in_the_sitemap_actually_answers(live):

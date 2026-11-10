@@ -129,6 +129,11 @@ app.include_router(_ops2.fr)
 from api import partners2 as _p2  # noqa: E402
 app.include_router(_p2.ar)
 app.include_router(_p2.pr)
+from api import catalog as _cat  # noqa: E402
+app.include_router(_cat.ar)
+app.include_router(_cat.pub)
+from api import public_pages as _pub  # noqa: E402
+app.include_router(_pub.r)
 from api import places as places_api, billing as billing_api, inbox as inbox_api, partner as partner_api  # noqa: E402
 app.include_router(places_api.r)
 app.include_router(billing_api.r)
@@ -420,6 +425,19 @@ def security_txt(request: Request):
                     headers={"Cache-Control": "public, max-age=86400"})
 
 
+def _partner_entries(origin: str) -> str:
+    """Live partners and their city/area pages. Paused or unverified partners drop out on the next fetch."""
+    import xml.sax.saxutils as _x
+    from api.db import SessionLocal
+    try:
+        with SessionLocal() as db:
+            paths = _pub.sitemap_paths(db)
+    except Exception as e:
+        print("[sitemap] partner pages skipped:", type(e).__name__, flush=True)
+        return ""
+    return "".join(f"<url><loc>{_x.escape(origin + p)}</loc><priority>{'0.6' if p.count('/') <= 3 else '0.7'}</priority></url>" for p in paths)
+
+
 @app.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
 def sitemap(request: Request):
     import xml.sax.saxutils as _x
@@ -434,7 +452,7 @@ def sitemap(request: Request):
         return f"<url><loc>{_x.escape(origin + path)}</loc>{mod}<priority>{pri}</priority></url>"
     xml = ('<?xml version="1.0" encoding="UTF-8"?>'
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-           + "".join(entry(p) for p in PUBLIC_PAGES) + "</urlset>")
+           + "".join(entry(p) for p in PUBLIC_PAGES) + _partner_entries(origin) + "</urlset>")
     return Response(xml, media_type="application/xml; charset=utf-8",
                     headers={"Cache-Control": "public, max-age=3600"})
 

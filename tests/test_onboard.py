@@ -207,3 +207,42 @@ def test_phase3_invites_signins_scorecard_quality():
     assert sc["m"]["corrections"] >= 1 and len(sc["series"]) == 30
     cv = c.get("/api/admin/coverage?kind=lab", headers=H).json()
     assert any(g["pin"] == "500049" for g in cv["gaps"]) and any(x["pin"] == "500072" and x["partners"] == 1 for x in cv["rows"])
+
+
+def test_phase4_catalogue_public_pages_sitemap():
+    import server, io
+    from PIL import Image
+    from api.db import SessionLocal
+    from api.models import Admin, Store, LabTest
+    from api.security import hash_pw
+    c = TestClient(server.app).__enter__(); H = {"x-tht": "1", "x-forwarded-for": "10.2.0.1"}
+    with SessionLocal() as db:
+        db.add(Admin(email="p4@x.in", pw_hash=hash_pw("Right-password-99"), role="owner"))
+        live = Store(kind="lab", name="Vijaya Diagnostics", area="Kukatpally", city="Hyderabad", lat=17.49, lng=78.39, verified=True, active=True, licence="MC-4512",
+                     home_collection=True, landmark="Opp JNTU metro", rating=4.8, rating_n=12, profile={"hoursWeek": "6:30 am–9 pm"})
+        hidden = Store(kind="lab", name="Paused Lab", area="Kukatpally", city="Hyderabad", lat=17.4, lng=78.4, verified=True, active=False)
+        db.add_all([live, hidden]); db.flush()
+        db.add(LabTest(store_id=live.id, code="cbc", name="Complete blood count (CBC)", price=249)); db.commit()
+        lid, hid = live.id, hidden.id
+    assert c.post("/api/admin/login", json={"email": "p4@x.in", "password": "Right-password-99"}, headers=H).status_code == 200
+    m = c.get("/api/admin/catalog/meds?tab=rx", headers=H).json()
+    assert m["counts"]["all"] >= 40 and all(r["rx"] for r in m["rows"])
+    sku = m["rows"][0]["sku"]
+    assert c.put(f"/api/admin/catalog/meds/{sku}", json={"name": "X", "schedule": "H1", "rx": False}, headers=H).status_code == 400
+    b = io.BytesIO(); Image.new("RGB", (30, 20), (0, 0, 255)).save(b, "PNG")
+    ph = c.post(f"/api/admin/catalog/meds/{sku}/photo", data={"side": "front"}, files={"file": ("a.png", b.getvalue(), "image/png")}, headers=H).json()["photos"]
+    assert TestClient(server.app).get(f"/api/v2/catalog/meds/{sku}/photo/{ph[0]['id']}").status_code == 200
+    pk = c.get("/api/admin/catalog/packages", headers=H).json()
+    assert any(p["code"] == "heartdia" for p in pk["rows"])
+    bad = c.put("/api/admin/catalog/packages/cheapx", json={"name": "Too dear", "tests": ["cbc", "hba1c"], "price": 99999, "active": True}, headers=H)
+    assert bad.status_code == 400
+    city = TestClient(server.app).get("/labs/hyderabad")
+    assert city.status_code == 200 and "Vijaya Diagnostics" in city.text and "Paused Lab" not in city.text
+    import re
+    link = re.search(r'href="(/labs/hyderabad/kukatpally/vijaya-diagnostics-[a-z0-9]{6})"', city.text).group(1)
+    pg = TestClient(server.app).get(link)
+    assert pg.status_code == 200 and '"@type": "DiagnosticLab"' in pg.text and "₹249" in pg.text and "application/ld+json" in pg.text
+    assert TestClient(server.app).get(f"/labs/hyderabad/kukatpally/paused-lab-{hid[-6:]}").status_code == 404
+    sm = TestClient(server.app).get("/sitemap.xml").text
+    assert link in sm and "paused-lab" not in sm
+    assert TestClient(server.app).get("/partner/join/abcdefghijklmnop").status_code == 200   # not swallowed by the public routes
