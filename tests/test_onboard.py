@@ -246,3 +246,70 @@ def test_phase4_catalogue_public_pages_sitemap():
     sm = TestClient(server.app).get("/sitemap.xml").text
     assert link in sm and "paused-lab" not in sm
     assert TestClient(server.app).get("/partner/join/abcdefghijklmnop").status_code == 200   # not swallowed by the public routes
+
+
+def test_phase5_families_requests_companies_offers_devices_practice():
+    import server, time
+    from api.db import SessionLocal
+    from api.models import Admin, Household, User, Person
+    from api.security import hash_pw
+    import api.auth as A
+    c = TestClient(server.app).__enter__(); H = {"x-tht": "1", "x-forwarded-for": "10.1.0.1"}
+    with SessionLocal() as db:
+        db.add(Admin(email="p5@x.in", pw_hash=hash_pw("Right-password-99"), role="owner"))
+        h = Household(key="kp5", name="Asha Rao", city="Hyderabad"); db.add(h); db.flush()
+        u = User(email="asha5@x.in", phone="+919849004410", household_id=h.id, pw_hash="x"); db.add(u); db.flush()
+        from api.family import encrypt
+        db.add(Person(household_id=h.id, name="Asha Rao", owner_user=u.id, blob=encrypt({}))); db.commit(); hid, uid = h.id, u.id
+    assert c.post("/api/admin/login", json={"email": "p5@x.in", "password": "Right-password-99"}, headers=H).status_code == 200
+    # devices: a second device needs a code
+    c2 = TestClient(server.app)
+    r = c2.post("/api/admin/login", json={"email": "p5@x.in", "password": "Right-password-99"}, headers={"x-tht": "1", "x-forwarded-for": "10.1.0.2"})
+    assert r.status_code == 428 and r.json()["detail"]["needCode"]
+    code = r.json()["detail"].get("demo")
+    if code:
+        assert c2.post("/api/admin/login", json={"email": "p5@x.in", "password": "Right-password-99", "code": code}, headers={"x-tht": "1", "x-forwarded-for": "10.1.0.2"}).status_code == 200
+    # families: partial search finds nothing, full mobile finds masked family
+    assert c.get("/api/admin/families?q=98490", headers=H).json()["rows"] == []
+    f = c.get("/api/admin/families?q=9849004410", headers=H).json()["rows"]
+    assert f and f[0]["name"] == "A•••• R." and "Asha" not in str(f)
+    fam = c.get(f"/api/admin/families/{hid}", headers=H).json()
+    assert "records" not in fam and fam["account"]["mobile"].startswith("+91")
+    assert c.post(f"/api/admin/families/{hid}/ask-access", json={"reason": "Report not showing for her"}, headers=H).status_code == 200
+    orig = A.current_user
+    A.current_user = lambda req, db: db.get(User, uid)
+    try:
+        f2 = TestClient(server.app)
+        from api.models import AccessGrant
+        with SessionLocal() as db:
+            gid = db.query(AccessGrant).filter_by(household_id=hid).one().id
+        assert f2.post(f"/api/v2/access/{gid}", json={"allow": True}).json()["status"] == "granted"
+        assert f2.post("/api/v2/data-requests", json={"kind": "copy"}).status_code == 200
+        assert f2.post("/api/v2/data-requests", json={"kind": "copy"}).status_code == 409
+        co = c.post("/api/admin/companies", json={"name": "Acme Software", "invited": 420, "price": 1800}, headers=H).json()
+        assert f2.post("/api/v2/company/join", json={"code": co["code"]}).json()["company"] == "Acme Software"
+        assert c.get("/api/admin/companies", headers=H).json()["rows"][0]["stats"] is None   # fewer than 20: no totals
+        # offers: never on medicines, budget and once-per-family
+        end = time.strftime("%Y-%m-%d", time.gmtime(time.time() + 10 * 86400))
+        assert c.post("/api/admin/offers", json={"code": "FIRST100", "title": "₹100 off", "applies": "medicine", "flat": 100, "budget": 50000, "ends": end}, headers=H).status_code == 400
+        assert c.post("/api/admin/offers", json={"code": "FIRST100", "title": "₹100 off", "applies": "lab", "flat": 100, "budget": 50000, "ends": end}, headers=H).status_code == 200
+        assert f2.post("/api/v2/offers/check", json={"code": "first100", "kind": "lab", "items": [{"name": "CBC"}], "subtotal": 400}).json()["off"] == 100
+        assert f2.post("/api/v2/offers/check", json={"code": "FIRST100", "kind": "medicine", "items": [{"name": "X", "rx": True}], "subtotal": 400}).status_code == 400
+    finally:
+        A.current_user = orig
+    fam = c.get(f"/api/admin/families/{hid}", headers=H).json()
+    assert "records" in fam
+    dr = c.get("/api/admin/data-requests", headers=H).json()["rows"][0]
+    assert c.post(f"/api/admin/data-requests/{dr['id']}", json={"note": "ready"}, headers=H).status_code == 200
+    # messages: pause one, sign-in codes can't be paused
+    assert c.post("/api/admin/messages", json={"kind": "otp", "on": False}, headers=H).status_code == 400
+    assert c.post("/api/admin/messages", json={"kind": "refill", "on": False}, headers=H).status_code == 200
+    assert not [m for m in c.get("/api/admin/messages", headers=H).json()["rows"] if m["kind"] == "refill"][0]["on"]
+    # practice
+    assert c.post("/api/admin/practice/late", headers=H).status_code == 200
+    assert any("practice" in x["what"].lower() for x in c.get("/api/admin/console/board", headers=H).json()["lanes"]["way"])
+    assert c.post("/api/admin/practice/clear", headers=H).status_code == 200
+    assert "Yesterday" in c.get("/api/admin/summary", headers=H).json()["text"]
+    # sign out everywhere ends the session
+    assert c.post("/api/admin/signout-everywhere", headers=H).status_code == 200
+    assert c.get("/api/admin/me", headers=H).status_code == 401

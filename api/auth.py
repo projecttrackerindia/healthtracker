@@ -902,16 +902,8 @@ def alert_old_contact(kind: str, old: str) -> None:
         pass
 
 
-# ---- delete the account (DPDP right to erasure). Health records live on the device and are deleted there. -------
-class DeleteAccount(BaseModel):
-    confirm: str
-
-
-@r.post("/account/delete", dependencies=[Depends(csrf)])
-def account_delete(body: DeleteAccount, request: Request, response: Response, db: Session = Depends(get_db), u: User = Depends(need_user)):
-    limit(request, "delete", 5, 3600)
-    if body.confirm.strip().upper() != "DELETE":
-        raise HTTPException(400, 'Type DELETE to confirm.')
+def erase_user(db: Session, u: User) -> None:
+    """Everything account_delete removes, callable by an admin carrying out a DPDP erasure request."""
     from .models import Household, HouseholdState, Invite
     from .people import delete_user_data
     delete_user_data(db, u)          # per-person profile, records and files; 409 if a dependent would be left alone
@@ -935,6 +927,19 @@ def account_delete(body: DeleteAccount, request: Request, response: Response, db
     if targets:
         db.query(OtpCode).filter(OtpCode.target.in_(targets)).delete(synchronize_session=False)
     db.delete(u)
+
+
+# ---- delete the account (DPDP right to erasure). Health records live on the device and are deleted there. -------
+class DeleteAccount(BaseModel):
+    confirm: str
+
+
+@r.post("/account/delete", dependencies=[Depends(csrf)])
+def account_delete(body: DeleteAccount, request: Request, response: Response, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    limit(request, "delete", 5, 3600)
+    if body.confirm.strip().upper() != "DELETE":
+        raise HTTPException(400, 'Type DELETE to confirm.')
+    erase_user(db, u)
     response.delete_cookie(COOKIE, path="/")
     return {"deleted": True}
 

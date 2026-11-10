@@ -134,6 +134,9 @@ app.include_router(_cat.ar)
 app.include_router(_cat.pub)
 from api import public_pages as _pub  # noqa: E402
 app.include_router(_pub.r)
+from api import phase5 as _p5  # noqa: E402
+app.include_router(_p5.ar)
+app.include_router(_p5.fr)
 from api import places as places_api, billing as billing_api, inbox as inbox_api, partner as partner_api  # noqa: E402
 app.include_router(places_api.r)
 app.include_router(billing_api.r)

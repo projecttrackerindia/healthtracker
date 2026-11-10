@@ -48,6 +48,12 @@ def wants_push(db: Session, user_id: str, kind: str) -> bool:
 
 def notify(db: Session, household_id: str, kind: str, title: str, body: str = "", ref: dict | None = None, member_id: str = "", url: str = "/app", to_user: str = "") -> Notice:
     """One notice row + a push to the phones allowed to see it (when push is configured)."""
+    try:
+        from .phase5 import paused_kinds
+        if kind in paused_kinds(db):   # an admin paused this message everywhere (Content → Messages)
+            return Notice(household_id=household_id, kind=kind, title=title[:160])
+    except Exception:
+        pass
     n = Notice(household_id=household_id, member_id=member_id or "", kind=kind, title=title[:160], body=body[:400], ref=ref or {}, to_user=to_user or "")
     db.add(n)
     who = audience(db, household_id, member_id or "", to_user or "")

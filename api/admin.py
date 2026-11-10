@@ -28,7 +28,7 @@ def me(request: Request, db: Session = Depends(get_db)) -> Admin:
     if not p:
         raise HTTPException(401, "login required")
     a = db.get(Admin, p.get("id"))
-    if not a:
+    if not a or int(p.get("ep") or 0) != int(a.session_epoch or 0):
         raise HTTPException(401, "login required")
     return a
 
@@ -46,6 +46,75 @@ def log(db: Session, who: str, what: str, detail: str = ""):
 class Login(BaseModel):
     email: str
     password: str
+    code: str = ""
+
+
+DEV_COOKIE = "dk_adev"
+
+
+def _device_check(db: Session, a: Admin, body: "Login", request: Request, response: Response):
+    """A device this admin hasn't used before must enter a code sent to them, unless it's their very first device
+    or no way to send a code is set up (then it's let in, recorded and shown in Your devices)."""
+    import hashlib
+    import secrets
+    from . import messaging
+    from .auth import check_code, send_code
+    from .models import AdminDevice
+    raw = request.cookies.get(DEV_COOKIE) or ""
+    key = hashlib.sha256(raw.encode()).hexdigest() if raw else ""
+    known = db.scalar(select(AdminDevice).where(AdminDevice.admin_id == a.id, AdminDevice.key == key, AdminDevice.trusted == True)) if key else None  # noqa: E712
+    ua = (request.headers.get("user-agent") or "")
+    label = ("iPhone" if "iPhone" in ua else "Android" if "Android" in ua else "Mac" if "Mac OS" in ua else "Windows" if "Windows" in ua else "Device") + \
+            (" · Chrome" if "Chrome" in ua and "Edg" not in ua else " · Safari" if "Safari" in ua and "Chrome" not in ua else " · Edge" if "Edg" in ua else " · Firefox" if "Firefox" in ua else "")
+    if known:
+        known.last = now()
+        return known
+    has_trusted = db.scalar(select(AdminDevice).where(AdminDevice.admin_id == a.id, AdminDevice.trusted == True))  # noqa: E712
+    target, kind = (a.phone, "phone") if a.phone and messaging.sms_mode() in ("msg91", "twilio") else (a.email, "email")
+    can_send = (messaging.email_ready() if kind == "email" else True) or messaging.demo()
+    if has_trusted and can_send:
+        if not body.code:
+            out = send_code(request, db, target, kind, "step")
+            db.commit()
+            raise HTTPException(428, {"needCode": True, "sentTo": (target[:2] + "•••" + target[target.find("@"):]) if kind == "email" else target[:3] + " ••••• " + target[-3:], **({"demo": out.get("demo")} if out.get("demo") else {})})
+        check_code(db, target, "step", body.code)
+    raw = secrets.token_urlsafe(24)
+    response.set_cookie(DEV_COOKIE, raw, httponly=True, samesite="strict", secure=request.url.scheme == "https", max_age=400 * 86400, path="/")
+    d = AdminDevice(admin_id=a.id, key=hashlib.sha256(raw.encode()).hexdigest(), label=label[:80], trusted=True)
+    db.add(d)
+    if has_trusted:
+        log(db, a.email, "admin.new_device" + ("" if can_send else ".unverified"), label)
+    return d
+
+
+@r.get("/devices")
+def devices(request: Request, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    import hashlib
+    from .models import AdminDevice
+    raw = request.cookies.get(DEV_COOKIE) or ""
+    mine = hashlib.sha256(raw.encode()).hexdigest() if raw else ""
+    rows = db.scalars(select(AdminDevice).where(AdminDevice.admin_id == a.id).order_by(AdminDevice.last.desc())).all()
+    return {"rows": [{"id": d.id, "label": d.label, "first": d.first, "last": d.last, "this": d.key == mine, "trusted": d.trusted} for d in rows]}
+
+
+@r.post("/devices/{did}/forget")
+def forget_device(did: int, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    from .models import AdminDevice
+    d = db.get(AdminDevice, did)
+    if not d or d.admin_id != a.id:
+        raise HTTPException(404)
+    db.delete(d)
+    a.session_epoch = (a.session_epoch or 0) + 1      # every session ends; this device needs a code next time
+    log(db, a.email, "admin.device.forget", d.label)
+    return {"ok": True}
+
+
+@r.post("/signout-everywhere")
+def signout_everywhere(response: Response, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    a.session_epoch = (a.session_epoch or 0) + 1
+    log(db, a.email, "admin.signout_everywhere")
+    response.delete_cookie(COOKIE, path="/")
+    return {"ok": True}
 
 
 def _alert_owner(a: Admin) -> None:
@@ -102,10 +171,11 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
             raise HTTPException(401, "Wrong email, mobile number or password." + (f" {left} attempt{'s' if left != 1 else ''} left, then sign-in pauses for 15 minutes." if 0 < left <= 3 else ""))
         raise HTTPException(401, "Wrong email, mobile number or password.")
     a.fails, a.locked_until = 0, 0
+    dev = _device_check(db, a, body, request, response)
     rl_clear(request, "admin-login")
     a.last_login = now()
     log(db, a.email, "login")
-    response.set_cookie(COOKIE, sign({"id": a.id, "e": a.email}), httponly=True, samesite="strict", secure=request.url.scheme == "https", max_age=12 * 3600, path="/")
+    response.set_cookie(COOKIE, sign({"id": a.id, "e": a.email, "ep": int(a.session_epoch or 0)}), httponly=True, samesite="strict", secure=request.url.scheme == "https", max_age=12 * 3600, path="/")
     return {"ok": True, "email": a.email, "role": a.role, "phone": a.phone or ""}
 
 

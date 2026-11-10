@@ -80,6 +80,9 @@ def tick(now_dt: datetime | None = None) -> int:
     try:
         with session() as db:
             daily_people(db, now_dt)
+            if now_dt.hour == 8:
+                from .phase5 import send_morning_summary
+                send_morning_summary(db)
             db.commit()
     except Exception as e:  # a daily check must never stop the dose reminders
         print("[reminders] daily:", type(e).__name__, str(e)[:120], flush=True)

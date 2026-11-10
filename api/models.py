@@ -247,6 +247,8 @@ class Admin(Base):
     phone: Mapped[str] = mapped_column(String(20), default="")   # E.164; signs in with this or the email
     fails: Mapped[int] = mapped_column(Integer, default=0)        # wrong passwords in a row
     locked_until: Mapped[int] = mapped_column(Integer, default=0)
+    session_epoch: Mapped[int] = mapped_column(Integer, default=0)   # bump to sign out everywhere
+    summary: Mapped[bool] = mapped_column(Boolean, default=True)      # morning summary by email
     pw_hash: Mapped[str] = mapped_column(String(160))
     role: Mapped[str] = mapped_column(String(16), default="owner")  # owner | ops | content
     created: Mapped[int] = mapped_column(Integer, default=now)
@@ -1227,3 +1229,90 @@ class Package(Base):
     price: Mapped[int] = mapped_column(Integer, default=0)
     active: Mapped[bool] = mapped_column(Boolean, default=False)
     updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class AdminDevice(Base):
+    __tablename__ = "admin_devices"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    admin_id: Mapped[int] = mapped_column(Integer, index=True)
+    key: Mapped[str] = mapped_column(String(64), index=True)          # hash of a random cookie set on the device
+    label: Mapped[str] = mapped_column(String(80), default="")
+    first: Mapped[int] = mapped_column(Integer, default=now)
+    last: Mapped[int] = mapped_column(Integer, default=now)
+    trusted: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class AccessGrant(Base):
+    """Support asks a family for one-time access to their records; the family decides in their app."""
+    __tablename__ = "access_grants"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ag"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    admin_email: Mapped[str] = mapped_column(String(120), default="")
+    reason: Mapped[str] = mapped_column(String(300), default="")
+    status: Mapped[str] = mapped_column(String(12), default="asked")   # asked | granted | declined | expired
+    expires: Mapped[int] = mapped_column(Integer, default=0)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class DataRequest(Base):
+    __tablename__ = "data_requests"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("dr"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    user_id: Mapped[str] = mapped_column(String(32), default="")
+    kind: Mapped[str] = mapped_column(String(12))                       # delete | copy | correct
+    detail: Mapped[str] = mapped_column(String(400), default="")
+    via: Mapped[str] = mapped_column(String(20), default="app")         # app | email | grievance
+    status: Mapped[str] = mapped_column(String(12), default="open", index=True)
+    due: Mapped[int] = mapped_column(Integer, default=0)
+    done_note: Mapped[str] = mapped_column(String(300), default="")
+    done_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class Company(Base):
+    __tablename__ = "companies"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("co"))
+    name: Mapped[str] = mapped_column(String(120))
+    code: Mapped[str] = mapped_column(String(16), unique=True, index=True)
+    hr_email: Mapped[str] = mapped_column(String(160), default="")
+    plan: Mapped[str] = mapped_column(String(160), default="")
+    invited: Mapped[int] = mapped_column(Integer, default=0)
+    price: Mapped[int] = mapped_column(Integer, default=0)              # per employee, INR
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class CompanyMember(Base):
+    __tablename__ = "company_members"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    company_id: Mapped[str] = mapped_column(String(32), index=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    user_id: Mapped[str] = mapped_column(String(32), default="", index=True)
+    joined: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class Offer(Base):
+    __tablename__ = "offers"
+    code: Mapped[str] = mapped_column(String(24), primary_key=True)
+    title: Mapped[str] = mapped_column(String(160))
+    applies: Mapped[str] = mapped_column(String(16), default="lab")     # lab | package | visit — never prescription medicines
+    pct: Mapped[int] = mapped_column(Integer, default=0)
+    flat: Mapped[int] = mapped_column(Integer, default=0)
+    max_off: Mapped[int] = mapped_column(Integer, default=0)
+    budget: Mapped[int] = mapped_column(Integer, default=0)
+    spent: Mapped[int] = mapped_column(Integer, default=0)
+    uses: Mapped[int] = mapped_column(Integer, default=0)
+    once: Mapped[bool] = mapped_column(Boolean, default=True)
+    ends: Mapped[int] = mapped_column(Integer, default=0)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class OfferUse(Base):
+    __tablename__ = "offer_uses"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(24), index=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    order_id: Mapped[str] = mapped_column(String(32), default="")
+    amount: Mapped[int] = mapped_column(Integer, default=0)
+    t: Mapped[int] = mapped_column(Integer, default=now)
