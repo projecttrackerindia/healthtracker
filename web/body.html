@@ -555,8 +555,8 @@ async function swap(sex){$('#load').style.display='block';STATE.sex=sex;SET=awai
 async function detail(){const want=U.hd||(!(navigator.connection||{}).saveData&&(navigator.connection||{}).type==='wifi');if(want===!!STATE.hd||!SRC[STATE.sex].hd){if(MODE==='settings')mode('settings');return}
  STATE.hd=want;await swap(STATE.sex);mode(MODE)}
 /* ---- 8 · search, quiz, cross-section, hologram ---- */
-let ONTO=null;function onto(){if(ONTO)return Promise.resolve(ONTO);return fetch('/a/onto.df440074.json').then(r=>r.json()).then(j=>(ONTO=j)).catch(()=>(ONTO={}))}
-function ontoOf(nm){const o=ONTO||{};const c=clean(nm).toLowerCase();return o[c]||o[c.replace(/^(left|right) /,'')]||null}
+let ONTO=null;function onto(){if(ONTO)return Promise.resolve(ONTO);return fetch('/a/onto.df440074.json').then(r=>r.json()).then(j=>{ONTO={};for(const k in j)ONTO[k.toLowerCase()]=j[k];return ONTO}).catch(()=>(ONTO={}))}
+function ontoOf(nm){const o=ONTO||{};const r=String(nm).toLowerCase(),c=clean(nm).toLowerCase();return o[r]||o[c]||o['left '+c]||o['right '+c]||null}
 function mSearch(){onto();shape();CAM(10.5,1.0,-.2);head(who()+' · '+T('body').toUpperCase(),T('search'),'');
  $('#extra').innerHTML=`<div class="srch glass" style="pointer-events:auto"><span>⌕</span><input id="q" placeholder="Heart, femur, vagus nerve…" autocomplete="off" style="flex:1;border:0;background:none;font:inherit;outline:0"></div><div class="res glass" id="res" style="pointer-events:auto;display:none"></div>`;
  const q=$('#q');q.focus();q.oninput=()=>{const s=q.value.trim().toLowerCase();const r=$('#res');if(s.length<2){r.style.display='none';return}const hits=[];SET.names.forEach((n,k)=>{const oo=ontoOf(n);if((n.toLowerCase().includes(s)||(oo&&oo[1]&&oo[1].some(y=>y.toLowerCase().includes(s))))&&hits.length<6&&!hits.some(h=>clean(SET.names[h])===clean(n)))hits.push(k)});
