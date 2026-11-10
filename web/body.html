@@ -41,6 +41,7 @@ body.preg #bg{background:radial-gradient(80% 60% at 50% 40%,#FFFFFF 0%,#FBF1F4 5
 .srch{position:fixed;top:190px;left:16px;right:16px;height:48px;border-radius:24px;display:flex;align-items:center;gap:10px;padding:0 18px;font-size:17px;z-index:5}
 .res{position:fixed;top:246px;left:16px;right:16px;border-radius:20px;padding:6px;z-index:5}.res div{padding:12px 14px;border-radius:14px;font-size:15px}.res div.on{background:rgba(10,132,255,.1);color:#0A84FF;font-weight:600}
 body.real #bg{background:radial-gradient(70% 60% at 50% 45%,#3A3A3C 0%,#1C1C1E 75%)}body.real .big,body.real .eb,body.real .line{color:#F5F5F7}body.real .chip:not(.on){background:rgba(255,255,255,.12);color:#F5F5F7;border-color:transparent}
+body.focus #modes,body.focus #sub{display:none}body.focus #bg{background:radial-gradient(70% 60% at 50% 42%,#3A3438 0%,#161315 78%)}body.focus .big,body.focus .eb,body.focus .line{color:#F5F5F7}body.focus .chip:not(.on){background:rgba(255,255,255,.12);color:#F5F5F7;border-color:transparent}body.focus .x{background:rgba(255,255,255,.14);color:#fff}
 body.holo #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 70%)}body.holo .big,body.holo .eb,body.holo .line{color:#CFF4FF}
 #extra{position:fixed;inset:0;pointer-events:none;z-index:4}
 </style></head><body>
@@ -202,7 +203,7 @@ function placeTags(){const r=$('#gl').getBoundingClientRect();let svg='';
   svg+=`<line x1="${x}" y1="${y}" x2="${Math.max(side>0?8:150,Math.min(r.width-(side>0?150:8),lx))}" y2="${Math.max(210,Math.min(r.height-90,ly))}" stroke="rgba(29,29,31,.35)" stroke-width="1"/><circle cx="${x}" cy="${y}" r="3.5" fill="${t.dataset.col}" stroke="#fff" stroke-width="1.5"/>`});
  $('#lines').innerHTML=svg}
 function tags(list){$('#tags').innerHTML='';list.forEach(t=>{const el=document.createElement('button');el.className='tag'+(t.big?' big':'');el.dataset.side=t.side;el.dataset.dy=t.dy||0;el.dataset.col=t.col;if(t.big)el.dataset.big=1;
- el.innerHTML=t.big?`<small>${t.org} · ${t.test}</small><b>${t.val}<i>${t.unit}</i></b><span class="pill ${t.cls}">${t.flag}</span>`:`<span class="dot" style="background:${t.col}"></span>${t.org}`;el._c=centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
+ el.innerHTML=t.big?`<small>${t.org} · ${t.test}</small><b>${t.val}<i>${t.unit}</i></b><span class="pill ${t.cls}">${t.flag}</span>`:`<span class="dot" style="background:${t.col}"></span>${t.org}`;el._c=t.all?centerOfAll(t.re):centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
 
 /* ===== pregnancy: growing uterus, belly shaped around it, a baby that changes shape and moves by week ===== */
 const sst=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
@@ -319,7 +320,7 @@ function sheet(html){$('#card').innerHTML='<div class="grab"></div>'+html;$('#ca
 const CAM=(z,y,ry=0,rx=0)=>{goalZ=z;goalY=y;HOME={z,y};goal.y=ry;goal.x=rx};
 function modes(){const pg=DATA&&DATA.person.pregnancy;const M=[...(pg?['baby']:[]),'explore','real','timeline','hurt','meds','heartv','vitals','search','quiz','cut','holo','settings'];
  $('#modes').innerHTML=M.map(m=>`<button class="chip ${MODE===m?'on':''}" onclick="mode('${m}')">${m==='settings'?'Aa':T(m)}</button>`).join('')}
-function reset(){closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');if(LAY[0])LAY[0].material.color.set(0xE6ECF4);BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
+function reset(){if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');if(LAY[0])LAY[0].material.color.set(0xE6ECF4);BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
  if(HOLO)unholo();R.localClippingEnabled=false;for(const l in LAY){LAY[l].material.clippingPlanes=[];LAY[l].material.side=THREE.FrontSide}$('#sub').innerHTML='';$('#extra').innerHTML='';body.position.x=0;setLayer('organs');QZ=null;HURT=null}
 async function mode(m){MODE=m;modes();reset();({baby:mBaby,explore:mExplore,real:mReal,timeline:mTimeline,hurt:mHurt,meds:mMeds,heartv:mHeart,vitals:mVitals,search:mSearch,quiz:mQuiz,cut:mCut,holo:mHolo,settings:mSettings})[m]()}
 /* ---- bodies that match the person: proportions by age ---- */
@@ -357,7 +358,7 @@ const NATURAL={heart:0xB8323F,liver:0x8E3B2C,pancreas:0xD9963A,kidney:0x7E2C2C,l
 function mExplore(){shape();LAYK='organs';CAM(HOME0.z*.92,HOME0.y+.2);head(who()+' · '+T('body').toUpperCase(),T('body'),lineFor());subLayers();
  const bad=Object.entries(orgFindings()).filter(([o,f])=>f.flag!=='normal'&&ORGRE[o]&&centerOf(ORGRE[o]));
  calm(bad.map(([o])=>({re:ORGRE[o],hex:NATURAL[o]||0xB8323F,beat:o==='heart'&&DATA.vitals&&+DATA.vitals.hr&&!U.still?+DATA.vitals.hr:0})));
- let side=1;tags(bad.map(([o,f])=>{const t={org:T(o),test:f.test,val:f.value,unit:f.unit||'',flag:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o],side,dy:side>0?-30:30,col:OCOL[o],big:1,onTap:()=>organCard(o)};side=-side;return t}))}
+ let side=1;tags(bad.map(([o,f])=>{const t={org:T(o),test:f.test,val:f.value,unit:f.unit||'',flag:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o],side,dy:side>0?-30:30,col:OCOL[o],big:1,onTap:()=>focusOrgan(o)};side=-side;return t}))}
 function organCard(o){const f=orgFindings()[o];const fs=latest().filter(x=>x.org===o);const k=SET.meta.parts.findIndex((p,i)=>(p.l??1)===3&&ORGRE[o].test(SET.names[i]));const [sys,desc]=k>=0?infoP(SET.meta.parts[k],SET.names[k]):['',''];
  sheet(`<div class="row" style="gap:12px;align-items:flex-start"><span class="sw" style="background:${OCOL[o]}"></span><div style="flex:1"><div class="cn">${esc(T(o))}</div>${sys?`<div class="eb" style="margin:2px 0 0">${esc(sys)}</div>`:''}</div><button class="x" onclick="closeCard()" aria-label="Close">✕</button></div>
  ${desc?`<p class="cd">${esc(cap(desc.replace(/^[^:]+:\s*/,'')))}</p>`:''}
@@ -368,7 +369,7 @@ const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 const fmtD=d=>{if(!d)return'';const x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})};
 /* tap on any part, in any mode that allows it */
 function tap(x,y){if(MODE==='hurt')return hurtTap(x,y);if(MODE==='quiz')return quizTap(x,y);const h=pick(x,y);if(!h){closeCard();return}
- const nm=SET.names[h.k];for(const o in ORGRE)if(LAYK==='organs'&&ORGRE[o].test(nm)&&MODE==='explore'){SEL=h;highlight(h);return organCard(o)}
+ const nm=SET.names[h.k];for(const o in ORGRE)if(LAYK==='organs'&&ORGRE[o].test(nm)&&MODE==='explore'){return FOCUS[o]?focusOrgan(o):organCard(o)}
  SEL=h;highlight(h);const p=SET.meta.parts[h.k];const [sys,desc]=infoP(p,nm);const col=SYS_COL[sys]||'#8E8E93';
  sheet(`<div class="row" style="gap:12px;align-items:flex-start"><span class="sw" style="background:${col}"></span><div style="flex:1;min-width:0"><div class="cn">${esc(clean(nm))}</div><div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><span class="pill" style="background:${col}22;color:${col}">${esc(sys)}</span></div></div><button class="x" onclick="closeCard()" aria-label="Close">✕</button></div>
  <p class="cd">${esc(cap(desc.replace(/^[^:]+:\s*/,'')))}</p><button class="btn pri" style="width:100%;margin-top:14px" onclick="send('ask',{q:'What does the ${esc(clean(nm))} do, and what problems can it have?'})">${T('ask')}</button>`);
@@ -534,12 +535,43 @@ async function mReal(){if(STATE.sex!=='male'){REAL={back:STATE.base};await swap(
 function calm(focus){shape();document.body.classList.remove('real');setLayer('organs');for(const l in LAY){const m=LAY[l];m.visible=+l===0||+l===3}
  const sk=LAY[0].material;sk.color.set(0xC8987A).convertSRGBToLinear();sk.opacity=focus&&focus.length?.42:.97;sk.transparent=true;sk.depthWrite=!(focus&&focus.length);sk.onBeforeCompile=()=>{};sk.needsUpdate=true;sk.roughness=.55;sk.clearcoat=.15;
  LAY[3].visible=false;clearGlows();(focus||[]).forEach(f=>{const g=glow(f.re,f.hex,3,1);if(g){const mm=g.children[0];mm.material.emissiveIntensity=.06;mm.material.onBeforeCompile=TISSUE(3);mm.renderOrder=10;mm.material.depthTest=false;mm.material.depthWrite=false;if(f.beat)PULSE={g,bpm:f.beat}}})}
+
+/* ===== organ focus: fly in to one organ and the parts connected to it, in true colour; "Whole body" returns ===== */
+const FOCUS={
+ pancreas:{main:/^pancreas$|pancreatic duct/i,rel:/duoden|spleen|splenic (artery|vein)|superior mesenteric (artery|vein)|gastroduodenal|pancreaticoduodenal|common bile duct|gallbladder|portal vein/i,parts:[['Pancreas',/^pancreas$/i],['Duodenum',/duodenum/i],['Spleen',/^spleen$/i],['Splenic vein',/splenic vein/i]]},
+ heart:{main:/ventric|atri(um|al)|myocard|papillary|leaflet|cusp|interventricular/i,rel:/coronary|aort|pulmonary trunk|pulmonary (artery|vein)|vena cava|brachiocephalic trunk/i,parts:[['Left ventricle',/^left ventricle$/i],['Aorta',/ascending aorta|arch of aorta/i],['Right coronary artery',/right coronary artery/i],['Pulmonary trunk',/^pulmonary trunk$/i]]},
+ liver:{main:/liver|lobe of liver/i,rel:/gallbladder|hepatic (artery|vein|duct)|portal vein|bile duct|cystic duct|inferior vena cava|common hepatic/i,parts:[['Liver',/liver/i],['Gallbladder',/gallbladder/i],['Portal vein',/portal vein/i],['Inferior vena cava',/inferior vena cava/i]]},
+ kidney:{main:/kidney|renal (cortex|medulla|pelvis|papilla|pyramid|column)/i,rel:/renal (artery|vein)|intrarenal|ureter|suprarenal|adrenal|abdominal aorta|inferior vena cava/i,parts:[['Kidneys',/kidney/i],['Renal artery',/right renal artery/i],['Ureter',/ureter/i],['Adrenal gland',/suprarenal gland/i]]},
+ thyroid:{main:/thyroid gland|lobe of thyroid|isthmus of thyroid|parathyroid/i,rel:/trachea|larynx|thyroid cartilage|cricoid|thyroid (artery|vein)|common carotid|internal jugular|esophag|oesophag/i,parts:[['Thyroid gland',/thyroid gland|lobe of thyroid/i],['Thyroid cartilage',/thyroid cartilage/i],['Trachea',/^trachea$/i],['Common carotid artery',/right common carotid/i]]},
+ lung:{main:/lung|lobe of (left|right) lung/i,rel:/bronch|trachea|pulmonary (artery|vein|trunk)|pleura|diaphragm/i,parts:[['Lungs',/lung/i],['Trachea',/^trachea$/i],['Bronchi',/main bronchus/i],['Pulmonary trunk',/^pulmonary trunk$/i]]}};
+let FOC=null;
+function subsetMesh(l,re){const m=LAY[l];if(!m)return null;const rs=m.userData.ranges.filter(r=>re.test(SET.names[r[2]]));if(!rs.length)return null;let n=0;rs.forEach(r=>n+=r[6]);const idx=new Uint32Array(n);let o=0;
+ rs.forEach(r=>{idx.set(m.geometry.index.array.subarray(r[5],r[5]+r[6]),o);o+=r[6]});const g=new THREE.BufferGeometry();g.setAttribute('position',m.geometry.attributes.position);g.setAttribute('normal',m.geometry.attributes.normal);g.setAttribute('color',m.geometry.attributes.color);g.setIndex(new THREE.BufferAttribute(idx,1));const P=m.geometry.attributes.position.array,bb=new THREE.Box3(),v=new THREE.Vector3();for(let i=0;i<idx.length;i+=3){const j=idx[i]*3;bb.expandByPoint(v.set(P[j],P[j+1],P[j+2]))}g.boundingBox=bb;g.boundingSphere=bb.getBoundingSphere(new THREE.Sphere());
+ const mt=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.42,clearcoat:.55,clearcoatRoughness:.3});mt.onBeforeCompile=TISSUE(l===4?3:l);const mesh=new THREE.Mesh(g,mt);mesh.userData.box=g.boundingBox;return mesh}
+function focusOrgan(o,why){const F=FOCUS[o];if(!F)return organCard(o);closeCard();clearGlows();tags([]);untint&&LAY[3]&&untint();
+ if(FOC){FOC.forEach(m=>body.remove(m))}FOC=[];for(const l in LAY)LAY[l].visible=false;
+ // the organ, then what connects to it, from every layer that has it (organs, vessels, bones)
+ const box=new THREE.Box3();for(const l of [3,4,2]){const main=subsetMesh(l,F.main),rel=subsetMesh(l,F.rel);if(main){body.add(main);FOC.push(main);box.union(main.userData.box)}if(rel){rel.material.transparent=true;rel.material.opacity=.92;body.add(rel);FOC.push(rel)}}
+ if(box.isEmpty())return organCard(o);const c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3()).length();
+ // frame it: the organ fills the middle of the screen, a little room for its connections
+ body.position.x=-c.x*body.scale.x;const cy=c.y*body.scale.y+body.position.y,d=Math.max(1.3,sz*body.scale.x*4.6);goalZ=d;goalY=cy+d*.035;if(o==='thyroid'){goal.y=-.75}camZ=d;camY=goalY;HOME={z:goalZ,y:goalY};if(o!=='thyroid')goal.y=-.25;goal.x=.05;
+ document.body.classList.add('focus');
+ const sides=[1,-1,1,-1],dys=[-40,-20,40,30];tags(F.parts.filter(p=>centerOfAll(p[1])).map((p,i)=>({org:p[0],re:p[1],all:1,side:sides[i],dy:dys[i],col:i?'#8E8E93':OCOL[o]})));
+ const fs=latest().filter(x=>x.org===o),dk=SET.meta.parts.findIndex((p,i)=>F.main.test(SET.names[i])),desc=dk>=0?cap(infoP(SET.meta.parts[dk],SET.names[dk])[1].replace(/^[^:]+:\s*/,'')):'';head(who()+' · '+T(o).toUpperCase(),T(o),why||'');
+ sheet(`<div class="row" style="justify-content:space-between;gap:10px"><div class="cn" style="font-size:19px">${esc(T(o))}</div><button class="btn sec" style="height:36px;font-size:13.5px" onclick="unfocus()">Whole body</button></div>
+ ${fs.map(x=>`<div class="fx"><div><small>${esc(x.rep||'Report')} · ${esc(fmtD(x.date))}</small><div class="fv">${esc(x.test)} <b>${esc(x.value)}</b> ${esc(x.unit||'')}</div></div><span class="pill ${FCLS[x.flag]||'info'}">${esc(T(x.flag||'unknown'))}</span></div>`).join('')||`<p class="cd" style="margin-top:6px">${esc(desc)}</p>`}
+ <div class="row" style="gap:10px;margin-top:12px"><button class="btn pri" style="flex:1" onclick="send('ask',{q:'Explain my ${esc(TX.en[o])} results in simple words'})">${T('ask')}</button>${fs.some(x=>x.flag!=='normal')&&DATA.canWrite?`<button class="btn sec" style="flex:1" onclick="send('book',{codes:${esc(JSON.stringify(fs.map(x=>x.code).filter(Boolean)))}})">${T('book')}</button>`:''}</div>`)}
+function centerOfAll(re){if(!SET)return null;const b=new THREE.Box3();let n=0;SET.meta.parts.forEach((p,k)=>{if(re.test(SET.names[k])){const c=p.b;b.expandByPoint(new THREE.Vector3(c[0],c[1],c[2]));b.expandByPoint(new THREE.Vector3(c[3],c[4],c[5]));n++}});return n?b.getCenter(new THREE.Vector3()):null}
+function unfocus(){if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');body.position.x=0;mode(MODE==='explore'?'explore':MODE)}
 /* ---- boot ---- */
 let HOME0={z:16,y:0};
 function parseSet(buf,names){const dv=new DataView(buf),n=dv.getUint32(0,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,n)));return{buf,base:4+n,meta,names}}
 async function boot(d){DATA=d;document.documentElement.lang=U.lang;const sex=d.person.sex==='female'?'female':'male';STATE.base=sex;STATE.sex=sex;STATE.hd=false;
  SET=await loadSex(sex,false);build(SET);shape();HOME0={z:HOME.z,y:HOME.y};$('#load').style.display='none';
- modes();await mode(d.start||'explore');
+ modes();const st=d.start||'';if(st.startsWith('focus:')){await mode('explore');focusOrgan(st.slice(6))}
+ else if(!st){const rank={high:2,low:1};const worst=Object.entries(orgFindings()).filter(([o,f])=>rank[f.flag]&&FOCUS[o]).sort((a,b)=>rank[b[1].flag]-rank[a[1].flag])[0];
+  await mode('explore');if(worst&&!d.person.pregnancy)focusOrgan(worst[0],`${worst[1].test} is ${worst[1].flag==='high'?'high':'low'}. Tap Whole body to see everything.`)}
+ else await mode(st);
  if((navigator.connection||{}).type==='wifi'||U.hd)setTimeout(detail,1500)}
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-data')return;boot(e.data.data)});
 /* preview without the app: /body?demo */
