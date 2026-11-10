@@ -81,6 +81,8 @@ def jobs(db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
 
 class Move(BaseModel):
     note: str = ""
+    code: str = ""
+    sample: str = ""
 
 
 def _advance(db: Session, o: Order, to: str, u: PartnerUser, family: str) -> dict:
@@ -125,6 +127,8 @@ def arrived(oid: str, body: Move, db: Session = Depends(get_db), u: PartnerUser 
 def collected(oid: str, body: Move, db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
     """Sample taken. The trail stops here and the report clock starts."""
     o = _job(db, u, oid)
+    from api.booking import check_door
+    check_door(o, body.code, body.sample)
     out = _advance(db, o, "collected", u, "Sample collected. Your report will arrive in the app.")
     return out
 

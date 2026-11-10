@@ -213,6 +213,27 @@ def my_phone(body: PhoneIn, a: Admin = Depends(me), db: Session = Depends(get_db
     return {"ok": True, "phone": ph}
 
 
+class EmailIn(BaseModel):
+    email: str
+    password: str
+
+
+@r.put("/me/email")
+def my_email(body: EmailIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Move a sign-in email (e.g. off the previous domain). Asks for the password again."""
+    import re as _re
+    if not check_pw(body.password, a.pw_hash):
+        raise HTTPException(403, "That password is not right.")
+    em = body.email.strip().lower()
+    if not _re.fullmatch(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", em):
+        raise HTTPException(400, "Enter a valid email.")
+    if db.scalar(select(Admin).where(Admin.email == em, Admin.id != a.id)):
+        raise HTTPException(409, "Another admin already uses this email.")
+    old, a.email = a.email, em
+    log(db, em, "admin.email", f"{old} → {em}")
+    return {"ok": True, "email": em}
+
+
 # ---- settings and client errors -------------------------------------------------------------------------------------
 class ReviewerIn(BaseModel):
     name: str = ""

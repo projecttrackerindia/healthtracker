@@ -165,6 +165,9 @@ class Order(Base):
     # does not go out at all.
     verified_by: Mapped[str | None] = mapped_column(String(32), nullable=True)   # the pharmacist's PartnerUser id
     verified_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    door_code: Mapped[str] = mapped_column(String(6), default="")                # shown to the family; the technician or rider enters it at the door
+    sample_id: Mapped[str] = mapped_column(String(40), default="")               # barcode on the sample tube, scanned at collection and at the lab
+    cancel_fee: Mapped[int] = mapped_column(Integer, default=0)
     rx_doctor: Mapped[str] = mapped_column(String(120), default="")              # prescriber, as written on it
     rx_reg_no: Mapped[str] = mapped_column(String(40), default="")               # their council registration
     rx_date: Mapped[str] = mapped_column(String(10), default="")                 # the date on the prescription
@@ -1316,3 +1319,51 @@ class OfferUse(Base):
     order_id: Mapped[str] = mapped_column(String(32), default="")
     amount: Mapped[int] = mapped_column(Integer, default=0)
     t: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class SavedAddress(Base):
+    """A family's saved place: where the technician comes, or where medicines are delivered."""
+    __tablename__ = "saved_addresses"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ad"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    label: Mapped[str] = mapped_column(String(20), default="Home")
+    line1: Mapped[str] = mapped_column(String(120), default="")      # flat / house no. and floor
+    line2: Mapped[str] = mapped_column(String(160), default="")      # building, street
+    landmark: Mapped[str] = mapped_column(String(120), default="")
+    area: Mapped[str] = mapped_column(String(80), default="")
+    city: Mapped[str] = mapped_column(String(80), default="")
+    state: Mapped[str] = mapped_column(String(40), default="")
+    pin: Mapped[str] = mapped_column(String(6), default="", index=True)
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    acc: Mapped[int] = mapped_column(Integer, default=0)
+    name: Mapped[str] = mapped_column(String(80), default="")
+    phone: Mapped[str] = mapped_column(String(20), default="")
+    note: Mapped[str] = mapped_column(String(160), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class AreaWait(Base):
+    """"Tell me when you come here": families waiting for a partner in their PIN code."""
+    __tablename__ = "area_waits"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    pin: Mapped[str] = mapped_column(String(6), index=True)
+    kind: Mapped[str] = mapped_column(String(12), default="lab")
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    notified: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class SchemeCard(Base):
+    """A government health-cover card a family keeps in the app (PM-JAY, Aarogyasri, CGHS…). The number is encrypted;
+    only the last four digits are shown in lists."""
+    __tablename__ = "scheme_cards"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    scheme: Mapped[str] = mapped_column(String(24))
+    blob: Mapped[str] = mapped_column(Text, default="")
+    last4: Mapped[str] = mapped_column(String(4), default="")
+    valid_until: Mapped[str] = mapped_column(String(10), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)

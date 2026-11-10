@@ -83,6 +83,9 @@ def tick(now_dt: datetime | None = None) -> int:
             if now_dt.hour == 8:
                 from .phase5 import send_morning_summary
                 send_morning_summary(db)
+            if now_dt.hour == 20 and now_dt.minute < 5:
+                from .booking import evening_before
+                evening_before(db)
             db.commit()
     except Exception as e:  # a daily check must never stop the dose reminders
         print("[reminders] daily:", type(e).__name__, str(e)[:120], flush=True)

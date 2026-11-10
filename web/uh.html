@@ -371,7 +371,7 @@ async function API(path,o={}){const h={'x-tht':'1'};if(o.json)h['content-type']=
 const today=()=>new Date().toISOString().slice(0,10);
 const fmtDate=s=>{if(!s)return'';const d=new Date(s.length===10?s+'T00:00':s);return isNaN(d)?s:d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:d.getFullYear()===new Date().getFullYear()?undefined:'numeric'})};
 let ME=null;const S={person:null,tab:'summary',focus:0,mini:false,week:null};const REC={};
-const P=id=>ME.people.find(p=>p.id===(id||S.person));
+const P=id=>(ME&&ME.people||[]).find(p=>p.id===(id||S.person));
 const isMe=p=>p&&p.self;
 const nameOf=p=>p?(p.self?'You':p.name):'';
 const can=(p,l)=>({none:0,medid:1,summary:2,all:3,guardian:4,owner:5})[p.access]>=({medid:1,summary:2,all:3})[l];
@@ -727,7 +727,7 @@ const ROW=(icon,col,t,end,on)=>`<button class="li" onclick="${on}"><span class="
 function openSettings(){const me=P(ME.me),u=ME.user;page('Settings',`<button class="card row" style="width:100%;text-align:left;margin-top:14px" onclick="openProfile()"><span class="av" style="background:${me.color};width:60px;height:60px;border-radius:30px;font-size:24px">${esc(me.name[0])}</span><div style="flex:1"><div style="font-size:20px;font-weight:700">${esc(me.name)}</div><div class="sub">${esc(u.phone||u.email||'')} · Health profile</div></div>${ic(I.chev,'#C7C7CC')}</button>
  <div class="list" style="margin-top:18px">${ROW(I.id,'#FF3B30','Medical ID','',"openMedId()")}${ROW(I.phone,'#34C759','Emergency contacts',(me.medicalId.contacts||[]).length+'',"openContacts()")}${ROW(I.rec,'#30B0C7','My doctors','',"openDoctors()")}${ROW(I.share||I.rec,'#0A84FF','Share with a doctor','',"shareDoctor()")}${ROW(I.rec,'#5E5CE6','Doctor visit summary (PDF)','',"visitSummary()")}${ROW(I.lock,'#636366','Who can see my health','',"openSharing()")}</div>
  ${me.sex==='female'?`<div class="list" style="margin-top:18px">${ROW(I.drop,'#E5577A','Cycle','Private',"openCycle()")}${ROW(I.baby,'#E5577A','Pregnancy',me.pregnancy&&me.pregnancy.stage==='pregnant'?'Week '+me.pregnancy.week:'Off',"openPregnancy()")}</div>`:''}
- <div class="list" style="margin-top:18px">${ROW(I.bell,'#FF9500','Notifications',(typeof Notification!=='undefined'&&Notification.permission==='granted')?'On':'Off',"openNotifSettings()")}${ROW(I.rec,'#30B0C7','Bookings and orders','',"openOrders()")}</div>
+ <div class="list" style="margin-top:18px">${ROW(I.bell,'#FF9500','Notifications',(typeof Notification!=='undefined'&&Notification.permission==='granted')?'On':'Off',"openNotifSettings()")}${ROW(I.rec,'#30B0C7','Bookings and orders','',"openOrders()")}${ROW(I.map||I.rec,'#0071E3','Addresses','',"openAddresses()")}${ROW(I.shield,'#1A7F37','Government health cover','PM-JAY, state',"openSchemes()")}</div>
  <div class="list" style="margin-top:18px">${ROW(I.eye||I.lock,'#5E5CE6','Who opened my records','',"openAccessLog()")}${ROW(I.shield,'#30B0C7','Sign-in and security','',"openSecurity()")}${ROW(I.down,'#8E8E93','Your data','Export, delete',"openData()")}</div>
  <button class="btn sec" style="width:100%;margin-top:22px" onclick="signOut()">Sign out</button><p class="cap" style="text-align:center">Urban Health · urbanhealth.in · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>`)}
 function lockBanner(me){const L=me.idLock||{};if(!L.last)return'';const f=t=>new Date(t*1e3).toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
@@ -819,13 +819,14 @@ function labPick(id){const l=LAB.quote.labs.find(x=>x.id===id);LAB.lab=l;LAB.slo
  <div class="list" style="margin-top:12px;background:#F7F7F9">${l.lines.map(x=>`<div class="li" style="font-size:15px">${esc(x.name)}<span class="end" style="color:var(--ink)">${money(x.price)}</span></div>`).join('')}${l.fee?`<div class="li" style="font-size:15px">Home visit<span class="end" style="color:var(--ink)">${money(l.fee)}</span></div>`:''}<div class="li" style="font-weight:700">Total<span class="end" style="color:var(--ink);font-weight:700">${money(l.total)}</span></div></div></div>
  ${l.fasting?`<div class="card" style="margin-top:10px;border:1.5px solid #FFE0B2"><div class="cat" style="color:var(--amber)">Fasting needed</div><p style="margin:6px 0 0;font-size:15px">Nothing to eat for 10–12 hours before the visit. Water is fine.</p></div>`:''}
  <div class="sect">WHEN</div><div class="chips" id="slots">${l.slots.map((s,i)=>`<button class="chip ${i===0?'on':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>
- <div class="sect">ADDRESS FOR THE VISIT</div><textarea id="laddr" class="inp2" style="height:84px;padding:12px 16px;resize:none" placeholder="Flat, building, street, area, landmark"></textarea>
+ <div class="sect">ADDRESS FOR THE VISIT</div><div id="addrbox"><div class="card sub">Loading…</div></div>
  <div class="sect">PAYMENT</div><div class="list"><div class="li">Pay the technician (cash or UPI)<span class="radio on"></span></div></div>
  <button class="btn pri" style="width:100%;margin-top:18px" id="lbook">Book for ${esc(nameOf(p))} · ${money(l.total)}</button><p class="cap">The lab confirms first. You can cancel free until the technician sets out.</p>`,'LABS');
  document.querySelectorAll('#slots .chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('#slots .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');LAB.slot=c.dataset.s});
- try{const a=localStorage.getItem('uh-addr');if(a)$('#laddr').value=a}catch(_){}
- $('#lbook').onclick=async()=>{const addr=$('#laddr').value.trim();if(addr.length<10)return toast('Add the full address so the technician can find you');try{localStorage.setItem('uh-addr',addr)}catch(_){}
-  const b=$('#lbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:l.id,kind:'lab',items:l.lines.map(x=>({code:x.code})),slot:LAB.slot,address:addr,member:p.name,memberId:p.id,payment:'cod',...(LAB.loc||{})}});toast('Booked. The lab will confirm shortly.');openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
+ addrMount('addrbox','lab',l.id);
+ API(`/api/v2/stores/${l.id}/slots`).then(r=>{const m={};r.rows.forEach(x=>m[x.slot]=x.left);document.querySelectorAll('#slots .chip').forEach(c=>{if(m[c.dataset.s]===0){c.disabled=true;c.style.opacity=.4;c.textContent+=' · full';if(c.classList.contains('on')){c.classList.remove('on');LAB.slot=''}}else if(m[c.dataset.s]!=null&&m[c.dataset.s]<=2)c.textContent+=' · '+m[c.dataset.s]+' left'})}).catch(()=>{});
+ $('#lbook').onclick=async()=>{const ad=addrPayload('lab');if(!ad)return;if(!LAB.slot)return toast('Choose a time');
+  const b=$('#lbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:l.id,kind:'lab',items:l.lines.map(x=>({code:x.code})),slot:LAB.slot,...ad,member:p.name,memberId:p.id,payment:'cod'}});toast('Booked. The lab will confirm shortly.');openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
 let TRACKT=null;
 async function openOrders(){let os=[];try{os=(await API('/api/v1/orders',{key:true})).orders}catch(e){}
  page('Bookings and orders',os.length?`<div class="list" style="margin-top:14px">${os.map(o=>`<button class="li" onclick="openOrder('${o.id}')"><div style="flex:1;min-width:0"><div style="font-weight:600">${esc((o.items||[]).map(i=>i.name).join(', ')).slice(0,60)}</div><div class="sub">${esc(o.member||'')} · ${esc(o.slot||new Date(o.created*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}))}</div></div><span class="pill ${o.status==='cancelled'?'bad':o.status==='done'||o.status==='delivered'||o.status==='reported'?'ok':'warn'}">${esc(o.steps[o.step]||o.status)}</span></button>`).join('')}</div>`
@@ -838,16 +839,16 @@ async function openOrder(id,quiet){clearTimeout(TRACKT);let o;try{o=(await API('
  if(quiet&&$('#ostep')&&$('#ostep').dataset.step==String(o.step)){   // only the position moved: move the marker, keep the page still
   if(ORDERMAP&&pt)ORDERMAP.update({them:pt,home});const t=$('#oeta');if(t)t.textContent=live?`${who} on the way · updated ${Math.max(0,Math.round(tr.ageS/60))} min ago`:'';
  }else{
- page(o.kind==='lab'?'Home test':'Medicine order',`<p class="sub" style="font-size:15px;margin-top:4px">${esc(o.member||'')}${o.slot?' · '+esc(o.slot):''} · <span class="mono">${esc(o.id)}</span></p>
+ page(o.kind==='lab'?'Home test':'Medicine order',`<p class="sub" style="font-size:15px;margin-top:4px">${esc(o.member||'')}${o.slot?' · '+esc(o.slot):''} · <span class="mono">${esc(o.id)}</span></p>${doorCard(o)}
  ${pt||(!done&&o.step>=2)?`<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div id="omap" style="height:260px;background:#EEF1F5"></div>
  <div style="padding:14px 16px" class="row"><div style="flex:1"><div style="font-weight:700;font-size:17px">${live?who+' on the way':pt?'Last known location':'Waiting for live location'}</div><div class="sub" id="oeta">${tr&&tr.agent?esc(tr.agent.name)+' · ':''}${live?'updated '+Math.max(0,Math.round(tr.ageS/60))+' min ago':'Shown as soon as they set out'}</div></div>${tr&&tr.agent&&tr.agent.phone?`<a class="round" style="background:#E3F5E8" href="tel:${esc(tr.agent.phone)}" aria-label="Call">${ic(I.phone,'#1A7F37',20)}</a>`:''}</div></div>`:''}
  <div class="list" style="margin-top:14px" id="ostep" data-step="${o.step}">${o.steps.map((s,i)=>`<div class="li" style="font-size:15px"><span style="width:12px;height:12px;border-radius:6px;flex:none;background:${o.status==='cancelled'?'#D1D1D6':i<o.step?'#34C759':i===o.step?'#0071E3':'#D1D1D6'};box-shadow:${i===o.step&&o.status!=='cancelled'?'0 0 0 5px rgba(0,113,227,.18)':'none'}"></span><span style="${i>o.step?'color:#8E8E93':''}">${esc(s)}</span></div>`).join('')}</div>
  ${o.checkedBy?`<div class="card row" style="margin-top:10px">${ic(I.shield||I.check,'#1A7F37',22)}<div><div style="font-weight:600">Prescription checked by ${esc(o.checkedBy.name)}</div><div class="sub">${o.checkedBy.regNo?'Reg. no. '+esc(o.checkedBy.regNo):''}</div></div></div>`:''}
  <div class="list" style="margin-top:14px">${(o.items||[]).map(x=>`<div class="li" style="font-size:15px">${esc(x.name)}${x.qty?' × '+x.qty:''}<span class="end" style="color:var(--ink)">${money(x.price*(x.qty||1))}</span></div>`).join('')}<div class="li" style="font-weight:700">Total<span class="end" style="color:var(--ink);font-weight:700">${money(o.total)}</span></div></div>
  ${o.store&&o.store.phone?`<a class="btn sec" style="width:100%;margin-top:14px" href="tel:${esc(o.store.phone)}">${ic(I.phone,'#1D1D1F',18)} Call ${esc(o.store.name)}</a>`:''}
- ${o.status!=='cancelled'&&o.step<3?`<button class="btn sec" style="width:100%;margin-top:10px;color:#C4291C" onclick="cancelOrder('${o.id}')">Cancel</button>`:''}
+ <div id="omore"></div>
  <button class="btn sec" style="width:100%;margin-top:10px" onclick="reportProblem('${o.id}','${o.kind}')">Report a problem</button>`,o.kind==='lab'?'LABS · LIVE':'MEDICINES · LIVE');
- ORDERMAP=null;const el=$('#omap');if(el){ORDERMAP=await liveMap(el,{center:pt||home||undefined});ORDERMAP.update({them:pt,home})}}
+ orderMore(o);ORDERMAP=null;const el=$('#omap');if(el){ORDERMAP=await liveMap(el,{center:pt||home||undefined});ORDERMAP.update({them:pt,home})}}
  if(!done)TRACKT=setTimeout(()=>{if($('.page')&&$('.page').textContent.includes(o.id))openOrder(id,true)},live?10000:20000)}
 function reportProblem(oid,kind){const K=kind==='lab'?[['missed_visit',"Technician didn't come"],['late','Very late'],['report','Report not showing or wrong'],['refund','Refund not received'],['behaviour','Rude or unprofessional'],['other','Something else']]:[['wrong_medicine','Wrong medicine delivered'],['unsafe','Damaged, expired or unsafe'],['late','Very late'],['refund','Refund not received'],['behaviour','Rude or unprofessional'],['other','Something else']];
  const sx=sheetX('',`<div style="padding:0 16px 8px"><p style="font-size:20px;font-weight:700;margin:0 0 4px">What went wrong?</p><p class="cap" style="margin:0 0 12px">We reply within ${kind==='lab'?'6':'2'} hours for urgent problems.</p><div class="list">${K.map(([k,t],i)=>`<label class="li"><input type="radio" name="pk" value="${k}" ${i?'':'checked'} style="width:20px;height:20px"><span style="flex:1">${t}</span></label>`).join('')}</div>
@@ -894,7 +895,7 @@ async function gmaps(){if(GM!==null)return GM;try{const c=await API('/api/v1/con
 const MAPSTYLE=[{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{elementType:'geometry',stylers:[{color:'#F2F3F5'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#FFFFFF'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#D6E6F5'}]},{elementType:'labels.text.fill',stylers:[{color:'#6E6E73'}]}];
 function dotIcon(col,r){return{path:google.maps.SymbolPath.CIRCLE,scale:r||9,fillColor:col,fillOpacity:1,strokeColor:'#fff',strokeWeight:3}}
 /* a live map: returns update({me,them}) — Google Maps when the key is set, a Google embed otherwise */
-async function liveMap(el,opts){const g=await gmaps();
+async function liveMap(el,opts){const g=await gmaps();if(!el||!el.isConnected)return{update(){}};
  if(!g){let last='';return{update:({them,me})=>{const p=them||me;if(!p)return;const src=`https://www.google.com/maps?q=${p.lat},${p.lng}&z=15&output=embed`;if(src!==last){last=src;el.innerHTML=`<iframe title="Map" style="width:100%;height:100%;border:0" loading="lazy" src="${src}"></iframe>`}}}}
  const map=new g.Map(el,{center:opts.center||{lat:17.385,lng:78.4867},zoom:15,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAPSTYLE,clickableIcons:false});
  const mk={},line=new g.Polyline({map,strokeColor:'#0A84FF',strokeOpacity:.9,strokeWeight:4,geodesic:true}),trail=[];
@@ -925,13 +926,13 @@ function rxPick(id){const s=RXO.quote.stores.find(x=>x.id===id),p=P();RXO.store=
  <div class="list" style="margin-top:12px;background:#F7F7F9">${s.lines.map(x=>`<div class="li" style="font-size:15px">${esc(x.name)} × ${x.qty}<span class="end" style="color:var(--ink)">${money(x.price*x.qty)}</span></div>`).join('')}${s.fee?`<div class="li" style="font-size:15px">Delivery<span class="end" style="color:var(--ink)">${money(s.fee)}</span></div>`:''}<div class="li" style="font-weight:700">Total<span class="end" style="color:var(--ink);font-weight:700">${money(s.total)}</span></div></div></div>
  <div class="sect">PRESCRIPTION</div><div class="list">${rxs.map((r,i)=>`<button class="li" onclick="RXO.rx='${r.file}';document.querySelectorAll('.rxr').forEach(x=>x.classList.remove('on'));this.querySelector('.rxr').classList.add('on')"><div style="flex:1"><div>${esc(r.title)}</div><div class="sub">${fmtDate(r.day)}${r.doctor?' · '+esc(r.doctor):''}</div></div><span class="radio rxr ${i===0?'on':''}"></span></button>`).join('')||'<div class="li sub">No prescription on file</div>'}<button class="li" style="color:var(--blue);font-weight:600" onclick="pickReport('prescription')">${ic(I.cam,'#0071E3')} Add a prescription</button></div>
  <p class="cap">Prescription medicines are dispensed only after the pharmacist checks a valid prescription. You will see their name and registration number.</p>
- <div class="sect">DELIVER TO</div><textarea id="raddr" class="inp2" style="height:84px;padding:12px 16px;resize:none" placeholder="Flat, building, street, area, landmark"></textarea>
+ <div class="sect">DELIVER TO</div><div id="addrbox"><div class="card sub">Loading…</div></div>
  <div class="sect">PAYMENT</div><div class="seg" id="pay"><button class="on" data-p="cod">Cash on delivery</button><button data-p="upi">UPI on delivery</button></div>
  <button class="btn pri" style="width:100%;margin-top:18px" id="rbook">Place order · ${money(s.total)}</button>`,'MEDICINES');
- try{const a=localStorage.getItem('uh-addr');if(a)$('#raddr').value=a}catch(_){}
+ addrMount('addrbox','pharmacy',s.id);
  document.querySelectorAll('#pay button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#pay button').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
- $('#rbook').onclick=async()=>{const addr=$('#raddr').value.trim();if(addr.length<10)return toast('Add the full delivery address');try{localStorage.setItem('uh-addr',addr)}catch(_){}
-  const b=$('#rbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:s.id,kind:'medicine',items:s.lines.map(x=>({sku:x.sku,qty:x.qty,member:p.id})),address:addr,member:p.name,memberId:p.id,payment:document.querySelector('#pay .on').dataset.p,rxShared:!!RXO.rx,rxDocs:RXO.rx?[RXO.rx]:[],...(LAB.loc||{})}});toast('Order placed. The pharmacist is checking it.');openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
+ $('#rbook').onclick=async()=>{const ad=addrPayload('pharmacy');if(!ad)return;
+  const b=$('#rbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:s.id,kind:'medicine',items:s.lines.map(x=>({sku:x.sku,qty:x.qty,member:p.id})),...ad,member:p.name,memberId:p.id,payment:document.querySelector('#pay .on').dataset.p,rxShared:!!RXO.rx,rxDocs:RXO.rx?[RXO.rx]:[]}});toast('Order placed. The pharmacist is checking it.');openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
 
 /* ---------------- women's health ---------------- */
 async function openPregnancy(){const me=P(ME.me);if(!me.sex||me.sex!=='female')return;await loadRecords(me.id);const cur0=me.pregnancy||{};
@@ -1146,6 +1147,140 @@ setInterval(()=>{if(ME&&document.visibilityState==='visible')pollInbox()},60*100
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 fit();frame();boot();
 
+/* ---------------- Addresses with a map pin · serviceability · doorstep code · government cover ---------------- */
+const ADDR={rows:null,sel:null};
+async function addrLoad(force){if(ADDR.rows&&!force)return ADDR.rows;try{ADDR.rows=(await API('/api/v2/addresses')).rows}catch(_){ADDR.rows=[]}
+ let last='';try{last=localStorage.getItem('uh-addr-id')||''}catch(_){}
+ ADDR.sel=ADDR.rows.find(a=>a.id===(ADDR.sel&&ADDR.sel.id))||ADDR.rows.find(a=>a.id===last)||ADDR.rows[0]||null;return ADDR.rows}
+const LBL={Home:'⌂',Work:'▣',Parents:'♥',Other:'•'};
+function addrLine(a){return[a.line1,a.line2,a.area].filter(Boolean).join(', ')}
+function addrCard(a,kind,store){if(!a)return`<button class="card row" style="width:100%;text-align:left;border:1.5px dashed #C7C7CC" onclick="addrPick('${kind}','${store||''}')">${ic(I.map||I.rec,'#0071E3',24)}<div style="flex:1"><div style="font-weight:600">Add address with map pin</div><div class="sub">Flat, building, landmark and who will be at the door</div></div>${ic(I.chev,'#C7C7CC')}</button>`;
+ const sv=a.serve||{},ok=kind==='pharmacy'?sv.pharmacies:sv.labs;
+ return`<button class="card" style="width:100%;text-align:left" onclick="addrPick('${kind}','${store||''}')"><div class="row"><span class="ib" style="background:#0071E3;color:#fff;font-weight:700">${LBL[a.label]||'•'}</span><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(a.label)}${a.name?' · '+esc(a.name):''}</div><div class="sub" style="white-space:normal">${esc(addrLine(a))}</div><div class="sub">Near ${esc(a.landmark)} · ${esc(a.pin)}</div></div><span class="sub" style="color:#0071E3">Change</span></div>
+ ${ok===0?`<div style="margin-top:10px;background:#FFF4E5;color:#8A5300;border-radius:12px;padding:10px 12px;font-size:13.5px">No partner ${kind==='pharmacy'?'pharmacy delivers':'lab collects at home'} at ${esc(a.pin)} yet.</div>`:ok?`<div class="pill ok" style="margin-top:10px;display:inline-block">${kind==='pharmacy'?'Delivery':'Home collection'} available</div>`:''}</button>`}
+async function addrMount(id,kind,store){await addrLoad();const el=$('#'+id);if(el)el.innerHTML=addrCard(ADDR.sel,kind,store)}
+function addrPick(kind,store){const rows=ADDR.rows||[];
+ const sx=sheetX('Address',`<div style="padding:4px 16px 18px"><div class="list">${rows.map(a=>`<button class="li" data-a="${a.id}"><span class="ib" style="background:#0071E3;color:#fff;font-weight:700">${LBL[a.label]||'•'}</span><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(a.label)}</div><div class="sub" style="white-space:normal">${esc(addrLine(a))} · ${esc(a.pin)}</div></div><span class="radio ${ADDR.sel&&ADDR.sel.id===a.id?'on':''}"></span></button>`).join('')}
+ <button class="li" data-new>${ic('<path d="M12 5v14M5 12h14"/>','#0071E3',20)}<span style="color:#0071E3;font-weight:600">Add a new address</span></button></div>
+ ${rows.length?'<button class="btn sec" style="width:100%;margin-top:12px" data-edit>Edit the selected address</button>':''}</div>`);
+ sx.el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ADDR.sel=rows.find(a=>a.id===b.dataset.a);try{localStorage.setItem('uh-addr-id',ADDR.sel.id)}catch(_){}sx.close();addrRefresh(kind,store)});
+ sx.el.querySelector('[data-new]').onclick=()=>{sx.close();addrEdit(null,kind,store)};
+ const e=sx.el.querySelector('[data-edit]');if(e)e.onclick=()=>{sx.close();addrEdit(ADDR.sel,kind,store)}}
+function addrRefresh(kind,store){const el=$('#addrbox');if(el)el.innerHTML=addrCard(ADDR.sel,kind,store);if(typeof ADDR.onchange==='function')ADDR.onchange(ADDR.sel)}
+/* A small drag-to-move map: Google Maps when a key is set, OpenStreetMap tiles otherwise. The pin stays in the centre. */
+async function pinMap(el,c,onMove){const g=await gmaps();if(!el||!el.isConnected)return{set(){}};
+ if(g){const m=new g.Map(el,{center:c,zoom:18,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAPSTYLE,clickableIcons:false});
+  m.addListener('idle',()=>{const p=m.getCenter();onMove({lat:p.lat(),lng:p.lng()})});return{set:p=>m.setCenter(p)}}
+ const Z=18,T=256,px=(lat,lng)=>{const s=T*2**Z,x=(lng+180)/360*s,r=lat*Math.PI/180,y=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s;return[x,y]},
+  ll=(x,y)=>{const s=T*2**Z,lng=x/s*360-180,n=Math.PI-2*Math.PI*y/s;return{lat:180/Math.PI*Math.atan(.5*(Math.exp(n)-Math.exp(-n))),lng}};
+ let [cx,cy]=px(c.lat,c.lng),drag=null,tm=null;el.style.position='relative';el.style.overflow='hidden';el.style.touchAction='none';
+ const draw=()=>{const w=el.clientWidth||320,h=el.clientHeight||260,x0=cx-w/2,y0=cy-h/2,tx0=Math.floor(x0/T),ty0=Math.floor(y0/T);let s='';
+  for(let tx=tx0;tx*T<x0+w;tx++)for(let ty=ty0;ty*T<y0+h;ty++)s+=`<img alt="" draggable="false" src="https://tile.openstreetmap.org/${Z}/${tx}/${ty}.png" style="position:absolute;left:${tx*T-x0}px;top:${ty*T-y0}px;width:${T}px;height:${T}px;user-select:none;pointer-events:none">`;
+  el.innerHTML=s+'<span style="position:absolute;right:6px;bottom:4px;font-size:10px;background:#fff9;padding:1px 4px;border-radius:4px">© OpenStreetMap</span>'};
+ const done=()=>{clearTimeout(tm);tm=setTimeout(()=>onMove(ll(cx,cy)),350)};
+ el.onpointerdown=e=>{drag=[e.clientX,e.clientY];el.setPointerCapture(e.pointerId)};
+ el.onpointermove=e=>{if(!drag)return;cx-=e.clientX-drag[0];cy-=e.clientY-drag[1];drag=[e.clientX,e.clientY];draw()};
+ el.onpointerup=el.onpointercancel=()=>{if(drag){drag=null;done()}};
+ draw();setTimeout(()=>onMove(ll(cx,cy)),50);return{set:p=>{[cx,cy]=px(p.lat,p.lng);draw();done()}}}
+function addrEdit(a,kind,store){a=a||{label:'Home'};let pos=a.lat?{lat:a.lat,lng:a.lng,acc:a.acc||0}:null,geo={};
+ const L=['Home','Work','Parents','Other'];
+ const sx=sheetX(a.id?'Edit address':'New address',`<div style="padding:0 16px 20px"><div style="position:relative;height:250px;border-radius:16px;overflow:hidden;background:#EEF1F5;margin-top:4px"><div id="pmap" style="position:absolute;inset:0"></div>
+  <svg width="34" height="46" viewBox="0 0 34 46" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 3px 4px #0004)"><path d="M17 1C8 1 1 8 1 17c0 12 16 28 16 28s16-16 16-28C33 8 26 1 17 1z" fill="#FF3B30"/><circle cx="17" cy="17" r="6" fill="#fff"/></svg>
+  <button type="button" id="pme" style="position:absolute;right:10px;top:10px;background:#fff;border:0;border-radius:18px;padding:8px 12px;font-weight:600;box-shadow:0 2px 8px #0002">◎ Use my location</button>
+  <div id="pwhere" style="position:absolute;left:10px;right:10px;bottom:10px;background:#fffe;border-radius:12px;padding:8px 12px;font-size:13.5px">Move the map so the pin sits on your door.</div></div>
+  <input class="inp2" id="psq" placeholder="Search area or building" style="margin-top:10px">
+  <div id="psr" class="list" style="margin-top:6px;display:none"></div>
+  <form id="af" style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+   <input class="inp2" name="line1" required minlength="1" placeholder="Flat / house no. and floor *" value="${esc(a.line1||'')}">
+   <input class="inp2" name="line2" required minlength="3" placeholder="Building and street *" value="${esc(a.line2||'')}">
+   <input class="inp2" name="landmark" required minlength="3" placeholder="Landmark — e.g. opposite Ratnadeep *" value="${esc(a.landmark||'')}">
+   <div class="row" style="gap:10px"><input class="inp2" name="area" placeholder="Area" value="${esc(a.area||'')}" style="flex:2"><input class="inp2" name="pin" required inputmode="numeric" pattern="[1-9][0-9]{5}" maxlength="6" placeholder="PIN *" value="${esc(a.pin||'')}" style="flex:1"></div>
+   <div class="sect" style="margin:6px 0 0">WHO WILL BE AT THE DOOR</div>
+   <div class="row" style="gap:10px"><input class="inp2" name="name" placeholder="Name" value="${esc(a.name||'')}" style="flex:1"><input class="inp2" name="phone" inputmode="tel" placeholder="Phone" value="${esc(a.phone||'')}" style="flex:1"></div>
+   <input class="inp2" name="note" maxlength="140" placeholder="Note for the technician (gate code, dog, parking)" value="${esc(a.note||'')}">
+   <div class="seg" id="alb">${L.map(x=>`<button type="button" data-l="${x}" class="${(a.label||'Home')===x?'on':''}">${x}</button>`).join('')}</div>
+   <div id="asv" class="sub"></div>
+   <button class="btn pri" style="width:100%">Save address</button>
+   ${a.id?'<button type="button" class="btn sec" style="width:100%;color:#C4291C" id="adel">Remove address</button>':''}
+  </form></div>`);
+ const f=sx.el.querySelector('#af'),w=sx.el.querySelector('#pwhere'),sv=sx.el.querySelector('#asv');let label=a.label||'Home';
+ sx.el.querySelectorAll('#alb button').forEach(b=>b.onclick=()=>{sx.el.querySelectorAll('#alb button').forEach(x=>x.classList.remove('on'));b.classList.add('on');label=b.dataset.l});
+ const moved=async p=>{pos={...p,acc:pos&&pos.acc||25};w.textContent='Finding the address…';
+  try{geo=await API(`/api/v2/geo/reverse?lat=${p.lat.toFixed(6)}&lng=${p.lng.toFixed(6)}`)}catch(_){geo={}}
+  w.textContent=[geo.area,geo.city,geo.pin].filter(Boolean).join(', ')||'Pin placed. Fill in the PIN below.';
+  if(geo.pin&&!f.pin.dataset.typed)f.pin.value=geo.pin;if(geo.area&&!f.area.dataset.typed)f.area.value=geo.area;
+  if(f.pin.value.length===6)try{const s=geo.serve&&geo.pin===f.pin.value?geo.serve:await API(`/api/v2/serviceable?pin=${f.pin.value}&lat=${p.lat}&lng=${p.lng}`);
+   sv.innerHTML=s.labs||s.pharmacies?`<span class="pill ok">Served here</span> ${s.labs?s.labs+' lab'+(s.labs>1?'s':''):''}${s.labs&&s.pharmacies?' · ':''}${s.pharmacies?s.pharmacies+' pharmac'+(s.pharmacies>1?'ies':'y'):''}${s.homeHours?' · '+esc(s.homeHours):''}`
+    :`<span class="pill warn">Not served yet</span> ${s.nearestLab?'Nearest lab: '+esc(s.nearestLab.name)+', '+s.nearestLab.km+' km.':''}`}catch(_){}};
+ ['pin','area'].forEach(k=>f[k].oninput=()=>f[k].dataset.typed=1);
+ let M=null;const start=pos||(LAB.loc)||{lat:17.385,lng:78.4867};pinMap(sx.el.querySelector('#pmap'),start,moved).then(m=>M=m);
+ const me=()=>{if(!navigator.geolocation)return toast('Location is not available on this phone');navigator.geolocation.getCurrentPosition(p=>{pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};LAB.loc={lat:pos.lat,lng:pos.lng};M&&M.set(pos)},()=>toast('Allow location, or move the map yourself'),{enableHighAccuracy:true,timeout:8000})};
+ sx.el.querySelector('#pme').onclick=me;if(!a.id&&!LAB.loc)me();
+ let st=null;const q=sx.el.querySelector('#psq'),sr=sx.el.querySelector('#psr');
+ q.oninput=()=>{clearTimeout(st);if(q.value.trim().length<3){sr.style.display='none';return}st=setTimeout(async()=>{let r=[];try{r=(await API('/api/v2/geo/search?q='+encodeURIComponent(q.value.trim())+(pos?`&lat=${pos.lat}&lng=${pos.lng}`:''))).rows||[]}catch(_){}
+  sr.style.display=r.length?'':'none';sr.innerHTML=r.slice(0,5).map((x,i)=>`<button type="button" class="li" data-i="${i}"><div style="flex:1"><div>${esc(x.title||x.area)}</div><div class="sub">${esc(x.sub||[x.area,x.city,x.pin].filter(Boolean).join(', '))}</div></div></button>`).join('');
+  sr.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const x=r[+b.dataset.i];sr.style.display='none';q.value='';M&&M.set({lat:x.lat,lng:x.lng})})},400)};
+ f.onsubmit=async e=>{e.preventDefault();if(!pos)return toast('Place the pin on the map first');const d=Object.fromEntries(new FormData(f));
+  try{const body={...d,label,lat:pos.lat,lng:pos.lng,acc:pos.acc||0,city:geo.city||a.city||'',state:geo.state||a.state||''};
+   const r=a.id?await API('/api/v2/addresses/'+a.id,{method:'PUT',json:body}):await API('/api/v2/addresses',{json:body});
+   await addrLoad(true);ADDR.sel=ADDR.rows.find(x=>x.id===r.id)||ADDR.sel;try{localStorage.setItem('uh-addr-id',r.id)}catch(_){}sx.close();toast('Address saved');addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}};
+ const del=sx.el.querySelector('#adel');if(del)del.onclick=async()=>{if(!confirm('Remove this address?'))return;try{await API('/api/v2/addresses/'+a.id,{method:'DELETE'});await addrLoad(true);sx.close();addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}}}
+async function openAddresses(){await addrLoad(true);page('Addresses',`<div id="addrlist" class="list" style="margin-top:14px">${ADDR.rows.map(a=>`<button class="li" onclick="addrEdit(ADDR.rows.find(x=>x.id==='${a.id}'),'lab','')"><span class="ib" style="background:#0071E3;color:#fff;font-weight:700">${LBL[a.label]||'•'}</span><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(a.label)}</div><div class="sub" style="white-space:normal">${esc(addrLine(a))} · near ${esc(a.landmark)} · ${esc(a.pin)}</div></div>${ic(I.chev,'#C7C7CC')}</button>`).join('')}
+ <button class="li" onclick="addrEdit(null,'lab','')">${ic('<path d="M12 5v14M5 12h14"/>','#0071E3',20)}<span style="color:#0071E3;font-weight:600">Add a new address</span></button></div>
+ <p class="cap">A technician or rider sees your full address and phone only on the day of the visit. Before that, partners see just the area and PIN.</p>`,'SETTINGS')}
+/* The address part of a checkout. Returns the payload for /api/v1/orders, or null with a message. */
+function addrPayload(kind){const a=ADDR.sel;if(!a){toast('Add the address with a map pin first');addrPick(kind,'');return null}
+ const sv=a.serve||{};if((kind==='pharmacy'?sv.pharmacies:sv.labs)===0){notServed(a,kind);return null}
+ return{addr:{id:a.id},address:''}}
+function notServed(a,kind){const sx=sheetX('Not in your area yet',`<div style="padding:4px 20px 20px"><p style="font-size:15px;line-height:1.5">No partner ${kind==='pharmacy'?'pharmacy delivers':'lab does home collection'} at <b>${esc(a.pin)}</b> yet. We're adding partners area by area.</p>
+ ${kind!=='pharmacy'&&a.serve&&a.serve.nearestLab?`<div class="card" style="margin-top:8px"><div style="font-weight:600">${esc(a.serve.nearestLab.name)}</div><div class="sub">${a.serve.nearestLab.km} km away · walk-in</div></div><button class="btn sec" style="width:100%;margin-top:10px" data-v>Visit the lab instead</button>`:''}
+ <button class="btn pri" style="width:100%;margin-top:10px" data-n>Notify me when you come to ${esc(a.pin)}</button></div>`);
+ const v=sx.el.querySelector('[data-v]');if(v)v.onclick=()=>{window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.serve.nearestLab.name+' '+(a.serve.nearestLab.area||''))}`,'_blank','noopener')};
+ sx.el.querySelector('[data-n]').onclick=async()=>{try{await API('/api/v2/area-wait',{json:{pin:a.pin,kind:kind==='pharmacy'?'pharmacy':'lab'}});sx.close();toast("We'll tell you as soon as a partner starts there")}catch(e){toast(e.message)}}}
+/* Order screen extras: doorstep code, change or cancel by the rules, invoice, help */
+function doorCard(o){if(!o.doorCode||['cancelled','collected','processing','ready','delivered'].includes(o.status))return'';
+ return`<div class="card row" style="margin-top:14px;background:#0B1B33;color:#fff"><div style="flex:1"><div style="font-size:13px;opacity:.75">DOORSTEP CODE</div><div style="font-size:34px;font-weight:700;letter-spacing:.3em;font-variant-numeric:tabular-nums">${esc(o.doorCode)}</div><div style="font-size:13px;opacity:.75">Tell this to the ${o.kind==='lab'?'technician':'rider'} only when they are at your door.</div></div>${ic(I.lock,'#fff',30)}</div>`}
+async function orderMore(o){const el=$('#omore');if(!el)return;let t={};try{t=await API(`/api/v2/orders/${o.id}/terms`)}catch(_){}
+ const inv=['collected','processing','ready','delivered'].includes(o.status);
+ el.innerHTML=`${o.sampleId?`<div class="card row" style="margin-top:10px">${ic(I.rec,'#5E5CE6',20)}<div><div style="font-weight:600">Sample ${esc(o.sampleId)}</div><div class="sub">Labelled at your door; the lab scans it on arrival.</div></div></div>`:''}
+ <div class="list" style="margin-top:14px">${t.canMove?`<button class="li" onclick="moveOrder('${o.id}','${o.store?o.store.id:''}')">${ic(I.cal||I.rec,'#0071E3',20)}<span style="flex:1">Change the time</span><span class="sub">Free</span></button>`:''}
+ ${t.can?`<button class="li" onclick="cancelOrder2('${o.id}',${t.fee||0})">${ic(I.x,'#C4291C',20)}<span style="flex:1;color:#C4291C">Cancel</span><span class="sub">${t.free?'Free':'₹'+t.fee+' fee'}</span></button>`:''}
+ ${inv?`<a class="li" href="/api/v2/orders/${o.id}/invoice" target="_blank" rel="noopener">${ic(I.down,'#1D1D1F',20)}<span style="flex:1">GST invoice</span>${ic(I.chev,'#C7C7CC')}</a>`:''}
+</div>
+ <p class="cap">${esc(t.why||'')} If the lab cancels, you get a full refund. Grievance officer: see <a href="/privacy" target="_blank">privacy policy</a>.</p>`}
+async function cancelOrder2(id,fee){if(!confirm(fee?`Cancel? A ₹${fee} late-cancellation fee applies.`:'Cancel this booking? It is free.'))return;try{await API(`/api/v2/orders/${id}/cancel`,{method:'POST'});toast('Cancelled');openOrder(id)}catch(e){toast(e.message)}}
+async function moveOrder(id,sid){let rows=[];try{rows=(await API(`/api/v2/stores/${sid}/slots`)).rows}catch(e){return toast(e.message)}
+ const sx=sheetX('Change the time',`<div style="padding:4px 16px 20px"><div class="chips">${rows.map(r=>`<button class="chip" ${r.left?'':'disabled style="opacity:.4"'} data-s="${esc(r.slot)}">${esc(r.slot)}${r.left?'':' · full'}</button>`).join('')}</div></div>`);
+ sx.el.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{try{await API(`/api/v2/orders/${id}/reschedule`,{json:{slot:b.dataset.s}});sx.close();toast('Time changed');openOrder(id)}catch(e){toast(e.message)}})}
+/* Government health cover: eligibility guide, official links, and the card kept in the app */
+let SCH=null;
+async function openSchemes(pid){if(!SCH)try{SCH=await API('/api/v2/schemes')}catch(e){return toast(e.message)}
+ const p=(pid?P(pid):P(ME&&ME.me))||{id:'',name:'',profile:{}},age=p&&p.profile&&p.profile.dob?Math.floor((Date.now()-new Date(p.profile.dob))/31557600000):'';
+ let cards=[];try{cards=(await API('/api/v2/schemes/cards')).rows}catch(_){}
+ page('Government health cover',`<p class="line">Find the free government cover ${p.name?esc(nameOf(p)):'your family'} may get, and how to apply. Applying always happens on the official portal or at a hospital desk — no app can enrol you.</p>
+ ${cards.length?`<div class="sect">YOUR CARDS</div><div class="list">${cards.map(c=>`<button class="li" onclick="showCard('${c.id}')"><span class="ib" style="background:#1A7F37;color:#fff">₹</span><div style="flex:1"><div style="font-weight:600">${esc(c.name)}</div><div class="sub">•••• ${esc(c.last4)}${c.memberId&&P(c.memberId)?' · '+esc(nameOf(P(c.memberId))):''}${c.validUntil?' · valid till '+esc(c.validUntil):''}</div></div>${ic(I.chev,'#C7C7CC')}</button>`).join('')}</div>`:''}
+ <div class="sect">CHECK ELIGIBILITY</div><form id="scf" class="card" style="display:flex;flex-direction:column;gap:10px">
+  <label class="sub">State<select class="inp2" name="state" style="margin-top:4px">${SCH.states.map(s=>`<option ${s===((ME&&ME.state)||'Telangana')?'selected':''}>${esc(s)}</option>`).join('')}</select></label>
+  <label class="sub">Age<input class="inp2" name="age" type="number" min="0" max="120" value="${age}" style="margin-top:4px"></label>
+  <div class="sub">Ration card (white, pink, rice or food-security card)?</div><div class="seg" data-k="rationCard"><button type="button" data-v="yes">Yes</button><button type="button" data-v="no">No</button><button type="button" data-v="dontknow" class="on">Not sure</button></div>
+  <div class="sub">Yearly family income under ₹2.5 lakh?</div><div class="seg" data-k="incomeLow"><button type="button" data-v="1">Yes</button><button type="button" data-v="0">No</button><button type="button" data-v="" class="on">Skip</button></div>
+  <div class="sub">Work</div><div class="seg" data-k="job"><button type="button" data-v="" class="on">Other</button><button type="button" data-v="central">Central govt</button><button type="button" data-v="exservice">Ex-service</button><button type="button" data-v="esi">ESI worker</button></div>
+  <button class="btn pri">Check</button></form><div id="scr"></div>
+ <p class="cap">Details checked ${esc(SCH.checked)}. Enrolment is always free — never pay an agent, and never share an OTP on a call.</p>`,'FAMILY');
+ const f=$('#scf'),v={rationCard:'dontknow',incomeLow:'',job:''};
+ f.querySelectorAll('.seg').forEach(sg=>sg.querySelectorAll('button').forEach(b=>b.onclick=()=>{sg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');v[sg.dataset.k]=b.dataset.v}));
+ f.onsubmit=async e=>{e.preventDefault();try{const r=await API('/api/v2/schemes/check',{json:{state:f.state.value,age:f.age.value?+f.age.value:null,rationCard:v.rationCard,job:v.job,incomeLow:v.incomeLow===''?null:v.incomeLow==='1'}});
+  $('#scr').innerHTML=r.results.map(x=>x.level==='note'?`<div class="card" style="margin-top:10px;background:#FFF4E5"><b>${esc(x.name)}</b><div class="sub" style="white-space:normal;margin-top:4px">${esc(x.why)}</div></div>`:`<div class="card" style="margin-top:10px"><div class="row"><div style="flex:1"><div style="font-weight:700;font-size:16px">${esc(x.name)}</div><div class="sub">${esc(x.cover)}</div></div><span class="pill ${x.level==='likely'?'ok':'info'}">${x.level==='likely'?'Likely eligible':'Worth checking'}</span></div>
+   <p style="font-size:14.5px;margin:10px 0 6px;line-height:1.45">${esc(x.why)}</p><p class="sub" style="white-space:normal;line-height:1.45">${esc(x.apply)}</p>
+   <div class="sub" style="margin-top:6px">Bring: ${esc(x.docs.join(' · '))}</div>
+   <div class="row" style="gap:8px;margin-top:12px"><a class="btn pri" style="flex:1" href="${esc(x.url)}" target="_blank" rel="noopener">Official site</a>${x.help?`<a class="btn sec" style="flex:1" href="tel:${esc(x.help.replace(/-/g,''))}">Call ${esc(x.help)}</a>`:''}</div>
+   <button class="btn sec" style="width:100%;margin-top:8px" onclick="addCard('${x.id}','${p.id}')">I have this card — keep it here</button></div>`).join('')+`<p class="cap">${esc(r.beware)}</p>`;$('#scr').scrollIntoView({behavior:'smooth'})}catch(err){toast(err.message)}}}
+function addCard(sc,pid){const s=SCH.schemes.find(x=>x.id===sc);const sx=sheetX('Add card',`<form style="padding:4px 20px 20px;display:flex;flex-direction:column;gap:10px"><b>${esc(s.name)}</b><input class="inp2" name="number" required placeholder="Card or beneficiary number" autocomplete="off"><label class="sub">Valid until (optional)<input class="inp2" type="date" name="validUntil" style="margin-top:4px"></label><p class="cap" style="margin:0">Not your Aadhaar number. The number is encrypted; lists show only the last 4.</p><button class="btn pri">Save</button></form>`);
+ const f=sx.el.querySelector('form');f.onsubmit=async e=>{e.preventDefault();try{await API('/api/v2/schemes/cards',{json:{scheme:sc,number:f.number.value,validUntil:f.validUntil.value,memberId:pid}});sx.close();toast('Card saved');openSchemes(pid)}catch(err){toast(err.message)}}}
+async function showCard(id){let c;try{c=await API('/api/v2/schemes/cards/'+id)}catch(e){return toast(e.message)}
+ const sx=sheetX(c.name,`<div style="padding:4px 20px 20px"><div class="card" style="background:linear-gradient(135deg,#1A7F37,#0B5A26);color:#fff"><div style="font-size:13px;opacity:.8">${esc(c.name)}</div><div style="font-size:22px;font-weight:700;letter-spacing:.08em;margin:10px 0">${esc(c.number)}</div><div style="font-size:13px;opacity:.8">${c.memberId&&P(c.memberId)?esc(nameOf(P(c.memberId))):''}${c.validUntil?' · valid till '+esc(c.validUntil):''}</div></div>
+ <p class="cap">Show this at the hospital's Ayushman / Arogya Mitra desk with Aadhaar.${c.help?' Helpline '+esc(c.help)+'.':''}</p><button class="btn sec" style="width:100%;color:#C4291C" data-d>Remove card</button></div>`);
+ sx.el.querySelector('[data-d]').onclick=async()=>{if(!confirm('Remove this card?'))return;try{await API('/api/v2/schemes/cards/'+id,{method:'DELETE'});sx.close();openSchemes()}catch(e){toast(e.message)}}}
 </script>
 </body>
 </html>

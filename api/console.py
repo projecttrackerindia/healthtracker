@@ -69,7 +69,7 @@ def card(o: Order, t: int) -> dict:
     return {"id": o.id, "kind": o.kind, "status": o.status, "lane": LANE.get(o.status, "done" if o.status in DONE else "other"),
             "what": what or ("Lab test" if o.kind == "lab" else "Medicines"), "who": mask(o.member or (o.household.name if o.household else "")),
             "area": area, "store": o.store.name if o.store else "", "storeId": o.store_id, "slot": o.slot, "total": o.total,
-            "payment": o.payment, "late": late_by(o, t), "since": (t - _last_t(o)) // 60, "created": o.created,
+            "payment": o.payment, "late": 0 if t - _last_t(o) > 86400 else late_by(o, t), "stuck": (t - _last_t(o)) // 86400 if t - _last_t(o) > 86400 and o.status not in ("delivered", "ready", "cancelled", "refunded", "returned") else 0, "since": (t - _last_t(o)) // 60, "created": o.created,
             "rx": any(i.get("rx") for i in items), "verified": bool(o.verified_by), "agent": o.agent_id or "",
             "timeline": o.timeline or []}
 
@@ -110,7 +110,16 @@ def today(days: int = 7, a: Admin = Depends(admin_me), db: Session = Depends(get
     needs: list[dict] = []
 
     act = db.scalars(select(Order).where(Order.status.in_(ACTIVE_LAB + ACTIVE_MED))).all()
-    late = [o for o in act if late_by(o, t)]
+    # Over a day with no movement is not "late", it is stuck: someone has to close it or chase it.
+    stuck = [o for o in act if t - _last_t(o) > 86400]
+    late = [o for o in act if late_by(o, t) and o not in stuck]
+    unacc = [o for o in act if o.status == "placed" and t - (o.created or t) > 600 and o not in stuck]
+    if stuck:
+        needs.append({"sev": "urgent", "tag": "Orders", "icon": "⏸", "title": f"{len(stuck)} order{'s are' if len(stuck) > 1 else ' is'} stuck for over a day",
+                      "sub": f"#{stuck[0].id} · no update in {(t - _last_t(stuck[0])) // 86400} days · close it or call the partner", "act": "Open board", "go": "board"})
+    if unacc:
+        needs.append({"sev": "urgent", "tag": "Orders", "icon": "☎", "title": f"{len(unacc)} new order{'s' if len(unacc) > 1 else ''} not accepted in 10 min",
+                      "sub": f"#{unacc[0].id} · {unacc[0].store.name if unacc[0].store else ''} · call the partner", "act": "Open board", "go": "board"})
     if late:
         worst = max(late, key=lambda o: late_by(o, t))
         needs.append({"sev": "urgent", "tag": "Orders", "icon": "!", "title": f"{len(late)} order{'s are' if len(late) > 1 else ' is'} running late",
@@ -223,3 +232,62 @@ def search(q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_
     if acts:
         groups.append({"name": "Actions", "items": acts})
     return {"groups": groups}
+
+
+# ---- first-run checklist: what still stops the service from working end to end ---------------------------------------
+def _env(*k: str) -> bool:
+    return all(os.getenv(x) for x in k)
+
+
+@r.get("/setup")
+def setup(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+    from . import messaging
+    from .models import Setting
+    live_labs = db.scalar(select(func.count(Store.id)).where(Store.kind == "lab", Store.active == True, Store.verified == True)) or 0  # noqa: E712
+    live_ph = db.scalar(select(func.count(Store.id)).where(Store.kind == "pharmacy", Store.active == True, Store.verified == True)) or 0  # noqa: E712
+    rv = db.get(Setting, "reviewer")
+    owners = db.scalars(select(Admin).where(Admin.role == "owner")).all()
+    old_mail = [x.email for x in owners if x.email.split("@")[-1] != "urbanhealth.in"]
+    items = [
+        {"key": "partner", "group": "Go live", "name": "First live lab", "ok": live_labs > 0, "now": f"{live_labs} live",
+         "why": "Families can book home tests only with a live lab.", "how": "Network → Labs → finish a lab's checklist → Go live.", "go": "labs"},
+        {"key": "pharmacy", "group": "Go live", "name": "First live pharmacy", "ok": live_ph > 0, "now": f"{live_ph} live",
+         "why": "Medicine orders need a pharmacy with a registered pharmacist.", "how": "Network → Pharmacies → finish the checklist → Go live.", "go": "pharmacies"},
+        {"key": "reviewer", "group": "Go live", "name": "Clinical reviewer named", "ok": bool(rv and (rv.value or {}).get("name")), "now": "",
+         "why": "Health guidance pages show who reviewed them.", "how": "Fill in the reviewer form below.", "go": "system"},
+        {"key": "ai", "group": "Services", "name": "Smart reading of reports", "ok": _env("ANTHROPIC_API_KEY"), "now": "",
+         "why": "Without it, uploaded reports are stored but values aren't read out.", "how": "Add ANTHROPIC_API_KEY to /etc/urbanhealth/env.yaml on the server, then restart.", "go": ""},
+        {"key": "push", "group": "Services", "name": "Phone notifications", "ok": _env("VAPID_PRIVATE_KEY", "VAPID_SUBJECT"), "now": "",
+         "why": "Medicine and visit reminders reach phones only with push keys.", "how": "Generate a VAPID key pair once and add VAPID_PRIVATE_KEY and VAPID_SUBJECT=mailto:support@urbanhealth.in.", "go": ""},
+        {"key": "email", "group": "Services", "name": "Email", "ok": messaging.email_ready(), "now": "",
+         "why": "Partner invites, receipts and sign-in codes by email.", "how": "Add RESEND_API_KEY (or SMTP_HOST, SMTP_USER, SMTP_PASS) and verify the urbanhealth.in domain.", "go": ""},
+        {"key": "sms", "group": "Services", "name": "SMS alerts to partners", "ok": messaging.alert_sms_ready(), "now": "",
+         "why": "A new order texts the lab owner; without it they see it only in the portal.", "how": "Register the alert template on DLT, then add MSG91_AUTH_KEY and MSG91_SOS_FLOW_ID.", "go": ""},
+        {"key": "maps", "group": "Services", "name": "Google Maps", "ok": _env("GOOGLE_MAPS_KEY"), "now": "OpenStreetMap in use" if not _env("GOOGLE_MAPS_KEY") else "",
+         "why": "Optional. OpenStreetMap works; Google gives sharper street detail.", "how": "Add GOOGLE_MAPS_KEY restricted to urbanhealth.in.", "go": "", "optional": True},
+        {"key": "pay", "group": "Services", "name": "Online payments", "ok": _env("RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"), "now": "UPI and cash only" if not _env("RAZORPAY_KEY_ID") else "",
+         "why": "Optional. Cash and UPI at the door already work.", "how": "Create a Razorpay account, then add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.", "go": "", "optional": True},
+        {"key": "files", "group": "Services", "name": "Document storage bucket", "ok": _env("S3_BUCKET"), "now": "in the database" if not _env("S3_BUCKET") else "",
+         "why": "Optional for the pilot; a bucket is needed past a few thousand documents.", "how": "Create a private bucket and add S3_BUCKET with its keys.", "go": "", "optional": True},
+        {"key": "grievance", "group": "Law", "name": "Grievance officer named", "ok": _env("GRIEVANCE_NAME", "GRIEVANCE_EMAIL"), "now": "",
+         "why": "DPDP Act and the IT Rules require a named grievance officer.", "how": "Add GRIEVANCE_NAME and GRIEVANCE_EMAIL; they appear on the privacy page.", "go": ""},
+        {"key": "adminmail", "group": "Security", "name": "Owner email on urbanhealth.in", "ok": not old_mail, "now": ", ".join(old_mail),
+         "why": "Owner accounts use another domain; resets go to a mailbox you may not control.", "how": "On the server run: python -m api.admin_cli rename OLD NEW", "go": "team"},
+    ]
+    need = [i for i in items if not i["ok"] and not i.get("optional")]
+    return {"items": items, "done": sum(1 for i in items if i["ok"] or i.get("optional")), "total": len(items), "need": len(need)}
+
+
+@r.get("/funnel")
+def funnel(days: int = 30, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+    """Where families drop out of a booking. Screen opens come from the anonymous usage counter (no person attached)."""
+    import datetime as _dt
+    from .models import UsageDay
+    days = max(1, min(90, days))
+    since = (_dt.date.today() - _dt.timedelta(days=days)).isoformat()
+    cnt = dict(db.execute(select(UsageDay.screen, func.sum(UsageDay.n)).where(UsageDay.day >= since).group_by(UsageDay.screen)).all())
+    placed = db.scalar(select(func.count(Order.id)).where(Order.kind == "lab", Order.created >= now() - days * 86400)) or 0
+    done = db.scalar(select(func.count(Order.id)).where(Order.kind == "lab", Order.created >= now() - days * 86400, Order.status.in_(("ready", "collected", "processing")))) or 0
+    steps = [("Opened lab tests", int(cnt.get("book-a-home-test", 0))), ("Compared labs", int(cnt.get("choose-a-lab", 0))),
+             ("Reached checkout", int(cnt.get("confirm-booking", 0))), ("Booked", placed), ("Sample collected", done)]
+    return {"days": days, "steps": [{"name": n, "n": v} for n, v in steps]}

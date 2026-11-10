@@ -226,6 +226,8 @@ def porder(db: Session, o: Order) -> dict:
                          "rxDate": o.rx_date, "rxAgeDays": rx_age_days(o.rx_date),
                          "note": o.verify_note} if o.verified_at else None
     j["hasReport"] = bool(db.get(StoredFile, (o.household_id, f"labrep_{o.id}")))
+    from .booking import partner_view
+    partner_view(o, j)
     if o.kind == "lab":
         a = db.get(PartnerUser, o.agent_id) if o.agent_id else None
         j["agent"] = {"id": a.id, "name": a.name or a.email, "phone": a.phone} if a else None
@@ -247,6 +249,8 @@ def orders(status: str = "open", db: Session = Depends(get_db), u: PartnerUser =
 class StatusIn(BaseModel):
     status: str
     note: str = ""
+    code: str = ""
+    sample: str = ""
 
 
 @r.post("/orders/{oid}/status")
@@ -266,6 +270,9 @@ def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: Partn
         # The family's status line has said "Pharmacist checking" since the first version of this. Until a
         # registered pharmacist has actually signed the prescription off, it is a sentence we are making up.
         raise HTTPException(400, "A registered pharmacist must check the prescription before this is packed.")
+    if body.status in ("collected", "delivered"):
+        from .booking import check_door
+        check_door(o, body.code, body.sample)
     o.status = body.status
     o.timeline = (o.timeline or []) + [{"s": body.status, "t": now(), "by": u.email, "note": body.note[:200]}]
     s = my_store(db, u)

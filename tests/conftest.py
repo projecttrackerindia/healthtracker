@@ -41,3 +41,39 @@ def _clear_shared():
             db.query(RateHit).delete()
     except Exception:
         pass        # the table does not exist yet on the very first test to touch the database
+
+
+# Home visits and deliveries now need a full address with a map pin. Older tests send only a text address,
+# so give those requests a complete address at the store's own location (they are not testing the address rules).
+import pytest as _pt
+
+
+@_pt.fixture(autouse=True)
+def _full_address(monkeypatch):
+    from fastapi.testclient import TestClient as _TC
+    orig = _TC.post
+
+    def post(self, url, *a, **k):
+        j = k.get("json")
+        if isinstance(j, dict) and str(url).startswith("/api/v1/orders") and url.rstrip("/") == "/api/v1/orders" and "addr" not in j and j.get("address") != "x":
+            from api.db import SessionLocal
+            from api.models import Store
+            with SessionLocal() as db:
+                s = db.get(Store, j.get("store"))
+                if s is not None:
+                    pin = ((s.profile or {}).get("pins") or [None])[0] or "500081"
+                    j = {**j, "addr": {"line1": "Flat 1", "line2": j.get("address") or "Main road", "landmark": "Near the park", "pin": pin,
+                                       "lat": s.lat or 17.44, "lng": s.lng or 78.38}}
+                    k["json"] = j
+        import re as _re
+        m = _re.match(r"/api/(?:partner/orders/([^/]+)/status|tech/jobs/([^/]+)/collected)$", str(url))
+        if m and isinstance(j, dict) and "code" not in j and (j.get("status") in ("collected", "delivered") or m.group(2)):
+            from api.db import SessionLocal
+            from api.models import Order
+            with SessionLocal() as db:
+                o = db.get(Order, m.group(1) or m.group(2))
+                if o is not None and o.door_code:
+                    k["json"] = {**j, "code": o.door_code}
+        return orig(self, url, *a, **k)
+
+    monkeypatch.setattr(_TC, "post", post)

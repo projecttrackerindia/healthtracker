@@ -185,6 +185,10 @@ app.include_router(queue_api.r)
 app.include_router(queue_api.pr)
 from api import people as people_api  # noqa: E402
 app.include_router(people_api.r)
+from api import booking as booking_api
+app.include_router(booking_api.r)
+from api import schemes as schemes_api
+app.include_router(schemes_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)

@@ -262,7 +262,7 @@ class OrderReq(BaseModel):
     addr: dict | None = None   # a saved address from the profile (home / work / other)
 
 
-ADDR_KEYS = ("label", "name", "phone", "line1", "line2", "landmark", "area", "city", "state", "pin")
+ADDR_KEYS = ("label", "name", "phone", "line1", "line2", "landmark", "area", "city", "state", "pin", "note")
 
 
 def clean_addr(a: dict | None) -> dict | None:
@@ -315,7 +315,7 @@ def order_json(o: Order):
     return {"id": o.id, "kind": o.kind, "store": store_json(o.store) if o.store else None, "items": o.items, "subtotal": o.subtotal, "fee": o.fee,
             "discount": o.discount, "total": o.total, "address": o.address, "member": o.member, "rxShared": o.rx_shared, "slot": o.slot,
             "status": "cancelled" if i < 0 else (o.status if o.status in ("return_requested", "returned", "refunded") else steps[i][0]), "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
-            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr,
+            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr, "doorCode": o.door_code, "sampleId": o.sample_id, "cancelFee": o.cancel_fee,
             "visitRating": o.visit_rating, "visitTags": o.visit_tags,
             # Asked once the sample is in the bag and the person is still fresh in mind — not days later when
             # the report lands, by which time the family is rating the report and calling it the visit.
@@ -385,11 +385,17 @@ def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db)
     kind = "lab" if body.kind == "lab" else "shop" if s.kind == "shop" else "medicine"
     if body.kind != "lab" and body.payment not in ("cod", "upi", "online"):
         raise HTTPException(400, "payment must be cod or upi")
+    from . import booking
+    _ca = booking.check_order(db, s, body, h.id)
+    if _ca:
+        body.addr = _ca
+        body.address = ""
     o = Order(household_id=h.id, store_id=s.id, kind=kind, items=lines, subtotal=sub, fee=fee, discount=disc, total=sub + fee,
               address=(body.address or addr_line(clean_addr(body.addr)))[:240], addr=clean_addr(body.addr), member=body.member[:80], member_id=body.memberId[:32] or None, rx_files=rx_files, rx_shared=body.rxShared, slot=body.slot[:40], payment=body.payment[:24],
               timeline=[{"s": "placed", "t": now()}], eta=now() + s.eta_min * 60)
     db.add(o)
     db.flush()
+    booking.after_order(db, o, s)
     o.store = s
     try:
         from .partner import alert_store

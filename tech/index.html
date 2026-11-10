@@ -242,7 +242,13 @@ function render() {
 async function move(id, what, btn) {
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
   try {
-    await api(`/partner/tech/jobs/${id}/${what}`, { body: { note: "" } });
+    let code = "", sample = "";
+    if (what === "collected") {
+      code = (prompt("Doorstep code — ask the family for the 4 digits in their app:") || "").trim();
+      if (!code) { btn.disabled = false; btn.textContent = "Collected the sample"; return; }
+      sample = (prompt("Sample barcode (scan or type; blank uses the order number):") || "").trim();
+    }
+    await api(`/partner/tech/jobs/${id}/${what}`, { body: { note: "", code, sample } });
     if (what === "collected") toast("Sample collected. The family has been told.");
     await load();
   } catch (e) {

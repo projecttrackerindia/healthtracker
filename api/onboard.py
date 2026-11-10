@@ -222,6 +222,8 @@ def state(sid: str, body: StateIn, a: Admin = Depends(admin_me), db: Session = D
         if left:
             raise HTTPException(409, "Not ready yet: " + "; ".join(f"{c['name']} — {', '.join(c['missing'])}" for c in left))
         s.verified, s.active, s.step = True, True, 7
+        from .booking import notify_area
+        notify_area(db, s)
     elif body.action == "pause":
         s.active = False
     elif body.action == "resume":
