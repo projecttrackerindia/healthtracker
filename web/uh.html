@@ -669,7 +669,7 @@ async function openCycle(){const me=P(ME.me);await loadRecords(me.id);const star
 function bodyData(p){const pg=preg(p),reps=(REC[p.id]||[]).filter(r=>r.kind==='report');const fs=[];
  reps.sort((a,b)=>(b.day||'').localeCompare(a.day||'')).forEach(r=>(r.findings||[]).forEach(f=>fs.push({test:f.test,value:f.value,unit:f.unit,flag:f.flag||'unknown',code:f.code||'',org:CODE_ORG[f.code]||null,rid:r.id,date:r.day,rep:r.title})));
  const vit=(REC[p.id]||[]).filter(r=>r.kind==='vital').sort((a,b)=>(b.at||b.day||'').localeCompare(a.at||a.day||''))[0];
- return{person:{name:nameOf(p),age:p.age??null,sex:p.sex||'male',pregnancy:pg?{week:S.week||pg.week}:null},findings:fs,
+ return{person:{name:nameOf(p),age:p.age??null,sex:p.sex||'male',height:+((p.medicalId||{}).height)||null,weight:+((p.medicalId||{}).weight)||null,pregnancy:pg?{week:S.week||pg.week}:null},findings:fs,
   meds:can(p,'all')?(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.active!==false).map(m=>({name:m.name,dose:m.dose||''})):[],canSeeMeds:can(p,'all'),
   vitals:vit?{hr:vit.hr,rr:vit.rr,spo2:vit.spo2,bp:vit.bp,src:vit.src||'',at:vit.at||vit.day}:null,canWrite:writer(p)}}
 let BODYF=null;

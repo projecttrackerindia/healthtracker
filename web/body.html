@@ -319,13 +319,25 @@ function reset(){closeCard();clearGlows();tags([]);if(LAY[3])untint();document.b
 async function mode(m){MODE=m;modes();reset();({baby:mBaby,explore:mExplore,timeline:mTimeline,hurt:mHurt,meds:mMeds,heartv:mHeart,vitals:mVitals,search:mSearch,quiz:mQuiz,cut:mCut,holo:mHolo,settings:mSettings})[m]()}
 /* ---- bodies that match the person: proportions by age ---- */
 let SHAPED=null;
-function shape(){const band=ageBand(DATA.person.age);if(SHAPED===band)return;SHAPED=band;let sc=1,headK=1;
- if(band==='child'){const a=DATA.person.age;sc=.55+.03*a;headK=1.32-.03*a}else if(band==='baby'){sc=.38;headK=1.55}
- body.scale.setScalar(sc);body.position.y=(sc-1)*2.4;
- if(headK===1)return;const neckY=SET.meta.neckY??(()=>{const c=centerOf(/thyroid gland|larynx/i);return c?c.y:2.6})();
- for(const l in LAY){const A=LAY[l].geometry.attributes.position,a=A.array;if(!LAY[l].userData.P0)LAY[l].userData.P0=a.slice();const o=LAY[l].userData.P0;
-  for(let i=0;i<a.length;i+=3){const y=o[i+1];const k=y>neckY?headK:1+(headK-1)*Math.max(0,1-(neckY-y)/.6)*.4;a[i]=o[i]*k;a[i+1]=y>neckY?neckY+(y-neckY)*k:y;a[i+2]=o[i+2]*k}
-  A.needsUpdate=true;LAY[l].geometry.computeVertexNormals()}}
+/* bodies that match the person: height sets the size, weight (BMI) the build, age the proportions */
+function build3(){const P=DATA.person,a=P.age,band=ageBand(a),sex=STATE.sex;const h=+P.height||0,w=+P.weight||0;
+ const ref=sex==='female'?160:172,refChild=a!=null?Math.min(ref,76+6*a):ref;
+ let sc=h?h/ref:(band==='child'?refChild/ref:band==='baby'?.38:1);sc=Math.max(.3,Math.min(1.25,sc));
+ let headK=1;if(band==='child')headK=1.32-.03*a;else if(band==='baby')headK=1.55;
+ let g=1;if(h&&w){const bmi=w/((h/100)**2);g=Math.max(.82,Math.min(1.45,Math.sqrt(bmi/22)))}
+ return{sc,headK,g,key:[band,sex,sc.toFixed(3),headK,g.toFixed(3),STATE.hd].join('|')}}
+function shape(){const S=build3();if(SHAPED===S.key)return;SHAPED=S.key;body.scale.setScalar(S.sc);body.position.y=(S.sc-1)*2.4;
+ const neck=(()=>{const c=centerOf(/thyroid gland|larynx/i);return c?c.y:2.6})(),hip=(()=>{const c=centerOf(/urinary bladder|uter/i);return c?c.y:-.6})(),chest=(()=>{const c=centerOf(ORGRE.heart);return c?c.y:1.6})();
+ const zc=(()=>{const c=centerOf(ORGRE.liver);return c?c.z:0})();
+ for(const l in LAY){const A=LAY[l].geometry.attributes.position,a=A.array;if(!LAY[l].userData.P0)LAY[l].userData.P0=a.slice();const o=LAY[l].userData.P0;const soft=+l===0||+l===1;
+  for(let i=0;i<a.length;i+=3){let x=o[i],y=o[i+1],z=o[i+2];
+   if(soft&&S.g!==1&&y<neck-.15){const belly=y>hip-.3&&y<chest?Math.sin(Math.PI*(y-(hip-.3))/(chest-hip+.3)):0;const gx=1+(S.g-1)*(.9+.3*belly),gz=1+(S.g-1)*(z>zc?1+1.2*belly:.8);
+    x*=gx;z=zc+(z-zc)*gz}
+   if(S.headK!==1){const k=y>neck?S.headK:1+(S.headK-1)*Math.max(0,1-(neck-y)/.6)*.4;x*=k;z*=k;if(y>neck)y=neck+(y-neck)*k}
+   a[i]=x;a[i+1]=y;a[i+2]=z}
+  A.needsUpdate=true;LAY[l].geometry.computeVertexNormals();LAY[l].geometry.computeBoundingSphere()}}
+function bodyLine(){const P=DATA.person;if(!P.height||!P.weight)return'Add height and weight in Medical ID to shape the body to match.';const bmi=P.weight/((P.height/100)**2);
+ return `${P.height} cm · ${P.weight} kg · BMI ${bmi.toFixed(1)} (${bmi<18.5?'underweight':bmi<23?'healthy for Indians':bmi<25?'overweight':'obese'})`}
 /* ---- explore: layers, tap, findings pinned to organs ---- */
 let LAYK='organs';
 function subLayers(){$('#sub').innerHTML=LAYERS.map(l=>`<button class="chip sm ${LAYK===l[0]?'on':''}" onclick="layerGo('${l[0]}')">${l[1]}</button>`).join('')+`<button class="chip sm ${STATE.xray?'on':''}" onclick="xray();subLayers()">X-ray</button>`}
@@ -461,7 +473,7 @@ function mBaby(){const pg=DATA.person.pregnancy;BABYON=!U.still||true;pregView2(
 function mSettings(){shape();CAM(HOME0.z,HOME0.y);head(who()+' · '+T('body').toUpperCase(),T('settings'),'');tags(organTags());
  const conn=navigator.connection||{};
  sheet(`<div class="cn" style="font-size:18px">${T('settings')}</div>
- <div class="q">Language</div><div class="chips2">${[['en','English'],['te','తెలుగు'],['hi','हिन्दी']].map(l=>`<span class="${U.lang===l[0]?'on':''}" onclick="U.lang='${l[0]}';saveU();modes();mode('settings')">${l[1]}</span>`).join('')}</div>
+ <div class="q" style="margin-top:4px">Body shape</div><p class="cd" style="margin:0">${esc(bodyLine())}</p><div class="q">Language</div><div class="chips2">${[['en','English'],['te','తెలుగు'],['hi','हिन्दी']].map(l=>`<span class="${U.lang===l[0]?'on':''}" onclick="U.lang='${l[0]}';saveU();modes();mode('settings')">${l[1]}</span>`).join('')}</div>
  <div class="q">Body detail</div><div class="chips2"><span class="${!U.hd?'on':''}" onclick="U.hd=false;saveU();detail()">Fast</span><span class="${U.hd?'on':''}" onclick="U.hd=true;saveU();detail()">HD · 35 MB</span></div>
  <p class="eb" style="margin-top:6px">${STATE.hd?'HD body loaded.':'Fast body loaded'}${conn.saveData?' · Data saver is on':''}. HD loads only on Wi-Fi or when you choose it.</p>
  <div class="q">Motion</div><div class="chips2"><span class="${!U.still?'on':''}" onclick="U.still=false;saveU();mode('settings')">On</span><span class="${U.still?'on':''}" onclick="U.still=true;saveU();mode('settings')">Reduce motion</span></div>`)}
