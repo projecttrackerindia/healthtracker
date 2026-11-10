@@ -23,13 +23,21 @@ def test_uploads_reject_disguised_file():
 
 def test_one_worker_runs_loops(tmp_path, monkeypatch):
     monkeypatch.setenv("LOOP_LOCK", str(tmp_path / "l.lock"))
-    tasks._LEADER.clear()
+    _release()
     assert tasks.in_process_loops() is True
     # a second process is simulated by trying the same lock from a fresh handle
     import fcntl
     f = open(tmp_path / "l.lock", "w")
     with pytest.raises(OSError):
         fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    f.close()
+    _release()
+
+
+def _release():
+    for h in tasks._LEADER:
+        if h is not None:
+            h.close()
     tasks._LEADER.clear()
 
 
