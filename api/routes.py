@@ -576,7 +576,8 @@ def lab_quotes(body: LabReq, db: Session = Depends(get_db), x_dokko_key: str | N
 
 
 def _slots():
-    t = datetime.now()
+    import datetime as _d
+    t = _d.datetime.now(_d.timezone(_d.timedelta(hours=5, minutes=30))).replace(tzinfo=None)   # slots are Indian time
     base = t.replace(minute=0, second=0, microsecond=0)
     out = []
     for dayoff in (0, 1, 2):

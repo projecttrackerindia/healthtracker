@@ -17,12 +17,12 @@ FULL = {"label": "Home", "line1": "Flat 402, 4th floor", "line2": "Sri Sai Resid
 
 def slot(hours):
     t = time.gmtime(time.time() + 19800 + hours * 3600)
-    return time.strftime("%a %d %b · ", t) + time.strftime("%I:00 %p", t).lstrip("0")
+    return time.strftime("%a %d %b · ", t) + time.strftime("%I:%M %p", t).lstrip("0")
 
 
 def test_address_rules_and_saved_book():
     f = R.family()
-    assert f.post("/api/v2/addresses", json={**FULL, "landmark": ""}).status_code in (400, 422)
+    assert f.post("/api/v2/addresses", json={**FULL, "line2": ""}).status_code in (400, 422)
     assert f.post("/api/v2/addresses", json={**FULL, "pin": "12345"}).status_code in (400, 422)
     assert f.post("/api/v2/addresses", json={**FULL, "lat": 51.5, "lng": -0.1}).status_code in (400, 422)
     a = f.post("/api/v2/addresses", json=FULL)

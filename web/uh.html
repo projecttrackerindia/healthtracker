@@ -889,7 +889,8 @@ async function openNotifSettings(){let pr=[];try{pr=await API('/api/v2/notify-pr
 async function setPref(k,on){try{await API('/api/v2/notify-prefs',{method:'PUT',json:{key:k,on}});openNotifSettings()}catch(e){toast(e.message)}}
 /* ---------------- Google Maps ---------------- */
 let GM=null;
-async function gmaps(){if(GM!==null)return GM;try{const c=await API('/api/v1/config');const k=c.maps&&c.maps.provider==='google'&&c.maps.key;if(!k){GM=false;return GM}
+window.gm_authFailure=()=>{GM=false;try{localStorage.setItem('uh-gm-bad',String(Date.now()))}catch(_){}document.querySelectorAll('[data-pinmap]').forEach(el=>el.__redo&&el.__redo())};
+async function gmaps(){if(GM!==null)return GM;try{if(Date.now()-(+localStorage.getItem('uh-gm-bad')||0)<864e5){GM=false;return GM}}catch(_){}try{const c=await API('/api/v1/config');const k=c.maps&&c.maps.provider==='google'&&c.maps.key;if(!k){GM=false;return GM}
  await new Promise(res=>{window.__gmcb=res;const s=document.createElement('script');s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(k)+'&callback=__gmcb&loading=async&v=weekly';s.async=true;s.onerror=()=>res();document.head.appendChild(s);setTimeout(res,8000)});
  GM=(window.google&&google.maps&&google.maps.Map)?google.maps:false}catch(_){GM=false}return GM}
 const MAPSTYLE=[{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{elementType:'geometry',stylers:[{color:'#F2F3F5'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#FFFFFF'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#D6E6F5'}]},{elementType:'labels.text.fill',stylers:[{color:'#6E6E73'}]}];
@@ -1080,7 +1081,7 @@ function onboard(step){const me=ME.me&&P(ME.me);step=step||(!me?1:!(me.medicalId
   bindContacts(()=>onboard(2));$('#on2').onclick=()=>{if((P(ME.me).medicalId.contacts||[]).length)onboard(3)}}
  if(step===3){wrap(`<h1 class="big">Add your family</h1><p class="line">Invite adults to join with their own login, or add a child or elder who has no phone.</p><div class="list" style="margin-top:16px">${ME.people.filter(p=>!p.self).map(p=>`<div class="li">${esc(p.name)}<span class="end">${p.dependent?'Dependent':'Joined'}</span></div>`).join('')}${ME.invites.map(i=>`<div class="li">${esc(i.contact)}<span class="end">Invited</span></div>`).join('')}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn sec" onclick="openInvite()">Invite adult</button><button class="btn sec" onclick="openDependent()">Add dependent</button></div><button class="btn pri" style="width:100%;margin-top:22px" onclick="finishOnboarding()">Open Urban Health</button>`)}}
-async function finishOnboarding(){closeL();S.person=ME.me;await loadRecords(ME.me);renderAll();if(!localStorage.getItem('uh-a2hs'))installHint()}
+async function finishOnboarding(){closeL();S.person=ME.me;await loadRecords(ME.me);renderAll();addrGate();if(!localStorage.getItem('uh-a2hs'))installHint()}
 function installHint(){try{localStorage.setItem('uh-a2hs','1')}catch(_){}if(matchMedia('(display-mode: standalone)').matches)return;const ios=/iphone|ipad/i.test(navigator.userAgent);
  if(DEFERRED){DEFERRED.prompt();DEFERRED=null;return}layer(`<div class="modal glass"><div class="row"><div style="font-weight:700;font-size:19px">Add Urban Health to your home screen</div><button class="x" onclick="closeL()">${ic(I.x,'#3A3A3C',16)}</button></div><p style="font-size:16px;line-height:1.5;margin:14px 2px">${ios?'Tap the Share button in Safari, then <b>Add to Home Screen</b>.':'Open the browser menu (⋮), then <b>Install app</b> or <b>Add to Home screen</b>.'} It opens full screen like an app, and SOS is one tap away.</p><button class="btn pri" style="width:100%" onclick="closeL()">OK</button></div>`)}
 let DEFERRED=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e});
@@ -1090,7 +1091,7 @@ async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);i
  const jt=sessionStorage.getItem('uh-join');if(jt){try{const j=await API('/api/v2/household/join',{json:{token:jt}});if(j.handover)toast('Welcome. Your records are now in your own account.');else{toast('You joined the family');if(j.relation)setTimeout(()=>confirmRel(j),600)}}catch(e){toast(e.message)}sessionStorage.removeItem('uh-join');await refreshMe()}
  closeL();if(!ME.me||!ME.onboarded)return onboard();
  const t=location.pathname.split('/')[2];if(['summary','records','meds','family'].includes(t))S.tab=t;S.person=S.person&&P(S.person)?S.person:ME.me;
- await Promise.all(ME.people.map(p=>loadRecords(p.id)));await pollInbox();renderAll()}
+ await Promise.all(ME.people.map(p=>loadRecords(p.id)));await pollInbox();renderAll();addrGate()}
 let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
 
 /* ---- Apple-style pickers. Applied to every page and sheet, so all forms behave the same ---- */
@@ -1128,7 +1129,7 @@ function enhance(root){root=root||document;
  root.querySelectorAll('input[name=relation].inp2:not([data-x]),input[name=rel].inp2:not([data-x])').forEach(inp=>{inp.dataset.x=1;const sel=document.createElement('select');sel.className='inp2';sel.name=inp.name;sel.required=inp.required;
   sel.innerHTML=`<option value="">Choose relationship</option>`+RELATIONS.map(r=>`<option ${r.toLowerCase()===String(inp.value).toLowerCase()?'selected':''}>${r}</option>`).join('');const lab=document.createElement('label');lab.innerHTML='<div class="sect" style="display:none">Relationship</div>';inp.replaceWith(lab);lab.appendChild(sel)});
  // names: as on Aadhaar
- root.querySelectorAll('input[name=name].inp2:not([data-x])').forEach(inp=>{inp.dataset.x=1;inp.placeholder='Full name as on Aadhaar';inp.autocapitalize='words'});
+ root.querySelectorAll('input[name=name].inp2:not([data-x])').forEach(inp=>{inp.dataset.x=1;if(!inp.placeholder)inp.placeholder='Full name as on Aadhaar';inp.autocapitalize='words'});
  // mobile numbers: +91 fixed, exactly 10 digits starting 6-9; the app adds +91 when it sends
  root.querySelectorAll('input[name=phone]:not([data-x])').forEach(inp=>{inp.dataset.x=1;const bg=getComputedStyle(inp).backgroundColor;const w=document.createElement('div');w.className='mob';w.style.background=bg;w.innerHTML='<b><i>🇮🇳</i>+91</b>';inp.replaceWith(w);w.appendChild(inp);inp.className='';inp.placeholder='98765 43210';inp.inputMode='numeric';inp.autocomplete='tel-national';
   const ten=v=>{let d=String(v||'').replace(/\D/g,'');if(d.length>10&&d.startsWith('91'))d=d.slice(2);if(d.length>10&&d.startsWith('0'))d=d.replace(/^0+/,'');return d.slice(-10)};inp.value=ten(inp.value);inp.oninput=()=>{const d=String(inp.value).replace(/\D/g,'');inp.value=d.length>10?ten(d):d;w.classList.toggle('bad',inp.value.length===10&&!/^[6-9]/.test(inp.value))};
@@ -1168,9 +1169,10 @@ function addrPick(kind,store){const rows=ADDR.rows||[];
  const e=sx.el.querySelector('[data-edit]');if(e)e.onclick=()=>{sx.close();addrEdit(ADDR.sel,kind,store)}}
 function addrRefresh(kind,store){const el=$('#addrbox');if(el)el.innerHTML=addrCard(ADDR.sel,kind,store);if(typeof ADDR.onchange==='function')ADDR.onchange(ADDR.sel)}
 /* A small drag-to-move map: Google Maps when a key is set, OpenStreetMap tiles otherwise. The pin stays in the centre. */
-async function pinMap(el,c,onMove){const g=await gmaps();if(!el||!el.isConnected)return{set(){}};
+async function pinMap(el,c,onMove,noG){const g=noG?false:await gmaps();if(!el||!el.isConnected)return{set(){}};
+ el.dataset.pinmap=1;const H={set(){}};el.__redo=()=>{el.innerHTML='';pinMap(el,c,onMove,true).then(m=>{H.set=m.set})};
  if(g){const m=new g.Map(el,{center:c,zoom:18,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAPSTYLE,clickableIcons:false});
-  m.addListener('idle',()=>{const p=m.getCenter();onMove({lat:p.lat(),lng:p.lng()})});return{set:p=>m.setCenter(p)}}
+  m.addListener('idle',()=>{const p=m.getCenter();c={lat:p.lat(),lng:p.lng()};onMove(c)});H.set=p=>m.setCenter(p);return{set:p=>H.set(p)}}
  const Z=18,T=256,px=(lat,lng)=>{const s=T*2**Z,x=(lng+180)/360*s,r=lat*Math.PI/180,y=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s;return[x,y]},
   ll=(x,y)=>{const s=T*2**Z,lng=x/s*360-180,n=Math.PI-2*Math.PI*y/s;return{lat:180/Math.PI*Math.atan(.5*(Math.exp(n)-Math.exp(-n))),lng}};
  let [cx,cy]=px(c.lat,c.lng),drag=null,tm=null;el.style.position='relative';el.style.overflow='hidden';el.style.touchAction='none';
@@ -1182,9 +1184,9 @@ async function pinMap(el,c,onMove){const g=await gmaps();if(!el||!el.isConnected
  el.onpointermove=e=>{if(!drag)return;cx-=e.clientX-drag[0];cy-=e.clientY-drag[1];drag=[e.clientX,e.clientY];draw()};
  el.onpointerup=el.onpointercancel=()=>{if(drag){drag=null;done()}};
  draw();setTimeout(()=>onMove(ll(cx,cy)),50);return{set:p=>{[cx,cy]=px(p.lat,p.lng);draw();done()}}}
-function addrEdit(a,kind,store){a=a||{label:'Home'};let pos=a.lat?{lat:a.lat,lng:a.lng,acc:a.acc||0}:null,geo={};
+function addrEdit(a,kind,store,must){a=a||{label:'Home'};let pos=a.lat?{lat:a.lat,lng:a.lng,acc:a.acc||0}:null,geo={};
  const L=['Home','Work','Parents','Other'];
- const sx=sheetX(a.id?'Edit address':'New address',`<div style="padding:0 16px 20px"><div style="position:relative;height:250px;border-radius:16px;overflow:hidden;background:#EEF1F5;margin-top:4px"><div id="pmap" style="position:absolute;inset:0"></div>
+ const sx=sheetX(a.id?'Edit address':must?'Your address':'New address',`<div style="padding:0 16px 20px">${must?'<p class="line" style="margin:4px 4px 12px">Add where you live once. Home tests and medicines come here — you can add more places later.</p>':''}<div style="position:relative;height:250px;border-radius:16px;overflow:hidden;background:#EEF1F5;margin-top:4px"><div id="pmap" style="position:absolute;inset:0"></div>
   <svg width="34" height="46" viewBox="0 0 34 46" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 3px 4px #0004)"><path d="M17 1C8 1 1 8 1 17c0 12 16 28 16 28s16-16 16-28C33 8 26 1 17 1z" fill="#FF3B30"/><circle cx="17" cy="17" r="6" fill="#fff"/></svg>
   <button type="button" id="pme" style="position:absolute;right:10px;top:10px;background:#fff;border:0;border-radius:18px;padding:8px 12px;font-weight:600;box-shadow:0 2px 8px #0002">◎ Use my location</button>
   <div id="pwhere" style="position:absolute;left:10px;right:10px;bottom:10px;background:#fffe;border-radius:12px;padding:8px 12px;font-size:13.5px">Move the map so the pin sits on your door.</div></div>
@@ -1192,17 +1194,18 @@ function addrEdit(a,kind,store){a=a||{label:'Home'};let pos=a.lat?{lat:a.lat,lng
   <div id="psr" class="list" style="margin-top:6px;display:none"></div>
   <form id="af" style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
    <input class="inp2" name="line1" required minlength="1" placeholder="Flat / house no. and floor *" value="${esc(a.line1||'')}">
-   <input class="inp2" name="line2" required minlength="3" placeholder="Building and street *" value="${esc(a.line2||'')}">
-   <input class="inp2" name="landmark" required minlength="3" placeholder="Landmark — e.g. opposite Ratnadeep *" value="${esc(a.landmark||'')}">
+   <input class="inp2" name="line2" required minlength="3" placeholder="Building, street or society *" value="${esc(a.line2||'')}">
+   <input class="inp2" name="landmark" placeholder="Landmark (helps the technician) — e.g. opposite Ratnadeep" value="${esc(a.landmark||'')}">
    <div class="row" style="gap:10px"><input class="inp2" name="area" placeholder="Area" value="${esc(a.area||'')}" style="flex:2"><input class="inp2" name="pin" required inputmode="numeric" pattern="[1-9][0-9]{5}" maxlength="6" placeholder="PIN *" value="${esc(a.pin||'')}" style="flex:1"></div>
    <div class="sect" style="margin:6px 0 0">WHO WILL BE AT THE DOOR</div>
-   <div class="row" style="gap:10px"><input class="inp2" name="name" placeholder="Name" value="${esc(a.name||'')}" style="flex:1"><input class="inp2" name="phone" inputmode="tel" placeholder="Phone" value="${esc(a.phone||'')}" style="flex:1"></div>
+   <div class="row" style="gap:10px"><input class="inp2" name="name" data-x="1" placeholder="Name" value="${esc(a.name||(a.id?'':(P(ME&&ME.me)||{}).name||''))}" style="flex:1"><input class="inp2" name="phone" data-x="1" inputmode="tel" placeholder="Phone" value="${esc(a.phone||(a.id?'':(ME&&ME.account&&ME.account.phone)||''))}" style="flex:1"></div>
    <input class="inp2" name="note" maxlength="140" placeholder="Note for the technician (gate code, dog, parking)" value="${esc(a.note||'')}">
    <div class="seg" id="alb">${L.map(x=>`<button type="button" data-l="${x}" class="${(a.label||'Home')===x?'on':''}">${x}</button>`).join('')}</div>
    <div id="asv" class="sub"></div>
    <button class="btn pri" style="width:100%">Save address</button>
    ${a.id?'<button type="button" class="btn sec" style="width:100%;color:#C4291C" id="adel">Remove address</button>':''}
   </form></div>`);
+ if(must){const x=sx.el.querySelector('[data-x]');x.style.visibility='hidden';sx.el.onclick=null}
  const f=sx.el.querySelector('#af'),w=sx.el.querySelector('#pwhere'),sv=sx.el.querySelector('#asv');let label=a.label||'Home';
  sx.el.querySelectorAll('#alb button').forEach(b=>b.onclick=()=>{sx.el.querySelectorAll('#alb button').forEach(x=>x.classList.remove('on'));b.classList.add('on');label=b.dataset.l});
  const moved=async p=>{pos={...p,acc:pos&&pos.acc||25};w.textContent='Finding the address…';
@@ -1237,6 +1240,21 @@ function notServed(a,kind){const sx=sheetX('Not in your area yet',`<div style="p
  <button class="btn pri" style="width:100%;margin-top:10px" data-n>Notify me when you come to ${esc(a.pin)}</button></div>`);
  const v=sx.el.querySelector('[data-v]');if(v)v.onclick=()=>{window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.serve.nearestLab.name+' '+(a.serve.nearestLab.area||''))}`,'_blank','noopener')};
  sx.el.querySelector('[data-n]').onclick=async()=>{try{await API('/api/v2/area-wait',{json:{pin:a.pin,kind:kind==='pharmacy'?'pharmacy':'lab'}});sx.close();toast("We'll tell you as soon as a partner starts there")}catch(e){toast(e.message)}}}
+
+/* Where are you? Like a delivery app: one saved address is required; on a new session, if location is already allowed
+   and you are away from every saved place, offer the current spot. Never asks for location permission by itself. */
+async function addrGate(){const rows=await addrLoad(true);
+ if(!rows.length)return addrEdit(null,'lab','',true);
+ try{if(sessionStorage.getItem('uh-gate'))return;sessionStorage.setItem('uh-gate','1')}catch(_){}
+ if(!navigator.permissions||!navigator.geolocation)return;let st;try{st=await navigator.permissions.query({name:'geolocation'})}catch(_){return}if(st.state!=='granted')return;
+ navigator.geolocation.getCurrentPosition(p=>{const me={lat:p.coords.latitude,lng:p.coords.longitude};LAB.loc=me;
+  const km=a=>{const R=6371,dl=(a.lat-me.lat)*Math.PI/180,dg=(a.lng-me.lng)*Math.PI/180,x=Math.sin(dl/2)**2+Math.cos(me.lat*Math.PI/180)*Math.cos(a.lat*Math.PI/180)*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(x))};
+  const near=rows.map(a=>[a,km(a)]).sort((x,y)=>x[1]-y[1])[0];
+  if(near[1]<.3){ADDR.sel=near[0];try{localStorage.setItem('uh-addr-id',near[0].id)}catch(_){}return}
+  const sx=sheetX('Choose location',`<div style="padding:4px 16px 20px"><button class="card row" style="width:100%;text-align:left" data-cur><span class="ib" style="background:#0071E3;color:#fff">◎</span><div style="flex:1"><div style="font-weight:600">Use current location</div><div class="sub">You're ${near[1]<10?near[1].toFixed(1):Math.round(near[1])} km from ${esc(near[0].label)}. Add flat and building to save it.</div></div></button>
+   <div class="sect">SAVED</div><div class="list">${rows.map(a=>`<button class="li" data-a="${a.id}"><span class="ib" style="background:#E8EEF8;color:#0071E3;font-weight:700">${LBL[a.label]||'•'}</span><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(a.label)}</div><div class="sub">${esc(addrLine(a))}</div></div><span class="sub">${km(a)<10?km(a).toFixed(1):Math.round(km(a))} km</span></button>`).join('')}</div></div>`);
+  sx.el.querySelector('[data-cur]').onclick=()=>{sx.close();addrEdit({label:'Other',lat:me.lat,lng:me.lng,acc:Math.round(p.coords.accuracy)},'lab','')};
+  sx.el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ADDR.sel=rows.find(a=>a.id===b.dataset.a);try{localStorage.setItem('uh-addr-id',ADDR.sel.id)}catch(_){}sx.close()})},()=>{},{timeout:6000,maximumAge:120000})}
 /* Order screen extras: doorstep code, change or cancel by the rules, invoice, help */
 function doorCard(o){if(!o.doorCode||['cancelled','collected','processing','ready','delivered'].includes(o.status))return'';
  return`<div class="card row" style="margin-top:14px;background:#0B1B33;color:#fff"><div style="flex:1"><div style="font-size:13px;opacity:.75">DOORSTEP CODE</div><div style="font-size:34px;font-weight:700;letter-spacing:.3em;font-variant-numeric:tabular-nums">${esc(o.doorCode)}</div><div style="font-size:13px;opacity:.75">Tell this to the ${o.kind==='lab'?'technician':'rider'} only when they are at your door.</div></div>${ic(I.lock,'#fff',30)}</div>`}

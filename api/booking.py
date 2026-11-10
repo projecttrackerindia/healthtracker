@@ -84,8 +84,6 @@ def _validate(body: AddrIn) -> dict:
         raise HTTPException(400, "Enter the house or flat number, and the floor.")
     if len(d["line2"]) < 3:
         raise HTTPException(400, "Enter the building or street.")
-    if len(d["landmark"]) < 3:
-        raise HTTPException(400, "Add a landmark so the technician can find you.")
     if not re.fullmatch(r"[1-9]\d{5}", (body.pin or "").strip()):
         raise HTTPException(400, "PIN code is 6 digits.")
     if not (6 <= body.lat <= 37.5 and 68 <= body.lng <= 97.5):
