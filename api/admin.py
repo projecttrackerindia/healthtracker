@@ -48,12 +48,29 @@ class Login(BaseModel):
     password: str
 
 
+def _alert_owner(a: Admin) -> None:
+    try:
+        from . import messaging
+        if messaging.email_ready():
+            messaging.send_mail(a.email, "Urban Health admin: sign-in locked", "Your Urban Health admin account was locked after 5 wrong passwords in a row. If this wasn't you, reset your password now and check Team & audit.")
+    except Exception as e:
+        print("[admin] lock alert failed:", str(e)[:120], flush=True)
+
+
 @r.post("/login")
 def login(body: Login, request: Request, response: Response, db: Session = Depends(get_db)):
     from .auth import clear as rl_clear, fail as rl_fail, guard as rl_guard
 
-    rl_guard(request, "admin-login", 8, 900)
-    ident = body.email.strip().lower()
+    try:
+        rl_guard(request, "admin-login", 8, 900)
+    except HTTPException:
+        raise HTTPException(429, "Too many wrong attempts from this network. Wait 15 minutes and try again.")
+    ident = (body.email or "").strip().lower()
+    if not ident or not body.password:
+        raise HTTPException(400, "Enter your email or mobile number, and your password.")
+    if len(body.password) > 128 or len(ident) > 160:
+        raise HTTPException(400, "That is too long to be a sign-in.")
+    a = None
     if "@" in ident:
         a = db.scalar(select(Admin).where(Admin.email == ident))
     else:
@@ -61,11 +78,30 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
         try:
             kind, ph = norm_id(ident)
         except HTTPException:
-            raise HTTPException(401, "wrong email, mobile number or password")
+            raise HTTPException(400, "Enter a valid email address or a 10-digit mobile number.")
         a = db.scalar(select(Admin).where(Admin.phone == ph)) if kind == "phone" else None
+    t = now()
+    if a and (a.locked_until or 0) > t:
+        mins = max(1, ((a.locked_until or 0) - t + 59) // 60)
+        raise HTTPException(423, f"This admin account is locked after too many wrong passwords. Try again in {mins} min, or ask the owner to reset it.")
     if not a or not check_pw(body.password, a.pw_hash):
         rl_fail(request, "admin-login", 900)
-        raise HTTPException(401, "wrong email, mobile number or password")
+        if a:
+            a.fails = (a.fails or 0) + 1
+            if a.fails >= 10:
+                # across every network: 15 min, then 1 h, then 24 h
+                a.locked_until = t + (900 if a.fails < 15 else 3600 if a.fails < 20 else 86400)
+                log(db, a.email, "login.locked", f"{a.fails} wrong passwords in a row")
+                _alert_owner(a)
+            else:
+                log(db, a.email, "login.fail", f"{a.fails} in a row")
+            db.commit()
+            if a.fails >= 10:
+                raise HTTPException(423, "Too many wrong passwords. This admin account is locked for 15 minutes and you have been emailed.")
+            left = 8 - a.fails
+            raise HTTPException(401, "Wrong email, mobile number or password." + (f" {left} attempt{'s' if left != 1 else ''} left, then sign-in pauses for 15 minutes." if 0 < left <= 3 else ""))
+        raise HTTPException(401, "Wrong email, mobile number or password.")
+    a.fails, a.locked_until = 0, 0
     rl_clear(request, "admin-login")
     a.last_login = now()
     log(db, a.email, "login")
@@ -93,7 +129,7 @@ class PhoneIn(BaseModel):
 def my_phone(body: PhoneIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
     """Sign in with a mobile number too. Asks for the password again: whoever holds the number can sign in with it."""
     if not check_pw(body.password, a.pw_hash):
-        raise HTTPException(401, "That password is not right.")
+        raise HTTPException(403, "That password is not right.")
     ph = ""
     if body.phone.strip():
         from .auth import norm_id
@@ -647,6 +683,13 @@ def del_video(vid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
 
 
 # ---- admins + audit -------------------------------------------------------------------------------------------------
+def _strong(pw: str, email: str) -> None:
+    from .passwords import check
+    bad = check(pw or "", email=email)
+    if bad:
+        raise HTTPException(400, "Password: " + "; ".join(bad).lower() + ".")
+
+
 class AdminIn(BaseModel):
     email: str
     password: str = ""
@@ -664,15 +707,14 @@ def add_admin(body: AdminIn, a: Admin = Depends(owner), db: Session = Depends(ge
     e = body.email.strip().lower()
     x = db.scalar(select(Admin).where(Admin.email == e))
     if x is None:
-        if len(body.password) < 8:
-            raise HTTPException(400, "password: 8 characters minimum")
+        _strong(body.password, e)
         x = Admin(email=e, pw_hash=hash_pw(body.password), role=body.role if body.role in ("owner", "ops", "content") else "ops")
         db.add(x)
     else:
         if body.password:
-            if len(body.password) < 8:
-                raise HTTPException(400, "password: 8 characters minimum")
+            _strong(body.password, e)
             x.pw_hash = hash_pw(body.password)
+            x.fails, x.locked_until = 0, 0
         x.role = body.role if body.role in ("owner", "ops", "content") else x.role
     if body.phone is not None:
         ph = ""

@@ -245,6 +245,8 @@ class Admin(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(120), unique=True)
     phone: Mapped[str] = mapped_column(String(20), default="")   # E.164; signs in with this or the email
+    fails: Mapped[int] = mapped_column(Integer, default=0)        # wrong passwords in a row
+    locked_until: Mapped[int] = mapped_column(Integer, default=0)
     pw_hash: Mapped[str] = mapped_column(String(160))
     role: Mapped[str] = mapped_column(String(16), default="owner")  # owner | ops | content
     created: Mapped[int] = mapped_column(Integer, default=now)
