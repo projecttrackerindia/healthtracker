@@ -44,11 +44,20 @@ body.real #bg{background:radial-gradient(70% 60% at 50% 45%,#3A3A3C 0%,#1C1C1E 7
 body.focus #modes,body.focus #sub{display:none}body.focus #bg{background:radial-gradient(70% 60% at 50% 42%,#3A3438 0%,#161315 78%)}body.focus .big,body.focus .eb,body.focus .line{color:#F5F5F7}body.focus .chip:not(.on){background:rgba(255,255,255,.12);color:#F5F5F7;border-color:transparent}body.focus .x{background:rgba(255,255,255,.14);color:#fff}
 body.holo #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 70%)}body.holo .big,body.holo .eb,body.holo .line{color:#CFF4FF}
 #extra{position:fixed;inset:0;pointer-events:none;z-index:4}
+.msheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.25);display:flex;align-items:flex-end;justify-content:center;animation:fd .2s ease both}
+.msheet .ms{width:100%;max-width:520px;background:rgba(250,250,252,.96);backdrop-filter:blur(30px);border-radius:24px 24px 0 0;padding:8px 12px max(16px,env(safe-area-inset-bottom))}
+@media(min-width:700px){.msheet{align-items:center}.msheet .ms{border-radius:24px}}
+.mrowb{display:flex;flex-direction:column;align-items:flex-start;width:100%;border:0;background:#fff;border-radius:14px;padding:12px 16px;margin-top:8px;font:inherit;text-align:left}.mrowb b{font-size:16px}.mrowb small{font-size:12.5px;color:#6E6E73;margin-top:2px}.mrowb.on{box-shadow:0 0 0 2px #0071E3 inset}
+@keyframes fd{from{opacity:0}to{opacity:1}}
+#zbar{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;border-radius:16px;overflow:hidden}
+#zbar button{width:40px;height:40px;border:0;background:transparent;font:500 20px Geist,Inter,sans-serif;color:var(--ink)}#zbar button+button{border-top:1px solid rgba(0,0,0,.06)}
+@media(pointer:coarse){#zbar{display:none}}body.focus #zbar button,body.real #zbar button,body.holo #zbar button{color:#fff}body.focus #zbar,body.real #zbar,body.holo #zbar{background:rgba(255,255,255,.12);border-color:transparent}
+#modes{flex-wrap:nowrap}
 </style></head><body>
 <div id="bg"></div><canvas id="gl"></canvas><svg id="lines"></svg><div id="tags"></div><div id="load">Loading anatomy…</div>
 <header class="top"><div class="row" style="justify-content:space-between"><p class="eb" id="eb"></p><button class="x" onclick="send('close')" aria-label="Close" style="pointer-events:auto">✕</button></div><h1 class="big" id="ttl">Body</h1><p class="line" id="ln"></p><div class="chips" id="modes"></div><div class="chips" id="sub" style="margin-top:0"></div><div id="chips" hidden></div></header>
 
-<div id="card" class="glass"></div><div id="extra"></div>
+<div id="zbar" class="glass"><button onclick="zoomBy(.8)" aria-label="Zoom in">+</button><button onclick="zoomBy(1.25)" aria-label="Zoom out">−</button><button onclick="resetView()" aria-label="Reset view">⟲</button></div><div id="card" class="glass"></div><div id="extra"></div>
 <script src="/a/three.9274bbce.js"></script>
 <script>
 const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -185,13 +194,32 @@ function clean(n){return n.replace(/^(right|left) /i,(m)=>m[0].toUpperCase()+m.s
 let HOME={z:16,y:0},rot={y:0,x:0},goal={y:0,x:0},camZ=16,camY=0,goalZ=16,goalY=0,drag=null,idle=0;
 function fit(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);$('#gl').style.width=w+'px';$('#gl').style.height=h+'px';cam.aspect=w/h;cam.updateProjectionMatrix()}
 addEventListener('resize',fit);
-$('#gl').addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,gy:goal.y,gx:goal.x,moved:0}});
-$('#gl').addEventListener('pointermove',e=>{if(!drag)return;drag.moved=Math.max(drag.moved,Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y));goal.y=drag.gy+(e.clientX-drag.x)*.012;goal.x=Math.max(-.4,Math.min(.4,drag.gx+(e.clientY-drag.y)*.004));idle=0});
-$('#gl').addEventListener('pointerup',e=>{if(drag&&drag.moved<6)tap(e.clientX,e.clientY);drag=null});
+/* gestures like a real 3D viewer: drag to turn in any direction, pinch or scroll to zoom, two fingers or right-drag to move, double-tap to reset */
+const PAN={x:0,y:0},PANG={x:0,y:0},PTR=new Map();let pinch=null,lastTap=0;
+const ZMAX=34,zmin=()=>FOC?.6:3.2,zoomBy=f=>{goalZ=Math.max(zmin(),Math.min(ZMAX,goalZ*f));idle=0};
+function resetView(){goalZ=HOME.z;goalY=HOME.y;PANG.x=0;PANG.y=0;goal.x=0;goal.y=FOC?goal.y:0}
+const GL=$('#gl');GL.addEventListener('contextmenu',e=>e.preventDefault());
+GL.addEventListener('pointerdown',e=>{GL.setPointerCapture(e.pointerId);PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});idle=0;
+ if(PTR.size===2){const [a,b]=[...PTR.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:goalZ,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,px:PANG.x,py:PANG.y};drag=null;return}
+ drag={x:e.clientX,y:e.clientY,gy:goal.y,gx:goal.x,px:PANG.x,py:PANG.y,pan:e.button===2||e.shiftKey,moved:0}});
+GL.addEventListener('pointermove',e=>{if(!PTR.has(e.pointerId))return;PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});idle=0;
+ const k=camZ/innerHeight*.42;   // world units per pixel at the current distance
+ if(pinch&&PTR.size===2){const [a,b]=[...PTR.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),z0=goalZ;goalZ=Math.max(zmin(),Math.min(ZMAX,pinch.z*pinch.d/Math.max(20,d)));const kk=z0/innerHeight*.42,mv=1-goalZ/z0;pinch.px+=(pinch.mx-innerWidth/2)*kk*mv;pinch.py-=(pinch.my-innerHeight*.46)*kk*mv;
+  PANG.x=pinch.px-((a.x+b.x)/2-pinch.mx)*k;PANG.y=pinch.py+((a.y+b.y)/2-pinch.my)*k;return}
+ if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved=Math.max(drag.moved,Math.abs(dx)+Math.abs(dy));
+ if(drag.pan){PANG.x=drag.px-dx*k;PANG.y=drag.py+dy*k}else{goal.y=drag.gy+dx*.011;goal.x=Math.max(-1.35,Math.min(1.35,drag.gx+dy*.008))}});
+const up=e=>{const single=PTR.size===1;PTR.delete(e.pointerId);if(PTR.size<2)pinch=null;
+ if(single&&drag&&drag.moved<6){const now=performance.now();if(now-lastTap<300){resetView();lastTap=0}else{lastTap=now;tap(e.clientX,e.clientY)}}if(!PTR.size)drag=null};
+GL.addEventListener('pointerup',up);GL.addEventListener('pointercancel',up);
+// zoom toward the point under the cursor or between the fingers, the way 3D viewers do
+function zoomAt(f,cx,cy){const z0=goalZ;zoomBy(f);const k=z0/innerHeight*.42,moved=1-goalZ/z0;PANG.x+=(cx-innerWidth/2)*k*moved;PANG.y-=(cy-innerHeight*.46)*k*moved}
+GL.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(e.deltaY*(e.ctrlKey?.01:.0015)),e.clientX,e.clientY)},{passive:false});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='+'||e.key==='=')zoomBy(.85);if(e.key==='-')zoomBy(1.18);if(e.key==='0')resetView();
+ if(e.key==='ArrowLeft')goal.y-=.25;if(e.key==='ArrowRight')goal.y+=.25;if(e.key==='ArrowUp')goal.x=Math.max(-1.35,goal.x-.2);if(e.key==='ArrowDown')goal.x=Math.min(1.35,goal.x+.2)});
 const clock=new THREE.Clock(),v3=new THREE.Vector3();
 function frame(){const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle>3&&!SEL&&!BABYON&&!U.still&&MODE==='explore')goal.y+=dt*.1;
  rot.y+=(goal.y-rot.y)*Math.min(1,dt*6);rot.x+=(goal.x-rot.x)*Math.min(1,dt*6);body.rotation.set(rot.x,rot.y,0);
- camZ+=(goalZ-camZ)*Math.min(1,dt*3);camY+=(goalY-camY)*Math.min(1,dt*3);cam.position.set(0,camY+.15,camZ);cam.lookAt(0,camY,0);
+ camZ+=(goalZ-camZ)*Math.min(1,dt*3);camY+=(goalY-camY)*Math.min(1,dt*3);PAN.x+=(PANG.x-PAN.x)*Math.min(1,dt*8);PAN.y+=(PANG.y-PAN.y)*Math.min(1,dt*8);cam.position.set(PAN.x,camY+.15+PAN.y,camZ);cam.lookAt(PAN.x,camY+PAN.y,0);
  if(HL)HL.material.emissiveIntensity=.35+.25*Math.sin(clock.elapsedTime*3.5);if(!U.still)pregAnimate(clock.elapsedTime,dt);if(typeof animFeat==='function')animFeat(clock.elapsedTime);
  R.render(scene,cam);placeTags();requestAnimationFrame(frame)}
 /* tags: report findings pinned to organs + atlas labels */
@@ -294,7 +322,7 @@ const FHEX={high:0xFF453A,low:0xFF9F0A,normal:0x30D158,unknown:0x8E8E93},FCLS={h
 /* ---- language ---- */
 const TX={
  en:{heart:'Heart',pancreas:'Pancreas',kidney:'Kidneys',liver:'Liver',lung:'Lungs',stomach:'Stomach',gut:'Intestines',uterus:'Uterus',thyroid:'Thyroid',brain:'Brain',bladder:'Bladder',spleen:'Spleen',gall:'Gallbladder',
-  body:'Body',explore:'Explore',real:'Realistic',timeline:'Timeline',hurt:'Where it hurts',meds:'Medicines',heartv:'Heart',vitals:'Vitals',search:'Search',quiz:'Quiz',cut:'Cut',holo:'Hologram',baby:'Baby',settings:'Display',
+  body:'Body',explore:'Explore',real:'Realistic',timeline:'Timeline',hurt:'Symptoms',meds:'Medicines',heartv:'Heart',vitals:'Vitals',search:'Search',quiz:'Quiz',cut:'Cut',holo:'Hologram',baby:'Baby',settings:'Display',
   high:'High',low:'Low',normal:'In range',unknown:'Check',ask:'✦ Ask about this',book:'Book a recheck',tapline:'Tap any part to learn what it does.',results:n=>n?`${n} result${n>1?'s':''} worth discussing. Tap an organ to learn more.`:'All recent results are in range. Tap any part to learn what it does.',noresults:'No reports yet. Add a report and the body will show what it means.'},
  te:{heart:'గుండె',pancreas:'క్లోమం',kidney:'మూత్రపిండాలు',liver:'కాలేయం',lung:'ఊపిరితిత్తులు',stomach:'జీర్ణాశయం',gut:'పేగులు',uterus:'గర్భాశయం',thyroid:'థైరాయిడ్',brain:'మెదడు',bladder:'మూత్రాశయం',spleen:'ప్లీహం',gall:'పిత్తాశయం',
   body:'శరీరం',explore:'చూడండి',timeline:'కాలక్రమం',hurt:'ఎక్కడ నొప్పి',meds:'మందులు',heartv:'గుండె',vitals:'వైటల్స్',search:'వెతకండి',quiz:'క్విజ్',cut:'కోత',holo:'హోలోగ్రామ్',baby:'బిడ్డ',settings:'డిస్ప్లే',
@@ -318,11 +346,14 @@ function orgFindings(){const by={};latest().forEach(f=>{if(!f.org||!ORGRE[f.org]
 function head(eb,t,ln){$('#eb').textContent=eb;$('#eb').style.color='';$('#ttl').textContent=t;$('#ln').innerHTML=ln||''}
 function sheet(html){$('#card').innerHTML='<div class="grab"></div>'+html;$('#card').classList.add('on')}
 const CAM=(z,y,ry=0,rx=0)=>{goalZ=z;goalY=y;HOME={z,y};goal.y=ry;goal.x=rx};
-function modes(){const pg=DATA&&DATA.person.pregnancy;const M=[...(pg?['baby']:[]),'explore','real','timeline','hurt','meds','heartv','vitals','search','quiz','cut','holo','settings'];
- $('#modes').innerHTML=M.map(m=>`<button class="chip ${MODE===m?'on':''}" onclick="mode('${m}')">${m==='settings'?'Aa':T(m)}</button>`).join('')}
+function modes(){const pg=DATA&&DATA.person.pregnancy;const MAIN=[...(pg?['baby']:[]),'explore','hurt','meds'];const MORE=['timeline','real','heartv','vitals','search','quiz','cut','holo','settings'];
+ $('#modes').innerHTML=MAIN.map(m=>`<button class="chip ${MODE===m?'on':''}" onclick="mode('${m}')">${T(m)}</button>`).join('')+`<button class="chip ${MORE.includes(MODE)?'on':''}" onclick="moreSheet()">${MORE.includes(MODE)?(MODE==='settings'?'Display':T(MODE))+' ▾':'More ▾'}</button>`}
+const MORE_I={timeline:['Timeline','How your results changed, report by report'],real:['Realistic','All layers in true colour, with a cut'],heartv:['Heart','Chambers, valves and your results'],vitals:['Vitals','Heart and lungs at your real rates'],search:['Search','Find any part by name'],quiz:['Quiz','Learn where organs are'],cut:['Cross-section','Slice through the body'],holo:['Hologram','A see-through view'],settings:['Display','Language, detail and motion']};
+function moreSheet(){const d=document.createElement('div');d.className='msheet';d.innerHTML=`<div class="ms"><div class="grab"></div>${Object.entries(MORE_I).map(([k,v])=>`<button class="mrowb ${MODE===k?'on':''}" data-k="${k}"><b>${v[0]}</b><small>${v[1]}</small></button>`).join('')}</div>`;document.body.appendChild(d);
+ d.onclick=e=>{const b=e.target.closest('[data-k]');if(b)mode(b.dataset.k);d.remove()}}
 function reset(){if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');if(LAY[0])LAY[0].material.color.set(0xE6ECF4);BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
  if(HOLO)unholo();R.localClippingEnabled=false;for(const l in LAY){LAY[l].material.clippingPlanes=[];LAY[l].material.side=THREE.FrontSide}$('#sub').innerHTML='';$('#extra').innerHTML='';body.position.x=0;setLayer('organs');QZ=null;HURT=null}
-async function mode(m){MODE=m;modes();reset();({baby:mBaby,explore:mExplore,real:mReal,timeline:mTimeline,hurt:mHurt,meds:mMeds,heartv:mHeart,vitals:mVitals,search:mSearch,quiz:mQuiz,cut:mCut,holo:mHolo,settings:mSettings})[m]()}
+async function mode(m){MODE=m;PANG.x=0;PANG.y=0;modes();reset();({baby:mBaby,explore:mExplore,real:mReal,timeline:mTimeline,hurt:mHurt,meds:mMeds,heartv:mHeart,vitals:mVitals,search:mSearch,quiz:mQuiz,cut:mCut,holo:mHolo,settings:mSettings})[m]()}
 /* ---- bodies that match the person: proportions by age ---- */
 let SHAPED=null;
 /* bodies that match the person: height sets the size, weight (BMI) the build, age the proportions */
@@ -346,7 +377,9 @@ function bodyLine(){const P=DATA.person;if(!P.height||!P.weight)return'Add heigh
  return `${P.height} cm · ${P.weight} kg · BMI ${bmi.toFixed(1)} (${bmi<18.5?'underweight':bmi<23?'healthy for Indians':bmi<25?'overweight':'obese'})`}
 /* ---- explore: layers, tap, findings pinned to organs ---- */
 let LAYK='organs';
-function subLayers(){$('#sub').innerHTML=LAYERS.map(l=>`<button class="chip sm ${LAYK===l[0]?'on':''}" onclick="layerGo('${l[0]}')">${l[1]}</button>`).join('')+`<button class="chip sm ${STATE.xray?'on':''}" onclick="xray();subLayers()">X-ray</button>`}
+function subLayers(){const cur=LAYERS.find(l=>l[0]===LAYK)||LAYERS[0];$('#sub').innerHTML=`<button class="chip sm on" onclick="layerSheet()">${cur[1]}${STATE.xray?' · X-ray':''} ▾</button>`}
+function layerSheet(){const d=document.createElement('div');d.className='msheet';d.innerHTML=`<div class="ms"><div class="grab"></div>${LAYERS.map(l=>`<button class="mrowb ${LAYK===l[0]?'on':''}" data-l="${l[0]}"><b>${l[1]}</b></button>`).join('')}<button class="mrowb ${STATE.xray?'on':''}" data-x="1"><b>X-ray</b><small>See through the outer layers</small></button></div>`;document.body.appendChild(d);
+ d.onclick=e=>{const b=e.target.closest('[data-l],[data-x]');if(b){if(b.dataset.x){xray();subLayers()}else layerGo(b.dataset.l)}d.remove()}}
 async function layerGo(k){if(LAY[0]){LAY[0].material.onBeforeCompile=FRESNEL;LAY[0].material.needsUpdate=true}clearGlows();const want=(k==='muscle'||k==='vessels'||k==='nerves')?'male':STATE.base;if(want!==STATE.sex){await swap(want)}LAYK=k;setLayer(k);closeCard();subLayers();tags(k==='organs'?organTags():[]);
  $('#ln').textContent=(want!==STATE.base?'Shown on the standard body. ':'')+(k==='organs'?lineFor():LINE[k])}
 function organTags(){const by=orgFindings(),out=[];let side=1;
@@ -355,9 +388,10 @@ function organTags(){const by=orgFindings(),out=[];let side=1;
 function lineFor(){const n=Object.values(orgFindings()).filter(f=>f.flag!=='normal').length;return latest().length?T('results')(n):T('noresults')}
 const NATURAL={heart:0xB8323F,liver:0x8E3B2C,pancreas:0xD9963A,kidney:0x7E2C2C,lung:0xD99AA2,thyroid:0xB8404E,stomach:0xD98F78,gut:0xD69580,uterus:0xD0607A,brain:0xC98F88,bladder:0xD8B060,spleen:0x6E2A40,gall:0x5F8F45};
 /* explore = the calm body: a natural person; only organs with a result to discuss come forward, in true colour */
-function mExplore(){shape();LAYK='organs';CAM(HOME0.z*.92,HOME0.y+.2);head(who()+' · '+T('body').toUpperCase(),T('body'),lineFor());subLayers();
+function mExplore(){shape();LAYK='organs';head(who()+' · '+T('body').toUpperCase(),T('body'),lineFor());subLayers();
  const bad=Object.entries(orgFindings()).filter(([o,f])=>f.flag!=='normal'&&ORGRE[o]&&centerOf(ORGRE[o]));
  calm(bad.map(([o])=>({re:ORGRE[o],hex:NATURAL[o]||0xB8323F,beat:o==='heart'&&DATA.vitals&&+DATA.vitals.hr&&!U.still?+DATA.vitals.hr:0})));
+ const anyBad=bad.length;if(anyBad)CAM(HOME0.z*.92,HOME0.y+.2);else CAM(16.5,.15);
  let side=1;tags(bad.map(([o,f])=>{const t={org:T(o),test:f.test,val:f.value,unit:f.unit||'',flag:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o],side,dy:side>0?-30:30,col:OCOL[o],big:1,onTap:()=>focusOrgan(o)};side=-side;return t}))}
 function organCard(o){const f=orgFindings()[o];const fs=latest().filter(x=>x.org===o);const k=SET.meta.parts.findIndex((p,i)=>(p.l??1)===3&&ORGRE[o].test(SET.names[i]));const [sys,desc]=k>=0?infoP(SET.meta.parts[k],SET.names[k]):['',''];
  sheet(`<div class="row" style="gap:12px;align-items:flex-start"><span class="sw" style="background:${OCOL[o]}"></span><div style="flex:1"><div class="cn">${esc(T(o))}</div>${sys?`<div class="eb" style="margin:2px 0 0">${esc(sys)}</div>`:''}</div><button class="x" onclick="closeCard()" aria-label="Close">✕</button></div>
