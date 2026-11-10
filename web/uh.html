@@ -674,7 +674,7 @@ function bodyData(p){const pg=preg(p),reps=(REC[p.id]||[]).filter(r=>r.kind==='r
   vitals:vit?{hr:vit.hr,rr:vit.rr,spo2:vit.spo2,bp:vit.bp,src:vit.src||'',at:vit.at||vit.day}:null,canWrite:writer(p)}}
 let BODYF=null;
 function openBody(start){const p=P();if(!can(p,'summary'))return;closeBody();const d=document.createElement('div');d.id='bodyf';
- d.style.cssText='position:fixed;inset:0;z-index:60;background:#F1F3F7';d.innerHTML='<iframe src="/body" title="3D body" style="border:0;width:100%;height:100%" allow="fullscreen"></iframe>';document.body.appendChild(d);BODYF={el:d,start};
+ d.style.cssText='position:fixed;inset:0;z-index:60;background:#F1F3F7';d.innerHTML='<iframe src="'+((start==='baby'||(!start&&preg(p)))?'/baby':'/body')+'" title="3D body" style="border:0;width:100%;height:100%" allow="fullscreen"></iframe>';document.body.appendChild(d);BODYF={el:d,start};
  history.pushState({body:1},'')}
 function closeBody(){if(BODYF){BODYF.el.remove();BODYF=null}}
 function bodySend(){if(!BODYF)return;const d=bodyData(P());if(BODYF.start)d.start=BODYF.start;BODYF.el.firstChild.contentWindow.postMessage({type:'uh-body-data',data:d},location.origin)}
@@ -682,6 +682,7 @@ addEventListener('popstate',()=>{if(BODYF)closeBody()});
 addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-act'||!BODYF)return;const a=e.data,p=P();
  if(a.act==='ready')return bodySend();
  if(a.act==='close'){closeBody();return history.back()}
+ if(a.act==='baby'){closeBody();return openBody('baby')}
  if(a.act==='sos')return startSOS();
  if(a.act==='map')return window.open('https://www.google.com/maps/search/'+encodeURIComponent(a.q||'hospital')+'/','_blank','noopener');
  closeBody();

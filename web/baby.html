@@ -1,0 +1,118 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Urban Health · Baby</title><meta name="robots" content="noindex"><meta name=viewport content="width=device-width,initial-scale=1"><style>
+body{margin:0;background:radial-gradient(70% 60% at 50% 45%,#3A2E30 0%,#151214 75%);font-family:-apple-system,Inter,system-ui,sans-serif;color:#F5F5F7;overflow:hidden}
+canvas{position:fixed;inset:0}.t{position:fixed;left:18px;top:18px;right:18px}.eb{font-size:12px;font-weight:600;color:#FF8FAB;letter-spacing:.04em}.big{font-size:34px;font-weight:700;letter-spacing:-.03em;margin:2px 0}.ln{font-size:15px;line-height:1.4;opacity:.85;max-width:320px}
+.card{position:fixed;left:8px;right:8px;bottom:8px;border-radius:28px;padding:16px 18px;background:rgba(40,32,36,.72);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,143,171,.18);color:#FF9DB6}.row{display:flex;justify-content:space-between;align-items:center}
+.cd{font-size:14.5px;line-height:1.45;margin:8px 0 0;opacity:.9}input{width:100%;accent-color:#FF6B8E;margin-top:12px}.sc{display:flex;justify-content:space-between;font-size:11px;opacity:.5}
+</style></head><body><canvas id=c></canvas>
+<button id=x aria-label="Close" style="position:fixed;top:14px;right:14px;width:34px;height:34px;border-radius:17px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:15px;z-index:9">✕</button><div id=ld style="position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font-size:13px;opacity:.6">Loading…</div><div class=t><div class=eb id=eb>SITA · PREGNANCY</div><div class=big id=tt>Week</div><div class=ln id=ln></div></div>
+<div class=card><div class=row><div><b id=ct style="font-size:19px">This week</b><div style="font-size:12px;opacity:.6" id=tri></div></div><span class=pill id=mo></span></div><p class=cd id=c1></p><p class=cd id=c2></p><input type=range min=4 max=40 id=wk><div class=sc><span>4</span><span>14</span><span>28</span><span>40</span></div><p style="font-size:10.5px;opacity:.4;margin:8px 0 0">3D: Z-Anatomy (CC BY-SA) · Sketchfab models by aellis43, icarj_3, gelmi.com.br, tingting_er, Medical Animations (CC BY). Illustration, not a scan.</p></div>
+<script src="/a/three.9274bbce.js"></script><script src="/a/gltfloader.5c15967b.js"></script><script>
+const R=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true});R.setPixelRatio(2);R.setClearColor(0x1A1517,1);R.setSize(innerWidth,innerHeight);R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.1;
+const S=new THREE.Scene();{const cv=document.createElement('canvas');cv.width=8;cv.height=256;const x=cv.getContext('2d'),g=x.createRadialGradient(4,100,0,4,100,200);g.addColorStop(0,'#3d3034');g.addColorStop(1,'#141113');x.fillStyle=g;x.fillRect(0,0,8,256);const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;S.background=t}const C=new THREE.PerspectiveCamera(26,innerWidth/innerHeight,.1,500);
+S.add(new THREE.HemisphereLight(0xfff1ea,0x3a2c2c,.75));const k=new THREE.DirectionalLight(0xfff0e6,1.2);k.position.set(20,40,60);S.add(k);const rim=new THREE.DirectionalLight(0xffb3c6,.8);rim.position.set(-40,20,-30);S.add(rim);const fill=new THREE.PointLight(0xffd7c2,.9,40);S.add(fill);
+const L=new THREE.GLTFLoader(),load=f=>new Promise(r=>L.load(f,g=>r(g)));const lin=h=>new THREE.Color(h).convertSRGBToLinear();
+const W={};let M,UT,UC,SK,P0,BABY={},cur=null,wk=20,T0=performance.now();
+// facts per week: [length cm, weight, size of, baby, mother, motion]
+const F=[[4,0.2,'0 g','a poppy seed','The embryo is implanting; the heart tube is forming.','Hormones rise; a period is missed.','Too small to move'],[6,0.6,'<1 g','a lentil','The heart starts beating, about 110 times a minute.','Nausea and tiredness are common.','Heartbeat only'],[8,1.6,'1 g','a raspberry','Fingers and toes begin; the tail fades.','The womb is the size of a lemon.','Tiny twitches'],[10,3.1,'4 g','a strawberry','All main organs have formed.','Waist may start to thicken.','Small jerks'],[12,5.4,'14 g','a lime','Reflexes begin: fingers open and close.','Nausea often eases. NT scan around now.','Stretches, turns'],[16,11.6,'100 g','an avocado','Can make sucking movements.','A small bump may show.','Rolling and turning'],[20,25.6,'300 g','a banana','Swallows and can hear sounds.','First flutters are often felt. Anomaly scan.','Kicks you may feel'],[24,30,'600 g','an ear of corn','Lungs develop; responds to your voice.','Glucose test is usually due before week 28.','Kicks and somersaults'],[28,37.6,'1 kg','an aubergine','Eyes open and close; sleep cycles begin.','Third trimester. Check-ups every two weeks.','Strong kicks, hiccups'],[32,42.4,'1.7 kg','a squash','Practises breathing; gains fat fast.','Back ache; Braxton Hicks may start.','Rolls, less room'],[36,47.4,'2.6 kg','a papaya','Usually turns head-down.','Baby may drop lower; breathing eases.','Head down, slow pushes'],[40,51.2,'3.4 kg','a small watermelon','Fully ready to be born.','Due now. Hospital bag ready.','Settled, strong pushes']];
+function fact(w){let a=F[0];for(const f of F)if(f[0]<=w)a=f;return a}
+async function init(){try{const [m,e4,sec,rig,term]=await Promise.all(['/a/preg-mother.efd8efe7.glb','/a/preg-embryo4.fe530680.glb','/a/preg-second.505f0088.glb','/a/preg-rigged.a7421e33.glb','/a/preg-term.dc2dad50.glb'].map(load));
+ M=m.scene;M.updateMatrixWorld(true);
+ M.traverse(o=>{if(!o.isMesh)return;const n=o.material.name;let mt;o.userData.src=n;
+  if(/Transparent_Skin/.test(n)){SK=o;mt=new THREE.MeshPhysicalMaterial({color:lin(0xC08A72),roughness:.45,clearcoat:.5,transparent:true,opacity:.24,depthWrite:false,side:THREE.FrontSide});o.renderOrder=5}
+  else if(/BONE|Bone|Cartilage/.test(n))mt=new THREE.MeshPhysicalMaterial({color:lin(/Cartilage/.test(n)?0xD8E2E2:0xE8DCC2),roughness:.6});
+  else if(/Bladder/.test(n))mt=new THREE.MeshPhysicalMaterial({color:lin(0xD8B060),roughness:.4,clearcoat:.6});
+  else if(/kidney|adrenal|ureter/i.test(n))mt=new THREE.MeshPhysicalMaterial({color:lin(/adrenal/.test(n)?0xD9A54A:/ureter/.test(n)?0xE0C06A:0x8E3A2E),roughness:.4,clearcoat:.6});
+  else if(/Uterus/.test(n)){UT=o;mt=new THREE.MeshPhysicalMaterial({color:lin(0xC9536A),roughness:.3,clearcoat:1,transparent:true,opacity:.32,depthWrite:false,side:THREE.DoubleSide});o.renderOrder=4}
+  else if(/Fallopian|Ovar|Ligament/.test(n))mt=new THREE.MeshPhysicalMaterial({color:lin(0xD98A94),roughness:.4,clearcoat:.5});
+  else if(/Default_OBJ|Eye/.test(n)){o.visible=false;BABY.e10=BABY.e10||o.parent;return}
+  else{o.visible=false;console.log('hid',n);return}mt.userData={src:n};o.material=mt});
+ S.add(M);W.sac=new THREE.Mesh(new THREE.SphereGeometry(1,64,48),new THREE.MeshPhysicalMaterial({color:lin(0xD0607A),roughness:.25,clearcoat:1,transparent:true,opacity:.10,depthWrite:false,side:THREE.FrontSide}));W.sac.renderOrder=4;W.sac.material.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nfloat fr=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.0);totalEmissiveRadiance+=vec3(0.85,0.3,0.42)*fr*.45;diffuseColor.a=max(diffuseColor.a,fr*.42);')};S.add(W.sac);W.pl=new THREE.Mesh(new THREE.SphereGeometry(1,40,24),new THREE.MeshPhysicalMaterial({color:lin(0x5E1A2A),roughness:.9,clearcoat:0}));S.add(W.pl);const ub=new THREE.Box3().setFromObject(UT);UC=ub.getCenter(new THREE.Vector3());W.u0=ub.getSize(new THREE.Vector3());
+ SK.geometry=SK.geometry.clone();P0=SK.geometry.attributes.position.array.slice();W.skInv=new THREE.Matrix4().copy(SK.matrixWorld).invert();
+ // babies
+ const mk=(g,col,op)=>{const o=g.scene;if(col)o.traverse(x=>{if(x.isMesh)x.material=new THREE.MeshPhysicalMaterial({color:lin(col),roughness:.45,clearcoat:.35,sheen:0,transparent:op<1,opacity:op||1})});const p=new THREE.Group();const b=new THREE.Box3().setFromObject(o);o.position.sub(b.getCenter(new THREE.Vector3()));p.add(o);p.userData.len=b.getSize(new THREE.Vector3()).length();p.visible=false;S.add(p);return p};
+ BABY.e4=mk(e4,0xE7A497,.92);BABY.sec=mk(sec,0xE3A188);BABY.rig=mk(rig);BABY.term=mk(term,0xE5A48B);
+ // early embryo from the mother file: clone and colour
+ const em=BABY.e10.clone();em.traverse(x=>{if(x.isMesh){x.visible=true;x.material=new THREE.MeshPhysicalMaterial({color:lin(0xE9A592),roughness:.45,clearcoat:.35})}});const ep=new THREE.Group();const eb=new THREE.Box3().setFromObject(em);em.position.sub(eb.getCenter(new THREE.Vector3()));ep.add(em);ep.userData.len=eb.getSize(new THREE.Vector3()).length();ep.visible=false;S.add(ep);BABY.e10=ep;
+ // the rigged baby's bones, sorted by role from where they sit
+ BABY.bones=[];rig.scene.traverse(x=>{if(x.isBone)BABY.bones.push(x)});BABY.bones.forEach(b=>{b.userData.r0=b.rotation.clone()});
+ const rc=new THREE.Box3().setFromObject(BABY.rig).getCenter(new THREE.Vector3());BABY.rig.updateMatrixWorld(true);
+ BABY.bones.forEach(b=>{const p=b.getWorldPosition(new THREE.Vector3()).sub(rc);b.userData.p=p});
+ const ys=BABY.bones.map(b=>b.userData.p.y);const ymin=Math.min(...ys),ymax=Math.max(...ys);BABY.bones.forEach(b=>{const t=(b.userData.p.y-ymin)/(ymax-ymin);b.userData.role=t<.35?'leg':t>.8?'head':Math.abs(b.userData.p.x)>.3*(ymax-ymin)?'arm':'body'});
+ await loadMuscles();wkI.value=wk;wkI.oninput=e=>{wk=+e.target.value;set(wk)};set(wk);loop()}catch(err){document.getElementById('ld').textContent='Could not load the 3D view. Check your connection.';throw err}}
+const wkI=document.getElementById('wk');
+function sst(a,b,x){const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)}
+function set(w){const f=fact(w),U=2.42;// model units are ~2.42 cm
+ const tl=Math.max(.05,(w<8?[.2,.2,.2,.4,.6,1.0,1.6][Math.max(0,w-2)]:f[1]+(fact(Math.min(40,w+4))[1]-f[1])*((w-f[0])/4)))/U;   // baby length in model units
+ for(const k of ['e4','e10','sec','rig','term'])BABY[k].visible=false;const key=w<11?'e4':w<28?'sec':w<33?'rig':'term';cur=BABY[key];cur.visible=true;
+ const diag=tl*(key==='e4'?.9:.62);cur.scale.setScalar(diag/cur.userData.len);
+ // womb: real size by week, rising out of the pelvis; the non-pregnant uterus shows only in the first weeks
+ const early=w<9;const uH=early?diag*1.9:Math.max(W.u0.y*1.0,diag*1.12,(w<12?3+(w-4)*.6:w*0.9)/U);UT.visible=w<9;if(w<9){UT.material.opacity=.08};W.sac.visible=true;W.pl.visible=w>=10;
+ const base=UC.y-W.u0.y*.45,c=early?new THREE.Vector3(UC.x,UC.y+W.u0.y*.12,UC.z+W.u0.z*.1):new THREE.Vector3(UC.x,base+uH*.5,UC.z+uH*.18);
+ W.sac.position.copy(c);W.sac.scale.set(uH*.40,uH*.5,uH*.38);W.pl.position.set(c.x+uH*.27,c.y+uH*.22,c.z-uH*.17);W.pl.scale.set(uH*.16,uH*.14,uH*.035);W.pl.lookAt(c);
+ const uw={min:new THREE.Vector3(c.x-uH*.4,c.y-uH*.5,c.z-uH*.38),max:new THREE.Vector3(c.x+uH*.4,c.y+uH*.5,c.z+uH*.38)};
+ cur.position.copy(c);cur.rotation.order='YXZ';cur.rotation.set(.12,-.55,key==='term'?Math.PI*sst(32,36,w):-.25);W.c=c;W.r=uH*.5;
+ fill.position.set(c.x+4,c.y+3,c.z+10);
+// belly: skin in front of the womb rides over it
+ const A=SK.geometry.attributes.position,a=A.array,cl=c.clone().applyMatrix4(W.skInv),R0=W.r*1.05,front=(uw.max.z-uw.min.z)/2+.6;
+ for(let i=0;i<a.length;i+=3){a[i]=P0[i];a[i+1]=P0[i+1];a[i+2]=P0[i+2]}
+ const Rl=R0/SK.matrixWorld.getMaxScaleOnAxis();
+ for(let i=0;i<a.length;i+=3){const dx=(P0[i]-cl.x)/Rl,dy=(P0[i+1]-cl.y)/(Rl*1.15);const q=dx*dx+dy*dy;if(q>=1||P0[i+2]<cl.z-.2*Rl)continue;const zf=cl.z+(front/SK.matrixWorld.getMaxScaleOnAxis())*Math.sqrt(1-q)*1.05;if(zf>P0[i+2])a[i+2]=P0[i+2]+(zf-P0[i+2])*(1-sst(.6,1,q))}
+ A.needsUpdate=true;SK.geometry.computeVertexNormals();
+ if(early){const d=uH*5.2;C.position.set(c.x+d*.35,c.y+d*.12,c.z+d*.92);C.lookAt(c.x,c.y-d*.12,c.z)}else{const camD=w<16?58:62+uH*1.2,tg=new THREE.Vector3(UC.x,Math.max(c.y,UC.y+2),UC.z);C.position.set(tg.x+camD*.34,tg.y+camD*.02,tg.z+camD*.86);C.lookAt(tg.x,tg.y-camD*.075,tg.z)}
+ musclesFor(c,uH,!early);W.zoomNote=early?'Enlarged to show detail':'';M.visible=!early;if(!early)UT.visible=false;
+ eb.textContent=(window.WHO?window.WHO+' · ':'')+'PREGNANCY';tt.textContent='Week '+w;const cm=tl*U;ln.innerHTML=`About <b>${cm<1?Math.round(cm*10)+' mm':Math.round(cm)+' cm'}</b>, <b>${f[2]}</b> · the size of ${f[3]}.`;
+ tri.textContent=(W.zoomNote?W.zoomNote+' · ':'')+(w<14?'1st':w<28?'2nd':'3rd')+' trimester · '+(40-w)+' weeks to go';mo.textContent='◉ '+f[6];c1.innerHTML='<b style="color:#FF9DB6">Baby</b> · '+f[4];c2.innerHTML='<b style="color:#FF9DB6">You</b> · '+f[5];W.w=w}
+const eb=document.getElementById('eb'),tt=document.getElementById('tt'),ln=document.getElementById('ln'),tri=document.getElementById('tri'),mo=document.getElementById('mo'),c1=document.getElementById('c1'),c2=document.getElementById('c2');
+// motion by week: heartbeat early, twitches, kicks and rolls, hiccups, settling head-down
+let kick=0,next=1.5,last=performance.now(),hic=0;
+window.poke=()=>{kick=1};
+function animate(t,dt){if(window.STILL)return;const w=W.w,amp=w<8?0:w<12?.15:w<18?.35:w<32?.75:w<37?.45:.3;if(!cur)return;
+ next-=dt;if(next<=0&&amp>.2){kick=1;next=1.4+Math.random()*(w<24?3:2)}kick=Math.max(0,kick-dt*2.4);if(w>=24&&w<34&&Math.random()<dt*.05)hic=3;hic=Math.max(0,hic-dt);
+ const kk=Math.sin(kick*Math.PI)*amp,dr=Math.sin(t*.6)*amp*.2;
+ cur.position.y=W.c.y+(hic>0?Math.max(0,Math.sin(t*Math.PI*1.8))*W.r*.02:0)+Math.sin(t*.8)*W.r*.01;
+ cur.rotation.y=-.55+Math.sin(t*.25)*amp*.18;
+ if(cur===BABY.rig)BABY.bones.forEach((b,i)=>{const r=b.userData.r0,ro=b.userData.role;b.rotation.copy(r);const sd=b.userData.p.x>0?1:-1;
+  if(ro==='leg'){b.rotation.x=r.x+sd*kk*1.1+dr*.4;b.rotation.z=r.z+sd*kk*.35}
+  if(ro==='arm'){b.rotation.z=r.z+Math.sin(t*1.3+i)*amp*.35;b.rotation.x=r.x+Math.sin(t*.9+i)*amp*.2}
+  if(ro==='head'){b.rotation.y=r.y+Math.sin(t*.5)*amp*.3;b.rotation.x=r.x+(hic>0?Math.max(0,Math.sin(t*Math.PI*1.8))*.08:0)}});
+ else cur.scale.multiplyScalar(1+(kk*.015))}
+function loop(){const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;animate(now/1000,dt);R.render(S,C);requestAnimationFrame(loop)}
+
+/* ===== the mother's muscles and ribs: Z-Anatomy (CC BY-SA), male-specific parts removed, fitted to her pelvis ===== */
+async function gunz(u){const r=await fetch(u);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
+const MUSC={};
+async function loadMuscles(){const [buf,names]=await Promise.all([gunz('/a/body-lite.e9802745.bin'),fetch('/a/names.f459bcee.json').then(r=>r.json())]);
+ const n=new DataView(buf).getUint32(0,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,n))),base=4+n;
+ const DROP=/penis|scrot|testis|cremaster|spermatic|epididym|ductus deferens|prostat|seminal|bulbospongios|ischiocavernos|dartos|glans|corpus cavernos|corpus spongios/i;
+ const KEEP2=/rib|costal|sternum|manubri|xiphoid|clavicle|scapula|humerus|radius|ulna|carpal|metacarp|phalan|femur|patella|tibia|fibula|tars|calcane|talus|navicul|cuboid|cuneiform|skull|mandible|maxill|cranium|frontal bone|parietal|occipital|temporal bone|zygomat|nasal bone|sphenoid|ethmoid|hyoid/i;
+ // fit: male hip-bone box -> mother pelvis box
+ const mb=new THREE.Box3();meta.parts.forEach((p,k)=>{if(/hip bone/i.test(names[k])){mb.expandByPoint(new THREE.Vector3(p.b[0],p.b[1],p.b[2]));mb.expandByPoint(new THREE.Vector3(p.b[3],p.b[4],p.b[5]))}});
+ const fb=new THREE.Box3();M.traverse(o=>{if(o.isMesh&&/Female_Pelvis/.test(o.material.userData.src||''))fb.expandByObject(o)});
+ const ms=mb.getSize(new THREE.Vector3()),fs=fb.getSize(new THREE.Vector3()),mc=mb.getCenter(new THREE.Vector3()),fc=fb.getCenter(new THREE.Vector3());
+ const sy=fs.y/ms.y,sx=fs.x/ms.x,sz=sy;MUSC.fit={sx,sy,sz,mc,fc};
+ for(const L of [1,2]){const ks=[];meta.parts.forEach((p,k)=>{if((p.l??1)!==L||DROP.test(names[k]))return;if(L===2&&!KEEP2.test(names[k]))return;ks.push(k)});
+  let nv=0,ni=0;ks.forEach(k=>{nv+=meta.parts[k].v;ni+=meta.parts[k].i});const pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni);let vo=0,io=0;
+  ks.forEach(k=>{const p=meta.parts[k],q=new Uint16Array(buf,base+p.o,p.v*3),b=p.b,I=new Uint16Array(buf,base+p.o+p.v*6,p.i),nm=names[k];
+   const tend=/tendon|aponeuros|fascia|retinacul|linea|sheath|ligament/i.test(nm);const c=lin(L===2?(/cartilage/i.test(nm)?0xD8E2E2:0xE8DCC2):tend?0xE6D8C2:0xA9372F);const v=((k*2654435761)>>>0)%1000/1000-.5;
+   for(let j=0;j<p.v;j++){for(let a=0;a<3;a++){const x=b[a]+q[j*3+a]/65535*(b[a+3]-b[a]);const t=a===0?(x-mc.x)*sx+fc.x:a===1?(x-mc.y)*sy+fc.y:(x-mc.z)*sz+fc.z;pos[(vo+j)*3+a]=t}
+    col[(vo+j)*3]=c.r*(1+v*.12);col[(vo+j)*3+1]=c.g*(1+v*.12);col[(vo+j)*3+2]=c.b*(1+v*.12)}
+   for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;vo+=p.v;io+=I.length});
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();
+  const m=new THREE.Mesh(g,new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:L===1?.5:.65,clearcoat:L===1?.35:.1,side:THREE.DoubleSide}));
+  if(L===1)m.material.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;').replace('#include <begin_vertex>','#include <begin_vertex>\nvOP=position;');sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;float h3(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}float n3(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x),mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x),f.y),mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x),mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x),f.y),f.z);}').replace('#include <color_fragment>','#include <color_fragment>\nfloat fb=n3(vec3(vOP.x*7.,vOP.y*.5,vOP.z*7.));diffuseColor.rgb*=0.8+0.3*fb*fb;')};
+  m.userData.P0=pos.slice();m.userData.I0=idx.slice();S.add(m);MUSC[L]=m}}
+/* the abdominal wall: muscle over the womb opens like a window and the rest shapes around the bump */
+function musclesFor(c,uH,show){for(const L of [1,2]){const m=MUSC[L];if(!m)continue;m.visible=show;if(!show)continue;
+ const P=m.userData.P0,I=m.userData.I0,rx=uH*.46,ry=uH*.56,out=[];
+ for(let t=0;t<I.length;t+=3){let cx=0,cy=0,cz=0;for(let k=0;k<3;k++){const v=I[t+k]*3;cx+=P[v];cy+=P[v+1];cz+=P[v+2]}cx/=3;cy/=3;cz/=3;
+  const dx=(cx-c.x)/rx,dy=(cy-c.y)/ry;if(dx*dx+dy*dy<1&&cz>c.z-uH*.05&&L===1)continue;if(L===2&&dx*dx+dy*dy<.5&&cz>c.z)continue;out.push(I[t],I[t+1],I[t+2])}
+ m.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(out),1))}}
+const send=(a,x={})=>parent.postMessage({type:'uh-body-act',act:a,...x},location.origin);
+document.getElementById('x').onclick=()=>send('close');
+c.addEventListener('pointerup',()=>{window.poke&&poke()});
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)window.STILL=true;
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-data')return;const d=e.data.data;const p=d.person||{};
+ window.WHO=(p.name||'').toUpperCase();wk=Math.max(4,Math.min(40,(p.pregnancy&&p.pregnancy.week)||20));if(window.READY){wkI.value=wk;set(wk)}});
+init().then(()=>{window.READY=1;document.getElementById('ld').remove();wkI.value=wk;set(wk)});send('ready');
+</script></body></html>

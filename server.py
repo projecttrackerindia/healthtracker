@@ -253,6 +253,7 @@ TYPES = {
     ".woff2": "font/woff2",
     ".webmanifest": "application/manifest+json",
     ".bin": "application/octet-stream",
+    ".glb": "model/gltf-binary",
     ".png": "image/png",
     ".ico": "image/x-icon",
     ".txt": "text/plain; charset=utf-8",
@@ -261,7 +262,7 @@ TYPES = {
     ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".woff": "font/woff", ".ttf": "font/ttf", ".pdf": "application/pdf", ".apk": "application/vnd.android.package-archive",
 }
 COMPRESSIBLE = {".html", ".js", ".css", ".json", ".svg", ".webmanifest", ".txt"}
-NO_CACHE = {"index.html", "uh.html", "body.html", "sw.js", "manifest.webmanifest"}
+NO_CACHE = {"index.html", "uh.html", "body.html", "baby.html", "sw.js", "manifest.webmanifest"}
 
 
 def _safe(rel: str) -> Path:
@@ -470,6 +471,14 @@ def app_shell(request: Request, rest: str = ""):
     APP_SHELL=classic serves the previous household-blob app instead, as an instant rollback."""
     shell = "index.html" if os.getenv("APP_SHELL", "") == "classic" else "uh.html"
     return _send(WEB / shell, request, "no-cache")
+
+
+@app.api_route("/baby", methods=["GET", "HEAD"], include_in_schema=False)
+def baby_page(request: Request):
+    """The pregnancy view: the real baby models by week inside the mother. Framed only by the app itself."""
+    resp = _send(WEB / "baby.html", request, "no-cache")
+    resp.headers["Content-Security-Policy"] = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+    return resp
 
 
 @app.api_route("/body", methods=["GET", "HEAD"], include_in_schema=False)
