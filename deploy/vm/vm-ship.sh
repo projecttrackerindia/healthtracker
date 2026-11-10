@@ -42,7 +42,7 @@ sudo sed -i "s|^IMAGE=.*|IMAGE=urbanhealth-local:$SHA|" /etc/urbanhealth/release
 sudo systemctl restart urbanhealth
 
 for i in $(seq 1 30); do
-  LIVE=$(curl -fsS --max-time 5 http://127.0.0.1:8080/api/health 2>/dev/null | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  LIVE=$( (curl -fsS --max-time 5 http://127.0.0.1:8080/api/health 2>/dev/null || true) | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
   if [ "$LIVE" = "$SHA" ]; then
     echo "== Live and verified: $SHA"
     sudo docker image prune -f >/dev/null 2>&1 || true
