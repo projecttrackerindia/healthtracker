@@ -98,8 +98,13 @@ def test_health_shows_when_each_task_last_ran():
 
 
 # ---------------------------------------------------------------- the switch-over is safe in both directions
-def test_the_in_process_loops_can_be_switched_off(monkeypatch):
+def test_the_in_process_loops_can_be_switched_off(monkeypatch, tmp_path):
     """Both on would double every reminder; both off would send none. The flag has to be honoured by all three."""
+    monkeypatch.setenv("LOOP_LOCK", str(tmp_path / "loops.lock"))   # a private lock: a running server may hold the default one
+    for h in tasks._LEADER:
+        if h is not None:
+            h.close()
+    tasks._LEADER.clear()
     monkeypatch.setenv("IN_PROCESS_LOOPS", "0")
     assert tasks.in_process_loops() is False
     monkeypatch.setenv("IN_PROCESS_LOOPS", "1")
