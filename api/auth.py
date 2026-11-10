@@ -551,6 +551,9 @@ def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
     kind, target = norm_id(body.id)
     purpose = "reset" if body.purpose == "reset" else "signin"
     u = find_user(db, body.id)
+    if u and purpose == "reset" and u.contact_changed_kind == kind and now() - (u.contact_changed or 0) < 86400:
+        until = time.strftime("%d %b, %I:%M %p", time.localtime((u.contact_changed or 0) + 86400))
+        raise HTTPException(423, f"This {'email' if kind == 'email' else 'mobile number'} was added to the account less than 24 hours ago, so it cannot reset the password until {until}. Use your other email or mobile.")
     f = new_flow(db, "otp", 10, user_id=u.id if u else "", data={"kind": kind, "target": target, "purpose": purpose})
     out = {}
     if u and not u.disabled:
@@ -846,12 +849,38 @@ def contact_verify(body: FlowCode, request: Request, db: Session = Depends(get_d
     col = User.email if d["kind"] == "email" else User.phone
     if db.scalar(select(User.id).where(col == d["target"], User.id != u.id)):
         raise HTTPException(409, "This is now linked to another account.")
+    old = u.email if d["kind"] == "email" else u.phone
     if d["kind"] == "email":
         u.email, u.email_verified = d["target"], True
     else:
         u.phone, u.phone_verified = d["target"], True
+    if old and old != d["target"]:
+        u.contact_changed, u.contact_changed_kind = now(), d["kind"]
+        alert_old_contact(d["kind"], old)
+    from .models import ProfileChange
+    db.add(ProfileChange(user_id=u.id, fields=("email" if d["kind"] == "email" else "mobile"), device=device_of(request)))
     db.delete(f)
     return me_json(u)
+
+
+def device_of(request: Request) -> str:
+    ua = request.headers.get("user-agent", "")
+    os_ = next((n for k, n in (("iPhone", "iPhone"), ("iPad", "iPad"), ("Android", "Android"), ("Windows", "Windows"), ("Mac OS", "Mac"), ("Linux", "Linux")) if k in ua), "Unknown device")
+    br = next((n for k, n in (("Edg/", "Edge"), ("Chrome/", "Chrome"), ("Firefox/", "Firefox"), ("Safari/", "Safari")) if k in ua), "browser")
+    return f"{br} on {os_}"
+
+
+def alert_old_contact(kind: str, old: str) -> None:
+    """Account-takeover defence: the address being replaced is told, with a way back."""
+    msg = ("The " + ("email" if kind == "email" else "mobile number") + " on your Urban Health account was just changed. "
+           "Not you? Sign in and reset your password, or write to support@urbanhealth.in to lock the account.")
+    try:
+        if kind == "email":
+            messaging.mail(old, "Your Urban Health email was changed", msg)
+        else:
+            messaging.send_text_sms(old, "Urban Health: " + msg)
+    except Exception:
+        pass
 
 
 # ---- delete the account (DPDP right to erasure). Health records live on the device and are deleted there. -------

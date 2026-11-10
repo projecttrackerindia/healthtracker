@@ -28,7 +28,9 @@ from . import messaging
 from .auth import csrf, limit, need_user
 from .db import get_db
 from .family import decrypt, encrypt
-from .models import (AccessLog, Grant, Guardian, HealthRecord, Household, HouseholdInvite, Notice, NoticeMark, NoticePref, Person, User, new_id, now)
+import hashlib
+
+from .models import (ProfileChange, AccessLog, Grant, Guardian, HealthRecord, Household, HouseholdInvite, Notice, NoticeMark, NoticePref, Person, User, new_id, now)
 
 r = APIRouter(prefix="/api/v2", dependencies=[Depends(csrf)])
 
@@ -43,7 +45,7 @@ RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother"
 _REL_ALIAS = {"spouse": "Wife", "wfie": "Wife", "wief": "Wife", "husbund": "Husband", "hubby": "Husband", "dad": "Father",
               "papa": "Father", "mom": "Mother", "mum": "Mother", "amma": "Mother", "nanna": "Father", "bro": "Brother", "sis": "Sister"}
 ONE_ONLY = {"Wife", "Husband", "Father", "Mother"}
-ID_KEYS = ("dob", "phone")          # with the name: changeable once a week, confirmed by an emailed code
+ID_KEYS = ("legalName", "dob", "phone")   # the Aadhaar name, birth date and mobile: once a week, with an emailed code
 ID_WEEK, ID_FIX = 7 * 86400, 86400
 
 
@@ -91,7 +93,7 @@ def _name_key(n: str) -> str:
     return re.sub(r"[^a-z]", "", (n or "").lower())
 
 
-PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone")
+PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone", "legalName", "abha")
 COLORS = ["#0A84FF", "#30B0C7", "#BF5AF2", "#FF9F0A", "#34C759", "#FF375F", "#5E5CE6", "#A2845E"]
 INVITE_DAYS = 7
 
@@ -200,6 +202,22 @@ def active_pregnancy(db: Session, pid: str) -> dict | None:
     return {"id": row.id, **d}
 
 
+IN_LAW = {"Father": "Father-in-law", "Mother": "Mother-in-law", "Brother": "Brother-in-law", "Sister": "Sister-in-law",
+          "Son-in-law": "Son-in-law", "Daughter-in-law": "Daughter-in-law"}
+
+
+def rel_for(db: Session, u: User, iv: HouseholdInvite) -> str:
+    """A relation as the viewer would say it: your wife's mother is your mother-in-law."""
+    if iv.by_user == u.id or not iv.relation:
+        return iv.relation
+    spouse = db.scalar(select(HouseholdInvite.token).where(
+        HouseholdInvite.relation.in_(("Wife", "Husband")),
+        ((HouseholdInvite.by_user == u.id) & (HouseholdInvite.used_by == iv.by_user)) | ((HouseholdInvite.by_user == iv.by_user) & (HouseholdInvite.used_by == u.id))))
+    if spouse and iv.relation in IN_LAW:
+        return IN_LAW[iv.relation]
+    return ""
+
+
 def person_json(db: Session, u: User, p: Person, a: Access) -> dict:
     pr = profile(p)
     out = {"id": p.id, "name": p.name, "color": p.color, "self": p.owner_user == u.id,
@@ -207,10 +225,15 @@ def person_json(db: Session, u: User, p: Person, a: Access) -> dict:
            "sex": pr.get("sex", ""), "age": age(pr.get("dob", "")), "medicalId": medical_id(db, p, a)}
     if a.can("summary"):
         out["profile"] = {k: pr.get(k, "") for k in PROFILE_KEYS}
+        out["profile"]["legalName"] = pr.get("legalName") or p.name
     if p.owner_user == u.id:
         out["idLock"] = id_lock(pr)
     if a.womens:
         out["pregnancy"] = active_pregnancy(db, p.id)
+    if p.owner_user and p.owner_user != u.id:
+        iv = db.scalar(select(HouseholdInvite).where(HouseholdInvite.used_by == p.owner_user, HouseholdInvite.household_id == p.household_id))
+        if iv:
+            out["relation"], out["relationOk"] = rel_for(db, u, iv), bool(iv.rel_ok)
     out["guardians"] = [g for g in db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id))] if p.owner_user is None else []
     return out
 
@@ -247,7 +270,26 @@ def clean_profile(d: dict) -> dict:
         raise HTTPException(400, "Choose a blood group")
     if out.get("sex") and out["sex"] not in ("male", "female", "other"):
         raise HTTPException(400, "Choose male, female or other")
+    if out.get("legalName"):
+        out["legalName"] = norm_name(out["legalName"])
+    if out.get("abha"):
+        d = re.sub(r"\D", "", str(out["abha"]))
+        if len(d) != 14:
+            raise HTTPException(400, "Health ID (ABHA) number has 14 digits")
+        out["abha"] = f"{d[:2]}-{d[2:6]}-{d[6:10]}-{d[10:]}"
     return out
+
+
+def abha_hash(v: str) -> str:
+    d = re.sub(r"\D", "", v or "")
+    return hashlib.sha256(("uh-abha:" + d).encode()).hexdigest() if d else ""
+
+
+def set_abha(db: Session, p: Person, v: str):
+    h = abha_hash(v)
+    if h and db.scalar(select(Person.id).where(Person.abha_hash == h, Person.id != p.id, Person.removed.is_(None))):
+        raise HTTPException(409, "This Health ID (ABHA) is already linked to another profile on Urban Health. If it is yours, write to support@urbanhealth.in.")
+    p.abha_hash = h
 
 
 # ---- me ---------------------------------------------------------------------------------------------------------------
@@ -294,7 +336,9 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
         k = _name_key(body.name)
         import difflib
         for q in db.scalars(select(Person).where(Person.household_id == h.id, Person.removed.is_(None))):
-            if _name_key(q.name) == k or difflib.SequenceMatcher(None, _name_key(q.name), k).ratio() > 0.88:
+            r_ = difflib.SequenceMatcher(None, _name_key(q.name), k).ratio()
+            same_dob = bool(body.profile.get("dob")) and profile(q).get("dob") == body.profile.get("dob")
+            if _name_key(q.name) == k or r_ > 0.88 or (same_dob and (r_ > 0.6 or k[:5] == _name_key(q.name)[:5])):
                 raise HTTPException(409, f"SAME:{q.id}:{q.name} is already in your family. Is this the same person?")
     if body.dependent:
         p = Person(household_id=h.id, owner_user=None, name=body.name.strip(), color=COLORS[n % len(COLORS)], blob=encrypt(clean_profile(body.profile)))
@@ -307,6 +351,7 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
         p = Person(household_id=h.id, owner_user=u.id, name=body.name.strip(), color=COLORS[n % len(COLORS)], blob=encrypt(clean_profile(body.profile)))
         db.add(p)
         db.flush()
+    set_abha(db, p, profile(p).get("abha", ""))
     db.commit()
     return person_json(db, u, p, access(db, u, p))
 
@@ -369,7 +414,10 @@ def edit_person(pid: str, body: PersonEdit, request: Request, u: User = Depends(
     newp = clean_profile({**cur, **(body.profile or {})}) if body.profile is not None else {k: cur.get(k, "") for k in PROFILE_KEYS}
     if newp.get("phone"):
         newp["phone"] = norm_contact(newp["phone"])[1]
-    changed = [k for k in ID_KEYS if (newp.get(k) or "") != (cur.get(k) or "")] + (["name"] if name != p.name else [])
+    cur.setdefault("legalName", p.name)
+    if not newp.get("legalName"):
+        newp["legalName"] = cur["legalName"]
+    changed = [k for k in ID_KEYS if (newp.get(k) or "") != (cur.get(k) or "")]
     if p.owner_user == u.id and changed and (cur.get("_idAt") or any(cur.get(k) for k in ID_KEYS)):
         lk = id_lock(cur)
         if lk["locked"]:
@@ -389,7 +437,11 @@ def edit_person(pid: str, body: PersonEdit, request: Request, u: User = Depends(
                 messaging.send_text_sms(old_phone, "Urban Health: the mobile number on your profile was changed. If this was not you, sign in and lock your account, or write to support@urbanhealth.in.")
             except Exception:
                 pass
-        _note(db, p.household_id, "safety", "Your details were changed", "Changed: " + ", ".join({"dob": "date of birth", "phone": "mobile"}.get(k, k) for k in changed) + ". Not you? Change your password now.", {"user": u.id}, to_user=u.id)
+        from .auth import device_of
+        db.add(ProfileChange(user_id=u.id, person_id=p.id, fields=",".join(changed), device=device_of(request)))
+        _note(db, p.household_id, "safety", "Your details were changed", "Changed: " + ", ".join({"dob": "date of birth", "phone": "mobile", "legalName": "name as on Aadhaar"}.get(k, k) for k in changed) + ". Not you? Change your password now.", {"user": u.id}, to_user=u.id)
+    if (newp.get("abha") or "") != (cur.get("abha") or ""):
+        set_abha(db, p, newp.get("abha", ""))
     p.name = name
     cur.update(newp)
     p.blob = encrypt(cur)
@@ -502,6 +554,13 @@ def add_record(pid: str, body: RecordIn, request: Request, u: User = Depends(nee
     # a dose may be marked by anyone allowed to see medicines (a son ticking Amma's tablet); everything else by owner/guardian
     if not (a.writer or (body.kind == "dose" and a.can_kind("dose"))):
         raise HTTPException(403, "Only they can add this")
+    if body.kind == "med":
+        body.data["name"] = med_name(body.data.get("name", ""))
+        k = med_key(body.data["name"])
+        for m in db.scalars(select(HealthRecord).where(HealthRecord.person_id == p.id, HealthRecord.kind == "med")):
+            d = decrypt(m.blob) or {}
+            if d.get("active") is not False and med_key(d.get("name")) == k:
+                raise HTTPException(409, f"{d.get('name')} is already in the medicines list. Edit it instead of adding it again.")
     x = HealthRecord(person_id=p.id, kind=body.kind, blob=encrypt(body.data), day=body.day, by_user=u.id)
     db.add(x)
     db.commit()
@@ -731,8 +790,27 @@ def join(body: JoinIn, u: User = Depends(need_user), db: Session = Depends(get_d
     i = db.get(HouseholdInvite, body.token)
     if not i or i.used_by or i.expires < now():
         raise HTTPException(400, "This invite has expired. Ask for a new one.")
+    by = db.get(User, i.by_user)
+    out = {"ok": True, "by": (by.name if by else "") or "Your family", "relation": i.relation}
+    if i.person_id:                                   # a dependent receiving their own login, records intact
+        p = db.get(Person, i.person_id)
+        if not p or p.owner_user or p.removed:
+            raise HTTPException(400, "This profile was already handed over.")
+        if my_person(db, u):
+            raise HTTPException(409, "You already have your own profile. Sign up with a new account to receive this one.")
+        if u.household_id and u.household_id != p.household_id:
+            _move_out(db, u)
+        u.household_id, u.role = p.household_id, "member"
+        p.owner_user = u.id
+        for g in db.scalars(select(Guardian).where(Guardian.person_id == p.id)):
+            db.merge(Grant(person_id=p.id, user_id=g.user_id, level="summary", womens=False))
+            db.delete(g)
+        i.used_by = u.id
+        _note(db, p.household_id, "family", f"{p.name} now has their own login", "Their records came with them. They decide what you can see now.", {"user": u.id})
+        db.commit()
+        return {**out, "handover": True}
     if u.household_id == i.household_id:
-        return {"ok": True}
+        return out
     if u.household_id and db.scalar(select(Guardian.person_id).join(Person, Person.id == Guardian.person_id).where(Guardian.user_id == u.id, Person.household_id == u.household_id)):
         raise HTTPException(409, "Hand over the people you look after before joining another family.")
     _move_out(db, u)
@@ -742,6 +820,165 @@ def join(body: JoinIn, u: User = Depends(need_user), db: Session = Depends(get_d
         mine.household_id = i.household_id
     i.used_by = u.id
     _note(db, i.household_id, "family", f"{u.name or 'Someone'} joined the family", "They chose what to share from their own Settings.", {"user": u.id})
+    db.commit()
+    return out
+
+
+class RelIn(BaseModel):
+    relation: str = ""
+    related: bool = True
+
+
+@r.post("/household/relation")
+def confirm_relation(body: RelIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """The person who joined says how they are related. A wrong relation is corrected and the inviter told."""
+    i = db.scalar(select(HouseholdInvite).where(HouseholdInvite.used_by == u.id, HouseholdInvite.household_id == (u.household_id or "-")))
+    if not i:
+        raise HTTPException(404, "Nothing to confirm")
+    rel = norm_relation(body.relation) if body.related else "Other"
+    if rel and rel != i.relation:
+        old = i.relation
+        i.relation = rel
+        _note(db, i.household_id, "family", f"{u.name or 'Someone'} corrected the relation", f"You added them as {old or 'family'}; they say {rel}.", {"user": u.id}, to_user=i.by_user)
+    i.rel_ok = 1
+    db.commit()
+    return {"ok": True, "relation": i.relation}
+
+
+class HandIn(BaseModel):
+    contact: str
+
+
+@r.post("/people/{pid}/handover")
+def handover(pid: str, body: HandIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """A dependent turning 18 gets their own login. One invite, their records move with them, nothing is copied."""
+    limit(request, "v2invite", 20, 3600)
+    p, a = person_or_404(db, u, pid)
+    if p.owner_user or not db.get(Guardian, (p.id, u.id)):
+        raise HTTPException(403, "Only a guardian can hand over a profile")
+    yrs = age(profile(p).get("dob", ""))
+    if not isinstance(yrs, int) or yrs < 18:
+        raise HTTPException(400, "Profiles can be handed over from 18 years of age")
+    kind, c = norm_contact(body.contact)
+    db.execute(delete(HouseholdInvite).where(HouseholdInvite.person_id == p.id, HouseholdInvite.used_by.is_(None)))
+    i = HouseholdInvite(token=secrets.token_urlsafe(24), household_id=p.household_id, contact=c, relation="", name=p.name,
+                        by_user=u.id, expires=now() + INVITE_DAYS * 86400, sent_at=now(), sends=1, person_id=p.id)
+    db.add(i)
+    db.commit()
+    return {"ok": True, "sent": _deliver(request, u, i), "invite": invite_view(i)}
+
+
+@r.get("/household/invites/{ref}/qr.svg")
+def invite_qr(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    import io
+    import qrcode
+    import qrcode.image.svg
+    i = _my_invite(db, u, ref)
+    img = qrcode.make(f"{str(request.base_url).rstrip('/')}/app/join/{i.token}", image_factory=qrcode.image.svg.SvgPathImage, box_size=12, border=2)
+    b = io.BytesIO()
+    img.save(b)
+    return Response(b.getvalue(), media_type="image/svg+xml", headers={"Cache-Control": "private, no-store"})
+
+
+@r.get("/changes")
+def my_changes(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    rows = db.scalars(select(ProfileChange).where(ProfileChange.user_id == u.id).order_by(ProfileChange.t.desc()).limit(100))
+    return [{"fields": x.fields.split(","), "device": x.device, "t": x.t} for x in rows]
+
+
+# ---- duplicates: find and merge ----------------------------------------------------------------------------------------
+def med_key(n: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (n or "").lower())
+
+
+def med_name(n: str) -> str:
+    """'DOLO-650', 'dolo650', 'Dolo 650' -> 'Dolo 650'."""
+    n = re.sub(r"[-_]+", " ", (n or "").strip())
+    n = re.sub(r"(?<=[A-Za-z])(?=\d)", " ", n)
+    n = re.sub(r"\s+", " ", n)
+    return " ".join(w if any(ch.isdigit() for ch in w) or (len(w) <= 3 and w.isupper()) else w[:1].upper() + w[1:].lower() for w in n.split(" "))[:80]
+
+
+@r.get("/household/duplicates")
+def duplicates(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    import difflib
+    out = []
+    if not u.household_id:
+        return out
+    ppl = [p for p in db.scalars(select(Person).where(Person.household_id == u.household_id, Person.removed.is_(None))) if access(db, u, p).writer]
+    allp = list(db.scalars(select(Person).where(Person.household_id == u.household_id, Person.removed.is_(None))))
+    for x in range(len(allp)):
+        for y in range(x + 1, len(allp)):
+            a, b = allp[x], allp[y]
+            if a.owner_user and b.owner_user:
+                continue
+            r_ = difflib.SequenceMatcher(None, _name_key(a.name), _name_key(b.name)).ratio()
+            same_dob = profile(a).get("dob") and profile(a).get("dob") == profile(b).get("dob")
+            if r_ > 0.88 or (same_dob and r_ > 0.6):
+                keep, drop = (a, b) if a.owner_user or a.created <= b.created else (b, a)
+                if not drop.owner_user and db.get(Guardian, (drop.id, u.id)):
+                    out.append({"kind": "person", "keep": keep.id, "drop": drop.id, "a": keep.name, "b": drop.name})
+    seen = {}
+    for i in db.scalars(select(HouseholdInvite).where(HouseholdInvite.household_id == u.household_id, HouseholdInvite.used_by.is_(None)).order_by(HouseholdInvite.created.desc())):
+        try:
+            c = norm_contact(i.contact)[1]
+        except HTTPException:
+            c = i.contact
+        if c in seen:
+            out.append({"kind": "invite", "keep": seen[c].token[:10], "drop": i.token[:10], "a": seen[c].name or seen[c].contact, "b": i.name or i.contact})
+        else:
+            seen[c] = i
+    for p in ppl:
+        meds = {}
+        for m in db.scalars(select(HealthRecord).where(HealthRecord.person_id == p.id, HealthRecord.kind == "med").order_by(HealthRecord.created)):
+            d = decrypt(m.blob) or {}
+            if d.get("active") is False:
+                continue
+            k = med_key(d.get("name"))
+            if k in meds:
+                out.append({"kind": "med", "keep": meds[k][0], "drop": m.id, "a": meds[k][1], "b": d.get("name", ""), "who": p.name})
+            else:
+                meds[k] = (m.id, d.get("name", ""))
+    return out
+
+
+class MergeIn(BaseModel):
+    kind: str
+    keep: str
+    drop: str
+
+
+@r.post("/household/merge")
+def merge(body: MergeIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    if body.kind == "invite":
+        _my_invite(db, u, body.keep)
+        db.delete(_my_invite(db, u, body.drop))
+    elif body.kind == "med":
+        a, b = db.get(HealthRecord, body.keep), db.get(HealthRecord, body.drop)
+        if not a or not b or a.kind != "med" or b.kind != "med" or a.person_id != b.person_id or not person_or_404(db, u, a.person_id)[1].writer:
+            raise HTTPException(404, "Not found")
+        for d in db.scalars(select(HealthRecord).where(HealthRecord.person_id == a.person_id, HealthRecord.kind == "dose")):
+            dd = decrypt(d.blob) or {}
+            if dd.get("med") == b.id:
+                dd["med"] = a.id
+                d.blob = encrypt(dd)
+        db.delete(b)
+    elif body.kind == "person":
+        keep, ka = person_or_404(db, u, body.keep)
+        drop, da = person_or_404(db, u, body.drop)
+        if drop.owner_user or not db.get(Guardian, (drop.id, u.id)) or keep.household_id != drop.household_id:
+            raise HTTPException(403, "Only a dependent you look after can be merged")
+        for rec in db.scalars(select(HealthRecord).where(HealthRecord.person_id == drop.id)):
+            rec.person_id = keep.id
+        kp, dp = profile(keep), profile(drop)
+        for k in PROFILE_KEYS:
+            if not kp.get(k) and dp.get(k):
+                kp[k] = dp[k]
+        keep.blob = encrypt(kp)
+        drop.removed = now()
+        db.execute(delete(Guardian).where(Guardian.person_id == drop.id))
+    else:
+        raise HTTPException(400, "Unknown")
     db.commit()
     return {"ok": True}
 

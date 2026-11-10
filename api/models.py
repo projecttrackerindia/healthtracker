@@ -319,6 +319,8 @@ class User(Base):
     ref_code: Mapped[str] = mapped_column(String(12), default="", index=True)   # this person's invite code (THT-XXXXXX)
     referred_by: Mapped[str] = mapped_column(String(32), default="")           # user id of whoever invited them
     ref_rewarded: Mapped[int] = mapped_column(Integer, default=0)              # when the inviter's reward was granted
+    contact_changed: Mapped[int] = mapped_column(Integer, default=0)           # a new email/mobile cannot reset the password for 24 h
+    contact_changed_kind: Mapped[str] = mapped_column(String(8), default="")
     failed: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[int | None] = mapped_column(Integer, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -959,6 +961,7 @@ class Person(Base):
     created: Mapped[int] = mapped_column(Integer, default=now)
     updated: Mapped[int] = mapped_column(Integer, default=now, onupdate=now)
     removed: Mapped[int | None] = mapped_column(Integer, nullable=True)   # dependents removed are kept 30 days
+    abha_hash: Mapped[str] = mapped_column(String(64), default="", index=True)   # one Health ID per person, app-wide
 
 
 class Guardian(Base):
@@ -1006,6 +1009,19 @@ class HouseholdInvite(Base):
     sent_at: Mapped[int] = mapped_column(Integer, default=0)
     sends: Mapped[int] = mapped_column(Integer, default=1)
     opened: Mapped[int] = mapped_column(Integer, default=0)
+    person_id: Mapped[str] = mapped_column(String(32), default="")      # handing a dependent their own account
+    rel_ok: Mapped[int] = mapped_column(Integer, default=0)             # the joiner confirmed the relation
+
+
+class ProfileChange(Base):
+    """Who changed identity details, when and from which device. Field names only, never the values (DPDP audit)."""
+    __tablename__ = "profile_changes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(32), index=True)
+    person_id: Mapped[str] = mapped_column(String(32), default="")
+    fields: Mapped[str] = mapped_column(String(200), default="")
+    device: Mapped[str] = mapped_column(String(80), default="")
+    t: Mapped[int] = mapped_column(Integer, default=now)
 
 
 class ConsentLog(Base):
