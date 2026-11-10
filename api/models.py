@@ -83,6 +83,14 @@ class Store(Base):
     owner_email: Mapped[str] = mapped_column(String(120), default="")
     notes: Mapped[str] = mapped_column(Text, default="")
     created: Mapped[int] = mapped_column(Integer, default=now)
+    # Onboarding: what families see before they walk in, and what we checked before letting them.
+    landmark: Mapped[str] = mapped_column(String(160), default="")
+    profile: Mapped[dict | None] = mapped_column(JSON, nullable=True)   # hours, access, languages, people, documents, PINs…
+    photos: Mapped[list | None] = mapped_column(JSON, nullable=True)    # [{id,label,t,lat,lng,by}] — bytes encrypted in files
+    pin_at: Mapped[int] = mapped_column(Integer, default=0)             # when the live pin was dropped at the shop
+    pin_by: Mapped[str] = mapped_column(String(80), default="")
+    pin_acc: Mapped[int] = mapped_column(Integer, default=0)            # metres, as the phone reported it
+    step: Mapped[int] = mapped_column(Integer, default=1)               # onboarding step 1..6; 7 = live
     items: Mapped[list["StoreItem"]] = relationship(back_populates="store", cascade="all, delete-orphan")
     tests: Mapped[list["LabTest"]] = relationship(back_populates="store", cascade="all, delete-orphan")
 
@@ -236,6 +244,7 @@ class Admin(Base):
     __tablename__ = "admins"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(120), unique=True)
+    phone: Mapped[str] = mapped_column(String(20), default="")   # E.164; signs in with this or the email
     pw_hash: Mapped[str] = mapped_column(String(160))
     role: Mapped[str] = mapped_column(String(16), default="owner")  # owner | ops | content
     created: Mapped[int] = mapped_column(Integer, default=now)

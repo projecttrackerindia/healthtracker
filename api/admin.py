@@ -53,15 +53,24 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
     from .auth import clear as rl_clear, fail as rl_fail, guard as rl_guard
 
     rl_guard(request, "admin-login", 8, 900)
-    a = db.scalar(select(Admin).where(Admin.email == body.email.strip().lower()))
+    ident = body.email.strip().lower()
+    if "@" in ident:
+        a = db.scalar(select(Admin).where(Admin.email == ident))
+    else:
+        from .auth import norm_id
+        try:
+            kind, ph = norm_id(ident)
+        except HTTPException:
+            raise HTTPException(401, "wrong email, mobile number or password")
+        a = db.scalar(select(Admin).where(Admin.phone == ph)) if kind == "phone" else None
     if not a or not check_pw(body.password, a.pw_hash):
         rl_fail(request, "admin-login", 900)
-        raise HTTPException(401, "wrong email or password")
+        raise HTTPException(401, "wrong email, mobile number or password")
     rl_clear(request, "admin-login")
     a.last_login = now()
     log(db, a.email, "login")
     response.set_cookie(COOKIE, sign({"id": a.id, "e": a.email}), httponly=True, samesite="strict", secure=request.url.scheme == "https", max_age=12 * 3600, path="/")
-    return {"ok": True, "email": a.email, "role": a.role}
+    return {"ok": True, "email": a.email, "role": a.role, "phone": a.phone or ""}
 
 
 @r.post("/logout")
@@ -72,7 +81,30 @@ def logout(response: Response):
 
 @r.get("/me")
 def whoami(a: Admin = Depends(me)):
-    return {"email": a.email, "role": a.role}
+    return {"email": a.email, "role": a.role, "phone": a.phone or ""}
+
+
+class PhoneIn(BaseModel):
+    phone: str = ""
+    password: str
+
+
+@r.put("/me/phone")
+def my_phone(body: PhoneIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Sign in with a mobile number too. Asks for the password again: whoever holds the number can sign in with it."""
+    if not check_pw(body.password, a.pw_hash):
+        raise HTTPException(401, "That password is not right.")
+    ph = ""
+    if body.phone.strip():
+        from .auth import norm_id
+        kind, ph = norm_id(body.phone)
+        if kind != "phone":
+            raise HTTPException(400, "Enter a mobile number")
+        if db.scalar(select(Admin).where(Admin.phone == ph, Admin.id != a.id)):
+            raise HTTPException(409, "Another admin already uses this mobile number.")
+    a.phone = ph
+    log(db, a.email, "admin.phone " + ("set" if ph else "removed"))
+    return {"ok": True, "phone": ph}
 
 
 # ---- settings and client errors -------------------------------------------------------------------------------------
@@ -619,11 +651,12 @@ class AdminIn(BaseModel):
     email: str
     password: str = ""
     role: str = "ops"
+    phone: str | None = None
 
 
 @r.get("/admins")
 def admins(a: Admin = Depends(owner), db: Session = Depends(get_db)):
-    return {"admins": [{"id": x.id, "email": x.email, "role": x.role, "created": x.created, "lastLogin": x.last_login} for x in db.scalars(select(Admin)).all()]}
+    return {"admins": [{"id": x.id, "email": x.email, "role": x.role, "phone": x.phone or "", "created": x.created, "lastLogin": x.last_login} for x in db.scalars(select(Admin)).all()]}
 
 
 @r.post("/admins")
@@ -641,6 +674,16 @@ def add_admin(body: AdminIn, a: Admin = Depends(owner), db: Session = Depends(ge
                 raise HTTPException(400, "password: 8 characters minimum")
             x.pw_hash = hash_pw(body.password)
         x.role = body.role if body.role in ("owner", "ops", "content") else x.role
+    if body.phone is not None:
+        ph = ""
+        if body.phone.strip():
+            from .auth import norm_id
+            kind, ph = norm_id(body.phone)
+            if kind != "phone":
+                raise HTTPException(400, "Enter a mobile number")
+            if db.scalar(select(Admin).where(Admin.phone == ph, Admin.email != e)):
+                raise HTTPException(409, "Another admin already uses this mobile number.")
+        x.phone = ph
     log(db, a.email, f"admin.save {e} {x.role}")
     return {"ok": True}
 
