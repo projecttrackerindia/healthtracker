@@ -338,7 +338,7 @@ function renderTop(){const p=P(),pg=preg(p),locked=!can(p,'summary'),fs=findings
   else if(pg){const w=wkInfo(S.week||pg.week);line=`Baby is about the size of <b>${w[1]}</b>. ${w[2]}`}
   else if(bad.length)line=`<b>${bad.length} result${bad.length>1?'s':''} worth discussing</b>: ${bad.slice(0,2).map(f=>esc(f.test)+' is '+(f.flag==='high'?'high':'low')).join(', ')}.`;
   else if(fs.length)line=`Latest results are <b>in range</b>.`;else line=writer(p)?'Add a report and it will appear on the body.':'No reports shared yet.'}
- $('#top').innerHTML=`<div class="ttl"><p class="eyebrow" style="color:${pg?'var(--rose)':''}">${esc(nameOf(p).toUpperCase())}${p.self?'':' · '+(p.dependent?'YOU LOOK AFTER':locked?'PRIVATE':'SHARED WITH YOU')}</p><h1 class="big">${T[S.tab]}</h1>${line?`<p class="line">${line}</p>`:''}</div>
+ $('#top').innerHTML=`<div class="ttl"><p class="eyebrow" style="color:${pg?'var(--rose)':''}">${esc(nameOf(p).toUpperCase())}${p.self?'':' · '+(p.dependent?'YOU LOOK AFTER':locked?'PRIVATE':'SHARED WITH YOU')}</p><h1 class="big">${T[S.tab]}</h1>${line?`<p class="line">${line}</p>`:''}${S.tab==='summary'&&!locked?`<button class="chip glass" style="margin-top:10px" onclick="openBody()">${pg?'Explore baby in 3D':'Explore body in 3D'} ›</button>`:''}</div>
  <button class="sos glass" id="sosb" aria-label="Emergency SOS. Hold for one second.">SOS</button><button class="round glass" id="bell" aria-label="Notifications" style="position:relative" onclick="openInbox('all')">${ic(I.bell,'#1D1D1F',22)}<span id="bellc" style="position:absolute;top:4px;right:4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#FF3B30;color:#fff;font-size:11px;font-weight:700;display:${BOX.unread?'flex':'none'};align-items:center;justify-content:center">${BOX.unread>9?'9+':BOX.unread}</span></button><button class="round glass" id="who" aria-label="Choose person and settings"><span class="av" style="background:${p.color}">${esc(p.name[0]||'?')}</span></button>`;
  $('#who').onclick=openPeople;let ht;const sb=$('#sosb');sb.onpointerdown=()=>{sb.style.transform='scale(.9)';ht=setTimeout(()=>{sb.style.transform='';startSOS()},900)};sb.onpointerup=sb.onpointerleave=()=>{clearTimeout(ht);sb.style.transform=''};sb.onkeydown=e=>{if(e.key==='Enter')startSOS()}}
 function dosePlan(pid){const meds=(REC[pid]||[]).filter(r=>r.kind==='med'&&r.active!==false),doses=(REC[pid]||[]).filter(r=>r.kind==='dose'&&r.day===today()),out=[];
@@ -665,6 +665,38 @@ async function openCycle(){const me=P(ME.me);await loadRecords(me.id);const star
  <button class="btn pri" style="width:100%;margin-top:16px" id="cyst">My period started today</button><div class="sect">PAST PERIODS · AVERAGE ${avg} DAYS</div><div class="list">${starts.slice(-6).reverse().map(s=>`<div class="li">${fmtDate(s)}</div>`).join('')||'<div class="li sub">None logged</div>'}</div><p class="cap">Private to you unless you share women's health with someone.</p>`,'WOMEN\'S HEALTH','var(--rose)');
  $('#cyst').onclick=async()=>{try{await API(`/api/v2/people/${me.id}/records`,{json:{kind:'cycle',day:today(),data:{start:true}}});openCycle()}catch(e){toast(e.message)}}}
 /* ---------------- AI ---------------- */
+/* ---- full-screen 3D body (/body): the app hands it this person's data; it asks the app to act ---- */
+function bodyData(p){const pg=preg(p),reps=(REC[p.id]||[]).filter(r=>r.kind==='report');const fs=[];
+ reps.sort((a,b)=>(b.day||'').localeCompare(a.day||'')).forEach(r=>(r.findings||[]).forEach(f=>fs.push({test:f.test,value:f.value,unit:f.unit,flag:f.flag||'unknown',code:f.code||'',org:CODE_ORG[f.code]||null,rid:r.id,date:r.day,rep:r.title})));
+ const vit=(REC[p.id]||[]).filter(r=>r.kind==='vital').sort((a,b)=>(b.at||b.day||'').localeCompare(a.at||a.day||''))[0];
+ return{person:{name:nameOf(p),age:p.age??null,sex:p.sex||'male',pregnancy:pg?{week:S.week||pg.week}:null},findings:fs,
+  meds:can(p,'all')?(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.active!==false).map(m=>({name:m.name,dose:m.dose||''})):[],canSeeMeds:can(p,'all'),
+  vitals:vit?{hr:vit.hr,rr:vit.rr,spo2:vit.spo2,bp:vit.bp,src:vit.src||'',at:vit.at||vit.day}:null,canWrite:writer(p)}}
+let BODYF=null;
+function openBody(start){const p=P();if(!can(p,'summary'))return;closeBody();const d=document.createElement('div');d.id='bodyf';
+ d.style.cssText='position:fixed;inset:0;z-index:60;background:#F1F3F7';d.innerHTML='<iframe src="/body" title="3D body" style="border:0;width:100%;height:100%" allow="fullscreen"></iframe>';document.body.appendChild(d);BODYF={el:d,start};
+ history.pushState({body:1},'')}
+function closeBody(){if(BODYF){BODYF.el.remove();BODYF=null}}
+function bodySend(){if(!BODYF)return;const d=bodyData(P());if(BODYF.start)d.start=BODYF.start;BODYF.el.firstChild.contentWindow.postMessage({type:'uh-body-data',data:d},location.origin)}
+addEventListener('popstate',()=>{if(BODYF)closeBody()});
+addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-act'||!BODYF)return;const a=e.data,p=P();
+ if(a.act==='ready')return bodySend();
+ if(a.act==='close'){closeBody();return history.back()}
+ if(a.act==='sos')return startSOS();
+ if(a.act==='map')return window.open('https://www.google.com/maps/search/'+encodeURIComponent(a.q||'hospital')+'/','_blank','noopener');
+ closeBody();
+ if(a.act==='ask'){openAI();ask(String(a.q||'').slice(0,400))}
+ else if(a.act==='book')openLabs([...new Set((a.codes||[]).map(c=>PKG[c]).filter(Boolean))]);
+ else if(a.act==='addReport')pickReport('report');
+ else if(a.act==='vital')openVital()});
+function openVital(){const p=P();if(!writer(p))return toast('Only '+nameOf(p)+' or a guardian can add readings');
+ page('Add a reading',`<form id="vf" class="list" style="padding:6px 0">${[['hr','Pulse','beats a minute','40','200'],['rr','Breathing','breaths a minute','6','60'],['spo2','Oxygen (SpO₂)','%','70','100']].map(f=>`<label class="li"><div style="flex:1">${f[1]}<div class="sub">${f[2]}</div></div><input name="${f[0]}" type="number" inputmode="numeric" min="${f[3]}" max="${f[4]}" style="width:90px;text-align:right;border:0;background:none;font-size:20px;font-weight:600;outline:0" placeholder="–"></label>`).join('')}
+ <label class="li"><div style="flex:1">Blood pressure<div class="sub">top / bottom</div></div><input name="bp" pattern="\\d{2,3}/\\d{2,3}" style="width:110px;text-align:right;border:0;background:none;font-size:20px;font-weight:600;outline:0" placeholder="120/80"></label></form>
+ <button class="btn pri" style="width:100%;margin-top:16px" id="vsave">Save</button><p class="cap">Readings from watches and BP machines will appear here once they are connected.</p>`,nameOf(p).toUpperCase());
+ $('#vsave').onclick=async()=>{const f=new FormData($('#vf')),data={src:'entered by hand',at:new Date().toISOString()};let any=0;
+  for(const k of ['hr','rr','spo2']){const v=+f.get(k);if(v){data[k]=v;any=1}}const bp=(f.get('bp')||'').trim();if(bp){if(!/^\d{2,3}\/\d{2,3}$/.test(bp))return toast('Blood pressure looks like 120/80');data.bp=bp;any=1}
+  if(!any)return toast('Enter at least one reading');
+  try{await API(`/api/v2/people/${p.id}/records`,{json:{kind:'vital',data,day:today()}});await loadRecords(p.id);closeL();toast('Saved');openBody('vitals')}catch(err){toast(err.message)}}}
 function openAI(){const p=P(),fs=findings(p.id),pg=preg(p);
  const sug=!can(p,'summary')?[]:pg?[`Is week ${pg.week} going well?`,'What should I avoid eating?','What tests are due this trimester?']:fs.length?[`What does ${fs[0].test} ${fs[0].value} mean?`,'What should we ask the doctor?','What can we do at home?']:['How do I add a report?','What should a yearly check-up include?'];
  layer(`<div class="modal glass"><div class="row"><div class="orb" style="width:40px;height:40px;background:none;border:0;box-shadow:none"><i style="inset:4px"></i><b style="inset:7px"></b></div><div style="font-weight:600;font-size:17px">Ask about ${esc(p.self?'your health':p.name)}</div><button class="x" onclick="closeL()" aria-label="Close">${ic(I.x,'#3A3A3C',16)}</button></div>

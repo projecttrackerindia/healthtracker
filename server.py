@@ -175,7 +175,7 @@ CSP = (
     "font-src 'self' data: https://fonts.gstatic.com; "
     "connect-src 'self' wss: ws: blob: data: https://accounts.google.com https://api.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; "
     "media-src 'self' blob:; "
-    "frame-src https://accounts.google.com https://www.youtube-nocookie.com https://www.youtube.com https://api.razorpay.com https://checkout.razorpay.com https://www.google.com https://www.recaptcha.net https://*.firebaseapp.com; "
+    "frame-src 'self' https://accounts.google.com https://www.youtube-nocookie.com https://www.youtube.com https://api.razorpay.com https://checkout.razorpay.com https://www.google.com https://www.recaptcha.net https://*.firebaseapp.com; "
     "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 )
 SECURITY = {
@@ -261,7 +261,7 @@ TYPES = {
     ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".woff": "font/woff", ".ttf": "font/ttf", ".pdf": "application/pdf", ".apk": "application/vnd.android.package-archive",
 }
 COMPRESSIBLE = {".html", ".js", ".css", ".json", ".svg", ".webmanifest", ".txt"}
-NO_CACHE = {"index.html", "uh.html", "sw.js", "manifest.webmanifest"}
+NO_CACHE = {"index.html", "uh.html", "body.html", "sw.js", "manifest.webmanifest"}
 
 
 def _safe(rel: str) -> Path:
@@ -470,6 +470,14 @@ def app_shell(request: Request, rest: str = ""):
     APP_SHELL=classic serves the previous household-blob app instead, as an instant rollback."""
     shell = "index.html" if os.getenv("APP_SHELL", "") == "classic" else "uh.html"
     return _send(WEB / shell, request, "no-cache")
+
+
+@app.api_route("/body", methods=["GET", "HEAD"], include_in_schema=False)
+def body_page(request: Request):
+    """The full-screen 3D body. The app opens it in a frame and hands it the person's data by postMessage."""
+    resp = _send(WEB / "body.html", request, "no-cache")
+    resp.headers["Content-Security-Policy"] = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+    return resp
 
 
 @app.api_route("/classic", methods=["GET", "HEAD"], include_in_schema=False)
