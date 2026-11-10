@@ -94,3 +94,30 @@ def test_blind_search():
     assert c.get("/api/v2/search?q=rao lipid").json()["items"] and not c.get("/api/v2/search?q=rao zzz").json()["items"]
     other = person("Stranger")
     assert other.get("/api/v2/search?q=lipid").json()["items"] == []
+
+
+def test_report_learns_and_compares():
+    from api import people
+    from api.db import SessionLocal
+    from api.models import Person
+    c = person("Ramesh")
+    c.post(f"/api/v2/people/{c.pid}/records", json={"kind": "report", "day": "2026-03-14", "data": {"title": "Lipid", "findings": [
+        {"test": "HbA1c", "code": "hba1c", "value": "6.1", "unit": "%", "flag": "high"}, {"test": "Triglycerides", "code": "tg", "value": "140", "unit": "mg/dL", "flag": "normal"}]}})
+    amma = c.post("/api/v2/people", json={"name": "Lakshmamma", "dependent": True, "profile": {"dob": "1960-01-01"}}).json()
+    with SessionLocal() as db:
+        p = db.get(Person, c.pid)
+        cmp = people.compare_findings(db, p.id, [{"test": "HbA1c", "code": "hba1c", "value": "5.6", "unit": "%", "flag": "normal"},
+                                                  {"test": "Triglycerides", "code": "tg", "value": "182", "unit": "mg/dL", "flag": "high"},
+                                                  {"test": "Vitamin D", "code": "vitd", "value": "40", "flag": "normal"}], "2026-11-10")
+        assert [x["dir"] for x in cmp] == ["better", "worse", "first"]
+        assert "HbA1c improved" in people._compare_line(cmp)
+        sg = people.suggestions(db, p, {"patient": {"blood_group": "O Positive", "weight_kg": 65, "age_years": 40, "mobile": "7093127380"}},
+                                {"allergies_found": ["Sulfa drugs"]})
+        keys = {x["key"]: x for x in sg}
+        assert keys["blood"]["new"] == "O+" and keys["weight"]["new"] == "65" and keys["dob"]["lock"] and keys["phone"]["new"] == "+917093127380"
+        assert keys["allergies"]["new"] == "Penicillin, Sulfa drugs"
+        u = db.get(people.User, c.uid)
+        o = people.other_person(db, u, p, {"name": "LAKSHMAMMA K"})
+        assert o["to"] == amma["id"]
+        assert people.other_person(db, u, p, {"name": "Mr. RAMESH"}) is None
+        assert people._patient_from_text({"findings": [{"test": "ABO Blood Group", "value": "O"}, {"test": "Rh Type", "value": "Positive"}]})["blood_group"] == "O+"

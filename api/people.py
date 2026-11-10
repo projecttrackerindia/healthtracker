@@ -679,6 +679,197 @@ def delete_record(rid: str, u: User = Depends(need_user), db: Session = Depends(
 
 
 # ---- reports: file to S3, read by AI, values stored ------------------------------------------------------------------
+# ---- what a report can teach the profile, and how it compares with the last time -------------------------------------
+def _norm_blood(v: str) -> str:
+    m = re.search(r"(?i)\b(AB|A|B|O)\b\s*(?:rh\s*)?(\+|pos(?:itive)?|-|neg(?:ative)?|\u2212)", str(v or ""))
+    return (m.group(1).upper() + ("+" if m.group(2)[0] in "+pP" else "-")) if m else ""
+
+
+def _patient_from_text(reading: dict) -> dict:
+    out = {}
+    tests = {(f.get("test") or "").lower(): str(f.get("value") or "") for f in reading.get("findings") or []}
+    abo = next((v for k, v in tests.items() if "abo" in k or "blood group" in k), "")
+    rh = next((v for k, v in tests.items() if re.search(r"\brh\b", k)), "")
+    if abo:
+        b = _norm_blood(abo + " " + rh) or (abo.strip().upper()[:2] + ("+" if "pos" in rh.lower() else "-" if "neg" in rh.lower() else "") if re.fullmatch(r"(?i)\s*(ab|a|b|o)\s*", abo) else "")
+        if b and b[-1] in "+-":
+            out["blood_group"] = b
+    return out
+
+
+def suggestions(db: Session, p: Person, rec: dict, reading: dict) -> list[dict]:
+    pr, pt, out = profile(p), rec.get("patient") or {}, []
+    b = _norm_blood(pt.get("blood_group", ""))
+    if b and b != pr.get("blood"):
+        out.append({"key": "blood", "label": "Blood group", "old": pr.get("blood", ""), "new": b, "on": True})
+    try:
+        w = float(pt.get("weight_kg") or 0)
+        if 2 < w < 300 and abs(w - float(pr.get("weight") or 0)) >= 1:
+            out.append({"key": "weight", "label": "Weight", "old": pr.get("weight", ""), "new": f"{w:g}", "unit": "kg", "on": True})
+        h = float(pt.get("height_cm") or 0)
+        if 40 < h < 250 and abs(h - float(pr.get("height") or 0)) >= 2:
+            out.append({"key": "height", "label": "Height", "old": pr.get("height", ""), "new": f"{h:g}", "unit": "cm", "on": True})
+    except (TypeError, ValueError):
+        pass
+    dob = str(pt.get("dob") or "")
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", dob) and dob != pr.get("dob"):
+        out.append({"key": "dob", "label": "Date of birth", "old": pr.get("dob", ""), "new": dob, "lock": True, "on": False})
+    elif pt.get("age_years") and pr.get("dob"):
+        try:
+            if abs(int(pt["age_years"]) - (age(pr["dob"]) or 0)) >= 2:
+                out.append({"key": "dob", "label": "Date of birth", "old": pr.get("dob", ""), "new": "", "note": f"Report says age {int(pt['age_years'])}", "lock": True, "on": False})
+        except (TypeError, ValueError):
+            pass
+    mob = re.sub(r"\D", "", str(pt.get("mobile") or ""))[-10:]
+    if re.fullmatch(r"[6-9]\d{9}", mob) and mob != re.sub(r"\D", "", pr.get("phone", ""))[-10:]:
+        out.append({"key": "phone", "label": "Mobile", "old": pr.get("phone", ""), "new": "+91" + mob, "lock": True, "on": False, "note": "May be the number of whoever booked the test"})
+    have = (pr.get("allergies") or "").lower()
+    new_al = [a for a in reading.get("allergies_found") or [] if a and a.lower() not in have]
+    if new_al:
+        out.append({"key": "allergies", "label": "Allergies", "old": pr.get("allergies", ""), "new": ", ".join([x for x in [pr.get("allergies", "")] if x and x.lower() != "none"] + new_al), "on": True})
+    havec = (pr.get("conditions") or "").lower()
+    new_c = [c for c in reading.get("conditions_found") or [] if c and c.lower() not in havec]
+    if new_c:
+        out.append({"key": "conditions", "label": "Conditions", "old": pr.get("conditions", ""), "new": ", ".join([x for x in [pr.get("conditions", "")] if x and x.lower() != "none"] + new_c), "on": True})
+    return out
+
+
+BETTER_HIGH = ("hdl", "egfr", "hb", "alb", "vitd", "b12", "spo2", "ferr")
+
+
+def _num(v):
+    try:
+        return float(str(v).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def compare_findings(db: Session, pid: str, findings: list, day: str) -> list[dict]:
+    prev = {}
+    for x in db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind == "report").order_by(HealthRecord.day.desc())):
+        if (x.day or "") > day[:10]:
+            continue
+        d = decrypt(x.blob) or {}
+        for f in d.get("findings") or []:
+            k = (f.get("code") or re.sub(r"[^a-z0-9]", "", (f.get("test") or "").lower()))
+            if k and k not in prev:
+                prev[k] = (f, x.day)
+    out = []
+    for f in findings or []:
+        k = f.get("code") or re.sub(r"[^a-z0-9]", "", (f.get("test") or "").lower())
+        if k not in prev:
+            out.append({"test": f.get("test"), "now": f.get("value"), "unit": f.get("unit", ""), "dir": "first", "flag": f.get("flag", "")})
+            continue
+        pf, pday = prev[k]
+        a, b = _num(pf.get("value")), _num(f.get("value"))
+        if a is None or b is None or (pf.get("unit") or "").lower() != (f.get("unit") or "").lower() and pf.get("unit") and f.get("unit"):
+            out.append({"test": f.get("test"), "prev": pf.get("value"), "prevDay": pday, "now": f.get("value"), "unit": f.get("unit", ""), "dir": "same" if str(pf.get("value")).lower() == str(f.get("value")).lower() else "changed", "flag": f.get("flag", "")})
+            continue
+        if abs(b - a) <= max(abs(a) * 0.02, 1e-9):
+            d = "same"
+        else:
+            pfl, nfl = pf.get("flag") or "normal", f.get("flag") or "normal"
+            if pfl != "normal" and nfl == "normal":
+                d = "better"
+            elif pfl == "normal" and nfl != "normal":
+                d = "worse"
+            elif nfl == "high" or (nfl == "normal" and k not in BETTER_HIGH and pfl == "high"):
+                d = "better" if b < a else "worse"
+            elif nfl == "low":
+                d = "better" if b > a else "worse"
+            else:
+                d = ("better" if b > a else "worse") if k in BETTER_HIGH else "changed"
+        out.append({"test": f.get("test"), "prev": pf.get("value"), "prevDay": pday, "now": f.get("value"), "unit": f.get("unit", ""), "dir": d, "flag": f.get("flag", "")})
+    return out
+
+
+def _compare_line(cmp: list) -> str:
+    b = [c for c in cmp if c["dir"] == "better"]
+    w = [c for c in cmp if c["dir"] == "worse"]
+    if not b and not w:
+        return ""
+    parts = []
+    if b:
+        parts.append(f"{b[0]['test']} improved to {b[0]['now']} {b[0].get('unit') or ''}".strip() + (f" and {len(b) - 1} more" if len(b) > 1 else ""))
+    if w:
+        parts.append(f"{w[0]['test']} went the wrong way" + (f" with {len(w) - 1} more" if len(w) > 1 else "") + "; worth a word with your doctor")
+    return ". ".join(parts) + "."
+
+
+def other_person(db: Session, u: User, p: Person, pt: dict):
+    """A report printed with someone else's name: which family member it probably belongs to."""
+    import difflib
+    n = _name_key(pt.get("name", ""))
+    if len(n) < 3:
+        return None
+    mine = max(difflib.SequenceMatcher(None, n, _name_key(x)).ratio() for x in (p.name, profile(p).get("legalName") or p.name))
+    if mine > 0.6 or any(_name_key(w) in n for w in p.name.split() if len(w) > 3):
+        return None
+    best, score = None, 0.0
+    for q in db.scalars(select(Person).where(Person.household_id == p.household_id, Person.id != p.id, Person.removed.is_(None))):
+        if not access(db, u, q).writer:
+            continue
+        r_ = max(difflib.SequenceMatcher(None, n, _name_key(q.name)).ratio(), max((1.0 if len(w) > 3 and _name_key(w) in n else 0) for w in q.name.split()))
+        if r_ > score:
+            best, score = q, r_
+    return {"name": pt.get("name"), "to": best.id, "toName": best.name} if best and score > 0.6 else {"name": pt.get("name")}
+
+
+def med_changes(db: Session, pid: str, meds: list) -> list[dict]:
+    cur = {}
+    for m in db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind == "med")):
+        d = decrypt(m.blob) or {}
+        if d.get("active") is not False:
+            cur[re.sub(r"[^a-z]", "", (d.get("name") or "").split(" ")[0].lower())] = (m.id, d)
+    out = []
+    for m in meds or []:
+        k = re.sub(r"[^a-z]", "", (m.get("name") or "").split(" ")[0].lower())
+        if k in cur:
+            mid, d = cur[k]
+            old = (d.get("name") or "").strip()
+            new = ((m.get("name") or "") + " " + (m.get("strength") or "")).strip()
+            if med_key(old) != med_key(new):
+                out.append({"id": mid, "old": old, "new": new, "freq": m.get("frequency", "")})
+    return out
+
+
+class MoveIn(BaseModel):
+    to: str
+
+
+@r.post("/records/{rid}/move")
+def move_record(rid: str, body: MoveIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    x = db.get(HealthRecord, rid)
+    if not x or x.kind != "report":
+        raise HTTPException(404, "Not found")
+    p, a = person_or_404(db, u, x.person_id)
+    q, b = person_or_404(db, u, body.to)
+    if not (a.writer and b.writer) or p.household_id != q.household_id:
+        raise HTTPException(403, "You can move it only between people you manage")
+    d = decrypt(x.blob) or {}
+    d["other"], d["suggest"] = None, []
+    d["compare"] = compare_findings(db, q.id, d.get("findings") or [], x.day or "")
+    x.person_id, x.blob = q.id, encrypt(d)
+    index_record(db, x, d)
+    db.commit()
+    return rec_json(x)
+
+
+@r.post("/records/{rid}/seen")
+def seen_suggest(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    x = db.get(HealthRecord, rid)
+    if not x:
+        raise HTTPException(404, "Not found")
+    p, a = person_or_404(db, u, x.person_id)
+    if not a.writer:
+        raise HTTPException(403, "Not yours")
+    d = decrypt(x.blob) or {}
+    d["suggestDone"] = True
+    x.blob = encrypt(d)
+    db.commit()
+    return {"ok": True}
+
+
 @r.post("/people/{pid}/reports")
 async def upload_report(pid: str, request: Request, file: UploadFile = File(...), read: str = Form("1"), doc: str = Form("report"),
                         u: User = Depends(need_user), db: Session = Depends(get_db)):
@@ -727,9 +918,17 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
            "focus": reading.get("focus", []), "followups": reading.get("followups", []) + reading.get("tests_needed", []),
            "questions": reading.get("questions_for_doctor", []), "warnings": reading.get("warnings", []),
            "engine": reading.get("engine", ""), "mime": mime, "name": (file.filename or "")[:120], "checked": False}
+    rec.update({"patient": reading.get("patient") or {}, "lab": reading.get("lab", ""), "recheck": reading.get("recheck", []),
+                "doctorPhone": reading.get("doctor_phone", "")})
+    rec["patient"].update({k: v for k, v in _patient_from_text(reading).items() if not rec["patient"].get(k)})
+    rec["suggest"] = suggestions(db, p, rec, reading)
+    rec["compare"] = compare_findings(db, p.id, rec["findings"], rec["date"] or _dt.date.today().isoformat())
+    rec["other"] = other_person(db, u, p, rec["patient"])
+    if doc == "prescription":
+        rec["medChanges"] = med_changes(db, p.id, rec["medicines"])
     flagged = [f for f in rec["findings"] if (f.get("flag") or "normal") not in ("normal", "unknown")]
     _note(db, p.household_id, "report", f"{p.name}: {rec['title']} read" if p.owner_user != u.id else f"Your {rec['title']} is read",
-          (f"{len(flagged)} result{'s' if len(flagged) != 1 else ''} worth discussing" if flagged else "Results are in range") if rec["findings"] else "Saved. Add the values if needed.",
+          (_compare_line(rec["compare"]) or (f"{len(flagged)} result{'s' if len(flagged) != 1 else ''} worth discussing" if flagged else "Results are in range")) if rec["findings"] else "Saved. Add the values if needed.",
           {"person": p.id}, member_id=p.id)
     x = HealthRecord(person_id=p.id, kind="report", blob=encrypt(rec), file_id=fid, day=(rec["date"] or "")[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", rec["date"] or "") else _dt.date.today().isoformat(), by_user=u.id)
     db.add(x)
