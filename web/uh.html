@@ -746,7 +746,7 @@ async function startSOS(){const me=P(ME.me),c=me.medicalId.contacts||[];if(navig
  catch(e){$('#sosl').textContent='Could not reach the server: '+e.message+'. Call directly with the buttons below.'}}
 async function endSOS(){if(WATCH!=null)navigator.geolocation.clearWatch(WATCH);WATCH=null;if(SOSA)try{await API(`/api/v1/sos/${SOSA.id}/end`,{key:true,method:'POST'})}catch(_){}SOSA=null;closeL();toast('Alert ended. Your contacts were told you are safe.')}
 /* ---------------- auth + onboarding ---------------- */
-function authPage(mode){mode=mode||'signin';layer(`<div class="page auth" style="left:0"><div class="authart"><h2>Your family's health,<br>in one calm place.</h2><p>Reports read for you, medicines on time, and help one tap away.</p>
+function authPage(mode){mode=mode||'signin';layer(`<div class="page auth" style="left:0"><div class="authart"><h2>Your family's health,<br>in one secure place.</h2><p>Reports read for you, medicines on time, and help one tap away.</p>
  <div class="pt"><span class="i">${ic(I.lock,'#fff',18)}</span><div><b>Private for each person</b>Everyone signs in with their own account and chooses what to share.</div></div>
  <div class="pt"><span class="i">${ic(I.sum,'#fff',18)}</span><div><b>Results on a 3D body</b>See what a report means, on the organ it is about.</div></div>
  <div class="pt"><span class="i">${ic(I.phone,'#fff',18)}</span><div><b>SOS to your family</b>Live location and Medical ID to your emergency contacts.</div></div></div><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px">
