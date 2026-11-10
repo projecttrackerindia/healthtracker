@@ -504,7 +504,25 @@ function applyView(){const root=$('#root');root.innerHTML=`<div class="login"><d
   try{if(navigator.geolocation&&!b.lat){await new Promise(res=>navigator.geolocation.getCurrentPosition(p=>{b.lat=p.coords.latitude;b.lng=p.coords.longitude;res()},()=>res(),{timeout:4000}))}
    const r=await fetch('/api/v1/partner/apply',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)});const j=await r.json();if(!r.ok)throw new Error(j.detail||'Could not send');
    e.target.innerHTML=`<p class="msg on ok">${E(j.message)} Reference: <b>${E(j.id)}</b></p><a href="#" id="back2" class="btn">Back to sign in</a>`;$('#back2').onclick=ev=>{ev.preventDefault();render()}}catch(err){m.className='msg on err';m.textContent=err.message}}}
-render();load();setInterval(()=>{if(ME)load()},60000);
+
+// ---------------- one-time invite link: /partner/join/<token>
+async function joinView(tok){const root=$('#root');let info;
+ try{const r=await fetch('/api/partner/join/'+encodeURIComponent(tok));info=await r.json();if(!r.ok)throw new Error(info.detail||'This link isn’t valid.')}
+ catch(e){root.innerHTML=`<div class="login"><div class="card"><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="Urban Health"></div><h2 style="margin:8px 0">Link not working</h2><p style="color:var(--mute)">${E(e.message)}</p><a class="btn" href="/partner">Go to sign in</a></div></div>`;return}
+ root.innerHTML=`<div class="login"><div class="card" style="width:min(440px,100%)"><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="Urban Health"></div>
+ <h2 style="margin:10px 0 4px;font-size:26px;letter-spacing:-.02em">Welcome, ${E(info.name.split(' ')[0])}</h2><p style="color:var(--mute);margin:0 0 16px">You're joining <b>${E(info.store)}</b>${info.area?' · '+E(info.area):''} as ${E(info.role)}.</p>
+ <form id="jf"><label style="font-size:13px;color:var(--mute)">You'll sign in with<input value="${E(info.phone||info.email)}" disabled style="margin:4px 0 12px"></label>
+ <label style="font-size:13px;color:var(--mute)">Create a password<input name="p" type="password" autocomplete="new-password" minlength="12" maxlength="128" required style="margin:4px 0 6px"></label>
+ <p id="jh" style="font-size:12.5px;color:var(--mute);margin:0 0 12px">12 or more characters. Not your name, phone number or a common password.</p>
+ <p id="jm" class="msg"></p><button class="btn p" style="width:100%;justify-content:center;padding:12px">Continue</button></form>
+ <p style="font-size:12.5px;color:var(--mute);margin:14px 0 0">This link works once. Next: sign in, then add your shop photos, live location and prices.</p></div></div>`;
+ const pw=$('#jf').p;pw.oninput=()=>{const v=pw.value;$('#jh').innerHTML=v.length<12?`${12-v.length} more character${12-v.length>1?'s':''}`:'<b style="color:#1B6E30">✓ Long enough</b>'};
+ $('#jf').onsubmit=async e=>{e.preventDefault();const m=$('#jm'),b=e.target.querySelector('button');b.disabled=true;
+  try{const r=await fetch('/api/partner/join',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:tok,password:pw.value})});const j=await r.json();if(!r.ok)throw new Error(j.detail||'Could not save');
+   history.replaceState(null,'','/partner');root.innerHTML=`<div class="login"><div class="card"><h2 style="margin:0 0 6px">You're all set</h2><p style="color:var(--mute)">Sign in with <b>${E(j.signIn)}</b> and your new password.</p><a class="btn p" href="/partner" style="justify-content:center">Sign in</a></div></div>`}
+  catch(err){m.className='msg on err';m.textContent=err.message;b.disabled=false}}}
+const JOIN=location.pathname.match(/^\/partner\/join\/([A-Za-z0-9_-]{10,80})/);
+if(JOIN)joinView(JOIN[1]);else{render();load();setInterval(()=>{if(ME)load()},60000)}
 </script>
 </body>
 </html>

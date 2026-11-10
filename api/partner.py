@@ -62,7 +62,7 @@ def me(request: Request, db: Session = Depends(get_db)) -> PartnerUser:
     if not p or p.get("k") != "partner":
         raise HTTPException(401, "login required")
     u = db.get(PartnerUser, p.get("id"))
-    if not u or not u.active:
+    if not u or not u.active or int(p.get("e") or 0) != int(u.session_epoch or 0):
         raise HTTPException(401, "login required")
     return u
 
@@ -109,12 +109,22 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
 
     rl_guard(request, "partner-login", 8, 900)
     u = find_user(db, body.email)
-    if not u or not u.active or not check_pw(body.password, u.pw_hash):
+    if u and (u.locked_until or 0) > now():
+        raise HTTPException(423, f"This sign-in is locked after too many wrong passwords. Try again in {((u.locked_until or 0) - now()) // 60 + 1} min, or ask Urban Health to unlock it.")
+    if u and u.invite_hash and not u.pw_hash:
+        raise HTTPException(401, "Finish setting up first: open the link we sent you by SMS or email.")
+    if not u or not u.active or not u.pw_hash or not check_pw(body.password, u.pw_hash):
         rl_fail(request, "partner-login", 900)
-        raise HTTPException(401, "Wrong email or password.")
+        if u:
+            u.fails = (u.fails or 0) + 1
+            if u.fails >= 10:
+                u.locked_until = now() + 900
+            db.commit()
+        raise HTTPException(401, "Wrong email, mobile number or password.")
     rl_clear(request, "partner-login")
-    u.last_login = now()
-    response.set_cookie(COOKIE, sign({"id": u.id, "k": "partner"}), httponly=True, samesite="strict", secure=request.headers.get("x-forwarded-proto", request.url.scheme) == "https", max_age=12 * 3600, path="/")
+    u.last_login, u.fails, u.locked_until = now(), 0, 0
+    u.last_device = (request.headers.get("user-agent") or "")[:80]
+    response.set_cookie(COOKIE, sign({"id": u.id, "k": "partner", "e": int(u.session_epoch or 0)}), httponly=True, samesite="strict", secure=request.headers.get("x-forwarded-proto", request.url.scheme) == "https", max_age=12 * 3600, path="/")
     return me_json(db, u)
 
 
@@ -702,6 +712,11 @@ async def upload_report(oid: str, request: Request, db: Session = Depends(get_db
         mime, name = storage.checked(data, name)
         storage.put(db, o.household_id, f"labrep_{o.id}", data, mime, name, "partner:" + u.id)
         db.flush()
+        try:
+            from .partners2 import check_report
+            check_report(db, o, s, data, mime)
+        except Exception as e:                       # a quality check must never stop a family getting their report
+            print("[quality] check failed:", type(e).__name__, str(e)[:120], flush=True)
     except Exception as e:
         print("[partner] report store failed:", type(e).__name__, str(e)[:200], flush=True)
         raise HTTPException(502, "The report could not be stored right now; try again in a minute.")

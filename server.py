@@ -126,6 +126,9 @@ app.include_router(_console.r)
 from api import ops2 as _ops2  # noqa: E402
 app.include_router(_ops2.ar)
 app.include_router(_ops2.fr)
+from api import partners2 as _p2  # noqa: E402
+app.include_router(_p2.ar)
+app.include_router(_p2.pr)
 from api import places as places_api, billing as billing_api, inbox as inbox_api, partner as partner_api  # noqa: E402
 app.include_router(places_api.r)
 app.include_router(billing_api.r)

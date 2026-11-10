@@ -159,3 +159,51 @@ def test_phase2_rx_approvals_refund_complaints():
     assert c1.post(f"/api/admin/complaints/{cm['id']}", json={"text": cm["replies"]["en"], "resolve": True}, headers=H1).json()["status"] == "resolved"
     td = c1.get("/api/admin/console/today", headers=H1).json()
     assert isinstance(td["needs"], list)
+
+
+def test_phase3_invites_signins_scorecard_quality():
+    import server, time
+    from api.db import SessionLocal
+    from api.models import Admin, Household, Store, Order, PartnerUser
+    from api.security import hash_pw
+    from api.partners2 import check_report
+    c = TestClient(server.app).__enter__(); H = {"x-tht": "1", "x-forwarded-for": "10.4.0.1"}
+    with SessionLocal() as db:
+        db.add(Admin(email="p3@x.in", pw_hash=hash_pw("Right-password-99"), role="owner"))
+        s = Store(kind="lab", name="P3 Lab", city="Hyd", lat=17.4, lng=78.4, verified=True, profile={"pins": "500072 500085"}, pin="500072")
+        h = Household(key="kp3", name="Meena V"); db.add_all([s, h]); db.commit(); sid, hid = s.id, h.id
+    assert c.post("/api/admin/login", json={"email": "p3@x.in", "password": "Right-password-99"}, headers=H).status_code == 200
+    r = c.post(f"/api/admin/stores/{sid}/invite", json={"name": "Ravi Kumar", "phone": "90000 11182", "role": "technician"}, headers=H).json()
+    assert r["status"] == "invited" and r["demoLink"].startswith("/partner/join/")
+    tok = r["demoLink"].rsplit("/", 1)[1]
+    assert c.post(f"/api/admin/stores/{sid}/invite", json={"name": "Dup", "phone": "9000011182", "role": "staff"}, headers=H).status_code == 409
+    p = TestClient(server.app)
+    assert p.post("/api/partner/login", json={"email": "9000011182", "password": "anything-long-1"}, headers={"x-tht": "1"}).status_code == 401
+    assert p.get(f"/api/partner/join/{tok}").json()["store"] == "P3 Lab"
+    assert p.post("/api/partner/join", json={"token": tok, "password": "short"}).status_code == 400
+    assert p.post("/api/partner/join", json={"token": tok, "password": "Lab-tech-pass-2026"}).status_code == 200
+    assert p.post("/api/partner/join", json={"token": tok, "password": "Lab-tech-pass-2026"}).status_code == 404   # once only
+    assert p.post("/api/partner/login", json={"email": "9000011182", "password": "Lab-tech-pass-2026"}, headers={"x-tht": "1"}).status_code == 200
+    assert p.get("/api/partner/me").status_code == 200
+    uid = r["id"]
+    assert c.post(f"/api/admin/partner-users/{uid}", json={"action": "signout"}, headers=H).status_code == 200
+    assert p.get("/api/partner/me").status_code == 401      # signed out everywhere
+    for i in range(10):
+        TestClient(server.app).post("/api/partner/login", json={"email": "9000011182", "password": "wrong-pass-123"}, headers={"x-tht": "1", "x-forwarded-for": f"10.3.0.{i}"})
+    assert "locked" in TestClient(server.app).post("/api/partner/login", json={"email": "9000011182", "password": "Lab-tech-pass-2026"}, headers={"x-tht": "1", "x-forwarded-for": "10.3.1.1"}).json()["detail"]
+    assert c.post(f"/api/admin/partner-users/{uid}", json={"action": "unlock"}, headers=H).json()["status"] == "active"
+    # quality: same file for two people is flagged
+    with SessionLocal() as db:
+        o1 = Order(household_id=hid, store_id=sid, kind="lab", items=[{"name": "CBC"}], status="ready", total=300, addr={"pin": "500049"})
+        o2 = Order(household_id=hid, store_id=sid, kind="lab", items=[{"name": "CBC"}], status="ready", total=300, addr={"pin": "500049"})
+        db.add_all([o1, o2]); db.flush(); s = db.get(Store, sid)
+        assert not [f for f in check_report(db, o1, s, b"%PDF-same", "image/png") if f.kind == "copied"]
+        db.flush()
+        assert [f for f in check_report(db, o2, s, b"%PDF-same", "image/png") if f.kind == "copied"]
+        db.commit()
+    q = c.get("/api/admin/quality", headers=H).json()
+    assert any(r["kind"] == "copied" for r in q["rows"])
+    sc = c.get(f"/api/admin/stores/{sid}/scorecard", headers=H).json()
+    assert sc["m"]["corrections"] >= 1 and len(sc["series"]) == 30
+    cv = c.get("/api/admin/coverage?kind=lab", headers=H).json()
+    assert any(g["pin"] == "500049" for g in cv["gaps"]) and any(x["pin"] == "500072" and x["partners"] == 1 for x in cv["rows"])

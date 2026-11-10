@@ -592,6 +592,12 @@ class PartnerUser(Base):
     must_change: Mapped[bool] = mapped_column(Boolean, default=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
     last_login: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    invite_hash: Mapped[str] = mapped_column(String(64), default="")      # sha256 of the one-time join link; empty once used
+    invite_exp: Mapped[int] = mapped_column(Integer, default=0)
+    fails: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[int] = mapped_column(Integer, default=0)
+    session_epoch: Mapped[int] = mapped_column(Integer, default=0)        # bump to sign out of every device
+    last_device: Mapped[str] = mapped_column(String(80), default="")
 
 
 class Payout(Base):
@@ -1164,3 +1170,17 @@ class Complaint(Base):
     thread: Mapped[list | None] = mapped_column(JSON, nullable=True)                 # [{by, text, t}]
     resolved_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class QualityFlag(Base):
+    """Something about a lab's report that a person should look at. Raised automatically when the report arrives."""
+    __tablename__ = "quality_flags"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    store_id: Mapped[str] = mapped_column(String(32), index=True)
+    order_id: Mapped[str] = mapped_column(String(32), default="")
+    kind: Mapped[str] = mapped_column(String(24))          # late | copied | unsigned | not_medical | sample
+    serious: Mapped[bool] = mapped_column(Boolean, default=False)
+    text: Mapped[str] = mapped_column(String(300), default="")
+    file_hash: Mapped[str] = mapped_column(String(64), default="", index=True)
+    status: Mapped[str] = mapped_column(String(12), default="open", index=True)   # open | resolved
+    created: Mapped[int] = mapped_column(Integer, default=now, index=True)
