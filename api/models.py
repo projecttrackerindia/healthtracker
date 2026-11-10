@@ -1002,6 +1002,10 @@ class HouseholdInvite(Base):
     created: Mapped[int] = mapped_column(Integer, default=now)
     expires: Mapped[int] = mapped_column(Integer)
     used_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    name: Mapped[str] = mapped_column(String(80), default="")
+    sent_at: Mapped[int] = mapped_column(Integer, default=0)
+    sends: Mapped[int] = mapped_column(Integer, default=1)
+    opened: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class ConsentLog(Base):

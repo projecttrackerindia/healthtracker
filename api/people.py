@@ -37,6 +37,60 @@ RANK = {"none": 0, "medid": 1, "summary": 2, "all": 3, "guardian": 4, "owner": 5
 KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med": "all", "dose": "all",
               "preg": "summary", "kick": "summary", "cycle": "summary"}
 WOMENS = {"preg", "kick", "cycle"}
+RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother",
+             "Grandson", "Granddaughter", "Father-in-law", "Mother-in-law", "Son-in-law", "Daughter-in-law", "Brother-in-law",
+             "Sister-in-law", "Uncle", "Aunt", "Nephew", "Niece", "Cousin", "Friend", "Caregiver", "Other")
+_REL_ALIAS = {"spouse": "Wife", "wfie": "Wife", "wief": "Wife", "husbund": "Husband", "hubby": "Husband", "dad": "Father",
+              "papa": "Father", "mom": "Mother", "mum": "Mother", "amma": "Mother", "nanna": "Father", "bro": "Brother", "sis": "Sister"}
+ONE_ONLY = {"Wife", "Husband", "Father", "Mother"}
+ID_KEYS = ("dob", "phone")          # with the name: changeable once a week, confirmed by an emailed code
+ID_WEEK, ID_FIX = 7 * 86400, 86400
+
+
+def norm_relation(r: str) -> str:
+    """'WIFE', 'wife ', 'Wfie' -> 'Wife'. Anything unknown -> 'Other' (never free text)."""
+    k = re.sub(r"[^a-z-]", "", (r or "").lower())
+    if not k:
+        return ""
+    for x in RELATIONS:
+        if x.lower() == k:
+            return x
+    if k in _REL_ALIAS:
+        return _REL_ALIAS[k]
+    import difflib
+    m = difflib.get_close_matches(k, [x.lower() for x in RELATIONS], n=1, cutoff=0.75)
+    return next((x for x in RELATIONS if m and x.lower() == m[0]), "Other")
+
+
+def norm_name(n: str) -> str:
+    """Collapse spaces; fix ALL CAPS / all lower to Title Case. Mixed case the person typed is kept."""
+    n = re.sub(r"\s+", " ", (n or "").strip())[:80]
+    if n and (n.isupper() or n.islower()):
+        n = " ".join(w[:1].upper() + w[1:].lower() for w in n.split(" "))
+    return n
+
+
+def norm_contact(c: str) -> tuple[str, str]:
+    c = (c or "").strip()
+    if "@" in c:
+        c = c.lower()
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", c):
+            raise HTTPException(400, "Enter a valid email address")
+        return "email", c
+    d = re.sub(r"\D", "", c)
+    if len(d) == 12 and d.startswith("91"):
+        d = d[2:]
+    elif len(d) == 11 and d.startswith("0"):
+        d = d[1:]
+    if not re.fullmatch(r"[6-9]\d{9}", d):
+        raise HTTPException(400, "Enter a 10-digit mobile number")
+    return "phone", "+91" + d
+
+
+def _name_key(n: str) -> str:
+    return re.sub(r"[^a-z]", "", (n or "").lower())
+
+
 PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone")
 COLORS = ["#0A84FF", "#30B0C7", "#BF5AF2", "#FF9F0A", "#34C759", "#FF375F", "#5E5CE6", "#A2845E"]
 INVITE_DAYS = 7
@@ -153,6 +207,8 @@ def person_json(db: Session, u: User, p: Person, a: Access) -> dict:
            "sex": pr.get("sex", ""), "age": age(pr.get("dob", "")), "medicalId": medical_id(db, p, a)}
     if a.can("summary"):
         out["profile"] = {k: pr.get(k, "") for k in PROFILE_KEYS}
+    if p.owner_user == u.id:
+        out["idLock"] = id_lock(pr)
     if a.womens:
         out["pregnancy"] = active_pregnancy(db, p.id)
     out["guardians"] = [g for g in db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id))] if p.owner_user is None else []
@@ -209,8 +265,9 @@ def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
             members.append({"id": m.id, "name": m.name, "role": m.role, "you": m.id == u.id})
     invites = []
     if u.household_id:
-        for i in db.scalars(select(HouseholdInvite).where(HouseholdInvite.household_id == u.household_id, HouseholdInvite.used_by.is_(None), HouseholdInvite.expires > now())):
-            invites.append({"token": i.token[:6], "contact": i.contact, "relation": i.relation})
+        for i in db.scalars(select(HouseholdInvite).where(HouseholdInvite.household_id == u.household_id, HouseholdInvite.used_by.is_(None),
+                                                          HouseholdInvite.expires > now() - 30 * 86400).order_by(HouseholdInvite.created.desc())):
+            invites.append(invite_view(i))
     h = db.get(Household, u.household_id) if u.household_id else None
     return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role},
             "household": u.household_id, "hkey": h.key if h else None, "me": mine.id if mine else None, "people": people, "members": members,
@@ -222,6 +279,7 @@ class PersonIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     profile: dict = Field(default_factory=dict)
     dependent: bool = False
+    same_ok: bool = False
 
 
 @r.post("/people")
@@ -229,6 +287,15 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
     limit(request, "v2people", 30, 600)
     h = ensure_household(db, u)
     n = len(db.scalars(select(Person.id).where(Person.household_id == h.id)).all())
+    body.name = norm_name(body.name)
+    if not body.name:
+        raise HTTPException(400, "Enter the full name")
+    if body.dependent and not body.same_ok:
+        k = _name_key(body.name)
+        import difflib
+        for q in db.scalars(select(Person).where(Person.household_id == h.id, Person.removed.is_(None))):
+            if _name_key(q.name) == k or difflib.SequenceMatcher(None, _name_key(q.name), k).ratio() > 0.88:
+                raise HTTPException(409, f"SAME:{q.id}:{q.name} is already in your family. Is this the same person?")
     if body.dependent:
         p = Person(household_id=h.id, owner_user=None, name=body.name.strip(), color=COLORS[n % len(COLORS)], blob=encrypt(clean_profile(body.profile)))
         db.add(p)
@@ -255,19 +322,77 @@ def get_person(pid: str, u: User = Depends(need_user), db: Session = Depends(get
 class PersonEdit(BaseModel):
     name: str | None = None
     profile: dict | None = None
+    code: str | None = None
+
+
+def id_lock(pr: dict) -> dict:
+    """When identity details (name, date of birth, mobile) may next change. One free correction within 24 hours."""
+    last = int(pr.get("_idAt") or 0)
+    fix = bool(last and now() - last < ID_FIX and not pr.get("_idFix"))
+    return {"last": last, "next": last + ID_WEEK if last else 0, "locked": bool(last and now() < last + ID_WEEK and not fix), "fix": fix}
+
+
+def _id_target(u: User) -> tuple[str, str]:
+    return ("email", u.email) if u.email else ("phone", u.phone or "")
+
+
+@r.post("/people/{pid}/idcode")
+def id_code(pid: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    from .auth import send_code
+    p, a = person_or_404(db, u, pid)
+    if p.owner_user != u.id:
+        raise HTTPException(403, "Only they can change their own details")
+    lk = id_lock(profile(p))
+    if lk["locked"]:
+        raise HTTPException(423, "Next change allowed " + _when(lk["next"]))
+    kind, tgt = _id_target(u)
+    if not tgt:
+        raise HTTPException(400, "Add an email to your account first")
+    out = send_code(request, db, tgt, kind, "idchange")
+    db.commit()
+    masked = re.sub(r"^(.{2}).*(@.*)$", r"\1•••\2", tgt) if kind == "email" else tgt[:3] + " •••• " + tgt[-3:]
+    return {"ok": True, "to": masked, "kind": kind, **out}
+
+
+def _when(t: int) -> str:
+    d = _dt.datetime.fromtimestamp(t, _dt.timezone(_dt.timedelta(hours=5, minutes=30)))
+    return d.strftime("%a %-d %b, %-I:%M %p")
 
 
 @r.put("/people/{pid}")
-def edit_person(pid: str, body: PersonEdit, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def edit_person(pid: str, body: PersonEdit, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
     p, a = person_or_404(db, u, pid)
     if not a.writer:
         raise HTTPException(403, "Only they can change their profile")
-    if body.name is not None and body.name.strip():
-        p.name = body.name.strip()[:80]
-    if body.profile is not None:
-        cur = profile(p)
-        cur.update(clean_profile({**cur, **body.profile}))
-        p.blob = encrypt(cur)
+    cur = profile(p)
+    name = norm_name(body.name) if body.name is not None and body.name.strip() else p.name
+    newp = clean_profile({**cur, **(body.profile or {})}) if body.profile is not None else {k: cur.get(k, "") for k in PROFILE_KEYS}
+    if newp.get("phone"):
+        newp["phone"] = norm_contact(newp["phone"])[1]
+    changed = [k for k in ID_KEYS if (newp.get(k) or "") != (cur.get(k) or "")] + (["name"] if name != p.name else [])
+    if p.owner_user == u.id and changed and (cur.get("_idAt") or any(cur.get(k) for k in ID_KEYS)):
+        lk = id_lock(cur)
+        if lk["locked"]:
+            raise HTTPException(423, f"Name, date of birth and mobile can change once a week. Next change allowed {_when(lk['next'])}.")
+        if not body.code:
+            raise HTTPException(428, "Confirm with the code we send to your email")
+        from .auth import check_code
+        kind, tgt = _id_target(u)
+        check_code(db, tgt, "idchange", body.code)
+        if lk["fix"]:
+            cur["_idFix"] = 1                       # the one correction; the weekly clock does not restart
+        else:
+            cur["_idAt"], cur["_idFix"] = now(), 0
+        old_phone = cur.get("phone") or ""
+        if "phone" in changed and old_phone:
+            try:
+                messaging.send_text_sms(old_phone, "Urban Health: the mobile number on your profile was changed. If this was not you, sign in and lock your account, or write to support@urbanhealth.in.")
+            except Exception:
+                pass
+        _note(db, p.household_id, "safety", "Your details were changed", "Changed: " + ", ".join({"dob": "date of birth", "phone": "mobile"}.get(k, k) for k in changed) + ". Not you? Change your password now.", {"user": u.id}, to_user=u.id)
+    p.name = name
+    cur.update(newp)
+    p.blob = encrypt(cur)
     db.commit()
     return person_json(db, u, p, a)
 
@@ -486,37 +611,115 @@ def report_file(rid: str, u: User = Depends(need_user), db: Session = Depends(ge
 class InviteIn(BaseModel):
     contact: str
     relation: str = ""
+    name: str = ""
+
+
+INVITE_GAP, INVITE_MAX = 120, 5
+
+
+def invite_view(i: HouseholdInvite) -> dict:
+    st = "joined" if i.used_by else "expired" if i.expires < now() else "opened" if i.opened else "sent"
+    return {"ref": i.token[:10], "token": i.token[:6], "contact": i.contact, "relation": i.relation, "name": i.name,
+            "sent": i.sent_at or i.created, "sends": i.sends or 1, "status": st, "expires": i.expires,
+            "link": f"/app/join/{i.token}", "canResend": (now() - (i.sent_at or i.created)) >= INVITE_GAP and (i.sends or 1) < INVITE_MAX}
+
+
+def _deliver(request: Request, u: User, i: HouseholdInvite) -> bool:
+    link = f"{str(request.base_url).rstrip('/')}/app/join/{i.token}"
+    text = f"{u.name or 'Your family'} invited you to their family on Urban Health. Join with your own account: {link}"
+    try:
+        if "@" in i.contact and (messaging.email_ready() or messaging.demo()):
+            messaging.send_invite_email(i.contact, u.name or "Your family", i.relation or "", link)
+            return True
+        if "@" not in i.contact and (messaging.alert_sms_ready() or messaging.demo()):
+            return bool(messaging.send_text_sms(i.contact, text))
+    except Exception:
+        pass
+    return False
+
+
+def _my_invite(db: Session, u: User, ref: str) -> HouseholdInvite:
+    ref = (ref or "")[:10]
+    i = db.scalar(select(HouseholdInvite).where(HouseholdInvite.household_id == (u.household_id or "-"), HouseholdInvite.token.like(ref + "%"))) if len(ref) >= 6 else None
+    if not i or i.used_by:
+        raise HTTPException(404, "This invite is no longer there")
+    return i
 
 
 @r.post("/household/invite")
 def invite(body: InviteIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
     limit(request, "v2invite", 20, 3600)
     h = ensure_household(db, u)
-    c = body.contact.strip()
-    kind = "email" if "@" in c else "phone"
-    if kind == "email" and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", c.lower()):
-        raise HTTPException(400, "Enter a valid email address")
-    if kind == "phone":
-        digits = re.sub(r"\D", "", c)
-        if len(digits) < 10:
-            raise HTTPException(400, "Enter a valid mobile number")
-        c = "+91" + digits[-10:] if len(digits) <= 12 else "+" + digits
+    kind, c = norm_contact(body.contact)
+    rel, name = norm_relation(body.relation), norm_name(body.name)
+    if c in ((u.phone or ""), (u.email or "").lower()):
+        raise HTTPException(400, "That is your own " + ("email" if kind == "email" else "number"))
+    member = db.scalar(select(User).where(User.household_id == h.id, (User.email == c) if kind == "email" else (User.phone == c)))
+    if member:
+        raise HTTPException(409, f"{member.name or 'This person'} is already in your family")
+    live = db.scalars(select(HouseholdInvite).where(HouseholdInvite.household_id == h.id, HouseholdInvite.used_by.is_(None))).all()
+    dup = next((i for i in live if i.contact == c), None)
+    if dup:                                   # never a second row: the caller offers Resend instead
+        return {"ok": True, "duplicate": True, "invite": invite_view(dup)}
+    if rel in ONE_ONLY:
+        taken = db.scalar(select(HouseholdInvite).where(HouseholdInvite.household_id == h.id, HouseholdInvite.relation == rel,
+                                                         (HouseholdInvite.used_by.is_not(None)) | (HouseholdInvite.expires > now())))
+        if taken:
+            raise HTTPException(409, f"You already have a {rel.lower()} in your family ({taken.name or taken.contact}). Cancel that invite first if it was a mistake.")
     t = secrets.token_urlsafe(24)
-    db.add(HouseholdInvite(token=t, household_id=h.id, contact=c, relation=body.relation.strip()[:40], by_user=u.id, expires=now() + INVITE_DAYS * 86400))
+    i = HouseholdInvite(token=t, household_id=h.id, contact=c, relation=rel, name=name, by_user=u.id, expires=now() + INVITE_DAYS * 86400, sent_at=now(), sends=1)
+    db.add(i)
     db.commit()
-    origin = str(request.base_url).rstrip("/")
-    link = f"{origin}/app/join/{t}"
-    text = f"{u.name or 'Your family'} invited you to their family on Urban Health. Join with your own account: {link}"
-    sent = False
-    try:
-        if kind == "email" and (messaging.email_ready() or messaging.demo()):
-            messaging.send_invite_email(c, u.name or "Your family", body.relation or "", link)
-            sent = True
-        elif kind == "phone" and (messaging.alert_sms_ready() or messaging.demo()):
-            sent = bool(messaging.send_text_sms(c, text))
-    except Exception:
-        sent = False
-    return {"ok": True, "sent": sent, "link": link}
+    sent = _deliver(request, u, i)
+    return {"ok": True, "sent": sent, "link": f"{str(request.base_url).rstrip('/')}/app/join/{t}", "invite": invite_view(i)}
+
+
+@r.post("/household/invites/{ref}/resend")
+def invite_resend(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    limit(request, "v2resend", 20, 3600)
+    i = _my_invite(db, u, ref)
+    wait = INVITE_GAP - (now() - (i.sent_at or i.created))
+    if wait > 0:
+        raise HTTPException(429, f"Sent just now. You can resend in {wait} seconds.")
+    if (i.sends or 1) >= INVITE_MAX:
+        raise HTTPException(429, "Sent 5 times already. Share the link on WhatsApp instead.")
+    i.sends, i.sent_at, i.expires = (i.sends or 1) + 1, now(), now() + INVITE_DAYS * 86400
+    db.commit()
+    return {"ok": True, "sent": _deliver(request, u, i), "invite": invite_view(i)}
+
+
+class InviteEdit(BaseModel):
+    name: str = ""
+    relation: str = ""
+
+
+@r.put("/household/invites/{ref}")
+def invite_edit(ref: str, body: InviteEdit, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    i = _my_invite(db, u, ref)
+    i.name, i.relation = norm_name(body.name) or i.name, norm_relation(body.relation) or i.relation
+    db.commit()
+    return invite_view(i)
+
+
+@r.delete("/household/invites/{ref}")
+def invite_cancel(ref: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    i = _my_invite(db, u, ref)
+    db.delete(i)                              # the link stops working at once
+    db.commit()
+    return {"ok": True}
+
+
+@r.get("/household/invite/{token}")
+def invite_open(token: str, db: Session = Depends(get_db)):
+    """The invited person opened the link: mark it, and say who invited them. No health data."""
+    i = db.get(HouseholdInvite, token)
+    if not i or i.used_by or i.expires < now():
+        raise HTTPException(404, "This invite has expired. Ask for a new one.")
+    if not i.opened:
+        i.opened = now()
+        db.commit()
+    by = db.get(User, i.by_user)
+    return {"by": (by.name if by else "") or "Your family", "relation": i.relation}
 
 
 class JoinIn(BaseModel):
