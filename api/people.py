@@ -1277,7 +1277,8 @@ def med_name(n: str) -> str:
     n = re.sub(r"[-_]+", " ", (n or "").strip())
     n = re.sub(r"(?<=[A-Za-z])(?=\d)", " ", n)
     n = re.sub(r"\s+", " ", n)
-    return " ".join(w if any(ch.isdigit() for ch in w) or (len(w) <= 3 and w.isupper()) else w[:1].upper() + w[1:].lower() for w in n.split(" "))[:80]
+    units = {"mg": "mg", "mcg": "mcg", "g": "g", "ml": "ml", "iu": "IU", "%": "%"}   # "500 MG" -> "500 mg", not "500 Mg"
+    return " ".join(units[w.lower()] if w.lower() in units else w if any(ch.isdigit() for ch in w) or (len(w) <= 3 and w.isupper()) else w[:1].upper() + w[1:].lower() for w in n.split(" "))[:80]
 
 
 @r.get("/household/duplicates")
