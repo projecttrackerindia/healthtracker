@@ -247,6 +247,7 @@ body.flat .spacer{height:118px}body.flat #gl,body.flat #labels,body.flat #lines{
 .sheetx{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.28);animation:fade .2s ease both}
 .sheetx .sh{width:100%;max-width:520px;background:#F2F2F7;border-radius:22px 22px 0 0;padding:8px 0 max(18px,env(safe-area-inset-bottom));animation:up .32s var(--ease) both;max-height:78vh;display:flex;flex-direction:column}
 @media(min-width:700px){.sheetx{align-items:center}.sheetx .sh{border-radius:22px}
+.pwr{margin:8px 4px 0;display:flex;flex-direction:column;gap:5px}.pwi{display:flex;gap:8px;align-items:center;font-size:13.5px;color:#86868B}.pwi span{width:18px;height:18px;border-radius:9px;border:1.5px solid #C7C7CC;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}.pwi.ok{color:#1A7F37}.pwi.ok span{background:#34C759;border-color:#34C759}
 /* the sheet scrolls inside, so its Save button can always be reached; the header stays put */
 .sheetx .sh>:not(.hd){overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .sheetx .sh{max-height:min(88vh,860px)}
@@ -1108,7 +1109,7 @@ function authPage(mode){mode=mode||'signin';layer(`<div class="page auth" style=
  <div class="seg" style="margin-top:18px"><button class="${mode==='signin'?'on':''}" onclick="authPage('signin')">Sign in</button><button class="${mode==='signup'?'on':''}" onclick="authPage('signup')">Create account</button></div>
  <form id="af" style="margin-top:6px">${mode==='signin'?`<div class="sect">MOBILE OR EMAIL</div><input class="inp2" name="id" required autocomplete="username" inputmode="email" placeholder="98765 43210 or name@gmail.com">
  <div class="sect">PASSWORD (OR LEAVE EMPTY FOR A CODE)</div><input class="inp2" type="password" name="pw" autocomplete="current-password">`
- :`<div class="sect">FULL NAME</div><input class="inp2" name="name" required autocomplete="name"><div class="sect">MOBILE</div><input class="inp2" name="phone" required inputmode="tel" autocomplete="tel" placeholder="98765 43210"><div class="sect">EMAIL</div><input class="inp2" name="email" type="email" required autocomplete="email"><div class="sect">PASSWORD</div><input class="inp2" type="password" name="pw" required minlength="12" autocomplete="new-password"><p class="cap">12+ characters with upper and lower case, a number and a symbol.</p>
+ :`<div class="sect">FULL NAME</div><input class="inp2" name="name" required autocomplete="name"><div class="sect">MOBILE</div><input class="inp2" name="phone" required inputmode="tel" autocomplete="tel" placeholder="98765 43210"><div class="sect">EMAIL</div><input class="inp2" name="email" type="email" required autocomplete="email"><div class="sect">PASSWORD</div><input class="inp2" type="password" name="pw" required minlength="12" autocomplete="new-password" data-pwrules><div class="pwr" id="pwr"><div class="pwi">12+ characters with upper and lower case, a number and a symbol — and not your name, email or phone.</div></div>
  <label class="row" style="margin:12px 4px;font-size:14px;gap:10px"><input type="checkbox" name="terms" required style="width:20px;height:20px"> I agree to the <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a></label>`}
  <button class="btn pri" style="width:100%;margin-top:18px" id="ab">${mode==='signin'?'Continue':'Create account'}</button></form>
  <div id="gwrap" style="display:none;margin-top:18px"><div class="row" style="gap:10px;color:var(--ink3);font-size:13px"><span style="flex:1;height:1px;background:#D1D1D6"></span>or<span style="flex:1;height:1px;background:#D1D1D6"></span></div><div id="gbtn" style="display:flex;justify-content:center;margin-top:14px;min-height:44px"></div></div>
@@ -1454,6 +1455,18 @@ async function showCard(id){let c;try{c=await API('/api/v2/schemes/cards/'+id)}c
  sx.el.querySelector('[data-d]').onclick=async()=>{if(!confirm('Remove this card?'))return;try{await API('/api/v2/schemes/cards/'+id,{method:'DELETE'});sx.close();openSchemes()}catch(e){toast(e.message)}}}
 
 for(const k of Object.keys(window)){if(/^open[A-Z]/.test(k)&&typeof window[k]==='function'&&!window[k].__nav){const f=window[k];const w=function(...a){NAVCTX={fn:w,args:a};return f.apply(this,a)};w.__nav=1;window[k]=w}}
+
+/* Live password rules under "Create account": each rule turns green as it's met, and a name / email / phone match
+   says exactly which part, so nobody is left guessing at a toast. Mirrors api/passwords.py; the server still decides. */
+function pwRules(pw,name,email,phone){const low=pw.toLowerCase(),r=[];
+ r.push(['12 or more characters',pw.length>=12]);r.push(['Upper and lower case letters',/[A-Z]/.test(pw)&&/[a-z]/.test(pw)]);r.push(['A number',/\d/.test(pw)]);r.push(['A symbol such as ! @ # $ %',/[^A-Za-z0-9]/.test(pw)]);
+ const bits=(name+' '+String(email).split('@')[0]).toLowerCase().split(/[\s@._+-]+/).filter(b=>b.length>=3),hit=bits.find(b=>low.includes(b)),d=String(phone).replace(/\D/g,''),ph=d.length>=6&&pw.includes(d.slice(-6));
+ r.push([hit?`Doesn't contain “${hit}” from your name or email`:ph?"Doesn't contain your phone number":"Doesn't contain your name, email or phone",!hit&&!ph]);
+ if(/(.)\1\1/.test(pw))r.push(['No three identical characters in a row',false]);
+ if(/1234|2345|3456|4567|5678|6789|abcd|qwer|asdf/.test(low))r.push(['No runs like 1234 or abcd',false]);return r}
+document.addEventListener('input',e=>{const t=e.target;if(!t.matches||!t.matches('[data-pwrules],form input[name=name],form input[name=email],form input[name=phone]'))return;const f=t.form;if(!f)return;const pw=f.querySelector('[data-pwrules]'),box=f.querySelector('#pwr');if(!pw||!box)return;
+ const rs=pwRules(pw.value,(f.name&&f.name.value)||'',(f.email&&f.email.value)||'',(f.phone&&f.phone.value)||'');
+ box.innerHTML=pw.value?rs.map(([t,ok])=>`<div class="pwi ${ok?'ok':''}"><span>${ok?'✓':''}</span>${esc(t)}</div>`).join(''):'<div class="pwi">12+ characters with upper and lower case, a number and a symbol — and not your name, email or phone.</div>'},true);
 </script>
 </body>
 </html>
