@@ -171,7 +171,9 @@ def _parts(a: dict) -> dict:
     ad = a.get("address") or {}
     return {"area": ad.get("suburb") or ad.get("neighbourhood") or ad.get("city_district") or ad.get("village") or "",
             "city": ad.get("city") or ad.get("town") or ad.get("county") or "", "state": ad.get("state") or "", "pin": (ad.get("postcode") or "").replace(" ", "")[:6],
-            "street": ", ".join(x for x in (ad.get("building"), ad.get("road")) if x)}
+            "street": ", ".join(x for x in (ad.get("building"), ad.get("road")) if x), "road": ad.get("road") or "",
+            # The bold line on the card, like delivery apps: the building or place if known, else the street, else the area
+            "title": a.get("name") or ad.get("building") or ad.get("amenity") or ad.get("road") or ad.get("neighbourhood") or ad.get("suburb") or ""}
 
 
 @r.get("/geo/reverse")
