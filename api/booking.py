@@ -421,8 +421,8 @@ def check_order(db: Session, s: Store, body, household_id: str) -> dict | None:
     for k in ("lat", "lng"):
         if a and a.get(k) is not None:
             ca[k] = float(a[k])
-    if not ca.get("line1") or not ca.get("landmark") or not re.fullmatch(r"[1-9]\d{5}", ca.get("pin", "")) or ca.get("lat") is None:
-        raise HTTPException(400, "Add the address with a map pin, flat number and landmark before booking.")
+    if not ca.get("line1") or not re.fullmatch(r"[1-9]\d{5}", ca.get("pin", "")) or ca.get("lat") is None:
+        raise HTTPException(400, "Add the address with a map pin and the flat number before booking.")
     if not serves(s, ca["pin"], ca.get("lat"), ca.get("lng")):
         raise HTTPException(409, f"{s.name} doesn't come to {ca['pin']}. Choose another lab or visit the lab instead.")
     if body.kind == "lab" and body.slot:

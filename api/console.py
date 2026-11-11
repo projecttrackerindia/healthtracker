@@ -114,6 +114,14 @@ def today(days: int = 7, a: Admin = Depends(admin_me), db: Session = Depends(get
     stuck = [o for o in act if t - _last_t(o) > 86400]
     late = [o for o in act if late_by(o, t) and o not in stuck]
     unacc = [o for o in act if o.status == "placed" and t - (o.created or t) > 600 and o not in stuck]
+    unc = [o for o in act if o.kind == "medicine" and o.status == "placed" and any(x.get("s") == "unclaimed" for x in (o.timeline or []))]
+    pick = [o for o in act if o.kind == "medicine" and o.status == "packing" and (o.courier or "") == "uh"]
+    if unc:
+        needs.insert(0, {"sev": "urgent", "tag": "Orders", "icon": "☎", "title": f"{len(unc)} medicine order{'s' if len(unc) > 1 else ''} with no pharmacy",
+                         "sub": "Three nearby shops let it pass · call one and assign", "act": "Open dispatch", "go": "dispatch"})
+    if pick:
+        needs.insert(0, {"sev": "urgent", "tag": "Orders", "icon": "🛵", "title": f"{len(pick)} packed order{'s' if len(pick) > 1 else ''} to collect",
+                         "sub": "The pharmacy has no rider free", "act": "Open dispatch", "go": "dispatch"})
     if stuck:
         needs.append({"sev": "urgent", "tag": "Orders", "icon": "⏸", "title": f"{len(stuck)} order{'s are' if len(stuck) > 1 else ' is'} stuck for over a day",
                       "sub": f"#{stuck[0].id} · no update in {(t - _last_t(stuck[0])) // 86400} days · close it or call the partner", "act": "Open board", "go": "board"})

@@ -310,12 +310,20 @@ def _status(o: Order):
     return steps, i
 
 
+def _live(o):
+    from .dispatch import live
+    try:
+        return live(o)
+    except Exception:
+        return None
+
+
 def order_json(o: Order):
     steps, i = _status(o)
     return {"id": o.id, "kind": o.kind, "store": store_json(o.store) if o.store else None, "items": o.items, "subtotal": o.subtotal, "fee": o.fee,
             "discount": o.discount, "total": o.total, "address": o.address, "member": o.member, "rxShared": o.rx_shared, "slot": o.slot,
             "status": "cancelled" if i < 0 else (o.status if o.status in ("return_requested", "returned", "refunded") else steps[i][0]), "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
-            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr, "doorCode": o.door_code, "sampleId": o.sample_id, "cancelFee": o.cancel_fee,
+            "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr, "doorCode": o.door_code, "sampleId": o.sample_id, "cancelFee": o.cancel_fee, "live": _live(o),
             "visitRating": o.visit_rating, "visitTags": o.visit_tags,
             # Asked once the sample is in the bag and the person is still fresh in mind — not days later when
             # the report lands, by which time the family is rating the report and calling it the visit.

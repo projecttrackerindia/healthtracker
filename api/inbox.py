@@ -75,7 +75,9 @@ def notify(db: Session, household_id: str, kind: str, title: str, body: str = ""
             if s.user_id and not wants_push(db, s.user_id, kind):
                 continue
             try:
-                ok, status, _ = PUSH.send(s.sub, {"title": title[:80], "body": body[:160], "url": url, "tag": kind})
+                ok, status, _ = PUSH.send(s.sub, {"title": title[:80], "body": body[:160], "url": url,
+                                                  # one notification per order that updates in place, like delivery apps
+                                                  "tag": ("o-" + str((ref or {}).get("order"))) if (ref or {}).get("order") else kind})
                 if not ok and status in (404, 410):
                     db.delete(s)
             except Exception:

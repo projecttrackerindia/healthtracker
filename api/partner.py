@@ -226,6 +226,8 @@ def porder(db: Session, o: Order) -> dict:
                          "rxDate": o.rx_date, "rxAgeDays": rx_age_days(o.rx_date),
                          "note": o.verify_note} if o.verified_at else None
     j["hasReport"] = bool(db.get(StoredFile, (o.household_id, f"labrep_{o.id}")))
+    j["offerLeft"] = max(0, 180 - (now() - (o.offered_at or o.created or now()))) if o.status == "placed" else 0
+    j["courier"], j["pack"] = o.courier or "", o.pack or None
     from .booking import partner_view
     partner_view(o, j)
     if o.kind == "lab":
@@ -273,11 +275,21 @@ def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: Partn
     if body.status in ("collected", "delivered"):
         from .booking import check_door
         check_door(o, body.code, body.sample)
+    if body.status in ("checking", "confirmed") and not o.accepted_at:
+        o.accepted_at = now()
+    if body.status == "out" and o.kind == "medicine":
+        o.started_at = o.started_at or now()
+    if body.status == "delivered":
+        o.done_at = now()
     o.status = body.status
     o.timeline = (o.timeline or []) + [{"s": body.status, "t": now(), "by": u.email, "note": body.note[:200]}]
     s = my_store(db, u)
     title = f"{s.name}: {LABEL.get(body.status, body.status)}"
-    bodytxt = {"out": "Your medicines are on the way.", "delivered": "Delivered. Rate the pharmacy in Orders.", "collected": "Sample collected; the report follows.",
+    from .dispatch import family_line
+    fl = family_line(o, s)
+    if fl:
+        title, ftxt = fl
+    bodytxt = ftxt if fl else {"out": "Your medicines are on the way.", "delivered": "Delivered. Rate the pharmacy in Orders.", "collected": "Sample collected; the report follows.",
                "ready": "Your report is in Lab results. Tap Analyse to read it in plain words.", "cancelled": body.note or "The partner cancelled this order.",
                "refunded": "Refund initiated; 5-7 working days.", "returned": "Return received."}.get(body.status, body.note or f"Order THT-{o.id}")
     notify(db, o.household_id, "order", title, bodytxt, {"order": o.id, "status": body.status, "kind": o.kind, "store": s.name}, o.member_id or "", "/app")
@@ -979,3 +991,77 @@ def thread_file(hid: str, file_id: str, db: Session = Depends(get_db), u: Partne
         raise HTTPException(404, "not synced yet")
     row, data = got
     return RawResponse(data, media_type=row.mime, headers={"Cache-Control": "private, no-store"})
+
+
+# ---- the incoming-order flow: pass, pack with proof, ask for a rider -------------------------------------------------
+class PassIn(BaseModel):
+    reason: str = "busy"            # busy | no_stock | closed | far
+
+
+@r.post("/orders/{oid}/pass")
+def pass_order(oid: str, body: PassIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Can't take it: it goes to the next nearest pharmacy at once instead of waiting out the three minutes."""
+    o = _order(db, u, oid)
+    if o.kind != "medicine" or o.status != "placed":
+        raise HTTPException(409, "Only a new order can be passed on.")
+    o.offered_at = 0
+    o.timeline = (o.timeline or []) + [{"s": "passed", "t": now(), "by": u.email, "note": body.reason[:40]}]
+    from .dispatch import tick
+    tick(db)
+    return {"ok": True}
+
+
+class PackIn(BaseModel):
+    lines: dict = {}               # {index: true} — every line must be ticked
+    bill: int = 0                  # the amount on the pharmacy's own bill, in rupees
+
+
+@r.post("/orders/{oid}/pack")
+async def pack_order(oid: str, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Packed, with proof: every line ticked, the bill amount, and photos of the bill and the sealed bag."""
+    form = await request.form()
+    o = _order(db, u, oid)
+    if o.kind != "medicine" or order_json(o)["status"] != "checking":
+        raise HTTPException(409, "Only an accepted order can be packed.")
+    if any(i.get("rx") for i in (o.items or [])) and not o.verified_at:
+        raise HTTPException(400, "A registered pharmacist must check the prescription before this is packed.")
+    ticks = str(form.get("lines") or "").split(",")
+    if len([t for t in ticks if t != ""]) < len(o.items or []):
+        raise HTTPException(400, "Tick every medicine as you put it in the bag.")
+    try:
+        bill = int(float(form.get("bill") or 0))
+    except ValueError:
+        bill = 0
+    if bill <= 0:
+        raise HTTPException(400, "Enter the amount on your bill.")
+    pk = {"lines": len(o.items or []), "bill": bill, "by": u.email, "t": now()}
+    for k in ("billPhoto", "bagPhoto"):
+        f = form.get(k)
+        if f is not None and hasattr(f, "read"):
+            data = await f.read()
+            if len(data) > 8 * 1024 * 1024:
+                raise HTTPException(413, "Photo is over 8 MB.")
+            if data:
+                fid = f"pack_{o.id}_{k}"
+                storage.put(db, o.household_id, fid, data, getattr(f, "content_type", "image/jpeg") or "image/jpeg", f"{k}.jpg", u.email)
+                pk[k] = fid
+    if "billPhoto" not in pk:
+        raise HTTPException(400, "Add a photo of the bill.")
+    o.pack = pk
+    o.status = "packing"
+    o.timeline = (o.timeline or []) + [{"s": "packing", "t": now(), "by": u.email, "note": f"Packed · bill ₹{bill}"}]
+    s = my_store(db, u)
+    notify(db, o.household_id, "order", "Packed and ready", f"{s.name} packed your order · bill ₹{bill}. It leaves shortly.",
+           {"order": o.id, "status": "packing", "kind": "medicine", "store": s.name}, o.member_id or "", "/app")
+    return porder(db, o)
+
+
+@r.post("/orders/{oid}/need-rider")
+def need_rider(oid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """No delivery boy free: Urban Health collects the sealed, billed bag from the counter."""
+    o = _order(db, u, oid)
+    if o.kind != "medicine" or o.status != "packing":
+        raise HTTPException(409, "Pack the order first.")
+    o.courier = "uh"
+    o.timeline = (o.timeline or []) + [{"s": "rider_req", "t": now(), "by": u.email}]
+    return porder(db, o)

@@ -163,6 +163,10 @@ class Order(Base):
     # checking" since the first version; until now no pharmacist was named, registered or recorded. Rule
     # 65(11-A) also forbids substitution absolutely, so what was dispensed is what was prescribed or the order
     # does not go out at all.
+    offered_at: Mapped[int | None] = mapped_column(Integer, nullable=True)        # when the current store was offered it
+    tried: Mapped[list | None] = mapped_column(JSON, nullable=True)               # stores that let it pass, oldest first
+    courier: Mapped[str] = mapped_column(String(16), default="")                  # "" store's own rider | "uh" Urban Health picks up
+    pack: Mapped[dict | None] = mapped_column(JSON, nullable=True)                # {items:{sku:true}, bag: file id, bill: file id, amount}
     verified_by: Mapped[str | None] = mapped_column(String(32), nullable=True)   # the pharmacist's PartnerUser id
     verified_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
     door_code: Mapped[str] = mapped_column(String(6), default="")                # shown to the family; the technician or rider enters it at the door

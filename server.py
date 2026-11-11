@@ -103,6 +103,7 @@ def _init_db():
         except Exception as e:
             print("[shop] seed failed:", str(e)[:160], flush=True)
     reminders.start()
+    dispatch_api.start()
     proactive_api.start()
     from api import people as _people
     _people.start_purge()
@@ -189,6 +190,8 @@ from api import booking as booking_api
 app.include_router(booking_api.r)
 from api import schemes as schemes_api
 app.include_router(schemes_api.r)
+from api import dispatch as dispatch_api
+app.include_router(dispatch_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)
