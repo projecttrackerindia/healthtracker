@@ -25,7 +25,11 @@ def test_address_rules_and_saved_book():
     assert f.post("/api/v2/addresses", json={**FULL, "line2": ""}).status_code in (400, 422)
     assert f.post("/api/v2/addresses", json={**FULL, "pin": "12345"}).status_code in (400, 422)
     assert f.post("/api/v2/addresses", json={**FULL, "lat": 51.5, "lng": -0.1}).status_code in (400, 422)
-    a = f.post("/api/v2/addresses", json=FULL)
+    assert f.post("/api/v2/addresses", json={**FULL, "phone": "12345"}).status_code == 400           # not a 10-digit mobile
+    assert f.post("/api/v2/addresses", json=FULL).status_code == 428                                  # a new number: code first
+    code = f.post("/api/v2/addresses/phone-code", json={"phone": FULL["phone"]}).json()["demo"]
+    assert f.post("/api/v2/addresses", json={**FULL, "phoneCode": "000000" if code != "000000" else "111111"}).status_code == 400
+    a = f.post("/api/v2/addresses", json={**FULL, "phoneCode": code})
     assert a.status_code == 200, a.text
     assert a.json()["phone"].endswith("9876543210")
     assert [x["id"] for x in f.get("/api/v2/addresses").json()["rows"]] == [a.json()["id"]]

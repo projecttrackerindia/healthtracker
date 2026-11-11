@@ -103,7 +103,7 @@
   function open(o) {
     o = o || {};
     if (!document.getElementById("gp-css")) { const st = document.createElement("style"); st.id = "gp-css"; st.textContent = CSS; document.head.appendChild(st); }
-    let pos = o.start && o.start.lat ? { lat: o.start.lat, lng: o.start.lng } : null, fix = null, geo = {}, M = null, seq = 0;
+    let pos = o.start && o.start.lat ? { lat: o.start.lat, lng: o.start.lng } : null, fix = null, geo = {}, M = null, seq = 0, approx = 0;
     const d = document.createElement("div"); d.className = "gp"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", o.heading || "Select location");
     d.innerHTML = `<div class="gp-w"><div class="gp-map"></div><div class="gp-pinbox"><div class="gp-sh"></div><div class="gp-pin"><div class="gp-tip"><b>${esc(o.callout || "Your location")}</b><br><span style="opacity:.75">${esc(o.hint || "Move the map to the exact spot")}</span></div>${PIN}</div></div>
       <div class="gp-bar">${o.must ? "" : `<button type="button" class="gp-rb" data-x aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>`}
@@ -127,7 +127,8 @@
       const s = geo.serve, k = o.serve;
       $(".gp-v").innerHTML = !k || !s ? "" : (k === "pharmacy" ? s.pharmacies : s.labs) ? `<span style="color:#1A7F37;font-weight:600">● ${k === "pharmacy" ? "Delivery" : "Home collection"} available here</span>${s.homeHours ? ` <span style="color:#86868B">· ${esc(s.homeHours)}</span>` : ""}` : `<span style="color:#B25000;font-weight:600">● Not served here yet</span> <span style="color:#86868B">— you can still save it${s.nearestLab ? "; nearest lab " + s.nearestLab.km + " km" : ""}</span>`;
       const far = fix && pos ? Math.round(km(fix, pos) * 1000) : 0, w = $(".gp-warn");
-      if (o.maxMove && far > o.maxMove) { w.hidden = false; w.textContent = `The pin is ${far} m from where your phone is. Put it on the ${o.what || "door"} itself.`; } else w.hidden = true;
+      if (approx && far < 50) { w.hidden = false; w.textContent = `This device only knows roughly where you are (within ${approx >= 1000 ? (approx / 1000).toFixed(1) + " km" : approx + " m"}). Search your building or street above, then move the map onto your door.`; }
+      else if (o.maxMove && fix && !approx && far > o.maxMove) { w.hidden = false; w.textContent = `The pin is ${far} m from where your phone is. Put it on the ${o.what || "door"} itself.`; } else w.hidden = true;
       $(".gp-ok").disabled = false; fit();
     };
     const move = async (p) => {
@@ -143,8 +144,11 @@
       navigator.geolocation.getCurrentPosition((p) => {
         if (b) b.textContent = "◎ Use current location";
         fix = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy) };
+        // Laptops and desktops have no GPS: the browser guesses from Wi-Fi or the internet connection, often kilometres off.
+        approx = fix.acc > 150 ? fix.acc : 0;
         try { sessionStorage.setItem("gp-last", JSON.stringify(fix)); } catch (_) {}
         M && M.set(fix);
+        if (approx) setTimeout(() => q.focus(), 400);
       }, (e) => { if (b) b.textContent = "◎ Use current location"; if (!quiet) alert(e.code === 1 ? "Location is blocked. Allow it for this site in the browser, or search and move the map yourself." : "Couldn't get your location. Search or move the map instead."); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
     };
     if ($(".gp-me")) $(".gp-me").onclick = () => me(false);

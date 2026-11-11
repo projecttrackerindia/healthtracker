@@ -7,7 +7,7 @@ from __future__ import annotations
 import io
 import re
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response as RawResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -254,3 +254,42 @@ def public_packages(db: Session = Depends(get_db)):
     ensure(db)
     lp = _lab_prices(db)
     return {"rows": [pkg_json(db, p, lp) for p in db.scalars(select(Package).where(Package.active == True, Package.price > 0)).all()]}  # noqa: E712
+
+
+@pub.get("/suggest")
+def suggest(q: str, request: Request, db: Session = Depends(get_db)):
+    """Typing help for "Add medicine": what this family ordered or already takes first, then the shared list."""
+    import re as _re
+    from .medlist import NAMES
+    q = _re.sub(r"\s+", " ", (q or "").strip().lower())[:60]
+    if len(q) < 2:
+        return {"rows": []}
+    out: list[dict] = []
+    seen: set[str] = set()
+
+    def add(name: str, sub: str, src: str):
+        k = name.lower()
+        if k not in seen and len(out) < 12:
+            seen.add(k)
+            out.append({"name": name, "sub": sub, "src": src})
+    try:
+        from .auth import current_user
+        from .models import Order
+        u = current_user(request, db)
+        if u and u.household_id:
+            for o in db.scalars(select(Order).where(Order.household_id == u.household_id, Order.kind == "medicine").order_by(Order.created.desc()).limit(30)).all():
+                for i in o.items or []:
+                    n = i.get("name") or ""
+                    if q in n.lower():
+                        add(n, "You ordered this", "ordered")
+    except Exception:
+        pass
+    words = q.split()
+    match = lambda n: all(w in n.lower() for w in words)
+    starts = lambda n: n.lower().startswith(q)
+    cat = db.scalars(select(CatalogMed)).all()
+    for m in sorted([m for m in cat if match(m.name) or match(m.salt or "")], key=lambda m: (not starts(m.name), m.name))[:8]:
+        add(f"{m.name}{(' ' + m.form.split('·')[0].strip()) if m.form else ''}".strip(), m.salt or m.cat or "", "catalog")
+    for n in sorted([n for n in NAMES if match(n)], key=lambda n: (not starts(n), n)):
+        add(n, "", "common")
+    return {"rows": out}

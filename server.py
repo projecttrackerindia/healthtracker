@@ -192,6 +192,8 @@ from api import schemes as schemes_api
 app.include_router(schemes_api.r)
 from api import dispatch as dispatch_api
 app.include_router(dispatch_api.r)
+from api import mydoctors as mydoctors_api
+app.include_router(mydoctors_api.r)
 
 # --------------------------------------------------------------------------------------------------
 # Security headers. The app uses inline scripts/styles and a blob: web worker, WebGL and (for SOS)

@@ -22,7 +22,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .db import get_db
-from .models import AreaWait, Household, Order, PartnerUser, SavedAddress, Store, now
+from .models import AreaWait, Household, Order, PartnerUser, SavedAddress, Store, User, now
 
 r = APIRouter(prefix="/api/v2")
 SLOT_CAP = 6               # home visits a lab can do in one hourly slot unless it sets its own
@@ -54,7 +54,7 @@ class AddrIn(BaseModel):
     label: str = "Home"
     line1: str
     line2: str
-    landmark: str
+    landmark: str = ""
     area: str = ""
     city: str = ""
     state: str = ""
@@ -65,6 +65,40 @@ class AddrIn(BaseModel):
     name: str = ""
     phone: str = ""
     note: str = ""
+    phoneCode: str = ""       # a code sent to a new door phone
+    phoneToken: str = ""      # or a Firebase ID token for it
+
+
+def _phone_ok(db: Session, request: Request, u, body: "AddrIn", phone: str, keep: str = "") -> None:
+    """The person at the door must be reachable, so the number is a real Indian mobile. A number that isn't the
+    account's own (or one this family already proved) needs a one-time code first — a typo means a missed visit."""
+    if not re.fullmatch(r"\+91[6-9]\d{9}", phone or ""):
+        raise HTTPException(400, "Enter a 10-digit mobile number for the person at the door.")
+    known = {x for x in db.scalars(select(User.phone).where(User.household_id == u.household_id)).all() if x}
+    known |= {x for x in db.scalars(select(SavedAddress.phone).where(SavedAddress.household_id == u.household_id)).all() if x}
+    if keep:
+        known.add(keep)
+    if phone in known:
+        return
+    if not (body.phoneCode or body.phoneToken):
+        raise HTTPException(428, "Confirm this number with the code we send to it.")
+    from .auth import FlowCode, verify_code
+    if not verify_code(db, phone, "addr", FlowCode(flow="", code=body.phoneCode, firebaseToken=body.phoneToken)):
+        raise HTTPException(400, "That code is not right.")
+
+
+class PhoneIn(BaseModel):
+    phone: str
+
+
+@r.post("/addresses/phone-code")
+def addr_phone_code(body: PhoneIn, request: Request, db: Session = Depends(get_db)):
+    from .auth import norm_id, send_code
+    _user(request, db)
+    kind, ph = norm_id(body.phone)
+    if kind != "phone" or not re.fullmatch(r"\+91[6-9]\d{9}", ph):
+        raise HTTPException(400, "Enter a 10-digit mobile number.")
+    return {**send_code(request, db, ph, "phone", "addr"), "phone": ph}
 
 
 def _clean(v, n):
@@ -118,6 +152,7 @@ def add_address(body: AddrIn, request: Request, db: Session = Depends(get_db)):
         a.name = (u.name if hasattr(u, "name") else "") or ""
     if not a.phone:
         a.phone = u.phone or ""
+    _phone_ok(db, request, u, body, a.phone)
     db.add(a)
     db.flush()
     return {**addr_json(a), "serve": serviceable(db, a.pin, a.lat, a.lng)}
@@ -129,8 +164,12 @@ def edit_address(aid: str, body: AddrIn, request: Request, db: Session = Depends
     a = db.get(SavedAddress, aid)
     if not a or a.household_id != u.household_id:
         raise HTTPException(404)
-    for k, v in _validate(body).items():
-        setattr(a, k, v)
+    old = a.phone
+    v = _validate(body)
+    v["phone"] = v["phone"] or u.phone or ""
+    _phone_ok(db, request, u, body, v["phone"], keep=old)
+    for k, val in v.items():
+        setattr(a, k, val)
     a.updated = now()
     return {**addr_json(a), "serve": serviceable(db, a.pin, a.lat, a.lng)}
 

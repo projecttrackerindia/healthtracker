@@ -1371,3 +1371,18 @@ class SchemeCard(Base):
     last4: Mapped[str] = mapped_column(String(4), default="")
     valid_until: Mapped[str] = mapped_column(String(10), default="")
     created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class MyDoctor(Base):
+    """A doctor the family added themselves: name, speciality, where they sit, how to reach them."""
+    __tablename__ = "my_doctors"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    name: Mapped[str] = mapped_column(String(100))
+    specialty: Mapped[str] = mapped_column(String(80), default="")
+    hospital: Mapped[str] = mapped_column(String(120), default="")
+    phone: Mapped[str] = mapped_column(String(20), default="")
+    reg_no: Mapped[str] = mapped_column(String(40), default="")
+    note: Mapped[str] = mapped_column(String(200), default="")
+    created: Mapped[int] = mapped_column(Integer, default=now)
