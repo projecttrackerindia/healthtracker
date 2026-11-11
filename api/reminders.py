@@ -168,6 +168,27 @@ def tick(now_dt: datetime | None = None) -> int:
     return sent
 
 
+# Reminder text in the language each recipient chose (Settings > Language). Medicine names stay as typed.
+SAY = {
+    "en": {"due_own": "Time for your {t} medicines", "due_other": "{first}: {t} medicines", "missed_own": "Still to take",
+           "missed_other": "{first} has not taken the {t} medicines", "late": " · an hour past the reminder"},
+    "ta": {"due_own": "உங்கள் {t} மருந்துகளுக்கான நேரம்", "due_other": "{first}: {t} மருந்துகள்", "missed_own": "இன்னும் எடுக்கவில்லை",
+           "missed_other": "{first} {t} மருந்துகளை இன்னும் எடுக்கவில்லை", "late": " · நினைவூட்டலுக்குப் பின் ஒரு மணி நேரம்"},
+    "te": {"due_own": "మీ {t} మందుల సమయం", "due_other": "{first}: {t} మందులు", "missed_own": "ఇంకా వేసుకోలేదు",
+           "missed_other": "{first} {t} మందులు ఇంకా వేసుకోలేదు", "late": " · రిమైండర్ తర్వాత ఒక గంట"},
+}
+
+
+def _say(lang: str, key: str, **kw) -> str:
+    return (SAY.get(lang) or SAY["en"])[key].format(**kw)
+
+
+def lang_of(db, uid: str) -> str:
+    from .models import User
+    u = db.get(User, uid)
+    return (getattr(u, "lang", "") or "en") if u else "en"
+
+
 def tick_people(db, now_dt: datetime) -> int:
     """Reminders for Phase 0 per-person medicines (/api/v2).
 
@@ -249,16 +270,16 @@ def tick_people(db, now_dt: datetime) -> int:
                 db.add(ReminderSent(key=key))
                 if kind == "due":
                     to = owner or list(guardians)
-                    msg = lambda own: {"title": f"Time for your {t} medicines" if own else f"{first}: {t} medicines", "body": ", ".join(names), "url": "/app/meds", "tag": f"dose-{pid}-{t}"}
+                    msg = lambda own, lang="en": {"title": _say(lang, "due_own" if own else "due_other", t=t, first=first), "body": ", ".join(names), "url": "/app/meds", "tag": f"dose-{pid}-{t}"}
                 else:
                     to = owner + list(guardians)
-                    msg = lambda own: {"title": "Still to take" if own else f"{first} has not taken the {t} medicines", "body": ", ".join(names) + (" · an hour past the reminder" if not own else ""), "url": "/app/meds", "tag": f"missed-{pid}-{t}"}
+                    msg = lambda own, lang="en": {"title": _say(lang, "missed_own" if own else "missed_other", t=t, first=first), "body": ", ".join(names) + ("" if own else _say(lang, "late")), "url": "/app/meds", "tag": f"missed-{pid}-{t}"}
                 from .inbox import wants_push
                 for uid in to:
                     if not wants_push(db, uid, "reminder"):
                         continue
                     for s in subs_by_user.get(uid, []):
-                        ok, status, _ = PUSH.send(s.sub, msg(uid == p.owner_user))
+                        ok, status, _ = PUSH.send(s.sub, msg(uid == p.owner_user, lang_of(db, uid)))
                         if ok:
                             sent += 1
                         elif status in (404, 410):

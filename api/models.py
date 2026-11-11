@@ -341,6 +341,7 @@ class User(Base):
     ref_rewarded: Mapped[int] = mapped_column(Integer, default=0)              # when the inviter's reward was granted
     contact_changed: Mapped[int] = mapped_column(Integer, default=0)           # a new email/mobile cannot reset the password for 24 h
     contact_changed_kind: Mapped[str] = mapped_column(String(8), default="")
+    lang: Mapped[str] = mapped_column(String(5), default="en")                # app and reminder language: en | ta | te
     failed: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[int | None] = mapped_column(Integer, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)

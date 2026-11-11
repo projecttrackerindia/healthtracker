@@ -312,9 +312,26 @@ def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
                                                           HouseholdInvite.expires > now() - 30 * 86400).order_by(HouseholdInvite.created.desc())):
             invites.append(invite_view(i))
     h = db.get(Household, u.household_id) if u.household_id else None
-    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role},
+    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role, "lang": u.lang or "en"},
             "household": u.household_id, "hkey": h.key if h else None, "me": mine.id if mine else None, "people": people, "members": members,
             "invites": invites, "onboarded": bool(mine and contacts(db, mine.id))}
+
+
+LANGS = ("en", "ta", "te")
+
+
+class LangIn(BaseModel):
+    lang: str = Field(min_length=2, max_length=5)
+
+
+@r.put("/me/lang")
+def set_lang(body: LangIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """The account's language. The app shows itself in it, and medicine reminders sent to this account use it."""
+    if body.lang not in LANGS:
+        raise HTTPException(422, "Choose English, Tamil or Telugu.")
+    u.lang = body.lang
+    db.commit()
+    return {"ok": True, "lang": u.lang}
 
 
 # ---- people -----------------------------------------------------------------------------------------------------------

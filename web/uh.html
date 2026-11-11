@@ -282,6 +282,7 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;-webkit-te
 <nav class="dock" id="dock"></nav>
 <div id="layer"></div>
 <script src="/a/three.9274bbce.js"></script>
+<script src="/i18n.js?v=1"></script>
 <script>
 "use strict";
 /* send crashes to the admin panel (Client errors), once per message per session */
@@ -813,9 +814,33 @@ const ROW=(icon,col,t,end,on)=>`<button class="li" onclick="${on}"><span class="
 function openSettings(){const me=P(ME.me),u=ME.user;page('Settings',`<button class="card row" style="width:100%;text-align:left;margin-top:14px" onclick="openProfile()"><span class="av" style="background:${me.color};width:60px;height:60px;border-radius:30px;font-size:24px">${esc(me.name[0])}</span><div style="flex:1"><div style="font-size:20px;font-weight:700">${esc(me.name)}</div><div class="sub">${esc(u.phone||u.email||'')} · Health profile</div></div>${ic(I.chev,'#C7C7CC')}</button>
  <div class="list" style="margin-top:18px">${ROW(I.id,'#FF3B30','Medical ID','',"openMedId()")}${ROW(I.phone,'#34C759','Emergency contacts',(me.medicalId.contacts||[]).length+'',"openContacts()")}${ROW(I.rec,'#30B0C7','My doctors','',"openDoctors()")}${ROW(I.share||I.rec,'#0A84FF','Share with a doctor','',"shareDoctor()")}${ROW(I.rec,'#5E5CE6','Doctor visit summary (PDF)','',"visitSummary()")}${ROW(I.lock,'#636366','Who can see my health','',"openSharing()")}</div>
  ${me.sex==='female'?`<div class="list" style="margin-top:18px">${ROW(I.drop,'#E5577A','Cycle','Private',"openCycle()")}${ROW(I.baby,'#E5577A','Pregnancy',me.pregnancy&&me.pregnancy.stage==='pregnant'?'Week '+me.pregnancy.week:'Off',"openPregnancy()")}</div>`:''}
- <div class="list" style="margin-top:18px">${ROW(I.bell,'#FF9500','Notifications',(typeof Notification!=='undefined'&&Notification.permission==='granted')?'On':'Off',"openNotifSettings()")}${ROW(I.rec,'#30B0C7','Bookings and orders','',"openOrders()")}${ROW(I.map||I.rec,'#0071E3','Addresses','',"openAddresses()")}</div>
+ <div class="list" style="margin-top:18px">${ROW(I.bell,'#FF9500','Notifications',(typeof Notification!=='undefined'&&Notification.permission==='granted')?'On':'Off',"openNotifSettings()")}${ROW(I.rec,'#30B0C7','Bookings and orders','',"openOrders()")}${ROW(I.map||I.rec,'#0071E3','Addresses','',"openAddresses()")}${window.UHL?ROW(I.spark||I.rec,'#0A84FF','Language',UHL.name(),"openLanguage()"):''}</div>
  <div class="list" style="margin-top:18px">${ROW(I.eye||I.lock,'#5E5CE6','Who opened my records','',"openAccessLog()")}${ROW(I.shield,'#30B0C7','Sign-in and security','',"openSecurity()")}${ROW(I.down,'#8E8E93','Your data','Export, delete',"openData()")}</div>
  <button class="btn sec" style="width:100%;margin-top:22px" onclick="signOut()">Sign out</button><p class="cap" style="text-align:center">Urban Health · urbanhealth.in · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>`)}
+/* Language: the app's language for this account (saved, so reminders arrive in it too), each family member's
+   reminder language on this phone, and reading reminders aloud for elders who prefer listening. */
+function saveLang(l){API('/api/v2/me/lang',{method:'PUT',json:{lang:l}}).then(()=>{if(ME&&ME.user)ME.user.lang=l}).catch(()=>{})}
+const LGN={en:'English',ta:'Tamil',te:'Telugu'};
+function openLanguage(){if(!window.UHL)return;UHL.css();const cur=UHL.get(),ppl=ME.people.filter(p=>can(p,'summary'));
+ const voice=(()=>{try{return localStorage.getItem('uh-voice-on')==='1'}catch(_){return false}})();
+ page('Language',`<div class="uhl-sect" style="margin-left:16px">App language</div>
+ <div class="uhl-list" style="margin:0" role="radiogroup" data-noi18n>${['en','ta','te'].map(l=>`<button class="lg-row ${cur===l?'on':''}" role="radio" aria-checked="${cur===l}" lang="${l}" onclick="langPick('${l}')"><span class="uhl-big" style="font-size:17px">${UHL.names[l]}</span><span class="uhl-sub" style="margin-left:8px">${l==='en'?'':LGN[l]}</span><span class="uhl-rad"></span></button>`).join('')}</div>
+ <div class="uhl-sect" style="margin-left:16px">For each family member</div>
+ <div class="uhl-list" style="margin:0">${ppl.map(p=>{const pr=UHL.personPref(p.id),l=pr.lang||cur;return`<label class="lg-row" style="cursor:pointer"><span class="av" style="background:${p.color};width:32px;height:32px;border-radius:9px;font-size:14px;flex:none">${esc(p.name[0])}</span><div style="flex:1;min-width:0"><div data-noi18n>${esc(p.name)}${p.self?' · '+UHL.t('You'):''}</div><div class="uhl-sub">${UHL.t('Reminders in')} ${UHL.t(LGN[l])}${voice?', '+UHL.t('read aloud'):''}</div></div><span class="lg-pill" data-noi18n>${UHL.names[l]} ›</span><select aria-label="Reminder language for ${esc(p.name)}" onchange="langPerson('${p.id}',this.value)" style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer">${['en','ta','te'].map(x=>`<option value="${x}" ${x===l?'selected':''}>${UHL.names[x]}</option>`).join('')}</select></label>`}).join('')}</div>
+ <div class="uhl-sect" style="margin-left:16px">Voice</div>
+ <div class="uhl-list" style="margin:0"><div class="lg-row"><div style="flex:1"><div>Read reminders aloud</div><div class="uhl-sub">Helps elders who prefer listening</div></div><button class="lg-sw ${voice?'on':''}" role="switch" aria-checked="${voice}" aria-label="Read reminders aloud" onclick="langVoice(this)"></button></div>
+ <button class="lg-row" onclick="langSample()"><div style="flex:1"><div>Play a sample</div><div class="uhl-sub" id="lgvs">${UHL.hasVoice(cur)?'':UHL.t('This phone may not have a voice for this language')}</div></div><span class="lg-pill">▶</span></button></div>
+ <p class="cap" style="margin:10px 6px 0">${UHL.t('Medicine names stay as printed on the strip.')} ${UHL.t('Reminders sent to this account arrive in this language.')}</p>`)}
+function langPick(l){UHL.set(l,saveLang);openLanguage();renderAll()}
+function langPerson(pid,l){const v=UHL.personPref(pid);v.lang=l;UHL.setPersonPref(pid,v);openLanguage()}
+function langVoice(b){const on=!b.classList.contains('on');try{localStorage.setItem('uh-voice-on',on?'1':'0')}catch(_){}b.classList.toggle('on',on);b.setAttribute('aria-checked',on);if(on){const me=P(ME.me);UHL.speak(UHL.doseLine(me?me.name.split(' ')[0]:'',{name:'Metformin 500 mg',note:'After food'},UHL.get()))}}
+function langSample(){const l=UHL.get();const who={en:'Amma',ta:'அம்மா',te:'అమ్మ'}[l];if(!UHL.speak(UHL.doseLine(who,{name:'Metformin 500 mg',note:'After food'},l),l)){const e=$('#lgvs');if(e)e.textContent=UHL.t('This phone may not have a voice for this language')}}
+/* While the app is open, a due dose is read aloud once, in that person's reminder language. Push notifications
+   still arrive as usual; this only adds the spoken line for people who prefer listening. */
+setInterval(()=>{try{if(!window.UHL||!ME||localStorage.getItem('uh-voice-on')!=='1')return;const d=new Date(),hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+ for(const p of ME.people){if(!can(p,'summary'))continue;const meds=(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.active!==false&&!r.sos),done=(REC[p.id]||[]).filter(r=>r.kind==='dose'&&r.day===today());
+  for(const m of meds)for(const t of (m.times||[])){if(t!==hm||done.find(x=>x.med===m.id&&x.time===t))continue;const k='uh-said-'+p.id+m.id+today()+t;if(sessionStorage.getItem(k))continue;sessionStorage.setItem(k,'1');
+   const l=UHL.personPref(p.id).lang||UHL.get();UHL.speak(UHL.doseLine(p.name.split(' ')[0],m,l),l)}}}catch(_){}},20000);
 function lockBanner(me){const L=me.idLock||{};if(!L.last)return'';const f=t=>new Date(t*1e3).toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
  return`<div class="row" style="gap:10px;background:#EEF5FF;color:#0058B9;border-radius:14px;padding:11px 13px;font-size:13.5px;margin:12px 0 4px;line-height:1.4">${ic(I.lock,'#0058B9',18)}<span>${L.locked?`Aadhaar name, date of birth and mobile were changed <b>${f(L.last)}</b>. Next change allowed <b>${f(L.next)}</b>.`:L.fix?`Changed <b>${f(L.last)}</b>. You can make one correction until <b>${f(L.last+86400)}</b>.`:`Aadhaar name, date of birth and mobile can be changed once a week, confirmed by email.`}</span></div>`}
 function idOtp(pid,send){return new Promise(async(res,rej)=>{let to;try{const r=await API(`/api/v2/people/${pid}/idcode`,{json:{}});to=r.to;if(r.demo)console.log('demo code',r.demo)}catch(e){return rej(e)}
@@ -1184,7 +1209,7 @@ let DEFERRED=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();
 async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);if(m){try{sessionStorage.setItem('uh-join',m[1])}catch(_){}fetch('/api/v2/household/invite/'+m[1],{headers:{'x-tht':'1'}}).catch(()=>{});history.replaceState(null,'','/app')}
  try{await refreshMe()}catch(e){if(e.status===401)return authPage(sessionStorage.getItem('uh-join')?'signup':'signin');$('#load').textContent='Could not connect. Check your internet and reload.';return}
  const jt=sessionStorage.getItem('uh-join');if(jt){try{const j=await API('/api/v2/household/join',{json:{token:jt}});if(j.handover)toast('Welcome. Your records are now in your own account.');else{toast('You joined the family');if(j.relation)setTimeout(()=>confirmRel(j),600)}}catch(e){toast(e.message)}sessionStorage.removeItem('uh-join');await refreshMe()}
- closeL();if(!ME.me||!ME.onboarded)return onboard();
+ closeL();if(window.UHL){UHL.adopt(ME.user.lang);if(!UHL.chosen())await UHL.picker(saveLang)}if(!ME.me||!ME.onboarded)return onboard();
  const t=location.pathname.split('/')[2];if(['summary','records','meds','cover','family'].includes(t))S.tab=t;S.person=S.person&&P(S.person)?S.person:ME.me;
  await Promise.all(ME.people.map(p=>loadRecords(p.id)));await pollInbox();renderAll();addrGate()}
 let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
