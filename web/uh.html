@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F5F5F7">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -247,6 +247,13 @@ body.flat .spacer{height:118px}body.flat #gl,body.flat #labels,body.flat #lines{
 .sheetx{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.28);animation:fade .2s ease both}
 .sheetx .sh{width:100%;max-width:520px;background:#F2F2F7;border-radius:22px 22px 0 0;padding:8px 0 max(18px,env(safe-area-inset-bottom));animation:up .32s var(--ease) both;max-height:78vh;display:flex;flex-direction:column}
 @media(min-width:700px){.sheetx{align-items:center}.sheetx .sh{border-radius:22px}
+/* Behave like an app: nothing may be wider than the screen (iOS shrinks the whole page when anything is), and form
+   fields are 16px so iOS never zooms in on focus. */
+html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.tab{min-width:0}.tab span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.tab{font-size:9.5px}.tabs{padding:3px}.orb{width:58px;height:58px}}
+@media (max-width:700px){input,select,textarea{font-size:16px!important}}
+.page,.sheetx .sh,#layer{max-width:100vw;overflow-x:hidden}
 .pwr{margin:8px 4px 0;display:flex;flex-direction:column;gap:5px}.pwi{display:flex;gap:8px;align-items:center;font-size:13.5px;color:#86868B}.pwi span{width:18px;height:18px;border-radius:9px;border:1.5px solid #C7C7CC;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}.pwi.ok{color:#1A7F37}.pwi.ok span{background:#34C759;border-color:#34C759}
 /* the sheet scrolls inside, so its Save button can always be reached; the header stays put */
 .sheetx .sh>:not(.hd){overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
