@@ -1184,80 +1184,37 @@ async function pinMap(el,c,onMove,noG,o){o=o||{};const g=noG?false:await gmaps()
  el.onpointermove=e=>{if(!drag)return;cx-=e.clientX-drag[0];cy-=e.clientY-drag[1];drag=[e.clientX,e.clientY];draw()};
  el.onpointerup=el.onpointercancel=()=>{if(drag){drag=null;done()}};
  draw();setTimeout(()=>onMove(ll(cx,cy)),50);return{set:p=>{[cx,cy]=px(p.lat,p.lng);draw();done()}}}
-/* Address picker, delivery-app style. Step 1: full-screen map in Google's normal colours with shops and landmarks,
-   a pin with a callout, a search bar on top and a card with the place name and Confirm. Step 2: the details. */
-function addrEdit(a,kind,store,must){a=a||{label:'Home'};let pos=a.lat?{lat:a.lat,lng:a.lng,acc:a.acc||0}:null,geo={},M=null,busy=0;
- const L=['Home','Work','Parents','Other'];const d=document.createElement('div');d.className='apick';document.body.appendChild(d);
- const close=()=>{d.remove()};
- d.innerHTML=`<style>.apick{position:fixed;inset:0;z-index:95;background:#fff;display:flex;justify-content:center}.apick .w{position:relative;width:100%;max-width:520px;height:100%;overflow:hidden;background:#EEF1F5}
- .apick .mp,.apick .pbx{position:absolute;left:0;right:0;top:0;bottom:calc(var(--ch,190px) - 22px)}.apick .pbx{pointer-events:none;z-index:2}.apick .top{position:absolute;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));display:flex;gap:8px;z-index:3}
- .apick .rb{width:44px;height:44px;border-radius:22px;border:0;background:#fff;box-shadow:0 2px 10px #0002;display:grid;place-items:center;flex:none}
- .apick .sq{flex:1;height:44px;border-radius:22px;border:0;background:#fff;box-shadow:0 2px 10px #0002;padding:0 16px 0 40px;font-size:15px;outline:0}
- .apick .sr{position:absolute;left:12px;right:12px;top:calc(max(12px,env(safe-area-inset-top)) + 52px);background:#fff;border-radius:16px;box-shadow:0 8px 28px #0003;z-index:4;max-height:50vh;overflow:auto}
- .apick .sr button{display:block;width:100%;text-align:left;border:0;background:none;padding:12px 16px;border-top:1px solid #F0F0F2;font-size:15px}.apick .sr small{display:block;color:#86868B;font-size:13px;margin-top:2px}
- .apick .ppn{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);z-index:2;line-height:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;transition:transform .15s}
- .apick .ppn.up{transform:translate(-50%,calc(-100% - 10px))}
- .apick .tip{background:#1D1D1F;color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.3;text-align:center;margin-bottom:8px;white-space:nowrap;position:relative}
- .apick .tip:after{content:'';position:absolute;left:50%;bottom:-5px;width:10px;height:10px;background:#1D1D1F;transform:translateX(-50%) rotate(45deg)}
- .apick .shadow{position:absolute;left:50%;top:50%;width:14px;height:5px;border-radius:50%;background:#0005;transform:translate(-50%,-2px);z-index:1;pointer-events:none}
- .apick .me{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--ch,190px) + 14px);z-index:3;border:1px solid #0071E3;color:#0071E3;background:#fff;border-radius:20px;padding:9px 16px;font-weight:600;font-size:14px;box-shadow:0 2px 10px #0002}
- .apick .card{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -6px 24px #0002;padding:18px 18px max(18px,env(safe-area-inset-bottom));z-index:3}
- .apick .card h3{margin:0;font-size:20px;letter-spacing:-.3px;display:flex;gap:8px;align-items:center}.apick .card p{margin:4px 0 0;color:#6E6E73;font-size:14px;line-height:1.4}
- .apick .det{position:absolute;left:0;right:0;bottom:0;max-height:88%;overflow:auto;background:#F5F5F7;border-radius:22px 22px 0 0;z-index:5;padding:14px 16px max(18px,env(safe-area-inset-bottom));box-shadow:0 -10px 40px #0004;transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
- .apick .det.on{transform:none}.apick .pscr{position:absolute;inset:0;background:#0006;z-index:4;opacity:0;pointer-events:none;transition:opacity .28s}.apick .pscr.on{opacity:1;pointer-events:auto}
- .apick .chip{border:1px solid #D2D2D7;background:#fff;border-radius:18px;padding:8px 14px;font-weight:600;font-size:14px}.apick .chip.on{border-color:#0071E3;background:#E8F1FF;color:#0071E3}</style>
- <div class="w"><div class="mp" id="pmap"></div><div class="pbx"><div class="shadow"></div>
-  <div class="ppn" id="ppin"><div class="tip"><b>${kind==='pharmacy'?'Your order will come here':'The technician will come here'}</b><br><span style="opacity:.75">Move the map to your exact door</span></div>
-   <svg width="40" height="52" viewBox="0 0 34 46"><path d="M17 1C8 1 1 8 1 17c0 12 16 28 16 28s16-16 16-28C33 8 26 1 17 1z" fill="#FF3B30"/><circle cx="17" cy="17" r="6" fill="#fff"/></svg></div></div>
-  <div class="top">${must?'':`<button class="rb" data-back aria-label="Back">${ic('<path d="M15 6l-6 6 6 6"/>','#1D1D1F',22)}</button>`}<div style="flex:1;position:relative"><span style="position:absolute;left:14px;top:12px">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>','#86868B',18)}</span><input class="sq" id="psq" placeholder="Search area, street, building…" autocomplete="off"></div></div>
-  <div class="sr" id="psr" style="display:none"></div>
-  <button class="me" id="pme">◎ Use current location</button>
-  <div class="card" id="pcard"><div class="sub" style="font-size:12px;font-weight:600;letter-spacing:.4px;color:#86868B">${must?'ADD YOUR ADDRESS':'SELECT LOCATION'}</div>
-   <h3 id="ptitle">${ic(I.map||'<path d="M12 21s-7-6-7-12a7 7 0 0114 0c0 6-7 12-7 12z"/>','#FF3B30',22)}<span>Finding your place…</span></h3><p id="psub">&nbsp;</p><div id="psv" style="margin-top:10px;font-size:13.5px"></div>
-   <button class="btn pri" id="pok" style="width:100%;margin-top:14px">Confirm location</button></div>
-  <div class="pscr" id="pscrim"></div>
-  <form class="det" id="af"><div style="width:36px;height:5px;border-radius:3px;background:#C7C7CC;margin:0 auto 12px"></div>
-   <div class="row" style="gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:17px" id="dtitle"></div><div class="sub" style="white-space:normal" id="dsub"></div></div><button type="button" class="btn sec sm" id="dchg" style="flex:none">Change</button></div>
-   <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
-   <input class="inp2" name="line1" required placeholder="Flat / house no. and floor *" value="${esc(a.line1||'')}">
-   <input class="inp2" name="line2" required minlength="3" placeholder="Building, street or society *" value="${esc(a.line2||'')}">
-   <input class="inp2" name="landmark" placeholder="Landmark (optional) — e.g. opposite Ratnadeep" value="${esc(a.landmark||'')}">
-   <div class="row" style="gap:10px"><input class="inp2" name="area" placeholder="Area" value="${esc(a.area||'')}" style="flex:2"><input class="inp2" name="pin" required inputmode="numeric" pattern="[1-9][0-9]{5}" maxlength="6" placeholder="PIN *" value="${esc(a.pin||'')}" style="flex:1"></div>
-   <div class="sect" style="margin:6px 4px 0">SAVE AS</div><div class="row" style="gap:8px;flex-wrap:wrap" id="alb">${L.map(x=>`<button type="button" class="chip ${(a.label||'Home')===x?'on':''}" data-l="${x}">${LBL[x]} ${x}</button>`).join('')}</div>
-   <div class="sect" style="margin:6px 4px 0">WHO WILL BE AT THE DOOR</div>
-   <div class="row" style="gap:10px"><input class="inp2" name="name" data-x="1" placeholder="Name" value="${esc(a.name||(a.id?'':(P(ME&&ME.me)||{}).name||''))}" style="flex:1"><input class="inp2" name="phone" data-x="1" inputmode="tel" placeholder="Phone" value="${esc(a.phone||(a.id?'':(ME&&ME.account&&ME.account.phone)||''))}" style="flex:1"></div>
-   <input class="inp2" name="note" maxlength="140" placeholder="Note for the technician (gate code, dog, parking)" value="${esc(a.note||'')}">
-   <button class="btn pri" style="width:100%;margin-top:4px">Save address</button>
-   ${a.id?'<button type="button" class="btn sec" style="width:100%;color:#C4291C" id="adel">Remove address</button>':''}</div></form></div>`;
- const $$=s=>d.querySelector(s),f=$$('#af');let label=a.label||'Home';
- const bk=$$('[data-back]');if(bk)bk.onclick=close;
- d.querySelectorAll('#alb .chip').forEach(b=>b.onclick=()=>{d.querySelectorAll('#alb .chip').forEach(x=>x.classList.remove('on'));b.classList.add('on');label=b.dataset.l});
- const card=$$('#pcard');const fit=()=>d.style.setProperty('--ch',card.offsetHeight+'px');
- const title=()=>geo.title||geo.area||'Pinned location',sub=()=>[geo.area&&geo.area!==title()?geo.area:'',geo.city,geo.pin].filter(Boolean).join(', ');
- const moved=async p=>{pos={...p,acc:pos&&pos.acc||25};const my=++busy;$$('#ppin').classList.remove('up');$$('#ptitle span').textContent='Finding your place…';$$('#psub').innerHTML='&nbsp;';$$('#psv').innerHTML='';
-  try{const g=await API(`/api/v2/geo/reverse?lat=${p.lat.toFixed(6)}&lng=${p.lng.toFixed(6)}`);if(my!==busy)return;geo=g}catch(_){if(my!==busy)return;geo={}}
-  $$('#ptitle span').textContent=title();$$('#psub').textContent=sub()||'Fill in the PIN in the next step';
-  const s=geo.serve;if(s)$$('#psv').innerHTML=s.labs||s.pharmacies?`<span style="color:#1A7F37;font-weight:600">● ${kind==='pharmacy'?'Delivery':'Home collection'} available here</span>${s.homeHours?` <span class="sub">· ${esc(s.homeHours)}</span>`:''}`:`<span style="color:#B25000;font-weight:600">● Not served here yet</span> <span class="sub">— you can still save it${s.nearestLab?'; nearest lab '+s.nearestLab.km+' km':''}</span>`;fit()};
- const start=pos||LAB.loc||{lat:17.385,lng:78.4867};
- pinMap($$('#pmap'),start,moved,false,{full:true,onDrag:()=>{$$('#ppin').classList.add('up');$$('#psr').style.display='none'}}).then(m=>M=m);
- const me=()=>{if(!navigator.geolocation)return toast('Location is not available on this phone');$$('#pme').textContent='Locating…';navigator.geolocation.getCurrentPosition(p=>{$$('#pme').textContent='◎ Use current location';pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};LAB.loc={lat:pos.lat,lng:pos.lng};M&&M.set(pos)},()=>{$$('#pme').textContent='◎ Use current location';toast('Allow location in the browser, or move the map yourself')},{enableHighAccuracy:true,timeout:8000})};
- $$('#pme').onclick=me;if(!a.lat&&!LAB.loc)me();
- let st=null;const q=$$('#psq'),sr=$$('#psr');
- q.oninput=()=>{clearTimeout(st);if(q.value.trim().length<3){sr.style.display='none';return}st=setTimeout(async()=>{let r=[];try{r=(await API('/api/v2/geo/search?q='+encodeURIComponent(q.value.trim())+(pos?`&lat=${pos.lat}&lng=${pos.lng}`:''))).rows||[]}catch(_){}
-  sr.style.display=r.length?'':'none';sr.innerHTML=r.slice(0,6).map((x,i)=>`<button type="button" data-i="${i}"><b>${esc(x.title||x.area)}</b><small>${esc(x.sub||[x.area,x.city,x.pin].filter(Boolean).join(', '))}</small></button>`).join('');
-  sr.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const x=r[+b.dataset.i];sr.style.display='none';q.value='';q.blur();M&&M.set({lat:x.lat,lng:x.lng})})},350)};
- const open=on=>{$$('#af').classList.toggle('on',on);$$('#pscrim').classList.toggle('on',on)};
- $$('#pok').onclick=()=>{if(!pos)return toast('Move the map to your door first');
-  $$('#dtitle').textContent=title();$$('#dsub').textContent=sub();if(geo.pin&&!f.pin.dataset.typed)f.pin.value=geo.pin;if(geo.area&&!f.area.dataset.typed)f.area.value=geo.area;
-  if(!f.line2.value&&geo.road)f.line2.value=geo.road;open(true);setTimeout(()=>f.line1.focus(),300)};
- $$('#dchg').onclick=$$('#pscrim').onclick=()=>open(false);
- ['pin','area'].forEach(k=>f[k].oninput=()=>f[k].dataset.typed=1);
- f.onsubmit=async e=>{e.preventDefault();const dd=Object.fromEntries(new FormData(f));
+/* Address: step 1 is the shared map picker (/geopick.js), step 2 the details. Editing an address starts on the details. */
+function addrEdit(a,kind,store,must){a=a||{label:'Home'};
+ if(!window.GeoPick){const s=document.createElement('script');s.src='/geopick.js?v=1';s.onload=()=>addrEdit(a,kind,store,must);s.onerror=()=>toast('Could not load the map. Check your internet.');document.head.appendChild(s);return}
+ if(a.id&&a.lat)return addrDetails(a,{lat:a.lat,lng:a.lng,acc:a.acc||0},{title:a.line2,area:a.area,city:a.city,state:a.state,pin:a.pin},kind,store,must);
+ GeoPick.open({start:a.lat?{lat:a.lat,lng:a.lng}:LAB.loc,serve:kind==='pharmacy'?'pharmacy':'lab',must,
+  heading:must?'ADD YOUR ADDRESS':'SELECT LOCATION',callout:kind==='pharmacy'?'Your order will come here':'The technician will come here',hint:'Move the map to your exact door',
+  onConfirm:(p,g)=>{LAB.loc={lat:p.lat,lng:p.lng};addrDetails(a,p,g,kind,store,must)}})}
+function addrDetails(a,pos,geo,kind,store,must){const L=['Home','Work','Parents','Other'];let label=a.label||'Home';
+ const sx=sheetX(a.id?'Edit address':'Address details',`<form id="af" style="padding:0 16px 20px;display:flex;flex-direction:column;gap:10px">
+  <div class="card row" style="gap:12px;margin:0"><span class="ib" style="background:#FFECEB">${ic('<path d="M12 21s-7-6-7-12a7 7 0 0114 0c0 6-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>','#FF3B30',18)}</span><div style="flex:1;min-width:0"><div style="font-weight:700">${esc(geo.title||geo.road||geo.area||'Pinned location')}</div><div class="sub" style="white-space:normal">${esc([geo.area,geo.city,geo.pin].filter(Boolean).join(', '))}</div></div><button type="button" class="btn sec sm" id="dchg">Change</button></div>
+  <input class="inp2" name="line1" required placeholder="Flat / house no. and floor *" value="${esc(a.line1||'')}">
+  <input class="inp2" name="line2" required minlength="3" placeholder="Building, street or society *" value="${esc(a.line2||(a.id?'':geo.road||''))}">
+  <input class="inp2" name="landmark" placeholder="Landmark (optional) — e.g. opposite Ratnadeep" value="${esc(a.landmark||'')}">
+  <div class="row" style="gap:10px"><input class="inp2" name="area" placeholder="Area" value="${esc(a.area||geo.area||'')}" style="flex:2"><input class="inp2" name="pin" required inputmode="numeric" pattern="[1-9][0-9]{5}" maxlength="6" placeholder="PIN *" value="${esc(a.pin||geo.pin||'')}" style="flex:1"></div>
+  <div class="sect" style="margin:6px 4px 0">SAVE AS</div><div class="row" style="gap:8px;flex-wrap:wrap" id="alb">${L.map(x=>`<button type="button" class="chipl ${label===x?'on':''}" data-l="${x}">${LBL[x]} ${x}</button>`).join('')}</div>
+  <div class="sect" style="margin:6px 4px 0">WHO WILL BE AT THE DOOR</div>
+  <div class="row" style="gap:10px"><input class="inp2" name="name" data-x="1" placeholder="Name" value="${esc(a.name||(a.id?'':(P(ME&&ME.me)||{}).name||''))}" style="flex:1"><input class="inp2" name="phone" data-x="1" inputmode="tel" placeholder="Phone" value="${esc(a.phone||(a.id?'':(ME&&ME.account&&ME.account.phone)||''))}" style="flex:1"></div>
+  <input class="inp2" name="note" maxlength="140" placeholder="Note for the technician (gate code, dog, parking)" value="${esc(a.note||'')}">
+  <button class="btn pri" style="width:100%;margin-top:4px">Save address</button>
+  ${a.id?'<button type="button" class="btn sec" style="width:100%;color:#C4291C" id="adel">Remove address</button>':''}</form>
+  <style>.chipl{border:1px solid #D2D2D7;background:#fff;border-radius:18px;padding:8px 14px;font-weight:600;font-size:14px;color:#1D1D1F}.chipl.on{border-color:#0071E3;background:#E8F1FF;color:#0071E3}</style>`);
+ if(must){sx.el.querySelector('[data-x]').style.visibility='hidden';sx.el.onclick=null}
+ const f=sx.el.querySelector('#af');
+ sx.el.querySelectorAll('#alb .chipl').forEach(b=>b.onclick=()=>{sx.el.querySelectorAll('#alb .chipl').forEach(x=>x.classList.remove('on'));b.classList.add('on');label=b.dataset.l});
+ sx.el.querySelector('#dchg').onclick=()=>{sx.close();addrEdit({...a,lat:pos.lat,lng:pos.lng,id:undefined,_id:a.id},kind,store,must)};
+ if(!a.id)setTimeout(()=>f.line1.focus(),250);
+ f.onsubmit=async e=>{e.preventDefault();const dd=Object.fromEntries(new FormData(f));const id=a.id||a._id;
   try{const body={...dd,label,lat:pos.lat,lng:pos.lng,acc:pos.acc||0,city:geo.city||a.city||'',state:geo.state||a.state||''};
-   const r=a.id?await API('/api/v2/addresses/'+a.id,{method:'PUT',json:body}):await API('/api/v2/addresses',{json:body});
-   await addrLoad(true);ADDR.sel=ADDR.rows.find(x=>x.id===r.id)||ADDR.sel;try{localStorage.setItem('uh-addr-id',r.id)}catch(_){}close();toast('Address saved');addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}};
- const del=$$('#adel');if(del)del.onclick=async()=>{if(!confirm('Remove this address?'))return;try{await API('/api/v2/addresses/'+a.id,{method:'DELETE'});await addrLoad(true);close();addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}};
- if(a.id)setTimeout(()=>$$('#pok').click(),400);fit()}
+   const r=id?await API('/api/v2/addresses/'+id,{method:'PUT',json:body}):await API('/api/v2/addresses',{json:body});
+   await addrLoad(true);ADDR.sel=ADDR.rows.find(x=>x.id===r.id)||ADDR.sel;try{localStorage.setItem('uh-addr-id',r.id)}catch(_){}sx.close();toast('Address saved');addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}};
+ const del=sx.el.querySelector('#adel');if(del)del.onclick=async()=>{if(!confirm('Remove this address?'))return;try{await API('/api/v2/addresses/'+a.id,{method:'DELETE'});await addrLoad(true);sx.close();addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}}}
 
 async function openAddresses(){await addrLoad(true);page('Addresses',`<div id="addrlist" class="list" style="margin-top:14px">${ADDR.rows.map(a=>`<button class="li" onclick="addrEdit(ADDR.rows.find(x=>x.id==='${a.id}'),'lab','')"><span class="ib" style="background:#0071E3;color:#fff;font-weight:700">${LBL[a.label]||'•'}</span><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(a.label)}</div><div class="sub" style="white-space:normal">${esc(addrLine(a))} · near ${esc(a.landmark)} · ${esc(a.pin)}</div></div>${ic(I.chev,'#C7C7CC')}</button>`).join('')}
  <button class="li" onclick="addrEdit(null,'lab','')">${ic('<path d="M12 5v14M5 12h14"/>','#0071E3',20)}<span style="color:#0071E3;font-weight:600">Add a new address</span></button></div>

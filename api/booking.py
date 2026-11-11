@@ -187,19 +187,105 @@ def reverse(lat: float, lng: float, request: Request, db: Session = Depends(get_
     return {**p, "serve": serviceable(db, p.get("pin", ""), lat, lng)}
 
 
+def _gsearch(q: str, lat: float | None, lng: float | None) -> list[dict]:
+    """Google Places text search (server key, never sent to the browser): finds flats, societies and shops by name."""
+    from .places import gkey, _gpost
+    if not gkey():
+        return []
+    key = "g" + json.dumps([q.lower(), round(lat or 0, 2), round(lng or 0, 2)])
+    hit = _GEO.get(key)
+    if hit and hit[0] > now():
+        return hit[1]
+    body: dict = {"textQuery": q, "regionCode": "IN", "languageCode": "en", "pageSize": 6}
+    if lat and lng:
+        body["locationBias"] = {"circle": {"center": {"latitude": lat, "longitude": lng}, "radius": 30000.0}}
+    try:
+        j = _gpost("https://places.googleapis.com/v1/places:searchText", body, "places.displayName,places.formattedAddress,places.location,places.addressComponents", timeout=6)
+    except Exception:
+        return []
+    out = []
+    for p in j.get("places") or []:
+        comp = {}
+        for c in p.get("addressComponents") or []:
+            for t in c.get("types") or []:
+                comp.setdefault(t, c.get("longText", ""))
+        title = (p.get("displayName") or {}).get("text", "")
+        addr = p.get("formattedAddress", "")
+        out.append({"title": title, "sub": ", ".join(x.strip() for x in addr.split(",")[1:4] if x.strip() and x.strip() != title),
+                    "lat": p["location"]["latitude"], "lng": p["location"]["longitude"],
+                    "area": comp.get("sublocality_level_1") or comp.get("sublocality") or comp.get("neighborhood") or "",
+                    "city": comp.get("locality") or "", "state": comp.get("administrative_area_level_1") or "", "pin": comp.get("postal_code") or ""})
+    _GEO[key] = (now() + 86400, out)
+    return out
+
+
+def _ggeocode(q: str, lat: float | None, lng: float | None) -> list[dict]:
+    from .places import gkey, _gget, _gaddress
+    if not gkey():
+        return []
+    prm = {"address": q, "components": "country:IN", "language": "en", "region": "in"}
+    if lat and lng:
+        prm["bounds"] = f"{lat - .3},{lng - .3}|{lat + .3},{lng + .3}"
+    try:
+        j = _gget("https://maps.googleapis.com/maps/api/geocode/json", prm, timeout=6)
+    except Exception:
+        return []
+    out = []
+    for x in (j.get("results") or [])[:6]:
+        a = _gaddress(x)
+        if (x.get("types") or [""])[0] == "country":
+            continue
+        parts = [t.strip() for t in a["label"].split(",")]
+        out.append({"title": parts[0], "sub": ", ".join(parts[1:4]), "lat": a["lat"], "lng": a["lng"], "area": a["place"], "city": a["city"], "state": a["state"], "pin": a["pin"]})
+    return out
+
+
+def _photon(q: str, lat: float | None, lng: float | None) -> list[dict]:
+    """Photon (OpenStreetMap data) matches as you type — 'yogal' finds 'Yogalakshmi…', which Nominatim does not."""
+    params = {"q": q, "limit": 8, "lang": "en", "bbox": "68,6,97.5,37.5"}
+    if lat and lng:
+        params.update(lat=round(lat, 4), lon=round(lng, 4))
+    key = "p" + json.dumps(params, sort_keys=True)
+    hit = _GEO.get(key)
+    if hit and hit[0] > now():
+        return hit[1]
+    req = urllib.request.Request("https://photon.komoot.io/api/?" + urllib.parse.urlencode(params), headers={"User-Agent": "UrbanHealth/1.0 (support@urbanhealth.in)"})
+    try:
+        j = json.loads(urllib.request.urlopen(req, timeout=5).read())
+    except Exception:
+        return []
+    out = []
+    for f in j.get("features") or []:
+        pr = f.get("properties") or {}
+        if pr.get("countrycode", "IN").upper() != "IN":
+            continue
+        lon_, lat_ = (f.get("geometry") or {}).get("coordinates", [None, None])[:2]
+        if lat_ is None:
+            continue
+        title = pr.get("name") or " ".join(x for x in (pr.get("housenumber"), pr.get("street")) if x) or pr.get("district") or ""
+        area = pr.get("district") or pr.get("locality") or pr.get("suburb") or ""
+        out.append({"title": title, "sub": ", ".join(x for x in (pr.get("street") if pr.get("name") else "", area, pr.get("city"), pr.get("postcode")) if x and x != title),
+                    "lat": lat_, "lng": lon_, "area": area, "city": pr.get("city") or pr.get("county") or "", "state": pr.get("state") or "", "pin": (pr.get("postcode") or "")[:6]})
+    _GEO[key] = (now() + 86400, out[:6])
+    return out[:6]
+
+
 @r.get("/geo/search")
 def search(q: str, request: Request, lat: float | None = None, lng: float | None = None):
+    """Google Places when the server key is set, then Photon, then Nominatim — the first that finds anything."""
     from .auth import limit
-    limit(request, "geo", 60, 600)
-    q = (q or "").strip()[:120]
+    limit(request, "geo", 90, 600)
+    q = re.sub(r"\s+", " ", (q or "").strip())[:120]
     if len(q) < 3:
         return {"rows": []}
-    params = {"q": q, "limit": 6}
-    if lat and lng:
-        params["viewbox"] = f"{lng - .3},{lat + .3},{lng + .3},{lat - .3}"
-    res = _nominatim("search", params)
-    return {"rows": [{"title": (x.get("display_name") or "").split(",")[0], "sub": ", ".join((x.get("display_name") or "").split(",")[1:4]).strip(),
-                      "lat": float(x["lat"]), "lng": float(x["lon"]), **_parts(x)} for x in (res or [])[:6]]}
+    rows = _gsearch(q, lat, lng) or _photon(q, lat, lng) or _ggeocode(q, lat, lng)
+    if not rows:
+        params = {"q": q, "limit": 6}
+        if lat and lng:
+            params["viewbox"] = f"{lng - .3},{lat + .3},{lng + .3},{lat - .3}"
+        rows = [{"title": (x.get("display_name") or "").split(",")[0], "sub": ", ".join((x.get("display_name") or "").split(",")[1:4]).strip(),
+                 "lat": float(x["lat"]), "lng": float(x["lon"]), **_parts(x)} for x in (_nominatim("search", params) or [])[:6]]
+    return {"rows": rows[:6]}
 
 
 # ---- do we come here? ------------------------------------------------------------------------------------------------
