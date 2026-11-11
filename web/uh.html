@@ -122,6 +122,19 @@ body.mini .top .sos,body.mini .top .round{height:36px;min-width:36px}body.mini .
 .seg2.bk{display:flex;background:#E3E3E8;border-radius:12px;padding:3px}.seg2.bk button{flex:1;height:36px;border:0;border-radius:10px;background:none;font:inherit;font-size:15px;font-weight:600;color:#1D1D1F;cursor:pointer}.seg2.bk button.on{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1)}
 .okc{width:84px;height:84px;border-radius:50%;margin:0 auto;background:#30D158;display:grid;place-items:center;box-shadow:0 10px 30px rgba(48,209,88,.35)}
 .tok{border-radius:24px;padding:20px;color:#fff;background:linear-gradient(160deg,#0A84FF,#3A3AE0)}
+#simple{position:fixed;inset:0;z-index:55;background:#F2F2F7;overflow-y:auto;overscroll-behavior:contain}
+.smw{max-width:520px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));color:#1D1D1F}
+.smh{display:flex;justify-content:space-between;align-items:center;font-size:16px;color:#6E6E73;font-weight:600}.sms{height:50px;padding:0 22px;border-radius:25px;border:0;background:linear-gradient(180deg,#FF4B4B,#D7263D);color:#fff;font:800 19px Geist,sans-serif;box-shadow:0 6px 16px rgba(215,38,61,.35);cursor:pointer}
+.smw h1{font-size:38px;font-weight:700;letter-spacing:-.02em;margin:16px 4px 16px;line-height:1.15}
+.smc{background:#fff;border-radius:30px;padding:22px;margin-bottom:14px}.smp{font-size:19px;font-weight:700;color:#0058B0}
+.smr{display:flex;align-items:center;gap:16px;margin-top:16px}.smi{width:92px;height:92px;border-radius:24px;background:linear-gradient(180deg,#fff,#E6E9EF);box-shadow:inset 0 0 0 1px #E5E5EA;display:grid;place-items:center;flex:none}.smi i{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#C9D2DF);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.smr b{display:block;font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.15}.smd{font-size:17px;color:#6E6E73;margin-top:4px}
+.smy{width:100%;min-height:78px;border-radius:39px;border:0;background:#30D158;color:#fff;font-family:inherit;font-size:26px;font-weight:700;margin-top:20px;box-shadow:0 10px 24px rgba(48,209,88,.35);cursor:pointer}
+.sma{display:block;width:100%;min-height:52px;margin-top:10px;border:0;background:none;color:#0071E3;font-family:inherit;font-size:18px;font-weight:600;cursor:pointer}
+.smok{width:90px;height:90px;border-radius:50%;background:#30D158;color:#fff;font-size:48px;display:grid;place-items:center;margin:0 auto}
+.smt{display:flex;gap:10px;margin-top:12px}.smt div{flex:1;border-radius:18px;padding:12px 6px;text-align:center;background:#F2F2F7;font-size:16px;font-weight:600}.smt span{display:block;font-size:24px;margin-bottom:2px}.smt .ok{background:#E8F7EE;color:#1A7F37}.smt .late{background:#FFF3E0;color:#A35200}
+.smb{display:flex;gap:12px}.smb a{flex:1;min-height:92px;border-radius:26px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:#1D1D1F;font-weight:700;font-size:19px}
+.smx{display:block;margin:22px auto 0;border:0;background:none;color:#8E8E93;font:500 15px Geist,sans-serif;min-height:44px;cursor:pointer}
 a.li{text-decoration:none;color:inherit}
 .unx{padding:4px 16px}.un{display:flex;align-items:center;gap:12px;padding:12px 0}.un+.un{border-top:.5px solid var(--line,#E5E5EA)}.un .g{flex:1;min-width:0}.un .g b{display:block;font-size:16px;font-weight:600;letter-spacing:-.01em}.un .g small{display:block;color:#8E8E93;font-size:13.5px;margin-top:1px}
 .un .go{height:36px;padding:0 16px;border-radius:18px;border:0;background:#0071E3;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;flex:none}.un .go.sec{background:#F2F2F7;color:#0071E3}
@@ -642,6 +655,40 @@ async function openToken(id){clearTimeout(TOKT);let t;try{t=await API('/api/v1/q
  ${done?`<p class="line" style="margin-top:14px">Your prescription and notes will appear in Health when the doctor adds them.</p>`:''}`,'CARE');
  if(!done)TOKT=setTimeout(()=>{if(document.querySelector('#layer .page[data-t="OP today"]'))openToken(id)},15000)}
 async function tokenLeave(id){if(!confirm('Leave the queue? Your number will be given up.'))return;try{await API(`/api/v1/queue/${id}/leave`,{key:true,method:'POST'});clearTimeout(TOKT);await loadVisits();closeL();renderAll();toast('You left the queue')}catch(e){toast(e.message)}}
+
+/* ---------------- simple mode (for parents) ----------------
+   One screen on the parent's own phone: the next tablet with one big "I've taken it", today's doses, two big call
+   buttons and SOS. Turned on from Settings on that phone; the family sees every tap in the normal app as usual. */
+const SM_T={en:{hi:'Hello',taken:'I’ve taken it',again:'Hear again',today:'Today',done:'All done for today',none:'No tablets today',m:'Morning',a:'Afternoon',n:'Night',call:'Call',exit:'Normal app',tab:'tablet'},
+ ta:{hi:'வணக்கம்',taken:'சாப்பிட்டேன்',again:'மீண்டும் கேளுங்கள்',today:'இன்று',done:'இன்றைய மாத்திரைகள் முடிந்தது',none:'இன்று மாத்திரை இல்லை',m:'காலை',a:'மதியம்',n:'இரவு',call:'அழை',exit:'Normal app',tab:'மாத்திரை'},
+ te:{hi:'నమస్కారం',taken:'వేసుకున్నాను',again:'మళ్ళీ వినండి',today:'ఈరోజు',done:'ఈరోజు మాత్రలు అయిపోయాయి',none:'ఈరోజు మాత్రలు లేవు',m:'ఉదయం',a:'మధ్యాహ్నం',n:'రాత్రి',call:'కాల్',exit:'Normal app',tab:'మాత్ర'}};
+const smLang=()=>{try{return localStorage.getItem('uh-simple')||''}catch(_){return''}};
+const smPart=t=>+t.slice(0,2)<12?'m':+t.slice(0,2)<17?'a':'n';
+let SM_SAID='';
+function renderSimple(){const L=smLang();let el=$('#simple');if(!L||!ME||!ME.me){if(el)el.remove();return}const T=SM_T[L]||SM_T.en,me=P(ME.me);if(!me)return;
+ if(!el){el=document.createElement('div');el.id='simple';el.setAttribute('data-noi18n','');document.body.appendChild(el)}
+ const plan=dosePlan(me.id),now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),next=plan.find(x=>!x.done&&x.t<=hm)||plan.find(x=>!x.done);
+ const h12=t=>{const[a,b]=t.split(':');return`${(+a%12)||12}:${b}`},c=(me.medicalId.contacts||[]).filter(x=>x.phone);
+ const parts=['m','a','n'].map(k=>{const xs=plan.filter(x=>smPart(x.t)===k);return{k,st:!xs.length?'':xs.every(x=>x.done)?'✓':xs.some(x=>!x.done&&x.t<hm)?'!':'·'}});
+ const tl=L==='en'?'':` style="font-family:'Noto Sans ${L==='ta'?'Tamil':'Telugu'}',Geist,sans-serif"`;
+ el.innerHTML=`<div class="smw"${tl}><div class="smh"><span>${now.toLocaleDateString(L==='en'?'en-IN':L+'-IN',{weekday:'long',day:'numeric',month:'long'})}</span><button class="sms" onclick="sosConfirm()">SOS</button></div>
+ <h1>${T.hi}, ${esc(me.name.split(' ')[0])}</h1>
+ ${next?`<div class="smc"><div class="smp">${T[smPart(next.t)]} · ${h12(next.t)}</div><div class="smr"><div class="smi"><i></i></div><div style="flex:1;min-width:0"><b>${esc(next.m.name)}</b><div class="smd">${esc([next.m.dose,next.m.note].filter(Boolean).join(' · '))}</div></div></div>
+  <button class="smy" onclick="smTake('${next.m.id}','${next.t}')">✓ ${T.taken}</button><button class="sma" onclick="smSay()">🔊 ${T.again}</button></div>`
+ :`<div class="smc" style="text-align:center;padding:30px 20px"><div class="smok">✓</div><b style="font-size:24px;display:block;margin-top:12px">${plan.length?T.done:T.none}</b></div>`}
+ ${plan.length?`<div class="smc" style="padding:18px"><div class="smp" style="color:#6E6E73">${T.today}</div><div class="smt">${parts.filter(x=>x.st).map(x=>`<div class="${x.st==='✓'?'ok':x.st==='!'?'late':''}"><span>${x.st==='✓'?'✓':x.st==='!'?'!':'○'}</span>${T[x.k]}</div>`).join('')}</div></div>`:''}
+ <div class="smb">${c.slice(0,2).map(x=>`<a href="tel:${esc(x.phone)}">${ic(I.phone,'#30D158',30)}<span>${esc(x.name.split(' ')[0])}</span></a>`).join('')}${c.length<2?`<a href="tel:108">${ic(I.phone,'#FF3B30',30)}<span>108</span></a>`:''}</div>
+ <button class="smx" onclick="smOff()">${T.exit}</button></div>`;
+ if(next&&next.t<=hm){const k=today()+next.m.id+next.t;if(SM_SAID!==k){SM_SAID=k;setTimeout(smSay,600)}}}
+function smLine(){const L=smLang(),T=SM_T[L]||SM_T.en,me=P(ME.me),plan=dosePlan(me.id),now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),next=plan.find(x=>!x.done&&x.t<=hm)||plan.find(x=>!x.done);
+ if(!next)return T.done;return`${me.name.split(' ')[0]}, ${T[smPart(next.t)]} ${T.tab}. `+(window.UHL&&UHL.doseLine?UHL.doseLine('',next.m,L):next.m.name)}
+function smSay(){if(window.UHL&&UHL.speak)UHL.speak(smLine(),smLang())}
+async function smTake(med,t){const me=P(ME.me);try{await API(`/api/v2/people/${me.id}/records`,{json:{kind:'dose',day:today(),data:{med,time:t,at:Date.now()}}});if(navigator.vibrate)navigator.vibrate(60);await loadRecords(me.id);renderSimple()}catch(e){toast(e.message)}}
+function smOff(){if(!confirm('Switch back to the normal app?'))return;try{localStorage.removeItem('uh-simple')}catch(_){}renderSimple();renderAll()}
+function openSimple(){const cur=smLang();page('Simple mode',`<p class="line">For parents and elders: one big screen with the next tablet, one button to say it’s taken, today’s doses, two call buttons and SOS. Reminders are read aloud. Turn it on here, on their phone.</p>
+ <div class="sect">LANGUAGE</div><div class="list">${[['ta','தமிழ்','Tamil'],['te','తెలుగు','Telugu'],['en','English','English']].map(([k,n,e])=>`<button class="li" onclick="smOn('${k}')"><div style="flex:1;text-align:left"><div style="font-weight:600;font-size:18px">${n}</div><div class="sub">${e}</div></div>${cur===k?ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#0071E3',22):''}</button>`).join('')}</div>
+ <p class="cap" style="margin-top:12px">To switch back, tap “Normal app” at the bottom of the simple screen.</p>`,'SETTINGS')}
+function smOn(l){try{localStorage.setItem('uh-simple',l)}catch(_){}closeL();renderSimple();smSay()}
 /* Today's "Up next": the few things that need this person now, in time order, each with one action. */
 function upNext(p){if(!can(p,'all'))return'';const out=[],now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),h12=t=>{const[a,b]=t.split(':');const H=+a;return`${H%12||12}:${b} ${H<12?'AM':'PM'}`};
  out.push(...visitsNext(p));const plan=dosePlan(p.id),next=plan.find(x=>!x.done&&x.t>=hm)||plan.find(x=>!x.done),late=plan.filter(x=>!x.done&&x.t<hm),taken=plan.filter(x=>x.done).length;
@@ -687,7 +734,7 @@ function familyView(){const mine=P(ME.me);let h=`<div class="list">${ME.people.m
  <p class="cap">Adults sign in with their own account and choose what you can see. Children and elders without a phone are added as dependents you look after.</p>
  <div class="sect">WHO CAN SEE MY HEALTH</div><button class="li list" style="width:100%" onclick="openSharing()">${ic(I.lock,'#3A3A3C')}<span style="flex:1">Sharing and women's health</span><span class="end">${ic(I.chev,'#C7C7CC',18)}</span></button>
  ${ME.people.some(x=>!x.self)?`<button class="btn sec" style="width:100%;margin-top:18px;color:#C4291C" onclick="leaveHousehold()">Leave this family</button>`:''}`;return h}
-function renderAll(){if(!ME||!P())return;seen(S.tab);document.body.classList.toggle('flat',S.tab!=='summary');renderTop();renderDock();renderSheet();showModel()}
+function renderAll(){try{renderSimple()}catch(_){}if(!ME||!P())return;seen(S.tab);document.body.classList.toggle('flat',S.tab!=='summary');renderTop();renderDock();renderSheet();showModel()}
 async function selectPerson(id){S.person=id;S.focus=0;S.week=null;closeL();if(!REC[id])await loadRecords(id);renderAll()}
 /* ---------------- actions ---------------- */
 async function toggleDose(pid,med,time,doneId){try{if(doneId){await API('/api/v2/records/'+doneId,{method:'DELETE'})}else{await API(`/api/v2/people/${pid}/records`,{json:{kind:'dose',day:today(),data:{med,time,at:Date.now()}}})}await loadRecords(pid);renderAll()}catch(e){toast(e.message)}}
@@ -930,7 +977,7 @@ const ROW=(icon,col,t,end,on)=>`<button class="li" onclick="${on}"><span class="
 function openSettings(){const me=P(ME.me),u=ME.user;page('Settings',`<button class="card row" style="width:100%;text-align:left;margin-top:14px" onclick="openProfile()"><span class="av" style="background:${me.color};width:60px;height:60px;border-radius:30px;font-size:24px">${esc(me.name[0])}</span><div style="flex:1"><div style="font-size:20px;font-weight:700">${esc(me.name)}</div><div class="sub">${esc(u.phone||u.email||'')} · Health profile</div></div>${ic(I.chev,'#C7C7CC')}</button>
  <div class="list" style="margin-top:18px">${ROW(I.id,'#FF3B30','Medical ID','',"openMedId()")}${ROW(I.phone,'#34C759','Emergency contacts',(me.medicalId.contacts||[]).length+'',"openContacts()")}${ROW(I.rec,'#30B0C7','My doctors','',"openDoctors()")}${ROW(I.share||I.rec,'#0A84FF','Share with a doctor','',"shareDoctor()")}${ROW(I.rec,'#5E5CE6','Doctor visit summary (PDF)','',"visitSummary()")}${ROW(I.lock,'#636366','Who can see my health','',"openSharing()")}</div>
  ${me.sex==='female'?`<div class="list" style="margin-top:18px">${ROW(I.drop,'#E5577A','Cycle','Private',"openCycle()")}${ROW(I.baby,'#E5577A','Pregnancy',me.pregnancy&&me.pregnancy.stage==='pregnant'?'Week '+me.pregnancy.week:'Off',"openPregnancy()")}</div>`:''}
- <div class="list" style="margin-top:18px">${ROW(I.bell,'#FF9500','Notifications',(typeof Notification!=='undefined'&&Notification.permission==='granted')?'On':'Off',"openNotifSettings()")}${ROW(I.rec,'#30B0C7','Bookings and orders','',"openOrders()")}${ROW(I.map||I.rec,'#0071E3','Addresses','',"openAddresses()")}${window.UHL?ROW(I.spark||I.rec,'#0A84FF','Language',UHL.name(),"openLanguage()"):''}</div>
+ <div class="list" style="margin-top:18px">${ROW(I.bell,'#FF9500','Notifications',(typeof Notification!=='undefined'&&Notification.permission==='granted')?'On':'Off',"openNotifSettings()")}${ROW(I.rec,'#30B0C7','Bookings and orders','',"openOrders()")}${ROW(I.map||I.rec,'#0071E3','Addresses','',"openAddresses()")}${window.UHL?ROW(I.spark||I.rec,'#0A84FF','Language',UHL.name(),"openLanguage()"):''}${ROW(I.fam,'#FF9500','Simple mode for parents',smLang()?'On':'Off',"openSimple()")}</div>
  <div class="list" style="margin-top:18px">${ROW(I.eye||I.lock,'#5E5CE6','Who opened my records','',"openAccessLog()")}${ROW(I.shield,'#30B0C7','Sign-in and security','',"openSecurity()")}${ROW(I.down,'#8E8E93','Your data','Export, delete',"openData()")}</div>
  <button class="btn sec" style="width:100%;margin-top:22px" onclick="signOut()">Sign out</button><p class="cap" style="text-align:center">Urban Health · urbanhealth.in · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>`)}
 /* Language: the app's language for this account (saved, so reminders arrive in it too), each family member's
