@@ -1370,6 +1370,12 @@ class SchemeCard(Base):
     blob: Mapped[str] = mapped_column(Text, default="")
     last4: Mapped[str] = mapped_column(String(4), default="")
     valid_until: Mapped[str] = mapped_column(String(10), default="")
+    insurer: Mapped[str] = mapped_column(String(80), default="")       # private / employer cover: "Star Health"
+    plan: Mapped[str] = mapped_column(String(80), default="")          # "Family Floater"
+    sum_insured: Mapped[int] = mapped_column(Integer, default=0)
+    helpline: Mapped[str] = mapped_column(String(20), default="")
+    members: Mapped[list | None] = mapped_column(JSON, nullable=True)  # person ids covered
+    files: Mapped[dict | None] = mapped_column(JSON, nullable=True)    # {front, back, doc} → stored file ids (encrypted)
     created: Mapped[int] = mapped_column(Integer, default=now)
 
 

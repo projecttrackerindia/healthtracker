@@ -160,16 +160,27 @@ def _user(request: Request, db: Session):
 
 
 class CardIn(BaseModel):
-    scheme: str
+    scheme: str                     # a scheme id, or "private" | "employer"
     number: str
     memberId: str = ""
+    members: list[str] = []
     validUntil: str = ""
+    insurer: str = ""
+    plan: str = ""
+    sumInsured: int = 0
+    helpline: str = ""
+
+
+KINDS = {"private": "Health insurance", "employer": "Employer cover"}
 
 
 def _card(c: SchemeCard, full: bool = False) -> dict:
     from .family import decrypt
-    d = {"id": c.id, "scheme": c.scheme, "name": SCHEMES.get(c.scheme, {}).get("name", c.scheme), "memberId": c.member_id,
-         "last4": c.last4, "validUntil": c.valid_until, "help": SCHEMES.get(c.scheme, {}).get("help", "")}
+    sc = SCHEMES.get(c.scheme, {})
+    d = {"id": c.id, "scheme": c.scheme, "name": c.insurer or sc.get("name") or KINDS.get(c.scheme, c.scheme), "plan": c.plan or sc.get("cover", ""),
+         "memberId": c.member_id, "members": c.members or ([c.member_id] if c.member_id else []), "last4": c.last4, "validUntil": c.valid_until,
+         "help": c.helpline or sc.get("help", ""), "sumInsured": c.sum_insured, "kind": "gov" if c.scheme in SCHEMES else c.scheme,
+         "files": sorted((c.files or {}).keys())}
     if full:
         try:
             d["number"] = (decrypt(c.blob) or {}).get("n", "")
@@ -181,28 +192,94 @@ def _card(c: SchemeCard, full: bool = False) -> dict:
 @r.get("/cards")
 def cards(request: Request, db: Session = Depends(get_db)):
     u = _user(request, db)
-    return {"rows": [_card(c) for c in db.scalars(select(SchemeCard).where(SchemeCard.household_id == u.household_id)).all()]}
+    rows = db.scalars(select(SchemeCard).where(SchemeCard.household_id == u.household_id).order_by(SchemeCard.created.desc())).all()
+    return {"rows": [_card(c) for c in rows]}
+
+
+def _fill(c: SchemeCard, b: CardIn) -> None:
+    from .family import encrypt
+    if b.scheme not in SCHEMES and b.scheme not in KINDS:
+        raise HTTPException(400, "Choose the type of cover.")
+    n = re.sub(r"[^A-Za-z0-9/\-]", "", b.number).upper()
+    if not 4 <= len(n) <= 40:
+        raise HTTPException(400, "Enter the card or policy number as printed.")
+    if re.fullmatch(r"\d{12}", re.sub(r"\D", "", n)) and len(re.sub(r"\D", "", n)) == len(n):
+        raise HTTPException(400, "That looks like an Aadhaar number. Enter the card or policy number instead — we don't store Aadhaar.")
+    if b.validUntil and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", b.validUntil):
+        raise HTTPException(400, "Valid-until must be a date.")
+    if b.scheme in KINDS and len(b.insurer.strip()) < 2:
+        raise HTTPException(400, "Enter the insurer's name.")
+    hl = re.sub(r"[^\d+]", "", b.helpline)[:20]
+    c.scheme, c.blob, c.last4, c.valid_until = b.scheme, encrypt({"n": n}), re.sub(r"[^A-Z0-9]", "", n)[-4:], b.validUntil
+    c.member_id = (b.members[0] if b.members else b.memberId)[:32]
+    c.members = [m[:32] for m in b.members[:12]] or None
+    c.insurer, c.plan, c.helpline = b.insurer.strip()[:80], b.plan.strip()[:80], hl
+    c.sum_insured = max(0, min(100_000_000, int(b.sumInsured or 0)))
 
 
 @r.post("/cards")
 def add_card(b: CardIn, request: Request, db: Session = Depends(get_db)):
-    from .family import encrypt
     u = _user(request, db)
-    if b.scheme not in SCHEMES:
-        raise HTTPException(400, "Choose a scheme from the list.")
-    n = re.sub(r"[^A-Za-z0-9]", "", b.number).upper()
-    if not 6 <= len(n) <= 24:
-        raise HTTPException(400, "Enter the card or beneficiary number as printed (6–24 letters and digits).")
-    if re.fullmatch(r"\d{12}", n):
-        raise HTTPException(400, "That looks like an Aadhaar number. Enter the scheme card number instead — we don't store Aadhaar.")
-    if b.validUntil and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", b.validUntil):
-        raise HTTPException(400, "Valid-until must be a date.")
     if len(db.scalars(select(SchemeCard.id).where(SchemeCard.household_id == u.household_id)).all()) >= 20:
         raise HTTPException(400, "Up to 20 cards.")
-    c = SchemeCard(household_id=u.household_id, member_id=b.memberId[:32], scheme=b.scheme, blob=encrypt({"n": n}), last4=n[-4:], valid_until=b.validUntil)
+    c = SchemeCard(household_id=u.household_id)
+    _fill(c, b)
     db.add(c)
     db.flush()
     return _card(c)
+
+
+@r.put("/cards/{cid}")
+def edit_card(cid: str, b: CardIn, request: Request, db: Session = Depends(get_db)):
+    u = _user(request, db)
+    c = db.get(SchemeCard, cid)
+    if not c or c.household_id != u.household_id:
+        raise HTTPException(404)
+    _fill(c, b)
+    return _card(c)
+
+
+SLOTS = {"front": "Card front", "back": "Card back", "doc": "Policy document"}
+
+
+@r.post("/cards/{cid}/file/{slot}")
+async def card_file(cid: str, slot: str, request: Request, db: Session = Depends(get_db)):
+    """A photo of the card or the policy PDF, stored encrypted like reports."""
+    from . import storage
+    u = _user(request, db)
+    c = db.get(SchemeCard, cid)
+    if not c or c.household_id != u.household_id or slot not in SLOTS:
+        raise HTTPException(404)
+    form = await request.form()
+    f = form.get("file")
+    if f is None or not hasattr(f, "read"):
+        raise HTTPException(400, "Choose a photo or PDF.")
+    data = await f.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(413, "Up to 10 MB.")
+    mime = (getattr(f, "content_type", "") or "").lower()
+    if not (data[:4] == b"%PDF" or data[:3] == b"\xff\xd8\xff" or data[:8] == b"\x89PNG\r\n\x1a\n" or data[4:12] in (b"ftypheic", b"ftypmif1", b"ftypheix") or data[8:12] == b"WEBP"):
+        raise HTTPException(415, "Use a photo (JPG, PNG, HEIC) or a PDF.")
+    fid = f"ins_{c.id}_{slot}"
+    storage.put(db, u.household_id, fid, data, "application/pdf" if data[:4] == b"%PDF" else (mime if mime.startswith("image/") else "image/jpeg"), SLOTS[slot], u.id)
+    c.files = {**(c.files or {}), slot: fid}
+    return _card(c)
+
+
+@r.get("/cards/{cid}/file/{slot}")
+def card_file_get(cid: str, slot: str, request: Request, db: Session = Depends(get_db)):
+    from fastapi.responses import Response
+    from . import storage
+    u = _user(request, db)
+    c = db.get(SchemeCard, cid)
+    if not c or c.household_id != u.household_id or slot not in (c.files or {}):
+        raise HTTPException(404)
+    got = storage.get(db, u.household_id, c.files[slot])
+    if not got:
+        raise HTTPException(404)
+    row, data = got
+    mime = getattr(row, "mime", "") or "application/octet-stream"
+    return Response(data, media_type=mime, headers={"Cache-Control": "private, no-store", "Content-Disposition": "inline"})
 
 
 @r.get("/cards/{cid}")

@@ -33,14 +33,16 @@ def check(pw: str, name: str = "", email: str = "", phone: str = "") -> list[str
         out.append("Use at least 12 characters")
     if len(pw) > 128:
         out.append("Use at most 128 characters")
-    if not re.search(r"[A-Z]", pw):
-        out.append("Add an upper-case letter")
-    if not re.search(r"[a-z]", pw):
-        out.append("Add a lower-case letter")
-    if not re.search(r"\d", pw):
-        out.append("Add a number")
-    if not re.search(r"[^A-Za-z0-9]", pw):
-        out.append("Add a symbol such as ! @ # $ %")
+    # A passphrase of 16+ characters (3–4 random words) is stronger than a short mixed password and far easier to
+    # remember (NIST SP 800-63B). It skips the character-mix rules; every other rule below still applies.
+    phrase = len(pw) >= 16 and len([w for w in re.split(r"[\s\-_.]+", pw) if len(w) >= 3]) >= 3
+    if not phrase:
+        if not re.search(r"[A-Z]", pw) or not re.search(r"[a-z]", pw):
+            out.append("Use upper and lower case letters")
+        if not re.search(r"\d", pw):
+            out.append("Add a number")
+        if not re.search(r"[^A-Za-z0-9]", pw):
+            out.append("Add a symbol such as ! @ # $ %")
     if re.search(r"(.)\1\1", pw):
         out.append("Avoid three identical characters in a row")
     low = pw.lower()
