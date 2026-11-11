@@ -563,23 +563,52 @@ function showIncoming(list){let el=document.getElementById('incm');if(!list.leng
  if(RINGON)ringStart();clearTimeout(INC);INC=setTimeout(pollIncoming,left>0&&left<20?3000:10000)}
 async function passOrder(id){const why=prompt("Why can't you take it?\n1 = Too busy   2 = Out of stock   3 = Closing   4 = Too far",'1');if(why===null)return;
  const reason={1:'busy',2:'no_stock',3:'closed',4:'far'}[why.trim()]||'busy';try{await api(`/orders/${id}/pass`,{method:'POST',body:{reason}});toast('Passed to the next pharmacy');const el=document.getElementById('incm');if(el)el.remove();if(view==='orders')loadOrders();pollIncoming()}catch(e){toast(e.message)}}
-function packOrder(o){if(!o)return;const d=document.createElement('div');d.id='pkm';document.body.appendChild(d);
- d.innerHTML=`<style>#pkm{position:fixed;inset:0;z-index:300;background:rgba(10,14,24,.5);display:grid;place-items:center;padding:16px}#pkm .ic{width:100%;max-width:460px;max-height:92vh;overflow:auto;background:#fff;border-radius:24px;padding:20px 22px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
- #pkm h2{margin:0;font-size:24px;letter-spacing:-.4px}#pkm .ck{display:flex;gap:12px;align-items:center;padding:12px 4px;border-top:1px solid #F0F0F2;font-size:15px;cursor:pointer}#pkm .ck input{width:24px;height:24px;accent-color:#0A7C3E}
- #pkm label.ph{display:flex;gap:12px;align-items:center;border:1.5px dashed #C7C7CC;border-radius:14px;padding:12px 14px;margin-top:10px;cursor:pointer;font-weight:600}#pkm label.ph.ok{border:1.5px solid #34C759;background:#EEFBF2}
- #pkm .go{display:block;width:100%;height:54px;border:0;border-radius:27px;background:#0A7C3E;color:#fff;font-size:17px;font-weight:700;margin-top:16px}#pkm .go:disabled{opacity:.4}</style>
- <form class="ic" id="pkf"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Pack THT-${E(o.id)}</h2><button type="button" class="btn sm" id="pkx">Close</button></div>
- <p style="color:#6E6E73;margin:6px 0 10px">Tick each medicine as it goes into the bag. Exactly what was prescribed — no substitutes.</p>
- ${o.items.map((i,k)=>`<label class="ck"><input type="checkbox" data-k="${k}"><span style="flex:1">${E(i.name)}${i.rx?' <span class="tag warn">Rx</span>':''}</span><b>× ${i.qty||1}</b></label>`).join('')}
- <label style="display:block;margin-top:12px;font-weight:600">Amount on your bill ₹<input name="bill" type="number" min="1" required value="${o.total||''}" style="display:block;width:100%;margin-top:6px"></label>
- <label class="ph" id="ph1">📄 <span style="flex:1">Photo of the bill <small style="color:#C4291C">required</small></span><input type="file" name="billPhoto" accept="image/*" capture="environment" hidden></label>
- <label class="ph" id="ph2">🛍 <span style="flex:1">Photo of the sealed bag <small style="color:#6E6E73">recommended</small></span><input type="file" name="bagPhoto" accept="image/*" capture="environment" hidden></label>
- <button class="go" id="pkgo" disabled>Mark packed</button></form>`;
- const f=d.querySelector('#pkf'),go=d.querySelector('#pkgo');const upd=()=>{go.disabled=!([...f.querySelectorAll('[data-k]')].every(c=>c.checked)&&f.billPhoto.files.length&&+f.bill.value>0)};
- f.querySelectorAll('input').forEach(i=>i.onchange=i.oninput=()=>{['billPhoto','bagPhoto'].forEach((n,j)=>d.querySelector('#ph'+(j+1)).classList.toggle('ok',!!f[n].files.length));upd()});
- d.querySelector('#pkx').onclick=()=>d.remove();
- f.onsubmit=async e=>{e.preventDefault();go.disabled=true;go.textContent='Saving…';const fd=new FormData();fd.append('lines',[...f.querySelectorAll('[data-k]')].map(c=>c.dataset.k).join(','));fd.append('bill',f.bill.value);fd.append('billPhoto',f.billPhoto.files[0]);if(f.bagPhoto.files[0])fd.append('bagPhoto',f.bagPhoto.files[0]);
-  try{await api(`/orders/${o.id}/pack`,{method:'POST',raw:true,headers:{},body:fd});d.remove();toast('Packed · the family has been told');loadOrders()}catch(err){toast(err.message);go.disabled=false;go.textContent='Mark packed'}}}
+function packOrder(o){if(!o)return;const d=document.createElement('div');d.id='pkm';document.body.appendChild(d);const N=o.items.length;
+ const CK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
+ d.innerHTML=`<style>#pkm{position:fixed;inset:0;z-index:300;background:rgba(10,14,24,.42);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:grid;place-items:center;padding:16px;animation:pkF .2s ease}
+ @keyframes pkF{from{opacity:0}}@keyframes pkU{from{transform:translateY(24px) scale(.98);opacity:0}}@keyframes pkPop{0%{transform:scale(.5)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+ #pkm .ic{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:#F5F5F7;border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,.3);animation:pkU .35s cubic-bezier(.2,.8,.2,1)}
+ #pkm .top{padding:22px 22px 6px;display:flex;align-items:flex-start;gap:12px}#pkm h2{margin:0;font-size:26px;letter-spacing:-.6px;font-weight:700}#pkm .sub{color:#6E6E73;font-size:14px;margin-top:3px}
+ #pkm .x{width:32px;height:32px;border-radius:16px;border:0;background:#E5E5EA;color:#6E6E73;font-size:15px;cursor:pointer;flex:none;margin-left:auto}
+ #pkm .prog{margin:14px 22px 0;height:6px;border-radius:3px;background:#E5E5EA;overflow:hidden}#pkm .prog i{display:block;height:6px;border-radius:3px;background:#34C759;width:0;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+ #pkm .sec{font-size:13px;font-weight:600;color:#86868B;letter-spacing:.2px;margin:18px 26px 8px;display:flex;justify-content:space-between}
+ #pkm .grp{background:#fff;border-radius:18px;margin:0 16px;overflow:hidden}
+ #pkm .it{display:flex;align-items:center;gap:14px;width:100%;border:0;background:#fff;padding:14px 16px;text-align:left;font:inherit;font-size:16px;color:#1D1D1F;cursor:pointer;position:relative;transition:background .2s}
+ #pkm .it+.it:before{content:"";position:absolute;left:56px;right:0;top:0;height:.5px;background:#E5E5EA}
+ #pkm .it:active{background:#F2F2F7}#pkm .it .dot{width:26px;height:26px;border-radius:13px;border:2px solid #C7C7CC;flex:none;display:grid;place-items:center;transition:all .2s}
+ #pkm .it.on .dot{background:#34C759;border-color:#34C759;animation:pkPop .3s ease}#pkm .it .dot svg{opacity:0;transition:opacity .15s}#pkm .it.on .dot svg{opacity:1}
+ #pkm .it.on .nm{color:#86868B}#pkm .it .q{margin-left:auto;font-weight:600;color:#6E6E73;font-variant-numeric:tabular-nums;background:#F2F2F7;border-radius:10px;padding:3px 9px;font-size:14px}
+ #pkm .rx{font-size:11px;font-weight:700;color:#B25000;background:#FFF2E0;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+ #pkm .amt{display:flex;align-items:center;background:#fff;border-radius:18px;margin:0 16px;padding:6px 18px}#pkm .amt span{font-size:28px;font-weight:600;color:#86868B}
+ #pkm .amt input{border:0;outline:0;background:none;font:inherit;font-size:34px;font-weight:700;letter-spacing:-.8px;width:100%;padding:8px 6px;color:#1D1D1F;font-variant-numeric:tabular-nums}
+ #pkm .ph{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px}
+ #pkm .ph label{position:relative;aspect-ratio:4/3;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;overflow:hidden;background-size:cover;background-position:center;transition:transform .15s}
+ #pkm .ph label:active{transform:scale(.97)}#pkm .ph .cam{width:46px;height:46px;border-radius:23px;background:#E8F1FF;display:grid;place-items:center}
+ #pkm .ph b{font-size:14px}#pkm .ph small{font-size:12px;color:#86868B}#pkm .ph label.set .cam,#pkm .ph label.set b,#pkm .ph label.set small{display:none}
+ #pkm .ph label .ok{display:none;position:absolute;right:10px;top:10px;width:26px;height:26px;border-radius:13px;background:#34C759;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}#pkm .ph label.set .ok{display:grid}
+ #pkm .ph label .re{display:none;position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:600;border-radius:10px;padding:4px 9px}#pkm .ph label.set .re{display:block}
+ #pkm .foot{position:sticky;bottom:0;padding:16px;background:linear-gradient(rgba(245,245,247,0),#F5F5F7 30%)}
+ #pkm .go{display:block;width:100%;height:56px;border:0;border-radius:28px;background:#1D1D1F;color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer;transition:background .25s,transform .1s}
+ #pkm .go.ready{background:#34C759}#pkm .go:active{transform:scale(.98)}#pkm .go:disabled{cursor:default}</style>
+ <form class="ic" id="pkf"><div class="top"><div><h2>Pack order</h2><div class="sub">THT-${E(o.id)} · tap each medicine as it goes in the bag</div></div><button type="button" class="x" id="pkx" aria-label="Close">✕</button></div>
+  <div class="prog"><i id="pkp"></i></div>
+  <div class="sec"><span>MEDICINES</span><span id="pkc">0 of ${N}</span></div>
+  <div class="grp">${o.items.map((i,k)=>`<button type="button" class="it" data-k="${k}" aria-pressed="false"><span class="dot">${CK}</span><span class="nm">${E(i.name)}${i.rx?'<span class="rx">Rx</span>':''}</span><span class="q">×${i.qty||1}</span></button>`).join('')}</div>
+  <div class="sec"><span>AMOUNT ON YOUR BILL</span></div>
+  <div class="amt"><span>₹</span><input name="bill" type="number" inputmode="numeric" min="1" required value="${o.total||''}"></div>
+  <div class="sec"><span>PHOTOS</span><span>exactly what leaves the shop</span></div>
+  <div class="ph">${[['billPhoto','Bill','Required'],['bagPhoto','Sealed bag','Recommended']].map(([n,t,h])=>`<label data-ph="${n}"><span class="cam"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0071E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><b>${t}</b><small>${h}</small><span class="ok">${CK}</span><span class="re">Retake</span><input type="file" name="${n}" accept="image/*" capture="environment" hidden></label>`).join('')}</div>
+  <div class="foot"><button class="go" id="pkgo" disabled>Tap each medicine</button></div></form>`;
+ const f=d.querySelector('#pkf'),go=d.querySelector('#pkgo'),on=new Set();
+ const upd=()=>{const n=on.size,ph=!!f.billPhoto.files.length,amt=+f.bill.value>0;d.querySelector('#pkp').style.width=(100*n/N)+'%';d.querySelector('#pkc').textContent=`${n} of ${N}`;
+  const ready=n===N&&ph&&amt;go.disabled=!ready;go.classList.toggle('ready',ready);
+  go.textContent=n<N?`${N-n} more to pack`:!ph?'Add a photo of the bill':!amt?'Enter the bill amount':'Mark as packed'};
+ d.querySelectorAll('.it').forEach(b=>b.onclick=()=>{const k=b.dataset.k;on.has(k)?on.delete(k):on.add(k);b.classList.toggle('on',on.has(k));b.setAttribute('aria-pressed',on.has(k));if(navigator.vibrate)navigator.vibrate(8);upd()});
+ d.querySelectorAll('[data-ph]').forEach(l=>{const inp=l.querySelector('input');inp.onchange=()=>{const fl=inp.files[0];l.classList.toggle('set',!!fl);l.style.backgroundImage=fl?`url(${URL.createObjectURL(fl)})`:'';upd()}});
+ f.bill.oninput=upd;d.querySelector('#pkx').onclick=()=>d.remove();d.onclick=e=>{if(e.target===d)d.remove()};
+ f.onsubmit=async e=>{e.preventDefault();if(go.disabled)return;go.disabled=true;go.textContent='Saving…';const fd=new FormData();fd.append('lines',[...on].join(','));fd.append('bill',f.bill.value);fd.append('billPhoto',f.billPhoto.files[0]);if(f.bagPhoto.files[0])fd.append('bagPhoto',f.bagPhoto.files[0]);
+  try{await api(`/orders/${o.id}/pack`,{method:'POST',raw:true,headers:{},body:fd});go.textContent='Packed ✓';setTimeout(()=>d.remove(),450);toast('Packed · the family has been told');loadOrders()}catch(err){toast(err.message);go.disabled=false;upd()}};
+ upd()}
 try{RINGON=localStorage.getItem('uh-ring')==='1'}catch(_){}
 document.addEventListener('pointerdown',()=>{try{ACTX=ACTX||new (window.AudioContext||window.webkitAudioContext)();ACTX.resume()}catch(_){}},{once:true});
 setInterval(()=>{if(ME&&!document.getElementById('incm'))pollIncoming()},15000);setTimeout(()=>{if(ME)pollIncoming()},2500);
