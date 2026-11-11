@@ -111,7 +111,7 @@ body.mini .top .sos,body.mini .top .round{height:36px;min-width:36px}body.mini .
 .chip{height:36px;padding:0 14px;border-radius:18px;background:#fff;font-size:14px;font-weight:500;border:1px solid rgba(0,0,0,.06)}
 .chip.on{background:var(--ink);color:#fff}
 /* SOS */
-#sos{position:fixed;inset:0;z-index:60;background:#D7261E;color:#fff;display:flex;flex-direction:column;padding:max(56px,env(safe-area-inset-top)) 24px 30px;gap:12px;animation:fade .3s both}
+#sos{position:fixed;inset:0;z-index:60;background:#D7261E;color:#fff;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;padding:max(56px,env(safe-area-inset-top)) 24px 30px;gap:12px;animation:fade .3s both}
 .ringp{width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;margin:auto;animation:pulse 1.6s ease-in-out infinite}
 .hold{position:fixed;inset:0;z-index:59;background:rgba(215,38,30,.08);display:flex;align-items:center;justify-content:center}
 .lock{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:26px 18px}
@@ -1227,7 +1227,7 @@ async function pinMap(el,c,onMove,noG,o){o=o||{};const g=noG?false:await gmaps()
  draw();setTimeout(()=>onMove(ll(cx,cy)),50);return{set:p=>{[cx,cy]=px(p.lat,p.lng);draw();done()}}}
 /* Address: step 1 is the shared map picker (/geopick.js), step 2 the details. Editing an address starts on the details. */
 function addrEdit(a,kind,store,must){a=a||{label:'Home'};
- if(!window.GeoPick){const s=document.createElement('script');s.src='/geopick.js?v=2';s.onload=()=>addrEdit(a,kind,store,must);s.onerror=()=>toast('Could not load the map. Check your internet.');document.head.appendChild(s);return}
+ if(!window.GeoPick){const s=document.createElement('script');s.src='/geopick.js?v=3';s.onload=()=>addrEdit(a,kind,store,must);s.onerror=()=>toast('Could not load the map. Check your internet.');document.head.appendChild(s);return}
  if(a.id&&a.lat)return addrDetails(a,{lat:a.lat,lng:a.lng,acc:a.acc||0},{title:a.line2,area:a.area,city:a.city,state:a.state,pin:a.pin},kind,store,must);
  GeoPick.open({start:a.lat?{lat:a.lat,lng:a.lng}:LAB.loc,serve:kind==='pharmacy'?'pharmacy':'lab',must,
   heading:must?'ADD YOUR ADDRESS':'SELECT LOCATION',callout:kind==='pharmacy'?'Your order will come here':'The technician will come here',hint:'Move the map to your exact door',
