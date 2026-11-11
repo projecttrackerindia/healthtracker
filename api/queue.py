@@ -69,7 +69,7 @@ def ahead_of(db: Session, t: Token) -> int:
 def token_json(db: Session, t: Token, *, counter: bool = False) -> dict:
     d = db.get(PartnerUser, t.doctor_id)
     out = {"id": t.id, "number": t.number, "state": t.state, "day": t.day, "kind": t.kind,
-           "member": t.member, "why": t.why, "created": t.created,
+           "member": t.member, "why": t.why, "created": t.created, "appointment": t.appt_id or "",
            "doctor": (d.name or "") if d else "", "doctorId": t.doctor_id,
            "calledAt": t.called_at, "startedAt": t.started_at, "doneAt": t.done_at}
     if counter:
