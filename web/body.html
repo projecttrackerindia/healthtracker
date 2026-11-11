@@ -517,19 +517,19 @@ function mMed1(){shape();const meds=DATA.meds||[];head(who()+' · '+T('meds').to
  ${d?[['Works on','#30D158',d.works],['Side effects','#FF9F0A',d.side],['Watch','#0A84FF',d.watch]].map(([l,c,a])=>`<div class="mrow"><span style="background:${c}"></span><div><b>${l}</b> ${a.map(x=>esc(x[1])).join('. ')}.</div></div>`).join('')+`<div class="mrow"><span style="background:#FF453A"></span><div><b>Avoid</b> ${esc(d.avoid)}</div></div><p class="eb" style="margin-top:10px">General information. Follow your doctor's advice.</p>`
  :`<p class="cd">We don't have a body map for ${esc(m.name)} yet.</p><button class="btn pri" style="width:100%;margin-top:12px" onclick="send('ask',{q:${esc(JSON.stringify('What is '+m.name+' for, how does it work, and what side effects should I watch for?'))}})">✦ Ask what it does</button>`}`)}
 /* ---- 4 · organ detail: the heart ---- */
-function mHeart(){shape();for(const l in LAY)if(+l!==3)LAY[l].visible=false;LAY[3].material.transparent=true;LAY[3].material.opacity=.05;LAY[3].material.depthWrite=false;
- [[/left ventricle/i,0xC0303D],[/right ventricle/i,0xD9534F],[/left atri/i,0xB03050],[/right atri/i,0x7D5BA6],[/valve|cusp|leaflet/i,0xF2E3C6],[/aort/i,0xD0485A]].forEach(p=>glow(p[0],p[1],3,1));
- GLOWS.forEach(g=>g.children[0].material.emissiveIntensity=.12);const hc=centerOf(/ventric|atri/i)||new THREE.Vector3(0,1.6,.1);
- body.position.x=-hc.x*body.scale.x;CAM(2.6,hc.y*body.scale.y+body.position.y,-.4);
- if(!U.still)PULSE={g:GLOWS[0],bpm:+(DATA.vitals&&DATA.vitals.hr)||72};
- head(who()+' · '+T('heartv').toUpperCase(),T('heartv'),'Four chambers, four valves. Results explained on it.');
- tags([{org:'Left ventricle · pumps to the body',re:/left ventricle/i,side:1,dy:30,col:'#C0303D'},{org:'Right atrium',re:/right atri/i,side:-1,dy:-30,col:'#7D5BA6'},{org:'Left atrium',re:/left atri/i,side:1,dy:-50,col:'#B03050'},{org:'Right ventricle',re:/right ventricle/i,side:-1,dy:30,col:'#D9534F'}]);
- const hf=latest().filter(f=>f.org==='heart'&&/ldl|hdl|tg|tc|sbp|chol|trigly|pressure/i.test((f.code||'')+f.test));const v=DATA.vitals;
+function mHeart(){shape();const v=DATA.vitals||{};
  const EXPL={ldl:'LDL is the cholesterol that builds up inside the arteries feeding the heart muscle. Lower is better.',hdl:'HDL carries cholesterol away from the arteries. Higher is better.',tg:'Triglycerides are blood fats. High levels add to artery narrowing, especially with diabetes.',tc:'Total cholesterol. LDL and HDL tell more than this number alone.',sbp:'The top blood-pressure number is the push when the left ventricle squeezes.'};
- sheet((v&&v.bp?`<div class="row" style="justify-content:space-between"><div class="cn" style="font-size:19px">Blood pressure ${esc(v.bp)}</div></div><p class="cd">The top number is the push when the <b>left ventricle</b> squeezes; the bottom is the pressure while it refills. Over years, high pressure makes this wall thicker and stiffer.</p>`:'')+
- (hf.length?hf.map(f=>`<div class="fx"><div><small>${esc(f.test)} · ${esc(fmtD(f.date))}</small><div style="font-size:14.5px;margin-top:2px">${esc(EXPL[f.code]||'')}</div></div><div style="text-align:right"><b>${esc(f.value)}</b><br><span class="pill ${FCLS[f.flag]}">${T(f.flag)}</span></div></div>`).join('')
- :`<p class="cd" style="margin-top:0">The heart pumps about 7,000 litres of blood a day. The left ventricle has the thickest wall: it pushes blood to the whole body.</p>`)+
- `<button class="btn pri" style="width:100%;margin-top:12px" onclick="send('ask',{q:'Explain my heart results in simple words'})">${T('ask')}</button>`)}
+ const hf=latest().filter(f=>f.org==='heart'&&/ldl|hdl|tg|tc|sbp|chol|trigly|pressure/i.test((f.code||'')+f.test));
+ HEARTMSG={type:'heart-data',bpm:+v.hr||0,bp:v.bp||'',at:v.at||'',src:v.src||'',who:DATA.person.name||'',results:hf.map(f=>({test:f.test,value:f.value,flag:f.flag,date:f.date,expl:EXPL[f.code]||''}))};
+ /* the beating heart is its own page, opened over the body and handed the same person's numbers */
+ let fr=document.getElementById('heartFrame');
+ if(!fr){fr=document.createElement('iframe');fr.id='heartFrame';fr.src='/heart';fr.title='Heart';fr.allow='fullscreen';
+  fr.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;z-index:100;background:#EEF0F4';document.body.appendChild(fr)}
+ else fr.contentWindow.postMessage(HEARTMSG,location.origin)}
+let HEARTMSG=null;
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data)return;const fr=document.getElementById('heartFrame');if(!fr||e.source!==fr.contentWindow)return;
+ if(e.data.type==='heart-ready'&&HEARTMSG)fr.contentWindow.postMessage(HEARTMSG,location.origin);
+ else if(e.data.type==='heart-close'){fr.remove();mode('explore')}});
 /* ---- 6 · live vitals ---- */
 function mVitals(){shape();const v=DATA.vitals;CAM(HOME0.z*.55,HOME0.y+1.4*body.scale.y,0);head(who()+' · '+T('vitals').toUpperCase(),T('vitals'),v?`Latest reading · ${esc(v.src||'entered by hand')} · ${esc(fmtD(v.at))}`:'Add a reading. Watches and BP machines can sync later.');
  LAY[3].material.transparent=true;LAY[3].material.opacity=.35;
