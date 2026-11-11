@@ -38,7 +38,8 @@ r = APIRouter(prefix="/api/v2", dependencies=[Depends(csrf)])
 RANK = {"none": 0, "medid": 1, "summary": 2, "all": 3, "guardian": 4, "owner": 5}
 # which level reads which kind of record; womens kinds also need the womens switch
 KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med": "all", "dose": "all",
-              "preg": "summary", "kick": "summary", "cycle": "summary"}
+              "preg": "summary", "kick": "summary", "cycle": "summary",
+              "activity": "summary"}   # minutes a child (or parent) logs from Move; entered by them, never tracked in the background
 WOMENS = {"preg", "kick", "cycle"}
 RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother",
              "Grandson", "Granddaughter", "Father-in-law", "Mother-in-law", "Son-in-law", "Daughter-in-law", "Brother-in-law",
