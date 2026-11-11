@@ -249,7 +249,7 @@ async function tick(){let j;try{const r=await fetch('/api/v1/sos/t/'+encodeURICo
  if(j.loc){const key=j.loc.lat.toFixed(5)+','+j.loc.lng.toFixed(5);if(key!==lastKey){lastKey=key;document.getElementById('map').innerHTML=`<iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${j.loc.lat},${j.loc.lng}&z=16&output=embed" title="Map"></iframe>`}
   document.getElementById('acc').textContent=(j.loc.acc?`Accurate to about ${j.loc.acc} m. `:'')+(j.trail&&j.trail.length>1?`${j.trail.length} positions recorded.`:'')}
 }
-tick();setInterval(tick,20000);
+tick();setInterval(tick,10000);
 </script></body></html>"""
 
 

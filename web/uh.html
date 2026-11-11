@@ -111,6 +111,26 @@ body.mini .top .sos,body.mini .top .round{height:36px;min-width:36px}body.mini .
 .chip{height:36px;padding:0 14px;border-radius:18px;background:#fff;font-size:14px;font-weight:500;border:1px solid rgba(0,0,0,.06)}
 .chip.on{background:var(--ink);color:#fff}
 /* SOS */
+#sos.sos2{background:radial-gradient(120% 70% at 50% 28%,#E5383B 0%,#B8141F 55%,#7E0B14 100%);padding:max(48px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));gap:0}
+.sos2 .st{font-size:13px;font-weight:600;letter-spacing:.08em;opacity:.8}
+.sos2 .rg{margin:30px 0 24px;width:168px;height:168px;border-radius:50%;display:grid;place-items:center;position:relative;flex:none}
+.sos2 .rg:before,.sos2 .rg:after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.35);animation:sosr 2.4s ease-out infinite}.sos2 .rg:after{animation-delay:1.2s}
+@keyframes sosr{from{transform:scale(.8);opacity:1}to{transform:scale(1.25);opacity:0}}
+.sos2 .rg>div{width:124px;height:124px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center}
+.sos2 h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.03em}.sos2 #soss{margin:8px 0 0;font-size:17px;opacity:.9;line-height:1.38}
+.sos2 .pl2{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;justify-content:center}.sp2{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.16);font-size:14px;font-weight:600}
+.sp2 i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55)}.sp2 i.on{background:#7CFFB2;box-shadow:0 0 0 4px rgba(124,255,178,.25)}
+.sos2 .b1{width:100%;max-width:420px;height:66px;border-radius:33px;background:#fff;color:#B8141F;text-decoration:none;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 14px 34px rgba(0,0,0,.25);margin-top:10px}
+.sos2 .b2r{display:flex;gap:10px;width:100%;max-width:420px;margin-top:12px}.sos2 .b2{flex:1;height:54px;border-radius:27px;border:0;font:inherit;font-size:17px;font-weight:600;color:#fff;background:rgba(255,255,255,.18);display:grid;place-items:center;text-decoration:none;cursor:pointer}.sos2 .b2.safe{background:#1A7F37}
+.sos2 .dt{margin-top:14px;background:none;border:0;color:#fff;font:inherit;font-size:16px;font-weight:600;opacity:.88;cursor:pointer;min-height:44px}
+.sosd{position:fixed;inset:0;z-index:2}.sosd .sc{position:absolute;inset:0;background:rgba(0,0,0,.25)}
+.sosd .sh{position:absolute;left:0;right:0;bottom:0;max-height:82vh;overflow-y:auto;background:#fff;color:#1D1D1F;border-radius:28px 28px 0 0;padding:10px 20px max(24px,env(safe-area-inset-bottom));text-align:left;animation:fade .2s both}
+.sosd .gb{width:40px;height:5px;border-radius:3px;background:#D2D2D7;margin:0 auto 14px}.sosd h2{margin:0 0 4px;font-size:24px;letter-spacing:-.02em}.sosd .m{color:#6E6E73;font-size:14px;margin:0}
+.sosd .lb{font-size:13px;font-weight:600;color:#6E6E73;margin:18px 0 2px}.sosd .r{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #EEE}.sosd .lb+.r{border:0}
+.sosd .av{width:40px;height:40px;border-radius:50%;background:#F2F2F5;display:grid;place-items:center;font-weight:700;color:#6E6E73;flex:none}.sosd .g{flex:1;min-width:0}.sosd .g b{display:block;font-size:16px}.sosd .g small{color:#6E6E73;font-size:13px}
+.sosd .ok{color:#1A7F37;font-weight:600;font-size:14px}.sosd .c{height:38px;padding:0 16px;border-radius:19px;background:#F2F2F5;color:#1D1D1F;font-weight:600;font-size:15px;display:grid;place-items:center;text-decoration:none}
+.sosd .w{width:100%;height:54px;border-radius:27px;border:0;font:inherit;font-size:17px;font-weight:600;background:#1D1D1F;color:#fff;margin-top:16px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.sos2 .rg:before,.sos2 .rg:after{animation:none}}
 #sos{position:fixed;inset:0;z-index:60;background:#D7261E;color:#fff;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;padding:max(56px,env(safe-area-inset-top)) 24px 30px;gap:12px;animation:fade .3s both}
 .ringp{width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;margin:auto;animation:pulse 1.6s ease-in-out infinite}
 .hold{position:fixed;inset:0;z-index:59;background:rgba(215,38,30,.08);display:flex;align-items:center;justify-content:center}
@@ -1118,30 +1138,57 @@ async function ask(q){const p=P(),ch=$('#chat');ch.insertAdjacentHTML('beforeend
  const ctx={person:{name:p.name,age:p.age,sex:p.sex,medicalId:p.medicalId},results:findings(p.id).slice(0,30),medicines:(REC[p.id]||[]).filter(r=>r.kind==='med').map(m=>m.name),pregnancy:preg(p)||null};
  try{const r=await API('/api/v1/ai/ask',{json:{question:q,context:ctx,member:p.id},key:true});$('#pending').outerHTML=`<p class="aitext">${esc(r.answer||r.text||'')}</p>`}catch(e){$('#pending').outerHTML=`<p class="aitext" style="color:#B42318">${esc(e.message)}</p>`}}
 /* ---------------- SOS ---------------- */
-let SOSA=null,WATCH=null;
-async function startSOS(){const me=P(ME.me),c=me.medicalId.contacts||[];if(navigator.vibrate)navigator.vibrate([200,80,200]);
- layer(`<div id="sos"><div class="eyebrow" style="color:rgba(255,255,255,.8)">EMERGENCY SOS · ${esc(me.name.toUpperCase())}</div><h1 class="big" style="font-size:38px">Alerting your contacts</h1><p style="margin:0;font-size:16px;opacity:.92;line-height:1.45" id="sosl">Getting your location…</p>
- <div id="sosmap" style="height:170px;border-radius:22px;overflow:hidden;background:rgba(255,255,255,.12);margin-top:4px"></div>
- <div style="background:rgba(255,255,255,.14);border-radius:22px;padding:4px 16px;margin-top:6px" id="sosr">${c.map(x=>`<div class="row" style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.15)"><span style="flex:1">${esc(x.name)} · ${esc(x.relation||'')}</span><b>Sending…</b></div>`).join('')}</div>
- <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto">${c[0]?`<a class="btn" style="background:#fff;color:#D7261E;text-decoration:none" href="tel:${esc(c[0].phone)}">${ic(I.phone,'#D7261E',18)} Call ${esc(c[0].name)}</a>`:''}<a class="btn" style="background:#fff;color:#D7261E;text-decoration:none" href="tel:108">${ic(I.phone,'#D7261E',18)} Call 108</a></div>
- ${matchMedia('(pointer:fine)').matches?`<p style="margin:0;font-size:14px;opacity:.9;text-align:center">This computer can't place calls. Dial from your phone: <b style="font-size:18px">108</b>${c[0]?` · ${esc(c[0].name)} <b style="font-size:18px">${esc(c[0].phone)}</b>`:''}</p>`:''}
- <button class="btn" style="background:rgba(255,255,255,.2);color:#fff" onclick="endSOS()">I'm safe — end alert</button></div>`);
- const loc=await new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>res(null),{enableHighAccuracy:true,timeout:6000})});
- const m=me.medicalId,pg=m.pregnancy&&m.pregnancy.stage==='pregnant'?`; pregnant ${m.pregnancy.week} weeks`:'';
- let SM=null;if(loc&&$('#sosmap')){SM=await liveMap($('#sosmap'),{center:loc});SM.update({me:loc})}
- try{SOSA=await API('/api/v1/sos/start',{key:true,json:{member:me.id,name:me.name,phone:ME.user.phone||(me.profile&&me.profile.phone)||'',blood:m.blood||'',summary:`Blood ${m.blood||'?'}; allergies ${m.allergies||'none'}; conditions ${m.conditions||'none'}${pg}`,loc,contacts:c.map(x=>({n:x.name,ph:x.phone}))}});
-  $('#sosl').textContent=loc?'Your live location and Medical ID were sent. The page your contacts open follows you while this is on.':'Alert sent. Location is not available yet; it will follow as soon as your phone finds it.';
-  const got=n=>(SOSA.sent||[]).filter(x=>x.ok&&x.n===n).map(x=>({sms:'SMS',email:'Email',whatsapp:'WhatsApp'}[x.channel]||x.channel));
-  const nums=c.map(x=>x.phone).filter(Boolean),txt=`EMERGENCY: ${me.name} needs help. Live location and medical details: ${SOSA.url}`,ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
-  const smsHref=nums.length?(ios?`sms:/open?addresses=${nums.join(',')}&body=${encodeURIComponent(txt)}`:`sms:${nums.join(',')}?body=${encodeURIComponent(txt)}`):'';
-  const anyAuto=c.some(x=>got(x.name).length);
-  $('#sosl').textContent=anyAuto?(loc?'Your live location and Medical ID were sent. The page your contacts open follows you while this is on.':'Alert sent. Your location follows as soon as the phone finds it.'):'Your alert page is live. Now text it to your contacts — tap the button below.';
-  $('#sosr').innerHTML=c.map(x=>{const g=got(x.name);return`<div class="row" style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.15)"><span style="flex:1">${esc(x.name)}</span><b>${g.length?'Sent · '+g.join(', '):'Not sent yet'}</b></div>`}).join('')
-   +`${smsHref?`<a class="btn" style="display:flex;background:#fff;color:#D7261E;text-decoration:none;margin:12px 0 6px" href="${smsHref}">✉︎ Text ${anyAuto?'again':'all contacts now'}</a>`:''}<a class="btn" style="display:flex;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;margin:0 0 10px" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">Share on WhatsApp</a>`;
-  if(!anyAuto&&smsHref&&!matchMedia('(pointer:fine)').matches){try{location.href=smsHref}catch(_){}}
-  if(navigator.geolocation)WATCH=navigator.geolocation.watchPosition(p=>{const l={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};if(SM)SM.update({me:l});API(`/api/v1/sos/${SOSA.id}/loc`,{key:true,json:{loc:l}}).catch(()=>{})},()=>{},{enableHighAccuracy:true})}
- catch(e){$('#sosl').textContent='Could not reach the server: '+e.message+'. Call directly with the buttons below.'}}
-async function endSOS(){if(WATCH!=null)navigator.geolocation.clearWatch(WATCH);WATCH=null;if(SOSA)try{await API(`/api/v1/sos/${SOSA.id}/end`,{key:true,method:'POST'})}catch(_){}SOSA=null;closeL();toast('Alert ended. Your contacts were told you are safe.')}
+/* SOS, as approved: one look says the family is alerted; two big actions (call, I'm safe); everything else under Details.
+   Location: the GPS is watched continuously and sent at least every 10 s (sooner after a 50 m move) while the alert is on;
+   the screen is kept awake, because a web app stops receiving locations once the phone locks. */
+let SOSA=null,WATCH=null,SOSL=null,SOSLAST=0,SOSSENT=null,SOSTICK=null,SOSWAKE=null,SOSC=[];
+const sosFar=(a,b)=>{if(!a||!b)return 1e9;const R=6371000,d=x=>x*Math.PI/180,dl=d(b.lat-a.lat),dg=d(b.lng-a.lng);return 2*R*Math.asin(Math.sqrt(Math.sin(dl/2)**2+Math.cos(d(a.lat))*Math.cos(d(b.lat))*Math.sin(dg/2)**2))};
+async function sosWake(on){try{if(on&&'wakeLock' in navigator&&document.visibilityState==='visible')SOSWAKE=await navigator.wakeLock.request('screen');else if(!on&&SOSWAKE){await SOSWAKE.release();SOSWAKE=null}}catch(_){}}
+function sosVis(){if(!SOSA)return;if(document.visibilityState==='visible'){sosWake(true);SOSLAST=0;sosPush()}}
+async function sosPush(force){if(!SOSA||!SOSL)return;const now=Date.now(),moved=sosFar(SOSSENT,SOSL);if(!force&&now-SOSLAST<(moved>50?3000:10000))return;SOSLAST=now;SOSSENT=SOSL;
+ try{await API(`/api/v1/sos/${SOSA.id}/loc`,{key:true,json:{loc:SOSL}});SOSA.synced=now;sosPaint()}catch(_){}}
+function sosGot(n){return((SOSA&&SOSA.sent)||[]).filter(x=>x.ok&&x.n===n).map(x=>({sms:'SMS',email:'email',whatsapp:'WhatsApp',push:'app'}[x.channel]||x.channel))}
+function sosText(){const me=P(ME.me);return`EMERGENCY: ${me.name} needs help. Live location and medical details: ${SOSA?SOSA.url:''}`}
+function sosSms(nums){const ios=/iPhone|iPad|iPod/.test(navigator.userAgent),t=encodeURIComponent(sosText());return nums.length?(ios?`sms:/open?addresses=${nums.join(',')}&body=${t}`:`sms:${nums.join(',')}?body=${t}`):''}
+function sosPaint(){const el=$('#sos2');if(!el)return;const c=SOSC,reached=c.filter(x=>sosGot(x.name).length).length,state=!SOSA?(SOSA===false?'err':'sending'):reached||!c.length?'ok':'text';
+ const H={sending:['Sending alert…','Finding your location and telling your family.'],ok:[c.length?'Family alerted':'Alert is live',SOSL?'They can see where you are, live,<br>until you say you’re safe.':'Your location follows as soon as<br>the phone finds it.'],text:['Text your family','Your alert page is ready. Send it with<br>one tap so they can see where you are.'],err:['Call for help','We couldn’t reach the server.<br>Call directly with the buttons below.']}[state];
+ $('#sosh').innerHTML=H[0];$('#soss').innerHTML=H[1];
+ const live=SOSL&&SOSA&&SOSA.synced&&Date.now()-SOSA.synced<40000;
+ $('#sosp').innerHTML=`<span class="sp2"><i class="${live?'on':''}"></i>${live?'Live location':SOSL?'Location found':'Finding location…'}</span>${c.length?`<span class="sp2">${reached} of ${c.length} alerted</span>`:''}`;
+ const tx=$('#sostx');if(tx){const nums=c.filter(x=>!sosGot(x.name).length).map(x=>x.phone).filter(Boolean),h=sosSms(nums);tx.hidden=!(state==='text'&&h);if(h)tx.href=h}}
+async function startSOS(){const me=P(ME.me);SOSC=(me.medicalId.contacts||[]);SOSA=null;SOSL=null;SOSSENT=null;SOSLAST=0;if(navigator.vibrate)navigator.vibrate([200,80,200]);
+ const desk=matchMedia('(pointer:fine)').matches;
+ layer(`<div id="sos" class="sos2"><div id="sos2" style="display:flex;flex-direction:column;align-items:center;min-height:100%;text-align:center">
+ <div class="st">SOS ON · ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).toUpperCase()}</div>
+ <div class="rg"><div>${ic(I.pin||'<path d="M12 21s-6.5-5.3-6.5-11a6.5 6.5 0 0 1 13 0c0 5.7-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>','#fff',54)}</div></div>
+ <h1 id="sosh">Sending alert…</h1><p id="soss">Finding your location and telling your family.</p><div id="sosp" class="pl2"></div>
+ <div style="flex:1;min-height:28px"></div>
+ <a class="b1" id="sostx" hidden>✉︎ Text family now</a>
+ <a class="b1" href="tel:108">${ic(I.phone,'#B8141F',24)} Call 108 Ambulance</a>
+ <div class="b2r"><a class="b2" href="tel:112">Call 112</a><button class="b2 safe" onclick="endSOS()">I’m safe</button></div>
+ ${desk?`<p style="margin:12px 0 0;font-size:14px;opacity:.85">This computer can’t place calls. Dial <b>108</b> from your phone.</p>`:''}
+ <button class="dt" onclick="sosDetails()">Details ›</button></div></div>`);
+ sosWake(true);document.addEventListener('visibilitychange',sosVis);
+ const first=await new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>res(null),{enableHighAccuracy:true,timeout:6000})});
+ SOSL=first;const m=me.medicalId,pg=m.pregnancy&&m.pregnancy.stage==='pregnant'?`; pregnant ${m.pregnancy.week} weeks`:'';
+ try{SOSA=await API('/api/v1/sos/start',{key:true,json:{member:me.id,name:me.name,phone:ME.user.phone||(me.profile&&me.profile.phone)||'',blood:m.blood||'',summary:`Blood ${m.blood||'?'}; allergies ${m.allergies||'none'}; conditions ${m.conditions||'none'}${pg}`,loc:first,contacts:SOSC.map(x=>({n:x.name,ph:x.phone}))}});
+  SOSA.synced=first?Date.now():0;SOSSENT=first;SOSLAST=Date.now();sosPaint();
+  if(navigator.geolocation)WATCH=navigator.geolocation.watchPosition(p=>{SOSL={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};sosPush()},()=>{},{enableHighAccuracy:true,maximumAge:5000});
+  SOSTICK=setInterval(()=>{sosPush(true)},10000);
+  const noAuto=SOSC.length&&!SOSC.some(x=>sosGot(x.name).length),h=sosSms(SOSC.map(x=>x.phone).filter(Boolean));
+  if(noAuto&&h&&!desk){try{location.href=h}catch(_){}}}
+ catch(e){SOSA=false;sosPaint()}}
+async function sosDetails(){const c=SOSC,d=document.createElement('div');d.className='sosd';
+ const row=(av,t,s,r)=>`<div class="r"><div class="av">${av}</div><div class="g"><b>${t}</b><small>${s}</small></div>${r}</div>`;
+ d.innerHTML=`<div class="sc" onclick="this.parentNode.remove()"></div><div class="sh"><div class="gb"></div><h2>Details</h2><p class="m">${SOSL?'Live location updates every 10 seconds'+(SOSL.acc?` · about ${SOSL.acc} m`:''):'Still finding your location'}</p>
+ ${c.length?`<div class="lb">Alerted</div>${c.map(x=>{const g=sosGot(x.name);return row(esc((x.name||'?')[0].toUpperCase()),esc(x.name),g.length?esc(g.join(' · ')):'Couldn’t reach automatically',g.length?`<span class="ok">✓ Sent</span>`:(x.phone?`<a class="c" href="${sosSms([x.phone])}">Text</a>`:''))+(x.phone?'':'')}).join('')}`:`<p class="m" style="margin-top:14px">No emergency contacts yet. Add them from your profile so SOS can reach them.</p>`}
+ <div id="soshx"></div>
+ ${SOSA&&SOSA.url?`<button class="w" onclick="sosShare()">Share live location</button>`:''}</div>`;
+ $('#sos').appendChild(d);
+ if(SOSL)try{const r=await API(`/api/v1/places?kind=hospital&lat=${SOSL.lat}&lng=${SOSL.lng}&radius=6000`);const h=((r.places||[]).concat(r.partners||[])).sort((a,b)=>a.km-b.km)[0];
+  if(h&&$('#soshx'))$('#soshx').innerHTML=`<div class="lb">Nearest hospital</div>`+row('H',esc(h.name),`${h.km} km${h.emergency?' · emergency ward':''}`,h.phone?`<a class="c" href="tel:${esc(h.phone)}">Call</a>`:`<a class="c" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}">Go</a>`)}catch(_){}}
+async function sosShare(){if(!SOSA)return;const t=sosText();try{if(navigator.share)await navigator.share({title:'Emergency',text:t,url:SOSA.url});else{await navigator.clipboard.writeText(SOSA.url);toast('Live link copied')}}catch(_){}}
+async function endSOS(){if(WATCH!=null)navigator.geolocation.clearWatch(WATCH);WATCH=null;clearInterval(SOSTICK);SOSTICK=null;sosWake(false);document.removeEventListener('visibilitychange',sosVis);if(SOSA)try{await API(`/api/v1/sos/${SOSA.id}/end`,{key:true,method:'POST'})}catch(_){}SOSA=null;closeL();toast('Alert ended. Your family was told you are safe.')}
 /* ---------------- auth + onboarding ---------------- */
 function authPage(mode){mode=mode||'signin';layer(`<div class="page auth" style="left:0"><div class="authart"><h2>Your family's health,<br>in one secure place.</h2><p>Reports read for you, medicines on time, and help one tap away.</p>
  <div class="pt"><span class="i">${ic(I.lock,'#fff',18)}</span><div><b>Private for each person</b>Everyone signs in with their own account and chooses what to share.</div></div>
