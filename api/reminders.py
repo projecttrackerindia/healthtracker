@@ -176,8 +176,8 @@ def tick_people(db, now_dt: datetime) -> int:
     list is private unless shared, so reminders follow the same rule as reading it.
     """
     from .models import Guardian, HealthRecord, Person
-    day = now_dt.strftime("%Y-%m-%d")
-    minute = now_dt.hour * 60 + now_dt.minute
+    day0 = now_dt.strftime("%Y-%m-%d")
+    minute0 = now_dt.hour * 60 + now_dt.minute
     subs_by_user: dict[str, list] = {}
     for s in db.scalars(select(PushSub)).all():
         subs_by_user.setdefault(s.user_id, []).append(s)
@@ -192,6 +192,23 @@ def tick_people(db, now_dt: datetime) -> int:
         p = db.get(Person, pid)
         if not p or p.removed:
             continue
+        # Each person's reminders run on their own clock: the time zone their phone saved with the medicine.
+        day, minute = day0, minute0
+        tz = ""
+        for x in rows:
+            try:
+                tz = (decrypt(x.blob) or {}).get("tz") or ""
+            except Exception:
+                tz = ""
+            if tz:
+                break
+        if tz and tz != "Asia/Kolkata":
+            try:
+                from zoneinfo import ZoneInfo
+                ln = datetime.now(ZoneInfo(tz))
+                day, minute = ln.strftime("%Y-%m-%d"), ln.hour * 60 + ln.minute
+            except Exception:
+                pass
         guardians = db.scalars(select(Guardian.user_id).where(Guardian.person_id == pid)).all() if p.owner_user is None else []
         owner = [p.owner_user] if p.owner_user else []
         if not any(u in subs_by_user for u in owner + list(guardians)):

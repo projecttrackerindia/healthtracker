@@ -222,3 +222,44 @@ def del_card(cid: str, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(404)
     db.delete(c)
     return {"ok": True}
+
+
+@r.get("/doctors")
+def doctors_near(specialty: str = "", lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db)):
+    """Verified doctors at live partner hospitals, nearest first. Only registrations an admin checked are listed."""
+    from .booking import km
+    from .models import PartnerUser, Store
+    sp = [x.strip().lower() for x in specialty.split(",") if x.strip()]
+    out = []
+    for d in db.scalars(select(PartnerUser).where(PartnerUser.role == "doctor", PartnerUser.verified == True, PartnerUser.active == True)).all():  # noqa: E712
+        s = db.get(Store, d.store_id)
+        if not s or not s.active or not s.verified or s.kind != "hospital" or s.notes == "practice":
+            continue
+        if sp and not any(x in (d.specialty or "").lower() for x in sp):
+            continue
+        dist = round(km((lat, lng), (s.lat, s.lng)), 1) if lat and lng and s.lat is not None else None
+        prof = s.profile or {}
+        out.append({"name": d.name or "Doctor", "specialty": d.specialty, "hospital": s.name, "area": s.area, "phone": s.phone, "km": dist,
+                    "schemes": prof.get("schemes") or [], "rating": s.rating or None})
+    out.sort(key=lambda x: (x["km"] is None, x["km"] or 0))
+    return {"rows": out[:6]}
+
+
+class QuoteIn(BaseModel):
+    cover: int = 500000
+    note: str = ""
+
+
+@r.post("/quote-interest")
+def quote_interest(b: QuoteIn, request: Request, db: Session = Depends(get_db)):
+    """Until a licensed broker is signed, "Notify me" records the interest — nothing is shared with anyone."""
+    from .models import Setting
+    u = _user(request, db)
+    row = db.get(Setting, "insurance_interest")
+    v = dict(row.value or {}) if row else {}
+    v[u.household_id] = {"cover": max(100000, min(10000000, b.cover)), "t": int(__import__("time").time())}
+    if row:
+        row.value = v
+    else:
+        db.add(Setting(key="insurance_interest", value=v))
+    return {"ok": True}
