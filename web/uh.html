@@ -408,6 +408,20 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;-webkit-te
 .wheel div{height:44px;line-height:44px;scroll-snap-align:center;font-size:19px;color:var(--ink)}
 .page.still{animation:none}
 @media (min-width:980px){#aitop,#bell,#who{position:fixed!important;top:16px!important;margin:0!important}#aitop{right:132px!important}#bell{right:76px!important}#who{right:20px!important}}
+/* Desktop, in the same language as the approved phone prototype:
+   Home = the body in a rounded card on the left, the day's cards on the right, the bar and SOS under the card;
+   other sections = one centred column with the title above it. */
+@media (min-width:980px){
+ #herobg{display:block!important;position:fixed;z-index:0;left:24px;right:424px;top:132px;bottom:104px;border-radius:34px;background:linear-gradient(180deg,#FFFFFF 0%,#EEF1F7 100%);box-shadow:0 1px 2px rgba(0,0,0,.04);pointer-events:none;transition:opacity .4s}
+ body.flat #herobg{opacity:0}
+ #gl{right:auto!important;top:132px!important;transform:none!important;border-radius:34px}
+ body:not(.flat) .dock{right:400px!important}
+ body:not(.flat) .sos5{right:432px!important}
+ body:not(.flat) .top{right:420px!important;left:28px!important}
+ body.flat #scroll{left:0!important}
+ body.flat .sheet{max-width:720px!important}
+ body.flat .top{left:0!important;right:0!important;display:block}body.flat .top .ttl{max-width:720px;margin:0 auto;padding:0 18px}
+}
 </style>
 </head>
 <body>
@@ -489,8 +503,8 @@ async function buildModel(sex){
 function setBelly(M,amt){const P=M.skinGeo.attributes.position,a=P.array,o=M.P0,cx=M.uc.x,cy=M.uc.y+.25;
  for(let i=0;i<a.length;i+=3){const x=o[i],y=o[i+1],z=o[i+2];if(z>M.uc.z-.02&&amt>0){const dx=(x-cx)/.5,dy=(y-cy)/.62,f=Math.exp(-(dx*dx+dy*dy)*2.2);a[i+2]=z+amt*f}else a[i+2]=z}
  P.needsUpdate=true;M.skinGeo.computeVertexNormals()}
-let target={rx:0,ry:0},rot={rx:0,ry:0},drag=null,idle=0,pulseKey=null,camZ=17,camY=innerWidth<980?.75:0,camTZ=17,camTY=innerWidth<980?.75:0;
-function fit(){const desk=innerWidth>=980,w=desk?innerWidth-640:innerWidth,ht=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ht'))||150,h=desk?innerHeight:Math.max(240,innerHeight*.6-ht-14);R.setSize(w,h,false);canvas.style.width=w+'px';canvas.style.height=h+'px';cam.aspect=w/h;cam.zoom=desk?1:1.45;cam.updateProjectionMatrix()}
+let target={rx:0,ry:0},rot={rx:0,ry:0},drag=null,idle=0,pulseKey=null,camZ=17,camY=innerWidth<980?.75:.6,camTZ=17,camTY=innerWidth<980?.75:.6;
+function fit(){const desk=innerWidth>=980,w=desk?Math.min(innerWidth-448,760):innerWidth,ht=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ht'))||150,h=desk?innerHeight-240:Math.max(240,innerHeight*.6-ht-14);R.setSize(w,h,false);canvas.style.width=w+'px';canvas.style.height=h+'px';cam.aspect=w/h;cam.zoom=desk?1.25:1.45;cam.updateProjectionMatrix();if(desk)canvas.style.setProperty('left',(24+((innerWidth-448)-w)/2)+'px','important');else canvas.style.removeProperty('left')}
 addEventListener('resize',()=>{measureTop();fit();drawLabels()});
 canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,ry:target.ry,rx:target.rx};canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;target.ry=drag.ry+(e.clientX-drag.x)*.012;target.rx=Math.max(-.35,Math.min(.35,drag.rx+(e.clientY-drag.y)*.004));idle=0});
@@ -566,7 +580,7 @@ async function showModel(){const p=P();if(!p){return}
  M.skin.material.opacity=locked?.6:pg?.45:.26;M.skin.material.depthWrite=false;M.skin.material.color.set(pg?0xD9A090:0xDCE4EF).convertSRGBToLinear();
  const wk=S.week||(pg&&pg.week)||0;M.wombG.visible=false;const t=wk/40;
  if(pg){const r=.08+.30*t;M.wombG.position.set(M.uc.x,M.uc.y+.06+.30*t,M.uc.z+.04+.14*t);M.womb.scale.set(r,r*1.12,r*.95);M.baby.scale.setScalar(.04+.36*t);setBelly(M,.02+.26*t)}else setBelly(M,0);
- if(pg){camTZ=9.5;camTY=M.uc.y+.6}else if(pulseKey){camTZ=12.5;camTY=M.organs[pulseKey].center.y*.7}else{camTZ=17;camTY=innerWidth<980?.75:0}
+ if(pg){camTZ=9.5;camTY=M.uc.y+.6}else if(pulseKey){camTZ=12.5;camTY=M.organs[pulseKey].center.y*.7}else{camTZ=17;camTY=innerWidth<980?.75:.6}
  drawLabels()}
 function drawLabels(){const L=$('#labels');L.innerHTML='';LABS=[];const p=P();if(!cur||!p||S.tab!=='summary'||!can(p,'summary'))return;
  const pg=preg(p);if(pg){const w=S.week||pg.week;const el=document.createElement('button');el.className='lab glass';el.innerHTML=`<small>Week ${w} · baby</small><span class="v">${wkInfo(w)[1].replace(/^an? /,'')}</span><br><span class="pill pink">${w<14?'1st':w<28?'2nd':'3rd'} trimester</span>`;el.onclick=openPregnancy;L.appendChild(el);LABS.push({el,k:'womb',side:1});return}
