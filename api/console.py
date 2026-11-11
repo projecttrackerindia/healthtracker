@@ -9,7 +9,8 @@ import os
 import re
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -299,3 +300,40 @@ def funnel(days: int = 30, a: Admin = Depends(admin_me), db: Session = Depends(g
     steps = [("Opened lab tests", int(cnt.get("book-a-home-test", 0))), ("Compared labs", int(cnt.get("choose-a-lab", 0))),
              ("Reached checkout", int(cnt.get("confirm-booking", 0))), ("Booked", placed), ("Sample collected", done)]
     return {"days": days, "steps": [{"name": n, "n": v} for n, v in steps]}
+
+
+# ---- Ask: a question about running the network, answered from the same numbers Today shows ------------------------
+class AskIn(BaseModel):
+    q: str = Field(min_length=2, max_length=300)
+
+
+ASK_SYSTEM = ("You help the Urban Health operations team run a network of pharmacies, labs and clinics in Chennai. "
+              "Answer the question in at most 4 short sentences, plain English, using ONLY the JSON numbers given. "
+              "If the numbers do not answer it, say so and say which page would. Never invent names, orders or amounts. "
+              "Families are masked; never try to identify anyone.")
+GO = {"board": "Live board", "rx": "Prescription check", "dispatch": "Medicine dispatch", "complaints": "Complaints",
+      "pharmacies": "Pharmacies", "labs": "Labs", "applications": "Applications", "settlements": "Payouts", "payments": "Payments in",
+      "system": "System & errors", "trust": "Team & audit"}
+
+
+@r.post("/ask")
+def ask(body: AskIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+    d = today(days=7, a=a, db=db)
+    snap = {k: d[k] for k in ("needs", "kpi", "now", "network", "week")}
+    views = list(dict.fromkeys(n["go"] for n in d["needs"] if n.get("go") in GO))[:3]
+    go = [{"view": v, "label": GO[v]} for v in views]
+    from . import ai as AI
+    if AI.available():
+        try:
+            import json
+            r = AI.create(max_tokens=400, system=ASK_SYSTEM,
+                          messages=[{"role": "user", "content": f"Numbers (last 7 days and right now):\n{json.dumps(snap, default=str)[:12000]}\n\nQuestion: {body.q}"}])
+            text = "".join(b.text for b in r.content if getattr(b, "type", "text") == "text").strip()
+            if text:
+                return {"answer": text[:1200], "ai": True, "go": go}
+        except Exception as e:  # noqa: BLE001 — fall back to the plain summary below
+            print(f"[console.ask] {type(e).__name__}: {str(e)[:160]}", flush=True)
+    n = d["now"]
+    lines = [f"Right now: {n['new']} new, {n['way']} on the way, {n['proc']} processing, {n['late']} late."]
+    lines += [f"{x['title']} ({x['sub']})." for x in d["needs"][:3]] or ["Nothing needs you right now."]
+    return {"answer": " ".join(lines), "ai": False, "go": go}

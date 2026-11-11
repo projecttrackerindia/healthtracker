@@ -50,6 +50,70 @@ td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}tr:la
 .login label{display:block}.login .row label input,.login .row label select{width:100%}
 .bmap{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--line);margin-top:10px;background:#e8edf3}.bmap-in{position:absolute;left:50%;top:0}.bmap-in img{position:absolute;width:256px;height:256px}.bmap .pin{position:absolute;transform:translate(-50%,-100%);font-size:22px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}.bmap .pin.me{font-size:26px}.bmap .osm{position:absolute;right:6px;bottom:4px;font-size:10px;background:rgba(255,255,255,.8);padding:1px 6px;border-radius:6px;color:#333}
 @media (max-width:860px){.app{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}nav{display:flex;flex-wrap:wrap;gap:4px}nav button{width:auto}.who{margin:0 0 0 auto;border:0;padding:0}main{padding:16px}.ord{grid-template-columns:1fr}.ord .acts{justify-content:flex-start}}
+/* ================= Urban Health partner · Apple-style shell (Nov 2026 design) ================= */
+@font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
+:root{--bg:#F5F5F7;--card:#fff;--soft:#F2F2F5;--ink:#1D1D1F;--mute:#6E6E73;--line:rgba(0,0,0,.07);--blue:#0071E3;--green:#1A7F37;--amber:#9A5B00;--red:#C4291C;--ai:#5E5CE6;--r:22px;--teal:#0071E3;--sh:0 1px 2px rgba(0,0,0,.04);--font:Geist,Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#000;--card:#1C1C1E;--soft:#2C2C2E;--ink:#F5F5F7;--mute:#98989D;--line:rgba(255,255,255,.09);--blue:#0A84FF;--sh:none}}
+html,body{background:var(--bg)}
+.app{grid-template-columns:92px minmax(0,1fr)}
+aside{width:92px;padding:18px 10px;gap:6px;align-items:stretch;background:color-mix(in srgb,var(--card) 72%,transparent);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-right:1px solid var(--line)}
+aside .logo{padding:0 0 14px;justify-content:center}aside .logo svg.thl{height:40px;width:40px}
+aside nav{display:flex;flex-direction:column;gap:6px}
+aside nav button{flex-direction:column;justify-content:center;gap:4px;padding:10px 0;min-height:56px;border-radius:16px;font-size:11.5px;font-weight:600;color:var(--mute);position:relative;text-align:center}
+aside nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+aside nav button:hover{background:rgba(0,0,0,.04);color:var(--ink)}
+.app aside nav button.on,.app aside nav button.on:hover{background:var(--card);color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+aside nav button em{position:absolute;top:4px;right:10px;margin:0;font-size:10.5px;min-width:18px;text-align:center}
+.me{margin:auto auto 0;width:40px;height:40px;border-radius:50%;background:#E8E8ED;font-weight:600;color:var(--ink)}
+.memenu{position:fixed;left:100px;bottom:16px;z-index:70;width:280px;max-height:calc(100vh - 32px);overflow:auto;background:var(--card);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.18);padding:8px}
+.memenu .mehd{padding:10px 12px 8px}.memenu .mehd b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis}.memenu .mehd span{font-size:12px;color:var(--mute)}
+.memenu .megh{font-size:12px;font-weight:600;color:var(--mute);padding:10px 12px 4px}
+.memenu button{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:12px;font-size:14px;min-height:40px}.memenu button:hover,.memenu button.on{background:var(--soft)}.memenu button.d{color:var(--red)}
+main{padding:28px 36px 120px;max-width:1600px;width:100%}
+.ptabs{display:inline-flex;flex-wrap:wrap;gap:2px;background:#E8E8ED;border-radius:999px;padding:3px;margin:0 0 20px}
+.ptabs button{min-height:34px;padding:0 15px;border-radius:999px;font-size:13px;font-weight:600;color:var(--mute);white-space:nowrap}
+.ptabs button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.ptabs button em{font-style:normal;font-size:11px;background:var(--red);color:#fff;border-radius:99px;padding:1px 6px;margin-left:3px}
+@media (prefers-color-scheme:dark){.ptabs{background:#2C2C2E}.me{background:#2C2C2E}}
+h1{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1.08}
+.sub{font-size:14px}
+.card,.tcard,.tk{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);border:0}
+.btn{border-radius:999px;border:0;background:var(--soft);min-height:38px;padding:0 16px;font-weight:600}
+.btn.p{background:var(--blue);color:#fff}.btn.sm{min-height:32px;padding:0 12px;border-radius:999px}
+.tag{font:600 12px var(--font);letter-spacing:0;text-transform:none;padding:3px 10px;border:0;background:var(--soft)}
+.tag.ok{background:#E9F6EC;color:var(--green)}.tag.warn{background:#FFF4E0;color:var(--amber)}.tag.bad{background:#FDECEA;color:var(--red)}.tag.blue{background:#EEF4FF;color:#0058B0}
+.pill{font-size:12px;padding:3px 10px}
+th{font:600 12px var(--font);letter-spacing:0;text-transform:none}
+.wrap{border:0;border-radius:var(--r);background:var(--card);box-shadow:var(--sh)}
+input,select,textarea{border-radius:14px;border:1px solid var(--line);background:var(--card)}
+.seg{background:#E8E8ED;border-radius:999px;padding:3px;margin:0}.seg button{border-radius:999px;min-height:32px;padding:0 14px;font-weight:600;color:var(--mute)}.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+/* side panel: opens beside the page, never covers it in black */
+.drawer{background:rgba(0,0,0,.08);backdrop-filter:none}
+.panel{width:min(460px,100%);border-radius:28px 0 0 28px;box-shadow:-10px 0 40px rgba(0,0,0,.12);padding:26px 26px 40px}
+.panel h2{font-size:24px;font-weight:700;letter-spacing:-.02em}
+/* Home (design) */
+.tcard h3{color:var(--ink)}.kpi small{font:600 13px var(--font);letter-spacing:0;text-transform:none}.kpi b{font-size:30px}.tcard h3 a{font-size:13px;font-weight:600;letter-spacing:0}
+.tw{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+.tk{padding:18px 20px}.tk span{font-size:13px;font-weight:600;color:var(--mute)}.tk b{font-size:34px;letter-spacing:-.03em}
+aside .mark{width:44px;height:44px;margin:0 auto 14px;border-radius:14px;background:var(--ink);color:var(--card);display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:-.02em}
+.eb{color:var(--blue);font-size:14px;font-weight:600;margin-bottom:4px}
+.tsk{height:92px;border-radius:var(--r);background:linear-gradient(90deg,var(--card),var(--soft),var(--card));background-size:200% 100%;animation:tsk 1.4s infinite;margin-bottom:16px}@keyframes tsk{to{background-position:-200% 0}}
+.newo{padding:20px 22px;margin-bottom:16px;box-shadow:0 0 0 2px var(--blue),0 10px 30px rgba(0,113,227,.12)}
+.tring{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;flex:none}.tring span{width:52px;height:52px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:700 14px var(--font);font-variant-numeric:tabular-nums}
+.tnum{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:16px}.tnum .card{padding:18px 20px;margin:0}.tnum span{display:block;font-size:13px;font-weight:600;color:var(--mute)}.tnum b{display:block;font-size:34px;letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums}.tnum small{color:var(--mute);font-size:13px}
+.trow{display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid var(--line)}.trow .tag{min-width:84px;text-align:center}.sm{font-size:12.5px}.mute{color:var(--mute)}.mono{font-family:var(--mono)}
+.ord{border:0;border-radius:var(--r);box-shadow:var(--sh)}.empty{border:0;background:var(--card);border-radius:var(--r)}
+@media (prefers-color-scheme:dark){aside .mark{background:#F5F5F7;color:#000}}
+@media (prefers-reduced-motion:reduce){.tsk{animation:none}}
+@media (max-width:860px){
+ .app{grid-template-columns:1fr}
+ aside{position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;height:auto;flex-direction:row;padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:65;border-right:0;border-top:1px solid var(--line)}
+ aside .logo,aside .mark{display:none}aside nav{flex-direction:row;flex:1;justify-content:space-around}aside nav button{flex:1;min-height:52px}
+ .me{margin:auto 4px}.memenu{left:auto;right:8px;bottom:76px}
+ main{padding:18px 16px 170px}h1{font-size:30px}
+ .ptabs{display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
+ .panel{border-radius:24px 24px 0 0;height:auto;max-height:88vh;margin-top:auto}.drawer{align-items:flex-end}
+}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -61,20 +125,37 @@ const api=async(p,o={})=>{const r=await fetch('/api/partner'+p,{method:o.method|
 const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('on'),2400)};
 const fmt=t=>new Date(t*1000).toLocaleString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
 const money=n=>'₹'+Math.round(+n||0).toLocaleString('en-IN');
-let ME=null,view='orders',data={};
+let ME=null,view='today',data={};
+const homeView=()=>!ME?'today':ME.store.kind==='hospital'?'queue':ME.store.kind==='bloodbank'?'blood':'today';
 const KINDN={lab:'Diagnostic lab',pharmacy:'Pharmacy',hospital:'Hospital / clinic',bloodbank:'Blood bank',shop:'Urban Health store'};
 function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="login"><div class="card"><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="Urban Health"><small>Partner portal</small></div>
   <form id="lf"><label>Email</label><input id="le" type="email" autocomplete="username" required><label>Password</label><input id="lp" type="password" autocomplete="current-password" required><p class="msg" id="lm"></p><button class="btn p" style="width:100%;justify-content:center;margin-top:14px">Sign in</button></form>
   <p style="color:var(--mute);font-size:12px;margin:14px 0 0">For verified labs, pharmacies and hospitals. Not a partner yet? <a href="#" id="applyLink">Apply to join</a> · partner@urbanhealth.in</p></div></div>`;
   $('#applyLink').onclick=e=>{e.preventDefault();applyView()};
-  $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':'orders';render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
+  $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':homeView();render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
  const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
  const isBB=s.kind==='bloodbank',isShop=s.kind==='shop';
- const nav=[isBB?null:['orders',isLab?'Bookings':isHosp?'Orders':'Orders',c.openOrders],isLab?['team','Collection team',0]:null,s.kind==='pharmacy'?['team','Pharmacists',0]:null,s.kind==='pharmacy'?['pick','Pick list',0]:null,ME.user.role==='owner'?['earnings','Earnings',0]:null,isHosp?['queue','OP queue',0]:null,isHosp?['appts','Visit requests',c.pendingAppointments]:null,isHosp?['consults','Video consults',0]:null,(isHosp||isBB||ME.user.role==='doctor')?['blood','Blood requests',0]:null,['msgs','Messages',c.unreadMessages],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices',0],['profile','Store profile',0]].filter(Boolean);
- if(isBB&&view==='orders')view='blood';
- root.innerHTML=`<div class="app"><aside><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="Urban Health partners"></div><nav>${nav.map(([k,n,b])=>`<button class="${view===k?'on':''}" data-v="${k}">${n}${b?`<em>${b}</em>`:''}</button>`).join('')}</nav>
-  <div class="who"><b>${E(s.name)}</b>${E(KINDN[s.kind]||s.kind)} · ${s.verified?'<span class="tag ok">verified</span>':'<span class="tag warn">pending verification</span>'}<br>${ME.user.role==='doctor'?`Dr ${E(ME.user.name)} · `:''}${E(ME.user.email)} · <a href="#" id="out">Sign out</a></div></aside><main id="main"></main></div>`;
+ /* Five places, as in the design: Today · Orders · Messages · Earnings · Store (Clinic for hospitals). Each place's
+    pages are tabs under it, so a tab never leaves its place. Which pages exist still depends on the partner kind and role. */
+ const own=ME.user.role==='owner',isPh=s.kind==='pharmacy';
+ const P=[];
+ if(isHosp)P.push(['today','Today','queue',[['queue','OP queue'],['appts','Visit requests',c.pendingAppointments],['consults','Video consults']]]);
+ else if(isBB)P.push(['today','Today','blood',[['blood','Blood requests']]]);
+ else P.push(['today','Today','today',[]]);
+ if(!isBB)P.push(['orders','Orders','orders',[['orders',isLab?'Bookings':'Orders',c.openOrders],isPh?['pick','Pick list']:null,isLab?['team','Collection team']:null].filter(Boolean)]);
+ P.push(['msgs','Messages','msgs',[['msgs','Messages',c.unreadMessages],(isHosp||ME.user.role==='doctor')&&!isBB?['blood','Blood requests']:null].filter(Boolean)]);
+ if(own)P.push(['earn','Earnings','earnings',[]]);
+ P.push(['store',isHosp?'Clinic':isBB?'Blood bank':isLab?'Lab':'Store','profile',[['profile','Profile'],(isHosp||isBB||isShop)?null:['prices',isLab?'Price list':'Stock & prices'],isPh?['team','Pharmacists']:null].filter(Boolean)]);
+ const pl=P.find(([k,n,first,subs])=>view===first||subs.some(x=>x[0]===view))||P[0];
+ const IC2={today:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',orders:'<path d="M6 3h12l2 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z"/><path d="M4 7h16"/>',msgs:'<path d="M4 5h16v11H9l-5 4z"/>',earn:'<path d="M7 4h10M7 9h10M13 9c3 0 3 6-2 6H7l8 6"/>',store:'<path d="M4 9l2-5h12l2 5v11H4z"/><path d="M4 9h16"/>'};
+ const badge=k=>{const x=P.find(p=>p[0]===k);return x?x[3].reduce((a,y)=>a+(+y[2]||0),0):0};
+ root.innerHTML=`<div class="app"><aside><div class="mark" aria-label="${E(s.name)}">${E((s.name||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div><nav>${P.map(([k,n,first])=>`<button class="${pl[0]===k?'on':''}" ${pl[0]===k?'aria-current="page"':''} data-v="${first}"><svg viewBox="0 0 24 24" aria-hidden="true">${IC2[k]}</svg>${n}${badge(k)?`<em>${badge(k)}</em>`:''}</button>`).join('')}</nav>
+  <button class="me" id="mebtn" aria-haspopup="menu" aria-label="${E(ME.user.name||ME.user.email)} · sign out">${E((ME.user.name||ME.user.email||'?')[0].toUpperCase())}</button><div class="memenu" id="memenu" role="menu" hidden><div class="mehd"><b>${E(s.name)}</b><span>${E(KINDN[s.kind]||s.kind)} · ${s.verified?'verified':'pending verification'}</span><span>${ME.user.role==='doctor'?'Dr ':''}${E(ME.user.name||'')} · ${E(ME.user.email)}</span></div><button role="menuitem" data-v="profile">Profile and password</button><button role="menuitem" id="out" class="d">Sign out</button></div></aside>
+  <main>${pl[3].length>1?`<div class="ptabs" role="tablist">${pl[3].map(([v,t,b])=>`<button role="tab" aria-selected="${view===v}" data-v="${v}">${t}${b?` <em>${b}</em>`:''}</button>`).join('')}</div>`:''}<div id="main"></div></main></div>`;
  root.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{view=b.dataset.v;render();load()});$('#out').onclick=async e=>{e.preventDefault();await api('/logout',{method:'POST'});ME=null;render()};
+ const mb=$('#mebtn'),mm=$('#memenu');mb.onclick=e=>{e.stopPropagation();mm.hidden=!mm.hidden};document.addEventListener('click',e=>{if(!mm.hidden&&!mm.contains(e.target))mm.hidden=true});
+ if(view==='today'&&P[0][2]!=='today')view=P[0][2];
+ if(!VIEWS[view])view=pl[2];
  VIEWS[view]()}
 const head=(t,sub,right='')=>`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h1>${t}</h1><p class="sub">${sub}</p></div><div class="row" style="margin:0">${right}</div></div>`;
 const VIEWS={};
@@ -82,6 +163,26 @@ async function load(){try{ME=await api('/me',{quiet:true})}catch(e){}if(ME&&!(ty
 // ---------------- orders / bookings
 VIEWS.orders=()=>{const isLab=ME.store.kind==='lab';const m=$('#main');m.innerHTML=head(isLab?'Bookings':'Orders',isLab?'Confirm, collect, process, upload the report. The family sees every step in their app.':'Check the prescription, pack, deliver. The family sees every step in their app.',`<select id="ost"><option value="open">Open</option><option value="closed">Closed</option><option value="all">All</option></select>`)+`<div id="ol"><div class="empty">Loading…</div></div>`;
  $('#ost').onchange=()=>loadOrders();loadOrders()};
+/* Today: new orders to accept first (with the time left before Urban Health calls), then today's numbers, then what to do next. */
+VIEWS.today=()=>{const m=$('#main'),s=ME.store,isLab=s.kind==='lab';
+ m.innerHTML=`<div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:18px"><div><div class="eb">${E(s.name)}${s.area?' · '+E(s.area):''}</div><h1>Today</h1></div></div><div id="tdy"><div class="tsk"></div><div class="tsk" style="height:120px"></div><div class="tsk" style="height:240px"></div></div>`;
+ loadToday()};
+async function loadToday(){let r;try{r=await api('/orders?status=all')}catch(e){if($('#tdy'))$('#tdy').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ if(!$('#tdy'))return;const s=ME.store,isLab=s.kind==='lab',t0=new Date();t0.setHours(0,0,0,0);const T0=t0.getTime()/1000,now=Date.now()/1000;
+ const all=r.orders||[],todays=all.filter(o=>(o.created||0)>=T0),openS=/placed|confirmed|checking|packing|assigned|en_route|arrived|collected|processing|out/;
+ const fresh=all.filter(o=>o.status==='placed'),open=all.filter(o=>openS.test(o.status)&&o.status!=='placed').sort((a,b)=>(a.created||0)-(b.created||0)),done=todays.filter(o=>/delivered|ready|completed/.test(o.status));
+ const left=o=>Math.max(0,o.offerLeft||0),mmss=x=>`${Math.floor(x/60)}:${String(Math.floor(x%60)).padStart(2,'0')}`;
+ const ring=o=>{const f=left(o)/180;return`<div class="tring" data-end="${Date.now()+left(o)*1000}" role="img" aria-label="${mmss(left(o))} left to accept" style="background:conic-gradient(var(--blue) 0 ${Math.round(f*100)}%,#E8E8ED ${Math.round(f*100)}% 100%)"><span>${mmss(left(o))}</span></div>`};
+ const st=o=>({checking:'Checking',packing:'Packing',out:'Out for delivery',confirmed:'Confirmed',assigned:'Assigned',en_route:'On the way',arrived:'At the door',collected:'Collected',processing:'Testing'})[o.status]||o.status.replace(/_/g,' ');
+ $('#tdy').innerHTML=`${fresh.map(o=>`<section class="card newo" aria-label="New order"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">${ring(o)}<div style="flex:1 1 280px;min-width:0"><b style="font-size:17px">New ${isLab?'booking':'order'} · ${o.items.length} ${isLab?'test':'item'}${o.items.length>1?'s':''} · ${money(o.total)}</b><div class="mute" style="font-size:14px;margin-top:2px">${E(o.member||(o.family&&o.family.name)||'Family')}${typeof o.address==='string'&&o.address?' · '+E(o.address):''}${o.items.some(i=>i.rx)?' · prescription '+(o.rxShared?'attached':'needed'):''}${o.slot?' · '+E(o.slot):''}</div></div><div style="display:flex;gap:10px">${isLab?'':`<button class="btn" data-pass="${E(o.id)}">Can't take it</button>`}<button class="btn p" data-acc="${E(o.id)}">${isLab?'Confirm':'Accept'}</button></div></div></section>`).join('')}
+ <div class="tnum"><div class="card"><span>${isLab?'Bookings':'Orders'} today</span><b>${todays.length}</b><small>${open.length} in progress</small></div><div class="card"><span>Done today</span><b>${done.length}</b><small>${money(done.reduce((a,o)=>a+(o.total||0),0))}</small></div><div class="card"><span>Unread messages</span><b>${ME.counts.unreadMessages||0}</b><small><a href="#" data-go="msgs">Open messages</a></small></div></div>
+ <section class="card" style="padding:0;overflow:hidden"><div style="padding:18px 20px 8px;display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font-size:20px;letter-spacing:-.02em">${isLab?'In progress':'To pack and send'}</h2><span class="mute sm">Oldest first</span></div>
+ ${open.length?open.slice(0,8).map(o=>`<div class="trow"><span class="tag ${o.needsVerify?'warn':/packing|collected|processing/.test(o.status)?'blue':''}">${o.needsVerify?'Rx check':E(st(o))}</span><div style="flex:1;min-width:0"><b>${E(o.member||(o.family&&o.family.name)||'Family')} · ${o.items.length} ${isLab?'test':'item'}${o.items.length>1?'s':''}</b><div class="mute sm">${o.slot?E(o.slot)+' · ':''}<span class="mono">THT-${E(o.id)}</span></div></div><button class="btn sm" data-go="orders">Open ›</button></div>`).join(''):`<div class="empty" style="padding:30px">Nothing waiting. New ${isLab?'bookings':'orders'} appear here and ring within a minute of being placed.</div>`}</section>`;
+ $('#tdy').querySelectorAll('[data-acc]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api(`/orders/${b.dataset.acc}/status`,{method:'POST',body:{status:isLab?'confirmed':'checking',note:'',code:'',sample:''}});toast('Accepted · the family has been told');loadToday();load()}catch(e){toast(e.message);b.disabled=false}});
+ $('#tdy').querySelectorAll('[data-pass]').forEach(b=>b.onclick=()=>passOrder(b.dataset.pass));
+ $('#tdy').querySelectorAll('[data-go]').forEach(b=>b.onclick=e=>{e.preventDefault();view=b.dataset.go;render();load()});
+ clearInterval(loadToday.k);loadToday.k=setInterval(()=>{const r=document.querySelectorAll('.tring[data-end]');if(!r.length)return clearInterval(loadToday.k);r.forEach(x=>{const l=Math.max(0,(+x.dataset.end-Date.now())/1000),f=Math.round(l/180*100);x.style.background=`conic-gradient(var(--blue) 0 ${f}%,#E8E8ED ${f}% 100%)`;x.firstChild.textContent=mmss(l)})},1000);
+ clearTimeout(loadToday.t);loadToday.t=setTimeout(()=>{if(view==='today'&&$('#tdy'))loadToday()},fresh.length?5000:30000)}
 let LASTO=[];
 async function loadOrders(){const st=$('#ost')?$('#ost').value:'open';let r;try{r=await api('/orders?status='+st)}catch(e){$('#ol').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
  LASTO=r.orders;

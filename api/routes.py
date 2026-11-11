@@ -305,6 +305,7 @@ def _status(o: Order):
         # demo progression on staging only: in production, only the partner (or admin) advances an order
         el = now() - o.created
         i = max(live, max(i for i, s in enumerate(DEMO_SECONDS) if el >= s))
+        i = min(i, len(steps) - 1)  # DEMO_SECONDS is longer than the shop and medicine step lists
     if o.status in ("return_requested", "returned", "refunded"):
         return steps, i
     return steps, i
