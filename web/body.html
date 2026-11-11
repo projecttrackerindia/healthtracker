@@ -363,7 +363,7 @@ function sheet(html){$('#card').innerHTML='<div class="grab"></div>'+html;$('#ca
 const CAM=(z,y,ry=0,rx=0)=>{goalZ=z;goalY=y;HOME={z,y};goal.y=ry;goal.x=rx};
 function modes(){const pg=DATA&&DATA.person.pregnancy;const MAIN=[['explore','Results'],['meds',T('meds')],['timeline','Over time']];const MORE=Object.keys(MORE_I);
  $('#modes').innerHTML=(pg?`<button class="chip ${MODE==='baby'?'on':''}" onclick="mode('baby')">${T('baby')}</button>`:'')+`<div class="seg3" role="tablist">${MAIN.map(([m,l])=>`<button role="tab" aria-selected="${MODE===m}" class="${MODE===m?'on':''}" onclick="mode('${m}')">${l}</button>`).join('')}</div><button class="chip more ${MORE.includes(MODE)?'on':''}" aria-label="More views" onclick="moreSheet()">${MORE.includes(MODE)?(MODE==='settings'?'Display':T(MODE)):'•••'}</button>`}
-const MORE_I={hurt:['Symptoms','Tap where it hurts'],real:['Realistic','All layers in true colour, with a cut'],heartv:['Heart','Chambers, valves and your results'],vitals:['Vitals','Heart and lungs at your real rates'],search:['Search','Find any part by name'],quiz:['Quiz','Learn where organs are'],cut:['Cross-section','Slice through the body'],holo:['Hologram','A see-through view'],settings:['Display','Language, detail and motion'],credits:['Credits','Where the anatomy comes from']};
+const MORE_I={hurt:['Symptoms','Tap where it hurts'],real:['Realistic','Every muscle, bone, vessel and nerve, beating at your rate'],heartv:['Heart','Chambers, valves and your results'],vitals:['Vitals','Heart and lungs at your real rates'],search:['Search','Find any part by name'],quiz:['Quiz','Learn where organs are'],cut:['Cross-section','Slice through the body'],holo:['Hologram','A see-through view'],settings:['Display','Language, detail and motion'],credits:['Credits','Where the anatomy comes from']};
 function moreSheet(){const d=document.createElement('div');d.className='msheet';d.innerHTML=`<div class="ms"><div class="grab"></div>${Object.entries(MORE_I).map(([k,v])=>`<button class="mrowb ${MODE===k?'on':''}" data-k="${k}"><b>${v[0]}</b><small>${v[1]}</small></button>`).join('')}</div>`;document.body.appendChild(d);
  d.onclick=e=>{const b=e.target.closest('[data-k]');if(b)mode(b.dataset.k);d.remove()}}
 function reset(){if(window.EX)EX.clear();if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');if(LAY[0])LAY[0].material.color.set(0xE6ECF4);BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
@@ -585,15 +585,20 @@ function mHolo(){shape();CAM(HOME0.z,HOME0.y,-.2);head(who()+' · '+T('holo').to
 function unholo(){for(const l in HOLO){if(!LAY[l])continue;LAY[l].material.dispose();LAY[l].material=HOLO[l].mat;LAY[l].visible=HOLO[l].vis}HOLO=null}
 
 /* realistic: every layer solid at once, true colours, dark stage, optional half cut (like the Z-Anatomy atlas) */
-let REAL=null;
-async function mReal(){if(STATE.sex!=='male'){REAL={back:STATE.base};await swap('male')}shape();document.body.classList.add('real');
- for(const l in LAY){const m=LAY[l],mt=m.material;m.visible=+l!==0;mt.transparent=false;mt.opacity=1;mt.depthWrite=true;mt.side=THREE.DoubleSide;mt.clearcoat=.25;mt.roughness=.55}
- LAY[0].visible=false;
- R.localClippingEnabled=true;CUTP=new THREE.Plane(new THREE.Vector3(-1,0,0),0);for(const l in LAY)LAY[l].material.clippingPlanes=[CUTP];
- CAM(HOME0.z*.62,HOME0.y+1.6*body.scale.y,-1.35);goal.x=0;
- head(who()+' · REALISTIC','Inside the body','Skin, muscle, bone, organs, vessels and nerves together. Slide to cut.');
- sheet(`<div class="q" style="margin-top:0">Cut</div><input type="range" min="-60" max="60" value="0" style="width:100%" oninput="CUTP.constant=this.value/100" aria-label="Cut position">
- <div class="chips2" style="margin-top:10px"><span class="on" onclick="cutAxis(this,-1,0,0)">Side view</span><span onclick="cutAxis(this,0,0,-1)">Front view</span><span onclick="CUTP.constant=99;this.parentNode.querySelectorAll('span').forEach(s=>s.classList.toggle('on',s===this))">Whole body</span></div>`)}
+/* Realistic: the full anatomy atlas (every system, wet-tissue look, cut-away), opened over the body.
+   It beats and breathes at the person's own rates, and any heart part opens the beating heart. */
+function mReal(){shape();const v=DATA.vitals||{};
+ const EXPL={ldl:'LDL is the cholesterol that builds up inside the arteries feeding the heart muscle. Lower is better.',hdl:'HDL carries cholesterol away from the arteries. Higher is better.',tg:'Triglycerides are blood fats. High levels add to artery narrowing, especially with diabetes.',tc:'Total cholesterol. LDL and HDL tell more than this number alone.',sbp:'The top blood-pressure number is the push when the left ventricle squeezes.'};
+ const hf=latest().filter(f=>f.org==='heart'&&/ldl|hdl|tg|tc|sbp|chol|trigly|pressure/i.test((f.code||'')+f.test));
+ ANATMSG={type:'anat-data',bpm:+v.hr||0,rr:+v.rr||0,who:DATA.person.name||'',heart:{bpm:+v.hr||0,bp:v.bp||'',at:v.at||'',src:v.src||'',who:DATA.person.name||'',results:hf.map(f=>({test:f.test,value:f.value,flag:f.flag,date:f.date,expl:EXPL[f.code]||''}))}};
+ let fr=document.getElementById('anatFrame');
+ if(!fr){fr=document.createElement('iframe');fr.id='anatFrame';fr.src='/anatomy';fr.title='Anatomy';fr.allow='fullscreen';
+  fr.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;z-index:100;background:#EEF0F4';document.body.appendChild(fr)}
+ else fr.contentWindow.postMessage(ANATMSG,location.origin)}
+let ANATMSG=null;
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data)return;const fr=document.getElementById('anatFrame');if(!fr||e.source!==fr.contentWindow)return;
+ if(e.data.type==='anat-ready'&&ANATMSG)fr.contentWindow.postMessage(ANATMSG,location.origin);
+ else if(e.data.type==='anat-close'){fr.remove();mode('explore')}});
 
 /* calm: a natural body; only what matters right now comes forward, in true colour */
 function calm(focus){shape();document.body.classList.remove('real');setLayer('organs');for(const l in LAY){const m=LAY[l];m.visible=+l===0||+l===3}

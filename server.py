@@ -300,7 +300,7 @@ TYPES = {
     ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".woff": "font/woff", ".ttf": "font/ttf", ".pdf": "application/pdf", ".apk": "application/vnd.android.package-archive",
 }
 COMPRESSIBLE = {".html", ".js", ".css", ".json", ".svg", ".webmanifest", ".txt"}
-NO_CACHE = {"index.html", "uh.html", "body.html", "baby.html", "heart.html", "sw.js", "manifest.webmanifest"}
+NO_CACHE = {"index.html", "uh.html", "body.html", "baby.html", "heart.html", "anatomy.html", "sw.js", "manifest.webmanifest"}
 
 
 def _safe(rel: str) -> Path:
@@ -536,6 +536,15 @@ def app_shell(request: Request, rest: str = ""):
 def baby_page(request: Request):
     """The pregnancy view: the real baby models by week inside the mother. Framed only by the app itself."""
     resp = _send(WEB / "baby.html", request, "no-cache")
+    resp.headers["Content-Security-Policy"] = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+    return resp
+
+
+@app.api_route("/anatomy", methods=["GET", "HEAD"], include_in_schema=False)
+def anatomy_page(request: Request):
+    """The full anatomy atlas (Z-Anatomy / BodyParts3D, CC BY-SA). The 3D body opens it in a frame for its Realistic
+    view and hands it the person's pulse and breathing rate by postMessage."""
+    resp = _send(WEB / "anatomy.html", request, "no-cache")
     resp.headers["Content-Security-Policy"] = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
     return resp
 
