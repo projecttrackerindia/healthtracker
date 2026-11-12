@@ -1313,7 +1313,7 @@ const isKid=p=>{const a=ageOf(p);return a!=null&&a<18};
 /* a child's age as parents say it: 7 weeks, 5 months, 4 years */
 function ageWords(p){const d=p&&p.profile&&p.profile.dob;const a=ageOf(p);if(d&&a!=null&&a<2){const days=Math.floor((new Date(today()+'T00:00')-new Date(d+'T00:00'))/864e5);if(days<91){const w=Math.max(0,Math.floor(days/7));return w?w+(w===1?' week':' weeks'):days+(days===1?' day':' days')}const m=Math.floor(days/30.44);return m+' months'}return a+(a===1?' year':' years')}
 /* a child's home is their cards (growth, vaccines, kids mode), not the adult 3D body */
-const kidFlat=p=>!!(p&&((isKid(p)&&ageOf(p)<13)||(S.tab==='summary'&&womStage(p)==='loss')));
+const kidFlat=p=>!!(p&&isKid(p)&&ageOf(p)<13);
 const firstName=p=>{const w=String(p.name||'').split(' ');return /^baby$/i.test(w[0])&&w[1]?w[0]+' '+w[1]:w[0]};
 const kidBand=a=>a<3?'baby':a<6?'small':a<13?'kid':'teen';
 const MOVES={small:[['🐸','Frog jumps','Squat down, hands on the floor, then jump up!',30],['⭐','Star jumps','Jump and open your arms and legs like a star',30],['🦩','Flamingo','Stand on one leg like a flamingo',20],['🐻','Bear walk','Hands and feet on the floor, walk like a bear',30],['🦘','Kangaroo hops','Hop forward with feet together',30]],
@@ -1514,7 +1514,7 @@ function rtClose(){if(RT&&RT.tm)clearInterval(RT.tm);RT=null;try{speechSynthesis
 function renderSheet(){const p=P(),locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id);let h='';
  if(S.tab==='summary'){
   if(locked)h=lockCard(p)+`<div class="sect">MEDICAL ID</div>`+medIdCard(p);
-  else{const st=womStage(p);if(pg)h+=pregHome(p,pg);else if(isKid(p))h+=kidsHome(p);else if(st==='after')h+=afterHome(p)+upNext(p);else if(st==='loss')h+=lossHome(p);else if(st==='cycle'||st==='trying')h+=cycleHome(p,st==='trying')+bodyList(p)+upNext(p);else h+=bodyList(p)+upNext(p);
+  else{const st=womStage(p);if(pg)h+=pregHome(p,pg);else if(isKid(p))h+=kidsHome(p);else if(st==='after')h+=afterHome(p)+upNext(p);else if(st==='loss')h+=lossHome(p)+bodyList(p);else if(st==='cycle'||st==='trying')h+=cycleHome(p,st==='trying')+bodyList(p)+upNext(p);else h+=bodyList(p)+upNext(p);
    if(!fs.length&&writer(p)&&!pg&&womStage(p)!=='loss')h+=`<button class="card row" style="width:100%;text-align:left" onclick="pickReport()">${ic(I.cam,'#0071E3',26)}<div><div style="font-weight:600">Add your first report</div><div class="sub">PDF or photo. It is read for you and shown on the body.</div></div></button>`;
    const lastRep=(REC[p.id]||[]).filter(r=>r.kind==='report'&&r.summary).sort((a,b)=>(b.day||'').localeCompare(a.day||''))[0];
    const lastCmp=(REC[p.id]||[]).filter(r=>r.kind==='report'&&(r.compare||[]).some(c=>c.dir!=='first')).sort((a,b)=>(b.day||'').localeCompare(a.day||''))[0];
