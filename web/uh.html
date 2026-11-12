@@ -243,7 +243,7 @@ a.li{text-decoration:none;color:inherit}
 .pdel{background:#FFE8E6;border-radius:22px;padding:16px 18px;margin-top:6px}.pdel b{display:block;color:#C4291C;font-size:16px}.pdel small{display:block;color:#55555B;font-size:13.5px;margin:3px 0 10px}.pdel button{border:0;background:#C4291C;color:#fff;font:inherit;font-weight:600;height:40px;padding:0 18px;border-radius:20px;cursor:pointer}
 .ucard .of{font-size:15px;font-weight:600;opacity:.85;letter-spacing:0}.ubar{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.25);margin:8px 0 4px}.ubar i{display:block;height:7px;border-radius:4px;background:#fff}
 .aieb{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:#5E5CE6;margin-bottom:2px}
-.ctiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.ctiles div{background:#fff;border-radius:20px;padding:13px 14px}.ctiles small{display:block;font-size:12.5px;color:#8E8E93}.ctiles b{display:block;font-size:15.5px;margin-top:3px;line-height:1.3}
+.tsub{display:block;font-size:12.5px;color:#55555B;margin-top:2px}.ctiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.ctiles div{background:#fff;border-radius:20px;padding:13px 14px}.ctiles small{display:block;font-size:12.5px;color:#8E8E93}.ctiles b{display:block;font-size:15.5px;margin-top:3px;line-height:1.3}
 .cwhy{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;background:#fff;border:0;border-radius:18px;padding:13px 14px;font:inherit;font-weight:600;font-size:15px;color:inherit;text-align:left;cursor:pointer}.cwhy span{flex:1}
 .ctl{display:block;width:100%;text-align:left;border:0;font:inherit;color:inherit;padding:14px 16px 10px;position:relative;cursor:pointer}.cth{display:flex;justify-content:space-between;margin-bottom:6px}.cth b{font-size:16px}.cth span{color:#8E8E93;font-weight:600}
 .cst{position:relative;padding:5px 0 5px 22px;font-size:14.5px;color:#8E8E93}.cst:before{content:"";position:absolute;left:0;top:10px;width:12px;height:12px;border-radius:6px;background:#E5E5EA}.cst:after{content:"";position:absolute;left:5px;top:24px;width:2px;height:14px;background:#E5E5EA}.cst:last-child:after{display:none}
@@ -990,11 +990,11 @@ function renderSheet(){const p=P(),locked=!can(p,'summary'),pg=preg(p),fs=findin
  if(S.tab==='meds'){if(!can(p,'all'))h=lockCard(p);else{const plan=dosePlan(p.id),t=plan.filter(x=>x.done).length,c=2*Math.PI*44,meds=(REC[p.id]||[]).filter(r=>r.kind==='med');
   if(!meds.length)h=`<div class="card lock">${ic(I.pill,'#8E8E93',30)}<div style="font-weight:600;font-size:17px">No medicines</div><div class="sub">Add them by hand or scan a prescription.</div></div>`;
   else{h=`
-  <div class="card mtod">${plan.map(x=>{const h=t=>{const[a,b]=t.split(':');return`${(+a%12)||12}:${b} ${+a<12?'AM':'PM'}`},at=x.done&&x.done.at?new Date(+x.done.at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):'';return`<div class="mrow"><button class="mchk${x.done?' on':''}" aria-label="${x.done?'Mark not taken':'Mark taken'}" onclick="toggleDose('${p.id}','${x.m.id}','${x.t}','${x.done?x.done.id:''}')">${x.done?ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',18):''}</button><div style="flex:1;min-width:0"><b>${esc(x.m.name)}</b><small>${h(x.t)} · ${x.done?'taken'+(at?' '+at:''):esc(x.m.note||x.m.dose||'')}</small></div></div>`}).join('')}</div>${runsOut(p)}
+  <div class="card mtod">${plan.map(x=>{const h=t=>{const[a,b]=t.split(':');return`${(+a%12)||12}:${b} ${+a<12?'AM':'PM'}`},at=x.done&&x.done.at?new Date(+x.done.at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):'';return`<div class="mrow"><button class="mchk${x.done?' on':''}" aria-label="${x.done?'Mark not taken':'Mark taken'}" onclick="toggleDose('${p.id}','${x.m.id}','${x.t}','${x.done?x.done.id:''}')">${x.done?ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',18):''}</button><div style="flex:1;min-width:0"><b>${esc(x.m.name)}</b><small>${h(x.t)} · ${x.done?'taken'+(at?' '+at:''):esc(x.m.note||x.m.dose||'')}</small></div></div>`}).join('')}</div>${runsOut(p)}${medWeek(p)}${medChecked(p)}
   <div class="sect">ALL MEDICINES</div><div class="list">${meds.map(m=>`<button class="li" onclick="${writer(p)?`openMed('${m.id}')`:''}"><div style="flex:1"><div style="font-weight:600">${esc(m.name)}</div><div class="sub">${esc([m.dose,(m.times||[]).join(', ')].filter(Boolean).join(' · '))}</div></div>${m.active===false?'<span class="pill info">Stopped</span>':''}</button>`).join('')}</div>`}
   {const k=h.indexOf('<div class="sect">ALL MEDICINES</div>');if(k>0)h=S.sub===1?h.slice(k).replace('ALL MEDICINES','MY MEDICINES'):h.slice(0,k)}
-  if(false)h+=`<button class="btn dark" style="width:100%;margin-top:14px" onclick="openPharmacy()">Order from a nearby pharmacy</button>`;
-  if(writer(p))h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"><button class="btn pri" onclick="openMed()">${ic(I.plus,'#fff',18)} Add medicine</button><button class="btn sec" onclick="pickReport('prescription')">${ic(I.cam,'#1D1D1F',18)} Scan Rx</button></div>`}}
+  if(meds.length&&S.sub!==1)h+=`<div class="ptn">${ic(I.check,'#1A7F37',16)}<span>Orders are fulfilled by licensed pharmacies, and a registered pharmacist checks every prescription.</span></div>`;
+  if(writer(p))h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"><button class="btn pri" onclick="openMed()" style="white-space:nowrap">${ic(I.plus,'#fff',18)} Add</button><button class="btn sec" onclick="pickReport('prescription')">${ic(I.cam,'#1D1D1F',18)} Scan Rx</button></div>`}}
  if(S.tab==='family')h=familyView();
  if(S.tab==='cover'){h=`<div id="cov"></div>`;setTimeout(coverView,0)}
  if(S.tab==='visits'){h=can(p,'all')?visitsBlock(p):lockCard(p)}
@@ -1572,6 +1572,31 @@ function openAI(){const p=P(),fs=findings(p.id),pg=preg(p);
 async function ask(q){const p=P(),ch=$('#chat');ch.insertAdjacentHTML('beforeend',`<div class="bubble" style="margin-top:10px">${esc(q)}</div><p class="aitext" id="pending">Thinking…</p>`);
  const ctx={person:{name:p.name,age:p.age,sex:p.sex,medicalId:p.medicalId},results:findings(p.id).slice(0,30),medicines:(REC[p.id]||[]).filter(r=>r.kind==='med').map(m=>m.name),pregnancy:preg(p)||null};
  try{const r=await API('/api/v1/ai/ask',{json:{question:q,context:ctx,member:p.id},key:true});$('#pending').outerHTML=`<p class="aitext">${esc(r.answer||r.text||'')}</p>`}catch(e){$('#pending').outerHTML=`<p class="aitext" style="color:#B42318">${esc(e.message)}</p>`}}
+/* Medicine: the week at a glance, someone else in the family today, and the safety check (approved mockup 2). */
+function medDays(pid,day){const meds=(REC[pid]||[]).filter(r=>r.kind==='med'&&r.active!==false&&!r.sos),exp=meds.reduce((n,m)=>n+((m.times&&m.times.length)?m.times.length:1),0),got=(REC[pid]||[]).filter(r=>r.kind==='dose'&&r.day===day).length;return[Math.min(got,exp),exp]}
+function medWeek(p){const days=[...Array(7)].map((_,k)=>{const d=new Date();d.setDate(d.getDate()-k);return d.toISOString().slice(0,10)});let g=0,e=0,miss='';
+ days.forEach((d,k)=>{if(k===0)return;const[a,b]=medDays(p.id,d);g+=a;e+=b;if(b>a&&!miss)miss=new Date(d+'T00:00').toLocaleDateString('en-IN',{weekday:'short'})});
+ const cand=ME.people.filter(q=>q.id!==p.id&&can(q,'all'));cand.forEach(q=>{if(!REC[q.id]&&!MCHK['ld:'+q.id]){MCHK['ld:'+q.id]=1;loadRecords(q.id).then(()=>S.tab==='meds'&&renderSheet()).catch(()=>{})}});
+ const other=cand.find(q=>(REC[q.id]||[]).some(r=>r.kind==='med'&&r.active!==false));
+ const o=other?medDays(other.id,today()):null,last=other?(REC[other.id]||[]).filter(r=>r.kind==='dose'&&r.day===today()).sort((a,b)=>(b.at||0)-(a.at||0))[0]:null;
+ if(!e&&!o)return'';
+ return`<div class="ctiles" style="margin-top:12px">${e?`<div><small>Last 6 days</small><b style="font-size:20px">${g} of ${e}</b><span class="tsub">${g>=e?'Every dose taken':`${e-g} missed${miss?' · '+miss:''}`}</span></div>`:''}${o&&o[1]?`<div><small>${esc(nameOf(other).split(' ')[0])} today</small><b style="font-size:20px">${o[0]} of ${o[1]}${o[0]>=o[1]?' ✓':''}</b><span class="tsub">${last&&last.at?'Last at '+new Date(+last.at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):'Nothing taken yet'}</span></div>`:''}</div>`}
+let MCHK={};
+function medChecked(p){const meds=(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.active!==false);if(!meds.length)return'';
+ const key=p.id+':'+today()+':'+meds.map(m=>m.name).sort().join('|');let got=MCHK[key];
+ if(!got){try{got=JSON.parse(localStorage.getItem('uh-mchk')||'{}')[key]}catch(_){}}
+ if(!got&&!MCHK[key+':run']){MCHK[key+':run']=1;const pr=p.profile||{},m=p.medicalId||{};
+  API('/api/v1/ai/medcheck',{key:true,json:{member:p.id,context:{medicines:meds.map(x=>({name:x.name,dose:x.dose||'',times:x.times||[]})),allergies:String(pr.allergies||m.allergies||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),conditions:String(m.conditions||pr.conditions||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),age:ageOf(p),sex:pr.sex||''}}})
+   .then(r=>{MCHK[key]=r;try{const c=JSON.parse(localStorage.getItem('uh-mchk')||'{}');Object.keys(c).forEach(k=>{if(!k.includes(today()))delete c[k]});c[key]=r;localStorage.setItem('uh-mchk',JSON.stringify(c))}catch(_){}if(S.tab==='meds')renderSheet()}).catch(()=>{MCHK[key]={err:1};if(S.tab==='meds')renderSheet()});got=null}
+ const row=(col,glyph,a,b)=>`<div class="rrow" style="cursor:default"><span class="rk" style="background:${col}">${glyph}</span><span style="flex:1;min-width:0"><b style="white-space:normal">${a}</b><small>${b}</small></span></div>`;
+ let body;
+ if(!got)body=row('#E5E5EA',ic(I.spark,'#8E8E93',15),'Checking your medicines together…','Interactions, repeats and your allergies');
+ else if(got.err)return'';
+ else{const al=(got.alerts||[]).slice(0,3),dup=(got.duplicates||[]).slice(0,1),tip=(got.timing||[])[0];
+  body=(al.length?al.map(a=>row(a.level==='stop'?'#FF3B30':a.level==='ask'?'#FF9500':'#0A84FF','<b style="color:#fff">!</b>',esc(a.title),esc(a.detail))).join(''):row('#30D158',ic(I.check,'#fff',15),`Your ${meds.length} medicine${meds.length>1?'s':''} work well together`,'Checked against each other and your allergies'))
+   +dup.map(d=>row('#FF9500','<b style="color:#fff">2×</b>',`${esc(d.ingredient)} appears twice`,esc((d.medicines||[]).join(' and '))+' · ask your pharmacist')).join('')
+   +(tip?row('#5E5CE6',ic(I.spark,'#fff',15),'A timing tip',esc(tip)):'')}
+ return`<div class="sec2" style="margin-top:14px">CHECKED FOR YOU</div><div class="rlist">${body}</div><p class="cap" style="margin:-4px 6px 0">Guidance only. Your doctor or pharmacist has the final word.</p>`}
 /* ---------------- upload links: a report from a lab that is not on Urban Health ----------------
    The person makes an expiring link; the lab uploads; nothing is filed until the person says "It's mine". */
 let UPL={},UPLT={};
