@@ -1313,7 +1313,7 @@ const isKid=p=>{const a=ageOf(p);return a!=null&&a<18};
 /* a child's age as parents say it: 7 weeks, 5 months, 4 years */
 function ageWords(p){const d=p&&p.profile&&p.profile.dob;const a=ageOf(p);if(d&&a!=null&&a<2){const days=Math.floor((new Date(today()+'T00:00')-new Date(d+'T00:00'))/864e5);if(days<91){const w=Math.max(0,Math.floor(days/7));return w?w+(w===1?' week':' weeks'):days+(days===1?' day':' days')}const m=Math.floor(days/30.44);return m+' months'}return a+(a===1?' year':' years')}
 /* a child's home is their cards (growth, vaccines, kids mode), not the adult 3D body */
-const kidFlat=p=>!!(p&&((isKid(p)&&ageOf(p)<13)||(S.tab==='summary'&&['cycle','trying','after','loss'].includes(womStage(p)))));
+const kidFlat=p=>!!(p&&((isKid(p)&&ageOf(p)<13)||(S.tab==='summary'&&womStage(p)==='loss')));
 const firstName=p=>{const w=String(p.name||'').split(' ');return /^baby$/i.test(w[0])&&w[1]?w[0]+' '+w[1]:w[0]};
 const kidBand=a=>a<3?'baby':a<6?'small':a<13?'kid':'teen';
 const MOVES={small:[['🐸','Frog jumps','Squat down, hands on the floor, then jump up!',30],['⭐','Star jumps','Jump and open your arms and legs like a star',30],['🦩','Flamingo','Stand on one leg like a flamingo',20],['🐻','Bear walk','Hands and feet on the floor, walk like a bear',30],['🦘','Kangaroo hops','Hop forward with feet together',30]],
