@@ -158,6 +158,9 @@ app.include_router(medid_api.r)
 from api import uplink as uplink_api  # noqa: E402
 app.include_router(uplink_api.r)
 app.include_router(uplink_api.pub)
+from api import compliance as compliance_api  # noqa: E402
+app.include_router(compliance_api.ar)
+app.include_router(compliance_api.pub)
 app.include_router(export_api.r)
 app.include_router(network_api.r)
 app.include_router(network_api.ar)

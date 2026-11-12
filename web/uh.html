@@ -248,6 +248,7 @@ a.li{text-decoration:none;color:inherit}
 .ctl{display:block;width:100%;text-align:left;border:0;font:inherit;color:inherit;padding:14px 16px 10px;position:relative;cursor:pointer}.cth{display:flex;justify-content:space-between;margin-bottom:6px}.cth b{font-size:16px}.cth span{color:#8E8E93;font-weight:600}
 .cst{position:relative;padding:5px 0 5px 22px;font-size:14.5px;color:#8E8E93}.cst:before{content:"";position:absolute;left:0;top:10px;width:12px;height:12px;border-radius:6px;background:#E5E5EA}.cst:after{content:"";position:absolute;left:5px;top:24px;width:2px;height:14px;background:#E5E5EA}.cst:last-child:after{display:none}
 .cst.d{color:#1D1D1F}.cst.d:before{background:#30D158}.cst.n{color:#1D1D1F;font-weight:700}.cst.n:before{background:#0071E3;box-shadow:0 0 0 4px #D6E6FF}.cst small{font-weight:500;color:#8E8E93}
+.soon{text-align:center;background:#fff;border-radius:24px;padding:26px 20px}.soon .soi{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#5E5CE6,#0A84FF);display:grid;place-items:center;margin:0 auto 12px}.soon b{display:block;font-size:19px;letter-spacing:-.01em}.soon p{color:#55555B;font-size:15px;line-height:1.45;margin:8px 0 0}
 .rlist{background:#fff;border-radius:22px;padding:2px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04);margin-bottom:12px}
 .rrow{display:flex;gap:12px;align-items:center;width:100%;padding:13px 0;border:0;border-bottom:.5px solid rgba(60,60,67,.14);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}.rrow:last-child{border-bottom:0}
 .rrow .rk{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}.rrow b{display:block;font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rrow small{display:block;color:#8E8E93;font-size:14px;margin-top:1px}
@@ -609,7 +610,7 @@ function findings(pid){const reps=(REC[pid]||[]).filter(r=>r.kind==='report').so
  reps.forEach(r=>(r.findings||[]).forEach(f=>{const key=(f.code||f.test||'').toLowerCase();if(!key||seen.has(key))return;seen.add(key);out.push({...f,flag:qualFlag(f),org:CODE_ORG[f.code]||nameOrg(f.test),rid:r.id,date:r.day,rep:r.title})}));
  out.sort((a,b)=>((a.flag==='normal'||!a.flag)-(b.flag==='normal'||!b.flag)));return out}
 async function loadRecords(pid){const p=P(pid);if(!p||!can(p,'summary')){REC[pid]=[];return}try{REC[pid]=await API(`/api/v2/people/${pid}/records`);REC[pid].forEach(r=>{if(r.kind==='med'&&r.name)r.name=r.name.replace(/\b(Mg|Mcg|Ml|Iu)\b/g,u=>u==='Iu'?'IU':u.toLowerCase())})}catch(e){REC[pid]=[]}}
-async function refreshMe(){ME=await API('/api/v2/me');if(!P(S.person))S.person=ME.me}
+async function refreshMe(){ME=await API('/api/v2/me');if(!SVC)loadSvc();if(!P(S.person))S.person=ME.me}
 /* ---------------- 3D ---------------- */
 async function showModel(){const p=P();if(!p){return}
  const female=p.sex==='female',sex=female?'female':'male';$('#load').style.display=MODELS[sex]?'none':'block';
@@ -798,7 +799,7 @@ function visitsNext(p){const out=[];TOKS.forEach(t=>out.push(`<div class="un"><s
  APPTS.filter(a=>(!a.member||a.member===p.id)).forEach(a=>{const[d,t]=vWhen(a);if(vMissed(a)&&d===today())out.push(`<div class="un"><span class="ti" style="background:#FF9F0A">${ic('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>','#fff',20)}</span><div class="g"><b>Missed your ${vT12(t)} visit?</b><small>${esc(a.store?a.store.name:'')} · call the OP desk or book again</small></div><button class="go sec" onclick="openVisit('${a.id}')">Fix</button></div>`);
   else if(['confirmed','requested','rescheduled'].includes(a.status)&&d&&d>=today()&&(new Date(d+'T00:00')-new Date(today()+'T00:00'))<=2*864e5&&!TOKS.length)out.push(`<div class="un"><span class="ti" style="background:${a.status==='confirmed'?'#30D158':'#FF9F0A'}">${ic(a.status==='confirmed'?'<path d="M5 12.5l4.5 4.5L19 7.5"/>':'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>','#fff',20)}</span><div class="g"><b>${esc(a.doctor||'Visit')} · ${vDay(d)}${t?' '+vT12(t):''}</b><small>${esc(a.store?a.store.name:'')} · ${vState(a)[0]}</small></div><button class="go${d===today()&&a.status==='confirmed'?'':' sec'}" onclick="openVisit('${a.id}')">${d===today()&&a.status==='confirmed'?'I’m here':'Open'}</button></div>`)});
  return out}
-async function openBook(){const p=P();page('Book a visit',`<p class="line">Partner hospitals near you. The hospital confirms the exact time and you get a token on the day.</p><div id="bk1" class="list" style="margin-top:14px"><div class="li sub">Finding hospitals…</div></div>`,'CARE');
+async function openBook(){if(!svcOk('visits'))return;const p=P();page('Book a visit',`<p class="line">Partner hospitals near you. The hospital confirms the exact time and you get a token on the day.</p><div id="bk1" class="list" style="margin-top:14px"><div class="li sub">Finding hospitals…</div></div>`,'CARE');
  let H=[];try{H=(await API('/api/v1/hospitals',{key:true})).hospitals||[]}catch(_){}
  if(!$('#bk1'))return;$('#bk1').outerHTML=H.length?`<div class="list" style="margin-top:14px">${H.map(h=>`<button class="li" onclick="bookDoctor('${h.id}')"><span class="ti" style="background:#0A84FF">${ic('<rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M12 9v6M9 12h6M9 21v-3h6v3"/>','#fff',20)}</span><div style="flex:1;min-width:0;text-align:left"><div style="font-weight:600">${esc(h.name)}</div><div class="sub">${esc([h.area,h.km!=null?h.km+' km':'',h.hours].filter(Boolean).join(' · '))}</div></div>${ic(I.chev,'#C7C7CC',18)}</button>`).join('')}</div>`:`<div class="card lock" style="margin-top:14px">${ic('<rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M12 9v6M9 12h6M9 21v-3h6v3"/>','#8E8E93',30)}<div style="font-weight:600;font-size:17px">No partner hospitals near you yet</div><div class="sub">We’re adding hospitals in your city. Meanwhile, call your hospital and note the visit here.</div></div>`}
 async function bookDoctor(sid){const p=P();let D={doctors:[]};try{D=await API('/api/v1/doctors?store='+encodeURIComponent(sid))}catch(_){}
@@ -1346,7 +1347,7 @@ async function enablePush(){const ios=/iphone|ipad/i.test(navigator.userAgent),s
 const PKG={tc:'lipid',ldl:'lipid',hdl:'lipid',tg:'lipid',glu_f:'hba1c',glu_pp:'hba1c',glu_r:'hba1c',hba1c:'hba1c',alt:'lft',ast:'lft',alp:'lft',bili:'lft',alb:'lft',creat:'kft',urea:'kft',uric:'kft',egfr:'kft',na:'kft',k:'kft',tsh:'thy',t3:'thy',t4:'thy',hb:'cbc',wbc:'cbc',plt:'cbc',rbc:'cbc',mcv:'cbc',pcv:'cbc',vitd:'vitd',b12:'b12',ferr:'iron'};
 let LAB={codes:new Set(),all:null,quote:null,lab:null,slot:'',loc:null};
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN');
-async function openLabs(pre){const p=P();if(!writer(p))return toast('Only '+p.name+' or someone who looks after them can book tests');
+async function openLabs(pre){if(!svcOk('lab'))return;const p=P();if(!writer(p))return toast('Only '+p.name+' or someone who looks after them can book tests');
  if(!LAB.all){try{LAB.all=(await API('/api/v1/labs/tests')).tests}catch(e){return toast(e.message)}}
  const sug=[...new Set(findings(p.id).filter(f=>f.flag&&f.flag!=='normal').map(f=>PKG[f.code]).filter(Boolean))];
  LAB.codes=new Set(pre||sug);LAB.quote=null;LAB.lab=null;labPage(sug)}
@@ -1473,7 +1474,7 @@ async function liveMap(el,opts){const g=await gmaps();if(!el||!el.isConnected)re
   if(n>1)map.fitBounds(b,60);else if(n===1)map.panTo(b.getCenter())}}}
 /* ---------------- medicines: order from nearby pharmacies ---------------- */
 let RXO={items:[],quote:null,store:null,rx:''};
-async function openPharmacy(preIds){const p=P();if(!writer(p))return toast('Only '+p.name+' or someone who looks after them can order');
+async function openPharmacy(preIds){if(!svcOk('medicine'))return;const p=P();if(!writer(p))return toast('Only '+p.name+' or someone who looks after them can order');
  const meds=(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.active!==false);
  RXO.items=meds.map(m=>({id:m.id,name:m.name,qty:1,on:!preIds||preIds.includes(m.id)}));
  page('Order medicines',`<p class="line">For <b>${esc(nameOf(p))}</b>. Compare nearby pharmacies, then a pharmacist checks the prescription before packing.</p>
@@ -1881,6 +1882,12 @@ function installHint(){try{localStorage.setItem('uh-a2hs','1')}catch(_){}if(matc
  if(DEFERRED){DEFERRED.prompt();DEFERRED=null;return}layer(`<div class="modal glass"><div class="row"><div style="font-weight:700;font-size:19px">Add Urban Health to your home screen</div><button class="x" onclick="closeL()">${ic(I.x,'#3A3A3C',16)}</button></div><p style="font-size:16px;line-height:1.5;margin:14px 2px">${ios?'Tap the Share button in Safari, then <b>Add to Home Screen</b>.':'Open the browser menu (⋮), then <b>Install app</b> or <b>Add to Home screen</b>.'} It opens full screen like an app, and SOS is one tap away.</p><button class="btn pri" style="width:100%" onclick="closeL()">OK</button></div>`)}
 let DEFERRED=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e});
 /* ---------------- boot ---------------- */
+/* Services switch on per city as licensed partners are verified (admin → Services by city). Until then: Coming soon. */
+let SVC=null;
+function loadSvc(){const c=(P(ME&&ME.me)||{}).profile||{};API('/api/v2/services'+(c.city?'?city='+encodeURIComponent(c.city):'')).then(x=>SVC=x).catch(()=>{})}
+const SVCN={medicine:['Medicine orders','licensed pharmacies, with a registered pharmacist checking every prescription'],lab:['Home tests','accredited labs (NABL) with trained technicians'],visits:['Hospital visits','registered hospitals and clinics'],insurance:['Buying insurance','IRDAI-licensed insurance brokers']};
+function soonCard(k){const n=SVCN[k];return`<div class="soon"><div class="soi">${ic(I.spark,'#fff',26)}</div><b>${n[0]}: coming soon in your area</b><p>We’re partnering with ${n[1]}. As soon as they’re verified near you, it switches on here. We’ll let you know.</p></div>`}
+function svcOk(k){if(SVC&&SVC[k]===false){sheetX(SVCN[k][0],`<div class="ulf">${soonCard(k)}</div>`);return false}return true}
 async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);if(m){try{sessionStorage.setItem('uh-join',m[1])}catch(_){}fetch('/api/v2/household/invite/'+m[1],{headers:{'x-tht':'1'}}).catch(()=>{});history.replaceState(null,'','/app')}
  try{await refreshMe()}catch(e){if(e.status===401)return authPage(sessionStorage.getItem('uh-join')?'signup':'signin');$('#load').textContent='Could not connect. Check your internet and reload.';return}
  const jt=sessionStorage.getItem('uh-join');if(jt){try{const j=await API('/api/v2/household/join',{json:{token:jt}});if(j.handover)toast('Welcome. Your records are now in your own account.');else{toast('You joined the family');if(j.relation)setTimeout(()=>confirmRel(j),600)}}catch(e){toast(e.message)}sessionStorage.removeItem('uh-join');await refreshMe()}
@@ -2111,6 +2118,7 @@ async function coverView(){const el=$('#cov');if(!el)return;const p=P();
  el.innerHTML=seg+'<div id="covb" style="padding-bottom:110px"><div class="card sub">Loading…</div></div>';el.querySelectorAll('.cseg button').forEach(b=>b.onclick=()=>{S.cov=b.dataset.k;coverView()});
  const box=$('#covb');if(!SCH)try{SCH=await API('/api/v2/schemes')}catch(_){}
  if(S.cov==='gov'){box.innerHTML=`<div class="card"><div style="font-weight:600;font-size:17px">Free government cover</div><p class="sub" style="white-space:normal;margin:6px 0 12px">PM-JAY, the 70+ cover, your state's scheme, CGHS, ECHS and ESIC. Answer five questions to see what ${p.self?'you':esc(nameOf(p))} may get, and how to apply.</p><button class="btn pri" style="width:100%" onclick="openSchemes('${p.id}')">Check eligibility</button></div><p class="cap">Applying always happens on the official portal or at a hospital desk — no app can enrol you. Enrolment is free; never pay an agent.</p>`;return}
+ if(S.cov==='plans'&&SVC&&SVC.insurance===false){box.innerHTML=soonCard('insurance');return}
  if(S.cov==='plans'){const n=ME.people.length,ages=ME.people.map(x=>{const d=x.profile&&x.profile.dob;return d?Math.floor((Date.now()-new Date(d))/31557600000):null}).filter(x=>x!=null),old=ages.length?Math.max(...ages):null,flag=ME.people.some(x=>findings(x.id).some(f=>f.flag&&f.flag!=='normal'));let cov=S.covAmt||500000;
   const draw=()=>{box.innerHTML=`<div class="card"><div style="font-weight:600;font-size:16px">Your family</div><div class="sub">${n} ${n>1?'people':'person'}${old!=null?' · eldest '+old:''}${ME.city?' · '+esc(ME.city):''}</div>
    <div class="chips" style="margin-top:12px">${[[500000,'₹5 lakh'],[1000000,'₹10 lakh'],[2500000,'₹25 lakh']].map(([v,t])=>`<button type="button" class="chip ${cov===v?'on':''}" data-v="${v}">${t}</button>`).join('')}</div></div>
