@@ -63,6 +63,9 @@ def test_one_press_creates_the_alert_mails_contacts_and_opens_a_live_page(mail):
     assert pj["name"] == "Meera Raghavan" and pj["loc"]["lat"] == 17.4401 and "id" not in pj and "contacts" not in pj and pj["phone"] == "+919876500000"
     # the family's inbox got the alert too (push/WhatsApp fan-out goes through notify)
     assert c.get("/api/v1/sos/t/nope").status_code == 404
+    # the person in trouble sees that the page was opened
+    st = c.get("/api/v1/sos/" + j["id"], headers=hk).json()
+    assert st["opened"] and st["views"] >= 1
 
 
 def test_location_arrives_later_and_the_alert_ends(mail):

@@ -172,3 +172,16 @@ def test_report_date_and_duplicates(monkeypatch):
     assert photo.status_code == 409                                                     # same date, same values: a copy
     forced = c.post(f"/api/v2/people/{c.pid}/reports", headers={"x-tht": "1"}, files={"file": ("cbc2.pdf", io.BytesIO(PDF + b"%x\n"), "application/pdf")}, data={"read": "1", "force": "1"})
     assert forced.status_code == 200
+
+
+def test_permissions_recorded_and_changeable():
+    c = person("Perm")
+    s = c.get("/api/v2/permissions").json()
+    assert not s["asked"] and s["items"]["emergency_location"] is None
+    s = c.put("/api/v2/permissions", json={"items": {"emergency_location": True, "reminders": False}, "via": "signup"}).json()
+    assert s["asked"] and s["items"]["emergency_location"]["granted"] and not s["items"]["reminders"]["granted"]
+    s = c.put("/api/v2/permissions", json={"items": {"emergency_location": True}, "via": "settings"}).json()
+    assert len(s["history"]) == 2                                   # no change, no new row
+    s = c.put("/api/v2/permissions", json={"items": {"emergency_location": False}, "via": "settings"}).json()
+    assert not s["items"]["emergency_location"]["granted"] and s["history"][0]["via"] == "settings" and len(s["history"]) == 3
+    assert c.put("/api/v2/permissions", json={"items": {"sell_data": True}}).status_code == 400

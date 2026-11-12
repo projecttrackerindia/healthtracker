@@ -132,6 +132,7 @@ def alert_json(a: SosAlert, origin: str) -> dict:
     return {"id": a.id, "token": a.token, "url": f"{origin}/sos/{a.token}", "name": a.name, "active": a.active, "created": a.created, "updated": a.updated, "ended": a.ended,
             "loc": {"lat": a.lat, "lng": a.lng, "acc": a.acc} if a.lat is not None else None, "trail": (a.trail or [])[-50:], "sent": a.sent or [],
             "summary": a.data.get("summary", ""), "blood": a.data.get("blood", ""), "phone": a.data.get("phone", ""), "message": message(a, origin),
+            "opened": (a.data or {}).get("opened"), "views": (a.data or {}).get("views", 0),
             "maps": maps_link(a.lat, a.lng) if a.lat is not None else "", "directions": directions_link(a.lat, a.lng) if a.lat is not None else ""}
 
 
@@ -193,6 +194,12 @@ def update_loc(sid: str, body: LocIn, request: Request, db: Session = Depends(ge
     return alert_json(a, origin)
 
 
+@r.get("/api/v1/sos/{sid}")
+def status(sid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    h = household(db, x_dokko_key, create=False)
+    return alert_json(_mine(db, h, sid), _origin(request))
+
+
 @r.post("/api/v1/sos/{sid}/end")
 def end(sid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
@@ -211,6 +218,12 @@ def public_json(token: str, request: Request, db: Session = Depends(get_db)):
     a = db.scalar(select(SosAlert).where(SosAlert.token == token[:48]))
     if not a or (not a.active and a.ended and now() - a.ended > 86400):
         raise HTTPException(404, "This alert is no longer available.")
+    if a.active:                                   # the person in trouble sees that someone has the page open
+        d = dict(a.data or {})
+        d["opened"] = d.get("opened") or now()
+        d["views"] = int(d.get("views") or 0) + 1
+        a.data = d
+        db.commit()
     j = alert_json(a, _origin(request))
     j.pop("id", None)
     return j

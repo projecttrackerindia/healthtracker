@@ -1841,3 +1841,46 @@ def start_purge() -> None:
             _t.sleep(6 * 3600)
 
     threading.Thread(target=loop, name="people-purge", daemon=True).start()
+
+
+# ---------------- permissions (DPDP: each purpose asked separately, each answer recorded, changeable any time) ----------------
+PERMS = {"emergency_location": "Emergency location", "nearby_care": "Nearby care", "reminders": "Reminders", "ai_reports": "AI reads my reports"}
+PERMS_VERSION = "1.0"
+
+
+def _perm_state(db: Session, uid: str) -> dict:
+    from .models import ConsentLog
+    rows = db.scalars(select(ConsentLog).where(ConsentLog.user_id == uid, ConsentLog.kind.in_(list(PERMS))).order_by(ConsentLog.t, ConsentLog.id)).all()
+    cur = {}
+    for x in rows:
+        cur[x.kind] = {"granted": bool(x.granted), "t": x.t, "version": x.version}
+    hist = [{"kind": x.kind, "label": PERMS[x.kind], "granted": bool(x.granted), "t": x.t, "version": x.version, "via": x.via} for x in reversed(rows)][:60]
+    return {"items": {k: cur.get(k) for k in PERMS}, "labels": PERMS, "version": PERMS_VERSION, "asked": bool(cur), "history": hist}
+
+
+class PermsIn(BaseModel):
+    items: dict[str, bool]
+    via: str = "app"
+
+
+@r.get("/permissions")
+def get_perms(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    return _perm_state(db, u.id)
+
+
+@r.put("/permissions")
+def put_perms(body: PermsIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """Only changes are recorded; rows are never edited, a withdrawal is a new row."""
+    from .auth import client_ip
+    from .models import ConsentLog
+    limit(request, "perms", 60, 600)
+    cur = _perm_state(db, u.id)["items"]
+    iph = hashlib.sha256((client_ip(request) + os.getenv("SECRET_KEY", "")).encode()).hexdigest()
+    via = "signup" if body.via == "signup" else "settings" if body.via == "settings" else "app"
+    for k, v in body.items.items():
+        if k not in PERMS:
+            raise HTTPException(400, "Unknown permission")
+        if cur.get(k) is None or cur[k]["granted"] != bool(v):
+            db.add(ConsentLog(user_id=u.id, kind=k, version=PERMS_VERSION, granted=bool(v), via=via, ip_hash=iph))
+    db.commit()
+    return _perm_state(db, u.id)
