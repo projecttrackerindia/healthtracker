@@ -519,7 +519,7 @@ def access_log(pid: str, u: User = Depends(need_user), db: Session = Depends(get
         raise HTTPException(403, "Only they can see this")
     names = {m.id: m.name for m in db.scalars(select(User).where(User.household_id == p.household_id))}
     rows = db.scalars(select(AccessLog).where(AccessLog.person_id == p.id).order_by(AccessLog.t.desc()).limit(50)).all()
-    return [{"who": names.get(x.user_id, "Someone"), "what": x.what, "t": x.t} for x in rows]
+    return [{"who": names.get(x.user_id) or (x.user_id[4:] if x.user_id.startswith("ext:") else "Someone"), "what": x.what, "t": x.t, "ext": x.user_id.startswith("ext:")} for x in rows]
 
 
 # ---- records ----------------------------------------------------------------------------------------------------------

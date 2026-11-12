@@ -1393,3 +1393,23 @@ class MyDoctor(Base):
     reg_no: Mapped[str] = mapped_column(String(40), default="")
     note: Mapped[str] = mapped_column(String(200), default="")
     created: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class UploadLink(Base):
+    """A link a person makes so a lab or hospital that is not on Urban Health can upload a report for them.
+    Only the hash of the token is stored for lookup; the token itself is kept encrypted so the owner can share it again.
+    Files that arrive are held as kind 'upload' (no access level can read them) until the owner accepts them."""
+    __tablename__ = "upload_links"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ul"))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    token_enc: Mapped[bytes] = mapped_column(LargeBinary, default=b"")
+    person_id: Mapped[str] = mapped_column(String(32), index=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    by_user: Mapped[str] = mapped_column(String(32), default="")
+    code: Mapped[str] = mapped_column(String(8), default="")         # spoken at the counter; empty = not asked
+    tries: Mapped[int] = mapped_column(Integer, default=0)          # wrong codes; the link locks at 5
+    max_files: Mapped[int] = mapped_column(Integer, default=3)
+    used: Mapped[int] = mapped_column(Integer, default=0)
+    expires: Mapped[int] = mapped_column(Integer)
+    revoked: Mapped[int] = mapped_column(Integer, default=0)
+    created: Mapped[int] = mapped_column(Integer, default=now)

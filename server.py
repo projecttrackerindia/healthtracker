@@ -155,6 +155,9 @@ app.include_router(tasks_api.r)
 app.include_router(tech_api.r)
 from api import abdm as abdm_api, export as export_api, medid as medid_api, network as network_api  # noqa: E402
 app.include_router(medid_api.r)
+from api import uplink as uplink_api  # noqa: E402
+app.include_router(uplink_api.r)
+app.include_router(uplink_api.pub)
 app.include_router(export_api.r)
 app.include_router(network_api.r)
 app.include_router(network_api.ar)
