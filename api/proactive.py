@@ -150,7 +150,7 @@ def nudges(state: dict, today: date) -> list[dict]:
         # 2. pregnancy milestones (by completed week, once per week)
         preg = ((state.get("preg") or {}).get(mid) or {})
         lmp = _d(preg.get("lmp") or "")
-        if lmp:
+        if lmp and preg.get("stage", "pregnant") == "pregnant":       # never after a birth or a loss
             wk = (today - lmp).days // 7
             if wk in PREG_WEEKS:
                 out.append({"key": f"preg:{mid}:{wk}", "kind": "nudge_preg", "member": mid, "title": f"{first}: week {wk} of pregnancy",
@@ -285,7 +285,7 @@ def weekly(state: dict, today: date) -> dict:
         preg = ((state.get("preg") or {}).get(mid) or {})
         preg_out = None
         lmp = _d(preg.get("lmp") or "")
-        if lmp:
+        if lmp and preg.get("stage", "pregnant") == "pregnant":       # never after a birth or a loss
             wk = (today - lmp).days // 7
             h = m.get("h")
             wts = [v for v in sorted(((state.get("vitals") or {}).get(mid) or []), key=lambda v: v.get("t", 0)) if isinstance(v.get("w"), (int, float)) and isinstance(v.get("t"), (int, float))]

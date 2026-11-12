@@ -40,3 +40,12 @@ def test_bad_values_refused():
         assert c.post(f"/api/v2/people/{kid}/records", json={"kind": "vax", "data": data}).status_code == 400
     for data in ({}, {"w": 999}, {"h": 5}, {"w": "abc"}, {"hc": 90, "w": 10}):
         assert c.post(f"/api/v2/people/{kid}/records", json={"kind": "growth", "data": data}).status_code == 400
+
+
+def test_pregnancy_loss_and_mood():
+    c, _ = parent()
+    me = next(p for p in c.get("/api/v2/me").json()["people"] if p["self"])["id"]
+    r = c.post(f"/api/v2/people/{me}/records", json={"kind": "preg", "data": {"stage": "loss", "ended": "2026-11-12"}})
+    assert r.status_code == 200
+    assert c.post(f"/api/v2/people/{me}/records", json={"kind": "mood", "data": {"v": "low"}}).status_code == 200
+    assert c.post(f"/api/v2/people/{me}/records", json={"kind": "mood", "data": {"v": "sad!"}}).status_code == 400

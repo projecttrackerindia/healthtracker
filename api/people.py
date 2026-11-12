@@ -39,10 +39,11 @@ RANK = {"none": 0, "medid": 1, "summary": 2, "all": 3, "guardian": 4, "owner": 5
 # which level reads which kind of record; womens kinds also need the womens switch
 KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med": "all", "dose": "all",
               "preg": "summary", "kick": "summary", "cycle": "summary",
-              "activity": "summary",
-              "vax": "summary",      # a vaccine visit marked as given (schedule group + date)
-              "growth": "summary"}   # a height/weight/head measurement for a child   # minutes a child (or parent) logs from Move; entered by them, never tracked in the background
-WOMENS = {"preg", "kick", "cycle"}
+              "activity": "summary",  # minutes a child (or parent) logs from Move; entered by them, never tracked in the background
+              "vax": "summary",       # a vaccine visit marked as given (schedule group + date)
+              "growth": "summary",    # a height/weight/head measurement for a child
+              "mood": "summary"}      # her own "how are you feeling" after a birth; women's health, so private by default
+WOMENS = {"preg", "kick", "cycle", "mood"}
 RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother",
              "Grandson", "Granddaughter", "Father-in-law", "Mother-in-law", "Son-in-law", "Daughter-in-law", "Brother-in-law",
              "Sister-in-law", "Uncle", "Aunt", "Nephew", "Niece", "Cousin", "Friend", "Caregiver", "Other")
@@ -547,8 +548,10 @@ def _check_record(kind: str, data: dict, day: str):
             raise HTTPException(400, "An emergency contact needs a name and a phone number")
     if kind == "med" and not str(data.get("name", "")).strip():
         raise HTTPException(400, "Medicine name is required")
-    if kind == "preg" and data.get("stage") not in ("trying", "pregnant", "after"):
+    if kind == "preg" and data.get("stage") not in ("trying", "pregnant", "after", "loss"):
         raise HTTPException(400, "Choose a stage")
+    if kind == "mood" and data.get("v") not in ("good", "okay", "low", "vlow"):
+        raise HTTPException(400, "Choose how you feel")
     if kind == "vax" and not re.fullmatch(r"[a-z0-9]{1,8}", str(data.get("g", ""))):
         raise HTTPException(400, "Choose which vaccines were given")
     if kind == "growth":
