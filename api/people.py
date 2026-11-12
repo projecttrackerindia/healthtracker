@@ -1617,6 +1617,17 @@ def purge_person(db: Session, p: Person) -> None:
     db.delete(p)
 
 
+def guardian_block(db: Session, u: User) -> str:
+    """The reason an account cannot be deleted yet (a dependent would be left without a guardian), or ''."""
+    deps = []
+    for g in db.scalars(select(Guardian).where(Guardian.user_id == u.id)).all():
+        p = db.get(Person, g.person_id)
+        if p and not db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id, Guardian.user_id != u.id)).all():
+            deps.append(p)
+    adults = db.scalar(select(User.id).where(User.household_id == u.household_id, User.id != u.id)) if u.household_id else None
+    return f"Make another adult the guardian of {', '.join(p.name for p in deps)} first (Family → their name)." if deps and adults else ""
+
+
 def delete_user_data(db: Session, u: User) -> None:
     """Called when an account is deleted. Their own profile goes with every record and file. People they look after go too
     when no one else can look after them; if another adult in the family is a guardian, those people stay with that adult.
@@ -1653,8 +1664,30 @@ def purge(db: Session) -> dict:
         purge_person(db, p)
     inv = db.query(HouseholdInvite).filter(HouseholdInvite.expires < t - 30 * 86400).delete(synchronize_session=False)
     old = db.query(AccessLog).filter(AccessLog.t < t - 730 * 86400).delete(synchronize_session=False)
+    erased = erase_due(db)
     from . import ops
-    return {"people": len(gone), "invites": inv, "accessLog": old, **ops.purge(db)}
+    return {"people": len(gone), "invites": inv, "accessLog": old, "erased": erased, **ops.purge(db)}
+
+
+def erase_due(db: Session) -> int:
+    """Accounts whose 48-hour deletion notice has run out are erased now (DPDP: the person is told before erasure and can
+    change their mind until then)."""
+    from .auth import erase_user
+    from .models import Setting
+    n = 0
+    for s in db.scalars(select(Setting).where(Setting.key.like("erase:%"))).all():
+        if (s.value or {}).get("at", 0) > now():
+            continue
+        u = db.get(User, s.key[6:])
+        db.delete(s)
+        if u:
+            try:
+                erase_user(db, u)
+                n += 1
+            except HTTPException as e:                 # a dependent would be left alone: keep the account, tell them
+                _note(db, u.household_id or "", "family", "Your account was not deleted", str(e.detail), to_user=u.id)
+        db.commit()
+    return n
 
 
 def start_purge() -> None:

@@ -70,3 +70,20 @@ def test_code_locks_after_five():
     for _ in range(5):
         lab.post(f"/u/{tok}/upload", headers={"x-tht": "1"}, files={"file": ("r.pdf", io.BytesIO(PDF), "application/pdf")}, data={"lab": "Some Lab", "confirm": "1", "code": "111111"})
     assert lab.get(f"/u/{tok}").status_code == 423
+
+
+def test_delete_with_48_hours_notice():
+    from api.db import SessionLocal
+    from api.models import Setting, User
+    from api import people
+    c = person("Lakshmi", {"sex": "female", "dob": "1980-02-02"})
+    r = c.post("/api/v1/auth/account/delete", json={"confirm": "DELETE", "later": True}).json()
+    assert r["scheduled"] > 0 and c.get("/api/v1/auth/account/delete").json()["at"] == r["scheduled"]
+    assert c.post("/api/v1/auth/account/delete/cancel").json() == {"at": None}
+    c.post("/api/v1/auth/account/delete", json={"confirm": "DELETE", "later": True})
+    with SessionLocal() as db:
+        s = db.get(Setting, "erase:" + c.uid)
+        s.value = {"at": 1}
+        db.commit()
+        assert people.erase_due(db) == 1
+        assert db.get(User, c.uid) is None

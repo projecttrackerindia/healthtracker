@@ -932,6 +932,27 @@ def erase_user(db: Session, u: User) -> None:
 # ---- delete the account (DPDP right to erasure). Health records live on the device and are deleted there. -------
 class DeleteAccount(BaseModel):
     confirm: str
+    later: bool = False      # the app asks for 48 hours' notice: erased then unless cancelled
+
+
+ERASE_NOTICE = 48 * 3600
+
+
+@r.get("/account/delete")
+def account_delete_status(db: Session = Depends(get_db), u: User = Depends(need_user)):
+    from .models import Setting
+    s = db.get(Setting, "erase:" + u.id)
+    return {"at": (s.value or {}).get("at") if s else None}
+
+
+@r.post("/account/delete/cancel", dependencies=[Depends(csrf)])
+def account_delete_cancel(db: Session = Depends(get_db), u: User = Depends(need_user)):
+    from .models import Setting
+    s = db.get(Setting, "erase:" + u.id)
+    if s:
+        db.delete(s)
+        db.commit()
+    return {"at": None}
 
 
 @r.post("/account/delete", dependencies=[Depends(csrf)])
@@ -939,6 +960,26 @@ def account_delete(body: DeleteAccount, request: Request, response: Response, db
     limit(request, "delete", 5, 3600)
     if body.confirm.strip().upper() != "DELETE":
         raise HTTPException(400, 'Type DELETE to confirm.')
+    if body.later:
+        from .models import Setting
+        from .people import _note, guardian_block
+        why = guardian_block(db, u)
+        if why:
+            raise HTTPException(409, why)
+        at = now() + ERASE_NOTICE
+        s = db.get(Setting, "erase:" + u.id) or Setting(key="erase:" + u.id)
+        s.value = {"at": at, "asked": now()}
+        db.merge(s)
+        when = time.strftime("%d %b, %I:%M %p", time.localtime(at))
+        _note(db, u.household_id or "", "family", "Your account will be deleted on " + when,
+              "Everything you added goes then. Changed your mind? Open Privacy and tap Keep my account.", to_user=u.id)
+        try:
+            if u.email:
+                messaging.mail(u.email, "Your Urban Health account will be deleted", f"You asked us to delete your Urban Health account. It will be erased on {when}. If this wasn't you, or you changed your mind, open the app and choose Privacy → Keep my account.")
+        except Exception:
+            pass
+        db.commit()
+        return {"scheduled": at}
     erase_user(db, u)
     response.delete_cookie(COOKIE, path="/")
     return {"deleted": True}

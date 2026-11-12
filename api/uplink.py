@@ -371,3 +371,12 @@ button{{width:100%;height:54px;border-radius:27px;border:0;background:#0071E3;co
 .msg{{min-height:20px;margin:10px 2px 0;font-size:14px;color:#55555B}}.msg.bad{{color:#C4291C}}.foot{{text-align:center;color:#8E8E93;font-size:13px;margin-top:14px}}
 .done{{text-align:center;padding:26px 18px}}.tick{{width:64px;height:64px;border-radius:32px;background:#30D158;color:#fff;font-size:32px;display:grid;place-items:center;margin:0 auto 10px}}.done h2{{margin:0 0 6px}}.done p{{color:#55555B;margin:0}}.again{{display:inline-block;margin-top:14px;color:#0071E3;font-weight:600;text-decoration:none}}
 </style></head><body><main>{body}</main></body></html>"""
+
+
+@r.get("/privacy/contact")
+def privacy_contact():
+    """The Grievance Officer the Privacy centre shows (DPDP: contact details must be easy to find)."""
+    import os
+    return {"name": os.getenv("GRIEVANCE_NAME", "Grievance Officer, Urban Health"),
+            "email": os.getenv("GRIEVANCE_EMAIL") or os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", "") or "privacy@urbanhealth.in",
+            "replyDays": 7}
