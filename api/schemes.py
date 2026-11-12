@@ -10,6 +10,7 @@ Rules change. Every scheme carries the date its details were last checked, and t
 from __future__ import annotations
 
 import re
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -17,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .db import get_db
-from .models import SchemeCard
+from .models import SchemeCard, now
 
 r = APIRouter(prefix="/api/v2/schemes")
 CHECKED = "Nov 2026"
@@ -180,7 +181,8 @@ def _card(c: SchemeCard, full: bool = False) -> dict:
     d = {"id": c.id, "scheme": c.scheme, "name": c.insurer or sc.get("name") or KINDS.get(c.scheme, c.scheme), "plan": c.plan or sc.get("cover", ""),
          "memberId": c.member_id, "members": c.members or ([c.member_id] if c.member_id else []), "last4": c.last4, "validUntil": c.valid_until,
          "help": c.helpline or sc.get("help", ""), "sumInsured": c.sum_insured, "kind": "gov" if c.scheme in SCHEMES else c.scheme,
-         "files": sorted((c.files or {}).keys())}
+         "files": sorted((c.files or {}).keys()), "terms": c.terms or {}, "claims": c.claims or []}
+    d.update(_usage(c))
     if full:
         try:
             d["number"] = (decrypt(c.blob) or {}).get("n", "")
@@ -226,6 +228,134 @@ def add_card(b: CardIn, request: Request, db: Session = Depends(get_db)):
     _fill(c, b)
     db.add(c)
     db.flush()
+    return _card(c)
+
+
+TERM_KEYS = ("room_rent", "icu_limit", "copay", "deductible", "waiting_initial_days", "waiting_specific_months", "waiting_ped_months", "maternity",
+             "daycare", "pre_post_hospitalisation", "ambulance", "restoration", "no_claim_bonus", "exclusions", "network_url", "tpa", "tpa_phone",
+             "cashless_steps", "plain_summary", "valid_from", "policy_type")
+CLAIM_STEPS = ("submitted", "preauth", "approved", "settled")
+
+
+def _usage(c: SchemeCard) -> dict:
+    """Cover used this policy year: approved or settled claims since the policy year began (valid_from, else 12 months)."""
+    import datetime as _dt
+    start = (c.terms or {}).get("valid_from") or ""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", start):
+        start = (_dt.date.today() - _dt.timedelta(days=365)).isoformat()
+    used = sum(int(x.get("approved") or 0) for x in (c.claims or []) if x.get("status") in ("approved", "settled") and (x.get("date") or "") >= start)
+    return {"used": used, "left": max(0, c.sum_insured - used) if c.sum_insured else None}
+
+
+def _mine(request: Request, db: Session, cid: str) -> SchemeCard:
+    u = _user(request, db)
+    c = db.get(SchemeCard, cid)
+    if not c or c.household_id != u.household_id:
+        raise HTTPException(404)
+    return c
+
+
+@r.post("/cards/{cid}/read-policy")
+def read_policy(cid: str, request: Request, db: Session = Depends(get_db)):
+    """Read the policy PDF saved with the card and keep the terms that matter at a hospital desk, in plain words."""
+    from . import ai, storage
+    from .auth import limit
+    limit(request, "policy-read", 6, 3600)
+    c = _mine(request, db, cid)
+    fid = (c.files or {}).get("doc")
+    if not fid:
+        raise HTTPException(400, "Add the policy PDF first.")
+    got = storage.get(db, c.household_id, fid)
+    if not got:
+        raise HTTPException(404, "The policy file is missing. Add it again.")
+    row, data = got
+    out = ai.analyze_policy(data, getattr(row, "mime", "") or "application/pdf", "")
+    if not out.get("readable", True) and not out.get("room_rent"):
+        raise HTTPException(422, (out.get("warnings") or ["We couldn't read this document. Enter the key terms yourself."])[0])
+    c.terms = {**(c.terms or {}), **{k: out[k] for k in TERM_KEYS if out.get(k) not in (None, "", [])}, "read": now()}
+    if not c.sum_insured and out.get("sum_insured"):
+        c.sum_insured = int(out["sum_insured"])
+    if not c.valid_until and re.fullmatch(r"\d{4}-\d{2}-\d{2}", out.get("valid_to") or ""):
+        c.valid_until = out["valid_to"]
+    if not c.helpline and (out.get("tpa_phone") or out.get("claim_helpline")):
+        c.helpline = re.sub(r"[^\d+]", "", out.get("tpa_phone") or out.get("claim_helpline"))[:20]
+    if not c.plan and out.get("plan_name"):
+        c.plan = str(out["plan_name"])[:80]
+    return _card(c)
+
+
+class TermsIn(BaseModel):
+    room_rent: str = ""
+    copay: str = ""
+    waiting_ped_months: int | None = None
+    no_claim_bonus: str = ""
+    valid_from: str = ""
+
+
+@r.put("/cards/{cid}/terms")
+def set_terms(cid: str, b: TermsIn, request: Request, db: Session = Depends(get_db)):
+    c = _mine(request, db, cid)
+    if b.valid_from and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", b.valid_from):
+        raise HTTPException(400, "Policy start must be a date.")
+    c.terms = {**(c.terms or {}), **{k: (v.strip()[:120] if isinstance(v, str) else v) for k, v in b.model_dump().items() if v not in (None, "")}}
+    return _card(c)
+
+
+class ClaimIn(BaseModel):
+    person: str = ""
+    hospital: str = ""
+    amount: int = 0
+    approved: int = 0
+    date: str = ""
+    kind: str = "cashless"          # cashless | reimbursement
+    status: str = "submitted"       # submitted | preauth | approved | settled | rejected
+    note: str = ""
+
+
+def _claim(b: ClaimIn, old: dict | None = None) -> dict:
+    import datetime as _dt
+    if b.status not in CLAIM_STEPS + ("rejected",):
+        raise HTTPException(400, "Unknown claim status.")
+    if b.date and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", b.date):
+        raise HTTPException(400, "Claim date must be a date.")
+    x = {**(old or {}), "person": b.person[:32], "hospital": b.hospital.strip()[:80], "amount": max(0, min(10**8, b.amount)), "approved": max(0, min(10**8, b.approved)),
+         "date": b.date or (old or {}).get("date") or _dt.date.today().isoformat(), "kind": "reimbursement" if b.kind == "reimbursement" else "cashless",
+         "status": b.status, "note": b.note.strip()[:200]}
+    hist = list((old or {}).get("steps") or [])
+    if not hist or hist[-1].get("s") != b.status:
+        hist.append({"s": b.status, "t": now()})
+    x["steps"] = hist[-10:]
+    return x
+
+
+@r.post("/cards/{cid}/claims")
+def add_claim(cid: str, b: ClaimIn, request: Request, db: Session = Depends(get_db)):
+    c = _mine(request, db, cid)
+    if len(c.claims or []) >= 50:
+        raise HTTPException(400, "Up to 50 claims per card.")
+    if len(b.hospital.strip()) < 2:
+        raise HTTPException(400, "Enter the hospital's name.")
+    x = {"id": uuid.uuid4().hex[:10], **_claim(b)}
+    c.claims = [*(c.claims or []), x]
+    return _card(c)
+
+
+@r.put("/cards/{cid}/claims/{clid}")
+def edit_claim(cid: str, clid: str, b: ClaimIn, request: Request, db: Session = Depends(get_db)):
+    c = _mine(request, db, cid)
+    rows = list(c.claims or [])
+    i = next((n for n, x in enumerate(rows) if x.get("id") == clid), None)
+    if i is None:
+        raise HTTPException(404)
+    rows[i] = _claim(b, rows[i])
+    c.claims = rows
+    return _card(c)
+
+
+@r.delete("/cards/{cid}/claims/{clid}")
+def del_claim(cid: str, clid: str, request: Request, db: Session = Depends(get_db)):
+    c = _mine(request, db, cid)
+    c.claims = [x for x in (c.claims or []) if x.get("id") != clid]
     return _card(c)
 
 

@@ -1377,6 +1377,8 @@ class SchemeCard(Base):
     helpline: Mapped[str] = mapped_column(String(20), default="")
     members: Mapped[list | None] = mapped_column(JSON, nullable=True)  # person ids covered
     files: Mapped[dict | None] = mapped_column(JSON, nullable=True)    # {front, back, doc} → stored file ids (encrypted)
+    terms: Mapped[dict | None] = mapped_column(JSON, nullable=True)    # read from the policy PDF or typed: room rent, co-pay, waiting…
+    claims: Mapped[list | None] = mapped_column(JSON, nullable=True)   # [{id, person, hospital, amount, approved, date, kind, status, t}]
     created: Mapped[int] = mapped_column(Integer, default=now)
 
 

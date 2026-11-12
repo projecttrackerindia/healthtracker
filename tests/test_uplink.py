@@ -87,3 +87,20 @@ def test_delete_with_48_hours_notice():
         db.commit()
         assert people.erase_due(db) == 1
         assert db.get(User, c.uid) is None
+
+
+def test_insurance_terms_and_claims(monkeypatch):
+    c = person("Ravi", {"sex": "male", "dob": "1985-01-01"})
+    card = c.post("/api/v2/schemes/cards", json={"scheme": "private", "number": "P/2116/0042731", "insurer": "Star Health", "plan": "Family Floater", "sumInsured": 1000000, "members": [c.pid]}).json()
+    cid = card["id"]
+    assert card["left"] == 1000000 and card["used"] == 0
+    c.post(f"/api/v2/schemes/cards/{cid}/file/doc", files={"file": ("p.pdf", io.BytesIO(PDF), "application/pdf")})
+    monkeypatch.setattr(ai, "analyze_policy", lambda *a, **k: {"readable": True, "room_rent": "1% of sum insured per day", "copay": "none", "waiting_ped_months": 36,
+                                                               "no_claim_bonus": "10% per claim-free year", "valid_from": "2026-01-01", "tpa_phone": "1800 425 2255"})
+    t = c.post(f"/api/v2/schemes/cards/{cid}/read-policy").json()
+    assert t["terms"]["room_rent"].startswith("1%") and t["terms"]["waiting_ped_months"] == 36 and t["help"] == "18004252255"
+    cl = c.post(f"/api/v2/schemes/cards/{cid}/claims", json={"hospital": "Kauvery", "amount": 180000, "date": "2026-11-02", "status": "submitted"}).json()["claims"][0]
+    after = c.put(f"/api/v2/schemes/cards/{cid}/claims/{cl['id']}", json={"hospital": "Kauvery", "amount": 180000, "approved": 160000, "date": "2026-11-02", "status": "approved"}).json()
+    assert after["used"] == 160000 and after["left"] == 840000 and [s["s"] for s in after["claims"][0]["steps"]] == ["submitted", "approved"]
+    assert c.delete(f"/api/v2/schemes/cards/{cid}/claims/{cl['id']}").json()["claims"] == []
+    assert person("Other").post(f"/api/v2/schemes/cards/{cid}/claims", json={"hospital": "X Hospital"}).status_code == 404
