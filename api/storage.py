@@ -99,15 +99,62 @@ PDF_DANGER = (b"/JavaScript", b"/JS", b"/OpenAction", b"/Launch", b"/EmbeddedFil
 MAX_PAGES = 50
 
 
+def _pdf_danger(data: bytes) -> bool:
+    body = re.sub(rb"#([0-9A-Fa-f]{2})", lambda m: bytes([int(m.group(1), 16)]), data)   # /J#61vaScript tricks
+    return any(re.search(re.escape(k) + rb"(?![A-Za-z])", body) for k in PDF_DANGER)
+
+
+_ANNOT_DROP = {"/FileAttachment", "/RichMedia", "/Screen", "/Movie", "/Sound", "/Widget", "/3D"}
+
+
+def _pdf_clean(data: bytes) -> bytes | None:
+    """Rebuild the PDF from its pages only: the document catalogue (open actions, named scripts, embedded files,
+    forms) is not copied, and page/annotation actions are removed. Returns None if it cannot be read."""
+    import io
+    try:
+        from pypdf import PdfReader, PdfWriter
+        from pypdf.generic import ArrayObject, NameObject
+        r = PdfReader(io.BytesIO(data))
+        if r.is_encrypted and not r.decrypt(""):
+            return None
+        if len(r.pages) > MAX_PAGES:
+            return None
+        w = PdfWriter()
+        for pg in r.pages:
+            pg = w.add_page(pg)
+            for k in ("/AA",):
+                if k in pg:
+                    del pg[NameObject(k)]
+            if "/Annots" in pg:
+                keep = ArrayObject()
+                for a in pg["/Annots"]:
+                    o = a.get_object()
+                    if o.get("/Subtype") in _ANNOT_DROP:
+                        continue
+                    for k in ("/A", "/AA"):
+                        if k in o:
+                            del o[NameObject(k)]
+                    keep.append(a)
+                pg[NameObject("/Annots")] = keep
+        out = io.BytesIO()
+        w.write(out)
+        return out.getvalue()
+    except Exception:
+        return None
+
+
 def safe_document(data: bytes, mime: str) -> bytes:
     """Refuse PDFs that can run anything or are locked; re-save photos as plain pixels (drops hidden payloads and
     the GPS location in camera metadata). Returns the bytes to store."""
     from fastapi import HTTPException
     if mime == "application/pdf":
-        body = re.sub(rb"#([0-9A-Fa-f]{2})", lambda m: bytes([int(m.group(1), 16)]), data)   # /J#61vaScript tricks
-        for k in PDF_DANGER:
-            if re.search(re.escape(k) + rb"(?![A-Za-z])", body):
-                raise HTTPException(415, "This PDF contains scripts or attachments, so it was not accepted. Print it to PDF again, or upload a photo of it.")
+        if _pdf_danger(data):
+            # Hospital and lab systems often add an open-action or form script. Rather than turn the report away,
+            # keep only the pages (text, pictures, links' rectangles) and drop every action, script and attachment.
+            data = _pdf_clean(data)
+            if data is None or _pdf_danger(data):
+                raise HTTPException(415, "This PDF could not be opened safely. Upload a photo or screenshot of it instead.")
+        body = re.sub(rb"#([0-9A-Fa-f]{2})", lambda m: bytes([int(m.group(1), 16)]), data)
         if b"/Encrypt" in body:
             raise HTTPException(415, "This PDF is password-protected. Save an unlocked copy and upload that.")
         pages = len(re.findall(rb"/Type\s*/Page(?![s\w])", body))
