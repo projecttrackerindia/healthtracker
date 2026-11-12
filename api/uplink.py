@@ -268,6 +268,12 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
     mime = file.content_type or "application/octet-stream"
     if not (mime.startswith("image/") or mime == "application/pdf"):
         raise HTTPException(415, "PDF or photo only")
+    import hashlib as _h
+    from .people import find_dup
+    sha = _h.sha256(data).hexdigest()
+    same, _ = find_dup(db, p.id, sha=sha)
+    if same:                                      # the family already has it: say thanks, store nothing twice
+        return {"ok": True, "dup": True, "left": max(0, x.max_files - x.used)}
     from . import storage
     mime, fname = storage.checked(data, file.filename or "report")
     data = storage.safe_document(data, mime)
@@ -276,7 +282,13 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
     storage.virus_scan(data)
     fid = new_id("f")
     storage.put(db, p.id, fid, data, mime, fname, "ext")
-    reading = {}
+    reading, txt = {}, ""
+    if mime == "application/pdf":
+        try:
+            from . import ai
+            txt = ai.text_from(data, mime)
+        except Exception:
+            txt = ""
     try:
         from . import ai
         from .people import age, profile
@@ -288,7 +300,8 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
     m = match(p, pt)
     import datetime as _dt
     title = str(reading.get("title") or "Lab report").strip()[:80]
-    rec = {"title": title, "doc": "report", "doctor": reading.get("doctor", ""), "date": reading.get("date", ""),
+    from .people import doc_date
+    rec = {"title": title, "doc": "report", "doctor": reading.get("doctor", ""), "date": doc_date(reading, txt),
            "findings": reading.get("findings", []), "medicines": [], "summary": reading.get("summary", ""),
            "focus": reading.get("focus", []), "followups": reading.get("followups", []), "questions": reading.get("questions_for_doctor", []),
            "warnings": reading.get("warnings", []), "engine": reading.get("engine", ""), "mime": mime, "name": (file.filename or "")[:120],
@@ -297,7 +310,13 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
                    "ip": hashlib.sha256((request.client.host if request.client else "").encode()).hexdigest()[:16]}}
     for f in rec["findings"]:
         f["sure"] = f.get("sure") is not False
-    day = (rec["date"] or "")[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", rec["date"] or "") else _dt.date.today().isoformat()
+    from .people import _sig
+    rec["sha"], rec["sig"] = sha, _sig(rec["findings"])
+    if rec["date"] and rec["sig"]:
+        same, _ = find_dup(db, p.id, date=rec["date"], sig=rec["sig"])
+        if same:
+            rec["dup"] = same.id
+    day = rec["date"] or _dt.date.today().isoformat()
     hr = HealthRecord(person_id=p.id, kind="upload", blob=encrypt(rec), file_id=fid, day=day, by_user="ext")
     db.add(hr)
     x.used += 1
@@ -342,7 +361,7 @@ def lab_page(token: str, request: Request, db: Session = Depends(get_db)):
 <p class="foot">Encrypted in transit and at rest, stored in India. The patient reviews the report before it is added to their records. Every upload is logged.</p>
 <script>
 const f=document.getElementById('f'),fn=document.getElementById('fn'),msg=document.getElementById('msg'),go=document.getElementById('go');
-f.file.onchange=()=>{{const x=f.file.files[0];fn.textContent=x?x.name+' · '+Math.round(x.size/1024)+' KB':'PDF, JPG or PNG · up to 15 MB';document.getElementById('dz').classList.toggle('set',!!x)}};
+f.file.onchange=()=>{{const x=f.file.files[0];fn.textContent=x?(x.name.length>34?x.name.slice(0,22)+'…'+x.name.slice(-9):x.name)+' · '+Math.round(x.size/1024)+' KB':'PDF, JPG or PNG · up to 15 MB';document.getElementById('dz').classList.toggle('set',!!x)}};
 f.onsubmit=async e=>{{e.preventDefault();msg.className='msg';
  if(f.lab.value.trim().length<3){{msg.textContent='Please enter your lab or hospital name.';return}}
  if(f.code&&!/^\\d{{6}}$/.test(f.code.value.trim())){{msg.textContent='Please enter the 6-digit code the patient gave you.';return}}
@@ -351,6 +370,7 @@ f.onsubmit=async e=>{{e.preventDefault();msg.className='msg';
  go.disabled=true;go.textContent='Uploading…';
  try{{const r=await fetch(location.pathname+'/upload',{{method:'POST',body:new FormData(f),headers:{{'x-tht':'1'}}}});const j=await r.json().catch(()=>({{}}));
   if(!r.ok)throw new Error(j.detail||'Upload failed. Please try again.');
+  if(j.dup){{f.outerHTML='<div class="card done"><div class="tick">✓</div><h2>Already received</h2><p>This exact file is already with the patient, so nothing new was added. Thank you.</p><a href="" class="again">Upload a different file</a></div>';return}}
   f.outerHTML='<div class="card done"><div class="tick">✓</div><h2>Uploaded. Thank you.</h2><p>The patient has been told and will review it.'+(j.left?' You can upload '+j.left+' more file'+(j.left>1?'s':'')+' with this link.':'')+'</p>'+(j.left?'<a href="" class="again">Upload another</a>':'')+'</div>'}}
  catch(err){{msg.className='msg bad';msg.textContent=err.message;go.disabled=false;go.textContent='Upload securely'}}}};
 </script>"""
@@ -365,7 +385,7 @@ main{{max-width:520px;margin:0 auto;padding:22px 16px 40px}}.brand{{display:flex
 h1{{font-size:28px;letter-spacing:-.02em;line-height:1.15;margin:0 0 6px}}.lead{{color:#55555B;margin:0 0 16px}}
 .card{{background:#fff;border-radius:22px;padding:6px 18px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}}.row{{padding:12px 0;border-bottom:.5px solid rgba(60,60,67,.14)}}.row:last-child{{border:0}}.row small,label span{{display:block;color:#8E8E93;font-size:13px}}.row b{{font-size:17px}}.two{{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
 .form{{padding:14px 18px 18px}}label{{display:block;margin-bottom:12px}}label em{{font-style:normal;color:#AEAEB2}}input{{width:100%;height:50px;border-radius:14px;border:0;background:#F2F2F7;padding:0 14px;font:inherit;font-size:16px;margin-top:5px;outline:0}}input:focus{{box-shadow:0 0 0 3px rgba(0,113,227,.25)}}
-.drop{{border:2px dashed #C7C7CC;border-radius:20px;padding:20px;text-align:center;cursor:pointer;margin-top:4px}}.drop b{{display:block;font-size:16px;color:#0071E3}}.drop span{{color:#8E8E93;margin-top:2px}}.drop.set{{border-color:#30D158;background:#F0FBF3}}
+.drop{{border:2px dashed #C7C7CC;border-radius:20px;padding:20px;text-align:center;cursor:pointer;margin-top:4px}}.drop b{{display:block;font-size:16px;color:#0071E3}}.drop span{{display:block;color:#8E8E93;margin-top:2px;overflow-wrap:anywhere;word-break:break-word;max-width:100%}}.drop{{min-width:0;overflow:hidden}}.drop.set{{border-color:#30D158;background:#F0FBF3}}
 .ck{{display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:14px 0}}.ck input{{display:none}}.ck i{{width:24px;height:24px;border-radius:12px;border:2px solid #C7C7CC;flex:none;margin-top:1px;display:grid;place-items:center}}.ck input:checked+i{{background:#0071E3;border-color:#0071E3}}.ck input:checked+i:after{{content:"✓";color:#fff;font-size:13px;font-weight:700}}.ck span{{color:#3A3A3C;font-size:15px}}
 button{{width:100%;height:54px;border-radius:27px;border:0;background:#0071E3;color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer}}button:disabled{{opacity:.6}}
 .msg{{min-height:20px;margin:10px 2px 0;font-size:14px;color:#55555B}}.msg.bad{{color:#C4291C}}.foot{{text-align:center;color:#8E8E93;font-size:13px;margin-top:14px}}

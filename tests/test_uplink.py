@@ -31,7 +31,7 @@ def test_link_upload_review_accept_and_security(monkeypatch):
     page = lab.get(f"/u/{tok}")
     assert page.status_code == 200 and "Prasanna Kumar" in page.text and "4321" in page.text and "noindex" in page.headers["x-robots-tag"]
     assert "O+" not in page.text                                               # nothing medical on the lab's page
-    up = lambda **k: lab.post(f"/u/{tok}/upload", headers={"x-tht": "1"}, files={"file": ("r.pdf", io.BytesIO(PDF), "application/pdf")},
+    up = lambda body=PDF, **k: lab.post(f"/u/{tok}/upload", headers={"x-tht": "1"}, files={"file": ("r.pdf", io.BytesIO(body), "application/pdf")},
                               data={"lab": "Apollo Diagnostics", "confirm": "1", **k})
     assert lab.post(f"/u/{tok}/upload", files={"file": ("r.pdf", io.BytesIO(PDF), "application/pdf")}, data={"lab": "x"}).status_code == 403   # no header
     assert up(code="000000").status_code == 403                                 # wrong code counts a try
@@ -48,7 +48,8 @@ def test_link_upload_review_accept_and_security(monkeypatch):
     assert [x for x in c.get(f"/api/v2/people/{c.pid}/records").json() if x["kind"] == "report"]
     # a report for someone else: age 63 vs 37 is paused, then removed
     monkeypatch.setattr(ai, "analyze", _reading("Prasanna K", 63, "male"))
-    assert up(code=link["code"]).status_code == 200
+    assert up(code=link["code"]).json().get("dup")                              # the same file again is not stored twice
+    assert up(PDF + b"%2\n", code=link["code"]).status_code == 200
     bad = c.get(f"/api/v2/people/{c.pid}/uploads").json()[0]
     assert not bad["match"]["ok"] and bad["match"]["age"] == "differs"
     assert c.post(f"/api/v2/uploads/{bad['id']}/ask").status_code == 200
@@ -152,3 +153,22 @@ def test_admin_privacy_services_messaging_and_inbox(monkeypatch):
         if s:
             db.delete(s)
             db.commit()
+
+
+def test_report_date_and_duplicates(monkeypatch):
+    from api import ai
+    from api.people import date_from_text, norm_date
+    assert norm_date("10/11/2026") == "2026-11-10" and norm_date("10-Nov-2026 09:12") == "2026-11-10" and norm_date("2099-01-01") == ""
+    assert date_from_text("Reg Date: 09/11/2026\nCollected On : 10-Nov-2026 08:10\nReported: 11/11/2026") == "2026-11-10"
+    c = person("Dup")
+    read = {"title": "CBC", "date": "02/10/2026", "findings": [{"test": "Hb", "value": "13", "unit": "g/dL"}, {"test": "WBC", "value": "7000"}],
+            "patient": {}, "engine": "test"}
+    monkeypatch.setattr(ai, "analyze", lambda *a, **k: dict(read))
+    r = c.post(f"/api/v2/people/{c.pid}/reports", headers={"x-tht": "1"}, files={"file": ("cbc.pdf", io.BytesIO(PDF), "application/pdf")}, data={"read": "1"})
+    assert r.status_code == 200 and r.json()["day"] == "2026-10-02", r.text           # filed under the date on the report
+    again = c.post(f"/api/v2/people/{c.pid}/reports", headers={"x-tht": "1"}, files={"file": ("cbc.pdf", io.BytesIO(PDF), "application/pdf")}, data={"read": "1"})
+    assert again.status_code == 409 and "2 Oct 2026" in again.json()["detail"]
+    photo = c.post(f"/api/v2/people/{c.pid}/reports", headers={"x-tht": "1"}, files={"file": ("cbc2.pdf", io.BytesIO(PDF + b"%x\n"), "application/pdf")}, data={"read": "1"})
+    assert photo.status_code == 409                                                     # same date, same values: a copy
+    forced = c.post(f"/api/v2/people/{c.pid}/reports", headers={"x-tht": "1"}, files={"file": ("cbc2.pdf", io.BytesIO(PDF + b"%x\n"), "application/pdf")}, data={"read": "1", "force": "1"})
+    assert forced.status_code == 200

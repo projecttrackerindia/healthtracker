@@ -889,7 +889,7 @@ def seen_suggest(rid: str, u: User = Depends(need_user), db: Session = Depends(g
 
 
 @r.post("/people/{pid}/reports")
-async def upload_report(pid: str, request: Request, file: UploadFile = File(...), read: str = Form("1"), doc: str = Form("report"),
+async def upload_report(pid: str, request: Request, file: UploadFile = File(...), read: str = Form("1"), doc: str = Form("report"), force: str = Form(""),
                         u: User = Depends(need_user), db: Session = Depends(get_db)):
     limit(request, "v2upload", 30, 600)
     p, a = person_or_404(db, u, pid)
@@ -901,6 +901,10 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     mime = file.content_type or "application/octet-stream"
     if not (mime.startswith("image/") or mime == "application/pdf"):
         raise HTTPException(415, "PDF or photo only")
+    sha = hashlib.sha256(data).hexdigest()
+    same, _ = find_dup(db, p.id, sha=sha)
+    if same:
+        raise HTTPException(409, f"You already added this report — it's in {p.name.split(' ')[0]}'s Lab under {_day_words(same.day)}.")
     from . import storage
     fid = new_id("f")
     mime, fname = storage.checked(data, file.filename or "report")
@@ -908,6 +912,7 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     if mime not in ("application/pdf", "image/heic"):
         mime = "image/jpeg"
     storage.virus_scan(data)
+    txt = ""
     if mime == "application/pdf":
         try:
             from . import ai
@@ -938,11 +943,12 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     generic = not stem or re.fullmatch(r"(?i)(img|image|scan|document|doc|photo|pxl|file|report|download)?[\s\d()]*", stem)
     title = reading.get("title") or ("Prescription" if doc == "prescription" else (stem.title() if not generic else ("Lab report" if len(reading.get("findings") or []) > 1 else first.get("test") or "Lab report")))
     rec = {"title": str(title).strip()[:80],
-           "doc": "prescription" if doc == "prescription" else "report", "doctor": reading.get("doctor", ""), "date": reading.get("date", ""),
+           "doc": "prescription" if doc == "prescription" else "report", "doctor": reading.get("doctor", ""), "date": doc_date(reading, txt),
            "findings": reading.get("findings", []), "medicines": reading.get("medicines", []), "summary": reading.get("summary", ""),
            "focus": reading.get("focus", []), "followups": reading.get("followups", []) + reading.get("tests_needed", []),
            "questions": reading.get("questions_for_doctor", []), "warnings": reading.get("warnings", []),
-           "engine": reading.get("engine", ""), "mime": mime, "name": (file.filename or "")[:120], "checked": False}
+           "engine": reading.get("engine", ""), "mime": mime, "name": (file.filename or "")[:120], "checked": False,
+           "sha": sha, "sig": _sig(reading.get("findings"))}
     rec.update({"patient": reading.get("patient") or {}, "lab": reading.get("lab", ""), "recheck": reading.get("recheck", []),
                 "doctorPhone": reading.get("doctor_phone", "")})
     rec["patient"].update({k: v for k, v in _patient_from_text(reading).items() if not rec["patient"].get(k)})
@@ -960,12 +966,79 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
            (_compare_line(rec["compare"]) or (f"{len(flagged)} value{'s' if len(flagged) != 1 else ''} need attention" if flagged else "Everything is in range"))
            + (f" · check {sum(1 for f in rec['findings'] if not f['sure'])} value(s) we weren't sure of" if any(not f["sure"] for f in rec["findings"]) else "")) if rec["findings"] or rec["unreadable"] else "Saved. Add the values if needed.",
           {"person": p.id}, member_id=p.id)
-    x = HealthRecord(person_id=p.id, kind="report", blob=encrypt(rec), file_id=fid, day=(rec["date"] or "")[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", rec["date"] or "") else _dt.date.today().isoformat(), by_user=u.id)
+    same, _ = find_dup(db, p.id, date=rec["date"], sig=rec["sig"]) if rec["date"] and force != "1" else (None, "")
+    if same:
+        from .models import StoredFile
+        f0 = db.get(StoredFile, (p.id, fid))
+        if f0:
+            db.delete(f0)
+        db.commit()
+        raise HTTPException(409, f"This looks like the {_day_words(same.day)} report you already added — same tests, same values. Nothing new was saved.")
+    x = HealthRecord(person_id=p.id, kind="report", blob=encrypt(rec), file_id=fid, day=rec["date"] or _dt.date.today().isoformat(), by_user=u.id)
     db.add(x)
     db.flush()
     index_record(db, x, rec)
     db.commit()
     return rec_json(x)
+
+
+_MON = {m: i + 1 for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))}
+
+
+def norm_date(s) -> str:
+    """'10/11/2026', '10-Nov-2026 09:12', 'Nov 10, 2026', '2026-11-10' -> '2026-11-10'. Day first (Indian documents).
+    '' when there is no real date, or it is in the future."""
+    s = str(s or "").strip().lower()
+    if not s:
+        return ""
+    y = mo = d = None
+    m = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", s)
+    if m:
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    if y is None:
+        m = re.search(r"\b(\d{1,2})[\s./-]+([a-z]{3})[a-z]*[\s.,/-]+(\d{2,4})\b", s)
+        if m and m.group(2) in _MON:
+            d, mo, y = int(m.group(1)), _MON[m.group(2)], int(m.group(3))
+    if y is None:
+        m = re.search(r"\b([a-z]{3})[a-z]*[\s.]+(\d{1,2}),?\s+(\d{4})\b", s)
+        if m and m.group(1) in _MON:
+            mo, d, y = _MON[m.group(1)], int(m.group(2)), int(m.group(3))
+    if y is None:
+        m = re.search(r"\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b", s)
+        if m:
+            d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if mo > 12 and d <= 12:
+                d, mo = mo, d
+    if y is None:
+        return ""
+    if y < 100:
+        y += 2000
+    try:
+        dt = _dt.date(y, mo, d)
+    except ValueError:
+        return ""
+    if dt > _dt.date.today() + _dt.timedelta(days=1) or dt.year < 1990:
+        return ""
+    return dt.isoformat()
+
+
+def date_from_text(text: str) -> str:
+    """The collection date printed on a report, else the report date, else the first date on it."""
+    t = text or ""
+    for label in (r"collect\w*|sample\s*(?:date|drawn|received)|registered", r"report\w*\s*(?:date|on)?|printed|date"):
+        for m in re.finditer(r"(?i)(?:" + label + r")[^\n\d]{0,25}([\d]{1,4}[\s./-]+(?:[a-z]{3,9}|\d{1,2})[\s.,/-]+\d{2,4})", t):
+            d = norm_date(m.group(1))
+            if d:
+                return d
+    for m in re.finditer(r"\b\d{1,2}[\s./-]+(?:[A-Za-z]{3,9}|\d{1,2})[\s.,/-]+\d{2,4}\b", t):
+        d = norm_date(m.group(0))
+        if d:
+            return d
+    return ""
+
+
+def doc_date(reading: dict, text: str = "") -> str:
+    return norm_date(reading.get("date")) or date_from_text(text) or norm_date((reading.get("doctor") or ""))
 
 
 def flag_from_ref(value, ref: str, old: str) -> str:
@@ -1667,6 +1740,63 @@ def purge(db: Session) -> dict:
     erased = erase_due(db)
     from . import ops
     return {"people": len(gone), "invites": inv, "accessLog": old, "erased": erased, **ops.purge(db)}
+
+
+def _sig(findings) -> str:
+    """Same tests with the same values: the fingerprint of a report's content."""
+    v = sorted(f"{(f.get('test') or '').strip().lower()}={str(f.get('value') or '').strip()}" for f in (findings or []) if f.get("test"))
+    return hashlib.sha256("|".join(v).encode()).hexdigest()[:20] if len(v) >= 2 else ""
+
+
+def find_dup(db: Session, pid: str, sha: str = "", date: str = "", sig: str = "", skip: str = ""):
+    """An earlier report of this person that is the same file, or the same date with the same values. (record, how)"""
+    for x in db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind.in_(("report", "upload")))).all():
+        if x.id == skip:
+            continue
+        try:
+            r = decrypt(x.blob) or {}
+        except Exception:
+            continue
+        if sha and r.get("sha") == sha:
+            return x, "file"
+        if sig and date and x.day == date and (r.get("sig") or _sig(r.get("findings"))) == sig:
+            return x, "values"
+    return None, ""
+
+
+def _day_words(d: str) -> str:
+    try:
+        return _dt.date.fromisoformat(d).strftime("%-d %b %Y")
+    except Exception:
+        return d or "earlier"
+
+
+def redate(db: Session) -> int:
+    """Once: reports filed under the upload day get the date printed on the document (from the reading, or the PDF text)."""
+    from .models import Setting
+    if db.get(Setting, "redate1"):
+        return 0
+    n = 0
+    for x in db.scalars(select(HealthRecord).where(HealthRecord.kind.in_(("report", "upload")))).all():
+        try:
+            rec = decrypt(x.blob)
+        except Exception:
+            continue
+        d = norm_date(rec.get("date")) or norm_date(rec.get("doctor"))
+        if not d and x.file_id and (rec.get("mime") or "") == "application/pdf":
+            try:
+                from . import ai, storage
+                _, data = storage.get(db, x.person_id, x.file_id)
+                d = date_from_text(ai.text_from(data, "application/pdf"))
+            except Exception:
+                d = ""
+        if d and d != x.day:
+            rec["date"] = d
+            x.blob, x.day = encrypt(rec), d
+            n += 1
+    db.add(Setting(key="redate1", value={"t": now(), "n": n}))
+    db.commit()
+    return n
 
 
 def erase_due(db: Session) -> int:

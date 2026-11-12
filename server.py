@@ -107,6 +107,11 @@ def _init_db():
     proactive_api.start()
     from api import people as _people
     _people.start_purge()
+    try:
+        with session() as db:
+            print("[redate] reports re-dated:", _people.redate(db), flush=True)
+    except Exception as e:
+        print("[redate] skipped:", str(e)[:160], flush=True)
 
 
 app.include_router(public_api.r)
