@@ -696,7 +696,7 @@ function fold(on){if(document.body.classList.contains('fold')===on||innerWidth>=
 function sosHold(){const b=$('#sos5'),arc=$('#sosarc');if(!b)return;let t0=0,raf=0,fired=false;
  const tick=()=>{const q=Math.min(1,(performance.now()-t0)/1000);arc.style.opacity=q>0?1:0;arc.setAttribute('stroke-dasharray',`${(208*q).toFixed(1)} 208`);if(q>=1&&!fired){fired=true;b.classList.remove('hold');try{navigator.vibrate&&navigator.vibrate([60,40,60])}catch(_){}arc.setAttribute('stroke-dasharray','0 208');startSOS();return}raf=requestAnimationFrame(tick)};
  b.oncontextmenu=e=>e.preventDefault();b.onpointerdown=e=>{e.preventDefault();sirenUnlock();fired=false;t0=performance.now();b.classList.add('hold');try{b.setPointerCapture(e.pointerId)}catch(_){}raf=requestAnimationFrame(tick)};
- const up=()=>{cancelAnimationFrame(raf);b.classList.remove('hold');if(!fired&&performance.now()-t0<1000){b.classList.add('tipon');setTimeout(()=>b.classList.remove('tipon'),1400)}arc.setAttribute('stroke-dasharray','0 208');arc.style.opacity=0};b.onpointerup=up;b.onpointercancel=up;
+ const up=()=>{cancelAnimationFrame(raf);b.classList.remove('hold');if(fired&&!SIROFF){if(SIRON&&SIRON.a&&SIRA.paused)SIRON=false;if(!SIRON)sirenStart()}if(!fired&&performance.now()-t0<1000){b.classList.add('tipon');setTimeout(()=>b.classList.remove('tipon'),1400)}arc.setAttribute('stroke-dasharray','0 208');arc.style.opacity=0};b.onpointerup=up;b.onpointercancel=up;b.ontouchend=()=>{if(fired&&!SIROFF&&(!SIRON||(SIRON.a&&SIRA.paused))){SIRON=false;sirenStart()}};
  b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();sosConfirm()}}}
 function lockCard(p){return`<div class="card lock"><div class="round" style="background:#F2F2F7">${ic(I.lock,'#3A3A3C',24)}</div><div style="font-size:17px;font-weight:600">${esc(p.name)} keeps this private</div><div class="sub" style="font-size:15px;line-height:1.45">You can see their Medical ID. Only ${esc(p.name)} can share more, from Settings → Who can see my health.</div></div>`}
 function medIdCard(p){const m=p.medicalId||{};const pg=m.pregnancy&&m.pregnancy.stage==='pregnant'?m.pregnancy:null;
@@ -1772,17 +1772,32 @@ function sosPaint(){const el=$('#sos2');if(!el)return;const c=SOSC,reached=c.fil
 /* Alarm sound while SOS is on: a two-tone siren from Web Audio, unlocked by the touch that starts SOS (iOS needs a gesture).
    audioSession 'playback' lets it sound with the ring/silent switch on, where Safari supports it. One tap turns it off. */
 let SIR=null,SIRON=false;
-function sirenUnlock(){try{if('audioSession' in navigator)navigator.audioSession.type='playback'}catch(_){}try{SIR=SIR||new (window.AudioContext||window.webkitAudioContext)();if(SIR.state!=='running')SIR.resume()}catch(_){}}
-function sirenStart(){try{sirenUnlock();if(!SIR||SIRON)return;const o=SIR.createOscillator(),g=SIR.createGain(),t=SIR.currentTime;o.type='square';g.gain.value=.0001;g.gain.exponentialRampToValueAtTime(.32,t+.15);
+/* Siren. iOS only unlocks sound inside a tap that ends (touchend/click), not on press-down, and Web Audio obeys the silent
+   switch. So the siren is a real <audio> element (plays even on silent, like a video), made from a generated WAV, primed on
+   the first tap anywhere in the app and again when the SOS hold is released. Web Audio is only the fallback. */
+let SIRA=null,SIRURL='';
+function sirenWav(){if(SIRURL)return SIRURL;const sr=22050,sec=2,n=sr*sec,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+ w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+ let ph=0;for(let i=0;i<n;i++){const f=(i/sr)%1<.5?960:740;ph+=2*Math.PI*f/sr;const s=Math.sin(ph),sq=Math.tanh(s*3);v.setInt16(44+i*2,sq*0.9*32767,true)}
+ return SIRURL=URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
+function sirenUnlock(){try{if('audioSession' in navigator)navigator.audioSession.type='playback'}catch(_){}
+ try{if(!SIRA){SIRA=new Audio(sirenWav());SIRA.loop=true;SIRA.preload='auto';SIRA.setAttribute('playsinline','')}if(!SIRA._ok&&!SIRON){SIRA.muted=true;const q=SIRA.play();if(q&&q.then)q.then(()=>{if(!SIRON){SIRA.pause();SIRA.currentTime=0}SIRA.muted=false;SIRA._ok=true}).catch(()=>{SIRA.muted=false})}}catch(_){}
+ try{SIR=SIR||new (window.AudioContext||window.webkitAudioContext)();if(SIR.state!=='running')SIR.resume()}catch(_){}}
+['touchend','click','keydown'].forEach(k=>document.addEventListener(k,()=>{if(!SIRA||!SIRA._ok)sirenUnlock()},{capture:true,passive:true}));
+function sirenStart(){sirenUnlock();if(SIRON)return sosSoundBtn();let ok=false;
+ try{SIRA.muted=false;SIRA.volume=1;SIRA.currentTime=0;const q=SIRA.play();ok=true;SIRON={a:SIRA};if(q&&q.catch)q.catch(()=>{if(SIRON&&SIRON.a){SIRON=false;sirenWeb()}})}catch(_){}
+ if(!ok)sirenWeb();sosSoundBtn()}
+function sirenWeb(){try{if(!SIR||SIRON)return;const o=SIR.createOscillator(),g=SIR.createGain(),t=SIR.currentTime;o.type='square';g.gain.value=.0001;g.gain.exponentialRampToValueAtTime(.32,t+.15);
  for(let i=0;i<1200;i++){o.frequency.setValueAtTime(i%2?740:960,t+i*.5)}o.connect(g).connect(SIR.destination);o.start();SIRON={o,g}}catch(_){}sosSoundBtn()}
-function sirenStop(){try{if(SIRON){const t=SIR.currentTime;SIRON.g.gain.setTargetAtTime(.0001,t,.05);SIRON.o.stop(t+.3)}}catch(_){}SIRON=false;try{navigator.vibrate&&navigator.vibrate(0)}catch(_){}sosSoundBtn()}
+function sirenStop(){try{if(SIRON&&SIRON.a){SIRA.pause();SIRA.currentTime=0}else if(SIRON){const t=SIR.currentTime;SIRON.g.gain.setTargetAtTime(.0001,t,.05);SIRON.o.stop(t+.3)}}catch(_){}SIRON=false;SIROFF=true;try{navigator.vibrate&&navigator.vibrate(0)}catch(_){}sosSoundBtn()}
+let SIROFF=false;
 function sosSoundBtn(){const b=$('#sossnd');if(b){b.innerHTML=SIRON?`${ic('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>','#fff',20)}<span>Sound off</span>`:`${ic('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>','#fff',20)}<span>Sound on</span>`;b.setAttribute('aria-pressed',SIRON?'true':'false')}}
 function sosWa(phone){const d=String(phone||'').replace(/\D/g,''),n=d.length===10?'91'+d:d;return`https://wa.me/${n}?text=${encodeURIComponent(sosText())}`}
 function sosWaAll(){const ph=SOSC.map(x=>x.phone).filter(Boolean);return ph.length===1?sosWa(ph[0]):`https://wa.me/?text=${encodeURIComponent(sosText())}`}
 async function startSOS(){const me=P(ME.me);SOSC=(me.medicalId.contacts||[]);SOSA=null;SOSL=null;SOSSENT=null;SOSLAST=0;try{getSelection().removeAllRanges()}catch(_){}if(navigator.vibrate)navigator.vibrate([400,200,400,200,400]);
  const desk=matchMedia('(pointer:fine)').matches;
  layer(`<div id="sos" class="sos2"><div id="sos2" style="display:flex;flex-direction:column;align-items:center;min-height:100%;text-align:center">
- <button id="sossnd" class="snd" onclick="SIRON?sirenStop():sirenStart()"></button>
+ <button id="sossnd" class="snd" onclick="if(SIRON)sirenStop();else{SIROFF=false;sirenStart()}"></button>
  <div class="st">SOS ON · ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).toUpperCase()}</div>
  <div class="rg"><div>${ic(I.pin||'<path d="M12 21s-6.5-5.3-6.5-11a6.5 6.5 0 0 1 13 0c0 5.7-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>','#fff',54)}</div></div>
  <h1 id="sosh">Sending alert…</h1><p id="soss">Finding your location and telling your family.</p><div id="sosp" class="pl2"></div>
@@ -1793,7 +1808,7 @@ async function startSOS(){const me=P(ME.me);SOSC=(me.medicalId.contacts||[]);SOS
  <div class="b2r"><a class="b2" href="tel:112">Call 112</a><button class="b2 safe" onclick="endSOS()">I’m safe</button></div>
  ${desk?`<p style="margin:12px 0 0;font-size:14px;opacity:.85">This computer can’t place calls. Dial <b>108</b> from your phone.</p>`:''}
  <button class="dt" onclick="sosDetails()">Details ›</button></div></div>`);
- sosWake(true);document.addEventListener('visibilitychange',sosVis);sirenStart();{const w=$('#soswa');if(w)w.href=sosWaAll()}
+ sosWake(true);document.addEventListener('visibilitychange',sosVis);SIROFF=false;sirenStart();{const w=$('#soswa');if(w)w.href=sosWaAll()}
  const first=await new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>res(null),{enableHighAccuracy:true,timeout:6000})});
  SOSL=first;const m=me.medicalId,pg=m.pregnancy&&m.pregnancy.stage==='pregnant'?`; pregnant ${m.pregnancy.week} weeks`:'';
  try{SOSA=await API('/api/v1/sos/start',{key:true,json:{member:me.id,name:me.name,phone:ME.user.phone||(me.profile&&me.profile.phone)||'',blood:m.blood||'',summary:`Blood ${m.blood||'?'}; allergies ${m.allergies||'none'}; conditions ${m.conditions||'none'}${pg}`,loc:first,contacts:SOSC.map(x=>({n:x.name,ph:x.phone}))}});
