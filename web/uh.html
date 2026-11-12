@@ -472,6 +472,7 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;-webkit-te
  body.flat .sheet{max-width:720px!important}
  body.flat .top{left:0!important;right:0!important;display:block}body.flat .top .ttl{max-width:720px;margin:0 auto;padding:0 18px}
 }
+.idlew{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;padding:24px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}.idlew .iw{background:#fff;border-radius:24px;padding:24px 22px 20px;max-width:320px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25)}.idlew b{display:block;font-size:20px;letter-spacing:-.02em}.idlew p{margin:8px 0 18px;color:#3C3C43;font-size:15px;line-height:1.45}.idlew span{font-variant-numeric:tabular-nums;font-weight:600}
 </style>
 </head>
 <body>
@@ -1845,16 +1846,16 @@ function sirenWav(){if(SIRURL)return SIRURL;const sr=22050,sec=2,n=sr*sec,b=new 
  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
  let ph=0;for(let i=0;i<n;i++){const f=(i/sr)%1<.5?960:740;ph+=2*Math.PI*f/sr;const s=Math.sin(ph),sq=Math.tanh(s*3);v.setInt16(44+i*2,sq*0.9*32767,true)}
  return SIRURL=URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
-function sirenUnlock(){try{if('audioSession' in navigator)navigator.audioSession.type='playback'}catch(_){}
+function sirenUnlock(){
  try{if(!SIRA){SIRA=new Audio(sirenWav());SIRA.loop=true;SIRA.preload='auto';SIRA.setAttribute('playsinline','')}if(!SIRA._ok&&!SIRON){SIRA.muted=true;const q=SIRA.play();if(q&&q.then)q.then(()=>{if(!SIRON){SIRA.pause();SIRA.currentTime=0}SIRA.muted=false;SIRA._ok=true}).catch(()=>{SIRA.muted=false})}}catch(_){}
  try{SIR=SIR||new (window.AudioContext||window.webkitAudioContext)();if(SIR.state!=='running')SIR.resume()}catch(_){}}
-['touchend','click','keydown'].forEach(k=>document.addEventListener(k,()=>{if(!SIRA||!SIRA._ok)sirenUnlock()},{capture:true,passive:true}));
-function sirenStart(){sirenUnlock();if(SIRON)return sosSoundBtn();let ok=false;
+/* No app-wide priming: playing the siren silently on the first tap made phones show a "now playing" sound sign as soon as the app opened. The siren is prepared only by the SOS button's own touch (sosHold), which iOS accepts. */
+function sirenStart(){try{if('audioSession' in navigator)navigator.audioSession.type='playback'}catch(_){}sirenUnlock();if(SIRON)return sosSoundBtn();let ok=false;
  try{SIRA.muted=false;SIRA.volume=1;SIRA.currentTime=0;const q=SIRA.play();ok=true;SIRON={a:SIRA};if(q&&q.catch)q.catch(()=>{if(SIRON&&SIRON.a){SIRON=false;sirenWeb()}})}catch(_){}
  if(!ok)sirenWeb();sosSoundBtn()}
 function sirenWeb(){try{if(!SIR||SIRON)return;const o=SIR.createOscillator(),g=SIR.createGain(),t=SIR.currentTime;o.type='square';g.gain.value=.0001;g.gain.exponentialRampToValueAtTime(.32,t+.15);
  for(let i=0;i<1200;i++){o.frequency.setValueAtTime(i%2?740:960,t+i*.5)}o.connect(g).connect(SIR.destination);o.start();SIRON={o,g}}catch(_){}sosSoundBtn()}
-function sirenStop(){try{if(SIRON&&SIRON.a){SIRA.pause();SIRA.currentTime=0}else if(SIRON){const t=SIR.currentTime;SIRON.g.gain.setTargetAtTime(.0001,t,.05);SIRON.o.stop(t+.3)}}catch(_){}SIRON=false;SIROFF=true;try{navigator.vibrate&&navigator.vibrate(0)}catch(_){}sosSoundBtn()}
+function sirenStop(){try{if(SIRON&&SIRON.a){SIRA.pause();SIRA.currentTime=0}else if(SIRON){const t=SIR.currentTime;SIRON.g.gain.setTargetAtTime(.0001,t,.05);SIRON.o.stop(t+.3)}}catch(_){}SIRON=false;SIROFF=true;try{if('audioSession' in navigator)navigator.audioSession.type='auto'}catch(_){}try{navigator.vibrate&&navigator.vibrate(0)}catch(_){}sosSoundBtn()}
 let SIROFF=false;
 function sosSoundBtn(){const b2=$('#sossn2');if(b2)b2.textContent=SIRON?'Turn off':'Turn on';const b=$('#sossnd');if(b){b.innerHTML=SIRON?`${ic('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>','#fff',18)}<span>Sound off</span>`:`${ic('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>','#fff',18)}<span>Turn siren on</span>`;b.setAttribute('aria-pressed',SIRON?'true':'false')}}
 function sosWa(phone){const d=String(phone||'').replace(/\D/g,''),n=d.length===10?'91'+d:d;return`https://wa.me/${n}?text=${encodeURIComponent(sosText())}`}
@@ -1914,7 +1915,7 @@ async function sosDetails(){const c=SOSC,d=document.createElement('div');d.class
 async function sosShare(){if(!SOSA)return;const t=sosText();try{if(navigator.share)await navigator.share({title:'Emergency',text:t,url:SOSA.url});else{await navigator.clipboard.writeText(SOSA.url);toast('Live link copied')}}catch(_){}}
 async function endSOS(){document.body.classList.remove('sosopen');sirenStop();if(WATCH!=null)navigator.geolocation.clearWatch(WATCH);WATCH=null;clearInterval(SOSTICK);SOSTICK=null;sosWake(false);document.removeEventListener('visibilitychange',sosVis);if(SOSA)try{await API(`/api/v1/sos/${SOSA.id}/end`,{key:true,method:'POST'})}catch(_){}SOSA=null;closeL();toast('Alert ended. Your family was told you are safe.')}
 /* ---------------- auth + onboarding ---------------- */
-function authPage(mode){mode=mode||'signin';layer(`<div class="page auth" style="left:0"><div class="authart"><h2>Your family's health,<br>in one secure place.</h2><p>Reports read for you, medicines on time, and help one tap away.</p>
+function authPage(mode){mode=mode||'signin';try{localStorage.removeItem('uh-act')}catch(_){}layer(`<div class="page auth" style="left:0"><div class="authart"><h2>Your family's health,<br>in one secure place.</h2><p>Reports read for you, medicines on time, and help one tap away.</p>
  <div class="pt"><span class="i">${ic(I.lock,'#fff',18)}</span><div><b>Private for each person</b>Everyone signs in with their own account and chooses what to share.</div></div>
  <div class="pt"><span class="i">${ic(I.sum,'#fff',18)}</span><div><b>Results on a 3D body</b>See what a report means, on the organ it is about.</div></div>
  <div class="pt"><span class="i">${ic(I.phone,'#fff',18)}</span><div><b>SOS to your family</b>Live location and Medical ID to your emergency contacts.</div></div></div><div class="pin" style="padding-top:max(40px,env(safe-area-inset-top));max-width:440px">
@@ -2003,11 +2004,32 @@ const SVCN={medicine:['Medicine orders','licensed pharmacies, with a registered 
 function soonCard(k){const n=SVCN[k];return`<div class="soon"><div class="soi">${ic(I.spark,'#fff',26)}</div><b>${n[0]}: coming soon in your area</b><p>We’re partnering with ${n[1]}. As soon as they’re verified near you, it switches on here. We’ll let you know.</p></div>`}
 function svcOk(k){if(SVC&&SVC[k]===false&&EMB&&EMB.live&&EMB.key===S.tab+':'+S.sub){EMB.title='-';EMB.html=soonCard(k);renderSheet();return false}if(SVC&&SVC[k]===false){sheetX(SVCN[k][0],`<div class="ulf">${soonCard(k)}</div>`);return false}return true}
 async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);if(m){try{sessionStorage.setItem('uh-join',m[1])}catch(_){}fetch('/api/v2/household/invite/'+m[1],{headers:{'x-tht':'1'}}).catch(()=>{});history.replaceState(null,'','/app')}
- try{await refreshMe()}catch(e){if(e.status===401)return authPage(sessionStorage.getItem('uh-join')?'signup':'signin');$('#load').textContent='Could not connect. Check your internet and reload.';return}
+ try{await refreshMe()}catch(e){if(e.status===401){const w=sessionStorage.getItem('uh-idle');authPage(sessionStorage.getItem('uh-join')?'signup':'signin');if(w){sessionStorage.removeItem('uh-idle');toast('Signed out after 10 minutes without activity')}return}$('#load').textContent='Could not connect. Check your internet and reload.';return}
  const jt=sessionStorage.getItem('uh-join');if(jt){try{const j=await API('/api/v2/household/join',{json:{token:jt}});if(j.handover)toast('Welcome. Your records are now in your own account.');else{toast('You joined the family');if(j.relation)setTimeout(()=>confirmRel(j),600)}}catch(e){toast(e.message)}sessionStorage.removeItem('uh-join');await refreshMe()}
+ {let la=0;try{la=+localStorage.getItem('uh-act')||0}catch(_){}if(la&&Date.now()-la>=IDLE_MS)return idleOut();IDLET=0;idleMark()}
  closeL();if(window.UHL){UHL.adopt(ME.user.lang);if(!UHL.chosen())await UHL.picker(saveLang)}await loadPerms();locWarm();if(!ME.me||!ME.onboarded)return onboard();
  const t=location.pathname.split('/')[2];if(['summary','records','meds','cover','family','visits'].includes(t))S.tab=t;S.person=S.person&&P(S.person)?S.person:ME.me;
  await Promise.all([...ME.people.map(p=>loadRecords(p.id)),loadVisits()]);await pollInbox();renderAll();if(PERMS&&!PERMS.asked)setTimeout(()=>permsGate(0,addrGate),900);else addrGate()}
+/* Sign out after 10 minutes without activity. Activity = any touch, scroll, typing, or touching the 3D body (it posts 'uh-active').
+   Time keeps counting while the app is in the background, so coming back after 10+ minutes asks for sign-in again.
+   A 60-second warning comes first; any touch keeps you signed in. Never signs out while SOS is on. Shared across tabs. */
+const IDLE_MS=10*60000,IDLE_WARN=60000;let IDLET=Date.now(),IDLEW=null;
+function idleLast(){let v=IDLET;try{v=Math.max(v,+localStorage.getItem('uh-act')||0)}catch(_){}return v}
+function idleMark(){if(IDLEW)idleWarnOff();const n=Date.now();if(n-IDLET<4000)return;IDLET=n;try{localStorage.setItem('uh-act',String(n))}catch(_){}}
+function idleOut(){if(IDLEW)idleWarnOff();try{localStorage.removeItem('uh-act');sessionStorage.setItem('uh-idle','1')}catch(_){}ME=null;signOut()}
+function idleWarnOff(){const d=IDLEW;IDLEW=null;if(d){clearInterval(d._t);d.remove()}}
+function idleWarn(){const d=document.createElement('div');d.className='idlew';d.setAttribute('role','alertdialog');d.setAttribute('aria-label','Still there?');
+ d.innerHTML=`<div class="iw"><b>Still there?</b><p>For your privacy, you'll be signed out in <span>60</span> seconds.</p><button class="btn" style="width:100%">Stay signed in</button></div>`;
+ document.body.appendChild(d);IDLEW=d;d.querySelector('button').onclick=()=>{IDLET=0;idleMark()};
+ d._t=setInterval(()=>{const left=Math.max(0,Math.ceil((IDLE_MS-(Date.now()-idleLast()))/1000));const sp=d.querySelector('span');if(sp)sp.textContent=left},500)}
+function idleCheck(){if(!ME||document.body.classList.contains('sosopen'))return;const gone=Date.now()-idleLast();
+ if(gone>=IDLE_MS)return idleOut();if(gone>=IDLE_MS-IDLE_WARN&&!IDLEW&&!document.hidden)idleWarn();else if(gone<IDLE_MS-IDLE_WARN&&IDLEW)idleWarnOff()}
+['pointerdown','keydown','wheel','input','touchstart'].forEach(k=>addEventListener(k,idleMark,{capture:true,passive:true}));
+addEventListener('scroll',idleMark,{capture:true,passive:true});
+addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.type==='uh-active')idleMark()});
+addEventListener('storage',e=>{if(e.key==='uh-act'&&IDLEW)idleWarnOff()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck()});addEventListener('pageshow',idleCheck);
+setInterval(idleCheck,5000);
 let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
 
 /* ---- Apple-style pickers. Applied to every page and sheet, so all forms behave the same ---- */

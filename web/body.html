@@ -348,6 +348,8 @@ function saveU(){try{localStorage.setItem('uh-body',JSON.stringify({lang:U.lang,
 /* ---- data from the app ---- */
 let DATA=null,MODE='explore';
 const send=(act,x={})=>parent.postMessage({type:'uh-body-act',act,...x},location.origin);
+/* tell the app the user is active here (touches inside this frame don't reach it), for the 10-minute sign-out */
+{let la=0;const act=()=>{const n=Date.now();if(n-la<4000)return;la=n;try{parent!==window&&parent.postMessage({type:'uh-active'},location.origin)}catch(_){}};['pointerdown','wheel','keydown','touchstart'].forEach(k=>addEventListener(k,act,{capture:true,passive:true}))}
 const who=()=>DATA?DATA.person.name.toUpperCase():'';
 const ageBand=a=>a==null?'adult':a<2?'baby':a<13?'child':a>=60?'elder':'adult';
 function hist(f){const k=(f.code||f.test||'').toLowerCase();return(DATA.findings||[]).filter(x=>(x.code||x.test||'').toLowerCase()===k&&x.date).sort((a,b)=>a.date.localeCompare(b.date))}
@@ -518,35 +520,46 @@ function mMed1(){shape();const meds=DATA.meds||[];head(who()+' · '+T('meds').to
    Model: BodyParts3D-derived, CC BY 4.0 (credit shown below the sheet). Outside and Inside (cut-away) share part names;
    tapping a part explains it and shows the results tied to it. Optional heartbeat sound (lub-dub) synced to the beat. */
 const H3F={out:['/a/heart3.453c86f3.glb','/a/heart3-full.2ab48028.glb'],in:['/a/heart3-cut.1a4d1edc.glb','/a/heart3-cut-full.ffaf390e.glb']};
+/* women see the female heart (HuBMAP female based), outside and cut-away */
+const H3FF={out:["/a/heartf.e096f07d.glb", "/a/heartf-full.da1ae97b.glb"],in:["/a/heartf-cut.a31ba0db.glb", "/a/heartf-cut-full.d49bd94e.glb"]};
+const h3Fem=()=>STATE.base==='female',h3f=k=>(h3Fem()?H3FF:H3F)[k],h3L=()=>H3L[(h3Fem()?'f':'')+H3.kind];
 let H3=null;const H3C={};
-const H3P=[[/^Heart_Wall_LeftVentricle/,'Left ventricle','The strongest chamber. Each squeeze pushes oxygen-rich blood out through the aorta to the whole body.','lv'],
- [/^Heart_Wall_RightVentricle/,'Right ventricle','Pumps blood to the lungs, where it picks up oxygen.','rv'],
- [/^Heart_Wall_LeftAtrium/,'Left atrium','Collects oxygen-rich blood coming back from the lungs and passes it to the left ventricle.','la'],
- [/^Heart_Wall_RightAtrium/,'Right atrium','Collects blood returning from the body. The heart’s natural pacemaker sits in its wall.','ra'],
- [/^Aorta/,'Aorta','The body’s main artery. Every beat sends blood from the left ventricle into it.','ao'],
- [/^PulmonaryTrunk/,'Pulmonary trunk','Carries blood from the right ventricle to the lungs.','pa'],
- [/^VenaCava_Superior/,'Superior vena cava','Brings blood back from the head and arms to the right atrium.','vc'],
- [/^VenaCava_Inferior/,'Inferior vena cava','Brings blood back from the lower body to the right atrium.','vc'],
- [/^CoronaryArtery/,'Coronary arteries','They feed the heart muscle itself. High LDL cholesterol can narrow them over the years.','ca'],
- [/^CoronaryVein/,'Coronary veins','They drain used blood from the heart muscle back into the right atrium.','cv'],
- [/^Valve_Mitral/,'Mitral valve','A one-way door between the left atrium and the left ventricle. It shuts when the ventricle squeezes.','mv'],
- [/^Valve_Tricuspid/,'Tricuspid valve','The one-way door between the right atrium and the right ventricle.','tv'],
- [/^Valve_Aortic/,'Aortic valve','Opens when the heart squeezes so blood goes out to the body, then shuts so it can’t flow back.','av'],
- [/^Valve_Pulmonary/,'Pulmonary valve','Opens to let blood go to the lungs, then shuts so it can’t flow back.','pv'],
- [/^PapillaryMuscle/,'Heart strings','Small muscles inside the ventricles hold the valve flaps with thin cords, so the valves can’t flip backwards.','pm']];
+const H3P=[[/^Heart_Wall_LeftVentricle|^F_Circulatory_Ventricle_Left/,'Left ventricle','The strongest chamber. Each squeeze pushes oxygen-rich blood out through the aorta to the whole body.','lv'],
+ [/^Heart_Wall_RightVentricle|^F_Circulatory_Ventricle_Right/,'Right ventricle','Pumps blood to the lungs, where it picks up oxygen.','rv'],
+ [/^Heart_Wall_LeftAtrium|^F_Circulatory_CardiacAtrium_Left/,'Left atrium','Collects oxygen-rich blood coming back from the lungs and passes it to the left ventricle.','la'],
+ [/^Heart_Wall_RightAtrium|^F_Circulatory_CardiacAtrium_Right/,'Right atrium','Collects blood returning from the body. The heart’s natural pacemaker sits in its wall.','ra'],
+ [/^Aorta|^F_Circulatory_(AorticArch|AscendingAorta|DescendingAorta)/,'Aorta','The body’s main artery. Every beat sends blood from the left ventricle into it.','ao'],
+ [/^PulmonaryTrunk|^F_Circulatory_Pulmonary(Trunk|Artery)/,'Pulmonary trunk','Carries blood from the right ventricle to the lungs.','pa'],
+ [/^VenaCava_Superior|^F_Circulatory_SuperiorVenaCava/,'Superior vena cava','Brings blood back from the head and arms to the right atrium.','vc'],
+ [/^VenaCava_Inferior|^F_Circulatory_InferiorVenaCava/,'Inferior vena cava','Brings blood back from the lower body to the right atrium.','vc'],
+ [/^CoronaryArtery|^F_Circulatory_(CoronaryArtery|AnteriorDescendingArtery|CircumflexArtery|DiagonalBranch|MarginalArtery|MarginalBranch|PosteriorDescending|PosteriorVentricularBranch)/,'Coronary arteries','They feed the heart muscle itself. High LDL cholesterol can narrow them over the years.','ca'],
+ [/^PulmonaryVein|^F_Circulatory_PulmonaryVein/,'Pulmonary veins','Bring oxygen-rich blood back from the lungs to the left atrium.','pu'],
+ [/^CoronaryVein|^F_Circulatory_(AnteriorCardiacVein|GreatCardiacVein|MarginalVein|MiddleCardiacVein|ObliqueVein|SmallCardiacVein|PosteriorVeinOfVentricle|CoronarySinus)/,'Coronary veins','They drain used blood from the heart muscle back into the right atrium.','cv'],
+ [/^Valve_Mitral|^F_Circulatory_MitralValve/,'Mitral valve','A one-way door between the left atrium and the left ventricle. It shuts when the ventricle squeezes.','mv'],
+ [/^Valve_Tricuspid|^F_Circulatory_TricuspidValve/,'Tricuspid valve','The one-way door between the right atrium and the right ventricle.','tv'],
+ [/^Valve_Aortic|^F_Circulatory_AorticValve/,'Aortic valve','Opens when the heart squeezes so blood goes out to the body, then shuts so it can’t flow back.','av'],
+ [/^Valve_Pulmonary|^F_Circulatory_PulmonaryValve/,'Pulmonary valve','Opens to let blood go to the lungs, then shuts so it can’t flow back.','pv'],
+ [/^F_Circulatory_InterventricularSeptum|^Heart_Wall_Septum/,'Septum','The muscular wall between the left and right ventricles.','sp'],
+ [/^PapillaryMuscle|^F_Circulatory_PapillaryMuscle/,'Heart strings','Small muscles inside the ventricles hold the valve flaps with thin cords, so the valves can’t flip backwards.','pm']];
 const H3L={out:[['ao','Aorta_Arch'],['vc','VenaCava_Superior'],['pa','PulmonaryTrunk'],['ra','Heart_Wall_RightAtrium'],['rv','Heart_Wall_RightVentricle'],['ca','CoronaryArtery_Trunk_LAD'],['lv','Heart_Wall_LeftVentricle']],
- in:[['ao','Aorta_Ascending'],['vc','VenaCava_Superior'],['ra','Heart_Wall_RightAtrium'],['av','Valve_Aortic_AnteriorCusp'],['mv','Valve_Mitral_AnteriorLeaflet'],['tv','Valve_Tricuspid_SeptalLeaflet'],['pm','PapillaryMuscle_LV_Lateral'],['lv','Heart_Wall_LeftVentricle']]};
+ in:[['ao','Aorta_Ascending'],['vc','VenaCava_Superior'],['ra','Heart_Wall_RightAtrium'],['av','Valve_Aortic_AnteriorCusp'],['mv','Valve_Mitral_AnteriorLeaflet'],['tv','Valve_Tricuspid_SeptalLeaflet'],['pm','PapillaryMuscle_LV_Lateral'],['lv','Heart_Wall_LeftVentricle']],
+ fout:[['ao','F_Circulatory_AorticArch'],['vc','F_Circulatory_SuperiorVenaCava'],['pa','F_Circulatory_PulmonaryTrunk'],['ra','F_Circulatory_CardiacAtrium_Right'],['rv','F_Circulatory_Ventricle_Right'],['ca','F_Circulatory_AnteriorDescendingArtery_Left'],['lv','F_Circulatory_Ventricle_Left']],
+ fin:[['ao','F_Circulatory_AscendingAorta'],['vc','F_Circulatory_SuperiorVenaCava'],['ra','F_Circulatory_CardiacAtrium_Right'],['av','F_Circulatory_AorticValve'],['mv','F_Circulatory_MitralValve'],['tv','F_Circulatory_TricuspidValve'],['pm','F_Circulatory_PapillaryMuscleOfHeartAntlat'],['lv','F_Circulatory_Ventricle_Left']]};
 const h3Info=n=>H3P.find(p=>p[0].test(n||''));
 function h3Name(o){while(o&&!h3Info(o.name))o=o.parent;return o}
-async function h3Get(kind){if(H3C[kind])return H3C[kind];for(let i=0;i<40&&!THREE.GLTFLoader;i++)await new Promise(r=>setTimeout(r,100));
+async function h3Get(kind){const ck=(h3Fem()?'f':'')+kind;if(H3C[ck])return H3C[ck];for(let i=0;i<40&&!THREE.GLTFLoader;i++)await new Promise(r=>setTimeout(r,100));
  const L=new THREE.GLTFLoader(),ld=u=>new Promise((res,rej)=>L.load(u,res,undefined,rej));let g=null;
- try{if(window.MeshoptDecoder){await MeshoptDecoder.ready;L.setMeshoptDecoder(MeshoptDecoder);g=await ld(H3F[kind][0])}}catch(_){g=null}
- if(!g)g=await ld(H3F[kind][1]);return H3C[kind]=g}
+ try{if(window.MeshoptDecoder){await MeshoptDecoder.ready;L.setMeshoptDecoder(MeshoptDecoder);g=await ld(h3f(kind)[0])}}catch(_){g=null}
+ if(!g)g=await ld(h3f(kind)[1]);
+ /* chamber-wall box in the file's own space, measured before the app moves it */
+ g.scene.updateMatrixWorld(true);const wb=new THREE.Box3();g.scene.traverse(o=>{if(o.isMesh&&/^Heart_Wall|^F_Circulatory_(Ventricle|CardiacAtrium)/.test((h3Name(o)||{}).name||''))wb.expandByObject(o)});g.userData.walls=wb;
+ return H3C[ck]=g}
 function h3Box(re){const b=new THREE.Box3();let n=0;SET.meta.parts.forEach((p,k)=>{if((p.l??1)===3&&re.test(SET.names[k])){const c=p.b;b.expandByPoint(new THREE.Vector3(c[0],c[1],c[2]));b.expandByPoint(new THREE.Vector3(c[3],c[4],c[5]));n++}});return n?b:null}
 async function h3Show(kind){if(!H3)return;vLoading(true);const g=await h3Get(kind);vLoading(false);if(!H3||MODE!=='heartv')return;
  if(H3.root){body.remove(H3.piv||H3.root);H3.mix&&H3.mix.stopAllAction()}
  const root=g.scene;root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;if(!o.userData.m0){o.userData.m0=o.material;o.material=o.material.clone()}}});
- const walls=new THREE.Box3();root.traverse(o=>{if(o.isMesh&&/^Heart_Wall/.test((h3Name(o)||{}).name||''))walls.expandByObject(o)});
+ /* the female cut-away keeps only half the walls, so it is sized from the matching outside heart (same coordinates) */
+ const walls=(h3Fem()&&kind==='in'?(await h3Get('out')).userData.walls:g.userData.walls).clone();if(!H3||MODE!=='heartv')return;
  const hb=h3Box(/^(left|right) (atrium|ventricle)$/i)||h3Box(/ventric|atri/i),bs=hb.getSize(new THREE.Vector3()),ms=walls.getSize(new THREE.Vector3());
  const sc=Math.max(bs.x/ms.x,bs.y/ms.y)*1.02,hc=hb.getCenter(new THREE.Vector3()),wc=walls.getCenter(new THREE.Vector3());
  root.scale.setScalar(sc);root.position.set(-wc.x*sc,-wc.y*sc,-wc.z*sc);const piv=new THREE.Group();piv.position.copy(hc);piv.add(root);body.add(piv);H3.piv=piv;root.userData.piv=piv;H3.root=root;H3.kind=kind;H3.sc=sc;
@@ -574,20 +587,20 @@ function h3Sheet(){if(!H3)return;const v=DATA.vitals||{},fs=h3Results();
  <p style="font-size:11.5px;color:#8E8E93;text-align:center;margin:12px 0 0">3D heart: BodyParts3D, © The Database Center for Life Science, CC BY 4.0</p>`)}
 function h3Pick(o,keep){if(!H3)return;const info=h3Info(o.name);if(!info)return;H3.sel=o;
  H3.root.traverse(m=>{if(m.isMesh&&m.material.emissive){const on=h3Name(m)&&h3Info(h3Name(m).name)===info;m.material.emissive.set(on?0x5E5CE6:0x000000);m.material.emissiveIntensity=on?.35:0}});
- const fs=h3Results(info[3]),others=[...new Set(H3P.filter(p=>p!==info&&H3L[H3.kind].some(l=>l[0]===p[3])).map(p=>p[3]))];
+ const fs=h3Results(info[3]),others=[...new Set(H3P.filter(p=>p!==info&&h3L().some(l=>l[0]===p[3])).map(p=>p[3]))];
  if(keep)return;sheet(`<div class="row" style="justify-content:space-between;align-items:center"><button class="lk" onclick="h3Back()">‹ Your heart</button><button class="x" onclick="h3Back()" aria-label="Close">✕</button></div>
  <div class="eb" style="color:#FF2D55;margin:6px 0 0">${H3.kind==='in'?'Inside your heart':'Your heart'}</div><div class="cn" style="font-size:24px">${esc(info[1])}</div><p class="cd" style="color:#1D1D1F">${esc(info[2])}</p>
  ${/^(mv|tv|av|pv|pm)$/.test(info[3])?`<button class="fx" style="width:100%;border:0;font:inherit;text-align:left" onclick="H3.slow=true;h3Rate();h3Sub()"><div><div style="font-weight:600">▶ Watch it open and close</div><small>Slow motion · one beat</small></div></button>`:''}
  ${h3Rows(fs)}
  <div style="font-size:12.5px;color:#8E8E93;font-weight:600;margin:14px 2px 6px">OTHER PARTS</div><div class="row" style="flex-wrap:wrap;gap:6px">${others.map(c=>{const p=H3P.find(x=>x[3]===c);return`<button class="chip" onclick="h3Go('${c}')">${esc(p[1])}</button>`}).join('')}</div>
  <button class="btn pri" style="width:100%;margin-top:14px" onclick="send('ask',{q:'What does the ${esc(info[1].toLowerCase())} do, and what problems can it have?'})">${T('ask')}</button>`)}
-function h3Go(code){const l=H3L[H3.kind].find(x=>x[0]===code),o=l&&H3.nodes[l[1]];if(o)h3Pick(o)}
+function h3Go(code){const l=h3L().find(x=>x[0]===code),o=l&&H3.nodes[l[1]];if(o)h3Pick(o)}
 function h3Back(){if(!H3)return;H3.sel=null;H3.root&&H3.root.traverse(m=>{if(m.isMesh&&m.material.emissive){m.material.emissive.set(0);m.material.emissiveIntensity=0}});h3Sheet()}
 function h3Tap(x,y){if(!H3||!H3.root)return;const r=$('#gl').getBoundingClientRect(),v=new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(v,cam);
  const hits=ray.intersectObject(H3.root,true).filter(h=>h.object.visible);const o=hits.length&&h3Name(hits[0].object);if(o)h3Pick(o);else h3Back()}
 /* labels pinned to parts, projected every frame */
 function h3Labels(){const el=$('#h3tags')||(()=>{const d=document.createElement('div');d.id='h3tags';document.body.appendChild(d);return d})();
- el.innerHTML=H3L[H3.kind].filter(l=>H3.nodes[l[1]]).map(l=>`<button class="h3t" data-n="${l[1]}" onclick="h3Go('${l[0]}')"><i></i>${esc(H3P.find(p=>p[3]===l[0])[1].replace('Superior vena cava','Vena cava').replace('Coronary arteries','Coronary artery'))}</button>`).join('')}
+ el.innerHTML=h3L().filter(l=>H3.nodes[l[1]]).map(l=>`<button class="h3t" data-n="${l[1]}" onclick="h3Go('${l[0]}')"><i></i>${esc(H3P.find(p=>p[3]===l[0])[1].replace('Superior vena cava','Vena cava').replace('Coronary arteries','Coronary artery'))}</button>`).join('')}
 const _v3=new THREE.Vector3(),_b3=new THREE.Box3();
 function h3Place(){const el=$('#h3tags');if(!el)return;if(!H3||!H3.root){el.style.display='none';return}el.style.display='';const r=$('#gl').getBoundingClientRect(),cardTop=$('#card').classList.contains('on')?$('#card').getBoundingClientRect().top:r.bottom;
  const L=[];el.querySelectorAll('.h3t').forEach(b=>{const o=H3.nodes[b.dataset.n];if(!o)return;_b3.setFromObject(o);_b3.getCenter(_v3);_v3.project(cam);L.push({b,o,x:r.left+(_v3.x+1)/2*r.width,y:r.top+(1-_v3.y)/2*r.height,w:b.offsetWidth||90,ok:_v3.z<1})});
@@ -611,13 +624,11 @@ function h3Off(){document.body.classList.remove('h3');if(!H3)return;if(H3.root)b
    One body, the person's own numbers on it, one tap to understand. Views: the body (results), an organ, a report,
    a medicine. Organs a result or medicine points to show in their true colour; everything else is see-through.
    Organ models: BodyParts3D-derived set (CC BY 4.0). */
-const OGF_M={kidney:'/a/organ-kidneys.7bb47128.glb',liver:'/a/organ-liver.baeb90ee.glb',lung:'/a/organ-lungs.e83a2432.glb',stomach:'/a/organ-stomach.92a75bae.glb',gut:'/a/organ-intestines.bd95ab93.glb',pancreas:'/a/organ-pancreas.e93bc82c.glb',spleen:'/a/organ-spleen.5e8b763b.glb',bladder:'/a/organ-bladder.c868b793.glb',brain:'/a/organ-brain.f8593012.glb'};
+const OGF_M={"kidney": "/a/organ-kidneys.0b811778.glb", "liver": "/a/organ-liver.73af6ab6.glb", "lung": "/a/organ-lungs.2e2682e7.glb", "stomach": "/a/organ-stomach.42ade6ea.glb", "gut": "/a/organ-intestines.3f4ba3dc.glb", "pancreas": "/a/organ-pancreas.22a32d50.glb", "spleen": "/a/organ-spleen.5cb23154.glb", "bladder": "/a/organ-bladder.237e9554.glb", "brain": "/a/organ-brain.eaddc173.glb"};
 /* Women see the female organ set (HuBMAP female v1.5 based). It has no stomach or bladder, so those stay shared. The uterus and ovaries only ever reach this page for the woman herself (the app strips them otherwise). */
-const OGF_F={kidney:'/a/organf-kidneys.544b322b.glb',liver:'/a/organf-liver.88e341b8.glb',lung:'/a/organf-lungs.3900c916.glb',gut:'/a/organf-intestines.3135113b.glb',pancreas:'/a/organf-pancreas.81c8ce2e.glb',spleen:'/a/organf-spleen.a1228d59.glb',brain:'/a/organf-brain.83cc9b10.glb',uterus:'/a/organf-reproductive.d1713ba7.glb'};
+const OGF_F={"kidney": "/a/organf-kidneys.fee959c3.glb", "liver": "/a/organf-liver.89678007.glb", "lung": "/a/organf-lungs.0d4e52e6.glb", "gut": "/a/organf-intestines.3650a0fb.glb", "pancreas": "/a/organf-pancreas.52a92e83.glb", "spleen": "/a/organf-spleen.bcae2658.glb", "brain": "/a/organf-brain.f4399dd3.glb", "uterus": "/a/organf-reproductive.d1630a8e.glb"};
 const ogf=o=>(STATE.base==='female'&&OGF_F[o])||(o!=='uterus'&&OGF_M[o])||null;
-/* part names that are wrong or misspelt in the delivered files (reported to the artist) */
-const NAMEFIX={'Caudate nucleus':['Caudate lobe of the liver','A small lobe at the back of the liver, next to the inferior vena cava.'],'Round ligament of the uterus':['Round ligament of the liver','The remnant of the vein that fed the liver before birth; it runs in the edge of the falciform ligament.'],'Left superomedial segment1':['Liver segment (left superomedial)',''],'Jejenum':['Jejunum',''],'Ucinate process1':['Uncinate process',''],'Sphincter of heptopancreatic ampulla':['Sphincter of the hepatopancreatic ampulla',''],'Hepataduodenal ligament':['Hepatoduodenal ligament','']};
-function ogName(u){const f=NAMEFIX[u.display_name];return f?{n:f[0],d:f[1]||u.description||''}:{n:u.display_name,d:u.description||''}}
+function ogName(u){return{n:u.display_name,d:u.description||''}}
 const ORGI={heart:['Heart','Your heart','Pumps blood to every part of the body, about 100,000 times a day.'],kidney:['Kidneys','Your kidneys','Your kidneys clean waste from the blood and make urine.'],liver:['Liver','Your liver','Your liver clears toxins, stores energy and makes bile to digest fat.'],lung:['Lungs','Your lungs','Your lungs bring oxygen into the blood and breathe out carbon dioxide.'],pancreas:['Sugar & pancreas','Your pancreas','Your pancreas makes insulin, which keeps blood sugar in range.'],thyroid:['Thyroid','Your thyroid','Your thyroid sets how fast the body uses energy.'],stomach:['Stomach','Your stomach','Your stomach stores food and starts digesting it with acid.'],gut:['Intestines','Your intestines','Your intestines absorb nutrients and water from food.'],brain:['Brain','Your brain','Your brain controls thinking, movement and every other organ.'],bladder:['Bladder','Your bladder','Your bladder stores urine until you pass it.'],spleen:['Spleen','Your spleen','Your spleen filters old blood cells and helps fight infection.'],blood:['Blood','Your blood','Blood carries oxygen, fights infection and helps clotting.'],bones:['Bones','Your bones','Bones hold you up and store calcium.'],prostate:['Prostate','Your prostate','A gland below the bladder; PSA is checked to watch it.'],uterus:['Uterus & ovaries','Uterus & ovaries','The ovaries release an egg each month and make oestrogen and progesterone; the uterus is where a baby grows. Tests like FSH, LH and AMH show how the ovaries are working.']};
 const ORGN=o=>(ORGI[o]||[o])[0];
 const OGL={kidney:[[/^Right kidney( capsule)?$/,'Right kidney'],[/^Left kidney( capsule)?$/,'Left kidney'],[/^Left adrenal gland$/,'Adrenal gland'],[/^Left renal artery( \(anterior division\))?$/,'Renal artery'],[/^Left ureter$/,'Ureter']],
