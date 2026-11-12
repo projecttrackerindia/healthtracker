@@ -212,7 +212,7 @@ app.include_router(mydoctors_api.r)
 # --------------------------------------------------------------------------------------------------
 CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' blob: https://accounts.google.com https://checkout.razorpay.com https://maps.googleapis.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; "
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://accounts.google.com https://checkout.razorpay.com https://maps.googleapis.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; "
     "worker-src 'self' blob:; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; "
     "img-src 'self' data: blob: https://i.ytimg.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com; "
