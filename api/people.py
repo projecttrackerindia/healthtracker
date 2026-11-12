@@ -39,7 +39,9 @@ RANK = {"none": 0, "medid": 1, "summary": 2, "all": 3, "guardian": 4, "owner": 5
 # which level reads which kind of record; womens kinds also need the womens switch
 KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med": "all", "dose": "all",
               "preg": "summary", "kick": "summary", "cycle": "summary",
-              "activity": "summary"}   # minutes a child (or parent) logs from Move; entered by them, never tracked in the background
+              "activity": "summary",
+              "vax": "summary",      # a vaccine visit marked as given (schedule group + date)
+              "growth": "summary"}   # a height/weight/head measurement for a child   # minutes a child (or parent) logs from Move; entered by them, never tracked in the background
 WOMENS = {"preg", "kick", "cycle"}
 RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother",
              "Grandson", "Granddaughter", "Father-in-law", "Mother-in-law", "Son-in-law", "Daughter-in-law", "Brother-in-law",
@@ -547,6 +549,24 @@ def _check_record(kind: str, data: dict, day: str):
         raise HTTPException(400, "Medicine name is required")
     if kind == "preg" and data.get("stage") not in ("trying", "pregnant", "after"):
         raise HTTPException(400, "Choose a stage")
+    if kind == "vax" and not re.fullmatch(r"[a-z0-9]{1,8}", str(data.get("g", ""))):
+        raise HTTPException(400, "Choose which vaccines were given")
+    if kind == "growth":
+        ok = False
+        for k, lo, hi in (("w", 0.3, 150), ("h", 20, 220), ("hc", 20, 65)):
+            v = data.get(k)
+            if v in (None, ""):
+                continue
+            try:
+                v = float(v)
+            except (TypeError, ValueError):
+                raise HTTPException(400, "Enter numbers only")
+            if not lo <= v <= hi:
+                raise HTTPException(400, {"w": "Weight looks wrong (kg)", "h": "Height looks wrong (cm)", "hc": "Head size looks wrong (cm)"}[k])
+            data[k] = round(v, 2)
+            ok = True
+        if not ok:
+            raise HTTPException(400, "Enter a weight or a height")
 
 
 @r.get("/people/{pid}/records")

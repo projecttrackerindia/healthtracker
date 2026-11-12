@@ -1,0 +1,90 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Urban Health · Kids</title><meta name="robots" content="noindex"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>
+@font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
+:root{--ink:#1D1D1F;--sub:#3A3A3C}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:radial-gradient(90% 60% at 50% 30%,#FFFFFF 0%,#F1EEFF 55%,#E6E9FF 100%);font-family:Geist,-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.top{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 12px);display:flex;align-items:center;gap:10px;z-index:5}
+#x{width:44px;height:44px;border-radius:22px;border:0;background:rgba(255,255,255,.9);box-shadow:0 1px 4px rgba(0,0,0,.1);display:grid;place-items:center;flex:none}
+.seg{display:flex;flex:1;background:rgba(232,232,237,.85);border-radius:999px;padding:3px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.seg button{flex:1;border:0;background:none;font:600 15px Geist,-apple-system,sans-serif;color:var(--sub);min-height:38px;border-radius:999px}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.lb{position:fixed;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;background:#fff;border:0;border-radius:999px;padding:8px 13px;font:600 15px Geist,-apple-system,sans-serif;color:var(--ink);box-shadow:0 3px 12px rgba(40,30,90,.16);white-space:nowrap;z-index:3;min-height:36px;transition:opacity .2s,box-shadow .2s}
+.lb i{width:10px;height:10px;border-radius:5px;flex:none}
+.lb.on{box-shadow:0 0 0 3px currentColor,0 3px 12px rgba(40,30,90,.2)}
+.card{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);max-height:52vh;overflow-y:auto;border-radius:30px;padding:20px 20px 16px;background:rgba(255,255,255,.96);box-shadow:0 10px 36px rgba(40,30,90,.14);z-index:4}
+.card h2{font-size:30px;font-weight:700;letter-spacing:-.03em;margin:0}
+.card p{font-size:18px;line-height:1.4;margin:6px 0 0;color:var(--sub)}.card p.cr{font-size:11px;color:#8E8E93;margin:10px 0 0}
+.wow{margin-top:12px;background:#FFF6DA;border-radius:18px;padding:12px 14px;font-size:17px;line-height:1.4;color:#3A2E00}.wow b{color:#9A5B00}
+.btns{display:flex;gap:10px;margin-top:14px}
+.btns button{flex:1;height:58px;border-radius:29px;border:0;font:700 18px Geist,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
+#play{background:#E5352B;color:#fff}#fast{background:#F2F2F7;color:var(--ink)}
+#play.on{background:#1D1D1F}
+.back{border:0;background:#F2F2F7;color:#5E5CE6;font:600 15px Geist,-apple-system,sans-serif;padding:8px 14px;border-radius:999px;margin-top:12px;min-height:36px}
+.cr{font-size:11px;color:#8E8E93;margin:12px 0 0;line-height:1.4}
+#ld{position:fixed;left:50%;top:38%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(94,92,230,.18);border-top-color:#5E5CE6;animation:sp .9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#err{position:fixed;left:24px;right:24px;top:36%;text-align:center;font-size:15px;color:#6E6E73;display:none}
+</style></head><body>
+<canvas id=c></canvas><div id=ld role=status aria-label="Loading"></div><div id=err>Could not load this. Check the internet and try again.</div><div id=lbs></div>
+<div class=top><button id=x aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div class=seg role=tablist><button data-o=heart role=tab>Heart</button><button data-o=lungs role=tab>Lungs</button><button data-o=stomach role=tab>Tummy</button></div></div>
+<div class=card id=cd></div>
+<script src="/a/three.9274bbce.js"></script><script src="/a/gltfloader.5c15967b.js"></script><script src="/a/meshopt.0de67743.js"></script><script>
+/* Kids organ screen (kids demo v0.1). Tap a part or its label to learn about it; Listen plays the organ's movement with its
+   sound; "After running" plays the heart and lungs faster. Text is the artist's children's copy (to be checked by an educator). */
+const O={heart:{g:'kd-heart.6520d4fd.glb',s:'kd-heart_beat.69376950.m4a',t:'Your heart',play:'Listen',fast:1,ic:'<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#fff" d="M12 21s-7.5-4.6-10-9.3C.4 8.4 2.4 4.5 6.3 4.5c2.3 0 3.8 1.3 4.7 2.8.9-1.5 2.4-2.8 4.7-2.8 3.9 0 5.9 3.9 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>',
+  f:{little:'Your heart pumps blood all around your body.',big:['Your heart is a muscle about as big as your fist.','It beats about 100,000 times every day!','Running and playing make your heart strong.'],size:'your fist'},
+  p:{Right_Atrium:['Right top room','Blood from your body comes in here first. It is low on oxygen, so we colour it blue.','#5b8cff'],Right_Ventricle:['Right bottom room','This room pumps blue blood to your lungs to pick up oxygen.','#3a63e0'],Left_Atrium:['Left top room','Fresh red blood full of oxygen comes back from your lungs into this room.','#ff6b6b'],Left_Ventricle:['Left bottom room','The strongest room! It pumps red blood out to your whole body.','#e8364a'],Big_Blood_Tubes:['Big blood tubes','Big tubes carry blood into and out of your heart.','#b04ad6']}},
+ lungs:{g:'kd-lungs.ba9ca8bd.glb',s:'kd-lungs_breathe.ab633fe2.m4a',t:'Your lungs',play:'Breathe',fast:1,ic:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8M12 11c-2 0-3-2-5-2-2.5 0-4 4-4 8 0 2 1 3 3 3 3 0 4-2 4-5M12 11c2 0 3-2 5-2 2.5 0 4 4 4 8 0 2-1 3-3 3-3 0-4-2-4-5"/></svg>',
+  f:{little:'Your lungs fill up with air when you breathe in.',big:['Your lungs fill with air like two sponges.','You breathe in and out about 20,000 times a day.','Clean air and exercise keep your lungs healthy.'],size:'two big pears'},
+  p:{Right_Lung:['Right lung','Your right lung has three parts. It fills with air like a sponge.','#ff7fa3'],Left_Lung:['Left lung','Your left lung is a bit smaller, to make room for your heart.','#ff9ec0'],Windpipe:['Windpipe','Air travels down this tube and splits into two, one for each lung.','#3fb6d0']}},
+ stomach:{g:'kd-stomach.b7e9c5c4.glb',s:'kd-stomach_gulp_rumble.27f154fc.m4a',t:'Your tummy',play:'Gulp',fast:0,ic:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M9 3v5c0 2-3 3-3 7a6 6 0 0 0 12 0c0-3-2-4-4-4s-3 1-3 3"/></svg>',
+  f:{little:'Your stomach mashes your food into a soup.',big:['An empty stomach is about as big as your fist, and it stretches when you eat.','Food stays in your stomach for about 2 to 4 hours.','Chewing well and eating fruit and vegetables help your tummy.'],size:'your fist'},
+  p:{Food_Pipe:['Food pipe','When you swallow, this tube squeezes your food down to your stomach.','#e8a21c'],Stomach:['Stomach','Your stomach squishes food with strong juices until it is like a soup.','#ff8a1f'],Small_Intestine_Start:['Small intestine','The food soup moves on into this tube, the start of your small intestine.','#ff5f8f']}}};
+const $=id=>document.getElementById(id),Q=new URLSearchParams(location.search),AGE=+Q.get('a')||6,esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const R=new THREE.WebGLRenderer({canvas:$('c'),antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.1;
+const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(26,1,.001,50);
+S.add(new THREE.HemisphereLight(0xffffff,0x9a90c0,.9));{const k=new THREE.DirectionalLight(0xffffff,1.1);k.position.set(3,5,7);S.add(k);const f=new THREE.DirectionalLight(0xf0e8ff,.5);f.position.set(-6,1,4);S.add(f)}
+const piv=new THREE.Group();S.add(piv);const L=new THREE.GLTFLoader();const ready=(async()=>{if(window.MeshoptDecoder){await MeshoptDecoder.ready;L.setMeshoptDecoder(MeshoptDecoder)}})();
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;let org=null,cur=null,mix=null,act=null,au=null,sel=null,rotY=0,goalY=0,drag=null,fitR=1,labels=[],playing=0;
+const CACHE={};const load=o=>CACHE[o]||(CACHE[o]=ready.then(()=>new Promise((res,rej)=>L.load('/a/'+O[o].g,res,undefined,rej))).catch(e=>{delete CACHE[o];throw e}));
+function card(){const o=O[org];if(sel){const p=o.p[sel];$('cd').innerHTML=`<h2 style="color:${p[2]}">${esc(p[0])}</h2><p>${esc(p[1])}</p><button class=back id=bk>‹ ${esc(o.t)}</button>`;$('bk').onclick=()=>pick(null);return}
+ const f=o.f;$('cd').innerHTML=`<h2>${esc(o.t)}</h2><p>${esc(f.little)} It is about as big as ${esc(f.size)}.</p><div class=wow><b>Wow!</b> ${esc(f.big[1])}</div>${AGE>=7?`<p style="font-size:16px">${esc(f.big[2])}</p>`:''}
+ <div class=btns><button id=play>${o.ic}<span>${o.play}</span></button>${o.fast?'<button id=fast>After running</button>':''}</div><p class=cr>Tap a coloured part to learn more · Shapes from BodyParts3D, CC BY 4.0</p>`;
+ $('play').onclick=()=>playing?stop():play(1);if($('fast'))$('fast').onclick=()=>play(1.6);if(playing)setBtn()}
+function setBtn(){const b=$('play');if(!b)return;b.classList.toggle('on',!!playing);b.lastChild.textContent=playing?'Stop':O[org].play}
+function stop(){playing=0;if(act)act.stop();if(au){au.pause();au.currentTime=0}setBtn()}
+function play(rate){stop();if(!cur)return;const clip=cur.animations[0];if(clip&&!still){act=mix.clipAction(clip);act.reset();act.setLoop(THREE.LoopOnce);act.clampWhenFinished=false;act.timeScale=rate;act.play()}
+ try{au=au&&au.dataset.o===org?au:Object.assign(new Audio('/a/'+O[org].s),{preload:'auto'});au.dataset.o=org;au.playbackRate=rate;if('preservesPitch' in au)au.preservesPitch=false;au.currentTime=0;au.play().catch(()=>{})}catch(_){}
+ playing=1;setBtn();const dur=Math.max(clip?clip.duration:0,au&&au.duration||0)/rate;clearTimeout(play.t);play.t=setTimeout(()=>{if(playing){playing=0;setBtn()}},dur*1000+300)}
+function pick(n){sel=n;labels.forEach(l=>l.el.classList.toggle('on',l.n===n));cur&&cur.scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive){let q=o;while(q&&!O[org].p[q.name])q=q.parent;o.material.emissive.setHex(n&&q&&q.name===n?0x2a2a2a:0)}});card()}
+async function show(o){if(o===org)return;stop();org=o;sel=null;document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.o===o));card();$('lbs').innerHTML='';labels=[];
+ const t=setTimeout(()=>$('ld').style.display='block',200);let g;try{g=await load(o)}catch(e){clearTimeout(t);$('ld').style.display='none';$('err').style.display='block';return}clearTimeout(t);$('ld').style.display='none';$('err').style.display='none';if(org!==o)return;
+ if(cur)piv.remove(cur.scene);const sc=g.scene;sc.position.set(0,0,0);sc.traverse(m=>{if(m.isMesh){m.frustumCulled=false;if(!m.userData.own){m.material=m.material.clone();m.userData.own=1}}});sc.updateMatrixWorld(true);
+ const b=new THREE.Box3().setFromObject(sc),ctr=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3());fitR=Math.max(sz.x,sz.y,sz.z)*.5;sc.position.sub(ctr);piv.add(sc);cur=g;mix=new THREE.AnimationMixer(sc);
+ Object.entries(O[o].p).forEach(([n,p])=>{const nd=sc.getObjectByName(n);if(!nd)return;const an=nd.userData&&nd.userData.label_anchor;const v=an?new THREE.Vector3(...an):new THREE.Box3().setFromObject(nd).getCenter(new THREE.Vector3());
+  const el=document.createElement('button');el.className='lb';el.style.color=p[2];el.innerHTML=`<i style="background:${p[2]}"></i><span style="color:#1D1D1F">${esc(p[0])}</span>`;el.onclick=()=>pick(sel===n?null:n);$('lbs').appendChild(el);labels.push({n,el,v,nd})});
+ goalY=rotY=0;frame()}
+function frame(){const a=innerWidth/innerHeight,top=80,bot=$('cd').offsetHeight+20,hv=innerHeight-top-bot,fov=C.fov*Math.PI/180;
+ const need=Math.max(fitR/Math.tan(fov/2)*(innerHeight/Math.max(hv,150)),fitR/(Math.tan(fov/2)*a)*1.2)*.92;const shift=((bot-top)/2)/innerHeight*2*Math.tan(fov/2)*need;
+ C.position.set(0,-shift,need);C.lookAt(0,-shift,0);C.near=need/50;C.far=need*10;C.updateProjectionMatrix()}
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>show(b.dataset.o));
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),cv=$('c');
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,r:goalY,m:0};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x;drag.m=Math.max(drag.m,Math.abs(dx)+Math.abs(e.clientY-drag.y));goalY=drag.r+dx*.012});
+cv.addEventListener('pointerup',e=>{const d=drag;drag=null;if(!d||d.m>8||!cur)return;ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(ndc,C);
+ const h=ray.intersectObject(cur.scene,true)[0];let o=h&&h.object;while(o&&!O[org].p[o.name])o=o.parent;pick(o?o.name:null)});
+function resize(){R.setSize(innerWidth,innerHeight,false);C.aspect=innerWidth/innerHeight;if(cur)frame()}addEventListener('resize',resize);new ResizeObserver(()=>cur&&frame()).observe($('cd'));
+const clock=new THREE.Clock(),tmp=new THREE.Vector3();(function loop(){const dt=Math.min(clock.getDelta(),.05);if(!drag&&!still&&!sel)goalY+=dt*.18;rotY+=(goalY-rotY)*Math.min(1,dt*8);piv.rotation.y=rotY;if(mix)mix.update(dt);R.render(S,C);
+ const cb=innerHeight-$('cd').offsetHeight-14;
+ /* labels sit on their part; when two would overlap they are nudged apart so every name stays readable and tappable */
+ const ps=labels.map(l=>{tmp.copy(l.v);cur.scene.localToWorld(tmp);const front=tmp.clone().applyMatrix4(C.matrixWorldInverse).z;tmp.project(C);const w=l.el.offsetWidth/2+8;return{l,w:l.el.offsetWidth,h:l.el.offsetHeight||36,x:Math.max(w,Math.min(innerWidth-w,(tmp.x+1)/2*innerWidth)),y:(1-tmp.y)/2*innerHeight,front}});
+ for(let it=0;it<6;it++)for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const a=ps[i],b=ps[j],ox=(a.w+b.w)/2+6-Math.abs(a.x-b.x),oy=(a.h+b.h)/2+6-Math.abs(a.y-b.y);if(ox>0&&oy>0){const d=oy/2*(a.y<=b.y?1:-1);a.y-=d;b.y+=d}}
+ ps.forEach(p=>{const l=p.l,y=p.y,hide=y>cb-10||y<70||p.front>0;if(l.y==null)l.y=y;l.y+=(y-l.y)*.35;l.el.style.opacity=hide?0:1;l.el.style.pointerEvents=hide?'none':'auto';l.el.style.transform=`translate(${p.x}px,${l.y}px) translate(-50%,-50%)`});
+ requestAnimationFrame(loop)})();
+const send=(a,x={})=>parent.postMessage({type:'uh-kid',act:a,...x},location.origin);$('x').onclick=()=>{stop();send('close')};
+{let la=0;const ac=()=>{const n=Date.now();if(n-la<4000)return;la=n;try{parent!==window&&parent.postMessage({type:'uh-active'},location.origin)}catch(_){}};['pointerdown','touchstart'].forEach(k=>addEventListener(k,ac,{capture:true,passive:true}))}
+resize();show(O[Q.get('o')]?Q.get('o'):'heart');
+</script></body></html>

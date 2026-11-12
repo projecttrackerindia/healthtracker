@@ -551,6 +551,14 @@ def baby_page(request: Request):
     return resp
 
 
+@app.api_route("/kid", methods=["GET", "HEAD"], include_in_schema=False)
+def kid_page(request: Request):
+    """Kids mode: the child's own organ screen (heart, lungs, tummy). Framed only by the app itself."""
+    resp = _send(WEB / "kid.html", request, "no-cache")
+    resp.headers["Content-Security-Policy"] = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+    return resp
+
+
 @app.api_route("/body", methods=["GET", "HEAD"], include_in_schema=False)
 def body_page(request: Request):
     """The full-screen 3D body. The app opens it in a frame and hands it the person's data by postMessage."""

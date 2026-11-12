@@ -363,7 +363,16 @@ def check_code(db: Session, target: str, purpose: str, code: str) -> bool:
 
 
 def verify_code(db: Session, target: str, purpose: str, body: "FlowCode") -> bool:
-    """A 6-digit code of ours, or — for a mobile number when Firebase is the SMS channel — a Firebase ID token that certifies that number."""
+    """A 6-digit code of ours, or — for a mobile number when Firebase is the SMS channel — a Firebase ID token that certifies that number,
+    or a reverse SMS: a text with a one-use phrase that arrived from this very number (see rsms_* below)."""
+    if body.rsms:
+        rf = db.get(AuthFlow, body.rsms)
+        if not rf or rf.kind != "rsms" or rf.expires < now() or (rf.data or {}).get("target") != target or (rf.data or {}).get("purpose") != purpose:
+            raise HTTPException(400, "This step has expired. Send a new text.")
+        if (rf.data or {}).get("state") != "ok":
+            raise HTTPException(400, "Your text has not arrived yet. Send it, then wait a few seconds.")
+        db.delete(rf)   # one use only
+        return True
     if body.firebaseToken and target.startswith("+") and messaging.sms_mode() == "firebase":
         c = db.scalar(select(OtpCode).where(OtpCode.target == target, OtpCode.purpose == purpose, OtpCode.used == False).order_by(OtpCode.created.desc()))  # noqa: E712
         if not c or c.expires < now():
@@ -389,7 +398,7 @@ def masked(kind: str, v: str) -> str:
 def config(request: Request):
     host, origin = rp(request)
     return {"passkeys": True, "email": messaging.email_ready(), "sms": messaging.sms_ready(), "demo": messaging.demo(), "rpId": host,
-            "policy": {"min": 12, "max": 128}, "firebase": messaging.firebase_web_config(), "google": os.getenv("GOOGLE_CLIENT_ID", "") or None}
+            "policy": {"min": 12, "max": 128}, "rsms": rsms_ready(), "firebase": messaging.firebase_web_config(), "google": os.getenv("GOOGLE_CLIENT_ID", "") or None}
 
 
 @r.get("/me")
@@ -423,6 +432,7 @@ class Signup(BaseModel):
     password: str
     terms: bool = False
     verify: str = "otp"   # otp: mobile one-time code · aadhaar: identity through DigiLocker (name and date of birth come from Aadhaar)
+    method: str = "code"  # code · rsms: the mobile is verified by a text the person sends us
 
 
 @r.post("/signup/start", dependencies=[Depends(csrf)])
@@ -455,8 +465,9 @@ def signup_start(body: Signup, request: Request, db: Session = Depends(get_db)):
         if not dl_enabled():
             raise HTTPException(400, "Aadhaar verification through DigiLocker opens soon; please verify your mobile number by OTP for now.")
     kind, target = ("email", email) if email and (messaging.email_ready() or messaging.demo() or not phone) else ("phone", phone)
-    f = new_flow(db, "signup", 15, data={"name": name, "email": email, "phone": phone, "pw": passwords.hash_pw(body.password), "kind": kind, "target": target, "verify": verify})
-    out = send_code(request, db, target, kind, "signup")
+    method = "rsms" if body.method == "rsms" and rsms_ready() else "code"
+    f = new_flow(db, "signup", 15, data={"name": name, "email": email, "phone": phone, "pw": passwords.hash_pw(body.password), "kind": kind, "target": target, "verify": verify, "method": method})
+    out = {"rsms": True} if kind == "phone" and method == "rsms" else send_code(request, db, target, kind, "signup")
     return {"flow": f.id, "sentTo": masked(kind, target), "channel": kind, **out}
 
 
@@ -464,6 +475,7 @@ class FlowCode(BaseModel):
     flow: str
     code: str = ""
     firebaseToken: str = ""   # Firebase Phone Authentication: the browser's ID token stands in for the code
+    rsms: str = ""            # reverse SMS: the id of a verified text the person sent us from this number
 
 
 @r.post("/signup/verify", dependencies=[Depends(csrf)])
@@ -492,7 +504,7 @@ def signup_verify(body: FlowCode, request: Request, response: Response, db: Sess
     if other and (messaging.demo() or (messaging.sms_ready() if other_kind == "phone" else messaging.email_ready())):
         try:
             cf = new_flow(db, "contact", 10, user_id=u.id, data={"kind": other_kind, "target": other})
-            sent = send_code(request, db, other, other_kind, "contact")
+            sent = {"rsms": True} if other_kind == "phone" and d.get("method") == "rsms" and rsms_ready() else send_code(request, db, other, other_kind, "contact")
             out["verifyNext"] = {"flow": cf.id, "channel": other_kind, "sentTo": masked(other_kind, other), **sent}
         except HTTPException:
             pass  # rate-limited or provider down: the app offers verification from the account page instead
@@ -558,6 +570,7 @@ def step_verify(body: FlowCode, request: Request, response: Response, db: Sessio
 
 # ---- one-time code sign-in and password reset ------------------------------------------------------------------------
 class OtpStart(BaseModel):
+    method: str = "code"   # code · rsms (no code is sent: the person sends us a text)
     id: str
     purpose: str = "signin"  # signin | reset
 
@@ -573,7 +586,9 @@ def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(423, f"This {'email' if kind == 'email' else 'mobile number'} was added to the account less than 24 hours ago, so it cannot reset the password until {until}. Use your other email or mobile.")
     f = new_flow(db, "otp", 10, user_id=u.id if u else "", data={"kind": kind, "target": target, "purpose": purpose})
     out = {}
-    if u and not u.disabled:
+    if kind == "phone" and body.method == "rsms" and rsms_ready():
+        out = {"rsms": True}   # same answer whether or not the account exists
+    elif u and not u.disabled:
         out = send_code(request, db, target, kind, purpose)
     elif not (messaging.email_ready() if kind == "email" else messaging.sms_ready()) and not messaging.demo():
         raise HTTPException(503, ("Email" if kind == "email" else "SMS") + " codes are not set up on this server yet. Use a passkey or password.")
@@ -588,6 +603,9 @@ def otp_verify(body: FlowCode, request: Request, response: Response, db: Session
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "otp")
     if not f.user_id:
+        if body.rsms:
+            verify_code(db, f.data["target"], f.data["purpose"], body)
+            raise HTTPException(404, "No account uses this number yet. Create one to continue.")
         raise HTTPException(400, "That code is not right. 4 attempts left.")
     d = f.data
     verify_code(db, d["target"], d["purpose"], body)
@@ -839,6 +857,7 @@ def profile(body: Profile, u: User = Depends(need_user)):
 # ---- add or verify an email / mobile on the signed-in account (verified badge) --------------------------------------
 class ContactStart(BaseModel):
     value: str
+    method: str = "code"
 
 
 @r.post("/contact/start", dependencies=[Depends(csrf)])
@@ -851,7 +870,7 @@ def contact_start(body: ContactStart, request: Request, db: Session = Depends(ge
     if other:
         raise HTTPException(409, "This " + ("email" if kind == "email" else "mobile number") + " is linked to another account.")
     f = new_flow(db, "contact", 10, user_id=u.id, data={"kind": kind, "target": target})
-    out = send_code(request, db, target, kind, "contact")
+    out = {"rsms": True} if kind == "phone" and body.method == "rsms" and rsms_ready() else send_code(request, db, target, kind, "contact")
     return {"flow": f.id, "sentTo": masked(kind, target), "channel": kind, **out}
 
 
@@ -1038,3 +1057,158 @@ def google_signin(body: GoogleIn, request: Request, response: Response, db: Sess
         new = True
     out = start_session(request, response, db, u, "google")
     return {**out, "new": new}
+
+
+# ---- reverse SMS ------------------------------------------------------------------------------------------------------
+# Instead of us texting a code, the person texts us. Their Messages app opens with our number and a one-use phrase
+# (UH-4F7K2Q) already filled in; they tap Send. The SMS provider (or, for testing, a phone forwarding its texts) posts
+# the text to /rsms/inbound with a shared secret. A text proves the number when its phrase matches a live attempt AND it
+# came from the number the person typed. The verify endpoints above then accept {rsms: id} in place of a code, once.
+#   REVERSE_SMS_NUMBER  the number people text (E.164, e.g. +919876543210)
+#   REVERSE_SMS_SECRET  shared secret the forwarder sends (header X-UH-Key, or ?key=)
+RSMS_ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"   # no 0/O, 1/I/L
+RSMS_RE = re.compile(r"\bUH-([A-Z2-9]{6})\b", re.I)
+
+
+def rsms_number() -> str:
+    n = re.sub(r"[\s()-]", "", os.getenv("REVERSE_SMS_NUMBER", ""))
+    if re.fullmatch(r"[6-9]\d{9}", n):
+        n = "+91" + n
+    return n if re.fullmatch(r"\+\d{10,15}", n) else ""
+
+
+def rsms_ready() -> bool:
+    return bool(rsms_number() and os.getenv("REVERSE_SMS_SECRET", ""))
+
+
+def _rsms_hash(tok: str) -> str:
+    return hashlib.sha256(("rsms:" + tok.upper() + ":" + SECRET).encode()).hexdigest()
+
+
+_PARENT = {"otp": ("otp", None), "signup": ("signup", "signup"), "contact": ("contact", "contact")}
+
+
+class RsmsStart(BaseModel):
+    flow: str
+    kind: str   # otp | signup | contact: the step this text proves the number for
+
+
+@r.post("/rsms/start", dependencies=[Depends(csrf)])
+def rsms_start(body: RsmsStart, request: Request, db: Session = Depends(get_db)):
+    limit(request, "rsms", 12, 600)
+    if body.kind not in _PARENT:
+        raise HTTPException(400, "This step has expired. Please start again.")
+    if not rsms_ready():
+        raise HTTPException(503, "Verifying by text is not set up yet. Get a code instead.")
+    pf = get_flow(db, body.flow, _PARENT[body.kind][0])
+    d = pf.data or {}
+    if d.get("kind") != "phone":
+        raise HTTPException(400, "Texts can only verify a mobile number.")
+    purpose = d.get("purpose") or _PARENT[body.kind][1]
+    # one live text per step: a new one replaces the old
+    for old in db.scalars(select(AuthFlow).where(AuthFlow.kind == "rsms")):
+        if (old.data or {}).get("parent") == pf.id:
+            db.delete(old)
+    tok = "".join(secrets.choice(RSMS_ALPHA) for _ in range(6))
+    f = new_flow(db, "rsms", 10, challenge=_rsms_hash(tok), user_id=pf.user_id or "",
+                 data={"parent": pf.id, "target": d["target"], "purpose": purpose, "state": "pending"})
+    to = rsms_number()
+    text = f"Urban Health sign-in UH-{tok}. Sending this text confirms this number is mine."
+    from urllib.parse import quote
+    uri = f"sms:{to}?&body={quote(text)}"
+    f.data = {**f.data, "uri": uri}
+    return {"id": f.id, "to": to, "toShown": to[:3] + " " + to[3:8] + " " + to[8:], "text": text, "phrase": "UH-" + tok,
+            "uri": uri, "expires": 600}
+
+
+@r.get("/rsms/status")
+def rsms_status(id: str, request: Request, db: Session = Depends(get_db)):
+    limit(request, "rsmsstat", 400, 600)
+    f = db.get(AuthFlow, id or "")
+    if not f or f.kind != "rsms":
+        return {"state": "gone"}
+    if f.expires < now():
+        return {"state": "expired"}
+    d = f.data or {}
+    return {"state": d.get("state", "pending"), **({"from": d["fromShown"]} if d.get("fromShown") else {})}
+
+
+@r.get("/rsms/qr.svg")
+def rsms_qr(id: str, db: Session = Depends(get_db)):
+    """For a computer: a QR the phone scans to open the same ready-made text."""
+    import io
+    import qrcode
+    import qrcode.image.svg
+    f = db.get(AuthFlow, id or "")
+    if not f or f.kind != "rsms" or f.expires < now() or not (f.data or {}).get("uri"):
+        raise HTTPException(404, "This text has expired. Start again.")
+    img = qrcode.make(f.data["uri"], image_factory=qrcode.image.svg.SvgPathImage, box_size=10, border=1)
+    b = io.BytesIO()
+    img.save(b)
+    return Response(b.getvalue(), media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+
+
+async def _inbound_fields(request: Request) -> tuple[str, str, str]:
+    q = request.query_params
+    data: dict = {}
+    ct = request.headers.get("content-type", "")
+    try:
+        if "json" in ct:
+            data = await request.json()
+        elif "form" in ct:
+            data = dict(await request.form())
+        else:
+            raw = (await request.body()).decode("utf-8", "ignore")
+            data = json.loads(raw) if raw.strip().startswith("{") else {"text": raw}
+    except Exception:
+        data = {}
+    pick = lambda *ks: next((str(data.get(k) or q.get(k) or "") for k in ks if (data.get(k) or q.get(k))), "")
+    key = request.headers.get("x-uh-key", "") or pick("key", "secret")
+    return key, pick("from", "sender", "msisdn", "mobile", "From", "number"), pick("text", "message", "body", "content", "Body", "msg")
+
+
+@r.api_route("/rsms/inbound", methods=["POST", "GET"])
+async def rsms_inbound(request: Request, db: Session = Depends(get_db)):
+    """Called by the SMS provider (or a forwarding phone) for every text that reaches REVERSE_SMS_NUMBER."""
+    limit(request, "rsmsin", 600, 600)
+    key, sender, text = await _inbound_fields(request)
+    secret = os.getenv("REVERSE_SMS_SECRET", "")
+    if not secret or not hmac.compare_digest(key.encode(), secret.encode()):
+        raise HTTPException(401, "Not allowed")
+    m = RSMS_RE.search(text or "")
+    if not m:
+        return {"ok": False, "why": "no phrase"}
+    f = db.scalar(select(AuthFlow).where(AuthFlow.kind == "rsms", AuthFlow.challenge == _rsms_hash(m.group(1))))
+    if not f or f.expires < now() or (f.data or {}).get("state") == "ok":
+        return {"ok": False, "why": "unknown or expired"}
+    try:
+        _, frm = norm_id(re.sub(r"[^\d+]", "", sender))
+    except HTTPException:
+        frm = ""
+    d = dict(f.data or {})
+    if frm and frm == d.get("target"):
+        d["state"] = "ok"
+    else:
+        d["state"], d["fromShown"] = "mismatch", (masked("phone", frm) if frm else "an unknown number")
+    f.data = d
+    return {"ok": d["state"] == "ok"}
+
+
+class CodeSend(BaseModel):
+    flow: str
+    kind: str   # otp | signup | contact
+
+
+@r.post("/code/send", dependencies=[Depends(csrf)])
+def code_send(body: CodeSend, request: Request, db: Session = Depends(get_db)):
+    """Send (or resend) the 6-digit code for a step already started: "Resend code" and "Get a code instead"."""
+    limit(request, "otp", 10, 600)
+    if body.kind not in _PARENT:
+        raise HTTPException(400, "This step has expired. Please start again.")
+    pf = get_flow(db, body.flow, _PARENT[body.kind][0])
+    d = pf.data or {}
+    purpose = d.get("purpose") or _PARENT[body.kind][1]
+    if body.kind == "otp" and not pf.user_id:
+        return {"sentTo": masked(d["kind"], d["target"]), "channel": d["kind"]}   # same answer whether or not the account exists
+    out = send_code(request, db, d["target"], d["kind"], purpose)
+    return {"sentTo": masked(d["kind"], d["target"]), "channel": d["kind"], **out}
