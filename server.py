@@ -493,6 +493,14 @@ LEGAL = {
 }
 
 
+# The new website, reviewed at a private address before it replaces "/". Never indexed.
+@app.api_route("/preview", methods=["GET", "HEAD"], include_in_schema=False)
+def site_preview(request: Request):
+    r = _send(SITE / "preview" / "index.html", request, "no-cache")
+    r.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return r
+
+
 @app.api_route("/privacy", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/terms", methods=["GET", "HEAD"], include_in_schema=False)
 def legal_page(request: Request):
