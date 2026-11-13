@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,shrink-to-fit=no,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F5F5F7">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -442,7 +442,11 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;-webkit-te
 .tab{min-width:0}.tab span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:400px){.tab{font-size:9.5px}.tabs{padding:3px}.orb{width:58px;height:58px}}
 @media (max-width:700px){input,select,textarea{font-size:16px!important}}
-.page,.sheetx .sh,#layer{max-width:100vw;overflow-x:hidden}
+.page,.sheetx .sh,/* Every page lives inside one fixed, clipped, full-screen frame. Whatever slides off the right edge (a page
+   leaving, a swipe-back) is cut off here, so iPhone Safari never sees content wider than the screen and never
+   zooms the whole view out mid-transition (the "squeezed Settings with Today beside it" frame). */
+#layer{position:fixed;inset:0;z-index:45;overflow:hidden;contain:strict;pointer-events:none}#layer:empty{display:none}
+#layer>*{pointer-events:auto}
 .pwr{margin:8px 4px 0;display:flex;flex-direction:column;gap:5px}.pwi{display:flex;gap:8px;align-items:center;font-size:13.5px;color:#86868B}.pwi span{width:18px;height:18px;border-radius:9px;border:1.5px solid #C7C7CC;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}.pwi.py{color:#1A7F37}.pwi.py span{background:#34C759;border-color:#34C759}.pwi.pn{color:#C4291C}.pwi.pn span{background:#FF3B30;border-color:#FF3B30}.pwmx{display:flex;gap:5px;margin:2px 0 4px}.pwm i{flex:1;height:5px;border-radius:3px}
 /* the sheet scrolls inside, so its Save button can always be reached; the header stays put */
 .sheetx .sh>:not(.hd){overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
@@ -466,7 +470,7 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;-webkit-te
 .wheels::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(#fff,rgba(255,255,255,0) 35%,rgba(255,255,255,0) 65%,#fff)}
 .wheel{position:relative;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;padding:88px 0;text-align:center}.wheel::-webkit-scrollbar{display:none}
 .wheel div{height:44px;line-height:44px;scroll-snap-align:center;font-size:19px;color:var(--ink)}
-.page.still{animation:none}
+.page.still,.page.still *,.page.pop *{animation:none!important}
 @media (min-width:980px){#aitop,#bell,#who{position:fixed!important;top:16px!important;margin:0!important}#aitop{right:132px!important}#bell{right:76px!important}#who{right:20px!important}}
 /* Desktop, in the same language as the approved phone prototype:
    Home = the body in a rounded card on the left, the day's cards on the right, the bar and SOS under the card;
@@ -563,14 +567,15 @@ body.lossfade #bg{transition:background .6s}
 @keyframes push{from{transform:translate3d(100%,0,0)}to{transform:none}}@keyframes popin{from{transform:translate3d(-24%,0,0)}to{transform:none}}
 /* Pages are solid sheets that move, never fade: nothing underneath shows through mid-move, and the width is pinned so
    iPhone Safari cannot reflow the text (wrapping, cut-off names) while a page slides or follows a swipe. */
-.page{opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden;contain:layout paint style;will-change:transform}
-@media (max-width:979px){.page{left:0;right:0;width:100vw;max-width:100vw;box-shadow:-10px 0 30px rgba(0,0,0,.10)}
+.page{opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+@media (max-width:979px){.page{left:0;right:0;box-shadow:-10px 0 30px rgba(0,0,0,.10)}
  .page:not(.push):not(.pop):not(.still):not(.auth){animation:pgin .4s cubic-bezier(.2,.8,.2,1) both}
  .page.auth{animation:fade .2s both;box-shadow:none}}
 @keyframes pgin{from{transform:translate3d(100%,0,0)}to{transform:none}}
 .page.leaving{transition:transform .3s cubic-bezier(.2,.8,.2,1)!important;transform:translate3d(100%,0,0)!important;animation:none!important}
-body.navpop .page *{animation:none!important}.pgghost{position:fixed;inset:0;background:#F2F2F7;overflow:hidden;pointer-events:none;box-shadow:-10px 0 30px rgba(0,0,0,.12)}
-#pgdim{position:fixed;inset:0;z-index:45;background:#000;opacity:0;pointer-events:none;transition:opacity .3s}
+body.navpop .page *{animation:none!important}.pgghost{position:absolute!important;inset:0;background:#F2F2F7;overflow:hidden;pointer-events:none!important;box-shadow:-10px 0 30px rgba(0,0,0,.12)}
+.pgdim2{position:absolute;inset:0;z-index:2;background:rgba(0,0,0,.10);opacity:1;transition:opacity .34s;pointer-events:none!important}
+#pgdim{position:absolute;inset:0;z-index:1;background:#000;opacity:0;pointer-events:none;transition:opacity .3s}
 .pbar{display:flex;align-items:center;justify-content:space-between}.pnav{border:0;background:none;color:var(--blue);font:600 17px var(--font,-apple-system),sans-serif;height:44px;padding:0 8px}.pnav:disabled{opacity:.4}
 .btn.navd{display:none!important}
 .sheetx .hd [data-ok].on{font-weight:600}.sheetx .hd [data-ok]:disabled{opacity:.4}
@@ -2643,7 +2648,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r97';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r98';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
@@ -2707,19 +2712,23 @@ function enhance(root){root=root||document;
 // FormData reads the 10 digits; give the server +91 so every stored number has one format
 (()=>{const G=FormData.prototype.get;FormData.prototype.get=function(k){const v=G.call(this,k);if(k==='phone'&&typeof v==='string'&&/^[6-9][0-9]{9}$/.test(v))return'+91'+v;return v}})();
 new MutationObserver(()=>enhance(document)).observe(document.documentElement,{childList:true,subtree:true});
-function layer(html){$('#layer').innerHTML=`<div class="scrim" onclick="closeL()"></div>${html}`}
-function closeL(){$('#layer').innerHTML='';NAV.length=0}
+function layer(html){const L=$('#layer'),keep=[...L.querySelectorAll(':scope>.pgghost,:scope>.pgdim2')];L.innerHTML=`<div class="scrim" onclick="closeL()"></div>${html}`;keep.forEach(n=>L.appendChild(n))}
+function closeL(){const L=$('#layer');[...L.children].forEach(c=>{if(!c.classList.contains('pgghost')&&!c.classList.contains('pgdim2'))c.remove()});NAV.length=0}
 /* Strict back navigation: every page opened from another page goes back to that page, not to the home screen. */
 const NAV=[];let NAVCTX=null,NAVPENDING=false;
-function navBackAnim(){const pg=$('#layer .page');if(!pg||innerWidth>=980||NAV.length<1||matchMedia('(prefers-reduced-motion: reduce)').matches)return navBack();
+function navBackAnim(){const pg=$('#layer .page');if(!pg||innerWidth>=980||matchMedia('(prefers-reduced-motion: reduce)').matches)return navBack();
  if(document.querySelector('.pgghost'))return;
- /* Like iOS: the page underneath is already there, whole and still; the current page slides off on top of it. */
- const g=pg.cloneNode(true),y=pg.scrollTop;g.classList.add('pgghost');g.classList.remove('push','pop');g.style.cssText+=`;z-index:46;width:${innerWidth}px;animation:none;transform:none`;document.body.appendChild(g);g.scrollTop=y;
+ /* Like iOS: the page underneath is already there, whole and still; the current page slides off on top of it.
+    Going back to Today works the same way, so nothing ever just vanishes. */
+ const g=pg.cloneNode(true),y=pg.scrollTop,L=$('#layer');g.classList.add('pgghost');g.classList.remove('push','pop');g.style.cssText+=';z-index:3;animation:none;transform:none';
  document.body.classList.add('navpop');NAVSYS=Date.now();navBack();
- const d=pgDim();d.style.transition='none';d.style.opacity='.12';
- requestAnimationFrame(()=>requestAnimationFrame(()=>{g.style.transition='transform .32s cubic-bezier(.2,.8,.2,1)';g.style.transform='translate3d(100%,0,0)';d.style.transition='opacity .32s';d.style.opacity='0'}));
- setTimeout(()=>{g.remove();document.body.classList.remove('navpop')},360)}
-function pgDim(){let d=document.getElementById('pgdim');if(!d){d=document.createElement('div');d.id='pgdim';document.body.appendChild(d)}return d}
+ const host=$('#layer');host.appendChild(g);g.scrollTop=y;
+ const d=document.createElement('div');d.className='pgdim2';host.insertBefore(d,g);
+ // Web Animations, not a CSS transition: it starts on this frame even while the page underneath is still drawing.
+ const ez='cubic-bezier(.2,.8,.2,1)',a=g.animate([{transform:'translate3d(0,0,0)'},{transform:'translate3d(100%,0,0)'}],{duration:340,easing:ez,fill:'forwards'});
+ d.style.transition='none';d.animate([{opacity:1},{opacity:0}],{duration:340,easing:ez,fill:'forwards'});
+ const done=()=>{g.remove();d.remove();document.body.classList.remove('navpop')};a.onfinish=done;setTimeout(done,600)}
+function pgDim(){let d=document.getElementById('pgdim');if(!d){d=document.createElement('div');d.id='pgdim'}const L=$('#layer'),pg=L&&L.querySelector('.page');if(L&&pg&&d.parentNode!==L)L.insertBefore(d,pg);return d}
 function navBack(){NAV.pop();const prev=NAV[NAV.length-1];if(!prev)return closeL();NAVPENDING=true;NAVCTX={fn:prev.fn,args:prev.args};prev.fn.apply(null,prev.args)}
 /* the system back (iOS edge swipe) already animates; drawing our own slide on top left the page half-drawn, so it lands still */
 /* iPhone: the system edge-swipe replays history with its own snapshot, which left pages half-drawn. On iOS the app keeps
