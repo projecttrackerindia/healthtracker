@@ -45,7 +45,9 @@ def test_video_consult_end_to_end():
     hid, uid, d = hospital_with_doctor(a)
     # the family sees no doctors until the registration is verified
     assert f.get(f"/api/v1/doctors?store={hid}").json() == {"doctors": [], "video": False}
-    assert a.post(f"/api/admin/stores/{hid}/users/{uid}/verify", json={"verified": True}).json()["verified"] is True
+    # two different admins approve the registration (maker-checker)
+    assert a.post(f"/api/admin/stores/{hid}/users/{uid}/verify", json={"verified": True}).json()["verified"] is False
+    assert admin().post(f"/api/admin/stores/{hid}/users/{uid}/verify", json={"verified": True}).json()["verified"] is True
     docs = f.get(f"/api/v1/doctors?store={hid}").json()
     assert docs["video"] and docs["doctors"][0]["name"] == "Meera Rao" and docs["doctors"][0]["regNo"] == "TSMC-45678"
     # request a video visit, the hospital confirms it
@@ -420,6 +422,7 @@ def test_loops_close_on_their_own_plan_expiry_stale_calls_and_alerts(monkeypatch
     assert len([n for n in f.get("/api/v1/inbox").json()["notices"] if "renews in" in n["title"]]) == 1
     # a call the doctor forgot to end closes after 3 hours
     a.post(f"/api/admin/stores/{hid}/users/{uid}/verify", json={"verified": True})
+    admin().post(f"/api/admin/stores/{hid}/users/{uid}/verify", json={"verified": True})
     ap = f.post("/api/v1/appointments", json={"store": hid, "member": "m1", "memberName": "P", "kind": "video", "date": "2026-10-20", "doctor": "Meera Rao"}).json()
     d.post(f"/api/partner/appointments/{ap['id']}", json={"status": "confirmed", "slotDate": "2026-10-20", "slotTime": "10:00"})
     d.post(f"/api/partner/consults/{ap['id']}/start")

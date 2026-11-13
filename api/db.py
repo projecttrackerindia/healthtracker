@@ -108,7 +108,10 @@ def ensure_columns() -> None:
               "households": [("backup_at", "INTEGER"), ("backup_to", "VARCHAR(200) DEFAULT ''")],
               "notices": [("to_user", "VARCHAR(32) DEFAULT ''")],
               "household_invites": [("name", "VARCHAR(80) DEFAULT ''"), ("sent_at", "INTEGER DEFAULT 0"), ("sends", "INTEGER DEFAULT 1"), ("opened", "INTEGER DEFAULT 0"), ("person_id", "VARCHAR(32) DEFAULT ''"), ("rel_ok", "INTEGER DEFAULT 0")],
-              "people": [("abha_hash", "VARCHAR(64) DEFAULT ''")]}
+              "people": [("abha_hash", "VARCHAR(64) DEFAULT ''")],
+              "admins": [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0")]}
+    wanted["partner_users"] += [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0"), ("reg_doc", "VARCHAR(64) DEFAULT ''"),
+                                ("reg_expiry", "VARCHAR(10) DEFAULT ''"), ("verify_by", "VARCHAR(120) DEFAULT ''")]
     insp = inspect(engine)
     with engine.begin() as conn:
         for table, cols in wanted.items():

@@ -101,6 +101,39 @@ def find_user(db: Session, ident: str) -> PartnerUser | None:
 class Login(BaseModel):
     email: str
     password: str
+    totp: str = ""
+    enrol: str = ""
+
+
+def _partner_totp(db: Session, u: PartnerUser, body: "Login") -> None:
+    """Every partner sign-in (doctors, pharmacists, lab and shop staff all see family health details) needs the
+    authenticator app. Same flow as admins: first sign-in enrols, every later one asks for a fresh code."""
+    from . import totp
+    from .security import sign as _sign, verify as _verify
+    if not totp.required() and not u.totp_secret:
+        return
+    if u.totp_secret:
+        if not body.totp:
+            raise HTTPException(428, {"needTotp": True})
+        st = totp.verify(totp.unseal(u.totp_secret), body.totp, u.totp_step or 0)
+        if not st:
+            raise HTTPException(401, "That code didn't match. Use the newest code in your authenticator app.")
+        u.totp_step = st
+        return
+    if body.enrol and body.totp:
+        d = _verify(body.enrol)
+        if not d or d.get("t") != "ptotp" or d.get("id") != u.id or now() - int(d.get("at") or 0) > 900:
+            raise HTTPException(400, "That set-up expired. Sign in again to get a new code to scan.")
+        sec = totp.unseal(d["s"])
+        st = totp.verify(sec, body.totp)
+        if not st:
+            raise HTTPException(401, "That code didn't match. Check your phone's time is automatic, then try the newest code.")
+        u.totp_secret, u.totp_step = totp.seal(sec), st
+        return
+    sec = totp.new_secret()
+    acct = u.email if not u.email.endswith(".invalid") else (u.phone or u.name)
+    raise HTTPException(428, {"enrolTotp": True, "secret": sec, "qr": totp.qr_svg(totp.uri(sec, acct, "Urban Health Partner")), "uri": totp.uri(sec, acct, "Urban Health Partner"),
+                              "enrol": _sign({"t": "ptotp", "id": u.id, "s": totp.seal(sec), "at": now()})})
 
 
 @r.post("/login")
@@ -121,6 +154,7 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
                 u.locked_until = now() + 900
             db.commit()
         raise HTTPException(401, "Wrong email, mobile number or password.")
+    _partner_totp(db, u, body)
     rl_clear(request, "partner-login")
     u.last_login, u.fails, u.locked_until = now(), 0, 0
     u.last_device = (request.headers.get("user-agent") or "")[:80]
@@ -141,7 +175,8 @@ def me_json(db: Session, u: PartnerUser) -> dict:
     unread = db.scalar(select(func.count(Message.id)).where(Message.store_id == u.store_id, Message.sender == "family", Message.read_partner == False)) or 0  # noqa: E712
     return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith(".invalid") else u.email,
                      "phone": u.phone, "role": u.role, "mustChange": u.must_change,
-                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or ""},
+                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or "",
+                     "verified": bool(u.verified), "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "totp": bool(u.totp_secret)},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
                       "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct} if s else None,
@@ -181,8 +216,78 @@ def my_registration(body: RegIn, db: Session = Depends(get_db), u: PartnerUser =
     reg = body.regNo.strip().upper()[:40]
     if len(reg) < 4:
         raise HTTPException(400, "Enter your State Pharmacy Council registration number.")
+    if reg != (u.reg_no or ""):
+        u.verified, u.verify_by = False, ""   # a new number is checked again before it signs anything off
     u.reg_no = reg
     return {"ok": True, "regNo": reg}
+
+
+class AgreeIn(BaseModel):
+    accept: bool
+    name: str
+
+
+@r.get("/agreement")
+def agreement(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    from .onboard import AGREEMENT_VERSION
+    st = db.get(Store, u.store_id)
+    got = (st.profile or {}).get("agreement") or {}
+    return {"version": AGREEMENT_VERSION, "accepted": got.get("v") == AGREEMENT_VERSION, "at": got.get("at"), "by": got.get("name"),
+            "canSign": u.role == "owner", "points": [
+                "You hold a valid licence for everything you sell or test, and you tell us before it lapses.",
+                "A registered pharmacist checks every prescription before anything is packed. Habit-forming medicines are never sold through Urban Health.",
+                "You bill the family directly. Urban Health connects you to them and charges you the agreed fee per completed order.",
+                "Family health details you see are used only to fulfil that order, are never copied or shared, and are handled under the DPDP Act.",
+                "Either side can end this with 30 days' notice; orders already accepted are completed."],
+            "note": "Summary of the partner agreement. The full text is shared by Urban Health and reviewed by both sides' legal advisers."}
+
+
+@r.post("/agreement")
+def agreement_sign(body: AgreeIn, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """The owner accepts the current agreement by typing their full name: who, when, from where and which version
+    are kept with the partner, and the acceptance shows in the admin panel's onboarding checklist."""
+    from .auth import client_ip
+    from .onboard import AGREEMENT_VERSION
+    if u.role != "owner":
+        raise HTTPException(403, "Only the owner can accept the agreement for this business.")
+    name = " ".join(body.name.split())[:80]
+    if not body.accept or len(name) < 3:
+        raise HTTPException(400, "Type your full name to accept.")
+    st = db.get(Store, u.store_id)
+    p = dict(st.profile or {})
+    p["agreement"] = {"v": AGREEMENT_VERSION, "at": now(), "name": name, "by": u.id, "ip": client_ip(request)[:48]}
+    st.profile = p
+    from .models import Audit
+    db.add(Audit(who="partner:" + u.id, what=f"partner.agreement {st.id}", detail=f"{AGREEMENT_VERSION} · {name}"))
+    return {"ok": True, "version": AGREEMENT_VERSION, "at": p["agreement"]["at"], "by": name}
+
+
+@r.post("/my-certificate")
+async def my_certificate(request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Doctors and pharmacists upload their council registration certificate (PDF or photo) and its valid-until
+    date. Any change sends it back for two-admin approval."""
+    import re as _r
+    import secrets as _s
+    from fastapi import UploadFile
+    if u.role not in ("doctor", "pharmacist", "owner"):
+        raise HTTPException(403, "Only doctors and pharmacists upload a registration certificate.")
+    form = await request.form()
+    f, exp = form.get("file"), str(form.get("expiry") or "").strip()
+    if not _r.fullmatch(r"20\d\d-\d\d-\d\d", exp):
+        raise HTTPException(400, "Add the date your registration is valid until.")
+    if not hasattr(f, "read"):
+        raise HTTPException(400, "Choose the certificate (PDF or photo).")
+    data = await f.read()
+    mime = (getattr(f, "content_type", "") or "").lower()
+    if len(data) > 8_000_000:
+        raise HTTPException(413, "That file is over 8 MB.")
+    if not (data[:5] == b"%PDF-" or data[:3] == b"\xff\xd8\xff" or data[:8] == b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(400, "Upload a PDF, JPG or PNG.")
+    mime = "application/pdf" if data[:5] == b"%PDF-" else "image/png" if data[:4] == b"\x89PNG" else "image/jpeg"
+    fid = "reg_" + u.id + "_" + _s.token_hex(4)
+    storage.put(db, "pcred_" + u.store_id, fid, data, mime, "registration", "partner:" + u.id)
+    u.reg_doc, u.reg_expiry, u.verified, u.verify_by = fid, exp, False, ""
+    return {"ok": True, "regExpiry": exp, "verified": False}
 
 
 # ---- orders and bookings ---------------------------------------------------------------------------------------------
@@ -375,7 +480,7 @@ class TechIn(BaseModel):
 
 
 @r.post("/techs")
-def tech_add(body: TechIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+def tech_add(body: TechIn, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
     """Add somebody to the collection team and hand them a one-time password.
 
     Name and phone are both required and neither is decoration: the family is told who to expect and is given
@@ -412,36 +517,39 @@ def tech_add(body: TechIn, db: Session = Depends(get_db), u: PartnerUser = Depen
         # No address of their own: the account is still keyed by one, because that column is the primary
         # sign-in everywhere else in the portal. They never type it — they sign in with their phone.
         email = f"{digits}@{body.role}.invalid"
-    temp = secrets.token_urlsafe(6)
+    from .partners2 import INVITE_H, _h, _send_invite
+    tok = secrets.token_urlsafe(24)
     t = PartnerUser(store_id=u.store_id, email=email, name=name[:80], phone=digits, role=body.role,
-                    reg_no=reg, pw_hash=hash_pw(temp), must_change=True, active=True)
+                    reg_no=reg, pw_hash="", must_change=False, active=True, invite_hash=_h(tok), invite_exp=now() + INVITE_H * 3600)
     db.add(t)
     db.flush()
-    if not email.endswith(".invalid"):
-        from . import messaging
-        where = "https://urbanhealth.in/tech" if body.role == "tech" else "https://urbanhealth.in/partner"
-        messaging.mail(email, f"Your sign-in · {s.name}",
-                       f"Hello {name},\n\n{s.name} has added you as a {spec['label']}.\n\n"
-                       f"Sign in: {where}\nUse your mobile {digits} or this email\n"
-                       f"One-time password: {temp}\n\nYou will choose your own password the first time you sign in.")
+    # A one-time set-up link by SMS (and email if they have one). They choose their own password and set up their
+    # authenticator app; nobody else ever sees a password.
+    sent = _send_invite(request, t, s, tok)
     out = tech_json(db, t) if body.role == "tech" else staff_json(db, t)
-    # Shown once, on the owner's screen, for them to pass on. It is never stored in the clear.
-    out["tempPassword"] = temp
+    out["sentTo"] = sent
     out["signIn"] = digits
+    from . import messaging
+    if messaging.demo():
+        out["demoLink"] = f"/partner/join/{tok}"
     return out
 
 
 @r.post("/techs/{uid}/reset")
-def tech_reset(uid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+def tech_reset(uid: str, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
     """A forgotten password on a doorstep is a job that does not happen. The owner can fix it in a tap."""
     import secrets
 
     t = db.get(PartnerUser, uid)
     if not t or t.store_id != u.store_id or t.role not in SELF_ROLES:
         raise HTTPException(404, "Not one of your team.")
-    temp = secrets.token_urlsafe(6)
-    t.pw_hash, t.must_change, t.active = hash_pw(temp), True, True
-    return {"id": t.id, "name": t.name, "tempPassword": temp, "signIn": t.phone}
+    from .partners2 import INVITE_H, _h, _send_invite
+    tok = secrets.token_urlsafe(24)
+    t.pw_hash, t.must_change, t.active = "", False, True
+    t.invite_hash, t.invite_exp, t.session_epoch = _h(tok), now() + INVITE_H * 3600, (t.session_epoch or 0) + 1
+    sent = _send_invite(request, t, db.get(Store, t.store_id), tok)
+    from . import messaging
+    return {"id": t.id, "name": t.name, "sentTo": sent, "signIn": t.phone, **({"demoLink": f"/partner/join/{tok}"} if messaging.demo() else {})}
 
 
 class TechOff(BaseModel):
@@ -498,6 +606,8 @@ def _pharmacist(u: PartnerUser = Depends(me)) -> PartnerUser:
         raise HTTPException(403, "Add your State Pharmacy Council registration number before checking prescriptions.")
     if u.must_change:
         raise HTTPException(403, "Choose your own password first.")
+    if not u.verified:
+        raise HTTPException(403, "Urban Health is still checking your registration certificate. Upload it under Profile if you haven't; prescriptions open once two of our team have approved it.")
     return u
 
 

@@ -109,6 +109,9 @@ def test_pharmacy_sees_only_the_shared_prescription():
     # first. That is the same rule the technician app enforces.
     assert p.post("/api/partner/password", json={"current": p.temp_password, "new": "MyOwnPass#2026"}).status_code == 200
     assert p.post("/api/partner/my-registration", json={"regNo": "AP/40021"}).status_code == 200
+    from api.models import PartnerUser   # a new number is approved by two admins before it signs anything off
+    with DB.session() as db:
+        db.query(PartnerUser).filter(PartnerUser.reg_no == "AP/40021").update({"verified": True})
     assert p.post(f"/api/partner/orders/{o['id']}/verify",
                   json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": "2026-10-19"}).status_code == 200
     for st in ("packing", "out", "delivered"):

@@ -141,6 +141,19 @@ def task_purge(x_task_token: str | None = Header(None)):
     return _run("purge", 600, go)
 
 
+@r.post("/tasks/compliance", include_in_schema=False)
+def task_compliance(x_task_token: str | None = Header(None)):
+    """Daily (e.g. 00:30 IST): pause partners whose licence lapsed, withdraw lapsed doctor/pharmacist approvals."""
+    _auth(x_task_token)
+    from api import onboard
+    from api.db import session as _s
+
+    def go():
+        with _s() as db:
+            return onboard.expire_partners(db)
+    return _run("compliance", 600, go)
+
+
 @r.post("/tasks/proactive", include_in_schema=False)
 def task_proactive(x_task_token: str | None = Header(None)):
     """Every ten minutes. Housekeeping always; the morning pass only inside its hour, guarded by its own

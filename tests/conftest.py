@@ -77,3 +77,57 @@ def _full_address(monkeypatch):
         return orig(self, url, *a, **k)
 
     monkeypatch.setattr(_TC, "post", post)
+
+
+# Partner sign-ins are created with a one-time set-up link now; nobody is handed a password. Older tests were
+# written against the temporary-password flow and are testing other things (rosters, prescriptions, consults), so
+# this completes the link exactly as the person would (open it, choose a password) and hands the test that
+# password under the old key. Doctors and pharmacists created here are also treated as already approved by two
+# admins; the approval rules themselves are tested on their own in test_enterprise_admin.py.
+_SETUP_ROUTES = r"/api/(admin/stores/[^/]+/users(/[^/]+/reset)?|partner/techs(/[^/]+/reset)?)$"
+
+
+@_pt.fixture(autouse=True)
+def _complete_setup_links(monkeypatch):
+    import json as _json
+    import re as _re
+    import secrets as _sec
+    from fastapi.testclient import TestClient as _TC
+    orig = _TC.post
+
+    def post(self, url, *a, **k):
+        r = orig(self, url, *a, **k)
+        if r.status_code == 200 and _re.match(_SETUP_ROUTES, str(url)):
+            try:
+                j = r.json()
+            except Exception:
+                return r
+            link = j.get("demoLink") or ""
+            if link:
+                while True:   # a random password that passes the same rules a person's would
+                    pw = "Tmp#" + _sec.token_hex(6) + "Aa1"
+                    if not _re.search(r"(.)\1\1", pw):
+                        break
+                import server
+                c = _TC(server.app)
+                c.__enter__()
+                jr = orig(c, "/api/partner/join", json={"token": link.rsplit("/", 1)[1], "password": pw}, headers={"x-tht": "1"})
+                assert jr.status_code == 200, jr.text
+                from api.db import SessionLocal
+                from api.models import PartnerUser
+                with SessionLocal() as db:
+                    u = db.get(PartnerUser, j.get("id"))
+                    if u is not None:
+                        u.must_change = True
+                        if u.role in ("doctor", "pharmacist", "owner"):
+                            u.reg_doc, u.reg_expiry = "test", "2099-12-31"   # certificate on file
+                        if u.role in ("pharmacist", "owner"):
+                            u.verified, u.verify_by = True, "tests"           # doctors go through two-admin approval in the tests
+                        db.commit()
+                        if not j.get("email") or str(j.get("email")).endswith(".invalid"):
+                            j.setdefault("email", u.email)
+                j["tempPassword"] = pw
+                r._content = _json.dumps(j).encode()
+        return r
+
+    monkeypatch.setattr(_TC, "post", post)
