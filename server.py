@@ -303,6 +303,7 @@ TYPES = {
     ".svg": "image/svg+xml",
     ".woff2": "font/woff2",
     ".webmanifest": "application/manifest+json",
+    ".apk": "application/vnd.android.package-archive",
     ".bin": "application/octet-stream",
     ".glb": "model/gltf-binary",
     ".png": "image/png",
@@ -434,6 +435,30 @@ def robots(request: Request):
         lines += ["", f"Sitemap: {_origin(request)}/sitemap.xml", ""]
         body = "\n".join(lines)
     return Response(body, media_type="text/plain; charset=utf-8", headers={"Cache-Control": "public, max-age=3600"})
+
+
+# Android apps (android/). assetlinks.json proves urbanhealth.in and the apps share an owner, so Android opens them
+# full-screen with no browser bar. The fingerprint is the release signing key's; a Play Store listing adds its own.
+ANDROID_PACKAGES = ("in.urbanhealth.app", "in.urbanhealth.partner")
+ANDROID_CERTS = [c.strip() for c in os.getenv("ANDROID_CERT_SHA256", "98:CB:93:0A:95:BE:59:E0:E0:F7:69:F6:95:D0:35:0A:"
+                 "0E:1C:72:FE:4A:58:CE:D3:9F:62:9E:F2:E7:3C:E3:B0").split(",") if c.strip()]
+DOWNLOADS = {"urbanhealth.apk": "Urban-Health.apk", "urbanhealth-partner.apk": "Urban-Health-Partner.apk"}
+
+
+@app.api_route("/.well-known/assetlinks.json", methods=["GET", "HEAD"], include_in_schema=False)
+def assetlinks():
+    body = [{"relation": ["delegate_permission/common.handle_all_urls"],
+             "target": {"namespace": "android_app", "package_name": pkg, "sha256_cert_fingerprints": ANDROID_CERTS}}
+            for pkg in ANDROID_PACKAGES]
+    return JSONResponse(body, headers={"Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*"})
+
+
+@app.api_route("/download/{name}", methods=["GET", "HEAD"], include_in_schema=False)
+def download(name: str):
+    if name not in DOWNLOADS:
+        raise HTTPException(404)
+    return FileResponse(SITE / "downloads" / name, media_type="application/vnd.android.package-archive",
+                        filename=DOWNLOADS[name], headers={"Cache-Control": "no-cache"})
 
 
 @app.api_route("/.well-known/security.txt", methods=["GET", "HEAD"], include_in_schema=False)

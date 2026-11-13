@@ -1,0 +1,72 @@
+// Urban Health for Android: Trusted Web Activity shells around the web apps.
+// "user" opens https://urbanhealth.in/app, "partner" opens https://urbanhealth.in/partner.
+// The pages run in Chrome full-screen, so Google sign-in, notifications, camera and location work as on the web,
+// and every web release reaches the apps without a new APK. Ownership of urbanhealth.in is proven by
+// /.well-known/assetlinks.json, which must list the signing key's SHA-256 (see android/README.md).
+plugins { id "com.android.application" }
+
+def host = "urbanhealth.in"
+def keyProps = new Properties()
+def keyFile = rootProject.file("keystore.properties")
+if (keyFile.exists()) keyFile.withInputStream { keyProps.load(it) }
+
+android {
+    namespace "in.urbanhealth.twa"
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName "1.0.0"
+        manifestPlaceholders = [host: host]
+        resValue "string", "asset_statements",
+            "[{\\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://${host}\\\"}}]"
+    }
+
+    flavorDimensions = ["audience"]
+    productFlavors {
+        user {
+            dimension "audience"
+            applicationId "in.urbanhealth.app"
+            resValue "string", "app_name", "Urban Health"
+            manifestPlaceholders += [launchUrl: "https://${host}/app?src=android", pathPrefix: "/app",
+                                     barColor: "#F5F5F7", splashColor: "#FFFFFF"]
+        }
+        partner {
+            dimension "audience"
+            applicationId "in.urbanhealth.partner"
+            resValue "string", "app_name", "Urban Health Partner"
+            manifestPlaceholders += [launchUrl: "https://${host}/partner?src=android", pathPrefix: "/partner",
+                                     barColor: "#FFFFFF", splashColor: "#FFFFFF"]
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (keyProps["storeFile"]) {
+                storeFile file(keyProps["storeFile"])
+                storePassword keyProps["storePassword"]
+                keyAlias keyProps["keyAlias"]
+                keyPassword keyProps["keyPassword"]
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt")
+            if (keyProps["storeFile"]) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildFeatures { resValues true }
+}
+
+dependencies {
+    implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.7.4"
+}

@@ -10,3 +10,4 @@ deploy
 *.md
 node_modules
 .env*
+android
