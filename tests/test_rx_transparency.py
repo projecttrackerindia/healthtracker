@@ -36,7 +36,8 @@ def world():
         db.add(s)
         db.flush()
         db.add(PartnerUser(store_id=s.id, email=f"o{tag}@ph.test", name="Priya Nair", role="owner",
-                           reg_no="AP/12345", pw_hash=hash_pw(PW), active=True, must_change=False))
+                           reg_no="AP/12345", pw_hash=hash_pw(PW), active=True, must_change=False,
+                           verified=True, reg_doc="test", reg_expiry="2099-12-31"))   # approved by two admins
         fid = f"rx_{tag}"
         db.add(StoredFile(household_id=hid, file_id=fid, name="rx.pdf", mime="application/pdf", blob=b"x", size=1))
         o = Order(household_id=hid, store_id=s.id, kind="medicine", status="checking", member="Meera",

@@ -198,6 +198,15 @@ def test_an_owner_without_a_registration_number_is_asked_for_one_first():
     r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"})
     assert r.status_code == 403 and "registration number" in r.json()["detail"]
     assert c.post("/api/partner/my-registration", json={"regNo": "ap/99887"}).json()["regNo"] == "AP/99887"
+    # a new registration number goes back for approval before it can sign anything off
+    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"})
+    assert r.status_code == 403 and "checking" in r.json()["detail"]
+    from api.db import SessionLocal
+    from api.models import PartnerUser
+    with SessionLocal() as db:
+        u = db.query(PartnerUser).filter(PartnerUser.reg_no == "AP/99887").first()
+        u.verified = True
+        db.commit()
     assert c.post(f"/api/partner/orders/{oid}/verify",
                   json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"}).status_code == 200
 

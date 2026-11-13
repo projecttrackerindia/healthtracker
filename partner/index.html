@@ -114,6 +114,20 @@ aside .mark{width:44px;height:44px;margin:0 auto 14px;border-radius:14px;backgro
  .ptabs{display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
  .panel{border-radius:24px 24px 0 0;height:auto;max-height:88vh;margin-top:auto}.drawer{align-items:flex-end}
 }
+
+.login .card{max-width:calc(100vw - 32px);box-sizing:border-box}.tf{min-width:0;animation:tfin .35s cubic-bezier(.2,.8,.2,1) both}@keyframes tfin{from{opacity:0;transform:translateY(8px)}}
+.tf h2{font-size:22px;letter-spacing:-.02em;margin:10px 0 6px}.tf p{color:var(--mute);margin:0 0 14px;font-size:14px;line-height:1.45}
+.tf .qr{width:184px;height:184px;margin:6px auto 12px;padding:10px;border-radius:22px;background:#fff;box-shadow:0 0 0 1px var(--line),var(--sh);display:grid;place-items:center}.tf .qr svg{width:100%;height:100%}
+.tf .key{display:flex;align-items:center;justify-content:space-between;gap:10px;box-sizing:border-box;font-family:var(--mono);font-size:13px;letter-spacing:.08em;background:var(--soft);border-radius:999px;padding:8px 14px;margin:0 auto 14px;width:max-content;max-width:100%;word-break:break-all}
+.tf .key button{flex:none;white-space:nowrap;border:0;background:var(--teal);color:#fff;border-radius:999px;font:600 12px var(--font);padding:5px 10px;cursor:pointer}
+.tf .key span{min-width:0}.tf .apps{font-size:12.5px;color:var(--mute);text-align:center;margin:-4px 0 12px}
+.otp6{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:4px 0 12px}.otp6 input{height:54px;border-radius:16px;border:1px solid var(--line);background:var(--soft);text-align:center;font:600 22px var(--mono);color:var(--ink);padding:0;margin:0}
+.otp6 input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 20%,transparent);background:var(--card)}
+.cred{display:flex;gap:14px;align-items:center;padding:14px;border-radius:18px;background:var(--soft);margin:0 0 12px}.cred .ci{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;flex:none;font-size:20px;color:#fff}
+.cred b{display:block}.cred small{color:var(--mute)}.cred.ok .ci{background:var(--green)}.cred.wait .ci{background:var(--amber)}.cred.need .ci{background:var(--red)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px;border:1.5px dashed color-mix(in srgb,var(--teal) 45%,transparent);border-radius:18px;cursor:pointer;text-align:center;color:var(--mute);transition:background .2s}
+.drop:hover,.drop.on{background:color-mix(in srgb,var(--teal) 8%,transparent)}.drop b{color:var(--ink)}
+.agl{list-style:none;padding:0;margin:0 0 14px}.agl li{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.45}.agl li:first-child{border-top:0}.agl li:before{content:"";width:8px;height:8px;border-radius:4px;background:var(--teal);flex:none;margin-top:7px}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -121,18 +135,35 @@ aside .mark{width:44px;height:44px;margin:0 auto 14px;border-radius:14px;backgro
 <div id="root"></div><div class="toast" id="toast"></div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const api=async(p,o={})=>{const r=await fetch('/api/partner'+p,{method:o.method||'GET',headers:o.raw?o.headers:{'content-type':'application/json'},body:o.raw?o.body:(o.body===undefined?undefined:JSON.stringify(o.body)),credentials:'same-origin',cache:'no-store'});let j={};try{j=await r.json()}catch(e){}if(r.status===401&&!o.quiet){ME=null;render();throw new Error('Signed out')}if(!r.ok)throw new Error(j.detail||'Request failed');return j};
+const api=async(p,o={})=>{const r=await fetch('/api/partner'+p,{method:o.method||'GET',headers:o.raw?o.headers:{'content-type':'application/json'},body:o.raw?o.body:(o.body===undefined?undefined:JSON.stringify(o.body)),credentials:'same-origin',cache:'no-store'});let j={};try{j=await r.json()}catch(e){}if(r.status===401&&!o.quiet){ME=null;render();throw new Error('Signed out')}if(!r.ok){const e=new Error(typeof j.detail==='string'?j.detail:'Request failed');e.status=r.status;e.detail=j.detail;throw e}return j};
 const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('on'),2400)};
 const fmt=t=>new Date(t*1000).toLocaleString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
 const money=n=>'₹'+Math.round(+n||0).toLocaleString('en-IN');
 let ME=null,view='today',data={};
 const homeView=()=>!ME?'today':ME.store.kind==='hospital'?'queue':ME.store.kind==='bloodbank'?'blood':'today';
 const KINDN={lab:'Diagnostic lab',pharmacy:'Pharmacy',hospital:'Hospital / clinic',bloodbank:'Blood bank',shop:'Urban Health store'};
+function signedIn(){view=ME.user.mustChange?'profile':needsCred()?'profile':homeView();render();load()}
+function needsCred(){const u=ME.user;return(u.role==='doctor'||u.role==='pharmacist')&&!u.verified}
+/* Authenticator step: identical to the admin panel so partner staff learn it once. */
+function otpBoxes(){return`<div class="otp6" role="group" aria-label="6-digit code">${[0,1,2,3,4,5].map(i=>`<input inputmode="numeric" maxlength="1" ${i?'':'autocomplete="one-time-code"'} aria-label="Digit ${i+1}">`).join('')}</div>`}
+function otpWire(root,done){const bx=[...root.querySelectorAll('.otp6 input')];const val=()=>bx.map(b=>b.value).join('');
+ bx.forEach((b,i)=>{b.oninput=()=>{const d=b.value.replace(/\D/g,'');if(d.length>1){d.slice(0,6).split('').forEach((c,j)=>{if(bx[j])bx[j].value=c});bx[Math.min(5,d.length-1)].focus()}else{b.value=d;if(d&&bx[i+1])bx[i+1].focus()}if(val().length===6)done(val())};
+  b.onkeydown=e=>{if(e.key==='Backspace'&&!b.value&&bx[i-1]){bx[i-1].focus();bx[i-1].value=''}}});bx[0].focus();return{clear(){bx.forEach(b=>b.value='');bx[0].focus()}}}
+function totpStep(cred,d){const c=$('.login .card');const enrol=!!d.enrolTotp;
+ c.innerHTML=`<div class="tf"><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="Urban Health"><small>Partner portal</small></div>${enrol?`<h2>Keep patients' details safe</h2><p>Scan this with an authenticator app on your phone. Each sign-in will ask for the 6-digit code it shows.</p>
+  <div class="qr">${d.qr||''}</div><div class="apps">Google Authenticator · Microsoft Authenticator · 1Password · Apple Passwords</div>
+  <div class="key"><span>${E((d.secret||'').replace(/(.{4})/g,'$1 ').trim())}</span><button type="button" id="cpk">Copy</button></div><p style="margin-bottom:6px">Then type the code it shows:</p>`
+  :`<h2>Enter your code</h2><p>Open your authenticator app and type the 6-digit code for Urban Health Partner.</p>`}
+  ${otpBoxes()}<p class="msg" id="terr"></p><button class="btn" type="button" id="tback" style="width:100%;justify-content:center;margin-top:8px">Back</button></div>`;
+ if($('#cpk'))$('#cpk').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(d.secret);toast('Key copied')};$('#tback').onclick=()=>render();
+ let busy=false;const w=otpWire(c,async code=>{if(busy)return;busy=true;const m=$('#terr');m.className='msg';
+  try{ME=await api('/login',{method:'POST',body:{...cred,totp:code,enrol:d.enrol||''}});if(enrol)toast('Authenticator set up');signedIn()}
+  catch(x){m.className='msg on err';m.textContent=x.message;w.clear()}finally{busy=false}})}
 function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="login"><div class="card"><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="Urban Health"><small>Partner portal</small></div>
   <form id="lf"><label>Email</label><input id="le" type="email" autocomplete="username" required><label>Password</label><input id="lp" type="password" autocomplete="current-password" required><p class="msg" id="lm"></p><button class="btn p" style="width:100%;justify-content:center;margin-top:14px">Sign in</button></form>
   <p style="color:var(--mute);font-size:12px;margin:14px 0 0">For verified labs, pharmacies and hospitals. Not a partner yet? <a href="#" id="applyLink">Apply to join</a> · partner@urbanhealth.in</p></div></div>`;
   $('#applyLink').onclick=e=>{e.preventDefault();applyView()};
-  $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';try{ME=await api('/login',{method:'POST',body:{email:$('#le').value,password:$('#lp').value}});view=ME.user.mustChange?'profile':homeView();render();load()}catch(err){m.className='msg on err';m.textContent=err.message}};return}
+  $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';const cred={email:$('#le').value,password:$('#lp').value};try{ME=await api('/login',{method:'POST',body:cred});signedIn()}catch(err){if(err.status===428&&err.detail&&(err.detail.needTotp||err.detail.enrolTotp))return totpStep(cred,err.detail);m.className='msg on err';m.textContent=err.message}};return}
  const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
  const isBB=s.kind==='bloodbank',isShop=s.kind==='shop';
  /* Five places, as in the design: Today · Orders · Messages · Earnings · Store (Clinic for hospitals). Each place's
@@ -344,7 +375,7 @@ async function loadTechs(){const ph=ROLE()==='pharmacist';let r;try{r=await api(
     ${isOwner?`<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-trs="${E(t.id)}">Reset password</button> <button class="btn sm ${t.active?'d':''}" data-tac="${E(t.id)}:${t.active?0:1}">${t.active?'Turn off':'Turn on'}</button></td>`:''}</tr>`).join('')+`</table>`;
  if(!isOwner)return;
  $('#tl').querySelectorAll('[data-trs]').forEach(b=>b.onclick=async()=>{if(!confirm('Give this technician a new one-time password? Their current one stops working.'))return;
-   try{const g=await api(`/techs/${b.dataset.trs}/reset`,{method:'POST'});showCreds(g,'New one-time password')}catch(e){toast(e.message)}});
+   try{const g=await api(`/techs/${b.dataset.trs}/reset`,{method:'POST'});showCreds(g,'New set-up link sent')}catch(e){toast(e.message)}});
  $('#tl').querySelectorAll('[data-tac]').forEach(b=>b.onclick=async()=>{const[id,on]=b.dataset.tac.split(':');
    try{await api(`/techs/${id}/active`,{method:'POST',body:{active:on==='1'}});loadTechs()}catch(e){toast(e.message)}})}
 function techForm(){if($('#tf'))return;const ph=ROLE()==='pharmacist';
@@ -353,15 +384,15 @@ function techForm(){if($('#tf'))return;const ph=ROLE()==='pharmacist';
   <label class="grow">Mobile<input name="phone" required inputmode="numeric" placeholder="10 digits"></label>
   ${ph?`<label class="grow">Council registration no.<input name="regNo" required placeholder="State Pharmacy Council"></label>`:''}
   <label class="grow">Email <span style="font-weight:400;color:var(--mute)">(optional)</span><input name="email" type="email" placeholder="If they have one"></label></div>
- <p class="sub" style="margin:0 0 12px">They sign in at <b>urbanhealth.in/${ph?'partner':'tech'}</b> with their mobile number and a one-time password you hand them.${ph?' Their registration number appears against every prescription they check.':''}</p>
+ <p class="sub" style="margin:0 0 12px">They sign in at <b>urbanhealth.in/${ph?'partner':'tech'}</b> with their mobile number and a one-time set-up link we send them.${ph?' Their registration number appears against every prescription they check.':''}</p>
  <div class="row" style="margin:0"><button class="btn p">Add to the team</button> <button class="btn" type="button" id="tfx">Cancel</button></div></form></div>`);
  $('#tfx').onclick=()=>$('#tf').remove();
  $('#tform').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=e.target.querySelector('button');b.disabled=true;
-  try{const g=await api('/techs',{method:'POST',body:{name:f.get('name'),phone:f.get('phone'),email:f.get('email'),regNo:f.get('regNo')||'',role:ROLE()}});$('#tf').remove();showCreds(g,'Added — hand them this');loadTechs()}
+  try{const g=await api('/techs',{method:'POST',body:{name:f.get('name'),phone:f.get('phone'),email:f.get('email'),regNo:f.get('regNo')||'',role:ROLE()}});$('#tf').remove();showCreds(g,'Set-up link sent');loadTechs()}
   catch(err){toast(err.message);b.disabled=false}}}
 function showCreds(g,title){$('#tcreds').innerHTML=`<div class="card" style="border-color:color-mix(in srgb,var(--teal) 40%,transparent)">
- <h3>${E(title)}${g.name?` — ${E(g.name)}`:''}</h3><p class="sub" style="margin:0 0 10px">Shown once. We do not keep a copy, so write it down or send it to them now.</p>
- <div class="row" style="margin:0;font-family:var(--mono);font-size:15px"><span>Sign in: <b>${E(g.signIn||'')}</b></span><span>Password: <b>${E(g.tempPassword||'')}</b></span>
+ <h3>${E(title)}${g.name?` — ${E(g.name)}`:''}</h3><p class="sub" style="margin:0 0 10px">We sent them a one-time set-up link${g.sentTo&&g.sentTo.length?' by '+E(g.sentTo.join(' and ')):''}. They choose their own password and set up an authenticator app. The link works once, for 72 hours.</p>
+ <div class="row" style="margin:0;font-size:15px"><span>Signs in with: <b>${E(g.signIn||'')}</b></span>
  <button class="btn sm" id="tcx">Done</button></div></div>`;
  $('#tcx').onclick=()=>$('#tcreds').innerHTML=''}
 // ---------------- the OP queue
@@ -473,7 +504,21 @@ async function onbCard(){const box=document.getElementById('onb');if(!box)return
    onConfirm:async(p,g)=>{msg('Saving…');try{const r=await api('/onboarding/location',{method:'POST',body:{lat:p.lat,lng:p.lng,acc:p.acc,moved:p.moved==null?-1:p.moved,landmark:document.getElementById('lmk').value}});msg(r.relisted?'Saved. Your shop moved, so Urban Health will check it again before families see it.':'Saved.');onbCard()}catch(e){msg(e.message)}}});
  box.querySelectorAll('.onbp').forEach(b=>b.onclick=()=>{const f=document.getElementById('onbf');f.onchange=async()=>{if(!f.files[0])return;msg('Uploading…');const fd=new FormData();fd.append('slot',b.dataset.slot);fd.append('file',f.files[0]);try{const c=await here();fd.append('lat',c.latitude);fd.append('lng',c.longitude);fd.append('acc',Math.round(c.accuracy))}catch(e){}
   try{const r=await fetch('/api/partner/onboarding/photos',{method:'POST',body:fd,credentials:'same-origin',headers:{'x-tht':'1'}});if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.detail||'Upload failed')}msg('Photo saved.');onbCard()}catch(e){msg(e.message)}};f.click()})}
-VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy';setTimeout(onbCard,0);$('#main').innerHTML=head('Store profile','What families see: hours, phone, collection or delivery terms. Name, address and licence are changed by Urban Health.')+`<div class="card" id="onb"><h3>Shop location &amp; photos</h3><p style="color:var(--mute);margin:0">Loading…</p></div>`+
+function credCard(){const u=ME.user;if(!(u.role==='doctor'||u.role==='pharmacist'||(u.role==='owner'&&ME.store.kind==='pharmacy')))return'';
+ const st=u.verified?['ok','✓','Registration approved',`Valid until ${E(u.regExpiry)}. Renew before then to keep working.`]:u.regDoc?['wait','…','Being checked by Urban Health',`Two of our team check it on the council register. Usually within one working day.`]:['need','!','Upload your registration certificate',`${u.role==='doctor'?'Video consults':'Prescription checks'} open once it is approved.`];
+ return`<div class="card" id="credc"><h3>Your council registration</h3><div class="cred ${st[0]}"><span class="ci">${st[1]}</span><div><b>${st[2]}</b><small>${st[3]}</small></div></div>
+  <form id="crf"><label class="drop" id="crd"><input type="file" name="file" accept="application/pdf,image/jpeg,image/png" hidden required><b id="crn">${u.regDoc?'Replace certificate':'Choose your certificate'}</b><span>PDF or photo · up to 8 MB</span></label>
+  <div class="row" style="margin-top:12px;align-items:flex-end"><label class="grow">Valid until<input type="date" name="expiry" value="${E(u.regExpiry||'')}" required></label><button class="btn p">Send for approval</button></div></form></div>`}
+function agreeCard(){if(ME.user.role!=='owner')return'<div id="agc"></div>';return'<div class="card" id="agc"><h3>Partner agreement</h3><p style="color:var(--mute);margin:0">Loading…</p></div>'}
+async function agreePaint(){const el=$('#agc');if(!el||ME.user.role!=='owner')return;try{const a=await api('/agreement');
+ el.innerHTML=`<h3>Partner agreement</h3>${a.accepted?`<div class="cred ok"><span class="ci">✓</span><div><b>Accepted by ${E(a.by)}</b><small>${fmt(a.at)} · version ${E(a.version)}</small></div></div>`:`<p class="sub" style="margin:0 0 10px">What you agree to, in short:</p>`}
+  <ul class="agl">${a.points.map(x=>`<li>${E(x)}</li>`).join('')}</ul><p class="sub" style="font-size:12.5px;margin:0 0 12px">${E(a.note)}</p>
+  ${a.accepted?'':`<form id="agf"><label style="display:block">Type your full name to accept<input name="name" autocomplete="name" required minlength="3" style="width:100%;box-sizing:border-box"></label><button class="btn p" style="width:100%;justify-content:center;margin-top:10px">I agree</button></form>`}`;
+ const f=$('#agf');if(f)f.onsubmit=async e=>{e.preventDefault();try{await api('/agreement',{method:'POST',body:{accept:true,name:new FormData(f).get('name')}});toast('Agreement accepted');agreePaint()}catch(x){toast(x.message)}}}catch(e){el.innerHTML=''}}
+function credWire(){const f=$('#crf');if(!f)return;const inp=f.file,lab=$('#crd');inp.onchange=()=>{if(inp.files[0]){$('#crn').textContent=inp.files[0].name;lab.classList.add('on')}};
+ f.onsubmit=async e=>{e.preventDefault();const b=f.querySelector('button');b.disabled=true;try{const fd=new FormData(f);const r=await fetch('/api/partner/my-certificate',{method:'POST',body:fd,credentials:'same-origin'});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.detail||'Upload failed');
+  ME.user.regDoc=true;ME.user.regExpiry=j.regExpiry;ME.user.verified=false;toast('Sent for approval');VIEWS.profile()}catch(x){toast(x.message)}finally{b.disabled=false}}}
+VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy';setTimeout(()=>{onbCard();credWire();agreePaint()},0);$('#main').innerHTML=head('Store profile','What families see: hours, phone, collection or delivery terms. Name, address and licence are changed by Urban Health.')+credCard()+agreeCard()+`<div class="card" id="onb"><h3>Shop location &amp; photos</h3><p style="color:var(--mute);margin:0">Loading…</p></div>`+
  (s.kind==='hospital'&&ME.user.role==='owner'?`<div class="card" id="bdcard"><h3>Waiting-room screen</h3>
    <p class="sub" style="margin:0 0 10px">A television or tablet on the wall showing who is being seen. Open the link on it once and leave it; it signs itself in and refreshes every few seconds. It shows numbers and doctors, never patients\' names — a waiting room is a public place.</p>
    <div id="bdbox" style="color:var(--mute)">Loading…</div></div>`:'')+

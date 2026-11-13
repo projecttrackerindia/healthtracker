@@ -135,7 +135,7 @@ def invite(sid: str, body: InviteIn, request: Request, a: Admin = Depends(admin_
 
 
 class SigninAct(BaseModel):
-    action: str        # resend | reset | role | signout | unlock | remove
+    action: str        # resend | reset | role | signout | unlock | remove | totp
     role: str = ""
 
 
@@ -164,6 +164,9 @@ def signin_action(uid: str, body: SigninAct, request: Request, a: Admin = Depend
         if body.role == "owner" and db.scalar(select(PartnerUser).where(PartnerUser.store_id == u.store_id, PartnerUser.role == "owner", PartnerUser.active == True, PartnerUser.id != u.id)):  # noqa: E712
             raise HTTPException(409, "There is already an owner. Change their role first.")
         u.role = body.role
+        u.session_epoch = (u.session_epoch or 0) + 1
+    elif body.action == "totp":   # lost phone: set up the authenticator again at next sign-in
+        u.totp_secret, u.totp_step = "", 0
         u.session_epoch = (u.session_epoch or 0) + 1
     elif body.action == "signout":
         u.session_epoch = (u.session_epoch or 0) + 1

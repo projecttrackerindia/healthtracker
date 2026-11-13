@@ -258,6 +258,8 @@ class Admin(Base):
     summary: Mapped[bool] = mapped_column(Boolean, default=True)      # morning summary by email
     pw_hash: Mapped[str] = mapped_column(String(160))
     role: Mapped[str] = mapped_column(String(16), default="owner")  # owner | ops | content
+    totp_secret: Mapped[str] = mapped_column(String(200), default="")   # authenticator app, sealed with the app key
+    totp_step: Mapped[int] = mapped_column(Integer, default=0)          # last code's time step: a code works once
     created: Mapped[int] = mapped_column(Integer, default=now)
     last_login: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
@@ -608,6 +610,11 @@ class PartnerUser(Base):
     locked_until: Mapped[int] = mapped_column(Integer, default=0)
     session_epoch: Mapped[int] = mapped_column(Integer, default=0)        # bump to sign out of every device
     last_device: Mapped[str] = mapped_column(String(80), default="")
+    totp_secret: Mapped[str] = mapped_column(String(200), default="")
+    totp_step: Mapped[int] = mapped_column(Integer, default=0)
+    reg_doc: Mapped[str] = mapped_column(String(64), default="")      # stored file key of the registration certificate
+    reg_expiry: Mapped[str] = mapped_column(String(10), default="")   # YYYY-MM-DD; verification lapses after it
+    verify_by: Mapped[str] = mapped_column(String(120), default="")   # first admin who approved; a second, different one completes it
 
 
 class Payout(Base):
@@ -1415,3 +1422,4 @@ class UploadLink(Base):
     expires: Mapped[int] = mapped_column(Integer)
     revoked: Mapped[int] = mapped_column(Integer, default=0)
     created: Mapped[int] = mapped_column(Integer, default=now)
+

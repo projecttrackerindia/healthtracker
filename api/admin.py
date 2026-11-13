@@ -23,6 +23,36 @@ r = APIRouter(prefix="/api/admin")
 COOKIE = "dk_admin"
 
 
+# ---- who may do what ---------------------------------------------------------------------------------------------------
+# Checked here, once, for every admin route in every module, so a new route is covered the day it is added.
+#   owner    everything
+#   ops      runs the business day to day: partners, orders, families' accounts, privacy queue. Not money settings,
+#            other admins, platform settings, deleting partners or rewriting a family's record.
+#   content  first-aid videos, seasonal tips, the medicine and test catalogue, products and offers. Nothing about people.
+import re as _re
+
+_OWNER_ONLY = [
+    (None, r"/admins(/.*)?"), ("PUT", r"/plans/.+"), ("POST", r"/settings/.+"), ("POST", r"/storage/test"), ("POST", r"/ai/test"),
+    ("DELETE", r"/client-errors"), ("POST", r"/stores/import"), ("DELETE", r"/stores/[^/]+"), ("POST", r"/stores/[^/]+/commission"),
+    ("POST", r"/households/[^/]+/restore/.+"), ("POST", r"/families/[^/]+/state"), ("PUT", r"/messaging/.+"), ("PUT", r"/app/.+"),
+    ("PUT", r"/services/.+"), ("POST", r"/settlements/.+"), ("DELETE", r"/settlements/.+"), ("POST", r"/payments/[^/]+/(confirm|reject)"),
+]
+_EVERYONE = r"/(me(/.*)?|devices(/.*)?|signout-everywhere|logout|login|totp(/.*)?)"
+_CONTENT = r"/(seasonal|videos|catalog|products|offers)(/.*)?"
+ROLE_LABEL = {"owner": "Owner", "ops": "Operations", "content": "Content"}
+
+
+def allowed(role: str, method: str, path: str) -> bool:
+    sub = path.split("/api/admin", 1)[-1] or "/"
+    if role == "owner" or _re.fullmatch(_EVERYONE, sub):
+        return True
+    if role == "content":
+        return bool(_re.fullmatch(_CONTENT, sub))
+    if role == "ops":
+        return not any((m is None or m == method) and _re.fullmatch(rx, sub) for m, rx in _OWNER_ONLY)
+    return False
+
+
 def me(request: Request, db: Session = Depends(get_db)) -> Admin:
     p = verify(request.cookies.get(COOKIE))
     if not p:
@@ -30,6 +60,10 @@ def me(request: Request, db: Session = Depends(get_db)) -> Admin:
     a = db.get(Admin, p.get("id"))
     if not a or int(p.get("ep") or 0) != int(a.session_epoch or 0):
         raise HTTPException(401, "login required")
+    if request.url.path.startswith("/api/admin") and not allowed(a.role, request.method, request.url.path):
+        log(db, a.email, "denied", f"{request.method} {request.url.path}")
+        db.commit()
+        raise HTTPException(403, f"Your role ({ROLE_LABEL.get(a.role, a.role)}) can't do this. Ask the owner.")
     return a
 
 
@@ -47,6 +81,41 @@ class Login(BaseModel):
     email: str
     password: str
     code: str = ""
+    totp: str = ""     # 6-digit code from the authenticator app
+    enrol: str = ""    # signed set-up token from the first sign-in, sent back with the first code
+
+
+def _totp_step(db: Session, a: Admin, body: "Login") -> bool:
+    """Authenticator app on every sign-in. Returns True when it was used (it then replaces the new-device code).
+    First sign-in after it is switched on: we hand out a secret to scan, and the account is enrolled only once a
+    correct code comes back, so a half-finished set-up can't lock anyone out or leave a known secret behind."""
+    from . import totp
+    if not totp.required() and not a.totp_secret:
+        return False
+    if a.totp_secret:
+        if not body.totp:
+            raise HTTPException(428, {"needTotp": True})
+        st = totp.verify(totp.unseal(a.totp_secret), body.totp, a.totp_step or 0)
+        if not st:
+            log(db, a.email, "login.totp_fail")
+            db.commit()
+            raise HTTPException(401, "That code didn't match. Use the newest code in your authenticator app.")
+        a.totp_step = st
+        return True
+    if body.enrol and body.totp:
+        d = verify(body.enrol)
+        if not d or d.get("t") != "totp-enrol" or d.get("id") != a.id or now() - int(d.get("at") or 0) > 900:
+            raise HTTPException(400, "That set-up expired. Sign in again to get a new code to scan.")
+        sec = totp.unseal(d["s"])
+        st = totp.verify(sec, body.totp)
+        if not st:
+            raise HTTPException(401, "That code didn't match. Check the time on your phone is set automatically, then try the newest code.")
+        a.totp_secret, a.totp_step = totp.seal(sec), st
+        log(db, a.email, "totp.enrolled")
+        return True
+    sec = totp.new_secret()
+    raise HTTPException(428, {"enrolTotp": True, "secret": sec, "qr": totp.qr_svg(totp.uri(sec, a.email)), "uri": totp.uri(sec, a.email),
+                              "enrol": sign({"t": "totp-enrol", "id": a.id, "s": totp.seal(sec), "at": now()})})
 
 
 DEV_COOKIE = "dk_adev"
@@ -84,6 +153,26 @@ def _device_check(db: Session, a: Admin, body: "Login", request: Request, respon
     db.add(d)
     if has_trusted:
         log(db, a.email, "admin.new_device" + ("" if can_send else ".unverified"), label)
+    return d
+
+
+def _remember_device(db: Session, a: Admin, request: Request, response: Response):
+    import hashlib
+    import secrets
+    from .models import AdminDevice
+    raw = request.cookies.get(DEV_COOKIE) or ""
+    key = hashlib.sha256(raw.encode()).hexdigest() if raw else ""
+    d = db.scalar(select(AdminDevice).where(AdminDevice.admin_id == a.id, AdminDevice.key == key)) if key else None
+    if d:
+        d.last = now()
+        return d
+    ua = request.headers.get("user-agent") or ""
+    label = ("iPhone" if "iPhone" in ua else "Android" if "Android" in ua else "Mac" if "Mac OS" in ua else "Windows" if "Windows" in ua else "Device")
+    raw = secrets.token_urlsafe(24)
+    response.set_cookie(DEV_COOKIE, raw, httponly=True, samesite="strict", secure=request.url.scheme == "https", max_age=400 * 86400, path="/")
+    d = AdminDevice(admin_id=a.id, key=hashlib.sha256(raw.encode()).hexdigest(), label=label, trusted=True)
+    db.add(d)
+    log(db, a.email, "admin.new_device", label)
     return d
 
 
@@ -171,7 +260,11 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
             raise HTTPException(401, "Wrong email, mobile number or password." + (f" {left} attempt{'s' if left != 1 else ''} left, then sign-in pauses for 15 minutes." if 0 < left <= 3 else ""))
         raise HTTPException(401, "Wrong email, mobile number or password.")
     a.fails, a.locked_until = 0, 0
-    dev = _device_check(db, a, body, request, response)
+    if _totp_step(db, a, body):
+        body.code = body.code or "totp"   # the authenticator already proved it's them: no extra emailed code
+        dev = _remember_device(db, a, request, response)
+    else:
+        dev = _device_check(db, a, body, request, response)
     rl_clear(request, "admin-login")
     a.last_login = now()
     log(db, a.email, "login")
@@ -187,7 +280,7 @@ def logout(response: Response):
 
 @r.get("/me")
 def whoami(a: Admin = Depends(me)):
-    return {"email": a.email, "role": a.role, "phone": a.phone or ""}
+    return {"email": a.email, "role": a.role, "roleLabel": ROLE_LABEL.get(a.role, a.role), "phone": a.phone or "", "totp": bool(a.totp_secret)}
 
 
 class PhoneIn(BaseModel):
@@ -438,7 +531,7 @@ def edit_store(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depen
     s = db.get(Store, sid)
     if not s:
         raise HTTPException(404)
-    allowed = {c.name for c in Store.__table__.columns} - {"id", "created"}
+    allowed = {c.name for c in Store.__table__.columns} - {"id", "created", "verified"}   # going live is a checked step in onboarding
     for k, v in body.items():
         if k in allowed:
             setattr(s, k, v)
@@ -458,7 +551,7 @@ def del_store(sid: str, a: Admin = Depends(owner), db: Session = Depends(get_db)
 
 # ---- partner users: who can sign in to /partner for a store ----------------------------------------------------------
 class PartnerUserIn(BaseModel):
-    email: str
+    email: str = ""
     name: str = ""
     phone: str = ""
     role: str = "staff"       # owner | staff | doctor | tech | pharmacist
@@ -467,8 +560,10 @@ class PartnerUserIn(BaseModel):
 
 
 def pu_json(u: PartnerUser) -> dict:
-    return {"id": u.id, "email": u.email, "name": u.name, "phone": u.phone, "role": u.role, "active": u.active, "lastLogin": u.last_login, "mustChange": u.must_change,
-            "regNo": u.reg_no or "", "specialty": u.specialty or "", "verified": bool(u.verified)}
+    return {"id": u.id, "email": "" if (u.email or "").endswith(".invalid") else u.email, "name": u.name, "phone": u.phone, "role": u.role, "active": u.active,
+            "lastLogin": u.last_login, "mustChange": u.must_change, "regNo": u.reg_no or "", "specialty": u.specialty or "", "verified": bool(u.verified),
+            "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "approvedBy": u.verify_by or "", "totp": bool(u.totp_secret),
+            "invited": bool(u.invite_hash and not u.pw_hash)}
 
 
 @r.get("/stores/{sid}/users")
@@ -478,66 +573,103 @@ def partner_users(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db
 
 
 @r.post("/stores/{sid}/users")
-def partner_user_add(sid: str, body: PartnerUserIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
-    """Creates the sign-in and returns a one-time password to hand to the partner (shown once, never stored in clear)."""
-    import secrets
-    s = db.get(Store, sid)
-    if not s:
-        raise HTTPException(404)
-    email = body.email.strip().lower()
-    if "@" not in email or db.scalar(select(PartnerUser.id).where(PartnerUser.email == email)):
-        raise HTTPException(400, "A valid, unused email is needed.")
-    role = body.role if body.role in ("owner", "staff", "doctor", "tech", "pharmacist") else "staff"
-    if role == "tech" and s.kind != "lab":
-        raise HTTPException(400, "Collection technicians belong to labs.")
-    if role == "pharmacist":
-        if s.kind != "pharmacy":
-            raise HTTPException(400, "Pharmacists belong to pharmacies.")
-        if len(body.regNo.strip()) < 4:
-            raise HTTPException(400, "A pharmacist needs their State Pharmacy Council registration number.")
-    if role == "doctor":
-        if s.kind != "hospital":
-            raise HTTPException(400, "Doctors sign in under a hospital or clinic.")
-        if len(body.regNo.strip()) < 4 or not body.name.strip():
-            raise HTTPException(400, "A doctor needs a name and a medical council registration number.")
-    temp = secrets.token_urlsafe(9)
-    u = PartnerUser(store_id=sid, email=email, name=body.name[:80], phone=body.phone[:20], role=role, pw_hash=hash_pw(temp),
-                    reg_no=body.regNo.strip()[:40], specialty=body.specialty.strip()[:60], verified=False)
-    db.add(u)
-    db.flush()
-    log(db, a.email, f"partner.user.add {sid} {email} {role}")
-    from . import messaging
-    sent = messaging.mail(email, f"Your Urban Health partner sign-in · {s.name}",
-                          f"Hello {body.name or ''},\n\nA sign-in was created for you at {s.name}{' as a doctor' if role == 'doctor' else ''}.\n\nPortal: https://urbanhealth.in/partner\nEmail: {email}\nOne-time password: {temp}\n\n"
-                          f"You will set your own password on first sign-in.{' Video consults open once your registration number is verified by our team.' if role == 'doctor' else ''}")
-    return {"id": u.id, "email": email, "tempPassword": temp, "portal": "/partner", "role": role, "emailed": sent}
+def partner_user_add(sid: str, body: PartnerUserIn, request: Request, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Adds a sign-in by sending a one-time set-up link (SMS or email). No password is ever made up, shown or emailed:
+    the person chooses their own and sets up their authenticator app when they open the link."""
+    from .partners2 import InviteIn, invite
+    out = invite(sid, InviteIn(name=body.name, phone=body.phone, email=body.email, role=body.role, regNo=body.regNo), request, a, db)
+    u = db.get(PartnerUser, out["id"])
+    if u and body.specialty:
+        u.specialty = body.specialty.strip()[:60]
+    return {**out, **(pu_json(u) if u else {}), "setupLink": True}
 
 
 class DoctorVerifyIn(BaseModel):
     verified: bool = True
 
 
+def _cred_ok(u: PartnerUser) -> str:
+    """Why this registration can't be approved yet, or '' when it can."""
+    import time as _t
+    if len((u.reg_no or "").strip()) < 4:
+        return "Their registration number is missing."
+    if not u.reg_doc:
+        return "Their registration certificate hasn't been uploaded yet. They add it from the partner portal."
+    if not u.reg_expiry:
+        return "Add the date the registration is valid until."
+    if u.reg_expiry < _t.strftime("%Y-%m-%d"):
+        return "This registration has expired."
+    return ""
+
+
 @r.post("/stores/{sid}/users/{uid}/verify")
 def partner_user_verify(sid: str, uid: str, body: DoctorVerifyIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
-    """An admin confirms the doctor's registration against the NMC / state council register; only verified doctors can consult."""
+    """Doctors and pharmacists are approved by two different admins (maker-checker) after checking the certificate
+    against the NMC / State Medical or Pharmacy Council register. Either admin can withdraw approval alone."""
     u = db.get(PartnerUser, uid)
-    if not u or u.store_id != sid or u.role != "doctor":
+    if not u or u.store_id != sid or u.role not in ("doctor", "pharmacist"):
         raise HTTPException(404)
-    u.verified = bool(body.verified)
-    log(db, a.email, f"partner.doctor.{'verify' if u.verified else 'unverify'} {uid}")
+    if not body.verified:
+        u.verified, u.verify_by = False, ""
+        log(db, a.email, f"partner.{u.role}.unverify {uid}", u.name)
+        return pu_json(u)
+    why = _cred_ok(u)
+    if why:
+        raise HTTPException(400, why)
+    if not u.verify_by:
+        u.verify_by = a.email
+        log(db, a.email, f"partner.{u.role}.approve1 {uid}", u.name)
+    elif u.verify_by == a.email:
+        raise HTTPException(409, "You've already approved this. A second admin needs to check and approve it.")
+    else:
+        u.verified = True
+        log(db, a.email, f"partner.{u.role}.approve2 {uid}", f"{u.name} · first: {u.verify_by}")
     return pu_json(u)
 
 
-@r.post("/stores/{sid}/users/{uid}/reset")
-def partner_user_reset(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
-    import secrets
+class CredIn(BaseModel):
+    regExpiry: str = ""
+
+
+@r.put("/stores/{sid}/users/{uid}/credential")
+def partner_user_cred(sid: str, uid: str, body: CredIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    import re as _r
     u = db.get(PartnerUser, uid)
     if not u or u.store_id != sid:
         raise HTTPException(404)
-    temp = secrets.token_urlsafe(9)
-    u.pw_hash, u.must_change, u.active = hash_pw(temp), True, True
-    log(db, a.email, f"partner.user.reset {uid}")
-    return {"tempPassword": temp}
+    if body.regExpiry and not _r.fullmatch(r"20\d\d-\d\d-\d\d", body.regExpiry):
+        raise HTTPException(400, "Use a date like 2028-03-31.")
+    u.reg_expiry, u.verified, u.verify_by = body.regExpiry, False, ""   # a changed date needs checking again
+    log(db, a.email, f"partner.credential {uid}", body.regExpiry)
+    return pu_json(u)
+
+
+@r.get("/stores/{sid}/users/{uid}/certificate")
+def partner_user_cert(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    from fastapi.responses import Response as Raw
+    from . import storage
+    u = db.get(PartnerUser, uid)
+    if not u or u.store_id != sid or not u.reg_doc:
+        raise HTTPException(404)
+    got = storage.get(db, "pcred_" + u.store_id, u.reg_doc)
+    if not got:
+        raise HTTPException(404)
+    row, data = got
+    mime = row.mime
+    log(db, a.email, f"partner.certificate.view {uid}")
+    db.commit()
+    return Raw(data, media_type=mime, headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",
+                                               "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; object-src 'self'"})
+
+
+@r.post("/stores/{sid}/users/{uid}/reset")
+def partner_user_reset(sid: str, uid: str, request: Request, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Sends a fresh set-up link and signs them out everywhere; no temporary password."""
+    from .partners2 import SigninAct, signin_action
+    u = db.get(PartnerUser, uid)
+    if not u or u.store_id != sid:
+        raise HTTPException(404)
+    return signin_action(uid, SigninAct(action="reset"), request, a, db)
 
 
 @r.delete("/stores/{sid}/users/{uid}")
@@ -637,14 +769,21 @@ def set_status(oid: str, body: Advance, a: Admin = Depends(me), db: Session = De
 
 # ---- households -----------------------------------------------------------------------------------------------------
 @r.get("/households")
-def households(q: str = "", a: Admin = Depends(me), db: Session = Depends(get_db)):
-    rows = db.scalars(select(Household).order_by(Household.last_seen.desc()).limit(1000)).all()
-    if q:
-        ql = q.lower()
-        rows = [h for h in rows if ql in (h.name + h.city + h.email + h.phone + h.key).lower()]
-    oc = dict(db.execute(select(Order.household_id, func.count(Order.id)).group_by(Order.household_id)).all())
-    ac = dict(db.execute(select(AiJob.household_id, func.count(AiJob.id)).group_by(AiJob.household_id)).all())
-    return {"households": [{"id": h.id, "key": h.key[:6] + "…", "name": h.name, "city": h.city, "plan": h.plan, "planUntil": h.plan_until, "members": h.members, "blocked": h.blocked,
+def households(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    from sqlalchemy import or_
+    size, page = max(10, min(int(size or 50), 200)), max(1, int(page or 1))
+    qry = select(Household)
+    if q.strip():
+        like = f"%{q.strip().lower()[:80]}%"
+        qry = qry.where(or_(func.lower(Household.name).like(like), func.lower(Household.city).like(like), func.lower(Household.email).like(like), Household.phone.like(like)))
+    total = db.scalar(select(func.count()).select_from(qry.subquery())) or 0
+    rows = db.scalars(qry.order_by(Household.last_seen.desc()).offset((page - 1) * size).limit(size)).all()
+    ids = [h.id for h in rows]
+    oc = dict(db.execute(select(Order.household_id, func.count(Order.id)).where(Order.household_id.in_(ids)).group_by(Order.household_id)).all()) if ids else {}
+    ac = dict(db.execute(select(AiJob.household_id, func.count(AiJob.id)).where(AiJob.household_id.in_(ids)).group_by(AiJob.household_id)).all()) if ids else {}
+    log(db, a.email, "view.households", f"q={q[:60]} page={page} n={len(rows)}")
+    return {"total": total, "page": page, "size": size, "pages": max(1, -(-total // size)),
+            "households": [{"id": h.id, "key": h.key[:6] + "…", "name": h.name, "city": h.city, "plan": h.plan, "planUntil": h.plan_until, "members": h.members, "blocked": h.blocked,
                             "created": h.created, "lastSeen": h.last_seen, "orders": oc.get(h.id, 0), "ai": ac.get(h.id, 0), "phone": h.phone, "email": h.email, "notes": h.notes} for h in rows]}
 
 
@@ -790,7 +929,19 @@ class AdminIn(BaseModel):
 
 @r.get("/admins")
 def admins(a: Admin = Depends(owner), db: Session = Depends(get_db)):
-    return {"admins": [{"id": x.id, "email": x.email, "role": x.role, "phone": x.phone or "", "created": x.created, "lastLogin": x.last_login} for x in db.scalars(select(Admin)).all()]}
+    return {"admins": [{"id": x.id, "email": x.email, "role": x.role, "phone": x.phone or "", "created": x.created, "lastLogin": x.last_login,
+                        "totp": bool(x.totp_secret)} for x in db.scalars(select(Admin)).all()]}
+
+
+@r.post("/admins/{aid}/reset-totp")
+def reset_admin_totp(aid: int, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+    """A lost phone: clear their authenticator and sign them out; they set it up again at their next sign-in."""
+    x = db.get(Admin, aid)
+    if not x:
+        raise HTTPException(404)
+    x.totp_secret, x.totp_step, x.session_epoch = "", 0, (x.session_epoch or 0) + 1
+    log(db, a.email, f"admin.totp_reset {x.email}")
+    return {"ok": True}
 
 
 @r.post("/admins")
@@ -839,16 +990,25 @@ def audit(limit: int = 200, a: Admin = Depends(me), db: Session = Depends(get_db
 
 # ---- accounts (sign-in identities) -----------------------------------------------------------------------------------
 @r.get("/users")
-def users(q: str = "", a: Admin = Depends(me), db: Session = Depends(get_db)):
+def users(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me), db: Session = Depends(get_db)):
+    """Searched and paged in the database, so it stays fast and complete at any number of accounts.
+    Viewing people's contact details is itself recorded in the audit log."""
+    from sqlalchemy import or_
     from .models import AuthSession, Passkey, User
-    rows = db.scalars(select(User).order_by(User.created.desc()).limit(2000)).all()
-    if q:
-        ql = q.lower()
-        rows = [u for u in rows if ql in ((u.name or "") + (u.email or "") + (u.phone or "")).lower()]
-    pk = dict(db.execute(select(Passkey.user_id, func.count(Passkey.id)).group_by(Passkey.user_id)).all())
-    ss = dict(db.execute(select(AuthSession.user_id, func.count(AuthSession.id)).where(AuthSession.expires > now()).group_by(AuthSession.user_id)).all())
+    size, page = max(10, min(int(size or 50), 200)), max(1, int(page or 1))
+    qry = select(User)
+    if q.strip():
+        like = f"%{q.strip().lower()[:80]}%"
+        qry = qry.where(or_(func.lower(User.name).like(like), func.lower(User.email).like(like), User.phone.like(like)))
+    total = db.scalar(select(func.count()).select_from(qry.subquery())) or 0
+    rows = db.scalars(qry.order_by(User.created.desc()).offset((page - 1) * size).limit(size)).all()
+    ids = [u.id for u in rows]
+    pk = dict(db.execute(select(Passkey.user_id, func.count(Passkey.id)).where(Passkey.user_id.in_(ids)).group_by(Passkey.user_id)).all()) if ids else {}
+    ss = dict(db.execute(select(AuthSession.user_id, func.count(AuthSession.id)).where(AuthSession.user_id.in_(ids), AuthSession.expires > now()).group_by(AuthSession.user_id)).all()) if ids else {}
     plans = {h.id: h.plan for h in db.scalars(select(Household).where(Household.id.in_({u.household_id for u in rows if u.household_id}))).all()} if rows else {}
-    return {"users": [{"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "emailVerified": u.email_verified, "phoneVerified": u.phone_verified,
+    log(db, a.email, "view.users", f"q={q[:60]} page={page} n={len(rows)}")
+    return {"total": total, "page": page, "size": size, "pages": max(1, -(-total // size)),
+            "users": [{"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "emailVerified": u.email_verified, "phoneVerified": u.phone_verified,
                        "passkeys": pk.get(u.id, 0), "sessions": ss.get(u.id, 0), "twoStep": u.two_step, "hasPassword": bool(u.pw_hash),
                        "locked": bool(u.locked_until and u.locked_until > now()), "disabled": u.disabled, "plan": plans.get(u.household_id, "free"),
                        "created": u.created, "lastLogin": u.last_login} for u in rows]}

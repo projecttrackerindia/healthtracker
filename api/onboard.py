@@ -35,7 +35,34 @@ STEPS = ["Details", "Photos & location", "Licence", "Prices", "Team", "Bank & go
 MAX_PHOTO = 8 * 1024 * 1024
 PROFILE_KEYS = {"hoursWeek", "hoursSun", "homeHours", "pins", "reportTime", "access", "languages", "payment", "femaleCollector",
                 "frontDesk", "ownerName", "ownerPhone", "pathologist", "pathologistReg", "nablExpiry", "establishmentReg",
-                "bmwAgreement", "sampleReport", "bankName", "bankLast4", "payoutCycle", "emergency", "parking"}
+                "bmwAgreement", "sampleReport", "bankName", "bankLast4", "payoutCycle", "emergency", "parking",
+                "licenceExpiry", "bankIfsc", "bankHolder"}
+AGREEMENT_VERSION = "2026-11"   # bump when the partner agreement text changes; partners accept the new one
+
+
+def exp_of(p: dict) -> str:
+    """Licence valid-until date: drug licence (pharmacy), NABL (lab) or clinical establishment (hospital)."""
+    return (p or {}).get("licenceExpiry") or (p or {}).get("nablExpiry") or ""
+
+
+def expire_partners(db: Session) -> dict:
+    """Daily: a partner whose licence has lapsed stops receiving orders the same day, and a doctor or pharmacist whose
+    council registration has lapsed loses approval. Both are logged and can be restored once renewed."""
+    from .models import Audit
+    today, paused, lapsed = _today(), 0, 0
+    for st in db.scalars(select(Store).where(Store.active == True, Store.verified == True)).all():  # noqa: E712
+        e = exp_of(st.profile or {})
+        if e and e < today:
+            st.active = False
+            db.add(Audit(who="system", what=f"onboard.auto_pause {st.id}", detail=f"licence expired {e}"))
+            paused += 1
+    for u in db.scalars(select(PartnerUser).where(PartnerUser.verified == True)).all():  # noqa: E712
+        if u.reg_expiry and u.reg_expiry < today:
+            u.verified, u.verify_by = False, ""
+            db.add(Audit(who="system", what=f"partner.registration_lapsed {u.id}", detail=u.reg_expiry))
+            lapsed += 1
+    db.commit()
+    return {"paused": paused, "lapsed": lapsed}
 
 
 def _file_ns(s: Store) -> str:
@@ -54,7 +81,7 @@ def checks(db: Session, s: Store) -> list[dict]:
     shots = {x.get("slot") for x in (s.photos or [])}
     users = db.scalar(select(func.count(PartnerUser.id)).where(PartnerUser.store_id == s.id, PartnerUser.active == True)) or 0  # noqa: E712
     items = db.scalar(select(func.count(StoreItem.id)).where(StoreItem.store_id == s.id)) or 0
-    exp = p.get("nablExpiry") or ""
+    exp = exp_of(p)
     expired = bool(exp) and exp < _today()
     miss = [
         [x for x, ok in (("name", s.name), ("address", s.address), ("PIN code", s.pin), ("shop phone", s.phone), ("owner email", s.owner_email)) if not ok],
@@ -62,10 +89,11 @@ def checks(db: Session, s: Store) -> list[dict]:
         + (["live pin from the shop"] if not s.pin_at else (["a more accurate pin (now ±%d m)" % s.pin_acc] if s.pin_acc > 50 else []))
         + ([] if s.landmark else ["landmark"]),
         ([] if s.licence else ["licence / NABL number"]) + (["licence has expired"] if expired else [])
-        + ([] if s.kind != "lab" or exp else ["NABL expiry date"]) + ([] if s.gstin else ["GSTIN"]),
+        + ([] if exp else ["licence valid-until date"]) + ([] if s.gstin else ["GSTIN"]),
         [] if items else ["price list"],
         ([] if users else ["owner sign-in"]) + ([] if s.kind != "lab" or p.get("pathologist") else ["signing pathologist"]),
-        [] if p.get("bankLast4") else ["payout bank account"],
+        ([] if p.get("bankLast4") and p.get("bankIfsc") and p.get("bankHolder") else ["payout bank account (holder, IFSC, last 4)"])
+        + ([] if (p.get("agreement") or {}).get("v") == AGREEMENT_VERSION else ["partner agreement accepted by the owner"]),
     ]
     return [{"step": i + 1, "name": STEPS[i], "done": not m, "missing": m} for i, m in enumerate(miss)]
 
@@ -79,7 +107,7 @@ def status_of(s: Store, ck: list[dict]) -> tuple[str, str]:
     """(tab, tag) — tab is review | live | paused; tag is the one-line state shown in the list."""
     if not s.active:
         return "paused", "Paused"
-    exp = (s.profile or {}).get("nablExpiry") or ""
+    exp = exp_of(s.profile or {})
     if exp and exp < _today():
         return ("paused" if s.verified else "review"), "Licence expired"
     if s.verified:
@@ -202,8 +230,13 @@ def edit(sid: str, body: EditIn, a: Admin = Depends(admin_me), db: Session = Dep
                 p[k] = v if isinstance(v, bool) else _clean(v, 300)
         if p.get("bankLast4") and not re.fullmatch(r"\d{4}", p["bankLast4"]):
             raise HTTPException(400, "Only the last 4 digits of the account, please")
-        if p.get("nablExpiry") and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", p["nablExpiry"]):
-            raise HTTPException(400, "Expiry date as YYYY-MM-DD")
+        for k in ("nablExpiry", "licenceExpiry"):
+            if p.get(k) and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", p[k]):
+                raise HTTPException(400, "Expiry date as YYYY-MM-DD")
+        if p.get("bankIfsc"):
+            p["bankIfsc"] = p["bankIfsc"].upper().replace(" ", "")
+            if not re.fullmatch(r"[A-Z]{4}0[A-Z0-9]{6}", p["bankIfsc"]):
+                raise HTTPException(400, "That IFSC doesn't look right (11 characters, e.g. HDFC0001234)")
         s.profile = p
     log(db, a.email, f"onboard.edit {s.id}", ",".join(k for k, v in body.model_dump().items() if v is not None))
     return card(db, s, True)
