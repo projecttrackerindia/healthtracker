@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Urban Health · Your family's health, in one secure place</title>
+<meta name="description" content="Urban Health keeps your family's reports, medicines, doctor visits and emergency details together, explained in simple words. Your data stays in India.">
+<meta name="theme-color" content="#000000">
+<link rel="canonical" href="https://urbanhealth.in/"><meta property="og:type" content="website"><meta property="og:site_name" content="Urban Health"><meta property="og:locale" content="en_IN"><meta property="og:url" content="https://urbanhealth.in/"><meta property="og:title" content="Urban Health"><meta property="og:description" content="Your family’s health, in one secure place."><meta property="og:image" content="https://urbanhealth.in/s/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Urban Health — your family’s health, in one secure place."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Urban Health"><meta name="twitter:description" content="Your family’s health, in one secure place."><meta name="twitter:image" content="https://urbanhealth.in/s/img/og.png"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://urbanhealth.in/#org","name":"Urban Health","url":"https://urbanhealth.in/","logo":"https://urbanhealth.in/brand/png/user-icon-512.png","areaServed":{"@type":"Country","name":"India"}},{"@type":"WebSite","@id":"https://urbanhealth.in/#site","name":"Urban Health","url":"https://urbanhealth.in/","inLanguage":["en-IN","hi-IN"],"publisher":{"@id":"https://urbanhealth.in/#org"}},{"@type":"SoftwareApplication","name":"Urban Health","url":"https://urbanhealth.in/","applicationCategory":"HealthApplication","operatingSystem":"Web, Android, iOS","publisher":{"@id":"https://urbanhealth.in/#org"},"description":"A health card for everyone you care for: reports, medicine reminders, a 3D body view, nearby labs and pharmacies compared, pregnancy week by week, and one-tap SOS."}]}</script>
+<link rel="preload" href="/s/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M21.5%2015a4%204%200%200%201%204-4h3a4%204%200%200%201%204%204v34a4%204%200%200%201-4%204h-3a4%204%200%200%201-4-4V37.5H13a4%204%200%200%201-4-4v-3a4%204%200%200%201%204-4h8.5z%22%20fill%3D%22%232F5BFF%22/%3E%3Cpath%20d%3D%22M32%2032h5l3.2-8%204.6%2016%203.2-8h0.4%22%20fill%3D%22none%22%20stroke%3D%22%232F5BFF%22%20stroke-width%3D%224.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Ccircle%20cx%3D%2255.2%22%20cy%3D%2232%22%20r%3D%223.3%22%20fill%3D%22%232F5BFF%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/s/home/site.c2c22404.css">
+</head>
+<body class="w5">
+<a class="skip" href="#main">Skip to content</a>
+<div id="intro" aria-hidden="true"><svg viewBox="0 0 760 160"><defs><linearGradient id="ig" x1="0" x2="1"><stop offset="0" stop-color="#4F7BFF"/><stop offset=".5" stop-color="#8B6CFF"/><stop offset="1" stop-color="#F0559A"/></linearGradient></defs>
+<path d="M0 80H250l18-26 22 66 26-120 26 104 18-46 14 22H460c14 0 14-30 30-30h0v-22h24v22h22v24h-22v22h-24v-22c-16 0-16 30-30 30H760"/></svg><div class="ib">Urban Health</div></div>
+<header><nav id="nav" aria-label="Main"><div class="wrap">
+ <a href="#" class="logo" aria-label="Urban Health"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#2F5BFF"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#2F5BFF" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#2F5BFF"/></svg><span>Urban Health</span></a>
+ <div class="links"><a href="#heart">Overview</a><a href="#report">How it works</a><a href="#family">Family</a><a href="#lock">Privacy</a><a href="#faq">FAQ</a></div>
+ <div class="lang" role="group" aria-label="Language"><button data-l="en" aria-pressed="true">EN</button><button data-l="te" aria-pressed="false" lang="te">తె</button><button data-l="ta" aria-pressed="false" lang="ta">த</button></div>
+ <button class="menu" aria-label="Menu" aria-expanded="false" aria-controls="nav" onclick="this.setAttribute('aria-expanded',nav.classList.toggle('open'))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h16M4 15h16"/></svg></button>
+ <a href="/signin" class="signin">Sign in</a><a href="/app" class="cta">Open app</a>
+</div><div id="prog"></div></nav></header>
+<canvas id="world" aria-hidden="true"></canvas>
+<div id="wlabels" aria-hidden="true">
+ <div class="wl" data-c="1" data-a="heart" data-side="1" data-at=".05"><i style="background:#22C55E"></i>Heart · 72 bpm · regular</div>
+ <div class="wl" data-c="2" data-a="lung" data-side="1" data-at=".2"><i style="background:#22C55E"></i><span><b>Lungs</b><small>Breathing well</small></span></div>
+ <div class="wl" data-c="2" data-a="liver" data-side="-1" data-at=".32"><i style="background:#22C55E"></i><span><b>Liver</b><small>Values in range</small></span></div>
+ <div class="wl" data-c="2" data-a="kidney" data-side="1" data-at=".44"><i style="background:#F5A524"></i><span><b>Kidneys</b><small>Drink a little more water</small></span></div>
+ <div class="wl" data-c="2" data-a="gut" data-side="-1" data-at=".56"><i style="background:#22C55E"></i><span><b>Digestion</b><small>All looks good</small></span></div>
+ <div class="wl" data-c="4" data-a="tech"><i style="background:#4F7BFF"></i><span><b>Ravi · on the way</b></span><em>12 min</em></div>
+ <div class="wl nd" data-c="5" data-a="n0"><span><b>Meera · You</b></span></div>
+ <div class="wl nd" data-c="5" data-a="n1" data-at=".05"><span><b>Amma</b><small class="ok">Tablet taken</small></span></div>
+ <div class="wl nd" data-c="5" data-a="n2" data-at=".12"><span><b>Nanna</b><small class="warn">BP check due</small></span></div>
+ <div class="wl nd" data-c="5" data-a="n3" data-at=".19"><span><b>Arjun</b><small class="ok">All good</small></span></div>
+ <div class="wl nd" data-c="5" data-a="n4" data-at=".26"><span><b>Kavya, 6</b><small class="pink">Vaccine in 5 days</small></span></div>
+ <div class="wl big" data-c="6" data-a="kc"><b>Birth</b></div>
+ <div class="wl big sos" data-c="7" data-a="sc"><b>SOS</b></div>
+</div>
+<main id="main">
+<section class="chap hero" id="top" data-k="0"><div class="pin"><div class="tx l">
+ <p class="eb">Urban Health</p>
+ <h1>Your family's health.<br><span class="grad">In one secure place.</span></h1>
+ <p class="sub">Reports, medicines, visits and emergency details for everyone you love, explained in simple words.</p>
+ <div class="ctas"><a href="/app" class="cta big">Get started, free</a><a href="#heart" class="cta big ghost">See how it works</a></div>
+ <p class="hint" data-hint>Move your cursor. Then scroll.</p>
+</div></div></section>
+
+<section class="chap" id="heart" data-k="1"><div class="pin"><div class="tx l">
+ <p class="eb">Your heart</p>
+ <h2>Every beat, understood.</h2>
+ <p class="sub">Reports explained in plain words, so you always know what your body is telling you. Your doctor always has the final word.</p>
+</div></div></section>
+
+<section class="chap" id="body" data-k="2"><div class="pin"><div class="tx l">
+ <p class="eb">Your body</p>
+ <h2>See your health.<br><span class="g2">On your body.</span></h2>
+ <p class="sub">Every report lights up where it belongs. Green is good. Amber means take care.</p>
+</div></div></section>
+
+<section class="chap" id="report" data-k="3"><div class="pin"><div class="tx l">
+ <p class="eb">Your reports</p>
+ <h2>Snap a report.<br><span class="g2">Read it in plain words.</span></h2>
+ <p class="sub">Take a photo of any report, from any lab. Each value is explained in one sentence, and shown where it belongs.</p>
+ <ul class="res">
+  <li data-at=".3"><i class="ok"></i><span><b>Haemoglobin is normal</b><small>Your blood carries oxygen well.</small></span></li>
+  <li data-at=".45"><i class="ok"></i><span><b>Thyroid is in range</b><small>TSH 2.1, nothing to worry about.</small></span></li>
+  <li data-at=".6"><i class="warn"></i><span><b>Vitamin D is a little low</b><small>Morning sunlight helps. Ask your doctor about a supplement.</small></span></li>
+ </ul>
+</div></div></section>
+
+<section class="chap" id="lab" data-k="4"><div class="pin"><div class="tx r">
+ <p class="eb">Lab at home</p>
+ <h2>Tests at your door.<br><span class="g2">Reports in your pocket.</span></h2>
+ <p class="sub">Pick a time. A trained technician from a partner lab comes home, and you can follow every step until the report arrives, already explained.</p>
+ <ul class="steps5">
+  <li data-at="0"><i></i>Booked</li><li data-at=".1"><i></i>On the way</li><li data-at=".72"><i></i>Sample collected at home</li><li data-at=".82"><i></i>Report ready</li>
+ </ul>
+</div></div></section>
+
+<section class="chap" id="family" data-k="5"><div class="pin"><div class="tx c">
+ <p class="eb">Your family</p>
+ <h2>One family.<br><span class="g2">One secure place.</span></h2>
+ <p class="sub">Add the people you care for. Each gets their own profile, and you decide who sees what.</p>
+</div></div></section>
+
+<section class="chap" id="kids" data-k="6"><div class="pin"><div class="tx l">
+ <p class="eb">For kids</p>
+ <h2>Every vaccine.<br><span class="g2">Right on time.</span></h2>
+ <p class="sub">From the first day home to the first day of school, each dose fills a ring, and a gentle reminder arrives before the next one is due.</p>
+ <p class="fine">Shown as per India's Universal Immunisation Programme. Some vaccines depend on your area, and your paediatrician may suggest more.</p>
+</div></div></section>
+
+<section class="chap" id="sos" data-k="7"><div class="pin"><div class="tx c">
+ <p class="eb">In an emergency</p>
+ <h2>Hold for one second.</h2>
+ <p class="sub">That's all it takes to reach the people who matter.</p>
+ <ul class="outs5"><li data-at=".5">Calls 112</li><li data-at=".56">Alerts your family</li><li data-at=".62">Shares where you are</li><li data-at=".68">Shows your Medical ID</li></ul>
+ <p class="fine">If you can, always call 112 directly in an emergency. For an ambulance, call 108.</p>
+</div></div></section>
+
+<section class="chap" id="lock" data-k="8"><div class="pin"><div class="tx c b">
+ <p class="eb">Your privacy</p>
+ <h2>Locked. And kept in India.</h2>
+ <p class="sub">Your health is yours. We collect only what helps you, ask before we use it, and let you take it back.</p>
+ <ul class="pts5"><li data-at=".5">Kept in India</li><li data-at=".55">Encrypted</li><li data-at=".6">Consent first</li><li data-at=".65">No ads. No selling.</li></ul>
+</div></div></section>
+
+<section class="chap" id="final" data-k="9"><div class="pin"><div class="tx c mid">
+ <h2 class="fin">Care for everyone<br>you love. <span class="grad">Securely.</span></h2>
+ <p class="sub">Set up your family in two minutes. Works on any phone, in your browser.</p>
+ <div class="ctas"><a href="/app" class="cta big">Open Urban Health</a></div>
+</div></div></section>
+
+<section class="priv" id="privacy">
+ <div class="wrap">
+  <div class="pgrid">
+   <div class="pc spot dkspot rv"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8EA6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10l7-5 7 5v11M10 21v-6h4v6"/></svg></div><h3>Kept in India</h3><p>Health records are stored in data centres in Mumbai, on Google Cloud.</p><div class="kl">Your data doesn't travel abroad.</div></div>
+   <div class="pc spot dkspot rv d1"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8EA6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div><h3>Encrypted</h3><p>Everything travels over HTTPS and is encrypted where it is stored.</p><div class="kl">Like a letter in a locked box.</div></div>
+   <div class="pc spot dkspot rv d2"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8EA6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h9"/></svg></div><h3>Consent first</h3><p>You choose what the app may use, and can change it anytime. Each consent is recorded with time and purpose.</p><div class="kl">We always ask before we touch.</div></div>
+   <div class="pc spot dkspot rv"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8EA6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 11l2 2 4-4"/></svg></div><h3>You decide who sees</h3><p>Share a report with a doctor for a set time, and it closes by itself. You can see everyone with access.</p><div class="kl">Like lending a book and getting it back.</div></div>
+   <div class="pc spot dkspot rv d1"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8EA6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="3"/><path d="M10 7h4"/></svg></div><h3>Strong sign-in for our team</h3><p>Staff use an authenticator app, roles limit what each person can open, and access is written to an audit log.</p><div class="kl">Only the right people hold the keys.</div></div>
+   <div class="pc spot dkspot rv d2"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8EA6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></div><h3>No ads. No selling.</h3><p>We do not sell personal data or use health records for advertising.</p><div class="kl">Your secrets are not for sale.</div></div>
+  </div>
+ </div>
+</section>
+
+<section class="app5 lightsec"><div class="wrap">
+ <div class="head c rv"><div class="eyebrow">The app</div><h2>Designed for every age.</h2><p>Large type, clear buttons, one idea per screen.</p></div>
+ <div class="phones5 rv">
+  <figure><div class="phone"><div class="scr" style="--top:#fbeff3"><i class="sb"></i><img src="/s/home/img/today.79771a4b.webp" alt=""></div></div><figcaption>Today</figcaption></figure>
+  <figure><div class="phone"><div class="scr" style="--top:#f3f3f7"><i class="sb"></i><img src="/s/home/img/medid.86c4c4e6.webp" alt=""></div></div><figcaption>Medical ID</figcaption></figure>
+  <figure><div class="phone"><div class="scr" style="--top:#fbeff3"><i class="sb"></i><img src="/s/home/img/lab.63c6d11c.webp" alt=""></div></div><figcaption>Lab</figcaption></figure>
+  <figure><div class="phone"><div class="scr" style="--top:#fbeff3"><i class="sb"></i><img src="/s/home/img/medicine.62f0c894.webp" alt=""></div></div><figcaption>Medicines</figcaption></figure>
+ </div>
+</div></section>
+
+<section class="blk light lightsec" id="india">
+ <div class="wrap">
+  <p class="lnote2" data-note></p>
+  <div class="head rv"><div class="eyebrow" style="color:var(--blue)">Built for India</div><h2>Following India's health and data rules.</h2><p>Urban Health is designed around Indian law and guidance. Where a rule is still being phased in, we say so openly, and we work only with partners who hold the licences their work requires.</p></div>
+  <div class="comp">
+   <div class="cc spot rv"><span class="badge">DPDP</span><div><h3>Digital Personal Data Protection Act, 2023 and DPDP Rules, 2025</h3><p>Clear notices, purpose-bound consent, the right to access, correct and erase your data, a nominee, and a Grievance Officer. We are aligning with each phase as it comes into force.</p><span class="st8 wip">Aligning with the phased roll-out</span></div></div>
+   <div class="cc spot rv d1"><span class="badge">TPG</span><div><h3>Telemedicine Practice Guidelines, 2020</h3><p>Online consultations only with doctors registered with the National Medical Commission or a State Medical Council, with consent and a record of each consult.</p><span class="st8 ok">Designed to follow</span></div></div>
+   <div class="cc spot rv"><span class="badge">IT</span><div><h3>Information Technology Act, 2000 and SPDI Rules, 2011</h3><p>Reasonable security practices for sensitive personal data, including health records, with a published privacy policy and a way to raise concerns.</p><span class="st8 ok">Designed to follow</span></div></div>
+   <div class="cc spot rv d1"><span class="badge">ABDM</span><div><h3>Ayushman Bharat Digital Mission (ABHA)</h3><p>Built to work with ABHA health IDs and consent-based record sharing. Integration is being prepared and will be offered only once approved.</p><span class="st8 prep">Integration in preparation</span></div></div>
+   <div class="cc spot rv"><span class="badge">Rx</span><div><h3>Drugs and Cosmetics Act, 1940 and Rules</h3><p>Medicines come only from partner pharmacies with a valid drug licence. Prescription medicines need a valid prescription, checked by a registered pharmacist.</p><span class="st8 ok">Licensed partners only</span></div></div>
+   <div class="cc spot rv d1"><span class="badge">LAB</span><div><h3>Diagnostic labs and doctors</h3><p>Certificates and registration numbers are checked by two different members of our team before a partner joins, and expiry dates are watched daily.</p><span class="st8 ok">Verified by two people</span></div></div>
+  </div>
+  <div class="tl rv" id="tl" style="--w:66%">
+   <h3>DPDP Rules, 2025: how the roll-out works</h3>
+   <p>Notified in November 2025, coming into force in phases over 18 months.</p>
+   <div class="bar"><div class="fill"></div>
+    <span class="pt" data-d="2025-11-14" style="left:0"></span><span class="lbl" style="left:0;transform:none"><i class="dd">14 </i>Nov 2025</span>
+    <span class="pt" data-d="2026-11-14" style="left:66.7%"></span><span class="lbl" style="left:66.7%"><i class="dd">14 </i>Nov 2026</span>
+    <span class="pt" data-d="2027-05-14" style="left:100%"></span><span class="lbl" style="left:100%;transform:translateX(-100%)"><i class="dd">14 </i>May 2027</span>
+    <span class="now" id="nowTag" style="left:66.7%">Today</span>
+   </div>
+   <div class="tlc"><div data-d="2025-11-14"><b>Phase 1 · 14 Nov 2025</b>The Data Protection Board is set up and the basics take effect.<span class="ph"></span></div><div data-d="2026-11-14"><b>Phase 2 · 14 Nov 2026</b>Rules for consent managers begin.<span class="ph"></span></div><div data-d="2027-05-14"><b>Phase 3 · 14 May 2027</b>All duties apply in full: notices, security safeguards, breach reporting and the rights of users.<span class="ph"></span></div></div>
+  </div>
+ </div>
+</section>
+<section class="blk white lightsec" id="policy">
+ <div class="wrap">
+  <p class="lnote2" data-note></p>
+  <div class="head c rv"><div class="eyebrow" style="color:var(--blue)">Privacy policy, in short</div><h2>The fine print, made plain.</h2><p>A short summary of how we handle your information. The full policy always governs if anything here differs.</p></div>
+  <div class="acc">
+   <details class="rv" open><summary>What we collect<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">Only what you give us, or allow us to use:<ul><li>Account details: name, mobile number, email.</li><li>Health details you add: reports, medicines, allergies, visits and family profiles.</li><li>Location, only when you book a home visit or use SOS, and only with your permission.</li><li>Basic technical logs that keep the service secure.</li></ul><div class="simple">In simple words: we keep what you put in, nothing hidden.</div></div></details>
+   <details class="rv"><summary>Why we use it<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">To show your health information, explain reports, send reminders, arrange the tests, visits and medicines you ask for, help in an emergency, and keep accounts safe, only for the purposes you agreed to.<div class="simple">In simple words: only to help you, never to sell to you.</div></div></details>
+   <details class="rv"><summary>Who we share it with<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">Only the people you choose, for the task you choose: the lab you book, the doctor you consult, the pharmacy you order from, or family and contacts you add. Service providers who host our systems in India act on our instructions. We share with authorities only when the law requires it.<div class="simple">In simple words: only the people helping you get to see it.</div></div></details>
+   <details class="rv"><summary>How long we keep it<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">While your account is active, or as long as the law requires for medical and financial records. When you delete your account, personal data is erased after a short grace period, except what we must keep by law.<div class="simple">In simple words: when you leave, your data leaves too.</div></div></details>
+   <details class="rv"><summary>Your rights<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd"><ul><li>See a summary of your data and how it is used.</li><li>Correct or update anything that is wrong.</li><li>Withdraw consent and erase your data.</li><li>Nominate someone to act for you if you cannot.</li><li>Raise a grievance, and escalate to the Data Protection Board of India if it is not resolved.</li></ul><div class="simple">In simple words: it's your data, so you're the boss of it.</div></div></details>
+   <details class="rv"><summary>Children's data<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">Profiles for children under 18 are created and managed by a parent or lawful guardian, with their consent. We do not track children's behaviour or show them advertising.<div class="simple">In simple words: grown-ups look after kids' profiles.</div></div></details>
+   <details class="rv"><summary>Grievance Officer<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">For any question or concern about your data, write to our Grievance Officer at <a href="mailto:support@urbanhealth.in" style="color:var(--blue);font-weight:600">support@urbanhealth.in</a> with the subject "Grievance". We acknowledge every request and keep you updated until it is resolved.<div class="simple">In simple words: if something feels wrong, tell us and we'll fix it.</div></div></details>
+  </div>
+  <p style="text-align:center;margin-top:30px"><a href="/privacy" class="cta big ghost" style="color:var(--blue)">Read the full privacy policy</a></p>
+ </div>
+</section>
+<section id="faq" class="lightsec"><div class="wrap">
+ <div class="head c rv"><div class="eyebrow" style="color:var(--blue)">Questions</div><h2>Asked by families like yours.</h2></div>
+ <div class="acc"><details class="rv"><summary>Is Urban Health free to use?<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">Creating your account and adding your family is free. Lab tests, consultations and medicines you choose to book are paid to the provider, and the price is always shown before you confirm.<div class="simple">In simple words: Starting is free. You see every price before you pay.</div></div></details><details class="rv"><summary>Does it replace my doctor?<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">No. Urban Health helps you understand and organise your health information. Diagnosis and treatment always come from a registered doctor.<div class="simple">In simple words: It explains. Your doctor decides.</div></div></details><details class="rv"><summary>Where is my data stored?<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">Health records are stored in India, in Google Cloud data centres in Mumbai. We do not sell personal data or use it for advertising.<div class="simple">In simple words: Your data stays in India.</div></div></details><details class="rv"><summary>Can I look after my parents and children?<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">Yes. Add profiles for the people you care for. Parents can use a simple mode with larger text, children's profiles are managed by a parent or guardian, and you decide who can see what.<div class="simple">In simple words: One app for the whole family.</div></div></details><details class="rv"><summary>Which languages are available?<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">English, Telugu and Tamil today, with more Indian languages on the way.<div class="simple">In simple words: Three languages now, more coming.</div></div></details><details class="rv"><summary>How do I delete my data?<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">You can delete your account from Settings at any time. Personal data is erased after a short grace period, except what the law requires us to keep.<div class="simple">In simple words: You can leave whenever you like, and your data leaves with you.</div></div></details><details class="rv"><summary>What happens when I press SOS?<span class="pl2"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></summary><div class="bd">Holding SOS for one second alerts your emergency contacts with your location and Medical ID, and helps you call 112. If you can, always call 112 directly in an emergency.<div class="simple">In simple words: Hold for a second, and your people know.</div></div></details></div>
+</div></section>
+</main>
+<footer><div class="wrap">
+ <div class="disc">Urban Health helps you understand and organise health information. It does not replace a doctor's advice, diagnosis or treatment. <b>In an emergency, call 112, or 108 for an ambulance.</b></div>
+ <div class="fgrid">
+  <div><h3>Urban Health</h3><p>Your family's health, in one secure place. Made in India, for families across India.</p></div>
+  <div><h3>Explore</h3><ul><li><a href="#story">How it works</a></li><li><a href="#gal">Features</a></li><li><a href="/app">Open the app</a></li></ul></div>
+  <div><h3>Trust</h3><ul><li><a href="#lock">Privacy &amp; security</a></li><li><a href="#india">Compliance</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms of use</a></li></ul></div>
+  <div><h3>Contact</h3><ul><li><a href="mailto:support@urbanhealth.in">support@urbanhealth.in</a></li><li>Grievance Officer: same address, subject "Grievance"</li></ul></div>
+ </div>
+ <div class="copy"><span>© <span id="yr">2026</span> Urban Health. All rights reserved.</span><span>India</span></div>
+</div></footer>
+<script>window.UH_LIBS=(()=>{let p;return()=>p||(p=new Promise((ok,no)=>{const e=document.createElement("script");e.src="/a/three.9274bbce.js";e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();</script>
+<script>window.UH_BODY_BIN="/a/female.ab5cf751.bin";window.UH_BODY_NAMES="/a/names-f.a07a3541.json";window.UH_MARK="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M21.5%2015a4%204%200%200%201%204-4h3a4%204%200%200%201%204%204v34a4%204%200%200%201-4%204h-3a4%204%200%200%201-4-4V37.5H13a4%204%200%200%201-4-4v-3a4%204%200%200%201%204-4h8.5z%22%20fill%3D%22%232F5BFF%22/%3E%3Cpath%20d%3D%22M32%2032h5l3.2-8%204.6%2016%203.2-8h0.4%22%20fill%3D%22none%22%20stroke%3D%22%232F5BFF%22%20stroke-width%3D%224.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Ccircle%20cx%3D%2255.2%22%20cy%3D%2232%22%20r%3D%223.3%22%20fill%3D%22%232F5BFF%22/%3E%3C/svg%3E";</script>
+
+<script>/* ===== Urban Health · the particle world ===== */
+(async()=>{
+const cv=document.getElementById('world'),LBL=document.getElementById('wlabels');
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C=v=>v<0?0:v>1?1:v,seg=(p,a,b)=>C((p-a)/(b-a)),mix=(a,b,t)=>a+(b-a)*t;
+const E=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,EO=t=>1-Math.pow(1-t,3);
+const isMob=()=>innerWidth<560||(innerWidth<900&&innerHeight>innerWidth);
+let mob=isMob(),W=innerWidth,H=innerHeight;
+const tr=t=>window.__tr?window.__tr(t):t;
+if(window.UH_LIBS)await window.UH_LIBS();
+const T=window.THREE;let R3=null;
+try{R3=T&&new T.WebGLRenderer({canvas:cv,antialias:false,alpha:true,powerPreference:'high-performance'})}catch(e){}
+if(!R3){document.body.classList.add('noworld');return}
+R3.setPixelRatio(Math.min(devicePixelRatio||1,mob?1.6:1.75));
+const N=mob?5200:9000,N3=N*3;
+const scene=new T.Scene(),cam=new T.PerspectiveCamera(38,1,.01,200);
+const POS=new Float32Array(N3),VEL=new Float32Array(N3),COL=new Float32Array(N3),SZ=new Float32Array(N),D=new Float32Array(N),SW=new Float32Array(N3),PH=new Float32Array(N);
+for(let i=0;i<N;i++){D[i]=Math.random();PH[i]=Math.random()*6.283;SZ[i]=.5+Math.random()*.95;
+ const a=Math.random()*6.283,b=Math.acos(2*Math.random()-1);SW[i*3]=Math.sin(b)*Math.cos(a);SW[i*3+1]=Math.sin(b)*Math.sin(a);SW[i*3+2]=Math.cos(b);
+ const r=7+Math.random()*12;POS[i*3]=SW[i*3]*r;POS[i*3+1]=SW[i*3+1]*r;POS[i*3+2]=SW[i*3+2]*r-6}
+const geo=new T.BufferGeometry();
+const aP=new T.BufferAttribute(POS,3),aC=new T.BufferAttribute(COL,3);aP.setUsage(T.DynamicDrawUsage);aC.setUsage(T.DynamicDrawUsage);
+geo.setAttribute('position',aP);geo.setAttribute('aCol',aC);geo.setAttribute('aSize',new T.BufferAttribute(SZ,1));
+const mat=new T.ShaderMaterial({transparent:true,depthWrite:false,depthTest:false,blending:T.AdditiveBlending,uniforms:{uPR:{value:R3.getPixelRatio()},uScale:{value:30}},
+ vertexShader:'attribute vec3 aCol;attribute float aSize;uniform float uPR;uniform float uScale;varying vec3 vC;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;float s=aSize*uPR*uScale/max(.12,-mv.z);gl_PointSize=min(s,52.*uPR);vC=aCol;}',
+ fragmentShader:'varying vec3 vC;void main(){vec2 c=gl_PointCoord-.5;float d=length(c);if(d>.5)discard;float a=1.-smoothstep(0.,.5,d);gl_FragColor=vec4(vC*a*a*1.7,1.);}'});
+const pts=new T.Points(geo,mat);pts.frustumCulled=false;scene.add(pts);
+const mk=()=>({p:new Float32Array(N3),c:new Float32Array(N3)});
+const rgb=h=>[(h>>16&255)/255,(h>>8&255)/255,(h&255)/255];
+const put=(a,i,x,y,z)=>{a[i*3]=x;a[i*3+1]=y;a[i*3+2]=z};
+const G3=[rgb(0x4F7BFF),rgb(0x8B6CFF),rgb(0xF0559A)];
+const grad=(t,o,i,m=1)=>{t=C(t);const k=t<.5?0:1,f=t<.5?t*2:(t-.5)*2,a=G3[k],b=G3[k+1];put(o,i,mix(a[0],b[0],f)*m,mix(a[1],b[1],f)*m,mix(a[2],b[2],f)*m)};
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+/* ---------- shapes ---------- */
+async function markShape(){const s=mk();s.type='mark';const img=new Image();img.src=window.UH_MARK;try{await img.decode()}catch(_){}
+ const S=256,o=document.createElement('canvas');o.width=o.height=S;const g=o.getContext('2d');g.drawImage(img,0,0,S,S);
+ const d=g.getImageData(0,0,S,S).data,cand=[];for(let y=0;y<S;y++)for(let x=0;x<S;x++)if(d[(y*S+x)*4+3]>140)cand.push(x,y);
+ const n=cand.length/2||1;
+ for(let i=0;i<N;i++){const j=(Math.random()*n)|0,x=(cand[j*2]+Math.random()-128)/128*2.3,y=-(cand[j*2+1]+Math.random()-128)/128*2.3;put(s.p,i,x,y,rnd(-.18,.18));grad((x+2.3)/4.6,s.c,i,.8)}
+ return s}
+function heartF(x,y,z){const a=x*x+2.25*z*z+y*y-1;return a*a*a-x*x*y*y*y-.1125*z*z*y*y*y}
+function heartShape(warm){const s=mk();s.type='heart';const sc=1.55;
+ for(let i=0;i<N;i++){let dx,dy,dz,L;do{dx=rnd(-1,1);dy=rnd(-1,1);dz=rnd(-1,1);L=dx*dx+dy*dy+dz*dz}while(L>1||L<.01);L=Math.sqrt(L);dx/=L;dy/=L;dz/=L;
+  let lo=0,hi=2.4;for(let k=0;k<24;k++){const m=(lo+hi)/2;if(heartF(dx*m,dy*m,dz*m)<=0)lo=m;else hi=m}
+  const surf=Math.random()<.78,r=surf?lo:lo*Math.cbrt(Math.random())*.95;put(s.p,i,dx*r*sc,dy*r*sc+.12,dz*r*sc);
+  if(warm){const t=C((dx*r+1.2)/2.4);grad(t,s.c,i,surf?.85:.45)}
+  else{const f=Math.random();put(s.c,i,(surf?1:.75)*mix(1,1,f),(surf?.2:.12)+f*.22,(surf?.32:.22)+f*.22);if(!surf){s.c[i*3]*=.6;s.c[i*3+1]*=.6;s.c[i*3+2]*=.6}}}
+ return s}
+function organKey(n){n=n.toLowerCase();
+ if(/uter|ovar|fallop|placent/.test(n))return 'x';if(/thyroid/.test(n))return 'x';
+ if(/kidney|renal (cortex|pelvis|papill|pyramid)/.test(n)&&!/arter|vein|impression/.test(n))return 'kidney';
+ if(/pancrea/.test(n))return 'x';if(/liver/.test(n)&&!/impression|ligament/.test(n))return 'liver';
+ if(/atri|ventric|cardiac|heart|myocard|papillary|valve|leaflet|cusp|chordae|interventricular/.test(n)&&!/fourth ventricle|lateral ventricle|third ventricle|arter|vein|conduction/.test(n))return 'heart';
+ if(/lung|bronch/.test(n)&&!/arter|vein/.test(n))return 'lung';
+ if(/stomach|intestin|colon|jejun|ileum|duoden|cecum|caecum|rectum|esophag|oesophag|appendix|gallbladder/.test(n))return 'gut';return null}
+async function bodyShape(){
+ const src=window.UH_BODY_BIN;let buf;
+ if(typeof src==='string'&&src.startsWith('/'))buf=await new Response((await fetch(src)).body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+ else{const b=atob(src),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);buf=await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
+ const nm=typeof window.UH_BODY_NAMES==='string'?await (await fetch(window.UH_BODY_NAMES)).json():window.UH_BODY_NAMES;
+ const jl=new DataView(buf).getUint32(0,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base=4+jl;
+ const parts={skin:[],heart:[],lung:[],liver:[],kidney:[],gut:[]};
+ meta.parts.forEach((p,k)=>{const l=p.l??1,n=nm[k];let key=null;if(l===0){if(!/^skin/i.test(n))return;key='skin'}else if(l===3){key=organKey(n);if(!key||key==='x')return}else return;
+  const q=new Uint16Array(buf,base+p.o,p.v*3),b=p.b,arr=new Float32Array(p.v*3);
+  for(let j=0;j<p.v;j++){arr[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);arr[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);arr[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}
+  parts[key].push(arr)});
+ let mn=[1e9,1e9,1e9],mxx=[-1e9,-1e9,-1e9];parts.skin.forEach(a=>{for(let j=0;j<a.length;j+=3)for(let c=0;c<3;c++){mn[c]=Math.min(mn[c],a[j+c]);mxx[c]=Math.max(mxx[c],a[j+c])}});
+ const ctr=[0,1,2].map(c=>(mn[c]+mxx[c])/2),h0=mxx[1]-mn[1],sc=5.6/h0;
+ // drop stray organ pieces far from their organ
+ for(const k of ['heart','lung','liver','kidney','gut']){const cs=parts[k].map(a=>{let s=[0,0,0];for(let j=0;j<a.length;j+=3){s[0]+=a[j];s[1]+=a[j+1];s[2]+=a[j+2]}const n=a.length/3;return s.map(v=>v/n)});
+  const med=[0,1,2].map(c=>{const v=cs.map(x=>x[c]).sort((a,b)=>a-b);return v[v.length>>1]});const lim=h0*(k==='gut'?.16:k==='lung'?.12:.07);
+  parts[k]=parts[k].filter((a,i)=>Math.hypot(cs[i][0]-med[0],cs[i][1]-med[1],cs[i][2]-med[2])<lim)}
+ const s=mk();s.type='body';s.org=new Int8Array(N);s.anc={};
+ const share=[['skin',.6,0],['heart',.08,1],['lung',.12,2],['liver',.08,3],['kidney',.04,4],['gut',.08,5]];
+ const OC={skin:null,heart:rgb(0xFF3B4E),lung:rgb(0xF7A3B0),liver:rgb(0xC0473A),kidney:rgb(0xB8404A),gut:rgb(0xF2A188)};
+ let i=0;
+ for(const [k,f,id] of share){const pool=parts[k];if(!pool.length)continue;const tot=pool.reduce((a,b)=>a+b.length/3,0);const cnt=k==='gut'?N-i:Math.round(N*f);let ax=0,ay=0,az=0;
+  for(let n=0;n<cnt&&i<N;n++,i++){let r=Math.random()*tot,a;for(a of pool){if(r<a.length/3)break;r-=a.length/3}const j=Math.min(a.length/3-1,r|0)*3;
+   const x=(a[j]-ctr[0])*sc+rnd(-.008,.008),y=(a[j+1]-ctr[1])*sc,z=(a[j+2]-ctr[2])*sc;put(s.p,i,x,y,z);ax+=x;ay+=y;az+=z;s.org[i]=id;
+   if(k==='skin'){const m=rnd(.28,.55);put(s.c,i,.25*m,.42*m,1*m)}else{const c=OC[k],m=rnd(.7,1);put(s.c,i,c[0]*m,c[1]*m,c[2]*m)}}
+  if(k!=='skin')s.anc[k]=[ax/cnt,ay/cnt,az/cnt]}
+ for(;i<N;i++){put(s.p,i,0,0,0);s.org[i]=0}
+ return s}
+function sheetShape(){const s=mk();s.type='report';s.row=new Int8Array(N).fill(-1);
+ const F=[];const L=(x0,y0,x1,y1,w,row,col)=>F.push({x0,y0,x1,y1,w,row,col});
+ const wb=.55,dim=[.55,.6,.75];
+ L(-1.4,1.8,1.4,1.82,4,-1,dim);L(-1.4,-1.82,1.4,-1.8,4,-1,dim);L(-1.42,-1.8,-1.4,1.8,5,-1,dim);L(1.4,-1.8,1.42,1.8,5,-1,dim);
+ L(-1.15,1.32,-.1,1.5,6,-1,[.35,.5,1]);L(-1.15,1.08,.4,1.13,2,-1,[.35,.38,.5]);L(-1.15,.92,1.15,.94,2,-1,[.3,.3,.4]);
+ for(let r=0;r<5;r++){const y=.6-r*.46;L(-1.15,y-.05,-.25,y+.05,3,r,dim);L(-.05,y-.06,.42,y+.06,3,r,[.85,.85,.95]);L(.6,y-.04,1.15,y+.04,2,r,[.4,.42,.55])}
+ L(-1.15,-1.55,.3,-1.5,1.5,-1,[.3,.3,.4]);
+ const wt=F.reduce((a,f)=>a+f.w,0);let i=0;
+ F.forEach((f,k)=>{const cnt=k===F.length-1?N-i:Math.round(N*f.w/wt);for(let n=0;n<cnt&&i<N;n++,i++){put(s.p,i,rnd(f.x0,f.x1),rnd(f.y0,f.y1),rnd(-.03,.03));const m=rnd(.7,1);put(s.c,i,f.col[0]*m,f.col[1]*m,f.col[2]*m);s.row[i]=f.row}});
+ return s}
+const ROUTE=[[-2.4,1.7],[-1.2,1.7],[-1.2,.6],[0,.6],[0,-.5],[1.2,-.5],[1.2,-1.6]];
+const RL=(()=>{let L=[0];for(let k=1;k<ROUTE.length;k++)L.push(L[k-1]+Math.hypot(ROUTE[k][0]-ROUTE[k-1][0],ROUTE[k][1]-ROUTE[k-1][1]));return L})();
+function routeAt(q){const d=q*RL[RL.length-1];for(let k=1;k<RL.length;k++)if(d<=RL[k]){const f=(d-RL[k-1])/(RL[k]-RL[k-1]);return[mix(ROUTE[k-1][0],ROUTE[k][0],f),mix(ROUTE[k-1][1],ROUTE[k][1],f)]}return ROUTE[ROUTE.length-1]}
+const TILT=-1.0,TC=Math.cos(TILT),TS=Math.sin(TILT);
+const mapXf=(x,y,z)=>[x,y*TC-z*TS,y*TS+z*TC];
+function mapShape(){const s=mk();s.type='lab';s.rs=new Float32Array(N).fill(-1);s.tech=new Int8Array(N);s.off=new Float32Array(N3);
+ let i=0;const add=(x,y,z,c,m=1)=>{const w=mapXf(x,y,z);put(s.p,i,w[0],w[1],w[2]);put(s.c,i,c[0]*m,c[1]*m,c[2]*m);i++};
+ const street=[.18,.24,.45];const nS=Math.round(N*.38);
+ for(let n=0;n<nS;n++){if(Math.random()<.55){const x=[-2.4,-1.2,0,1.2,2.4][(Math.random()*5)|0];add(x+rnd(-.03,.03),rnd(-2.2,2.2),0,street,rnd(.6,1))}else{const y=[-1.6,-.5,.6,1.7][(Math.random()*4)|0];add(rnd(-3,3),y+rnd(-.03,.03),0,street,rnd(.6,1))}}
+ const nR=Math.round(N*.12);for(let n=0;n<nR;n++){const x=rnd(-3,3),y=-.05+Math.sin(x*1.1)*.35+rnd(-.12,.12);add(x,y,0,[.2,.45,.9],rnd(.3,.55))}
+ const nP=Math.round(N*.22);for(let n=0;n<nP;n++){const q=Math.random(),pp=routeAt(q);s.rs[i]=q;add(pp[0]+rnd(-.035,.035),pp[1]+rnd(-.035,.035),.02,[.35,.55,1])}
+ const nPin=Math.round(N*.08);for(let n=0;n<nPin;n++){const t=Math.random()*6.283,ry=Math.random();let x,z;if(ry<.65){const r=.22*Math.sqrt(Math.random());x=Math.cos(t)*r;z=.62+Math.sin(t)*r}else{const f=Math.random();x=rnd(-1,1)*.2*(1-f);z=.62-f*.6}
+  add(1.2+x,-1.6+rnd(-.02,.02),z,[1,.25,.35],rnd(.75,1))}
+ const nLab=Math.round(N*.04);for(let n=0;n<nLab;n++){const t=Math.random()*6.283,r=.24+rnd(-.02,.02);add(-2.4+Math.cos(t)*r,1.7+Math.sin(t)*r,0,[.6,.45,1])}
+ for(;i<N;){s.tech[i]=1;let dx,dy,dz,L;do{dx=rnd(-1,1);dy=rnd(-1,1);dz=rnd(-1,1);L=dx*dx+dy*dy+dz*dz}while(L>1);const r=.16;s.off[i*3]=dx*r;s.off[i*3+1]=dy*r;s.off[i*3+2]=dz*r+.2;put(s.c,i,.55,.75,1);i++}
+ return s}
+function famShape(){const s=mk();s.type='family';s.link=new Float32Array(N).fill(-1);
+ const sx=mob?1.45:2.5,sy=mob?1.75:1.15;
+ const NODES=[[0,0,.62,0x4F7BFF],[-sx,sy,.42,0x8B6CFF],[sx,sy,.42,0x1BB5B3],[-sx,-sy,.42,0x6B7FA8],[sx,-sy,.42,0xF0559A]];s.nodes=NODES;
+ let i=0;const nN=Math.round(N*.72),nL=N-nN;const w=NODES.map(n=>n[2]*n[2]),wt=w.reduce((a,b)=>a+b,0);
+ NODES.forEach((nd,k)=>{const cnt=k===4?nN-i:Math.round(nN*w[k]/wt);const c=rgb(nd[3]);for(let n=0;n<cnt;n++,i++){let dx,dy,dz,L;do{dx=rnd(-1,1);dy=rnd(-1,1);dz=rnd(-1,1);L=dx*dx+dy*dy+dz*dz}while(L>1||L<.01);L=Math.sqrt(L);const r=nd[2]*(Math.random()<.8?1:Math.cbrt(Math.random()));
+  put(s.p,i,nd[0]+dx/L*r,nd[1]+dy/L*r,dz/L*r);const m=rnd(.6,1);put(s.c,i,c[0]*m,c[1]*m,c[2]*m)}});
+ for(let n=0;n<nL;n++,i++){const k=1+(n%4),nd=NODES[k],f=Math.random();put(s.p,i,mix(0,nd[0],f)+rnd(-.02,.02),mix(0,nd[1],f)+rnd(-.02,.02),rnd(-.02,.02));s.link[i]=f+k*10;grad(f,s.c,i,.35)}
+ return s}
+function ringsShape(){const s=mk();s.type='kids';s.ring=new Int8Array(N).fill(-1);s.ang=new Float32Array(N);
+ const R=[2.3,1.92,1.54,1.16,.78],CL=[0x4F7BFF,0x8B6CFF,0xF0559A,0xF5A524,0x22C55E];const nC=Math.round(N*.07),nR=N-nC,wt=R.reduce((a,b)=>a+b,0);let i=0;
+ R.forEach((r,j)=>{const cnt=j===4?nR-i:Math.round(nR*r/wt);const c=rgb(CL[j]);for(let n=0;n<cnt;n++,i++){const a=Math.random()*6.283,b=Math.random()*6.283,tb=.075;const rr=r+Math.cos(b)*tb;
+  put(s.p,i,Math.sin(a)*rr,Math.cos(a)*rr,Math.sin(b)*tb);s.ring[i]=j;s.ang[i]=a;put(s.c,i,c[0],c[1],c[2])}});
+ for(;i<N;i++){let dx,dy,dz,L;do{dx=rnd(-1,1);dy=rnd(-1,1);dz=rnd(-1,1);L=dx*dx+dy*dy+dz*dz}while(L>1);put(s.p,i,dx*.34,dy*.34,dz*.34);put(s.c,i,1,.45,.55)}
+ return s}
+function sosShape(){const s=mk();s.type='sos';s.wave=new Int8Array(N);const nCore=Math.round(N*.42),nRing=Math.round(N*.2);let i=0;
+ for(let n=0;n<nCore;n++,i++){const a=Math.random()*6.283,r=Math.sqrt(Math.random())*1.0;put(s.p,i,Math.cos(a)*r,Math.sin(a)*r,rnd(-.12,.12)*(1-r));const m=rnd(.55,1);put(s.c,i,1*m,.2*m,.25*m)}
+ for(let n=0;n<nRing;n++,i++){const a=Math.random()*6.283,r=1.28+rnd(-.03,.03);put(s.p,i,Math.cos(a)*r,Math.sin(a)*r,rnd(-.03,.03));put(s.c,i,1,.55,.6)}
+ for(;i<N;i++){const a=Math.random()*6.283;s.wave[i]=1;put(s.p,i,Math.cos(a)*1.45,Math.sin(a)*1.45,0);put(s.c,i,1,.3,.35)}
+ return s}
+function lockShape(){const s=mk();s.type='lock';s.sh=new Int8Array(N);const nS=Math.round(N*.24);let i=0;
+ for(let n=0;n<nS;n++,i++){s.sh[i]=1;const t=Math.random();let x,y;if(t<.7){const a=Math.random()*Math.PI;x=Math.cos(a)*.72;y=.25+Math.sin(a)*.72}else{x=(Math.random()<.5?-.72:.72);y=rnd(-.05,.25)}
+  const b=Math.random()*6.283;put(s.p,i,x+Math.cos(b)*.12*Math.sign(x||1)*0,y,Math.sin(b)*.13);s.p[i*3]+=rnd(-.11,.11);const m=rnd(.6,1);put(s.c,i,.78*m,.8*m,.95*m)}
+ for(;i<N;){const x=rnd(-1.12,1.12),y=rnd(-1.35,.25),z=Math.random()<.7?(Math.random()<.5?-.32:.32):rnd(-.32,.32);
+  const kh=Math.hypot(x,y+.45)<.18||(Math.abs(x)<.07&&y<-.45&&y>-.95);if(kh)continue;put(s.p,i,x,y,z);grad((y+1.35)/1.7,s.c,i,rnd(.55,.95));i++}
+ return s}
+
+/* ---------- chapters ---------- */
+const SH=[];SH[0]=await markShape();SH[1]=heartShape(false);SH[2]=heartShape(false);SH[3]=sheetShape();SH[4]=mapShape();SH[5]=famShape();SH[6]=ringsShape();SH[7]=sosShape();SH[8]=lockShape();SH[9]=heartShape(true);for(let i=0;i<N3;i++)SH[9].c[i]*=.62;
+bodyShape().then(s=>{SH[2]=s}).catch(e=>console.warn('body',e));
+const CAM=(k,p)=>{switch(k){
+ case 0:return{z:mob?10:8.2,ox:.2,oy:mob?.27:0};
+ case 1:{const z=E(seg(p,.28,.9));return{z:mix(8.6,.25,z),ox:mob?0:mix(.17,0,E(seg(p,.25,.6))),oy:mob?mix(.13,0,seg(p,.25,.6)):0}}
+ case 2:return{z:10.4,ox:.17,oy:mob?.14:0,ly:-.05};
+ case 3:return{z:7.6,ox:.17,oy:mob?.16:0};
+ case 4:return{z:mob?5.6:7.2,ox:-.17,oy:mob?.12:.02,y:.4};
+ case 5:return{z:mob?9.6:9.8,ox:0,oy:mob?.14:.16};
+ case 6:return{z:8.3,ox:.19,oy:mob?.16:0};
+ case 7:return{z:8.6,ox:0,oy:mob?.06:.19};
+ case 8:return{z:9.6,ox:0,oy:mob?-.12:-.17};
+ case 9:return{z:mob?8.6:7.6,ox:0,oy:0};}};
+const beatF=t=>{const ph=(t*1.15)%1;return 1+.075*Math.exp(-Math.pow((ph-.08)/.045,2))+.045*Math.exp(-Math.pow((ph-.3)/.05,2))};
+const STATUS={1:[1,.25,.35],2:[.25,.95,.55],3:[.25,.95,.55],4:[1,.72,.2],5:[.25,.95,.55]};
+const BODYAT={2:.2,3:.32,4:.44,5:.56,1:.68};
+function pose(k,p,t,o){const s=SH[k];const P=o.p,Cc=o.c;P.set(s.p);Cc.set(s.c);o.anc=null;
+ switch(s.type){
+ case 'mark':{const sc=(mob?.6:.66)*(1+.015*Math.sin(t*1.6));for(let i=0;i<N3;i++)P[i]*=sc;break}
+ case 'heart':{const b=beatF(t),ry=Math.sin(t*.32)*.4+(k===9?t*.12:0),c=Math.cos(ry),sn=Math.sin(ry),gl=1+(b-1)*5;
+  for(let i=0;i<N3;i+=3){const x=P[i],z=P[i+2];P[i]=(x*c+z*sn)*b;P[i+1]*=b;P[i+2]=(-x*sn+z*c)*b;Cc[i]*=gl;Cc[i+1]*=gl;Cc[i+2]*=gl}
+  if(k===1)o.anc={heart:mob?[0,1.75*b,0]:[1.6*b,1.1,0]};break}
+ case 'body':{const a=-.55+E(p)*Math.PI*1.7+Math.sin(t*.3)*.05,c=Math.cos(a),sn=Math.sin(a);const on={};for(const id in BODYAT)on[id]=EO(seg(p,BODYAT[id],BODYAT[id]+.06));
+  for(let i=0,j=0;i<N;i++,j+=3){const x=P[j],z=P[j+2];P[j]=x*c+z*sn;P[j+2]=-x*sn+z*c;const g=s.org[i];if(g&&on[g]){const st=STATUS[g],f=on[g]*.75;Cc[j]=mix(Cc[j],st[0],f);Cc[j+1]=mix(Cc[j+1],st[1],f);Cc[j+2]=mix(Cc[j+2],st[2],f)}}
+  o.anc={};for(const kk in s.anc){const v=s.anc[kk];o.anc[kk]=[v[0]*c+v[2]*sn,v[1],-v[0]*sn+v[2]*c]}break}
+ case 'report':{const ys=mix(1.95,-2,seg(p,.14,.7)),ry=-.32+Math.sin(t*.4)*.04,c=Math.cos(ry),sn=Math.sin(ry),ST=[[.25,.95,.55],[.25,.95,.55],[.25,.95,.55],[1,.72,.2],[.25,.95,.55]];
+  for(let i=0,j=0;i<N;i++,j+=3){const y=s.p[j+1],r=s.row[i];if(r>=0&&y>ys){const st=ST[r];Cc[j]=st[0]*.8;Cc[j+1]=st[1]*.8;Cc[j+2]=st[2]*.8}
+   const dd=Math.abs(y-ys);if(dd<.09&&p<.72){const f=1-dd/.09;Cc[j]+=.5*f;Cc[j+1]+=.75*f;Cc[j+2]+=1.2*f}
+   const x=P[j],z=P[j+2];P[j]=x*c+z*sn;P[j+2]=-x*sn+z*c}break}
+ case 'lab':{const q=E(seg(p,.1,.72)),pp=routeAt(q),w=mapXf(pp[0],pp[1],0);
+  for(let i=0,j=0;i<N;i++,j+=3){if(s.tech[i]){const pulse=1+.15*Math.sin(t*5+PH[i]);P[j]=w[0]+s.off[j]*pulse;P[j+1]=w[1]+s.off[j+1]*pulse+.18;P[j+2]=w[2]+s.off[j+2]*pulse+.1}
+   else if(s.rs[i]>=0){const done=s.rs[i]<=q;const m=done?1.15:.28;Cc[j]*=m;Cc[j+1]*=m;Cc[j+2]*=m}}
+  o.anc={tech:[w[0],w[1]+.55,w[2]+.1]};break}
+ case 'family':{const a=Math.sin(t*.22)*.28+(p-.5)*.5,c=Math.cos(a),sn=Math.sin(a);
+  for(let i=0,j=0;i<N;i++,j+=3){const x=P[j],z=P[j+2];P[j]=x*c+z*sn;P[j+2]=-x*sn+z*c;const L=s.link[i];if(L>=0){const f=L%10,fl=((f+t*.45+((L/10)|0)*.25)%1);if(fl<.08){const g=1+(1-fl/.08)*2.2;Cc[j]*=g;Cc[j+1]*=g;Cc[j+2]*=g}}}
+  o.anc={};s.nodes.forEach((n,k2)=>{o.anc['n'+k2]=[n[0]*c,n[1]-n[2]-.12,-n[0]*sn]});break}
+ case 'kids':{const F=[0,1,2,3,4].map(j=>E(seg(p,.08+j*.15,.2+j*.15))*6.2832);
+  for(let i=0,j=0;i<N;i++,j+=3){const r=s.ring[i];if(r<0){const b=1+.12*Math.sin(t*2);P[j]*=b;P[j+1]*=b;P[j+2]*=b;continue}const a=s.ang[i],f=F[r];
+   if(a>f){Cc[j]*=.08;Cc[j+1]*=.08;Cc[j+2]*=.08}else if(f-a<.18&&f<6.2){Cc[j]*=2.2;Cc[j+1]*=2.2;Cc[j+2]*=2.2}}
+  o.anc={kc:[0,-.75,0]};break}
+ case 'sos':{const sent=seg(p,.42,.5),hold=seg(p,.1,.42);
+  for(let i=0,j=0;i<N;i++,j+=3){if(s.wave[i]){const w=((t*.55+PH[i]/6.283)%1);const r=1+w*1.9*sent;P[j]*=r;P[j+1]*=r;const m=sent*(1-w)*1.1+(1-sent)*.15;Cc[j]*=m;Cc[j+1]*=m;Cc[j+2]*=m}
+   else{const b=1-.05*hold*(1-sent)+.03*sent*Math.sin(t*6);P[j]*=b;P[j+1]*=b;const g=.75+.6*sent;Cc[j]*=g;Cc[j+1]*=g;Cc[j+2]*=g}}
+  o.anc={sc:[0,0,0]};break}
+ case 'lock':{const cl=E(seg(p,.18,.5)),glow=1+.5*seg(p,.48,.6)-.25*seg(p,.6,.9);
+  for(let i=0,j=0;i<N;i++,j+=3){if(s.sh[i])P[j+1]+=(1-cl)*.85;Cc[j]*=glow;Cc[j+1]*=glow;Cc[j+2]*=glow}break}}}
+
+/* ---------- scroll, pointer, frame ---------- */
+const CH=[...document.querySelectorAll('.chap')],NCH=CH.length;let tops=[],hts=[],endY=0;
+function measure(){W=innerWidth;H=innerHeight;mob=isMob();R3.setSize(W,H,false);cam.aspect=W/H;cam.updateProjectionMatrix();mat.uniforms.uScale.value=H*(mob?.042:.032);
+ tops=CH.map(e=>e.getBoundingClientRect().top+scrollY);hts=CH.map(e=>e.offsetHeight);endY=tops[NCH-1]+hts[NCH-1]}
+addEventListener('resize',()=>{const m=isMob();measure();if(m!==mob)location.reload()});addEventListener('load',measure);measure();
+function uNow(){const y=scrollY;if(y<=0)return 0;for(let k=NCH-1;k>=0;k--)if(y>=tops[k])return Math.min(k+.9999,k+(y-tops[k])/hts[k]);return 0}
+let ptr={x:0,y:0,on:0,last:0};
+const setP=(cx,cy)=>{ptr.x=cx/W*2-1;ptr.y=-(cy/H)*2+1;ptr.last=performance.now()};
+addEventListener('pointermove',e=>{setP(e.clientX,e.clientY);ptr.on=1},{passive:true});
+addEventListener('touchmove',e=>{const t=e.touches[0];if(t){setP(t.clientX,t.clientY);ptr.on=1}},{passive:true});
+addEventListener('touchstart',e=>{const t=e.touches[0];if(t){setP(t.clientX,t.clientY);ptr.on=1}},{passive:true});
+document.addEventListener('pointerleave',()=>ptr.on=0);
+const A=mk(),B=mk(),TG=new Float32Array(N3),TC2=new Float32Array(N3);
+const vP=new T.Vector3(),vD=new T.Vector3(),vF=new T.Vector3(),vL=new T.Vector3();
+let uS=0,started=performance.now(),camS=null;
+const labels=[...LBL.querySelectorAll('.wl')];
+function textFade(k,p){const inn=k===0?1:seg(p,.03,.13),out=k===NCH-1?1:k===1?1-seg(p,.42,.56):1-seg(p,.8,.92);return inn*out}
+function frame(now){requestAnimationFrame(frame);const t=now/1000;
+ if(scrollY>endY+H*.2){cv.style.visibility='hidden';LBL.style.visibility='hidden';return}cv.style.visibility='';LBL.style.visibility='';
+ const u=uNow();uS=RM?u:uS+(u-uS)*.14;
+ let k=Math.floor(uS),fr=uS-k,from,to,mt;
+ if(fr>.8&&k<NCH-1){from=k;to=k+1;mt=(fr-.8)/.4}else if(fr<.2&&k>0){from=k-1;to=k;mt=(fr+.2)/.4}else{from=to=k;mt=0}
+ const pf=from===k?fr:1,pt=to===k?fr:0;
+ pose(from,pf,t,A);if(to!==from)pose(to,pt,t,B);
+ // camera follows the morph
+ const ca=CAM(from,pf),cb=to!==from?CAM(to,pt):ca,cm=E(C(mt));
+ const zf=mob?Math.min(1.75,Math.max(1,.78/cam.aspect)):1;
+ const cz=mix(ca.z,cb.z,cm)*(mix(ca.z,cb.z,cm)<2?1:zf),cy=mix(ca.y||0,cb.y||0,cm),ly=mix(ca.ly||0,cb.ly||0,cm);
+ const ox=mob?0:mix(ca.ox,cb.ox,cm),oy=mix(ca.oy,cb.oy,cm);
+ cam.position.set(0,cy,cz);vL.set(0,ly,0);cam.lookAt(vL);cam.setViewOffset(W,H,-ox*W,-oy*H,W,H);cam.updateMatrixWorld();
+ // pointer in world space, on the plane through the focus point
+ let px=0,py=0,pz=0,pr=0;const act=ptr.on&&(now-ptr.last<(matchMedia('(pointer:coarse)').matches?900:4000))&&!RM;
+ if(act){vP.set(ptr.x,ptr.y,.5).unproject(cam);vD.copy(vP).sub(cam.position).normalize();cam.getWorldDirection(vF);const dist=vL.clone().sub(cam.position).dot(vF),s=dist/Math.max(.001,vD.dot(vF));
+  px=cam.position.x+vD.x*s;py=cam.position.y+vD.y*s;pz=cam.position.z+vD.z*s;pr=Math.max(.35,Math.abs(dist)*.085)*(mob?1.3:1)}
+ const amp=mob?1.1:1.5,K=RM?1:.075,DM=RM?0:.8;const intro=C((now-started-500)/1400);
+ for(let i=0,j=0;i<N;i++,j+=3){let tx=A.p[j],ty=A.p[j+1],tz=A.p[j+2],r=A.c[j],g=A.c[j+1],b=A.c[j+2];
+  if(to!==from){let tp=C(mt*1.7-D[i]*.7);tp=E(tp);const sw=Math.sin(tp*Math.PI)*amp;
+   tx=mix(tx,B.p[j],tp)+SW[j]*sw;ty=mix(ty,B.p[j+1],tp)+SW[j+1]*sw;tz=mix(tz,B.p[j+2],tp)+SW[j+2]*sw;r=mix(r,B.c[j],tp);g=mix(g,B.c[j+1],tp);b=mix(b,B.c[j+2],tp)}
+  const ph=PH[i];tx+=Math.sin(t*.7+ph)*.012;ty+=Math.cos(t*.6+ph*1.3)*.012;
+  let vx=VEL[j],vy=VEL[j+1],vz=VEL[j+2],x=POS[j],y=POS[j+1],z=POS[j+2];
+  if(RM){x=tx;y=ty;z=tz}else{vx+=(tx-x)*K*intro;vy+=(ty-y)*K*intro;vz+=(tz-z)*K*intro;
+   if(pr){const dx=x-px,dy=y-py,dz=z-pz,d2=dx*dx+dy*dy+dz*dz;if(d2<pr*pr){const d=Math.sqrt(d2)+1e-4,f=(1-d/pr);const push=f*f*pr*.16;
+     vx+=dx/d*push-dy/d*push*.9;vy+=dy/d*push+dx/d*push*.9;vz+=dz/d*push*.6;const gl=1+f*1.4;r*=gl;g*=gl;b*=gl}}
+   vx*=DM;vy*=DM;vz*=DM;x+=vx;y+=vy;z+=vz}
+  POS[j]=x;POS[j+1]=y;POS[j+2]=z;VEL[j]=vx;VEL[j+1]=vy;VEL[j+2]=vz;const fade=.35+.65*intro;COL[j]=r*fade;COL[j+1]=g*fade;COL[j+2]=b*fade}
+ aP.needsUpdate=true;aC.needsUpdate=true;R3.render(scene,cam);
+ // chapter text and labels
+ CH.forEach((el,i)=>{const p=i===k?fr:i<k?1:0,f=textFade(i,p);const tx=el.querySelector('.tx');if(tx){tx.style.opacity=f;tx.style.transform=`translateY(${(1-f)*(i<k||(i===k&&fr>.5)?-24:24)}px)`;tx.style.visibility=f<.01?'hidden':'visible'}
+  el.querySelectorAll('[data-at]').forEach(x=>x.classList.toggle('on',i===k&&fr>=+x.dataset.at||i<k))});
+ const lc=mt<.5?from:to,lp=lc===from?pf:pt,lo=(to===from?1:(mt<.5?1-mt*2:(mt-.5)*2))*textFade(lc,lp);const anc=(lc===from?A:B).anc||{};
+ for(const el of labels){const ch=+el.dataset.c,key=el.dataset.a,at=+(el.dataset.at||0);if(ch!==lc||!anc[key]){el.style.opacity=0;continue}
+  const a=anc[key];vP.set(a[0],a[1],a[2]).project(cam);const sx=(vP.x*.5+.5)*W,sy=(-vP.y*.5+.5)*H,side=+(el.dataset.side||0);
+  const o=lo*EO(seg(lp,at,at+.05));el.style.opacity=o;const w=el.offsetWidth,h=el.offsetHeight;
+  const Wv=document.documentElement.clientWidth;const sd=mob&&ch===1?0:side;let x=sd>0?sx+18:sd<0?sx-18-w:sx-w/2,y=sd||el.classList.contains('big')?sy-h/2:sy;x=Math.max(8,Math.min(Wv-w-8,x));el.style.transform=`translate(${x}px,${y+(1-o)*10}px)`}
+ // live words in labels
+ const kc=LBL.querySelector('[data-a="kc"] b');if(kc&&lc===6){const st=Math.min(4,Math.floor(seg(lp,.08,.9)*5));const L=['Birth','14 weeks','9 months','18 months','5 years'][st];if(kc.dataset.v!==L){kc.dataset.v=L;kc.textContent=tr(L)}}
+ const sc=LBL.querySelector('[data-a="sc"] b');if(sc&&lc===7){const L=lp>.46?'Help':'SOS';if(sc.dataset.v!==L){sc.dataset.v=L;sc.textContent=tr(L)}}
+ const te=LBL.querySelector('[data-a="tech"] b');if(te&&lc===4){const q=seg(lp,.1,.72),L=q>=1?(lp>.8?'Report ready':'Sample collected'):'Ravi · on the way';if(te.dataset.v!==L){te.dataset.v=L;te.textContent=tr(L)}
+  const m=te.parentElement.querySelector('em');if(m)m.textContent=q>=1?'':Math.max(1,Math.ceil(12*(1-q)))+' '+tr('min')}
+}
+requestAnimationFrame(frame);
+window.__world={get u(){return uS},N};
+})();
+</script>
+<script src="/s/home/site.d52d0658.js" defer></script>
+</body>
+</html>

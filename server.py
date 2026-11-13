@@ -387,6 +387,11 @@ def _send(p: Path, request: Request, cache: str):
 
 # landing page (public) at "/", the app at "/app"
 @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+def home(request: Request):
+    """The website (site/home). Sign-in, sign-up, reset and invite links keep the page below, which holds those screens."""
+    return _send(SITE / "home" / "index.html", request, "no-cache")
+
+
 @app.api_route("/signin", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/signup", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/reset", methods=["GET", "HEAD"], include_in_schema=False)
@@ -470,7 +475,7 @@ def sitemap(request: Request):
     # lastmod is the file's own mtime: it changes when the page changes and not when the server restarts, which is
     # exactly what the spec asks for. A wrong lastmod is worse than none — Google stops trusting the field.
     def entry(path: str) -> str:
-        f = SITE / ("index.html" if path == "/" else path.strip("/") + ".html")
+        f = SITE / ("home/index.html" if path == "/" else path.strip("/") + ".html")
         when = datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc).date().isoformat() if f.exists() else ""
         mod = f"<lastmod>{when}</lastmod>" if when else ""
         pri = "1.0" if path == "/" else "0.3"
@@ -493,12 +498,11 @@ LEGAL = {
 }
 
 
-# The new website, reviewed at a private address before it replaces "/". Never indexed.
+# The review address used before launch now points at the website itself.
 @app.api_route("/preview", methods=["GET", "HEAD"], include_in_schema=False)
 def site_preview(request: Request):
-    r = _send(SITE / "preview" / "index.html", request, "no-cache")
-    r.headers["X-Robots-Tag"] = "noindex, nofollow"
-    return r
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/", status_code=301)
 
 
 @app.api_route("/privacy", methods=["GET", "HEAD"], include_in_schema=False)
