@@ -74,8 +74,17 @@ def test_meds_abha_handover_relation_dupes():
     import uuid
     a = TestClient(server.app); a.__enter__(); a.headers.update(H)
     u = uuid.uuid4().hex[:8]
-    r = a.post("/api/v1/auth/signup/start", json={"name": "Anu", "email": f"{u}@example.com", "phone": "9" + str(uuid.uuid4().int)[-9:].zfill(9), "password": "Zq!8vB#2mLp@9xT", "terms": True}).json()
+    # a stranger holding the link is refused: the invite went to 9123456780
+    x = TestClient(server.app); x.__enter__(); x.headers.update(H)
+    rx = x.post("/api/v1/auth/signup/start", json={"name": "Stranger", "email": f"x{u}@example.com", "phone": "9" + str(uuid.uuid4().int)[-9:].zfill(9), "password": "Zq!8vB#2mLp@9xT", "terms": True}).json()
+    x.post("/api/v1/auth/signup/verify", json={"flow": rx["flow"], "code": rx["demo"]})
+    assert x.post("/api/v2/household/join", json={"token": tok}).status_code == 403
+    r = a.post("/api/v1/auth/signup/start", json={"name": "Anu", "email": f"{u}@example.com", "phone": "9123456780", "password": "Zq!8vB#2mLp@9xT", "terms": True}).json()
     a.post("/api/v1/auth/signup/verify", json={"flow": r["flow"], "code": r["demo"]})
+    from api.db import SessionLocal as _S
+    from api.models import User as _U
+    with _S() as db:   # the number is proved by the code it received
+        me_ = db.query(_U).filter(_U.email == f"{u}@example.com").one(); me_.phone_verified = True; db.commit()
     assert a.post("/api/v2/household/join", json={"token": tok}).json()["handover"]
     me = a.get("/api/v2/me").json()
     assert me["me"] == kid["id"]
@@ -134,13 +143,21 @@ def test_lockout_events_and_ops():
     d = TestClient(server.app); d.__enter__(); d.headers.update(H)
     for _ in range(5):
         assert d.post("/api/v1/auth/password/login", json={"id": f"{u}@example.com", "password": "wrong-Password-1"}).status_code == 400
-    assert d.post("/api/v1/auth/password/login", json={"id": f"{u}@example.com", "password": "Zq!8vB#2mLp@9xT"}).status_code == 429
+    # locked: another wrong guess is refused outright …
+    assert d.post("/api/v1/auth/password/login", json={"id": f"{u}@example.com", "password": "wrong-Password-1"}).status_code == 429
+    from api.db import SessionLocal as _S
+    from api.models import OtpCode as _O
+    with _S() as db:   # the sign-up code was seconds ago; step past the 45-second resend wait
+        db.query(_O).filter(_O.target == f"{u}@example.com").update({"created": _O.created - 120}); db.commit()
+    # … but the owner is never shut out: the right password still works, with a code on top
+    ok = d.post("/api/v1/auth/password/login", json={"id": f"{u}@example.com", "password": "Zq!8vB#2mLp@9xT"})
+    assert ok.status_code == 200 and ok.json()["step"] and ok.json()["locked"] is True
     from api.db import SessionLocal
     from api.models import SecurityEvent, User
     with SessionLocal() as db:
         uid = db.query(User).filter(User.email == f"{u}@example.com").one().id
         kinds = [e.kind for e in db.query(SecurityEvent).filter(SecurityEvent.user_id == uid)]
-    assert "locked" in kinds and kinds.count("password:wrong") == 5 and any(k.startswith("signin:") for k in kinds)
+    assert "locked" in kinds and kinds.count("password:wrong") == 6 and any(k.startswith("signin:") for k in kinds)
     assert c.post("/api/v2/client-error", json={"where": "uh.html:12", "message": "TypeError x for a@b.com"}).status_code == 204
     assert c.post("/api/v2/usage", json={"screen": "records"}).status_code == 204
     assert c.post("/api/v2/usage", json={"screen": "<script>"}).status_code == 204

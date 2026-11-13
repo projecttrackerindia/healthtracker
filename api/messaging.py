@@ -78,6 +78,10 @@ def firebase_phone(id_token: str) -> str:
     return str(users[0].get("phoneNumber") or "") if users else ""
 
 
+if os.getenv("OTP_DEMO", "0") == "1" and os.getenv("APP_ENV", "production") == "production":
+    raise RuntimeError("OTP_DEMO=1 with APP_ENV=production: refusing to start. Codes would be returned in API responses.")
+
+
 def demo() -> bool:
     """One-time codes shown on screen instead of sent: local development and staging only, never in production."""
     return os.getenv("OTP_DEMO", "0") == "1" and os.getenv("APP_ENV", "production") != "production"
