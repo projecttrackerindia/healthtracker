@@ -11,6 +11,11 @@ cd "$(dirname "$0")"
 # shellcheck source=config.sh
 source ./config.sh
 
+# Phone check first when this machine can run it (Cloud Shell needs: pip install playwright && playwright install --with-deps webkit chromium).
+if python3 -c "import playwright" 2>/dev/null; then
+  echo "== Phone check (iPhone 15 / Pixel 7)"
+  ( cd ../.. && python3 tests_e2e/phone_check.py ) || { echo "Phone check failed: not shipping. Screens are in tests_e2e/out/"; exit 1; }
+fi
 SHA=$(git -C ../.. rev-parse --short=10 HEAD)
 TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/tht/tht:${SHA}"
 echo "== Shipping $SHA"

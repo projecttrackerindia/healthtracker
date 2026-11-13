@@ -107,6 +107,8 @@ def _init_db():
     proactive_api.start()
     from api import people as _people
     _people.start_purge()
+    from api import onboard as _onboard
+    _onboard.start_compliance()   # daily licence / registration expiry check
     try:
         with session() as db:
             print("[redate] reports re-dated:", _people.redate(db), flush=True)

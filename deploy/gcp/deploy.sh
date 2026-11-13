@@ -4,6 +4,22 @@
 #   PREBUILT=1 ./deploy.sh      # image already pushed to $IMAGE (the GitHub workflow does this)
 set -euo pipefail
 cd "$(dirname "$0")"
+# urbanhealth.in is served by the VM, not Cloud Run. On 13 Nov 2026 a whole day of releases went to this Cloud Run
+# service, which nobody visits, while the site stayed on the old code. Refuse unless asked for explicitly.
+if [ "${ALLOW_CLOUD_RUN:-0}" != "1" ]; then
+  cat >&2 <<'MSG'
+
+  Stop: urbanhealth.in runs on the VM, not on Cloud Run.
+
+  To release to the live site:
+      cd ../vm && ./ship.sh
+  (or merge to main: GitHub deploys to the VM automatically once wif.sh has been run)
+
+  Only if you really mean the old Cloud Run copy:  ALLOW_CLOUD_RUN=1 ./deploy.sh
+
+MSG
+  exit 1
+fi
 # shellcheck source=config.sh
 source ./config.sh
 gcloud config set project "$PROJECT_ID" >/dev/null

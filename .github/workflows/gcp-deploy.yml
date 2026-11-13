@@ -1,4 +1,4 @@
-name: Deploy to Google Cloud Run
+name: Deploy urbanhealth.in
 
 # Merging to main deploys. The cut-over this file was waiting for is done — Railway is gone and Google Cloud is
 # the only hosting — and deploying by hand through a browser driving Cloud Shell has failed on extension blocks,
@@ -42,7 +42,7 @@ jobs:
   # pytest locally first.
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45                  # the suite takes ~20 minutes; 15 cancelled every run
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -52,8 +52,29 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: python -m pytest -q
 
+  # The phone check: the real app in Safari's engine (WebKit, iPhone 15) and Chrome (Pixel 7), walking the screens
+  # people use and failing on anything squeezed, overflowing, or throwing. The 13 Nov "squeezed Settings" bug
+  # would have stopped here.
+  phones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt playwright
+      - run: python -m playwright install --with-deps webkit chromium
+      - run: python tests_e2e/phone_check.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phone-screens
+          path: tests_e2e/out/
+
   deploy:
-    needs: test
+    needs: [test, phones]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -82,7 +103,7 @@ jobs:
         if: vars.DEPLOY_TARGET != 'vm' 
         # deploy.sh exits non-zero unless /api/health reports this exact commit, so a deploy that silently did
         # not happen turns the run red instead of green.
-        run: PREBUILT=1 ./deploy/gcp/deploy.sh
+        run: ALLOW_CLOUD_RUN=1 PREBUILT=1 ./deploy/gcp/deploy.sh
 
       - name: Release to the VM and verify the commit is live
         # Set the repository variable DEPLOY_TARGET=vm once deploy/vm/provision.sh has run. Until then this
@@ -106,6 +127,13 @@ jobs:
             sudo install -m 0755 /tmp/urbanhealth-env /usr/local/bin/urbanhealth-env
             sudo urbanhealth-release '${IMAGE%:*}:${GITHUB_SHA}' '$SHA'
           "
+          # Verify from the outside, on the real domain: green only if urbanhealth.in reports this exact commit.
+          for i in $(seq 1 30); do
+            V=$(curl -fsS --max-time 10 https://urbanhealth.in/api/health | python3 -c 'import sys,json;print(json.load(sys.stdin).get("version",""))' 2>/dev/null || true)
+            [ "$V" = "$SHA" ] && { echo "Live: $V"; exit 0; }
+            sleep 10
+          done
+          echo "urbanhealth.in still reports '$V', expected $SHA"; exit 1
 
       - name: Say what is live
         if: always()
@@ -115,7 +143,7 @@ jobs:
           # first version of this step called it anyway, so a failed deploy produced two red steps and no
           # summary — unreadable exactly when something has gone wrong and you need to read it.
           if command -v gcloud >/dev/null 2>&1; then
-            URL=$(gcloud run services describe tht --region "$REGION" --format='value(status.url)' 2>/dev/null || true)
+            URL=$([ "${{ vars.DEPLOY_TARGET }}" = "vm" ] && echo https://urbanhealth.in || gcloud run services describe tht --region "$REGION" --format='value(status.url)' 2>/dev/null || true)
           else
             URL=""
           fi

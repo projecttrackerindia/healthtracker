@@ -390,3 +390,30 @@ def public_photo(sid: str, pid: str, db: Session = Depends(get_db)):
     if not s or not s.verified or not s.active:
         raise HTTPException(404, "No such photo")
     return _photo_bytes(db, s, pid)
+
+
+def start_compliance() -> None:
+    """Runs the daily licence and registration expiry check inside the app (no Cloud Scheduler needed).
+    Every 6 hours it tries the 'compliance' lease; the lease lasts 20 hours, so it actually runs about once a day,
+    and only in one worker even when several are up."""
+    import threading
+    import time as _t
+
+    from .db import session
+    from .tasks import in_process_loops, lease
+    if not in_process_loops():
+        return
+
+    def loop():
+        _t.sleep(120)   # let startup finish first
+        while True:
+            try:
+                if lease("compliance", 20 * 3600):
+                    with session() as db:
+                        out = expire_partners(db)
+                    print("[onboard] compliance", out, flush=True)
+            except Exception as e:
+                print("[onboard] compliance failed:", type(e).__name__, str(e)[:160], flush=True)
+            _t.sleep(6 * 3600)
+
+    threading.Thread(target=loop, name="partner-compliance", daemon=True).start()

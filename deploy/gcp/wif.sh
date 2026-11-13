@@ -39,6 +39,15 @@ exists gcloud iam workload-identity-pools providers describe github --location=g
        --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
        --attribute-condition="assertion.repository=='${GITHUB_REPO}'"
 
+echo "== VM access (GitHub releases to the VM over SSH with OS Login)"
+VM_NAME="${VM:-urbanhealth}"; VM_SA_EMAIL="${VM_NAME}-vm@${PROJECT_ID}.iam.gserviceaccount.com"
+for r in roles/compute.osAdminLogin roles/compute.instanceAdmin.v1 roles/artifactregistry.writer roles/cloudbuild.builds.editor; do
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$DEPLOY_SA" --role="$r" --condition=None >/dev/null
+done
+exists gcloud iam service-accounts describe "$VM_SA_EMAIL" && \
+  gcloud iam service-accounts add-iam-policy-binding "$VM_SA_EMAIL" --member="serviceAccount:$DEPLOY_SA" --role=roles/iam.serviceAccountUser >/dev/null
+echo "   ok"
+
 echo "== Binding"
 gcloud iam service-accounts add-iam-policy-binding "$DEPLOY_SA" --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/${PN}/locations/global/workloadIdentityPools/github/attribute.repository/${GITHUB_REPO}" >/dev/null
@@ -52,6 +61,7 @@ Paste these into GitHub → Settings → Secrets and variables → Actions:
   Secret    GCP_DEPLOY_SA     ${DEPLOY_SA}
   Variable  GCP_PROJECT_ID    ${PROJECT_ID}
   Variable  GCP_REGION        ${REGION}
+  Variable  DEPLOY_TARGET     vm
 
 Then merge anything to main. The run deploys and goes red unless /api/health
 comes back reporting that exact commit.
