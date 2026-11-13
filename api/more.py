@@ -207,11 +207,6 @@ class ErrIn(BaseModel):
 @r.post("/client-error")
 def client_error(body: ErrIn, request: Request, db: Session = Depends(get_db)):
     limit(request, "cerr", 30, 600)
-    if body.message.startswith("navdiag "):
-        # Temporary page-transition measurements from phones (screen width, zoom, page box over time). Written to the
-        # service log only, never stored; no personal data in them.
-        print("[navdiag]", request.headers.get("user-agent", "")[:120], body.message[8:3000], flush=True)
-        return {"ok": True}
     msg = body.message.strip()[:400]
     if not msg:
         return {"ok": True}
