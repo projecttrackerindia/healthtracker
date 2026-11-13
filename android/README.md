@@ -30,6 +30,13 @@ Needs JDK 17+, Gradle 8.13+, Android SDK platform 36.
 
 Raise `versionCode` (and `versionName`) in `app/build.gradle` for every new APK, or phones refuse the update.
 
+## GitHub Actions
+
+`.github/workflows/android-twa.yml` builds and signs both apps on every push that touches `android/`, checks the
+signature matches the one in `assetlinks.json`, and uploads the APKs to the run. Run it by hand with **release**
+ticked to publish them as a GitHub Release. It needs two repository secrets: `TWA_KEYSTORE_BASE64` (base64 of the
+`.jks`) and `TWA_KEYSTORE_PASSWORD`.
+
 ## The signing key
 
 `urbanhealth-release.jks` plus `keystore.properties` (passwords). Kept outside git. **Every update must be signed with
