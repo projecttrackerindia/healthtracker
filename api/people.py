@@ -1141,7 +1141,14 @@ def report_file(rid: str, u: User = Depends(need_user), db: Session = Depends(ge
     mime = row.mime or "application/octet-stream"
     log(db, p, u, a, "report file")
     db.commit()
-    return Response(data, media_type=mime, headers={"Cache-Control": "private, no-store"})
+    ext = {"application/pdf": "pdf", "image/heic": "heic"}.get(mime, "jpg")
+    return Response(data, media_type=mime, headers={
+        "Cache-Control": "private, no-store",
+        "Content-Disposition": f'inline; filename="report-{x.id[:8]}.{ext}"',
+        "X-Content-Type-Options": "nosniff",
+        # a hostile PDF or image opened from here gets no scripts, no same-origin access, no forms
+        "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; object-src 'self'",
+    })
 
 
 # ---- household: invite, join, guardians, leave, remove ---------------------------------------------------------------
@@ -1256,7 +1263,24 @@ def invite_open(token: str, db: Session = Depends(get_db)):
         i.opened = now()
         db.commit()
     by = db.get(User, i.by_user)
-    return {"by": (by.name if by else "") or "Your family", "relation": i.relation}
+    return {"by": (by.name if by else "") or "Your family", "relation": i.relation, "for": _mask_contact(i.contact),
+            "forKind": "email" if "@" in (i.contact or "") else "phone"}
+
+
+def _invite_is_for(u: User, i: HouseholdInvite) -> bool:
+    c = (i.contact or "").strip().lower()
+    if not c:
+        return False
+    if "@" in c:
+        return bool(u.email and u.email.lower() == c and u.email_verified)
+    return bool(u.phone and u.phone == c and u.phone_verified)
+
+
+def _mask_contact(c: str) -> str:
+    if "@" in c:
+        a, _, d = c.partition("@")
+        return a[:2] + "•••@" + d
+    return c[:3] + " ••••• " + c[-3:]
 
 
 class JoinIn(BaseModel):
@@ -1268,6 +1292,9 @@ def join(body: JoinIn, u: User = Depends(need_user), db: Session = Depends(get_d
     i = db.get(HouseholdInvite, body.token)
     if not i or i.used_by or i.expires < now():
         raise HTTPException(400, "This invite has expired. Ask for a new one.")
+    if not _invite_is_for(u, i):
+        # A link can be forwarded; the family it opens cannot. Only the person it was sent to may use it.
+        raise HTTPException(403, "This invite was sent to " + _mask_contact(i.contact) + ". Sign in with that email or mobile number, verified, to accept it.")
     by = db.get(User, i.by_user)
     out = {"ok": True, "by": (by.name if by else "") or "Your family", "relation": i.relation}
     if i.person_id:                                   # a dependent receiving their own login, records intact

@@ -197,7 +197,7 @@ function placeTags(){const r=$('#gl').getBoundingClientRect();let svg='';
   svg+=`<line x1="${x}" y1="${y}" x2="${Math.max(side>0?8:150,Math.min(r.width-(side>0?150:8),lx))}" y2="${Math.max(210,Math.min(r.height-90,ly))}" stroke="rgba(29,29,31,.35)" stroke-width="1"/><circle cx="${x}" cy="${y}" r="3.5" fill="${t.dataset.col}" stroke="#fff" stroke-width="1.5"/>`});
  $('#lines').innerHTML=svg}
 function tags(list){$('#tags').innerHTML='';list.forEach(t=>{const el=document.createElement('button');el.className='tag'+(t.big?' big':'');el.dataset.side=t.side;el.dataset.dy=t.dy||0;el.dataset.col=t.col;if(t.big)el.dataset.big=1;
- el.innerHTML=t.big?`<small>${t.org} · ${t.test}</small><b>${t.val}<i>${t.unit}</i></b><span class="pill ${t.cls}">${t.flag}</span>`:`<span class="dot" style="background:${t.col}"></span>${t.org}`;el._c=centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
+ el.innerHTML=t.big?`<small>${esc(t.org)} · ${esc(t.test)}</small><b>${esc(t.val)}<i>${esc(t.unit)}</i></b><span class="pill ${esc(t.cls)}">${esc(t.flag)}</span>`:`<span class="dot" style="background:${esc(t.col)}"></span>${esc(t.org)}`;el._c=centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
 
 const STATE={layer:'organs',person:'amma',sex:'female'};
 const FIND={heart:{test:'LDL',val:'148',unit:'mg/dL',flag:'High',cls:'bad',note:'Lipid profile · 12 Oct',tests:'Lipid profile'},pancreas:{test:'HbA1c',val:'7.4',unit:'%',flag:'Above target',cls:'warn',note:'HbA1c · 12 Oct',tests:'HbA1c'},kidney:{test:'Creatinine',val:'0.9',unit:'mg/dL',flag:'In range',cls:'ok',note:'Kidney function · 12 Oct',tests:'KFT'}};

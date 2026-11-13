@@ -77,7 +77,7 @@ def apply(body: ApplyIn, request: Request, db: Session = Depends(get_db)):
     a = PartnerApplication(kind=body.kind, name=body.name.strip()[:120], contact=body.contact.strip()[:80], email=email, phone=body.phone.strip()[:24], address=body.address.strip()[:240],
                            area=body.area.strip()[:80], city=body.city.strip()[:80], pin=body.pin.strip()[:12], lat=body.lat, lng=body.lng, licence=body.licence.strip()[:64],
                            gstin=body.gstin.strip().upper()[:20], services=body.services.strip()[:300], note=body.note.strip()[:2000],
-                           ip=(request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else ""))[:48])
+                           ip=__import__("api.auth", fromlist=["client_ip"]).client_ip(request)[:48])
     db.add(a)
     db.flush()
     from . import messaging

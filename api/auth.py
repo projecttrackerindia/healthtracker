@@ -54,9 +54,18 @@ TOO_MANY = "Too many attempts. Please wait a few minutes and try again."
 _SWEPT = 0.0
 
 
+TRUSTED_PROXY_HOPS = max(0, int(os.getenv("TRUSTED_PROXY_HOPS", "1") or 0))
+
+
 def client_ip(request: Request) -> str:
-    return (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-            or (request.client.host if request.client else "?"))
+    """The caller's address, as seen by OUR proxy — never the left-most X-Forwarded-For entry, which the caller writes.
+    Each trusted proxy appends the address it saw, so with N proxies in front of us the real client is the N-th entry from
+    the right. TRUSTED_PROXY_HOPS=1 fits Railway and Cloud Run; 0 means no proxy (use the socket address)."""
+    direct = request.client.host if request.client else "?"
+    if not TRUSTED_PROXY_HOPS:
+        return direct
+    parts = [x.strip() for x in request.headers.get("x-forwarded-for", "").split(",") if x.strip()]
+    return parts[-TRUSTED_PROXY_HOPS] if len(parts) >= TRUSTED_PROXY_HOPS else direct
 
 
 
@@ -120,14 +129,31 @@ def _shared(k: str, n: int, per: int) -> bool:
         raise
     except Exception as e:
         print("[limit] shared counter unavailable:", type(e).__name__, str(e)[:120], flush=True)
-        return False
+        return None   # unknown: limit() decides whether that is safe for this key
 
 
-def limit(request: Request, key: str, n: int, per: int):
+# Keys that guard sign-in, codes and account recovery. If the shared counter cannot be read we must not wave these
+# through on the strength of one container's view (an attacker spread across containers gets N× the budget).
+STRICT_KEYS = {"pwlogin", "verify", "otp", "rsms", "google", "reset", "signup", "pwacct", "contact"}
+
+
+def limit(request: Request, key: str, n: int, per: int, subject: str = ""):
+    """subject: count against something other than the address (an account, a phone number) instead, so spreading
+    requests over many addresses does not multiply the allowance."""
     ip = client_ip(request)
-    k = f"{key}:{ip}"
-    if _local(k, n, per) or _shared(k, n, per):
-        raise HTTPException(429, TOO_MANY)
+    # With a subject, count only the subject: the caller already applies its own per-address limit, and counting the
+    # address here too would let one busy network (an office, a carrier NAT) exhaust everyone's allowance.
+    for k in ([f"{key}#{hashlib.sha256(subject.encode()).hexdigest()[:24]}"] if subject else [f"{key}:{ip}"]):
+        if _local(k, n, per):
+            raise HTTPException(429, TOO_MANY)
+        hit = _shared(k, n, per)
+        if hit is None and key.split(":")[0] in STRICT_KEYS:
+            # stricter local fallback instead of failing open: half the budget on this container alone
+            prod = os.getenv("APP_ENV", "production") == "production"
+            if prod and _local(k + ":degraded", max(1, n // 2), per):
+                raise HTTPException(429, TOO_MANY)
+        elif hit:
+            raise HTTPException(429, TOO_MANY)
     return ip
 
 
@@ -224,8 +250,12 @@ def rp(request: Request) -> tuple[str, str | list[str]]:
     canonical RP_ID there makes every passkey call fail with a SecurityError. So: RP_ID applies only when the request host is it
     or a subdomain of it; otherwise the request host is the RP and its own origin is the expected origin.
     """
-    req_host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "localhost").split(":")[0].lower()
     rp_id = (os.getenv("RP_ID") or "").strip().lower()
+    if rp_id and os.getenv("APP_ENV", "production") == "production":
+        # Production: never derive the RP or the expected origin from request headers.
+        allowed = [o.strip() for o in (os.getenv("APP_ORIGIN") or f"https://{rp_id}").split(",") if o.strip()]
+        return rp_id, allowed
+    req_host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "localhost").split(":")[0].lower()
     canonical = bool(rp_id) and (req_host == rp_id or req_host.endswith("." + rp_id))
     host = rp_id if canonical else req_host
     proto = request.headers.get("x-forwarded-proto", request.url.scheme)
@@ -319,6 +349,7 @@ def get_flow(db: Session, fid: str, kind: str) -> AuthFlow:
 
 def send_code(request: Request, db: Session, target: str, kind: str, purpose: str) -> dict:
     """Create and deliver a code. Returns {'demo': code} only when OTP_DEMO=1."""
+    limit(request, "otp:target", 8, 3600, subject=target)
     hour = db.scalar(select(func.count(OtpCode.id)).where(OtpCode.target == target, OtpCode.created > now() - 3600)) or 0
     last = db.scalar(select(func.max(OtpCode.created)).where(OtpCode.target == target)) or 0
     if now() - last < 45:
@@ -377,6 +408,10 @@ def verify_code(db: Session, target: str, purpose: str, body: "FlowCode") -> boo
         c = db.scalar(select(OtpCode).where(OtpCode.target == target, OtpCode.purpose == purpose, OtpCode.used == False).order_by(OtpCode.created.desc()))  # noqa: E712
         if not c or c.expires < now():
             raise HTTPException(400, "This step has expired. Ask for a new code.")
+        if c.attempts >= 5:
+            c.used = True
+            db.commit()
+            raise HTTPException(400, "Too many wrong codes. Ask for a new one.")
         if messaging.firebase_phone(body.firebaseToken) != target:
             c.attempts += 1
             db.commit()
@@ -527,8 +562,8 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
         raise bad
     if u.disabled:
         raise HTTPException(403, "This account is disabled. Contact support.")
-    if u.locked_until and u.locked_until > now():
-        raise HTTPException(429, f"Too many wrong passwords. Try again in {max(1, (u.locked_until - now()) // 60)} min, or sign in with a code or passkey.")
+    limit(request, "pwacct", 30, 3600, subject=u.id)   # per account, whatever address the guesses come from
+    locked = bool(u.locked_until and u.locked_until > now())
     if not passwords.verify_pw(body.password, u.pw_hash):
         from .ops import security
         u.failed += 1
@@ -549,12 +584,16 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
             except Exception:
                 pass
         db.commit()
+        if locked:   # already locked before this guess; the guess that sets the lock answers like any wrong one
+            raise HTTPException(429, "Too many wrong passwords on this account. Your password still works, but we'll also send you a code to confirm it's you.")
         raise bad
-    if u.two_step:
+    if u.two_step or locked:
+        # A lock never shuts the real owner out (that would let anyone lock any account): the right password
+        # still works, it just needs a code as well while the lock lasts.
         kind, target = ("email", u.email) if u.email else ("phone", u.phone)
         f = new_flow(db, "step", 10, user_id=u.id, data={"kind": kind, "target": target})
         out = send_code(request, db, target, kind, "step")
-        return {"step": f.id, "sentTo": masked(kind, target), "channel": kind, **out}
+        return {"step": f.id, "sentTo": masked(kind, target), "channel": kind, "locked": locked, **out}
     return start_session(request, response, db, u, "password")
 
 
@@ -628,6 +667,7 @@ class Reset(BaseModel):
 
 @r.post("/password/reset", dependencies=[Depends(csrf)])
 def password_reset(body: Reset, request: Request, response: Response, db: Session = Depends(get_db)):
+    limit(request, "reset", 10, 600)
     f = get_flow(db, body.flow, "reset")
     u = db.get(User, f.user_id)
     issues = passwords.check(body.password, u.name, u.email or "", u.phone or "")
@@ -1019,6 +1059,25 @@ def google_claims(credential: str) -> dict:
     if not cid or not credential or len(credential) > 4096:
         return {}
     try:
+        # Local check against Google's published keys (cached by google-auth): no network round trip per sign-in.
+        from google.auth.transport import requests as g_requests
+        from google.oauth2 import id_token as g_id_token
+        global _G_REQ
+        try:
+            _G_REQ
+        except NameError:
+            _G_REQ = g_requests.Request()
+        c = g_id_token.verify_oauth2_token(credential, _G_REQ, cid, clock_skew_in_seconds=10)
+        if c.get("iss") in ("accounts.google.com", "https://accounts.google.com") and c.get("email_verified") is True:
+            return c
+        return {}
+    except ImportError:
+        pass   # library missing: fall back to tokeninfo below
+    except ValueError:
+        return {}   # bad signature, wrong audience or expired
+    except Exception as e:
+        print("[auth] google local verify failed, using tokeninfo:", type(e).__name__, flush=True)
+    try:
         with urllib.request.urlopen("https://oauth2.googleapis.com/tokeninfo?" + urllib.parse.urlencode({"id_token": credential}), timeout=8) as r:
             c = json.loads(r.read().decode())
     except Exception:
@@ -1065,7 +1124,10 @@ def google_signin(body: GoogleIn, request: Request, response: Response, db: Sess
 # the text to /rsms/inbound with a shared secret. A text proves the number when its phrase matches a live attempt AND it
 # came from the number the person typed. The verify endpoints above then accept {rsms: id} in place of a code, once.
 #   REVERSE_SMS_NUMBER  the number people text (E.164, e.g. +919876543210)
-#   REVERSE_SMS_SECRET  shared secret the forwarder sends (header X-UH-Key, or ?key=)
+#   REVERSE_SMS_SECRET  shared secret the forwarder sends, in the X-UH-Key header only (POST)
+#   REVERSE_SMS_SOURCE  provider | forwarder. The proof is only as good as the sender number we are told. A real SMS
+#                       provider reports it from the network; a forwarding phone's app can claim any sender, so
+#                       "forwarder" is for testing and is refused when APP_ENV=production.
 RSMS_ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"   # no 0/O, 1/I/L
 RSMS_RE = re.compile(r"\bUH-([A-Z2-9]{6})\b", re.I)
 
@@ -1078,6 +1140,8 @@ def rsms_number() -> str:
 
 
 def rsms_ready() -> bool:
+    if os.getenv("REVERSE_SMS_SOURCE", "provider") == "forwarder" and os.getenv("APP_ENV", "production") == "production":
+        return False
     return bool(rsms_number() and os.getenv("REVERSE_SMS_SECRET", ""))
 
 
@@ -1163,16 +1227,16 @@ async def _inbound_fields(request: Request) -> tuple[str, str, str]:
     except Exception:
         data = {}
     pick = lambda *ks: next((str(data.get(k) or q.get(k) or "") for k in ks if (data.get(k) or q.get(k))), "")
-    key = request.headers.get("x-uh-key", "") or pick("key", "secret")
+    key = request.headers.get("x-uh-key", "")   # header only: a secret in a URL ends up in every proxy and provider log
     return key, pick("from", "sender", "msisdn", "mobile", "From", "number"), pick("text", "message", "body", "content", "Body", "msg")
 
 
-@r.api_route("/rsms/inbound", methods=["POST", "GET"])
+@r.post("/rsms/inbound")
 async def rsms_inbound(request: Request, db: Session = Depends(get_db)):
     """Called by the SMS provider (or a forwarding phone) for every text that reaches REVERSE_SMS_NUMBER."""
     limit(request, "rsmsin", 600, 600)
     key, sender, text = await _inbound_fields(request)
-    secret = os.getenv("REVERSE_SMS_SECRET", "")
+    secret = os.getenv("REVERSE_SMS_SECRET", "") if rsms_ready() else ""
     if not secret or not hmac.compare_digest(key.encode(), secret.encode()):
         raise HTTPException(401, "Not allowed")
     m = RSMS_RE.search(text or "")

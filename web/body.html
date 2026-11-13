@@ -241,7 +241,7 @@ function placeTags(){const r=$('#gl').getBoundingClientRect(),W=r.width,top=Math
   svg+=`<line x1="${p.x}" y1="${p.y}" x2="${p.lx}" y2="${p.ly}" stroke="rgba(29,29,31,.3)" stroke-width="1"/><circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${p.t.dataset.col}" stroke="#fff" stroke-width="1.5"/>`});
  $('#lines').innerHTML=svg}
 function tags(list){$('#tags').innerHTML='';list.forEach(t=>{const el=document.createElement('button');el.className='tag'+(t.big?' big':'');el.dataset.side=t.side;el.dataset.dy=t.dy||0;el.dataset.col=t.col;if(t.big)el.dataset.big=1;
- el.innerHTML=t.big?`<small>${t.org}${t.test?' · '+t.test:''}</small>${t.val!==''&&t.val!=null?`<b>${t.val}<i>${t.unit||''}</i></b>`:''}<span class="pill ${t.cls}">${t.flag}</span>`:`<span class="dot" style="background:${t.col}"></span>${t.org}`;el._c=t.all?centerOfAll(t.re):centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
+ el.innerHTML=t.big?`<small>${esc(t.org)}${t.test?' · '+esc(t.test):''}</small>${t.val!==''&&t.val!=null?`<b>${esc(t.val)}<i>${esc(t.unit||'')}</i></b>`:''}<span class="pill ${esc(t.cls)}">${esc(t.flag)}</span>`:`<span class="dot" style="background:${esc(t.col)}"></span>${esc(t.org)}`;el._c=t.all?centerOfAll(t.re):centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
 
 /* ===== pregnancy: growing uterus, belly shaped around it, a baby that changes shape and moves by week ===== */
 const sst=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};

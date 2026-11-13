@@ -26,6 +26,7 @@ def person(name, profile=None):
     me = c.post("/api/v2/people", json={"name": name, "profile": profile or PROFILE}).json()
     c.pid = me["id"]
     c.uid = c.get("/api/v2/me").json()["user"]["id"]
+    c.email = f"{u}@example.com"
     return c
 
 
@@ -33,7 +34,7 @@ def family():
     """Prasanna owns the household; Sita joins by invite; Amma is Prasanna's dependent."""
     pr = person("Prasanna")
     si = person("Sita", {**PROFILE, "sex": "female", "dob": "1995-07-04", "blood": "A+", "allergies": "None"})
-    link = pr.post("/api/v2/household/invite", json={"contact": "9876543210", "relation": "Wife"}).json()["link"]
+    link = pr.post("/api/v2/household/invite", json={"contact": si.email, "relation": "Wife"}).json()["link"]
     assert si.post("/api/v2/household/join", json={"token": link.rsplit("/", 1)[1]}).status_code == 200
     amma = pr.post("/api/v2/people", json={"name": "Amma", "dependent": True, "profile": {"sex": "female", "dob": "1964-01-01", "blood": "O+"}}).json()
     return pr, si, amma["id"]
