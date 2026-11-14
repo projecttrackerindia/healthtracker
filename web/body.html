@@ -59,6 +59,14 @@ body.holo #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 7
 .gbar{height:6px;border-radius:3px;background:#E5E5EA;overflow:hidden;margin-top:7px}.gbar i{display:block;height:100%;border-radius:3px;background:#34C759}
 .mlist .mi{display:flex;gap:12px;padding:11px 0;border-bottom:.5px solid rgba(0,0,0,.08);align-items:flex-start;cursor:pointer}.mlist .mi:last-child{border:0}.mi .dot{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;color:#fff;font-weight:700}
 .prog{display:flex;justify-content:space-between;padding:9px 0;border-bottom:.5px solid rgba(0,0,0,.08);font-size:14.5px}.prog:last-child{border:0}
+
+/* Results never cover the body: a short sheet on phones, a side panel on wide screens */
+#card{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+@media (min-width:900px){
+ #card{left:auto;right:16px;top:92px;bottom:16px;width:min(420px,38vw);max-height:none!important;transform:translateX(calc(100% + 32px))}
+ #card.on{transform:none}
+ #card .grab{display:none}
+}
 </style></head><body>
 <div id="bg"></div><canvas id="gl"></canvas><svg id="lines"></svg><div id="tags"></div><div id="load">Loading anatomy…</div>
 <header class="top"><div class="row" style="justify-content:space-between"><p class="eb" id="eb"></p><button class="x" onclick="send('close')" aria-label="Close" style="pointer-events:auto">✕</button></div><h1 class="big" id="ttl">Body</h1><p class="line" id="ln"></p><div class="chips" id="modes"></div><div class="chips" id="sub" style="margin-top:0"></div><div id="chips" hidden></div></header>

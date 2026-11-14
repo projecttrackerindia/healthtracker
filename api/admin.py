@@ -33,7 +33,7 @@ import re as _re
 
 _OWNER_ONLY = [
     (None, r"/admins(/.*)?"), ("PUT", r"/plans/.+"), ("POST", r"/settings/.+"), ("POST", r"/storage/test"), ("POST", r"/ai/test"),
-    ("DELETE", r"/client-errors"), ("POST", r"/stores/import"), ("DELETE", r"/stores/[^/]+"), ("POST", r"/stores/[^/]+/commission"),
+    ("DELETE", r"/client-errors"), ("POST", r"/stores/import"), ("DELETE", r"/stores/[^/]+"), ("POST", r"/stores/[^/]+/purge"), ("POST", r"/stores/[^/]+/commission"),
     ("POST", r"/households/[^/]+/restore/.+"), ("POST", r"/families/[^/]+/state"), ("PUT", r"/messaging/.+"), ("PUT", r"/app/.+"),
     ("PUT", r"/services/.+"), ("POST", r"/settlements/.+"), ("DELETE", r"/settlements/.+"), ("POST", r"/payments/[^/]+/(confirm|reject)"),
 ]
@@ -548,6 +548,38 @@ def del_store(sid: str, a: Admin = Depends(owner), db: Session = Depends(get_db)
     s.active = False
     log(db, a.email, f"store.deactivate {s.name}")
     return {"ok": True}
+
+
+@r.post("/stores/{sid}/purge")
+def purge_store(sid: str, body: dict, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+    """Remove a partner for good: test partners, duplicates, shops that never started. Only a paused partner, only when
+    the owner types its exact name, and never once real money moved through it (a confirmed family payment or a paid
+    payout): those stay paused so the books still add up."""
+    from sqlalchemy import delete as _del
+    from .models import Appointment, BloodRequest, Message, Payment, Payout, QualityFlag, Token, TrackPing
+    s = db.get(Store, sid)
+    if not s:
+        raise HTTPException(404)
+    if s.active:
+        raise HTTPException(409, "Pause this partner first, then delete it.")
+    if (body.get("confirm") or "").strip() != s.name.strip():
+        raise HTTPException(400, "Type the partner's name exactly to delete it.")
+    oids = list(db.scalars(select(Order.id).where(Order.store_id == sid)))
+    paid = db.scalar(select(func.count(Payment.id)).where(Payment.kind == "order", Payment.ref.in_(oids or [""]), Payment.status == "confirmed")) or 0
+    paid += db.scalar(select(func.count(Payout.id)).where(Payout.store_id == sid)) or 0
+    if paid:
+        raise HTTPException(409, "Money has moved through this partner, so it stays paused for the accounts instead of being deleted.")
+    if db.scalar(select(func.count(BloodRequest.id)).where(BloodRequest.store_id == sid)):
+        raise HTTPException(409, "Families have blood requests at this partner, so it stays paused.")
+    n = {"orders": len(oids)}
+    if oids:
+        db.execute(_del(TrackPing).where(TrackPing.order_id.in_(oids)))
+        db.execute(_del(Payment).where(Payment.kind == "order", Payment.ref.in_(oids)))
+    for M in (Order, Appointment, Message, QualityFlag, Token, Payout, StoreItem, LabTest, PartnerUser):
+        db.execute(_del(M).where(M.store_id == sid))
+    db.delete(s)
+    log(db, a.email, f"store.purge {s.name}", str(n))
+    return {"ok": True, **n}
 
 
 # ---- partner users: who can sign in to /partner for a store ----------------------------------------------------------
