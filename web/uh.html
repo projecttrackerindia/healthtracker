@@ -13,6 +13,7 @@
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/brand/png/user-icon-180.png">
 <title>Urban Health</title>
+<script src="/s/authfx.js" defer></script>
 <style>
 @font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
 :root{--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#8E8E93;--bg:#F5F5F7;--blue:#0071E3;--ai:#5E5CE6;--red:#E5352B;--green:#1A7F37;--amber:#9A5B00;--rose:#E5577A;
@@ -613,6 +614,41 @@ body.navpop .page *{animation:none!important}.pgghost{position:absolute!importan
 .rsact{margin-top:26px}.rsact a.btn{width:100%;text-decoration:none}.rsact .btn.pri,.rsact .btn.sec{width:100%}
 .btn.rsn{width:100%;margin-top:6px;background:#fff;box-shadow:inset 0 0 0 1px #D2D2D7}.btn.rsn:disabled{color:#AEAEB2;box-shadow:inset 0 0 0 1px #E5E5EA}
 @media (max-width:979px){.aflow{min-height:100dvh;display:flex;flex-direction:column}.aflow .rsact{margin-top:auto;padding-bottom:max(16px,env(safe-area-inset-bottom))}}
+
+/* ===== Sign-in: the stage (site/authfx.js) on the left, a calm form on the right; on phones the stage is a banner above a sheet */
+.page.auth{background:#fff!important;overflow-y:auto;overflow-x:hidden}
+.page.auth .authart{display:block!important;position:fixed;left:0;top:0;bottom:0;width:50%;min-width:0;padding:0;background:#000}
+.page.auth .authart::after{display:none}
+.page.auth .pin.aflow{margin-left:50%!important;margin-right:0!important;max-width:none!important;width:50%;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;
+ padding:48px clamp(32px,6vw,96px) 40px!important;background:#fff}
+.page.auth .aflow>*{width:100%!important;max-width:400px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box}
+.page.auth .aflow a{color:#0071E3;text-decoration:none}.page.auth .aflow a:hover{text-decoration:underline}
+.page.auth .aflow>img:first-child{display:none}
+.page.auth .aflow h1.big{font-size:clamp(30px,2.6vw,38px);letter-spacing:-.035em;line-height:1.08;white-space:normal;margin:6px 0 0;color:#1D1D1F}
+.page.auth .aflow p.line{font-size:16.5px;color:#6E6E73;max-width:none;margin:10px 0 18px}
+.page.auth .aflow .sect{margin:16px 2px 8px;font-size:13.5px;font-weight:600;color:#1D1D1F;letter-spacing:0}
+.page.auth .aflow .inp2{height:54px;border-radius:14px;background:#F5F5F7;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04);transition:box-shadow .2s,background .2s;font-size:17px}
+.page.auth .aflow .inp2:focus{outline:0;background:#fff;box-shadow:inset 0 0 0 1px #0071E3,0 0 0 4px rgba(0,113,227,.16)}
+.page.auth .aflow .btn.pri{height:54px;border-radius:27px;font-size:17px;background:#0071E3;color:#fff;box-shadow:0 12px 28px -12px rgba(0,113,227,.7)!important;transition:transform .2s,background .2s}
+.page.auth .aflow .btn.pri:hover{background:#0077ED}.page.auth .aflow .btn.pri:active{transform:scale(.985)}
+.page.auth .aflow .btn.sec{height:54px;border-radius:27px;background:#fff!important;box-shadow:inset 0 0 0 1px #D2D2D7!important}
+.page.auth .aflow .btn.ghost{height:46px}
+.page.auth .aflow .cap{color:#86868B}
+.page.auth .aflow .steps3 i.on{background:#0071E3}
+.page.auth .aapps{margin-top:auto;padding-top:28px;display:none}
+.page.auth .usug{display:inline-block;margin:10px 2px 0;padding:0;border:0;background:none;color:#0071E3;font-size:14px;font-weight:600;cursor:pointer}
+@media (max-width:899px){
+ .page.auth .authart{position:relative;width:auto;height:clamp(230px,34vh,310px);inset:auto}
+ .page.auth .authart.slim{height:clamp(150px,22vh,190px)}
+ .page.auth .authart.slim .ufx-copy{display:none}
+ .page.auth .pin.aflow{margin:-26px 0 0!important;width:auto;position:relative;z-index:2;min-height:0;justify-content:flex-start;border-radius:26px 26px 0 0;
+  padding:28px 22px max(28px,env(safe-area-inset-bottom))!important;box-shadow:0 -10px 30px -18px rgba(0,0,0,.5)}
+ .page.auth .aflow h1.big{font-size:30px}
+ .page.auth .aapps{display:block}
+ .page.auth .aapps .ufx-apps{justify-content:center;gap:12px}
+ .page.auth .aapps .ufx-dl{background:#1D1D1F;color:#fff;box-shadow:none}
+ .page.auth .aapps .ufx-ios{color:#86868B}
+}
 </style>
 </head>
 <body>
@@ -2469,11 +2505,13 @@ function inviteMismatch(msg){const v=invInfo()||{};const d=sheetX('Family invite
  <h2>This invite is for someone else</h2><p>${v.for?`${esc(v.by||'Your family')} sent it to <b style="color:var(--ink)">${esc(v.for)}</b>. Sign in with that ${v.forKind==='email'?'email':'number'} to join. `:esc(msg||'')}Family health records open only for the person invited.</p>
  <button class="btn pri" id="mmsw">Use ${v.forKind==='email'?'that email':'that number'}</button><button class="btn ghost" style="color:var(--blue)" id="mmask">Ask ${esc(v.by||'them')} for a new invite</button></div>`);
  const sw=document.getElementById('mmsw');if(sw)sw.onclick=()=>{sessionStorage.setItem('uh-join-keep','1');signOut()};const ak=document.getElementById('mmask');if(ak)ak.onclick=()=>{sessionStorage.removeItem('uh-join');sessionStorage.removeItem('uh-invite');toast('Ask them to invite the email or number you use here');d&&d.remove&&d.remove();document.querySelector('.sheetx')?.remove()}}
-function authShell(inner,art){layer(`<div class="page auth" style="left:0">${art===false?'':`<div class="authart"><h2>Your family's health,<br>in one secure place.</h2><p>Reports read for you, medicines on time, and help one tap away.</p>
- <div class="pt"><span class="i">${ic(I.lock,'#fff',18)}</span><div><b>Private for each person</b>Everyone signs in with their own account and chooses what to share.</div></div>
- <div class="pt"><span class="i">${ic(I.sum,'#fff',18)}</span><div><b>Results on a 3D body</b>See what a report means, on the organ it is about.</div></div>
- <div class="pt"><span class="i">${ic(I.phone,'#fff',18)}</span><div><b>SOS to your family</b>Live location and Medical ID to your emergency contacts.</div></div></div>`}<div class="pin aflow" style="padding-top:max(26px,env(safe-area-inset-top));max-width:440px">${inner}</div></div>`);pwEyes($('#layer'));
+function authShell(inner,art){layer(`<div class="page auth" style="left:0"><div class="authart${art===false?' slim':''}"></div><div class="pin aflow" style="padding-top:max(26px,env(safe-area-inset-top));max-width:440px">${inner}<div class="aapps"></div></div></div>`);pwEyes($('#layer'));authDress();
  if(art!==false){const h=inviteCard(),ln=document.querySelector('#layer .aflow p.line');if(h&&ln)ln.insertAdjacentHTML('afterend',h)}}
+function authDress(){const L=$('#layer');if(!L)return;
+ L.querySelectorAll('.aflow .sect').forEach(x=>{const t=x.textContent.trim();if(t&&t===t.toUpperCase())x.textContent=t[0]+t.slice(1).toLowerCase()});
+ const go=()=>{const h=L.querySelector('.authart');if(h&&window.UHFX){UHFX.stage(h,'user');const a=L.querySelector('.aapps');if(a)a.innerHTML=UHFX.apps('user')}};
+ const pw=L.querySelector('[data-pwrules]');const gp=()=>pw&&pw.dispatchEvent(new Event('input',{bubbles:true}));
+ if(window.UHFX){go();gp()}else addEventListener('load',()=>{go();gp()},{once:true})}
 async function authPage(mode){mode=mode||'signin';try{localStorage.removeItem('uh-act')}catch(_){}const cfg=await authCfg();
  if(mode==='signin')authShell(`<img src="/brand/svg/user-logo.svg" alt="Urban Health" height="32" style="margin:10px 0 24px"><h1 class="big">Welcome back</h1><p class="line">Sign in with your mobile number or email.</p>
  <form id="af"><div class="sect">MOBILE OR EMAIL</div><input class="inp2" name="id" required autocomplete="username" inputmode="email" placeholder="98765 43210 or name@gmail.com" value="${esc(sessionStorage.getItem('uh-id')||'')}">
@@ -2483,7 +2521,7 @@ async function authPage(mode){mode=mode||'signin';try{localStorage.removeItem('u
  <button class="btn sec" style="width:100%;margin-top:12px;background:#fff;box-shadow:inset 0 0 0 1px #D2D2D7" onclick="passkeyLogin()">${ic('<circle cx="9" cy="8" r="4"/><path d="M2 21c0-3.9 3.1-7 7-7 1.4 0 2.6.4 3.7 1M17 12a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM20 17l2 2"/>','#1D1D1F',20)}Use a passkey (Face ID)</button>
  <p class="cap" style="text-align:center;margin-top:22px">New to Urban Health? <a href="#" onclick="authPage('signup');return false" style="font-weight:600">Create an account</a></p>`);
  else authShell(`${AUTHBACK("authPage('signin')",'Sign in')}<div class="steps3"><i class="on"></i><i></i><i></i></div><h1 class="big">Create your account</h1><p class="line">Your own login. Your family sees only what you share.</p>
- <form id="af"><div class="sect">FULL NAME</div><input class="inp2" name="name" required autocomplete="name"><div class="sect">MOBILE</div><input class="inp2" name="phone" required inputmode="tel" autocomplete="tel" placeholder="98765 43210"><div class="sect">EMAIL</div><input class="inp2" name="email" type="email" required autocomplete="email"><div class="sect">PASSWORD</div><input class="inp2" type="password" name="pw" required minlength="12" autocomplete="new-password" data-pwrules><div class="pwr" id="pwr"><div class="pwi">12+ characters with upper and lower case, a number and a symbol — or 3–4 random words (16+). Not your name, email or phone.</div></div><div class="sect">CONFIRM PASSWORD</div><input class="inp2" type="password" name="pw2" required autocomplete="new-password" data-confirm><div class="pwmx" aria-live="polite"></div>
+ <form id="af"><div class="sect">FULL NAME</div><input class="inp2" name="name" required autocomplete="name"><div class="sect">MOBILE</div><input class="inp2" name="phone" required inputmode="tel" autocomplete="tel" placeholder="98765 43210"><div class="sect">EMAIL</div><input class="inp2" name="email" type="email" required autocomplete="email"><div class="sect">PASSWORD</div><input class="inp2" type="password" name="pw" required minlength="12" autocomplete="new-password" data-pwrules><div class="pwr" id="pwr"></div><div class="sect">CONFIRM PASSWORD</div><input class="inp2" type="password" name="pw2" required autocomplete="new-password" data-confirm><div class="pwmx" aria-live="polite"></div>
  <button type="button" class="agree" role="checkbox" aria-checked="false" id="agr"><span class="rt"></span><span>I agree to the <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a>, and to Urban Health keeping my health records.</span></button>
  <button class="btn pri" style="width:100%;margin-top:16px" id="ab">Create account</button><p class="cap" style="text-align:center;margin-top:10px">Next, we confirm your email and ${cfg.rsms?'your mobile with one text from it':'your mobile'}.</p></form>
  <div id="gwrap" style="display:none;margin-top:10px"><div class="row" style="gap:10px;color:var(--ink3);font-size:13px"><span style="flex:1;height:1px;background:#D1D1D6"></span>or<span style="flex:1;height:1px;background:#D1D1D6"></span></div><div id="gbtn" style="display:flex;justify-content:center;margin-top:14px;min-height:44px"></div></div>`);
@@ -2508,7 +2546,7 @@ function pwPage(id){id=String(id||sessionStorage.getItem('uh-id')||'').trim();
  $('#pf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=$('#pb');b.disabled=true;try{try{sessionStorage.setItem('uh-id',f.get('id'))}catch(_){}const r=await API('/api/v1/auth/password/login',{json:{id:f.get('id'),password:f.get('pw')}});if(r.step)return codePage('step',r);return authDone()}catch(err){toast(err.message)}finally{b.disabled=false}};
  $('#fgt').onclick=async()=>{const v=$('#pf [name=id]').value.trim();if(!v)return toast('Enter your mobile number or email first');try{const ph=isPhoneId(v),r=await API('/api/v1/auth/otp/start',{json:{id:v,purpose:'reset',method:ph&&AUTHCFG&&AUTHCFG.rsms?'rsms':'code'}});r.id=v;r.reset=1;return r.rsms?rsmsPage('otp',r):codePage('otp',r)}catch(err){toast(err.message)}}}
 function newPwPage(resetId){authShell(`<h1 class="big" style="margin-top:20px">Choose a new password</h1><p class="line">Changing it signs you out on your other devices.</p>
- <form id="np"><div class="sect">NEW PASSWORD</div><input class="inp2" type="password" name="pw" required minlength="12" autocomplete="new-password" data-pwrules><div class="pwr" id="pwr"><div class="pwi">12+ characters with upper and lower case, a number and a symbol — or 3–4 random words (16+).</div></div>
+ <form id="np"><div class="sect">NEW PASSWORD</div><input class="inp2" type="password" name="pw" required minlength="12" autocomplete="new-password" data-pwrules><div class="pwr" id="pwr"></div>
  <div class="sect">CONFIRM PASSWORD</div><input class="inp2" type="password" name="pw2" required autocomplete="new-password" data-confirm><div class="pwmx" aria-live="polite"></div><button class="btn pri" style="width:100%;margin-top:18px" id="nb">Save and sign in</button></form>`,false);
  const npOk=pwMatch($('#np'));$('#np').onsubmit=async e=>{e.preventDefault();if(!npOk())return;const b=$('#nb');b.disabled=true;try{await API('/api/v1/auth/password/reset',{json:{flow:resetId,password:new FormData(e.target).get('pw')}});toast('Password changed');authDone()}catch(err){toast(err.message)}finally{b.disabled=false}}}
 /* what happens after any proof (a text or a code) is accepted */
@@ -2622,7 +2660,7 @@ const SVCN={medicine:['Medicine orders','licensed pharmacies, with a registered 
 function soonCard(k){const n=SVCN[k];return`<div class="soon"><div class="soi">${ic(I.spark,'#fff',26)}</div><b>${n[0]}: coming soon in your area</b><p>We’re partnering with ${n[1]}. As soon as they’re verified near you, it switches on here. We’ll let you know.</p></div>`}
 function svcOk(k){if(SVC&&SVC[k]===false&&EMB&&EMB.live&&EMB.key===S.tab+':'+S.sub){EMB.title='-';EMB.html=soonCard(k);renderSheet();return false}if(SVC&&SVC[k]===false){sheetX(SVCN[k][0],`<div class="ulf">${soonCard(k)}</div>`);return false}return true}
 async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);if(m){try{sessionStorage.setItem('uh-join',m[1])}catch(_){}try{const ir=await fetch('/api/v2/household/invite/'+m[1],{headers:{'x-tht':'1'}});if(ir.ok)sessionStorage.setItem('uh-invite',JSON.stringify({...(await ir.json()),token:m[1]}))}catch(_){}history.replaceState(null,'','/app')}
- try{await refreshMe()}catch(e){if(e.status===401){const w=sessionStorage.getItem('uh-idle');authPage(sessionStorage.getItem('uh-join')?'signup':'signin');if(w){sessionStorage.removeItem('uh-idle');toast('Signed out after 10 minutes without activity')}return}$('#load').textContent='Could not connect. Check your internet and reload.';return}
+ try{await refreshMe();const gb=()=>window.UHFX&&UHFX.banner('user');if(window.UHFX)gb();else addEventListener('load',gb,{once:true})}catch(e){if(e.status===401){const w=sessionStorage.getItem('uh-idle');{const q=new URLSearchParams(location.search).get('auth');if(q)history.replaceState(null,'','/app');q==='reset'?pwPage():authPage(sessionStorage.getItem('uh-join')||q==='signup'?'signup':'signin')}if(w){sessionStorage.removeItem('uh-idle');toast('Signed out after 10 minutes without activity')}return}$('#load').textContent='Could not connect. Check your internet and reload.';return}
  const jt=sessionStorage.getItem('uh-join');if(jt){try{const j=await API('/api/v2/household/join',{json:{token:jt}});if(j.handover)toast('Welcome. Your records are now in your own account.');else{toast('You joined the family');if(j.relation)setTimeout(()=>confirmRel(j),600)}sessionStorage.removeItem('uh-invite')}catch(e){if(e.status===403){sessionStorage.removeItem('uh-join');await refreshMe();setTimeout(()=>inviteMismatch(e.message),400)}else toast(e.message)}sessionStorage.removeItem('uh-join');await refreshMe()}
  {let la=0;try{la=+localStorage.getItem('uh-act')||0}catch(_){}if(la&&Date.now()-la>=IDLE_MS)return idleOut();IDLET=0;idleMark()}
  closeL();document.body.classList.add('in');rcDone();if(window.UHL){UHL.adopt(ME.user.lang);if(!UHL.chosen())await UHL.picker(saveLang)}await loadPerms();locWarm();if(!ME.me||!ME.onboarded)return onboard();
@@ -3096,8 +3134,13 @@ function pwScore(pw,rs){const fails=rs.filter(x=>x[1]===false).length;if(!pw)ret
 document.addEventListener('input',e=>{const t=e.target;if(!t.matches||!t.matches('[data-pwrules],form input[name=name],form input[name=email],form input[name=phone]'))return;const f=t.form;if(!f)return;const pw=f.querySelector('[data-pwrules]'),box=f.querySelector('#pwr');if(!pw||!box)return;
  const rs=pwRules(pw.value,(f.name&&f.name.value)||'',(f.email&&f.email.value)||'',(f.phone&&f.phone.value)||''),sc=pwScore(pw.value,rs),fails=rs.filter(x=>x[1]===false).length;
  const lab=!pw.value?'':fails?(fails>1?`Weak — ${fails} things to fix`:'Fair — one thing to fix'):sc>=4?'Strong':'Good',col=fails?(fails>1?'#C4291C':'#B25000'):'#1A7F37';
- box.innerHTML=!pw.value?'<div class="pwi">12+ characters with upper and lower case, a number and a symbol — or 3–4 random words (16+). Not your name, email or phone.</div>'
-  :`<div class="pwmx">${[1,2,3,4].map(k=>`<i style="background:${k<=sc?col:'#E5E5EA'}"></i>`).join('')}</div><div style="font-size:13.5px;font-weight:600;color:${col};margin:2px 0 2px">${lab}</div>`+rs.map(([t,ok])=>`<div class="pwi ${ok===true?'py':ok===false?'pn':''}"><span>${ok===true?'✓':ok===false?'!':'·'}</span>${esc(t)}</div>`).join('')+(fails?'<div class="pwi" style="margin-top:2px">Tip: 3–4 random words like <b style="color:#1D1D1F">&nbsp;mango river kite 82</b></div>':'');
+ {const v=pw.value,F=[];if(v&&!rs[0][1])F.push({k:'len'});
+  const mix=rs.find(x=>/upper and lower/.test(x[0]));if(mix&&mix[1]===false){if(!/[A-Z]/.test(v))F.push({text:'Add a capital letter (A–Z).'});else if(!/[a-z]/.test(v))F.push({text:'Add a small letter (a–z).'});else if(!/\d/.test(v))F.push({text:'Add a number (0–9).'});else F.push({text:'Add a symbol, like ! or #.'})}
+  const per=rs.find(x=>/name or email|phone/.test(x[0])&&x[1]===false);if(per)F.push({text:/phone/.test(per[0])?'Leave out your phone number.':per[0].replace(/^Contains (“[^”]+”).*/,'Leave out $1. It’s part of your name or email.')});
+  if(rs.some(x=>/identical/.test(x[0])))F.push({text:'Avoid three of the same character in a row.'});
+  if(rs.some(x=>/run like/.test(x[0])))F.push({text:'Avoid easy runs like 1234 or abcd.'});
+  if(window.UHFX){UHFX.paint(box,UHFX.guide(v,F,sc>=4));if(!f.querySelector('.usug')){const g=document.createElement('button');g.type='button';g.className='usug';g.textContent='Suggest a strong password';g.onclick=()=>{const x=UHFX.suggest();[pw,f.querySelector('[data-confirm]')].forEach(i=>{if(i){i.value=x;i.type='text';i.dispatchEvent(new Event('input',{bubbles:true}))}});toast('Strong password filled in. Save it in your password manager.')};box.after(g)}}
+  else box.textContent=v.length<12?`${12-v.length} more characters`:'';}
  const sb=f.querySelector('button.btn.pri,button[type=submit]');if(sb&&f.querySelector('#pwr')){sb.disabled=!!fails||pw.value.length<12;sb.style.opacity=sb.disabled?.45:1}},true);
 </script>
 </body>

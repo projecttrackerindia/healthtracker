@@ -1,14 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Urban Health · Your family's health, in one living view</title>
-<meta name="description" content="Track your family's health in one place: a 3D body that shows your reports, medicines and reminders, nearby pharmacies and labs compared, pregnancy week by week, and one-tap SOS. Sign in with a passkey.">
+<title>Urban Health · Sign in</title>
+<meta name="robots" content="noindex">
 <meta name="theme-color" content="#F4F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0C12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/icon.svg"><link rel="apple-touch-icon" href="/brand/png/user-icon-180.png"><link rel="manifest" href="/manifest.webmanifest">
-<link rel="canonical" href="https://urbanhealth.in/"><meta property="og:type" content="website"><meta property="og:site_name" content="Urban Health"><meta property="og:locale" content="en_IN"><meta property="og:url" content="https://urbanhealth.in/"><meta property="og:title" content="Urban Health"><meta property="og:description" content="Your family’s health, in one living view."><meta property="og:image" content="https://urbanhealth.in/s/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Urban Health — your family’s health, in one living view."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Urban Health"><meta name="twitter:description" content="Your family’s health, in one living view."><meta name="twitter:image" content="https://urbanhealth.in/s/img/og.png"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://urbanhealth.in/#org","name":"Urban Health","url":"https://urbanhealth.in/","logo":"https://urbanhealth.in/brand/png/user-icon-512.png","areaServed":{"@type":"Country","name":"India"}},{"@type":"WebSite","@id":"https://urbanhealth.in/#site","name":"Urban Health","url":"https://urbanhealth.in/","inLanguage":["en-IN","hi-IN"],"publisher":{"@id":"https://urbanhealth.in/#org"}},{"@type":"SoftwareApplication","name":"Urban Health","url":"https://urbanhealth.in/","applicationCategory":"HealthApplication","operatingSystem":"Web, Android, iOS","publisher":{"@id":"https://urbanhealth.in/#org"},"description":"A health card for everyone you care for: reports, medicine reminders, a 3D body view, nearby labs and pharmacies compared, pregnancy week by week, and one-tap SOS."}]}</script>
 <link rel="preload" href="/s/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:Geist;src:url(/s/fonts/geist.woff2) format("woff2");font-weight:100 900;font-display:swap}
@@ -182,154 +181,33 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--mute);fo
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .logo svg path[transform],:root:not([data-theme=light]) footer svg path[transform]{fill:#E8EDFF}}
 .vsel{display:flex;flex-direction:column;gap:6px}.vsel .ck small{color:var(--mute,#6b7280)}
 .appgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.appcard{border:1px solid var(--line,#e5e7eb);border-radius:24px;padding:26px 24px;background:var(--card,#fff)}.appic{font-size:30px;margin-bottom:8px}.appcard h3{margin:0 0 8px;font-size:20px}.appcard p{color:var(--mute,#5f6577);margin:0;font-size:15px;line-height:1.5}.appmeta{display:block;color:var(--mute,#5f6577);font-size:12px;margin-top:10px}@media(max-width:900px){.appgrid{grid-template-columns:1fr}}
+
+/* ===== standalone sign-in page: stage on the left, the form on the right; phones: stage banner above a sheet */
+body{background:#fff}
+body .ustage{position:fixed;left:0;top:0;bottom:0;width:50%;margin:0}
+.ov,.ov.on{position:static;display:flex;align-items:center;justify-content:center;min-height:100dvh;margin-left:50%;padding:48px clamp(28px,6vw,96px);background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;opacity:1;pointer-events:auto}
+.sheet{width:100%;max-width:400px;max-height:none;overflow:visible;background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;transform:none!important;color:#1D1D1F}
+.sheet .mk,.sheet .x{display:none}
+.sheet h2{font-size:clamp(30px,2.6vw,38px);letter-spacing:-.035em;line-height:1.08;font-weight:700}
+.sheet .sub{font-size:16.5px;color:#6E6E73}
+.sheet .inp input{height:54px;border-radius:14px;font-size:17px}
+.sheet .btn{height:54px;font-size:17px}
+.sheet .btn.b{background:#0071E3}.sheet .btn.p{background:#1D1D1F;color:#fff}
+.gen2{display:inline-block;margin:10px 2px 4px;color:#0071E3;font-weight:600;font-size:14px;cursor:pointer}
+/* verify-with choices */
+.sheet .vsel{display:flex;flex-direction:column;gap:8px}.sheet .vsel .ck{display:flex;gap:10px;align-items:flex-start;justify-content:flex-start;padding:12px 14px;border-radius:14px;background:#F5F5F7;font-size:14.5px;text-align:left}
+@media (max-width:899px){
+ body .ustage{position:relative;width:auto;height:clamp(230px,34vh,310px)}
+ .ov,.ov.on{margin:-26px 0 0;position:relative;z-index:2;min-height:0;align-items:flex-start;border-radius:26px 26px 0 0;padding:28px 22px max(28px,env(safe-area-inset-bottom));box-shadow:0 -10px 30px -18px rgba(0,0,0,.5)}
+ .sheet h2{font-size:30px}
+}
 </style>
 </head>
 <body>
-<header class="nav"><div class="wrap navin">
-  <a class="logo" href="/" aria-label="Urban Health home"><svg role="img" aria-label="Urban Health" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 333.6 64"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/><path transform="translate(80 46)" d="M15.46875 0.515625C23.009765625 0.515625 27.9296875 -4.296875 27.9296875 -10.87109375V-32.01171875H24.0625V-11.171875C24.0625 -6.48828125 20.818359375 -3.09375 15.46875 -3.09375C10.119140625 -3.09375 6.875 -6.48828125 6.875 -11.171875V-32.01171875H3.0078125V-10.87109375C3.0078125 -4.296875 7.927734375 0.515625 15.46875 0.515625Z M32.764531250000005 0.0H36.416875000000005V-13.96484375C36.416875000000005 -17.810546875 38.586796875000005 -19.5078125 41.100468750000005 -19.5078125C42.153203125000005 -19.5078125 43.034062500000005 -19.3359375 43.334843750000005 -19.25V-22.90234375C43.034062500000005 -22.9453125 42.453984375000005 -23.03125 41.787968750000005 -23.03125C38.952031250000005 -23.03125 37.168828125000005 -21.462890625 36.330937500000005 -19.12109375H36.245000000000005V-22.6875H32.764531250000005Z M56.849375 0.4296875C62.757578125 0.4296875 66.68921875000001 -4.361328125 66.68921875000001 -11.34375C66.68921875000001 -18.34765625 62.757578125 -23.1171875 56.849375 -23.1171875C53.906015625 -23.1171875 51.22046875 -21.87109375 49.75953125 -19.3359375H49.7165625V-32.01171875H46.06421875V0.0H49.630625V-3.4375H49.67359375C51.30640625 -0.81640625 53.906015625 0.4296875 56.849375 0.4296875ZM56.29078125 -2.857421875C52.07984375 -2.857421875 49.41578125 -6.208984375 49.41578125 -11.34375C49.41578125 -16.478515625 52.07984375 -19.8515625 56.29078125 -19.8515625C60.222421875 -19.8515625 62.99390625 -16.908203125 62.99390625 -11.34375C62.99390625 -5.779296875 60.222421875 -2.857421875 56.29078125 -2.857421875Z M76.98109375 0.34375C81.10609375 0.34375 82.889296875 -1.58984375 83.7271875 -3.22265625H83.813125V0.0H87.4225V-15.640625C87.4225 -20.130859375 84.0709375 -23.1171875 78.78578125 -23.1171875C73.4146875 -23.1171875 69.740859375 -20.044921875 69.5475 -15.8984375H73.264296875C73.436171875 -18.154296875 75.627578125 -19.89453125 78.78578125 -19.89453125C81.96546875 -19.89453125 83.813125 -18.111328125 83.813125 -15.640625V-15.42578125C83.813125 -13.685546875 82.416640625 -13.857421875 78.09828125 -13.27734375C73.54359375 -12.67578125 69.07484375 -11.73046875 69.07484375 -6.53125C69.07484375 -1.998046875 72.469375 0.34375 76.98109375 0.34375ZM77.49671875 -2.921875C74.596328125 -2.921875 72.813125 -4.189453125 72.813125 -6.31640625C72.813125 -8.873046875 75.3053125 -9.775390625 77.92640625 -10.140625C80.526015625 -10.505859375 83.25453125 -10.9140625 83.813125 -11.4296875V-8.59375C83.813125 -5.62890625 81.96546875 -2.921875 77.49671875 -2.921875Z M95.60890625 -13.27734375C95.60890625 -17.853515625 98.27296875 -19.765625 101.5815625 -19.765625C104.97609375 -19.765625 106.95265625 -17.767578125 106.95265625 -13.8359375V0.0H110.605V-14.09375C110.605 -20.130859375 106.845234375 -23.1171875 102.2690625 -23.1171875C99.39015625 -23.1171875 97.091328125 -21.935546875 95.52296875 -19.357421875V-22.6875H91.9565625V0.0H95.60890625Z  M124.93679687500001 0.0H131.55398437500003V-13.4921875H145.15359375000003V0.0H151.74929687500003V-32.01171875H145.15359375000003V-19.1640625H131.55398437500003V-32.01171875H124.93679687500001Z M165.865390625 0.515625C171.365390625 0.515625 175.748203125 -2.62109375 176.58609375 -7.1328125H170.806796875C170.22671875 -5.37109375 168.529453125 -4.232421875 166.05875 -4.232421875C162.728671875 -4.232421875 160.795078125 -6.40234375 160.68765625 -9.75390625H176.822421875V-11.451171875C176.822421875 -18.369140625 172.3321875 -23.203125 165.650546875 -23.203125C159.14078125 -23.203125 154.521640625 -18.240234375 154.521640625 -11.322265625C154.521640625 -4.42578125 158.990390625 0.515625 165.865390625 0.515625ZM160.730625 -13.79296875C161.074375 -16.62890625 162.943515625 -18.390625 165.779453125 -18.390625C168.636875 -18.390625 170.5275 -16.62890625 170.849765625 -13.79296875Z M186.27640625 0.38671875C189.756875 0.38671875 191.711953125 -0.98828125 192.915078125 -3.201171875H193.001015625V0.0H199.188515625V-15.3828125C199.188515625 -20.23828125 195.622109375 -23.16015625 189.413125 -23.16015625C183.18265625 -23.16015625 179.48734375 -20.1953125 179.208046875 -15.51171875H185.15921875C185.309609375 -17.251953125 186.856484375 -18.455078125 189.219765625 -18.455078125C191.540078125 -18.455078125 192.9365625 -17.294921875 192.9365625 -15.619140625V-15.46875C192.9365625 -14.0078125 191.475625 -13.814453125 187.329140625 -13.40625C182.602578125 -12.9765625 178.477578125 -11.515625 178.477578125 -6.40234375C178.477578125 -1.869140625 181.743203125 0.38671875 186.27640625 0.38671875ZM188.038125 -4.017578125C185.911171875 -4.017578125 184.536171875 -4.962890625 184.536171875 -6.57421875C184.536171875 -8.37890625 186.254921875 -9.216796875 188.42484375 -9.5390625C190.465859375 -9.861328125 192.2490625 -10.162109375 192.97953125 -10.5703125V-8.29296875C192.97953125 -5.84375 191.08890625 -4.017578125 188.038125 -4.017578125Z M209.11515625 -32.01171875H202.777265625V0.0H209.11515625Z M225.74492187500002 -22.6875H221.10429687500002V-28.875H214.76640625000002V-22.6875H210.85625000000002V-17.724609375H214.76640625000002V-6.015625C214.76640625000002 -1.890625 217.06523437500002 0.0 222.04960937500002 0.0H225.74492187500002V-4.962890625H223.31718750000002C221.59843750000002 -4.962890625 221.10429687500002 -5.45703125 221.10429687500002 -7.00390625V-17.724609375H225.74492187500002Z M234.38250000000002 -12.611328125C234.38250000000002 -16.134765625 236.20867187500002 -17.703125 238.82976562500002 -17.703125C241.47234375000002 -17.703125 242.99773437500002 -16.091796875 242.99773437500002 -13.041015625V0.0H249.31414062500002V-14.201171875C249.31414062500002 -19.9375 246.19890625000002 -23.16015625 241.36492187500002 -23.16015625C238.16375000000002 -23.16015625 235.90789062500002 -21.763671875 234.38250000000002 -19.271484375V-32.01171875H228.04460937500002V0.0H234.38250000000002Z" fill="#2F5BFF"/></svg></a>
-  <nav aria-label="Main"><a href="#features">Features</a><a href="#how">How it works</a><a href="#security">Security</a><a href="#pricing">Pricing</a><a href="#app">Get the app</a><a href="#faq">FAQ</a></nav>
-  <div class="acts" id="acts"><a class="btn sm s" href="/signin" data-auth="signin">Sign in</a><a class="btn sm p" href="/signup" data-auth="signup">Get started</a></div>
-  <button class="menu" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="mainnav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-</div></header>
-<script>(function(){var b=document.getElementById('menu'),nav=document.querySelector('.navin nav');if(!b||!nav)return;nav.id='mainnav';if(!nav.querySelector('[data-auth=signin]')){var a=document.createElement('a');a.href='/signin';a.setAttribute('data-auth','signin');a.className='only-s';a.textContent='Sign in';nav.appendChild(a)}function set(o){document.body.classList.toggle('menu-open',o);b.setAttribute('aria-expanded',o?'true':'false');b.innerHTML=o?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'}
-b.addEventListener('click',function(){set(!document.body.classList.contains('menu-open'))});nav.addEventListener('click',function(e){if(e.target.closest('a'))set(false)});document.addEventListener('keydown',function(e){if(e.key==='Escape')set(false)})})();</script>
-
-<main>
-<section class="hero">
-  <div class="glow"></div>
-  <div class="wrap">
-    <div class="htop">
-      <span class="pill rv"><b>NEW</b> A health card for every family member</span>
-      <h1 class="rv">Your family's health,<br><em>in one living view.</em></h1>
-      <p class="lead rv">A health card for everyone you care for, a 3D body that shows your reports, medicine reminders, pregnancy week by week, and one-tap SOS when it matters.</p>
-      <div class="ctas rv"><a class="btn b" href="/signup" data-auth="signup">Create your free account <span class="arr">→</span></a><a class="btn s" href="/app?demo=1">See a demo with a sample family</a></div>
-      <div class="trust rv">
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Sign in with a passkey</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Encrypted, stored in India</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>English · हिंदी · తెలుగు</span>
-      </div>
-    </div>
-    <div class="stage">
-      <div class="frame" id="frame"><div class="bar"><i></i><i></i><i></i><span>urbanhealth.in/app</span></div>
-        <img src="/s/img/app-desktop.webp" width="1600" height="1000" alt="Urban Health home: a 3D anatomy body with a heart-rate pin, today's lab results to discuss, seasonal health alerts for the city, and a health score" fetchpriority="high"></div>
-      <div class="phone"><img src="/s/img/app-phone.webp" width="640" height="1385" alt="The app on a phone in dark mode with the bottom tab bar and SOS button" loading="lazy"></div>
-      <div class="chip c1"><span class="ic" style="background:color-mix(in srgb,var(--red) 14%,transparent)">❤️</span><div><b>72 bpm</b><svg class="ecg" viewBox="0 0 120 30"><path d="M0 18h26l5-9 6 18 5-14 4 5h22l5-9 6 18 5-14 4 5h32"/></svg></div></div>
-      <div class="chip c2"><span class="ic" style="background:color-mix(in srgb,var(--blue) 14%,transparent)">✦</span><div><b>Lipid report read</b><small>6 values explained · 3 questions for your doctor</small></div></div>
-      <div class="chip c3"><span class="ic" style="background:color-mix(in srgb,var(--teal) 14%,transparent)">💊</span><div><b>Doses on time</b><small>Reminders for the whole family</small></div></div>
-    </div>
-    <div class="facts rv">
-      <div><b>₹0</b><span>for the whole family, until March 2027</span></div>
-      <div><b>1 tap</b><span>SOS to 112 with your location</span></div>
-      <div><b>25</b><span>first-aid videos from St John Ambulance & AHA</span></div>
-      <div><b>3</b><span>languages: English, Hindi, Telugu</span></div>
-    </div>
-  </div>
-</section>
-
-<section class="band" id="features"><div class="wrap">
-  <div class="shead rv"><div><span class="eyebrow">What it does</span><h2 style="margin-top:14px">Everything your family's health needs. Nothing it doesn't.</h2></div><p>Built around how Indian families actually manage health: one phone, several people, paper reports, pharmacy runs and the occasional emergency.</p></div>
-  <div class="bento">
-    <article class="tile t-body rv"><span class="tag">3D body</span><h3>See your health, not just numbers</h3><p>Findings from your reports are pinned on a detailed 3D body: muscles, organs, bones and vessels. Male, female and pregnancy models.</p><div class="shot"><img src="/s/img/body.webp" width="900" height="1367" alt="3D muscular body with health findings pinned" loading="lazy"></div></article>
-    <article class="tile t-heart rv"><div class="split"><div style="display:flex;flex-direction:column"><span class="tag">Heart Lab</span><h3>Watch one heartbeat, slowly</h3><p>Chambers squeeze, valves open and close, and the electrical signal travels. Slow motion, cut-away views and the Wiggers diagram explain every phase.</p></div><img src="/s/img/heart.webp" width="900" height="1367" alt="Anatomical 3D heart with labels and phase controls" loading="lazy"></div></article>
-    <article class="tile t-ai rv"><div class="split"><div style="display:flex;flex-direction:column"><span class="tag">AI analysis</span><h3>Reports and prescriptions, in plain words</h3><p>Upload a PDF or photo. Every value is explained and flagged, follow-up tests are suggested, and you get the right questions for your doctor. A prescription becomes a medicine list with reminders.</p></div><img src="/s/img/ai.webp" width="900" height="1389" alt="AI analysis of a lipid profile with flagged values" loading="lazy"></div></article>
-    <article class="tile t-med rv"><span class="tag">Medicines · Coming soon</span><h3>Order from licensed pharmacies near you</h3><p>Compare nearby pharmacies on price and delivery time, with every prescription checked by a registered pharmacist. Opening city by city. Until then: dose reminders, stock alerts and allergy checks for every medicine.</p></article>
-    <article class="tile t-lab rv"><span class="tag">Labs · Coming soon</span><h3>Know the price before the needle</h3><p>Accredited labs near you with test prices, fasting needs, report times and home sample collection. Opening city by city.</p></article>
-    <article class="tile t-preg rv"><span class="tag">Pregnancy</span><h3>Week 3 to delivery, in 3D</h3><p>A baby built from real ultrasound measurements for each week, and a mother whose body changes with it. Food, water, kicks, contractions and danger signs — opt-in only, and never guessing the baby's sex.</p><div class="duo"><img src="/s/img/baby.webp" width="900" height="1367" alt="3D baby at week 30 inside the amniotic sac" loading="lazy"><img src="/s/img/mother.webp" width="900" height="1367" alt="3D mother at week 28 with the uterus and baby" loading="lazy"></div></article>
-    <article class="tile t-sos rv"><span class="tag">Safety</span><h3>One tap when it matters</h3><p>Call first, then alert family with your location and Medical ID.</p><ul><li>Nearest hospitals with directions</li><li>Offline first-aid steps and CPR beat</li><li>Lock-screen Medical ID</li></ul><div class="sosb"><span>112</span><span>108</span></div></article>
-    <article class="tile t-fam rv"><div><span class="tag">Family</span><h3>One account, the whole household</h3><p style="max-width:640px">Profiles for parents, children and grandparents, with consent switches for what each person shares. Plans cover up to 12 members.</p></div><div class="avs"><i style="background:#2F5BFF">👩</i><i style="background:#E0457F">👨</i><i style="background:#D98A00">👧</i><i style="background:#0B8A7C">👵</i><i style="background:#7A5CFF">👴</i></div></article>
-  </div>
-</div></section>
-
-<section class="band" id="how" style="padding-top:20px"><div class="wrap">
-  <div class="shead rv"><div><span class="eyebrow">How it works</span><h2 style="margin-top:14px">Set up in two minutes.</h2></div><p>No hospital login, no paperwork. Start with yourself and add the family when you're ready.</p></div>
-  <div class="steps">
-    <div class="step rv"><h3>Create your account and health card</h3><p>Your name, mobile number and a strong password, then your health card: date of birth, sex and blood group. Add a passkey so you never type the password again.</p></div>
-    <div class="step rv"><h3>Add your family and reports</h3><p>Profiles, medicines and the reports you already have. Photos and PDFs stay in your browser, not on our servers.</p></div>
-    <div class="step rv"><h3>Let it work for you</h3><p>Dose reminders, results explained in plain words, seasonal health alerts for your city and SOS one tap away.</p></div>
-  </div>
-</div></section>
-
-<section class="band" id="security" style="padding-top:20px"><div class="wrap"><div class="sec rv">
-  <span class="eyebrow" style="color:#8FA6FF">Security &amp; privacy</span>
-  <h2 style="margin-top:14px">Your family's health data, protected like it should be.</h2>
-  <p class="lead">Encrypted connections, sign-in with your fingerprint or face, and records that stay on your own device. Read exactly what we collect and why in our <a href="/privacy" style="color:#8FA6FF">privacy policy</a>.</p>
-  <div class="sgrid">
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 11c0 3-1 6-3 8M8 7.5A5 5 0 0 1 17 11c0 2.5-.4 4.6-1.2 6.5M5 11a7 7 0 0 1 2-5M12 15c0 1.5-.3 3-1 4.5M19.5 15c.3-1.3.5-2.6.5-4a8 8 0 0 0-14-5.3"/></svg><b>Sign in without a password</b><p>Use your fingerprint, face or screen lock with a passkey. There is nothing to steal or phish.</p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h8"/></svg><b>Codes that expire</b><p>One-time codes by SMS or email work for a few minutes and only a few tries.</p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>Strong passwords only</b><p>If you use a password, it must be strong and is checked against known data breaches.</p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg><b>Encrypted, stored in India</b><p>Without an account, records stay on your device. When you sign in they are encrypted and backed up in India, so your family sees the same records on every phone.</p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><b>Consent you can see</b><p>Every share, with a doctor, a pharmacy or an AI reading, is switched on by you and kept in a history.</p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg><b>Your account, protected</b><p>Repeated wrong attempts pause sign-in, and you can sign out of every device at any time.</p></div>
-  </div>
-</div></div></section>
-
-<section class="band" id="pricing" style="padding-top:20px"><div class="wrap">
-  <div class="shead rv"><div><span class="eyebrow">Pricing</span><h2 style="margin-top:14px">Free for every family until 31 March 2027.</h2></div><p>No plan to choose, no card to add, nothing to cancel. We earn a small share from the labs and pharmacies you order through — never from you, and never from your records.</p></div>
-  <div class="free-band rv" id="plans">
-    <div class="free-main">
-      <span class="free-tag" id="freeTag">Everything included</span>
-      <div class="price">₹0</div>
-      <div class="yr" id="freeUntil">for your whole family, until 31 March 2027</div>
-      <a class="btn b" href="/signup" data-auth="signup">Create your free account <span class="arr">→</span></a>
-    </div>
-    <ul class="free-list">
-      <li>Family profiles, records and the document vault</li>
-      <li>3D body, Heart Lab and the Pregnancy journey</li>
-      <li>Smart reading of reports and prescriptions</li>
-      <li>Medicine and lab price comparison</li>
-      <li>Home sample collection booking</li>
-      <li>SOS with live location, first aid and Medical ID</li>
-      <li>Doctor summaries you can share by link</li>
-      <li>English, हिन्दी and తెలుగు</li>
-    </ul>
-  </div>
-  <p class="free-foot rv">When the free period ends we will say so well in advance, and the records you have added stay yours either way.</p>
-</div></section>
-
-<section class="band" id="app" style="padding-top:20px"><div class="wrap">
-  <div class="shead rv"><div><span class="eyebrow">Phone & watch</span><h2 style="margin-top:14px">The app on your phone, your watch in your records</h2></div><p>The website is the full product. The phone app adds what a browser cannot: steps, sleep, heart rate and ECG from your watch through Health Connect (Android) or Apple Health (iPhone), and notifications that work with the app closed.</p></div>
-  <div class="appgrid rv">
-    <div class="appcard"><div class="appic">🤖</div><h3>Android</h3><p id="apkNote">Android 8.0 and newer. Health Connect sync, notifications, video visits.</p><div class="ctas" style="margin:14px 0 0"><a class="btn b" id="apkBtn" href="/download/android" hidden>Download APK <span class="arr">↓</span></a><span class="btn s" id="apkSoon">APK — publishing soon</span><span class="btn s" id="playBtn">Google Play — coming</span></div><small id="apkMeta" class="appmeta"></small><small class="appmeta">Installing an APK: open the file, allow “install from this source” once. Builds are signed and published from our GitHub Actions.</small></div>
-    <div class="appcard"><div class="appic">📱</div><h3>iPhone</h3><p>Today: open <b>urbanhealth.in/app</b> in Safari → Share → <b>Add to Home Screen</b>. It installs as a full-screen app with offline records. The App Store app with Apple Health and Apple Watch ECG import is in build.</p><div class="ctas" style="margin:14px 0 0"><a class="btn b" href="/app">Open in Safari <span class="arr">→</span></a><span class="btn s" id="iosBtn">App Store — coming</span></div><small id="iosMeta" class="appmeta"></small></div>
-    <div class="appcard"><div class="appic">⌚</div><h3>Watches & devices</h3><p>Apple Watch, Samsung Galaxy Watch, Fitbit, Noise, boAt, Amazfit and others sync through Health Connect or Apple Health. Fitbit also links directly from the web. Bluetooth blood-pressure monitors, oximeters, scales, thermometers and heart-rate straps are read in the browser; Polar H10 streams a live ECG.</p></div>
-  </div>
-</div></section>
-
-<section class="band" id="faq" style="padding-top:20px"><div class="wrap">
-  <div class="shead rv" style="grid-template-columns:1fr"><div><span class="eyebrow">Questions</span><h2 style="margin-top:14px">Good to know</h2></div></div>
-  <div class="faq rv">
-    <details><summary>What is a passkey, and why should I use one?</summary><p>A passkey replaces your password with the fingerprint, face or screen lock you already use on your phone or computer. It can't be guessed, reused or phished, and it syncs through iCloud Keychain or Google Password Manager. You can still keep a password and one-time codes as backups.</p></details>
-    <details><summary>Where are my health records stored?</summary><p>Without an account, everything stays in your browser on your device. When you sign in, your family's profiles, results, medicines and cards are encrypted and stored on our servers in India, so each family member sees them on their own phone. Photos and PDFs stay on the device where they were added. A document you analyse with AI is sent for that one reading and not kept.</p></details>
-    <details><summary>Does Urban Health diagnose illness?</summary><p>No. It explains results in plain language and suggests questions and checks to discuss with your doctor. It is not a medical device and does not replace professional care. In an emergency call 112 or 108.</p></details>
-    <details><summary>What makes a password acceptable here?</summary><p>At least 12 characters with upper- and lower-case letters, a number and a symbol; no three identical characters in a row; no runs like 1234 or qwer; nothing from your name, email or phone; and nothing that appears in common-password lists or known data breaches. The form checks each rule as you type, or can suggest a strong one.</p></details>
-    <details><summary>Can my whole family use one account?</summary><p>Yes. One account holds profiles for everyone you care for, each with their own records, medicines and consent settings. Up to 12 people, and it is free for everyone until 31 March 2027.</p></details>
-    <details><summary>Can I see my watch data here?</summary><p>Yes, through the phone app: Android reads Health Connect (steps, sleep, heart rate, weight, blood pressure, sugar, SpO₂) and iPhone reads Apple Health including Apple Watch ECG recordings. Fitbit links directly from the web. No watch maker lets third-party apps stream a live ECG from the watch itself; for a live ECG in the browser use a Polar H10 or similar chest strap.</p></details>
-    <details><summary>Is it really free? What happens in April 2027?</summary><p>Yes — every feature, for your whole family, with no card and nothing to cancel, until 31 March 2027. We earn a small share from the labs and pharmacies you order through, never from you and never from your records; your health data is not sold to anyone. Before anything changes we will tell you well in advance, and the records you have added stay yours either way.</p></details>
-    <details><summary>Can I order medicines or book lab tests?</summary><p>Ordering and lab booking are opening city by city. Every pharmacy and lab is checked by our team, with its licence or NABL number, before it appears. Prices come from their own lists and are confirmed when you order or book.</p></details>
-  </div>
-</div></section>
-
-<section class="final"><div class="wrap rv">
-  <h2>Start with your own health.<br>Bring the family when you're ready.</h2>
-  <div class="ctas"><a class="btn b" href="/signup" data-auth="signup">Create your free account <span class="arr">→</span></a><a class="btn s" href="/app?demo=1">See a demo with a sample family</a></div>
-</div></section>
-</main>
-
-<footer><div class="wrap">
-  <div class="fgrid">
-    <div><a href="/" style="display:inline-block;margin-bottom:12px"><svg role="img" aria-label="Urban Health" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 333.6 64"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/><path transform="translate(80 46)" d="M15.46875 0.515625C23.009765625 0.515625 27.9296875 -4.296875 27.9296875 -10.87109375V-32.01171875H24.0625V-11.171875C24.0625 -6.48828125 20.818359375 -3.09375 15.46875 -3.09375C10.119140625 -3.09375 6.875 -6.48828125 6.875 -11.171875V-32.01171875H3.0078125V-10.87109375C3.0078125 -4.296875 7.927734375 0.515625 15.46875 0.515625Z M32.764531250000005 0.0H36.416875000000005V-13.96484375C36.416875000000005 -17.810546875 38.586796875000005 -19.5078125 41.100468750000005 -19.5078125C42.153203125000005 -19.5078125 43.034062500000005 -19.3359375 43.334843750000005 -19.25V-22.90234375C43.034062500000005 -22.9453125 42.453984375000005 -23.03125 41.787968750000005 -23.03125C38.952031250000005 -23.03125 37.168828125000005 -21.462890625 36.330937500000005 -19.12109375H36.245000000000005V-22.6875H32.764531250000005Z M56.849375 0.4296875C62.757578125 0.4296875 66.68921875000001 -4.361328125 66.68921875000001 -11.34375C66.68921875000001 -18.34765625 62.757578125 -23.1171875 56.849375 -23.1171875C53.906015625 -23.1171875 51.22046875 -21.87109375 49.75953125 -19.3359375H49.7165625V-32.01171875H46.06421875V0.0H49.630625V-3.4375H49.67359375C51.30640625 -0.81640625 53.906015625 0.4296875 56.849375 0.4296875ZM56.29078125 -2.857421875C52.07984375 -2.857421875 49.41578125 -6.208984375 49.41578125 -11.34375C49.41578125 -16.478515625 52.07984375 -19.8515625 56.29078125 -19.8515625C60.222421875 -19.8515625 62.99390625 -16.908203125 62.99390625 -11.34375C62.99390625 -5.779296875 60.222421875 -2.857421875 56.29078125 -2.857421875Z M76.98109375 0.34375C81.10609375 0.34375 82.889296875 -1.58984375 83.7271875 -3.22265625H83.813125V0.0H87.4225V-15.640625C87.4225 -20.130859375 84.0709375 -23.1171875 78.78578125 -23.1171875C73.4146875 -23.1171875 69.740859375 -20.044921875 69.5475 -15.8984375H73.264296875C73.436171875 -18.154296875 75.627578125 -19.89453125 78.78578125 -19.89453125C81.96546875 -19.89453125 83.813125 -18.111328125 83.813125 -15.640625V-15.42578125C83.813125 -13.685546875 82.416640625 -13.857421875 78.09828125 -13.27734375C73.54359375 -12.67578125 69.07484375 -11.73046875 69.07484375 -6.53125C69.07484375 -1.998046875 72.469375 0.34375 76.98109375 0.34375ZM77.49671875 -2.921875C74.596328125 -2.921875 72.813125 -4.189453125 72.813125 -6.31640625C72.813125 -8.873046875 75.3053125 -9.775390625 77.92640625 -10.140625C80.526015625 -10.505859375 83.25453125 -10.9140625 83.813125 -11.4296875V-8.59375C83.813125 -5.62890625 81.96546875 -2.921875 77.49671875 -2.921875Z M95.60890625 -13.27734375C95.60890625 -17.853515625 98.27296875 -19.765625 101.5815625 -19.765625C104.97609375 -19.765625 106.95265625 -17.767578125 106.95265625 -13.8359375V0.0H110.605V-14.09375C110.605 -20.130859375 106.845234375 -23.1171875 102.2690625 -23.1171875C99.39015625 -23.1171875 97.091328125 -21.935546875 95.52296875 -19.357421875V-22.6875H91.9565625V0.0H95.60890625Z  M124.93679687500001 0.0H131.55398437500003V-13.4921875H145.15359375000003V0.0H151.74929687500003V-32.01171875H145.15359375000003V-19.1640625H131.55398437500003V-32.01171875H124.93679687500001Z M165.865390625 0.515625C171.365390625 0.515625 175.748203125 -2.62109375 176.58609375 -7.1328125H170.806796875C170.22671875 -5.37109375 168.529453125 -4.232421875 166.05875 -4.232421875C162.728671875 -4.232421875 160.795078125 -6.40234375 160.68765625 -9.75390625H176.822421875V-11.451171875C176.822421875 -18.369140625 172.3321875 -23.203125 165.650546875 -23.203125C159.14078125 -23.203125 154.521640625 -18.240234375 154.521640625 -11.322265625C154.521640625 -4.42578125 158.990390625 0.515625 165.865390625 0.515625ZM160.730625 -13.79296875C161.074375 -16.62890625 162.943515625 -18.390625 165.779453125 -18.390625C168.636875 -18.390625 170.5275 -16.62890625 170.849765625 -13.79296875Z M186.27640625 0.38671875C189.756875 0.38671875 191.711953125 -0.98828125 192.915078125 -3.201171875H193.001015625V0.0H199.188515625V-15.3828125C199.188515625 -20.23828125 195.622109375 -23.16015625 189.413125 -23.16015625C183.18265625 -23.16015625 179.48734375 -20.1953125 179.208046875 -15.51171875H185.15921875C185.309609375 -17.251953125 186.856484375 -18.455078125 189.219765625 -18.455078125C191.540078125 -18.455078125 192.9365625 -17.294921875 192.9365625 -15.619140625V-15.46875C192.9365625 -14.0078125 191.475625 -13.814453125 187.329140625 -13.40625C182.602578125 -12.9765625 178.477578125 -11.515625 178.477578125 -6.40234375C178.477578125 -1.869140625 181.743203125 0.38671875 186.27640625 0.38671875ZM188.038125 -4.017578125C185.911171875 -4.017578125 184.536171875 -4.962890625 184.536171875 -6.57421875C184.536171875 -8.37890625 186.254921875 -9.216796875 188.42484375 -9.5390625C190.465859375 -9.861328125 192.2490625 -10.162109375 192.97953125 -10.5703125V-8.29296875C192.97953125 -5.84375 191.08890625 -4.017578125 188.038125 -4.017578125Z M209.11515625 -32.01171875H202.777265625V0.0H209.11515625Z M225.74492187500002 -22.6875H221.10429687500002V-28.875H214.76640625000002V-22.6875H210.85625000000002V-17.724609375H214.76640625000002V-6.015625C214.76640625000002 -1.890625 217.06523437500002 0.0 222.04960937500002 0.0H225.74492187500002V-4.962890625H223.31718750000002C221.59843750000002 -4.962890625 221.10429687500002 -5.45703125 221.10429687500002 -7.00390625V-17.724609375H225.74492187500002Z M234.38250000000002 -12.611328125C234.38250000000002 -16.134765625 236.20867187500002 -17.703125 238.82976562500002 -17.703125C241.47234375000002 -17.703125 242.99773437500002 -16.091796875 242.99773437500002 -13.041015625V0.0H249.31414062500002V-14.201171875C249.31414062500002 -19.9375 246.19890625000002 -23.16015625 241.36492187500002 -23.16015625C238.16375000000002 -23.16015625 235.90789062500002 -21.763671875 234.38250000000002 -19.271484375V-32.01171875H228.04460937500002V0.0H234.38250000000002Z" fill="#2F5BFF"/></svg></a><p style="max-width:340px;margin:0">Family health companion with a living 3D body. Made in Hyderabad, India.</p></div>
-    <div><b>Product</b><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="/app">Open the app</a><a href="#security">Security</a></div>
-    <div><b>Account</b><a href="/signin" data-auth="signin">Sign in</a><a href="/signup" data-auth="signup">Create account</a><a href="/reset" data-auth="reset">Reset password</a></div>
-    <div><b>Legal</b><a href="/privacy">Privacy policy</a><a href="/terms">Terms of use</a></div>
-    <div><b>Emergency</b><a href="tel:112">Call 112</a><a href="tel:108">Ambulance 108</a></div>
-  </div>
-  <p class="fine">Urban Health™ gives general health information and is not a medical device; it does not diagnose or treat any condition. Always seek the advice of a qualified doctor. In an emergency call 112 or 108. © <span id="yr">2026</span> Urban Health. All rights reserved.</p>
-</div></footer>
-
-<!-- ================= auth ================= -->
-<div class="ov" id="ov" aria-hidden="true">
+<div class="ustage" id="stage"></div>
+<div class="ov on" id="ov">
 <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ah">
-  <button class="x" id="ax" aria-label="Close">✕</button>
+  <a class="x" id="ax" href="/" aria-label="Urban Health home">✕</a>
   <div class="mk"><svg width="44" height="44" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg></div>
   <div class="msg" id="am" role="alert"></div>
   <div class="msg demo" id="ad"></div>
@@ -370,10 +248,10 @@ b.addEventListener('click',function(){set(!document.body.classList.contains('men
     <div class="fld"><label for="un">Full name <small class="mute">as on Aadhaar</small></label><div class="inp"><input id="un" autocomplete="name" required maxlength="80" placeholder="Exactly as printed on your Aadhaar"></div></div>
     <div class="fld"><label for="ue">Email</label><div class="inp"><input id="ue" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required></div></div>
     <div class="fld"><label for="up">Mobile number</label><div class="inp pfx"><input id="up" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="98765 43210" maxlength="14"></div></div>
-    <div class="fld"><label for="upw">Password <a class="gen" id="genPw">Suggest a strong one</a></label><div class="inp"><input id="upw" type="password" autocomplete="new-password" required maxlength="128" aria-describedby="rules"><button class="eye" type="button" data-eye="upw">Show</button></div></div>
-    <div class="meter" id="meter" data-s=""><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="mlab"><span id="mlab">Password strength</span><b id="mbits"></b></div>
-    <ul class="rules" id="rules"></ul>
+    <div class="fld"><label for="upw">Password</label><div class="inp"><input id="upw" type="password" autocomplete="new-password" required maxlength="128" aria-describedby="rules"><button class="eye" type="button" data-eye="upw">Show</button></div></div>
+    
+    
+    <div id="rules"></div><a class="gen2" id="genPw">Suggest a strong password</a>
     <div class="fld"><label for="upw2">Confirm password</label><div class="inp"><input id="upw2" type="password" autocomplete="new-password" required maxlength="128"></div></div>
     <div class="fld" id="uvWrap" hidden><label>Verify with</label><div class="vsel"><label class="ck"><input type="radio" name="uv" value="otp" checked> <span>Mobile OTP</span></label><label class="ck"><input type="radio" name="uv" value="aadhaar"> <span>Aadhaar via DigiLocker <small>— name and date of birth come from Aadhaar</small></span></label></div></div>
     <label class="ck"><input type="checkbox" id="ut"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>, and I understand Urban Health gives information, not a diagnosis.</span></label>
@@ -393,8 +271,8 @@ b.addEventListener('click',function(){set(!document.body.classList.contains('men
   <form class="v" data-v="newpw" id="fNew" novalidate hidden>
     <h2>Choose a new password</h2><p class="sub">You'll be signed out of other devices.</p>
     <div class="fld"><label for="npw">New password <a class="gen" id="genPw2">Suggest a strong one</a></label><div class="inp"><input id="npw" type="password" autocomplete="new-password" required><button class="eye" type="button" data-eye="npw">Show</button></div></div>
-    <div class="meter" id="meter2" data-s=""><i></i><i></i><i></i><i></i><i></i></div>
-    <ul class="rules" id="rules2"></ul>
+    
+    <div id="rules2"></div>
     <button class="btn b full" type="submit">Save and sign in</button>
   </form>
 
@@ -409,27 +287,15 @@ b.addEventListener('click',function(){set(!document.body.classList.contains('men
 </div></div>
 
 <script src="/s/auth.js?v=20"></script>
+<script src="/s/authfx.js?v=1"></script>
 <script>
 (()=>{
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-document.getElementById('yr').textContent=new Date().getFullYear();
-// ---------- reveal on scroll ----------
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12,rootMargin:'0px 0px -40px'});
-$$('.rv').forEach((el,i)=>{el.style.transitionDelay=(el.closest('.bento,.steps,.plans')?(i%4)*70:0)+'ms';io.observe(el)});
-setTimeout(()=>$('#frame').classList.add('in'),200);
-// ---------- live plan prices ----------
-fetch('/api/v1/plans').then(r=>r.json()).then(d=>{const L=d.launch||{};
-  if(L.free&&L.until){const date=new Date(L.until*1000).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-    const u=$('#freeUntil');if(u)u.textContent='for your whole family, until '+date;
-    const h=$('#pricing h2');if(h)h.textContent='Free for every family until '+date+'.';return}
-  // the free period is over: show the plans the server is selling
-  const band=$('#plans');if(!band||!d.plans)return;band.className='plans';band.innerHTML=d.plans.map((p,i)=>`<div class="plan${i===1?' hot':''}"><h3>${p.name}</h3><div class="price">${p.month?'₹'+p.month+'<span>/month</span>':'₹0'}</div><div class="yr">${p.year?'or ₹'+p.year+' a year':'Forever'}</div><ul>${p.features.map(f=>`<li>${f.replace(/[<>&]/g,'')}</li>`).join('')}</ul><a class="btn ${i===1?'b':'s'}" href="/signup" data-auth="signup">${p.month?'Choose '+p.name:'Start free'}</a></div>`).join('');
-  const fo=$('.free-foot');if(fo)fo.remove()}).catch(()=>{});
 // ---------- account state in the nav ----------
 let ME=null;const next=new URLSearchParams(location.search).get('next');const NEXT=next&&next.startsWith('/')&&!next.startsWith('//')?next:'/app';
 const JOINM=/^\/join\/([A-Za-z0-9_-]{16,64})$/.exec(location.pathname);let INVITE=JOINM?JOINM[1]:null;try{if(INVITE)sessionStorage.setItem('tht-invite',INVITE);else INVITE=sessionStorage.getItem('tht-invite')}catch(e){}
 async function joinFamily(){if(!INVITE)return false;try{const r=await fetch('/api/v1/family/join',{method:'POST',headers:{'content-type':'application/json','x-tht':'1'},credentials:'same-origin',body:JSON.stringify({token:INVITE})});const j=await r.json();if(!r.ok)throw new Error(j.detail||'Could not join');try{sessionStorage.removeItem('tht-invite');sessionStorage.setItem('tht-joined','1');localStorage.setItem('dk6.join','1');localStorage.removeItem('dk6.sync');if(j.householdKey){const s=JSON.parse(localStorage.getItem('dk6')||'null');if(s){s.key=j.householdKey;localStorage.setItem('dk6',JSON.stringify(s))}else localStorage.setItem('dk6',JSON.stringify({v:1,lang:'en',active:'m1',created:Date.now(),mig:2,key:j.householdKey,members:[{id:'m1',pid:null,name:'You',rel:'You',age:0,sex:'male',w:0,h:0,av:'YO',c:'',shared:true}]}))}}catch(e){}return true}catch(e){try{sessionStorage.removeItem('tht-invite')}catch(_){}alert(e.message);return false}}
-THT.api('/me').then(r=>{ME=r.user;if(ME){$('#acts').innerHTML=`<span class="who hide-s"><i>${(ME.name||'?').trim()[0].toUpperCase()}</i>${ME.name.split(' ')[0].replace(/[<>&]/g,'')}</span><a class="btn sm p" href="/app">Open app →</a>`;$$('[data-auth=signup]').forEach(a=>{a.href='/app';a.removeAttribute('data-auth');a.firstChild.textContent='Open your dashboard '})}}).catch(()=>{});
+THT.api('/me').then(r=>{ME=r.user;if(ME&&!JOINM){location.replace(NEXT);return}if(ME&&false){$('#acts').innerHTML=`<span class="who hide-s"><i>${(ME.name||'?').trim()[0].toUpperCase()}</i>${ME.name.split(' ')[0].replace(/[<>&]/g,'')}</span><a class="btn sm p" href="/app">Open app →</a>`;$$('[data-auth=signup]').forEach(a=>{a.href='/app';a.removeAttribute('data-auth');a.firstChild.textContent='Open your dashboard '})}}).catch(()=>{});
 // ---------- auth sheet ----------
 let CFG={passkeys:true,email:false,sms:false,demo:false};THT.api('/config').then(c=>CFG=c).catch(()=>{});
 const ov=$('#ov'),msg=$('#am'),demoBox=$('#ad');let view='',ac=null,flow=null,codeKind='',lastId='';
@@ -446,10 +312,10 @@ function busy(btn,on){if(!btn)return;if(on){btn.dataset.t=btn.innerHTML;btn.disa
 function show(v,{keepMsg}={}){view=v;if(!keepMsg)hush();$$('.v').forEach(e=>e.hidden=e.dataset.v!==v);if(ac){ac.abort();ac=null}
  if(v==='signin')conditional();const f=$(`.v[data-v="${v}"] input:not([hidden]):not([type=checkbox])`);setTimeout(()=>f&&f.focus({preventScroll:true}),60);
  const path={signin:'/signin',signup:'/signup',reset:'/reset'}[v];if(path&&location.pathname!==path)history.replaceState(null,'',path+location.search)}
-function open(v){ov.classList.add('on');ov.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';show(v)}
-function close(){ov.classList.remove('on');ov.setAttribute('aria-hidden','true');document.body.style.overflow='';if(ac){ac.abort();ac=null}if(view==='code')clearAuthState();if(/^\/(signin|signup|reset)$/.test(location.pathname))history.replaceState(null,'','/')}
+function open(v){ov.classList.add('on');ov.setAttribute('aria-hidden','false');show(v)}
+function close(){location.href='/';return;ov.classList.remove('on');ov.setAttribute('aria-hidden','true');document.body.style.overflow='';if(ac){ac.abort();ac=null}if(view==='code')clearAuthState();if(/^\/(signin|signup|reset)$/.test(location.pathname))history.replaceState(null,'','/')}
 $$('[data-auth]').forEach(a=>a.addEventListener('click',e=>{if(!a.dataset.auth)return;e.preventDefault();if(ME&&a.dataset.auth!=='reset'){location.href='/app';return}open(a.dataset.auth)}));
-$('#ax').onclick=close;ov.addEventListener('mousedown',e=>{if(e.target===ov)close()});addEventListener('keydown',e=>{if(e.key==='Escape'&&ov.classList.contains('on'))close()});
+ov.addEventListener('mousedown',e=>{if(e.target===ov)close()});addEventListener('keydown',e=>{if(e.key==='Escape'&&ov.classList.contains('on'))close()});
 $$('[data-v-go]').forEach(a=>a.addEventListener('click',()=>show(a.dataset.vGo)));
 $$('[data-eye]').forEach(b=>b.onclick=()=>{const i=document.getElementById(b.dataset.eye);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'});
 const finish=async(r,offer=true)=>{clearAuthState();ME=r.user;if(r.aadhaarNext&&r.aadhaarNext.start){try{const j=await (await fetch('/api/v1/digilocker/start',{method:'POST',headers:{'X-THT':'1','Content-Type':'application/json'},credentials:'same-origin'})).json();if(j.url){location.href=j.url;return}say(j.detail||'DigiLocker is not available right now; verify your mobile from the app.')}catch(e){say(e.message)}}if(r.verifyNext&&r.verifyNext.flow){flow=r.verifyNext.flow;codeKind='second';lastId=r.verifyNext.channel;const h=r.verifyNext.channel==='phone'?'Verify your mobile':'Verify your email',sub=`One more step. Enter the 6-digit code we sent to ${r.verifyNext.sentTo}.`;codeView(h,sub);saveAuthState(h,sub);demo(r.verifyNext);return}if(INVITE){await joinFamily();location.href='/app';return}if(offer&&THT.passkey.supported()&&!ME.passkeys&&await THT.passkey.platform().catch(()=>false)){show('offer');return}location.href=NEXT};
@@ -486,17 +352,17 @@ $('#fCode').addEventListener('submit',async e=>{e.preventDefault();const c=code(
  catch(err){say(err.message);boxes.forEach(x=>x.value='');boxes[0].focus()}finally{busy(b,false)}});
 // ---------- password rules, meter, generator ----------
 function ctx(){return{name:$('#un').value,email:$('#ue').value,phone:$('#up').value}}
-function paintRules(pw,ul,meter,c){const R=THT.pw.rules(pw,c),S=THT.pw.score(pw,c);document.getElementById(ul).innerHTML=R.map(r=>`<li class="${r.ok?'ok':''}">${r.label}</li>`).join('');const m=document.getElementById(meter);m.dataset.s=pw?S.score:'';return{ok:R.every(r=>r.ok),S}}
-function upPaint(){const {S}=paintRules($('#upw').value,'rules','meter',ctx());$('#mlab').textContent=$('#upw').value?S.label:'Password strength';$('#mbits').textContent=$('#upw').value?`≈ ${S.bits} bits`:''}
-['upw','un','ue','up'].forEach(id=>document.getElementById(id).addEventListener('input',upPaint));upPaint();
-$('#npw').addEventListener('input',()=>paintRules($('#npw').value,'rules2','meter2',{}));paintRules('','rules2','meter2',{});
-function gen(a,b){const p=THT.pw.generate();[a,b].forEach(id=>{if(!id)return;const i=document.getElementById(id);i.value=p;i.type='text';const e=document.querySelector(`[data-eye="${id}"]`);if(e)e.textContent='Hide'});return p}
+const PWT={up:'Add a capital letter (A–Z).',lo:'Add a small letter (a–z).',num:'Add a number (0–9).',sym:'Add a symbol, like ! or #.',rep:'Avoid three of the same character in a row.',seq:'Avoid easy runs like 1234, abcd or qwer.',per:'Leave out your name, email or phone number.',com:'This one is too common. Try three random words.'};
+function paintRules(pw,box,_m,c){const R=THT.pw.rules(pw,c),S=THT.pw.score(pw,c),F=R.filter(r=>!r.ok).map(r=>({k:r.k,text:PWT[r.k]||r.label}));
+ if(window.UHFX)UHFX.paint(document.getElementById(box),UHFX.guide(pw,pw?F:[],S.score>=4));return{ok:!F.length,S}}
+function upPaint(){paintRules($('#upw').value,'rules','',ctx())}
+['upw','un','ue','up'].forEach(id=>document.getElementById(id).addEventListener('input',upPaint));
+$('#npw').addEventListener('input',()=>paintRules($('#npw').value,'rules2','',{}));
+addEventListener('load',()=>{upPaint();paintRules('','rules2','',{});if(window.UHFX)UHFX.stage($('#stage'),'user')});
+function gen(a,b){const p=window.UHFX?UHFX.suggest():THT.pw.generate();[a,b].forEach(id=>{if(!id)return;const i=document.getElementById(id);i.value=p;i.type='text';const e=document.querySelector(`[data-eye="${id}"]`);if(e)e.textContent='Hide'});return p}
 $('#genPw').onclick=()=>{gen('upw','upw2');upPaint();say('A strong password was filled in. Save it in your password manager — or create a passkey next and you will rarely need it.','ok')};
-$('#genPw2').onclick=()=>{gen('npw');paintRules($('#npw').value,'rules2','meter2',{})};
+$('#genPw2').onclick=()=>{gen('npw');paintRules($('#npw').value,'rules2','',{})};
 function signupBody(){const ph=$('#up').value.replace(/\D/g,'');const uv=document.querySelector('input[name=uv]:checked');return{name:$('#un').value.trim(),email:$('#ue').value.trim(),phone:ph?(ph.length===10?'+91'+ph:'+'+ph):'',password:$('#upw').value,terms:$('#ut').checked,verify:uv&&uv.value==='aadhaar'?'aadhaar':'otp'}}
-// app downloads: the button appears when a build has been published to the bucket
-fetch('/api/v1/app/android').then(r=>r.json()).then(j=>{if(j.available){$('#apkBtn').hidden=false;$('#apkSoon').hidden=true;$('#apkMeta').textContent=`Version ${j.version} · ${(j.size/1048576).toFixed(1)} MB · built ${new Date(j.built*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · SHA-256 ${j.sha256.slice(0,12)}…`}if(j.play){const b=$('#playBtn');b.outerHTML=`<a class="btn b" href="${j.play}" target="_blank" rel="noopener">Google Play</a>`}}).catch(()=>{});
-fetch('/api/v1/app/ios').then(r=>r.json()).then(j=>{if(j.appstore){$('#iosBtn').outerHTML=`<a class="btn b" href="${j.appstore}" target="_blank" rel="noopener">App Store</a>`}else if(j.testflight){$('#iosBtn').outerHTML=`<a class="btn s" href="${j.testflight}" target="_blank" rel="noopener">Join the TestFlight beta</a>`}}).catch(()=>{});
 // Aadhaar through DigiLocker is offered at sign-up once our partner registration is live
 fetch('/api/v1/digilocker/status').then(r=>r.json()).then(j=>{if(j&&j.enabled){$('#uvWrap').hidden=false}}).catch(()=>{});
 $('#fUp').addEventListener('submit',async e=>{e.preventDefault();hush();const B=signupBody();
@@ -515,7 +381,7 @@ $('#fNew').addEventListener('submit',async e=>{e.preventDefault();hush();const p
 $('#mkPk').onclick=async()=>{const b=$('#mkPk');hush();busy(b,true);try{await THT.passkey.register();say('Passkey created. Next time, just tap “Sign in with a passkey”.','ok');setTimeout(()=>location.href=NEXT,900)}catch(e){say(e.message)}finally{busy(b,false)}};
 $('#skipPk').onclick=()=>location.href=NEXT;
 // deep links: /signin, /signup, /reset — a pending code (survives reload) takes priority over the plain form
-if(!restoreAuthState()){const route={'/signin':'signin','/signup':'signup','/reset':'reset'}[location.pathname];if(route)open(route);if(new URLSearchParams(location.search).get('idle')==='1'){setTimeout(()=>say('You were signed out after 30 minutes of inactivity, to protect your records. Sign in to continue.'),300)}}
+if(!restoreAuthState()){const route={'/signin':'signin','/signup':'signup','/reset':'reset'}[location.pathname];if(route||!JOINM)open(route||'signin');if(new URLSearchParams(location.search).get('idle')==='1'){setTimeout(()=>say('You were signed out after 30 minutes of inactivity, to protect your records. Sign in to continue.'),300)}}
 if(JOINM){fetch('/api/v1/family/invite/'+INVITE).then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{if(!ok){INVITE=null;try{sessionStorage.removeItem('tht-invite')}catch(e){}open('signup');say(j.detail||'This invitation is no longer valid.');return}const who=String(j.by||'A family member').replace(/[<>&]/g,''),nm=String(j.name||'').replace(/[<>&]/g,'');if(ME){joinFamily().then(ok=>{if(ok)location.href='/app'});return}open('signup');const h=document.querySelector('#fUp h2'),p=document.querySelector('#fUp .sub');if(h)h.textContent='Join your family';if(p)p.textContent=who+' set up a profile for '+(nm||'you')+'. Create your account to see it on your phone.';if(nm){const n=document.getElementById('un');if(n&&!n.value)n.value=nm}const back=document.querySelector('#fUp .foot');if(back)back.insertAdjacentHTML('afterend','<p class="foot">Already have an account? <a class="lnk" data-v-go="signin">Sign in</a> and you will be added to the family.</p>')}).catch(()=>{})}
 })();
 </script>

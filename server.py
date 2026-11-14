@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import gzip
 import os
+from urllib.parse import urlencode
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response, RedirectResponse
 
 from sqlalchemy.exc import OperationalError
 
@@ -372,7 +373,7 @@ def _conditional(request: Request, r: FileResponse):
     return r
 
 
-def _send(p: Path, request: Request, cache: str):
+def _send(p: Path, request: Request, cache: str, status_code: int = 200):
     ext = p.suffix.lower()
     headers = {"Vary": "Accept-Encoding", "Cache-Control": cache}
     path = p
@@ -382,8 +383,9 @@ def _send(p: Path, request: Request, cache: str):
             headers["Content-Encoding"] = enc
     # stat_result up front: without it starlette sets the ETag during __call__, i.e. after we would have
     # looked for it, and every conditional request falls through to a full resend.
-    return _conditional(request, FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"),
-                                              headers=headers, stat_result=os.stat(path)))
+    resp = FileResponse(path, media_type=TYPES.get(ext, "application/octet-stream"), headers=headers,
+                        stat_result=os.stat(path), status_code=status_code)
+    return resp if status_code != 200 else _conditional(request, resp)
 
 
 # landing page (public) at "/", the app at "/app"
@@ -396,8 +398,18 @@ def home(request: Request):
 @app.api_route("/signin", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/signup", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/reset", methods=["GET", "HEAD"], include_in_schema=False)
+def auth_links(request: Request):
+    """Sign-in, sign-up and reset all live in the app's own sign-in now; old links and bookmarks land there."""
+    q = dict(request.query_params)
+    mode = request.url.path.strip("/")
+    if mode != "signin":
+        q["auth"] = mode
+    return RedirectResponse("/app" + ("?" + urlencode(q) if q else ""), 302)
+
+
 @app.api_route("/join/{token}", methods=["GET", "HEAD"], include_in_schema=False)
-def landing(request: Request, token: str = ""):
+def join_link(request: Request, token: str = ""):
+    """Family invitations from the classic app: a standalone sign-up page (site/index.html)."""
     return _send(SITE / "index.html", request, "no-cache")
 
 
@@ -632,7 +644,7 @@ def static(full_path: str, request: Request):
     if not p.is_file():  # single-page app: unknown paths fall back to the shell
         if "." in Path(rel).name:
             raise HTTPException(404)
-        return _send(SITE / "index.html", request, "no-cache")
+        return _send(SITE / "404.html", request, "no-cache", status_code=404)
     ext = p.suffix.lower()
     headers = {"Vary": "Accept-Encoding"}
     name = p.name

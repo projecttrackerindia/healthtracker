@@ -145,10 +145,17 @@ def test_each_public_page_names_its_own_canonical(live, path, expected):
     assert f'<link rel="canonical" href="{expected}">' in html
 
 
-def test_the_duplicate_paths_point_back_at_the_landing_page(live):
-    """/signin serves the landing HTML, so its canonical has to say so."""
-    for path in ("/signin", "/signup", "/reset"):
-        assert f'<link rel="canonical" href="https://{CANON}/">' in live.get(path).text, path
+def test_the_old_sign_in_paths_hand_over_to_the_app(live):
+    """Sign-in lives in the app now; /signin, /signup and /reset redirect there instead of serving a copy of a page."""
+    for path, want in (("/signin", "/app"), ("/signup", "/app?auth=signup"), ("/reset", "/app?auth=reset"),
+                       ("/signin?idle=1", "/app?idle=1")):
+        r = live.get(path, follow_redirects=False)
+        assert r.status_code == 302 and r.headers["location"] == want, path
+
+
+def test_unknown_paths_are_a_real_404_not_the_old_landing(live):
+    r = live.get("/no-such-page")
+    assert r.status_code == 404 and "This page isn" in r.text and "noindex" in r.text
 
 
 def test_the_share_image_is_absolute_and_present(live):

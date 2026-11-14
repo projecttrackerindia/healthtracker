@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Urban Health Partners</title>
+<script src="/s/authfx.js?v=1" defer></script>
 <meta name="robots" content="noindex">
 <link rel="icon" href="/brand/svg/partner-icon.svg"><meta name="theme-color" content="#13b5a3">
 <style>
@@ -128,6 +129,36 @@ aside .mark{width:44px;height:44px;margin:0 auto 14px;border-radius:14px;backgro
 .drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px;border:1.5px dashed color-mix(in srgb,var(--teal) 45%,transparent);border-radius:18px;cursor:pointer;text-align:center;color:var(--mute);transition:background .2s}
 .drop:hover,.drop.on{background:color-mix(in srgb,var(--teal) 8%,transparent)}.drop b{color:var(--ink)}
 .agl{list-style:none;padding:0;margin:0 0 14px}.agl li{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.45}.agl li:first-child{border-top:0}.agl li:before{content:"";width:8px;height:8px;border-radius:4px;background:var(--teal);flex:none;margin-top:7px}
+
+/* ===== sign-in screens: the stage on the left, a calm light form on the right; phones: stage banner above a sheet */
+.login{display:block;min-height:100dvh;padding:0;background:#fff;color:#1D1D1F;color-scheme:light;
+ --card:#fff;--soft:#F5F5F7;--ink:#1D1D1F;--mute:#6E6E73;--line:rgba(0,0,0,.08)}
+.login .lstage{position:fixed;left:0;top:0;bottom:0;width:50%}
+.login>.card{margin-left:50%;width:auto!important;max-width:none!important;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;
+ padding:48px clamp(32px,6vw,96px) 40px;border:0;border-radius:0;box-shadow:none;background:#fff}
+.login>.card>*{width:100%;max-width:400px;margin-left:auto;margin-right:auto}
+.login .logo{display:none}
+.login>.card[style*="640"]>*{max-width:560px}
+.login h1.lh,.login h2{font-size:clamp(30px,2.6vw,38px)!important;letter-spacing:-.035em;line-height:1.08;font-weight:700;margin:0 auto 10px!important}
+.login .ls,.login>.card>p{font-size:16px;color:#6E6E73;line-height:1.5;margin-top:0}
+.login label{font-size:13.5px!important;font-weight:600;color:#1D1D1F!important;margin:16px 0 8px!important}
+.login input,.login select,.login textarea{height:54px;border-radius:14px;border:0;background:#F5F5F7;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04);font-size:17px;padding:0 16px;color:#1D1D1F}
+.login textarea{height:auto;padding:12px 16px}
+.login input:focus,.login select:focus,.login textarea:focus{background:#fff;box-shadow:inset 0 0 0 1px #0E9B8C,0 0 0 4px rgba(14,155,140,.16)}
+.login .btn.p{height:54px;border-radius:27px;font-size:17px;justify-content:center;background:#0E9B8C;box-shadow:0 12px 28px -12px rgba(14,155,140,.7);transition:transform .2s,background .2s}
+.login .btn.p:hover{background:#0B8A7C}.login .btn.p:active{transform:scale(.985)}
+.login .btn:not(.p){height:48px;border-radius:24px;justify-content:center}
+.login .lf{margin-top:22px!important;font-size:14px;color:#6E6E73;line-height:1.7;text-align:center}
+.login .card a{color:#0E8A7C;font-weight:600}
+.login .lapps{display:none;margin-top:28px}
+@media (max-width:899px){
+ .login .lstage{position:relative;width:100%;height:clamp(230px,34vh,310px)}
+ .login>.card{margin:-26px 0 0;min-height:0;position:relative;z-index:2;justify-content:flex-start;border-radius:26px 26px 0 0;
+  padding:28px 22px max(28px,env(safe-area-inset-bottom));box-shadow:0 -10px 30px -18px rgba(0,0,0,.5)}
+ .login .lapps{display:block}.login .lapps .ufx-apps{justify-content:center;gap:12px}
+ .login .lapps .ufx-dl{background:#1D1D1F;color:#fff;box-shadow:none}.login .lapps .ufx-ios{color:#86868B;font-weight:400}
+ .login h1.lh,.login h2{font-size:30px!important}
+}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -160,8 +191,9 @@ function totpStep(cred,d){const c=$('.login .card');const enrol=!!d.enrolTotp;
   try{ME=await api('/login',{method:'POST',body:{...cred,totp:code,enrol:d.enrol||''}});if(enrol)toast('Authenticator set up');signedIn()}
   catch(x){m.className='msg on err';m.textContent=x.message;w.clear()}finally{busy=false}})}
 function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="login"><div class="card"><div class="logo"><img src="/brand/svg/partner-logo.svg" alt="Urban Health"><small>Partner portal</small></div>
+  <h1 class="lh">Welcome back</h1><p class="ls">Sign in with the email and password from your invitation.</p>
   <form id="lf"><label>Email</label><input id="le" type="email" autocomplete="username" required><label>Password</label><input id="lp" type="password" autocomplete="current-password" required><p class="msg" id="lm"></p><button class="btn p" style="width:100%;justify-content:center;margin-top:14px">Sign in</button></form>
-  <p style="color:var(--mute);font-size:12px;margin:14px 0 0">For verified labs, pharmacies and hospitals. Not a partner yet? <a href="#" id="applyLink">Apply to join</a> · partner@urbanhealth.in</p></div></div>`;
+  <p class="lf">Not a partner yet? <a href="#" id="applyLink">Apply to join</a><br>Help: <a href="mailto:partner@urbanhealth.in">partner@urbanhealth.in</a></p></div></div>`;
   $('#applyLink').onclick=e=>{e.preventDefault();applyView()};
   $('#lf').onsubmit=async e=>{e.preventDefault();const m=$('#lm');m.className='msg';const cred={email:$('#le').value,password:$('#lp').value};try{ME=await api('/login',{method:'POST',body:cred});signedIn()}catch(err){if(err.status===428&&err.detail&&(err.detail.needTotp||err.detail.enrolTotp))return totpStep(cred,err.detail);m.className='msg on err';m.textContent=err.message}};return}
  const s=ME.store,c=ME.counts,isLab=s.kind==='lab',isHosp=s.kind==='hospital';
@@ -668,14 +700,19 @@ async function joinView(tok){const root=$('#root');let info;
  <h2 style="margin:10px 0 4px;font-size:26px;letter-spacing:-.02em">Welcome, ${E(info.name.split(' ')[0])}</h2><p style="color:var(--mute);margin:0 0 16px">You're joining <b>${E(info.store)}</b>${info.area?' · '+E(info.area):''} as ${E(info.role)}.</p>
  <form id="jf"><label style="font-size:13px;color:var(--mute)">You'll sign in with<input value="${E(info.phone||info.email)}" disabled style="margin:4px 0 12px"></label>
  <label style="font-size:13px;color:var(--mute)">Create a password<input name="p" type="password" autocomplete="new-password" minlength="12" maxlength="128" required style="margin:4px 0 6px"></label>
- <p id="jh" style="font-size:12.5px;color:var(--mute);margin:0 0 12px">12 or more characters. Not your name, phone number or a common password.</p>
+ <div id="jh" style="margin:0 0 14px"></div>
  <p id="jm" class="msg"></p><button class="btn p" style="width:100%;justify-content:center;padding:12px">Continue</button></form>
  <p style="font-size:12.5px;color:var(--mute);margin:14px 0 0">This link works once. Next: sign in, then add your shop photos, live location and prices.</p></div></div>`;
- const pw=$('#jf').p;pw.oninput=()=>{const v=pw.value;$('#jh').innerHTML=v.length<12?`${12-v.length} more character${12-v.length>1?'s':''}`:'<b style="color:#1B6E30">✓ Long enough</b>'};
+ const pw=$('#jf').p;pw.oninput=()=>{const v=pw.value,F=[];if(v.length<12)F.push({k:'len'});else if(/(.)\1\1/.test(v))F.push({text:'Avoid three of the same character in a row.'});else if(/1234|2345|3456|4567|5678|6789|abcd|qwer|asdf/i.test(v))F.push({text:'Avoid easy runs like 1234 or abcd.'});
+  if(window.UHFX)UHFX.paint($('#jh'),UHFX.guide(v,F,v.length>=16));else $('#jh').textContent=v.length<12?(12-v.length)+' more characters':''};setTimeout(()=>pw.oninput(),0);
  $('#jf').onsubmit=async e=>{e.preventDefault();const m=$('#jm'),b=e.target.querySelector('button');b.disabled=true;
   try{const r=await fetch('/api/partner/join',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:tok,password:pw.value})});const j=await r.json();if(!r.ok)throw new Error(j.detail||'Could not save');
    history.replaceState(null,'','/partner');root.innerHTML=`<div class="login"><div class="card"><h2 style="margin:0 0 6px">You're all set</h2><p style="color:var(--mute)">Sign in with <b>${E(j.signIn)}</b> and your new password.</p><a class="btn p" href="/partner" style="justify-content:center">Sign in</a></div></div>`}
   catch(err){m.className='msg on err';m.textContent=err.message;b.disabled=false}}}
+function dress(){const L=document.querySelector('#root>.login');if(!window.UHFX)return;
+ if(L&&!L.querySelector('.lstage')){const h=document.createElement('div');h.className='lstage';L.prepend(h);UHFX.stage(h,'partner');const c=L.querySelector('.card');if(c&&!c.querySelector('.lapps')){const a=document.createElement('div');a.className='lapps';a.innerHTML=UHFX.apps('partner');c.appendChild(a)}}
+ if(!L&&typeof ME!=='undefined'&&ME)UHFX.banner('partner')}
+new MutationObserver(dress).observe(document.getElementById('root'),{childList:true});addEventListener('load',dress);
 const JOIN=location.pathname.match(/^\/partner\/join\/([A-Za-z0-9_-]{10,80})/);
 if(JOIN)joinView(JOIN[1]);else{render();load();setInterval(()=>{if(ME)load()},60000)}
 
