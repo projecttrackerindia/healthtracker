@@ -17,9 +17,10 @@ android {
     defaultConfig {
         minSdk 24
         targetSdk 36
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.0.2"
         manifestPlaceholders = [host: host]
+        resValue "string", "web_host", host
         resValue "string", "asset_statements",
             "[{\\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://${host}\\\"}}]"
     }
@@ -30,6 +31,7 @@ android {
             dimension "audience"
             applicationId "in.urbanhealth.app"
             resValue "string", "app_name", "Urban Health"
+            resValue "string", "web_start", "https://${host}/app?src=android"
             manifestPlaceholders += [launchUrl: "https://${host}/app?src=android", pathPrefix: "/app",
                                      barColor: "#F5F5F7", splashColor: "#FFFFFF"]
         }
@@ -37,6 +39,7 @@ android {
             dimension "audience"
             applicationId "in.urbanhealth.partner"
             resValue "string", "app_name", "Urban Health Partner"
+            resValue "string", "web_start", "https://${host}/partner?src=android"
             manifestPlaceholders += [launchUrl: "https://${host}/partner?src=android", pathPrefix: "/partner",
                                      barColor: "#FFFFFF", splashColor: "#FFFFFF"]
         }
@@ -64,7 +67,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    buildFeatures { resValues true }
+    buildFeatures { resValues true; buildConfig true }
 }
 
 dependencies {

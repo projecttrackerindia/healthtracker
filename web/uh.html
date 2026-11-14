@@ -1924,7 +1924,7 @@ function openSettings(){const me=P(ME.me),u=ME.user;page('Settings',`<button cla
  <button class="btn sec" style="width:100%;margin-top:22px" onclick="signOut()">Sign out</button>
  <div class="setfoot"><svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg>
  <b>Urban Health</b><small>Version ${esc(appVersion())}</small><small><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · urbanhealth.in</small><small>Made in India · Your data stays in India</small></div>`)}
-function appVersion(){let v='1.0.1';try{if(localStorage.getItem('uh-twa')==='1')v+=' · Android app'}catch(_){}return v+' ('+APPV.replace(/^dk-/,'')+')'}
+function appVersion(){let v='1.0.2';try{if(localStorage.getItem('uh-twa')==='1')v+=' · Android app'}catch(_){}return v+' ('+APPV.replace(/^dk-/,'')+')'}
 /* Language: the app's language for this account (saved, so reminders arrive in it too), each family member's
    reminder language on this phone, and reading reminders aloud for elders who prefer listening. */
 function saveLang(l){API('/api/v2/me/lang',{method:'PUT',json:{lang:l}}).then(()=>{if(ME&&ME.user)ME.user.lang=l}).catch(()=>{})}
@@ -2554,7 +2554,8 @@ async function sosShare(){if(!SOSA)return;const t=sosText();try{if(navigator.sha
 async function endSOS(){document.body.classList.remove('sosopen');sirenStop();if(WATCH!=null)navigator.geolocation.clearWatch(WATCH);WATCH=null;clearInterval(SOSTICK);SOSTICK=null;sosWake(false);document.removeEventListener('visibilitychange',sosVis);if(SOSA)try{await API(`/api/v1/sos/${SOSA.id}/end`,{key:true,method:'POST'})}catch(_){}SOSA=null;closeL();toast('Alert ended. Your family was told you are safe.')}
 /* ---------------- auth + onboarding ---------------- */
 /* Sign in with Google (Google Identity Services): Google confirms the Gmail, the server checks the token and signs in */
-async function googleInit(){try{const c=await API('/api/v1/auth/config');if(!c.google||!$('#gbtn'))return;if(!(window.google&&google.accounts&&google.accounts.id))await loadJS('https://accounts.google.com/gsi/client');
+async function googleInit(){try{if(/UrbanHealthAndroid/.test(navigator.userAgent))return;   /* Google refuses sign-in inside an in-app view; email and phone work */
+ const c=await API('/api/v1/auth/config');if(!c.google||!$('#gbtn'))return;if(!(window.google&&google.accounts&&google.accounts.id))await loadJS('https://accounts.google.com/gsi/client');
  google.accounts.id.initialize({client_id:c.google,callback:r=>googleDone(r.credential),ux_mode:'popup',itp_support:true});$('#gwrap').style.display='block';
  google.accounts.id.renderButton($('#gbtn'),{theme:'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'center',width:Math.min(400,$('#gbtn').clientWidth||320)})}catch(_){}}
 async function googleDone(cred,terms){try{await API('/api/v1/auth/google',{json:{credential:cred,terms:!!terms}});boot()}catch(e){
@@ -2773,7 +2774,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r102';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r103';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
