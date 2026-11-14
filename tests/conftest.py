@@ -106,7 +106,7 @@ def _complete_setup_links(monkeypatch):
             if link:
                 while True:   # a random password that passes the same rules a person's would
                     pw = "Tmp#" + _sec.token_hex(6) + "Aa1"
-                    if not _re.search(r"(.)\1\1", pw):
+                    if not _re.search(r"(.)\1\1", pw) and not _re.search(r"0123|1234|2345|3456|4567|5678|6789|abcd|bcde|cdef", pw.lower()):
                         break
                 import server
                 c = _TC(server.app)

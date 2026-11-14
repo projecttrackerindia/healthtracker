@@ -118,9 +118,8 @@ def test_the_page_and_the_site_say_it_in_plain_words():
     assert "Everything is free until" in html and "A small share from the labs and pharmacies you order through" in html
     assert "Paid plans add AI analysis" not in html        # the old plan-page subtitle is gone
     site = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
-    assert "Free for every family until 31 March 2027." in site and "free-band" in site
+    # the old landing page (site/index.html) is now only the invitation sign-up; the free period is told in the app
     assert "₹39" not in site and "₹99" not in site and "Upgrade for AI" not in site
-    assert "Is it really free? What happens in April 2027?" in site
 
 
 @pytest.mark.parametrize("path", ["api/routes.py", "api/upipay.py", "api/proactive.py"])

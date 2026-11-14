@@ -982,6 +982,11 @@ def erase_user(db: Session, u: User) -> None:
         db.query(PushSub).filter(PushSub.user_id == u.id).delete()
     db.query(AuthSession).filter(AuthSession.user_id == u.id).delete()
     db.query(AuthFlow).filter(AuthFlow.user_id == u.id).delete()
+    from .models import Setting
+    for k in ("nominee:" + u.id,):   # the nominee's contact details leave with the account
+        st_ = db.get(Setting, k)
+        if st_:
+            db.delete(st_)
     targets = [t for t in (u.email, u.phone) if t]
     if targets:
         db.query(OtpCode).filter(OtpCode.target.in_(targets)).delete(synchronize_session=False)

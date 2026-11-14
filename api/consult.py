@@ -91,7 +91,11 @@ def ice_servers() -> list[dict]:
 
 
 @r.get("/consults/ice")
-def ice():
+def ice(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    # relay (TURN) credentials cost money and can be abused as an open relay: only for people in a consultation
+    from .auth import current_user
+    if not (current_user(request, db) or household(db, x_dokko_key, create=False) or request.cookies.get(PARTNER_COOKIE)):
+        raise HTTPException(401, "Sign in to join a consultation.")
     return {"iceServers": ice_servers(), "turn": bool(os.getenv("TURN_URL"))}
 
 

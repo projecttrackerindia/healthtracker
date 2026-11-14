@@ -36,7 +36,7 @@ def security(db: Session, kind: str, user_id: str = "", request: Request | None 
 
 def record_error(db: Session, side: str, where: str, message: str) -> None:
     message = re.sub(r"[\w.+-]+@[\w-]+\.[\w.]+|\+?\d{10,13}", "•", message or "")[:300]   # no emails or phone numbers
-    sig = hashlib.sha1(f"{side}|{where}|{message[:120]}".encode()).hexdigest()
+    sig = hashlib.sha1(f"{side}|{where}|{message[:120]}".encode(), usedforsecurity=False).hexdigest()
     e = db.scalar(select(ErrorEvent).where(ErrorEvent.sig == sig))
     if e:
         e.count, e.last = e.count + 1, now()

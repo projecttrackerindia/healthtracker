@@ -12,6 +12,8 @@
 }
 
 {$DOMAINS} {
+	# say nothing about the software behind the site
+	header -Server
 	reverse_proxy 127.0.0.1:8080 {
 		# The app reads these to know its real address: CANONICAL_HOST drives the www -> apex redirect and
 		# decides which host is allowed into a search index.

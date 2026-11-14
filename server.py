@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import gzip
 import os
+from contextlib import asynccontextmanager
 from urllib.parse import urlencode
 import time
 from datetime import datetime, timedelta, timezone
@@ -35,7 +36,15 @@ SITE = ROOT / "site"
 VERSION = (os.getenv("APP_VERSION") or os.getenv("RAILWAY_GIT_COMMIT_SHA") or "dev")[:12]
 STARTED = time.time()
 
-app = FastAPI(title="Urban Health", version=VERSION, docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json")
+@asynccontextmanager
+async def _lifespan(_app):
+    _init_db()          # defined below; runs once when the server starts
+    yield
+
+
+app = FastAPI(title="Urban Health", version=VERSION, lifespan=_lifespan, docs_url=None, redoc_url=None,
+              # the API map is for development only; in production it is a free reconnaissance file
+              openapi_url="/api/v1/openapi.json" if os.getenv("APP_ENV", "production") in ("development", "test") and os.getenv("OPENAPI", "") == "1" else None)
 # Nothing compressed API responses before this: the phrase table, places and store lists all went out raw.
 # GZipMiddleware skips anything that already carries Content-Encoding, so the pre-built .br variants below
 # are untouched - this only catches what they miss, including /app for a client that does not accept brotli.
@@ -88,7 +97,6 @@ def _variant(p: Path, request: Request) -> tuple[Path, str | None]:
 
 
 
-@app.on_event("startup")
 def _init_db():
     try:
         Base.metadata.create_all(engine)
@@ -258,6 +266,12 @@ async def headers(request: Request, call_next):
         resp = JSONResponse({"detail": "Something went wrong on our side. Please try again."}, status_code=500)
     for k, v in SECURITY.items():
         resp.headers.setdefault(k, v)
+    # the older twin of frame-ancestors, for browsers and scanners that only read this one
+    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN" if "frame-ancestors 'self'" in resp.headers.get("Content-Security-Policy", "") else "DENY")
+    resp.headers.setdefault("Cross-Origin-Resource-Policy", "same-site")
+    resp.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
+    if "server" in resp.headers:
+        del resp.headers["server"]
     # Only the canonical address is allowed into a search index. The Cloud Run URL answers the same content, and if
     # Google indexes both, the two compete and the run.app one usually wins on crawl history — so it is told not to.
     if os.getenv("APP_ENV", "production") != "production" or (CANONICAL and host != CANONICAL):
@@ -531,7 +545,7 @@ LEGAL = {
     "GRIEVANCE_NAME": os.getenv("GRIEVANCE_NAME", "Grievance Officer, Urban Health"),
     "GRIEVANCE_EMAIL": os.getenv("GRIEVANCE_EMAIL") or os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
     "SUPPORT_EMAIL": os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
-    "UPDATED": os.getenv("POLICY_UPDATED", "18 October 2026"),
+    "UPDATED": os.getenv("POLICY_UPDATED", "14 November 2026"),
 }
 
 

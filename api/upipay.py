@@ -69,7 +69,10 @@ def pay_json(p: Payment, base: str = "") -> dict:
 
 
 @r.get("/accounts")
-def list_accounts():
+def list_accounts(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    # the receiving accounts are shown to someone about to pay, not to anyone on the internet
+    if not current_user(request, db) and not household(db, x_dokko_key, create=False):
+        raise HTTPException(401, "Sign in to pay.")
     return {"enabled": enabled(), "accounts": [public(a) for a in accounts()]}
 
 

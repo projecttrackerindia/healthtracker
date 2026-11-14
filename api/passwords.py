@@ -68,7 +68,7 @@ def pwned(pw: str) -> int:
     """Times the password appears in known breaches (0 if not found or the service is unreachable)."""
     if os.getenv("PWNED_CHECK", "1") == "0":
         return 0
-    h = hashlib.sha1(pw.encode()).hexdigest().upper()
+    h = hashlib.sha1(pw.encode(), usedforsecurity=False).hexdigest().upper()  # HIBP k-anonymity range lookup requires SHA-1
     try:
         req = urllib.request.Request(f"https://api.pwnedpasswords.com/range/{h[:5]}", headers={"Add-Padding": "true", "User-Agent": "Urban Health"})
         with urllib.request.urlopen(req, timeout=3) as r:

@@ -367,6 +367,18 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
         db.add(p)
         db.flush()
         db.add(Guardian(person_id=p.id, user_id=u.id))
+        # DPDP Act s.9 and Rule 10: a child's data is processed on the verifiable consent of a parent or lawful
+        # guardian. The adult adding the child is a verified account holder (checked mobile and email, 18+ at
+        # sign-up) and declares in the add screen that they are the parent or guardian; that declaration is kept.
+        try:
+            dob = str(body.profile.get("dob") or "")
+            if dob and _dt.date.fromisoformat(dob) > _dt.date.today().replace(year=_dt.date.today().year - 18):
+                from .models import ConsentLog
+                import hashlib as _hl
+                iph = _hl.sha256(((request.client.host if request.client else "") + os.getenv("SECRET_KEY", "")).encode()).hexdigest()
+                db.add(ConsentLog(user_id=u.id, kind="guardian:" + p.id[:15], version=PERMS_VERSION, granted=True, via="app", ip_hash=iph))
+        except ValueError:
+            pass
     else:
         if my_person(db, u):
             raise HTTPException(409, "You already have a profile")

@@ -400,3 +400,56 @@ def privacy_contact():
     return {"name": os.getenv("GRIEVANCE_NAME", "Grievance Officer, Urban Health"),
             "email": os.getenv("GRIEVANCE_EMAIL") or os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", "") or "privacy@urbanhealth.in",
             "replyDays": 7}
+
+
+# ---- nominee (DPDP Act 2023 s.14) --------------------------------------------------------------------------------------
+# Every person may name someone to exercise their data rights if they die or cannot act themselves. Kept encrypted,
+# shown only to the account holder, and handed to the Grievance Officer only on a verified request.
+class NomineeIn(BaseModel):
+    name: str = Field(min_length=2, max_length=80)
+    relation: str = Field(default="", max_length=40)
+    contact: str = Field(min_length=5, max_length=120)   # mobile number or email
+
+
+def _nominee_key(u: User) -> str:
+    return "nominee:" + u.id
+
+
+@r.get("/privacy/nominee")
+def nominee_get(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    from .models import Setting
+    s = db.get(Setting, _nominee_key(u))
+    import base64
+    v = decrypt(base64.b64decode(s.value["blob"])) if s and s.value and s.value.get("blob") else None
+    return {"nominee": v}
+
+
+@r.put("/privacy/nominee")
+def nominee_put(body: NomineeIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    limit(request, "nominee", 10, 3600)
+    contact = body.contact.strip()
+    if not (re.fullmatch(r"\+?\d[\d\s-]{8,15}", contact) or re.fullmatch(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", contact, re.I)):
+        raise HTTPException(400, "Enter their mobile number or email.")
+    from .models import ConsentLog, Setting
+    v = {"name": html.escape(body.name.strip()), "relation": html.escape(body.relation.strip()), "contact": contact, "at": now()}
+    import base64
+    blob = base64.b64encode(encrypt(v)).decode()
+    s = db.get(Setting, _nominee_key(u))
+    if s:
+        s.value = {"blob": blob}
+    else:
+        db.add(Setting(key=_nominee_key(u), value={"blob": blob}))
+    db.add(ConsentLog(user_id=u.id, kind="nominee", version="1.0", granted=True, via="app"))
+    db.commit()
+    return {"nominee": v}
+
+
+@r.delete("/privacy/nominee")
+def nominee_delete(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    from .models import ConsentLog, Setting
+    s = db.get(Setting, _nominee_key(u))
+    if s:
+        db.delete(s)
+        db.add(ConsentLog(user_id=u.id, kind="nominee", version="1.0", granted=False, via="app"))
+        db.commit()
+    return {"ok": True}

@@ -18,7 +18,7 @@ import json
 import os
 import secrets
 import time
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET  # Aadhaar XML comes from outside: no entity expansion or external entities
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
