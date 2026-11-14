@@ -120,7 +120,7 @@ body.preg .tab.on{color:var(--rose)}
 .orb b{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ECEBFF 45%,#C9C6FF)}
 .orb svg{position:relative;width:20px;height:20px}
 .top{transition:background .25s,padding .25s}
-body.mini .top{background:rgba(242,242,247,.86);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);padding-bottom:10px;border-bottom:.5px solid rgba(0,0,0,.08);align-items:center}
+body.mini .top{background:rgba(242,242,247,.95);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px);padding-bottom:10px;border-bottom:.5px solid rgba(0,0,0,.08);align-items:center}
 body.mini .top .big{font-size:20px;letter-spacing:-.02em}body.mini .top .line,body.mini .top .chip,body.mini .top .eyebrow{display:none}
 body.mini .top .sos,body.mini .top .round{height:36px;min-width:36px}body.mini .top .round{width:36px}
 /* popover / sheets */
@@ -715,7 +715,7 @@ body.navpop .page *{animation:none!important}.pgghost{position:absolute!importan
 <main id="scroll"><div class="spacer"></div><section class="sheet" id="sheet"></section></main>
 <nav class="dock" id="dock"></nav>
 <div id="layer"></div>
-<script src="/a/three.9274bbce.js"></script><script src="/a/gltfloader.5c15967b.js" defer></script><script src="/a/meshopt.0de67743.js" defer></script>
+<script src="/a/three.9274bbce.js"></script><script src="/a/gltfloader.5c15967b.js" defer></script><script src="/a/meshopt.0de67743.js" defer></script><script src="/fetal.js?v=1" defer></script>
 <script src="/i18n.js?v=1"></script>
 <script>
 "use strict";
@@ -746,17 +746,22 @@ const MODELS={};let cur=null;
 function pgMat(o){const m=o.material;if(!m||!m.transparent)return;let q=o,sk=false;while(q){if(q.name==='Mother_Skin')sk=true;q=q.parent}m.depthWrite=false;if(sk){m.side=THREE.FrontSide;o.renderOrder=3}else o.renderOrder=2}
 const PGM={"6":"pm-w06.7c97068e.glb","7":"pm-w07.0e0ecbda.glb","8":"pm-w08.9cd091fe.glb","9":"pm-w09.135a13be.glb","10":"pm-w10.7fa8cd59.glb","11":"pm-w11.5e0f4b41.glb","12":"pm-w12.49cc7525.glb","13":"pm-w13.72aea700.glb","14":"pm-w14.d55c08fe.glb","15":"pm-w15.ac8d869b.glb","16":"pm-w16.171cf1dd.glb","17":"pm-w17.34825933.glb","18":"pm-w18.e388b141.glb","19":"pm-w19.4786afc2.glb","20":"pm-w20.df255914.glb","21":"pm-w21.b19ed2d0.glb","22":"pm-w22.8096add0.glb","23":"pm-w23.e324b145.glb","24":"pm-w24.3b80d60d.glb","25":"pm-w25.192049ca.glb","26":"pm-w26.0bf4c754.glb","27":"pm-w27.8e330a41.glb","28":"pm-w28.5180bbff.glb","29":"pm-w29.e517ab2f.glb","30":"pm-w30.01b51aca.glb","31":"pm-w31.58373699.glb","32":"pm-w32.135d4952.glb","33":"pm-w33.ed6977bf.glb","34":"pm-w34.55b7b99e.glb","35":"pm-w35.87f62196.glb","36":"pm-w36.262e5df1.glb","37":"pm-w37.e5e44fe9.glb","38":"pm-w38.e6e5371b.glb","39":"pm-w39.9ec30cf0.glb","40":"pm-w40.2806aa28.glb"};
 const PGB={"6":"pb-w06.fb9c1ed3.glb","7":"pb-w07.6edab1b5.glb","8":"pb-w08.99cd6ab0.glb","9":"pb-w09.afbe4d7a.glb","10":"pb-w10.1a5fdb41.glb","11":"pb-w11.c11f5f7b.glb","12":"pb-w12.c7d73e99.glb","13":"pb-w13.bf04bc7e.glb","14":"pb-w14.09c9a608.glb","15":"pb-w15.c85a698d.glb","16":"pb-w16.a25bf097.glb","17":"pb-w17.b91da8bc.glb","18":"pb-w18.31dcc7fd.glb","19":"pb-w19.2c39a0be.glb","20":"pb-w20.98818bc2.glb","21":"pb-w21.9c1b57fe.glb","22":"pb-w22.24ab1cea.glb","23":"pb-w23.c8c72591.glb","24":"pb-w24.eb2bae1b.glb","25":"pb-w25.5fc59f28.glb","26":"pb-w26.d90c95cd.glb","27":"pb-w27.8b26e87f.glb","28":"pb-w28.22cdd80c.glb","29":"pb-w29.fb1d347c.glb","30":"pb-w30.34146f84.glb","31":"pb-w31.b2d8747f.glb","32":"pb-w32.2e7bffe0.glb","33":"pb-w33.5f99cd29.glb","34":"pb-w34.8beed4b4.glb","35":"pb-w35.b8a7d6ae.glb","36":"pb-w36.f4e459e1.glb","37":"pb-w37.21c1309e.glb","38":"pb-w38.3c0fd6e3.glb","39":"pb-w39.c985c380.glb","40":"pb-w40.3e52e075.glb"};
-const PGH={w:0,obj:null,mix:null,g:{},want:0};
+const PGR={"6":"pbr-w06.61166532.json","7":"pbr-w07.44cbeedc.json","8":"pbr-w08.ff766459.json","9":"pbr-w09.4a72d685.json","10":"pbr-w10.2147e07f.json","11":"pbr-w11.94381c85.json","12":"pbr-w12.65cb1c9f.json","13":"pbr-w13.ee60fe0e.json","14":"pbr-w14.0688218c.json","15":"pbr-w15.bd39835d.json","16":"pbr-w16.54ba8e9c.json","17":"pbr-w17.3922c548.json","18":"pbr-w18.4bed5e61.json","19":"pbr-w19.3e02f8c9.json","20":"pbr-w20.26af25d6.json","21":"pbr-w21.10e65a62.json","22":"pbr-w22.e441b10b.json","23":"pbr-w23.b5a6a9a4.json","24":"pbr-w24.6147f0a2.json","25":"pbr-w25.ae9a5802.json","26":"pbr-w26.9aec9460.json","27":"pbr-w27.fb095b6f.json","28":"pbr-w28.56d6784a.json","29":"pbr-w29.f2df95c4.json","30":"pbr-w30.9e76a9a9.json","31":"pbr-w31.87a86e33.json","32":"pbr-w32.3d9ec1e1.json","33":"pbr-w33.e969f18b.json","34":"pbr-w34.1376645d.json","35":"pbr-w35.69d37b82.json","36":"pbr-w36.fca17952.json","37":"pbr-w37.0f8a7570.json","38":"pbr-w38.4a7ef3be.json","39":"pbr-w39.cf17fd88.json","40":"pbr-w40.fc40fe7e.json"};
+const PGH={w:0,obj:null,mix:null,fs:null,g:{},want:0};
 async function pgLoad(w){if(PGH.g[w])return PGH.g[w];for(let i=0;i<60&&!(THREE.GLTFLoader&&window.MeshoptDecoder);i++)await new Promise(r=>setTimeout(r,100));
  const L=new THREE.GLTFLoader();await MeshoptDecoder.ready;L.setMeshoptDecoder(MeshoptDecoder);
  return PGH.g[w]=new Promise((res,rej)=>L.load('/a/'+PGB[w],g=>{const sc=g.scene;sc.traverse(o=>{if(o.isMesh)o.frustumCulled=false});
-  sc.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(sc);
-  const c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3()),h=Math.max(sz.y,sz.x*.8),k=3.1/h;const wrap=new THREE.Group();sc.position.copy(c).multiplyScalar(-1);wrap.add(sc);wrap.scale.setScalar(k);wrap.userData={g,baby:sc.getObjectByName('Baby')};res(wrap)},undefined,e=>{delete PGH.g[w];rej(e)}))}
+  const plain=()=>{sc.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(sc);
+   const c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3()),h=Math.max(sz.y,sz.x*.8),k=3.1/h;const wrap=new THREE.Group();sc.position.copy(c).multiplyScalar(-1);wrap.add(sc);wrap.scale.setScalar(k);wrap.userData={g,baby:sc.getObjectByName('Baby')};return wrap};
+  /* the moving baby (week-based movements); falls back to the still model if anything is missing */
+  const rig=PGR[w]?fetch('/a/'+PGR[w]).then(r=>r.ok?r.json():null).catch(()=>null):Promise.resolve(null);
+  rig.then(rg=>{try{if(!window.UHFetal)throw 0;const fs=UHFetal.create(THREE,g,rg,{bare:true,still:matchMedia('(prefers-reduced-motion: reduce)').matches});
+   const sz=fs.size,k=3.1/Math.max(sz.y,sz.x*.8),wrap=new THREE.Group();wrap.add(fs.group);wrap.scale.setScalar(k);wrap.userData={g,baby:fs.group,fs};res(wrap)}catch(_){res(plain())}})},undefined,e=>{delete PGH.g[w];rej(e)}))}
 async function pgShow(w){w=Math.max(6,Math.min(40,Math.round(w)));PGH.want=w;if(PGH.w===w&&PGH.obj)return;let o;try{o=await pgLoad(w)}catch(_){return}if(PGH.want!==w||!preg(P()))return;
  if(PGH.obj)root.remove(PGH.obj);if(PGH.mix)PGH.mix.stopAllAction();root.add(o);o.position.set(0,innerWidth<980?.75:.6,0);PGH.obj=o;PGH.w=w;
- const fl=o.userData.g.animations.find(a=>a.name==='Float');PGH.mix=fl?new THREE.AnimationMixer(o.children[0]):null;if(PGH.mix&&!matchMedia('(prefers-reduced-motion: reduce)').matches)PGH.mix.clipAction(fl).play();
+ PGH.fs=o.userData.fs||null;const fl=!PGH.fs&&o.userData.g.animations.find(a=>a.name==='Float');PGH.mix=fl?new THREE.AnimationMixer(o.children[0]):null;if(PGH.mix&&!matchMedia('(prefers-reduced-motion: reduce)').matches)PGH.mix.clipAction(fl).play();
  [w+1,w-1].filter(x=>x>=6&&x<=40).forEach(x=>pgLoad(x).catch(()=>{}))}
-function pgHide(){if(PGH.obj){root.remove(PGH.obj);PGH.obj=null;PGH.w=0}PGH.want=0}
+function pgHide(){if(PGH.obj){root.remove(PGH.obj);PGH.obj=null;PGH.w=0}PGH.fs=null;PGH.want=0}
 
 async function gunz(u){const r=await fetch(u);if(!r.ok)throw Error(u);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
 async function loadSet(bin,names){const [buf,n]=await Promise.all([gunz(bin),fetch(names).then(r=>r.json())]);const jl=new DataView(buf).getUint32(0,true);return{buf,meta:JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base:4+jl,names:n}}
@@ -827,7 +832,7 @@ function frame(){const dt=Math.min(clock.getDelta(),.05),tt=clock.elapsedTime;id
  camZ+=(camTZ-camZ)*Math.min(1,dt*3);camY+=(camTY-camY)*Math.min(1,dt*3);cam.position.set(0,camY,camZ);cam.lookAt(0,camY,0);
  if(cur&&pulseKey&&cur.organs[pulseKey]){const m=cur.organs[pulseKey].mesh.material;m.emissiveIntensity=.18+.22*(.5+.5*Math.sin(tt*3.2))}
  if(cur){for(const k in cur.organs)if(k!==pulseKey)cur.organs[k].mesh.material.emissiveIntensity=0}
- if(PGH.mix&&PGH.obj)PGH.mix.update(dt);
+ if(PGH.mix&&PGH.obj)PGH.mix.update(dt);if(PGH.fs&&PGH.obj)PGH.fs.update(dt,cam);
  if(cur&&cur.wombG.visible){cur.baby.rotation.y=Math.sin(tt*.8)*.15;cur.womb.material.opacity=.32+.06*Math.sin(tt*1.6)}
  if(!document.body.classList.contains('flat')&&!document.hidden&&!document.querySelector('#layer .page')){R.render(scene,cam);placeLabels()}requestAnimationFrame(frame)}
 const v3=new THREE.Vector3();
@@ -2808,7 +2813,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r104';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r105';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
