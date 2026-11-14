@@ -157,7 +157,7 @@ const kl=new THREE.DirectionalLight(0xfff6ee,1.05);kl.position.set(3,6,7);scene.
 const fl=new THREE.DirectionalLight(0xdfe9ff,.45);fl.position.set(-6,1,4);scene.add(fl);
 const rl=new THREE.DirectionalLight(0xbfd4ff,.75);rl.position.set(-2,4,-7);scene.add(rl);
 const body=new THREE.Group();scene.add(body);
-let SET=null,LAY={},PICK=[],SEL=null,HL=null;
+let SET=null,LAY={},PICK=[],SEL=null,HL=null,KIDB=null;
 async function gunz(u){const r=await fetch(u);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
 async function load(sex){const [buf,names]=await Promise.all([gunz(sex==='female'?'/a/female.ab5cf751.bin':'/a/body-lite.e9802745.bin'),fetch(sex==='female'?'/a/names-f.a07a3541.json':'/a/names.f459bcee.json').then(r=>r.json())]);
  const jl=new DataView(buf).getUint32(0,true);return{buf,meta:JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base:4+jl,names}}
@@ -179,10 +179,11 @@ function colOf(p,l,nm){const n=nm||'';let c;
  else if(l===4)c=/vein|venous|sinus|vena/i.test(n)?0x3A57D6:/lymph|thoracic duct/i.test(n)?0x7CC36B:0xCF2538;
  else if(l===5)c=/white matter|corpus callosum|capsule|fornix|commissure|tract|radiation|fascicul|funicul|spinal cord|cauda|conus/i.test(n)?0xEADFCF:/sulcus|fissure/i.test(n)?0x8E5A55:/gyrus|lobe|pole|cuneus|uncus|insula|cortex|operculum|lingula|cerebell|vermis|flocc|lobule|tonsil of cerebellum/i.test(n)&&!/nerve|branch/i.test(n)?0xC98F88:/nucleus|thalam|putamen|caudate|pallid|amygdal|hippocamp|claustrum|substantia|pons|medulla|midbrain|peduncle|hypothal|pituitary|pineal|olive|colliculus|mammillary/i.test(n)&&!/nerve|branch/i.test(n)?0xB98078:/falx|tentorium|dura|arachnoid|pia mater|mening/i.test(n)&&!/nerve|branch/i.test(n)?0xCDBBA2:0xE8BE3C;else c=0xE6ECF4;
  const col=new THREE.Color(c),v=hsh(n)-.5;col.offsetHSL(0,0,v*(l===1?.10:.06));return col.convertSRGBToLinear()}
+const KIDORG=/uter|ovar|fallop|vagin|cervi|prostat|seminal/i;
 const HIDE_ORG=/mammary|adipose|unnamed|fat body|fat pad|subcutaneous|areola|nipple|penis|scrot|testis|epididym|glans|corpus cavernosum|corpus spongiosum|vulva|labium|clitor/i;
 function build(S){LAY={};PICK=[];body.clear();
  const per={};S.meta.parts.forEach((p,k)=>{const l=p.l??1;(per[l]=per[l]||[]).push(k)});
- for(const l in per){const ks=per[l].filter(k=>!(+l===0&&/hair|eyebrow|eyelash/i.test(S.names[k]))&&!(+l===3&&HIDE_ORG.test(S.names[k])));let nv=0,ni=0;ks.forEach(k=>{nv+=S.meta.parts[k].v;ni+=S.meta.parts[k].i});
+ for(const l in per){const ks=per[l].filter(k=>!(+l===0&&/hair|eyebrow|eyelash/i.test(S.names[k]))&&!(+l===3&&HIDE_ORG.test(S.names[k]))&&!(+l===3&&KIDB&&KIDB!=='teen'&&KIDORG.test(S.names[k])));let nv=0,ni=0;ks.forEach(k=>{nv+=S.meta.parts[k].v;ni+=S.meta.parts[k].i});
   const pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni),ranges=[];let vo=0,io=0;
   ks.forEach(k=>{const p=S.meta.parts[k],P=partPos(S,p),I=partIdx(S,p),c=colOf(p,+l,S.names[k]);pos.set(P,vo*3);for(let j=0;j<p.v;j++){col[(vo+j)*3]=c.r;col[(vo+j)*3+1]=c.g;col[(vo+j)*3+2]=c.b}for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;ranges.push([io/3,(io+I.length)/3,k,vo,p.v,io,I.length]);vo+=p.v;io+=I.length});
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();
@@ -194,7 +195,7 @@ function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];
   if(l===0){m.visible=true;mt.opacity=key==='skin'?.95:.16;mt.depthWrite=key==='skin';mt.color.set(key==='skin'?0xE9C9B0:0xE6ECF4)}
   else if(l===L){m.visible=true;mt.opacity=1;mt.transparent=false;mt.depthWrite=true}
   else{const ctx=(key==='organs'&&l===2)||(key==='muscle'&&l===2)||(key==='vessels'&&l===3)||(key==='nerves'&&l===2)||(key==='skeleton'&&l===3);m.visible=ctx;mt.transparent=true;mt.opacity=.14;mt.depthWrite=false}}
- STATE.layer=key;goalZ=key==='organs'?10.5:16;goalY=key==='organs'?1.0:0;HOME={z:goalZ,y:goalY}}
+ if(KID)for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;STATE.layer=key;goalZ=key==='organs'?10.5:16;goalY=key==='organs'?1.0:0;HOME={z:goalZ,y:goalY}}
 /* tap a part */
 const ray=new THREE.Raycaster();
 function pick(x,y){const r=$('#gl').getBoundingClientRect(),v=new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(v,cam);
@@ -360,6 +361,19 @@ const send=(act,x={})=>parent.postMessage({type:'uh-body-act',act,...x},location
 {let la=0;const act=()=>{const n=Date.now();if(n-la<4000)return;la=n;try{parent!==window&&parent.postMessage({type:'uh-active'},location.origin)}catch(_){}};['pointerdown','wheel','keydown','touchstart'].forEach(k=>addEventListener(k,act,{capture:true,passive:true}))}
 const who=()=>DATA?DATA.person.name.toUpperCase():'';
 const ageBand=a=>a==null?'adult':a<2?'baby':a<13?'child':a>=60?'elder':'adult';
+/* babies, children and teens get a body of their own (MakeHuman, CC0) with the organs moved into its torso;
+   adult muscles and bones are not shown on a child's body, so those layers stay hidden for them */
+const KBM={"baby-male":"kb-baby-male.3cb687fa.json","child-male":"kb-child-male.57757ff0.json","teen-male":"kb-teen-male.0b0f3245.json","ref-male":{"hip":0.5307,"sh":0.7976,"w":0.2148,"d":0.1308,"cz":0.0442},"baby-female":"kb-baby-female.3b1fe183.json","child-female":"kb-child-female.5e0b8960.json","teen-female":"kb-teen-female.60379708.json","ref-female":{"hip":0.5126,"sh":0.7937,"w":0.1938,"d":0.1241,"cz":0.0454}};let KID=null;
+function kidBand(){const P=DATA&&DATA.person||{},a=P.age;if(a==null)return /^baby\b/i.test(P.name||'')?'baby':null;return a<3?'baby':a<13?'child':a<18?'teen':null}
+async function kidApply(band){const sex=STATE.sex,K=await (await fetch('/a/'+KBM[band+'-'+sex])).json(),ref=KBM['ref-'+sex],lm=K.lm;
+ const dec=(x,T)=>{const r=atob(x),u=new Uint8Array(r.length);for(let i=0;i<r.length;i++)u[i]=r.charCodeAt(i);return new T(u.buffer)};const q=dec(K.q,Uint16Array),ix=dec(K.i,Uint16Array),b=K.b,n=q.length/3;
+ const S0=LAY[0].geometry;S0.computeBoundingBox();const ab=S0.boundingBox.clone(),Ha=ab.max.y-ab.min.y,cx=(ab.min.x+ab.max.x)/2,cz=(ab.min.z+ab.max.z)/2,Ht=b[4]-b[1],k=Ha/Ht,tcx=(b[0]+b[3])/2,tcz=(b[2]+b[5])/2;
+ const pos=new Float32Array(n*3);for(let j=0;j<n;j++){pos[j*3]=cx+(b[0]+q[j*3]/65535*(b[3]-b[0])-tcx)*k;pos[j*3+1]=ab.min.y+(q[j*3+1]/65535*(b[4]-b[1]))*k;pos[j*3+2]=cz+(b[2]+q[j*3+2]/65535*(b[5]-b[2])-tcz)*k}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));g.computeVertexNormals();g.computeBoundingSphere();
+ LAY[0].geometry.dispose();LAY[0].geometry=g;LAY[0].userData.ranges=[];
+ if(LAY[3]){const A=LAY[3].geometry.attributes.position,a=A.array;for(let j=0;j<a.length;j+=3){const u=(a[j+1]-ab.min.y)/Ha,t=(u-ref.hip)/(ref.sh-ref.hip);a[j]=cx+(a[j]-cx)*(lm.w/ref.w);a[j+1]=ab.min.y+(lm.hip+t*(lm.sh-lm.hip))*Ha;a[j+2]=cz+(a[j+2]-cz)*(lm.d/ref.d)+(lm.cz-ref.cz)*Ha}
+  A.needsUpdate=true;LAY[3].geometry.computeVertexNormals();LAY[3].geometry.computeBoundingSphere();LAY[3].geometry.computeBoundingBox()}
+ for(const l of [1,2,4,5])if(LAY[l])Object.defineProperty(LAY[l],'visible',{get:()=>false,set:()=>{},configurable:true});KID=band;SHAPED='kid|'+band}
 function hist(f){const k=(f.code||f.test||'').toLowerCase();return(DATA.findings||[]).filter(x=>(x.code||x.test||'').toLowerCase()===k&&x.date).sort((a,b)=>a.date.localeCompare(b.date))}
 function prevOf(f){const h=hist(f).filter(x=>x.date<f.date);return h[h.length-1]||null}
 function trend(f){const p=prevOf(f);if(!p)return null;const a=parseFloat(p.value),b=parseFloat(f.value);if(isNaN(a)||isNaN(b)||a===b)return{p,dir:'same'};
@@ -387,7 +401,7 @@ function build3(){const P=DATA.person,a=P.age,band=ageBand(a),sex=STATE.sex;cons
  let headK=1;if(band==='child')headK=1.32-.03*a;else if(band==='baby')headK=1.55;
  let g=1;if(h&&w){const bmi=w/((h/100)**2);g=Math.max(.82,Math.min(1.45,Math.sqrt(bmi/22)))}
  return{sc,headK,g,key:[band,sex,sc.toFixed(3),headK,g.toFixed(3),STATE.hd].join('|')}}
-function shape(){const S=build3();if(SHAPED===S.key)return;SHAPED=S.key;body.scale.setScalar(S.sc);body.position.y=(S.sc-1)*2.4;
+function shape(){if(KID){for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;return}const S=build3();if(SHAPED===S.key)return;SHAPED=S.key;body.scale.setScalar(S.sc);body.position.y=(S.sc-1)*2.4;
  const neck=(()=>{const c=centerOf(/thyroid gland|larynx/i);return c?c.y:2.6})(),hip=(()=>{const c=centerOf(/urinary bladder|uter/i);return c?c.y:-.6})(),chest=(()=>{const c=centerOf(ORGRE.heart);return c?c.y:1.6})();
  const zc=(()=>{const c=centerOf(ORGRE.liver);return c?c.z:0})();
  for(const l in LAY){const A=LAY[l].geometry.attributes.position,a=A.array;if(!LAY[l].userData.P0)LAY[l].userData.P0=a.slice();const o=LAY[l].userData.P0;const soft=+l===0||+l===1;
@@ -758,7 +772,7 @@ function mSettings(){shape();CAM(HOME0.z,HOME0.y);head(who()+' · '+T('body').to
 const SRC={male:{lite:['/a/body-lite.e9802745.bin','/a/names.f459bcee.json'],hd:['/a/body-hd.5098f0cf.bin','/a/names.f459bcee.json']},female:{lite:['/a/female.ab5cf751.bin','/a/names-f.a07a3541.json']}};
 async function loadSex(sex,hd){const s=SRC[sex][hd&&SRC[sex].hd?'hd':'lite'];const [buf,names]=await Promise.all([gunz(s[0]),fetch(s[1]).then(r=>r.json())]);return parseSet(buf,names)}
 async function swap(sex){$('#load').style.display='block';STATE.sex=sex;SET=await loadSex(sex,STATE.hd&&sex==='male');build(SET);SHAPED=null;shape();$('#load').style.display='none'}
-async function detail(){const want=U.hd||(!(navigator.connection||{}).saveData&&(navigator.connection||{}).type==='wifi');if(want===!!STATE.hd||!SRC[STATE.sex].hd){if(MODE==='settings')mode('settings');return}
+async function detail(){if(KID)return;const want=U.hd||(!(navigator.connection||{}).saveData&&(navigator.connection||{}).type==='wifi');if(want===!!STATE.hd||!SRC[STATE.sex].hd){if(MODE==='settings')mode('settings');return}
  STATE.hd=want;await swap(STATE.sex);mode(MODE)}
 /* ---- 8 · search, quiz, cross-section, hologram ---- */
 let ONTO=null;function onto(){if(ONTO)return Promise.resolve(ONTO);return fetch('/a/onto.df440074.json').then(r=>r.json()).then(j=>{ONTO={};for(const k in j)ONTO[k.toLowerCase()]=j[k];return ONTO}).catch(()=>(ONTO={}))}
@@ -790,7 +804,7 @@ function unholo(){for(const l in HOLO){if(!LAY[l])continue;LAY[l].material.dispo
 
 /* realistic: every layer solid at once, true colours, dark stage, optional half cut (like the Z-Anatomy atlas) */
 let REAL=null;
-async function mReal(){if(STATE.sex!=='male'){REAL={back:STATE.base};await swap('male')}shape();document.body.classList.add('real');
+async function mReal(){if(KID)return;if(STATE.sex!=='male'){REAL={back:STATE.base};await swap('male')}shape();document.body.classList.add('real');
  for(const l in LAY){const m=LAY[l],mt=m.material;m.visible=+l!==0;mt.transparent=false;mt.opacity=1;mt.depthWrite=true;mt.side=THREE.DoubleSide;mt.clearcoat=.25;mt.roughness=.55}
  LAY[0].visible=false;
  R.localClippingEnabled=true;CUTP=new THREE.Plane(new THREE.Vector3(-1,0,0),0);for(const l in LAY)LAY[l].material.clippingPlanes=[CUTP];
@@ -936,7 +950,7 @@ function mCredits(){shape();head(who()+' · BODY','About the 3D model','');$('#s
 let HOME0={z:16,y:0};
 function parseSet(buf,names){const dv=new DataView(buf),n=dv.getUint32(0,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,n)));return{buf,base:4+n,meta,names}}
 async function boot(d){DATA=d;document.documentElement.lang=U.lang;const sex=d.person.sex==='female'?'female':'male';STATE.base=sex;STATE.sex=sex;STATE.hd=false;
- SET=await loadSex(sex,false);build(SET);shape();HOME0={z:HOME.z,y:HOME.y};$('#load').style.display='none';
+ KIDB=kidBand();KID=null;SET=await loadSex(sex,false);build(SET);if(KIDB){try{await kidApply(KIDB)}catch(e){KID=null}}shape();HOME0={z:HOME.z,y:HOME.y};$('#load').style.display='none';
  modes();const st=d.start||'';VIEW=null;VSTACK=[];
  const [k,arg]=[st.split(':')[0],st.slice(st.indexOf(':')+1)];
  if(k==='organ'||k==='focus')await vshow(arg==='heart'?{k:'heart'}:{k:'organ',o:arg});else if(k==='report')await vshow({k:'report',rid:arg});else if(k==='med')await vshow({k:'med',name:arg});

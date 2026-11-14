@@ -779,6 +779,23 @@ function organKey(n){n=n.toLowerCase();
 function mergeGeoms(list){let nv=0,ni=0;list.forEach(g=>{nv+=g.attributes.position.count;ni+=g.index.count});const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3),idx=new Uint32Array(ni);let vo=0,io=0;
  list.forEach(g=>{pos.set(g.attributes.position.array,vo*3);nor.set(g.attributes.normal.array,vo*3);const ix=g.index.array;for(let j=0;j<ix.length;j++)idx[io+j]=ix[j]+vo;vo+=g.attributes.position.count;io+=ix.length;g.dispose()});
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('normal',new THREE.BufferAttribute(nor,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeBoundingBox();return g}
+/* Bodies by age: babies, children and teens get their own body (MakeHuman, CC0); the adult organs are moved
+   into that torso by its landmarks. Adults (18+) keep the anatomical adult body. No date of birth: a dependent
+   is shown as a child (a baby if the name says so) and the profile asks for the date of birth. */
+const KBM={"baby-male":"kb-baby-male.3cb687fa.json","child-male":"kb-child-male.57757ff0.json","teen-male":"kb-teen-male.0b0f3245.json","ref-male":{"hip":0.5307,"sh":0.7976,"w":0.2148,"d":0.1308,"cz":0.0442},"baby-female":"kb-baby-female.3b1fe183.json","child-female":"kb-child-female.5e0b8960.json","teen-female":"kb-teen-female.60379708.json","ref-female":{"hip":0.5126,"sh":0.7937,"w":0.1938,"d":0.1241,"cz":0.0454}};
+function bodyBand(p){const a=ageOf(p);if(a==null)return p&&(/^baby\b/i.test(p.name||'')?'baby':/^(Son|Daughter|Grandson|Granddaughter|Child)$/.test(p.relation||'')?'child':'adult')||'adult';return a<3?'baby':a<13?'child':a<18?'teen':'adult'}
+async function buildKid(sex,band){const A=MODELS[sex]||await buildModel(sex),key=band+'-'+sex,K=await (await fetch('/a/'+KBM[key])).json(),ref=KBM['ref-'+sex],lm=K.lm;
+ const raw=atob(K.q),q=new Uint16Array(new Uint8Array([...raw].map(c=>c.charCodeAt(0))).buffer),ri=atob(K.i),ix=new Uint16Array(new Uint8Array([...ri].map(c=>c.charCodeAt(0))).buffer),b=K.b,n=q.length/3;
+ A.skinGeo.computeBoundingBox();const ab=A.skinGeo.boundingBox,Ha=ab.max.y-ab.min.y,cx=(ab.min.x+ab.max.x)/2,cz=(ab.min.z+ab.max.z)/2,Ht=b[4]-b[1],k=Ha/Ht,tcx=(b[0]+b[3])/2,tcz=(b[2]+b[5])/2;
+ const pos=new Float32Array(n*3);for(let j=0;j<n;j++){const x=b[0]+q[j*3]/65535*(b[3]-b[0]),y=b[1]+q[j*3+1]/65535*(b[4]-b[1]),z=b[2]+q[j*3+2]/65535*(b[5]-b[2]);pos[j*3]=cx+(x-tcx)*k;pos[j*3+1]=ab.min.y+(y-b[1])*k;pos[j*3+2]=cz+(z-tcz)*k}
+ const skinGeo=new THREE.BufferGeometry();skinGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));skinGeo.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));skinGeo.computeVertexNormals();skinGeo.computeBoundingBox();
+ const grp=new THREE.Group(),skin=new THREE.Mesh(skinGeo,A.skin.material.clone());skin.renderOrder=2;const back=new THREE.Mesh(skinGeo,new THREE.MeshBasicMaterial({color:0x8A5A4A,transparent:true,opacity:.12,side:THREE.BackSide,depthWrite:false}));back.renderOrder=1;grp.add(back,skin);
+ /* organs: the adult torso (hip to shoulder) is stretched onto this one */
+ const map=(x,y,z)=>{const u=(y-ab.min.y)/Ha,t=(u-ref.hip)/(ref.sh-ref.hip);return[cx+(x-cx)*(lm.w/ref.w),ab.min.y+(lm.hip+t*(lm.sh-lm.hip))*Ha,cz+(z-cz)*(lm.d/ref.d)+(lm.cz-ref.cz)*Ha]};
+ const organs={};for(const key2 in A.organs){if(key2==='uterus'&&band!=='teen')continue;const src=A.organs[key2].mesh.geometry,g=src.clone(),a=g.attributes.position.array;for(let j=0;j<a.length;j+=3){const m=map(a[j],a[j+1],a[j+2]);a[j]=m[0];a[j+1]=m[1];a[j+2]=m[2]}g.computeVertexNormals();g.computeBoundingBox();
+  const mesh=new THREE.Mesh(g,A.organs[key2].mesh.material.clone());mesh.renderOrder=0;grp.add(mesh);const c=new THREE.Vector3();g.boundingBox.getCenter(c);organs[key2]={mesh,center:c,base:A.organs[key2].base.clone()}}
+ const wombG=new THREE.Group();wombG.visible=false;const womb=new THREE.Object3D(),baby=new THREE.Object3D();wombG.add(womb,baby);grp.add(wombG);
+ return MODELS[key]={grp,skin,skinGeo,P0:skinGeo.attributes.position.array.slice(),organs,wombG,womb,baby,uc:organs.uterus?organs.uterus.center.clone():new THREE.Vector3(0,ab.min.y+Ha*.5,cz),kid:band}}
 async function buildModel(sex){
  const set=sex==='male'?await loadSet('/a/body-lite.e9802745.bin','/a/names.f459bcee.json'):await loadSet('/a/female.ab5cf751.bin','/a/names-f.a07a3541.json');
  const grp=new THREE.Group(),skinG=[],org={};
@@ -889,8 +906,8 @@ async function loadRecords(pid){const p=P(pid);if(!p||!can(p,'summary')){REC[pid
 async function refreshMe(){ME=await API('/api/v2/me');if(!SVC)loadSvc();if(!P(S.person))S.person=ME.me}
 /* ---------------- 3D ---------------- */
 async function showModel(){const p=P();if(!p){return}
- const female=p.sex==='female',sex=female?'female':'male';$('#load').style.display=MODELS[sex]?'none':'block';
- let M;try{M=MODELS[sex]||await buildModel(sex)}catch(e){$('#load').textContent='The 3D body could not load. Check your connection.';return}
+ const female=p.sex==='female',sex=female?'female':'male',band=bodyBand(p),mk=band==='adult'?sex:band+'-'+sex;$('#load').style.display=MODELS[mk]?'none':'block';
+ let M;try{M=MODELS[mk]||(band==='adult'?await buildModel(sex):await buildKid(sex,band).catch(()=>MODELS[sex]||buildModel(sex)))}catch(e){$('#load').textContent='The 3D body could not load. Check your connection.';return}
  $('#load').style.display='none';if(cur!==M){if(cur)root.remove(cur.grp);root.add(M.grp);cur=M}
  const locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id),f=fs[S.focus];document.body.classList.toggle('preg',!!pg);
  pulseKey=(!locked&&!pg&&f&&f.org&&M.organs[f.org]&&f.flag&&f.flag!=='normal')?f.org:null;
