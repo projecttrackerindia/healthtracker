@@ -324,3 +324,19 @@ def test_google_signin_creates_then_signs_in(monkeypatch):
     assert r.status_code == 200 and r.json()["new"] is False
     monkeypatch.delenv("GOOGLE_CLIENT_ID")
     assert c2.post("/api/v1/auth/google", json={"credential": "good"}).status_code == 503
+
+
+def test_ask_to_share_notifies_owner_once_a_day():
+    pr, si, amma = family()
+    # Prasanna sees only Sita's Medical ID, so he may ask; the note goes to Sita alone
+    r = pr.post(f"/api/v2/people/{si.pid}/ask-share", json={"level": "summary"})
+    assert r.status_code == 200 and r.json().get("asked") == 1, r.text
+    assert pr.post(f"/api/v2/people/{si.pid}/ask-share", json={"level": "all"}).json().get("already") is True
+    notes = si.get("/api/v2/inbox").json()
+    assert any("asks you to share" in n["title"] for n in notes["items"]), notes
+    # nothing changed: the ask is not a grant
+    lv = {x["userId"]: x["level"] for x in si.get(f"/api/v2/people/{si.pid}/sharing").json()}
+    assert lv[pr.uid] == "medid"
+    # someone who already sees everything (the guardian of a dependent) has nothing to ask for
+    assert pr.post(f"/api/v2/people/{amma}/ask-share", json={"level": "all"}).status_code == 400
+    assert pr.post(f"/api/v2/people/{si.pid}/ask-share", json={"level": "owner"}).status_code == 400

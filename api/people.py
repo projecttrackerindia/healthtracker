@@ -531,6 +531,37 @@ def set_sharing(pid: str, body: GrantIn, u: User = Depends(need_user), db: Sessi
     return {"ok": True}
 
 
+class AskShareIn(BaseModel):
+    level: str = "summary"
+
+
+@r.post("/people/{pid}/ask-share")
+def ask_share(pid: str, body: AskShareIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """Ask the person (or, for a child, their guardians) to share more. They decide in Settings; nothing changes here.
+    At most one ask per person per day, so it can never become nagging."""
+    p, a = person_or_404(db, u, pid)
+    if a.writer:
+        raise HTTPException(400, "You can already see everything here")
+    if body.level not in ("summary", "all"):
+        raise HTTPException(400, "Choose Summary or Everything")
+    since = now() - 86400
+    from .models import Notice
+    recent = db.scalars(select(Notice).where(Notice.household_id == p.household_id, Notice.kind == "sharing", Notice.t > since)).all()
+    if any((n.ref or {}).get("ask") and (n.ref or {}).get("person") == p.id and (n.ref or {}).get("from") == u.id for n in recent):
+        return {"ok": True, "already": True}
+    to = [p.owner_user] if p.owner_user else [g.user_id for g in db.scalars(select(Guardian).where(Guardian.person_id == p.id))]
+    to = [x for x in to if x and x != u.id]
+    if not to:
+        raise HTTPException(400, "There is nobody to ask yet")
+    what = {"summary": "the summary and reports", "all": "everything"}[body.level]
+    who = (u.name or "A family member").split()[0]
+    for t in to:
+        _note(db, p.household_id, "sharing", f"{who} asks you to share {what}" + ("" if p.owner_user else f" for {p.name}"),
+              "You decide. Open Settings → Who can see my health.", {"person": p.id, "ask": body.level, "from": u.id}, to_user=t)
+    db.commit()
+    return {"ok": True, "asked": len(to)}
+
+
 @r.get("/people/{pid}/access-log")
 def access_log(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
     p, a = person_or_404(db, u, pid)
