@@ -4,7 +4,7 @@ The family picks a plan (or chooses "Pay by UPI" for an order), the server recor
 reference, and shows a QR / one-tap UPI link for one of our accounts with the exact amount and the reference in the
 note. The person pays in any UPI app, enters the 12-digit UTR, and an admin matches it against the bank statement in
 Admin → Payments; confirming activates the plan (or marks the order paid) and tells the family. Nothing changes without
-that confirmation. Accounts come from UPI_ACCOUNTS (JSON) or api/data/upi.json; the QR is generated here, so the amount
+that confirmation. Off by default (UPI_PAY=1 plus UPI_ACCOUNTS, business accounts only); the QR is generated here, so the amount
 and reference are always right.
 """
 from __future__ import annotations
@@ -14,7 +14,6 @@ import json
 import os
 import re
 import time
-from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -35,22 +34,24 @@ from .routes import household
 
 r = APIRouter(prefix="/api/v1/pay/upi")
 ar = APIRouter(prefix="/api/admin")
-DATA = Path(__file__).resolve().parent / "data" / "upi.json"
 EXPIRE_S = 2 * 3600
 UTR_RE = re.compile(r"^[A-Za-z0-9]{12,22}$")
 
 
 def accounts() -> list[dict]:
+    # Business accounts only, and only from the server's environment: no UPI ID ships in the code. Online payment
+    # goes through Razorpay (api/rzp.py); this manual QR route stays off unless someone deliberately sets both
+    # UPI_PAY=1 and UPI_ACCOUNTS to a business current account.
     raw = os.getenv("UPI_ACCOUNTS", "").strip()
     try:
-        rows = json.loads(raw) if raw else json.loads(DATA.read_text())
+        rows = json.loads(raw) if raw else []
     except Exception:
         rows = []
     return [a for a in rows if a.get("vpa") and a.get("id")]
 
 
 def enabled() -> bool:
-    return bool(accounts()) and os.getenv("UPI_PAY", "1") not in ("0", "false", "off")
+    return os.getenv("UPI_PAY", "0") == "1" and bool(accounts())
 
 
 def public(a: dict) -> dict:
@@ -121,7 +122,7 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokk
         return pay_json(cur)
     u = current_user(request, db)
     n = (db.scalar(select(func.count(Payment.id))) or 0) + 1
-    pay = Payment(household_id=h.id, user_id=u.id if u else "", kind=body.kind, ref=ref, amount=amount, account=a["id"], vpa=a["vpa"], note=f"THT{n:05d}")
+    pay = Payment(household_id=h.id, user_id=u.id if u else "", kind=body.kind, ref=ref, amount=amount, account=a["id"], vpa=a["vpa"], note=f"UH{n:05d}")
     db.add(pay)
     db.flush()
     return pay_json(pay)
@@ -218,7 +219,7 @@ def activate_plan(db: Session, h: Household, code: str, period: str, amount: int
     h.plan, h.plan_until = code, start + days * 86400
     n = (db.scalar(select(func.count(Subscription.id))) or 0) + 1
     sub = Subscription(household_id=h.id, plan=code, period=period, amount=amount, status="active", provider=provider, provider_ref=ref, renews=h.plan_until,
-                       invoice_no=f"THT-{time.strftime('%Y%m')}-{n:05d}")
+                       invoice_no=f"UH-{time.strftime('%Y%m')}-{n:05d}")
     db.add(sub)
     db.flush()
     return sub

@@ -1665,13 +1665,21 @@ function renderAll(){try{renderSimple()}catch(_){}if(!ME||!P())return;seen(S.tab
 async function selectPerson(id){S.person=id;S.focus=0;S.week=null;closeL();if(!REC[id])await loadRecords(id);renderAll()}
 /* ---------------- actions ---------------- */
 async function toggleDose(pid,med,time,doneId){try{if(doneId){await API('/api/v2/records/'+doneId,{method:'DELETE'})}else{await API(`/api/v2/people/${pid}/records`,{json:{kind:'dose',day:today(),data:{med,time,at:Date.now()}}})}await loadRecords(pid);renderAll()}catch(e){toast(e.message)}}
+/* AI only with the person's own yes (DPDP). Asked once, in context; a "no" is kept and never nagged. */
+async function aiReady(){await loadPerms();const v=PERMS&&PERMS.items&&PERMS.items.ai_reports;if(v)return !!v.granted;
+ return new Promise(res=>{let done=false;const fin=async ok=>{if(done)return;done=true;try{await API('/api/v2/permissions',{method:'PUT',json:{items:{ai_reports:ok},via:'app'}});await loadPerms()}catch(_){}sx.close&&sx.close();res(ok)};
+  const sx=sheetX('Smart reading',`<div style="padding:4px 18px 12px"><p style="font-size:20px;font-weight:700;margin:4px 0 6px">Let AI read your health records?</p>
+  <p class="sub" style="margin:0 0 10px">It reads reports and prescriptions to pull out the values, explains them in plain words, and answers your questions about your own records.</p>
+  <div class="list" style="margin:0 0 12px"><div class="li" style="font-size:14.5px">Sent only to read them, over an encrypted connection</div><div class="li" style="font-size:14.5px">Never used to train AI, never sold</div><div class="li" style="font-size:14.5px">Not a diagnosis: your doctor decides</div><div class="li" style="font-size:14.5px">Change it any time in Settings → Privacy</div></div>
+  <button class="btn pri" style="width:100%" data-yes>Allow AI reading</button><button class="btn sec" style="width:100%;margin-top:8px" data-no>Not now, I'll add values myself</button></div>`,null);
+  sx.el.querySelector('[data-yes]').onclick=()=>fin(true);sx.el.querySelector('[data-no]').onclick=()=>fin(false);sx.el.querySelector('[data-x]').onclick=()=>fin(false)})}
 let PICK='report';function pickReport(kind){PICK=kind||'report';let f=$('#filepick');if(!f){f=document.createElement('input');f.type='file';f.id='filepick';f.accept='application/pdf,image/*';f.hidden=true;f.onchange=()=>{if(f.files[0])uploadReport(f.files[0]);f.value=''};document.body.appendChild(f)}f.click()}
 async function uploadReport(file){const p=P();if(file.size>15*1024*1024)return toast('Files up to 15 MB');
  const url=URL.createObjectURL(file),isImg=/^image\//.test(file.type);
  page('Reading your '+(PICK==='prescription'?'prescription':'report'),`<div class="scanbox"><div class="paper">${isImg?`<img src="${url}" alt="">`:`<img src="${url}" alt="" onload="this.parentNode.classList.add('hasimg')" onerror="this.remove()"><div class="mock"><b>${esc(file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').slice(0,40))}</b>${'<i></i>'.repeat(3)}<div class="tbl">${'<span></span><span></span><span></span>'.repeat(6)}</div>${'<i></i>'.repeat(2)}</div>`}<div class="beam"></div></div></div>
  <div class="steps" id="rsteps">${['Uploading securely','Encrypting','Reading the values','Placing results on the body'].map((t,i)=>`<div class="st${i?'':' on'}"><span class="dot"></span>${t}</div>`).join('')}</div>`,esc(nameOf(p)).toUpperCase());
  let si=0;const stp=setInterval(()=>{const a=document.querySelectorAll('#rsteps .st');if(!a.length||si>=a.length-1)return clearInterval(stp);a[si].classList.replace('on','done');a[++si].classList.add('on')},1400);
- const fd=new FormData();fd.append('file',file);fd.append('doc',PICK);fd.append('read','1');
+ const fd=new FormData();fd.append('file',file);fd.append('doc',PICK);fd.append('read',(await aiReady())?'1':'0');
  try{const r=await API(`/api/v2/people/${p.id}/reports`,{method:'POST',body:fd});await loadRecords(p.id);
   if(PICK==='prescription'&&(r.medicines||[]).length){openRxImport(r)}else{openReport(r.id);onbContinue();if((r.suggest||[]).length&&!(r.other&&r.other.to))setTimeout(()=>suggestSheet(p,r),700)}renderAll()}catch(e){clearInterval(stp);if(e.status===409){page('Already in your Lab',`<div class="card lock dupc">${ic(I.rec,'#0071E3',30)}<div style="font-weight:600;font-size:19px">You've added this one before</div><div class="sub">${esc(e.message)}</div><button class="btn pri" style="width:100%;margin-top:16px" onclick="closeL();S.tab='records';renderAll()">See it in Lab</button><button class="btn" style="width:100%;margin-top:8px" onclick="closeL();pickReport(PICK)">Add a different report</button></div>`,esc(nameOf(p)).toUpperCase());return}closeL();toast(e.message);if(ONBP){ONBP=false;onbPhoto()}}}
 function rxPlan(m){const f=(m.frequency||'').toLowerCase();
@@ -2047,13 +2055,14 @@ function labPick(id){const l=LAB.quote.labs.find(x=>x.id===id);LAB.lab=l;LAB.slo
  ${l.fasting?`<div class="card" style="margin-top:10px;border:1.5px solid #FFE0B2"><div class="cat" style="color:var(--amber)">Fasting needed</div><p style="margin:6px 0 0;font-size:15px">Nothing to eat for 10–12 hours before the visit. Water is fine.</p></div>`:''}
  <div class="sect">WHEN</div><div class="chips" id="slots">${l.slots.map((s,i)=>`<button class="chip ${i===0?'on':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>
  <div class="sect">ADDRESS FOR THE VISIT</div><div id="addrbox"><div class="card sub">Loading…</div></div>
- <div class="sect">PAYMENT</div><div class="list"><div class="li">Pay the technician (cash or UPI)<span class="radio on"></span></div></div>
+ <div class="sect">PAYMENT</div>${payPick('lpay','Pay at the visit')}
  <button class="btn pri" style="width:100%;margin-top:18px" id="lbook">Book for ${esc(nameOf(p))} · ${money(l.total)}</button><p class="cap">The lab confirms first. Cancelling is free until 2 hours before your slot.</p>`,'LABS');
  document.querySelectorAll('#slots .chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('#slots .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');LAB.slot=c.dataset.s});
  addrMount('addrbox','lab',l.id);
  API(`/api/v2/stores/${l.id}/slots`).then(r=>{const m={};r.rows.forEach(x=>m[x.slot]=x.left);document.querySelectorAll('#slots .chip').forEach(c=>{if(m[c.dataset.s]===0){c.disabled=true;c.style.opacity=.4;c.textContent+=' · full';if(c.classList.contains('on')){c.classList.remove('on');LAB.slot=''}}else if(m[c.dataset.s]!=null&&m[c.dataset.s]<=2)c.textContent+=' · '+m[c.dataset.s]+' left'})}).catch(()=>{});
+ document.querySelectorAll('#lpay button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#lpay button').forEach(x=>x.classList.toggle('on',x===b))});
  $('#lbook').onclick=async()=>{const ad=addrPayload('lab');if(!ad)return;if(!LAB.slot)return toast('Choose a time');
-  const b=$('#lbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:l.id,kind:'lab',items:l.lines.map(x=>({code:x.code})),slot:LAB.slot,...ad,member:p.name,memberId:p.id,payment:'cod'}});toast('Booked. The lab will confirm shortly.');openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
+  const b=$('#lbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:l.id,kind:'lab',items:l.lines.map(x=>({code:x.code})),slot:LAB.slot,...ad,member:p.name,memberId:p.id,payment:($('#lpay .on')||{dataset:{p:'cod'}}).dataset.p}});toast('Booked. The lab will confirm shortly.');if(o.payment==='online')await payOnline('order',o.id).catch(e=>toast(e.message));openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
 let TRACKT=null;
 /* My bookings: hospital visits, home tests and medicine orders in one list, one live status line each (approved mockup 7). */
 let BKF='up';
@@ -2075,6 +2084,15 @@ async function openOrdersOld(){let os=[];try{os=(await API('/api/v1/orders',{key
  page('Bookings and orders',os.length?`<div class="list" style="margin-top:14px">${os.map(o=>`<button class="li" onclick="openOrder('${o.id}')"><div style="flex:1;min-width:0"><div style="font-weight:600">${esc((o.items||[]).map(i=>i.name).join(', ')).slice(0,60)}</div><div class="sub">${esc(o.member||'')} · ${esc(o.slot||new Date(o.created*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}))}</div></div><span class="pill ${o.status==='cancelled'?'bad':o.status==='done'||o.status==='delivered'||o.status==='reported'?'ok':'warn'}">${esc(o.steps[o.step]||o.status)}</span></button>`).join('')}</div>`
  :`<div class="card lock" style="margin-top:14px"><div style="font-weight:600;font-size:17px">Nothing booked yet</div><button class="btn pri" onclick="openLabs()">Book a home test</button></div>`,'TESTS, MEDICINES AND SHOP')}
 let ORDERMAP=null;
+let PAYM=null,CFG1=null;async function cfg1(){if(!CFG1){try{CFG1=await API('/api/v1/config')}catch(_){CFG1={}}}return CFG1}
+async function payMode(){if(PAYM===null){PAYM=(await cfg1()).payments||'door'}return PAYM}
+async function mapCenter(){return (await cfg1()).center||null}
+function rzpJS(){return window.Razorpay?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://checkout.razorpay.com/v1/checkout.js';sc.onload=ok;sc.onerror=()=>no(new Error('Could not open the payment window. Check your internet, or pay at the door.'));document.head.append(sc)})}
+async function payOnline(kind,id,extra){const st=await API('/api/v1/pay/online/start',{key:true,json:{kind,orderId:kind==='order'?id:'',...(extra||{})}});await rzpJS();
+ return new Promise(res=>{const rz=new Razorpay({key:st.keyId,order_id:st.orderId,amount:st.amount,currency:st.currency,name:st.name,description:st.description,prefill:st.prefill,theme:{color:'#0071E3'},
+  handler:async r=>{try{await API('/api/v1/pay/online/verify',{key:true,json:{payment:st.payment,...r}});toast('Paid. Thank you.');res(true)}catch(e){toast(e.message);res(false)}},
+  modal:{ondismiss:()=>{toast(kind==='order'?'Not paid yet. You can pay from this order, or at the door.':'Not paid.');res(false)}}});rz.open()})}
+setTimeout(payMode,0);function payPick(id,door){const on=PAYM==='razorpay';return`<div class="seg" id="${id}"><button class="on" data-p="cod">${door}</button>${on?'<button data-p="online">Pay online now</button>':''}</div>${on?'<p class="cap">Online payment is by Razorpay: UPI, cards or netbanking. We never see your card or UPI PIN.</p>':''}`}
 async function openOrder(id,quiet){clearTimeout(TRACKT);let o;try{o=(await API('/api/v1/orders',{key:true})).orders.find(x=>x.id===id)}catch(e){return toast(e.message)}if(!o)return;
  let tr=null;try{tr=await API(`/api/v1/orders/${id}/track`,{key:true})}catch(_){}
  const pts=(tr&&tr.points)||[],pt=pts.length?pts[pts.length-1]:null,home=o.addr&&o.addr.lat?{lat:o.addr.lat,lng:o.addr.lng}:(LAB.loc||null);
@@ -2089,6 +2107,7 @@ async function openOrder(id,quiet){clearTimeout(TRACKT);let o;try{o=(await API('
  ${o.checkedBy?`<div class="card row" style="margin-top:10px">${ic(I.shield||I.check,'#1A7F37',22)}<div><div style="font-weight:600">Prescription checked by ${esc(o.checkedBy.name)}</div><div class="sub">${o.checkedBy.regNo?'Reg. no. '+esc(o.checkedBy.regNo):''}</div></div></div>`:''}
  <div class="list" style="margin-top:14px">${(o.items||[]).map(x=>`<div class="li" style="font-size:15px">${esc(x.name)}${x.qty?' × '+x.qty:''}<span class="end" style="color:var(--ink)">${money(x.price*(x.qty||1))}</span></div>`).join('')}<div class="li" style="font-weight:700">Total<span class="end" style="color:var(--ink);font-weight:700">${money(o.total)}</span></div></div>
  ${o.store&&o.store.phone?`<a class="btn sec" style="width:100%;margin-top:14px" href="tel:${esc(o.store.phone)}">${ic(I.phone,'#1D1D1F',18)} Call ${esc(o.store.name)}</a>`:''}
+ ${o.payment==='online'&&o.status!=='cancelled'?`<button class="btn pri" style="width:100%;margin-top:14px" onclick="payOnline('order','${o.id}').then(ok=>ok&&openOrder('${o.id}'))">Pay ${money(o.total)} online</button>`:o.payment==='online-paid'?`<div class="card row" style="margin-top:14px">${ic(I.check,'#1A7F37',20)}<div style="font-weight:600">Paid online</div></div>`:''}
  <div id="omore"></div>
  <button class="btn sec" style="width:100%;margin-top:10px" onclick="reportProblem('${o.id}','${o.kind}')">Report a problem</button>`,o.kind==='lab'?'LABS · LIVE':'MEDICINES · LIVE');
  orderMore(o);ORDERMAP=null;const el=$('#omap');if(el){ORDERMAP=await liveMap(el,{center:pt||home||undefined});ORDERMAP.update({them:pt,home})}}
@@ -2141,7 +2160,7 @@ function dotIcon(col,r){return{path:google.maps.SymbolPath.CIRCLE,scale:r||9,fil
 /* a live map: returns update({me,them}) — Google Maps when the key is set, a Google embed otherwise */
 async function liveMap(el,opts){const g=await gmaps();if(!el||!el.isConnected)return{update(){}};
  if(!g){let last='';return{update:({them,me})=>{const p=them||me;if(!p)return;const src=`https://www.google.com/maps?q=${+p.lat||0},${+p.lng||0}&z=15&output=embed`;if(src!==last){last=src;el.innerHTML=`<iframe title="Map" style="width:100%;height:100%;border:0" loading="lazy" src="${src}"></iframe>`}}}}
- const map=new g.Map(el,{center:opts.center||{lat:17.385,lng:78.4867},zoom:15,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAPSTYLE,clickableIcons:false});
+ const map=new g.Map(el,{center:opts.center||(CFG1&&CFG1.center)||{lat:13.0827,lng:80.2707},zoom:15,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAPSTYLE,clickableIcons:false});
  const mk={},line=new g.Polyline({map,strokeColor:'#0A84FF',strokeOpacity:.9,strokeWeight:4,geodesic:true}),trail=[];
  return{map,update:({them,me,home})=>{const b=new g.LatLngBounds();let n=0;
   for(const [k,p,col,r] of [['them',them,'#0A84FF',10],['me',me,'#FF3B30',9],['home',home,'#1D1D1F',8]]){if(!p)continue;const ll={lat:+p.lat,lng:+p.lng};
@@ -2171,12 +2190,12 @@ function rxPick(id){const s=RXO.quote.stores.find(x=>x.id===id),p=P();RXO.store=
  <div class="sect">PRESCRIPTION</div><div class="list">${rxs.map((r,i)=>`<button class="li" onclick="RXO.rx='${r.file}';document.querySelectorAll('.rxr').forEach(x=>x.classList.remove('on'));this.querySelector('.rxr').classList.add('on')"><div style="flex:1"><div>${esc(r.title)}</div><div class="sub">${fmtDate(r.day)}${r.doctor?' · '+esc(r.doctor):''}</div></div><span class="radio rxr ${i===0?'on':''}"></span></button>`).join('')||'<div class="li sub">No prescription on file</div>'}<button class="li" style="color:var(--blue);font-weight:600" onclick="pickReport('prescription')">${ic(I.cam,'#0071E3')} Add a prescription</button></div>
  <p class="cap">Prescription medicines are dispensed only after the pharmacist checks a valid prescription. You will see their name and registration number.</p>
  <div class="sect">DELIVER TO</div><div id="addrbox"><div class="card sub">Loading…</div></div>
- <div class="sect">PAYMENT</div><div class="seg" id="pay"><button class="on" data-p="cod">Cash on delivery</button><button data-p="upi">UPI on delivery</button></div>
+ <div class="sect">PAYMENT</div>${payPick('pay','Pay on delivery (cash or UPI)')}
  <button class="btn pri" style="width:100%;margin-top:18px" id="rbook">Place order · ${money(s.total)}</button>`,'MEDICINES');
  addrMount('addrbox','pharmacy',s.id);
  document.querySelectorAll('#pay button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#pay button').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
  $('#rbook').onclick=async()=>{const ad=addrPayload('pharmacy');if(!ad)return;
-  const b=$('#rbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:s.id,kind:'medicine',items:s.lines.map(x=>({sku:x.sku,qty:x.qty,member:p.id})),...ad,member:p.name,memberId:p.id,payment:document.querySelector('#pay .on').dataset.p,rxShared:!!RXO.rx,rxDocs:RXO.rx?[RXO.rx]:[]}});toast('Order placed. The pharmacist is checking it.');openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
+  const b=$('#rbook');b.disabled=true;try{const o=await API('/api/v1/orders',{key:true,json:{store:s.id,kind:'medicine',items:s.lines.map(x=>({sku:x.sku,qty:x.qty,member:p.id})),...ad,member:p.name,memberId:p.id,payment:document.querySelector('#pay .on').dataset.p,rxShared:!!RXO.rx,rxDocs:RXO.rx?[RXO.rx]:[]}});toast('Order placed. The pharmacist is checking it.');if(o.payment==='online')await payOnline('order',o.id).catch(e=>toast(e.message));openOrder(o.id)}catch(e){b.disabled=false;toast(e.message)}}}
 
 /* ---------------- women's health ---------------- */
 async function openPregnancy(){const me=P(ME.me);if(!me.sex||me.sex!=='female')return;await loadRecords(me.id);const cur0=me.pregnancy||{};
@@ -2265,7 +2284,7 @@ function openAI(){const p=P(),fs=findings(p.id),pg=preg(p);
  $('#askf').onsubmit=e=>{e.preventDefault();const q=e.target.q.value.trim();if(q){ask(q);e.target.q.value=''}}}
 async function ask(q){const p=P(),ch=$('#chat');ch.insertAdjacentHTML('beforeend',`<div class="bubble" style="margin-top:10px">${esc(q)}</div><p class="aitext" id="pending">Thinking…</p>`);
  const ctx={person:{name:p.name,age:p.age,sex:p.sex,medicalId:p.medicalId},results:findings(p.id).slice(0,30),medicines:(REC[p.id]||[]).filter(r=>r.kind==='med').map(m=>m.name),pregnancy:preg(p)||null};
- try{const r=await API('/api/v1/ai/ask',{json:{question:q,context:ctx,member:p.id},key:true});$('#pending').outerHTML=`<p class="aitext">${esc(r.answer||r.text||'')}</p>`}catch(e){$('#pending').outerHTML=`<p class="aitext" style="color:#B42318">${esc(e.message)}</p>`}}
+ try{const go=()=>API('/api/v1/ai/ask',{json:{question:q,context:ctx,member:p.id},key:true});let r;try{r=await go()}catch(e){if(e.status===428&&await aiReady())r=await go();else throw e}$('#pending').outerHTML=`<p class="aitext"${r.urgent?' style="color:#B42318;font-weight:600"':''}>${esc(r.answer||r.text||'')}</p><p class="cap" style="margin-top:4px">Health assistant · not a diagnosis. Your doctor decides.</p>`}catch(e){$('#pending').outerHTML=`<p class="aitext" style="color:#B42318">${esc(e.message)}</p>`}}
 /* Medicine: the week at a glance, someone else in the family today, and the safety check (approved mockup 2). */
 function medDays(pid,day){const meds=(REC[pid]||[]).filter(r=>r.kind==='med'&&r.active!==false&&!r.sos),exp=meds.reduce((n,m)=>n+((m.times&&m.times.length)?m.times.length:1),0),got=(REC[pid]||[]).filter(r=>r.kind==='dose'&&r.day===day).length;return[Math.min(got,exp),exp]}
 function medWeek(p){const days=[...Array(7)].map((_,k)=>{const d=new Date();d.setDate(d.getDate()-k);return d.toISOString().slice(0,10)});let g=0,e=0,miss='';
@@ -2714,7 +2733,7 @@ function onboard(step){const me=ME.me&&P(ME.me);step=step??(!me?0:!(me.medicalId
   const draw=()=>{const pg=$('#permpg');if(pg){pg.innerHTML=permsBody();permsBind(pg,draw)}};permsBind($('#permpg'),draw);$('#on3').onclick=async()=>{await permsSave('signup');onboard(4)}}
  if(step===4){wrap(`<h1 class="big">Add your family</h1><p class="line">Invite adults to join with their own login, or add a child or elder who has no phone.</p><div class="list" style="margin-top:16px">${ME.people.filter(p=>!p.self).map(p=>`<div class="li">${esc(p.name)}<span class="end">${p.dependent?'Dependent':'Joined'}</span></div>`).join('')}${ME.invites.map(i=>`<div class="li">${esc(i.contact)}<span class="end">Invited</span></div>`).join('')}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn sec" onclick="openAddChild()">Add a child</button><button class="btn sec" onclick="openAddFamily()">Add someone else</button></div><button class="btn pri" style="width:100%;margin-top:22px" onclick="finishOnboarding()">Open Urban Health</button>`)}}
-async function finishOnboarding(){closeL();S.person=ME.me;await loadRecords(ME.me);renderAll();addrGate();if(!localStorage.getItem('uh-a2hs'))installHint()}
+async function finishOnboarding(){closeL();S.person=ME.me;await loadRecords(ME.me);renderAll();addrGate(true);if(!localStorage.getItem('uh-a2hs'))installHint()}
 function installHint(){try{localStorage.setItem('uh-a2hs','1')}catch(_){}if(matchMedia('(display-mode: standalone)').matches)return;const ios=/iphone|ipad/i.test(navigator.userAgent);
  if(DEFERRED){DEFERRED.prompt();DEFERRED=null;return}layer(`<div class="modal glass"><div class="row"><div style="font-weight:700;font-size:19px">Add Urban Health to your home screen</div><button class="x" onclick="closeL()">${ic(I.x,'#3A3A3C',16)}</button></div><p style="font-size:16px;line-height:1.5;margin:14px 2px">${ios?'Tap the Share button in Safari, then <b>Add to Home Screen</b>.':'Open the browser menu (⋮), then <b>Install app</b> or <b>Add to Home screen</b>.'} It opens full screen like an app, and SOS is one tap away.</p><button class="btn pri" style="width:100%" onclick="closeL()">OK</button></div>`)}
 let DEFERRED=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e});
@@ -2754,7 +2773,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r101';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r102';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 let tt;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='glass';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:80;padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;max-width:90vw;text-align:center';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}
@@ -2907,11 +2926,11 @@ async function pinMap(el,c,onMove,noG,o){o=o||{};const g=noG?false:await gmaps()
  el.onpointerup=el.onpointercancel=()=>{if(drag){drag=null;done()}};
  draw();setTimeout(()=>onMove(ll(cx,cy)),50);return{set:p=>{[cx,cy]=px(p.lat,p.lng);draw();done()}}}
 /* Address: step 1 is the shared map picker (/geopick.js), step 2 the details. Editing an address starts on the details. */
-function addrEdit(a,kind,store,must){a=a||{label:'Home'};
- if(!window.GeoPick){const s=document.createElement('script');s.src='/geopick.js?v=3';s.onload=()=>addrEdit(a,kind,store,must);s.onerror=()=>toast('Could not load the map. Check your internet.');document.head.appendChild(s);return}
+function addrEdit(a,kind,store,must){a=a||{label:'Home'};if(!CFG1){cfg1().then(()=>addrEdit(a,kind,store,must));return}
+ if(!window.GeoPick){const s=document.createElement('script');s.src='/geopick.js?v=4';s.onload=()=>addrEdit(a,kind,store,must);s.onerror=()=>toast('Could not load the map. Check your internet.');document.head.appendChild(s);return}
  if(a.id&&a.lat)return addrDetails(a,{lat:a.lat,lng:a.lng,acc:a.acc||0},{title:a.line2,area:a.area,city:a.city,state:a.state,pin:a.pin},kind,store,must);
  if(!a.lat&&!LAB.loc){const sv=((typeof ADDR!=='undefined'&&ADDR.rows)||[]).find(x=>x.lat);if(sv)LAB.loc={lat:sv.lat,lng:sv.lng};else if(navigator.geolocation&&!a._geo){a._geo=1;navigator.geolocation.getCurrentPosition(q=>{LAB.loc={lat:q.coords.latitude,lng:q.coords.longitude};addrEdit(a,kind,store,must)},()=>addrEdit(a,kind,store,must),{timeout:3000,maximumAge:600000});return}}
- GeoPick.open({start:a.lat?{lat:a.lat,lng:a.lng}:LAB.loc,serve:kind==='pharmacy'?'pharmacy':'lab',must,
+ GeoPick.open({start:a.lat?{lat:a.lat,lng:a.lng}:LAB.loc,center:(CFG1&&CFG1.center)||null,serve:kind==='pharmacy'?'pharmacy':'lab',must,
   heading:must?'ADD YOUR ADDRESS':'SELECT LOCATION',callout:kind==='pharmacy'?'Your order will come here':'The technician will come here',hint:'Move the map to your exact door',
   onConfirm:(p,g)=>{LAB.loc={lat:p.lat,lng:p.lng};addrDetails(a,p,g,kind,store,must)}})}
 function addrDetails(a,pos,geo,kind,store,must){const L=['Home','Work','Parents','Other'];let label=a.label||'Home';
@@ -2962,8 +2981,8 @@ function notServed(a,kind){const sx=sheetX('Not in your area yet',`<div style="p
 
 /* Where are you? Like a delivery app: one saved address is required; on a new session, if location is already allowed
    and you are away from every saved place, offer the current spot. Never asks for location permission by itself. */
-async function addrGate(){const rows=await addrLoad(true);
- if(!rows.length)return addrEdit(null,'lab','',true);
+async function addrGate(first){const rows=await addrLoad(true);
+ if(!rows.length){if(first&&!document.querySelector('#layer .page,.sheetx'))addrEdit(null,'lab','',true);return}   // otherwise asked when booking, never over another screen
  try{if(sessionStorage.getItem('uh-gate'))return;sessionStorage.setItem('uh-gate','1')}catch(_){}
  if(!navigator.permissions||!navigator.geolocation)return;let st;try{st=await navigator.permissions.query({name:'geolocation'})}catch(_){return}if(st.state!=='granted')return;
  navigator.geolocation.getCurrentPosition(p=>{const me={lat:p.coords.latitude,lng:p.coords.longitude};LAB.loc=me;

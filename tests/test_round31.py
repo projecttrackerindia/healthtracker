@@ -66,6 +66,8 @@ def test_the_eleventh_document_falls_back_to_the_basic_reader_with_a_plain_messa
         s.add(AiJob(household_id=h.id, kind="report", engine="claude", ms=1))
     s.commit()
     s.close()
+    from tests.aiconsent import ai_yes
+    ai_yes(c)
     r = c.post("/api/v1/ai/analyze", headers=H, data={"kind": "report", "consent": "1", "text": "Haemoglobin 11.2 g/dL"})
     assert r.status_code == 200
     j = r.json()

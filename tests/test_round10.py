@@ -245,7 +245,8 @@ def test_assistant_commands_are_validated():
 
 
 def test_policy_kind_is_accepted_and_medcheck_quota_free_path():
-    f = family()
+    from tests.aiconsent import ai_yes
+    f = ai_yes(family(), signed_in=True)
     r = f.post("/api/v1/ai/analyze", data={"kind": "policy", "text": "Star Health Family Floater, Sum insured 5,00,000", "consent": "1", "context": "{}"})
     # without an API key the policy reader says so instead of pretending
     assert r.status_code == 200 and r.json()["kind"] == "policy" and r.json()["readable"] is False
@@ -296,7 +297,17 @@ def test_handover_nudge_at_eighteen():
     assert any(i["kind"] == "nudge_handover" for i in items)
 
 
+_FAKE_UPI = '[{"id":"indusind","bank":"Test Bank A","vpa":"biz.a@axl","name":"Urban Health"},{"id":"kotak","bank":"Test Bank B","vpa":"biz.b@ybl"},{"id":"axis","bank":"Test Bank C","vpa":"biz.c@okaxis"}]'
+
+
+def _upi_on(monkeypatch):
+    # the manual UPI route is off unless the server deliberately switches it on with business accounts
+    monkeypatch.setenv("UPI_PAY", "1")
+    monkeypatch.setenv("UPI_ACCOUNTS", _FAKE_UPI)
+
+
 def test_upi_payment_for_plan_and_order_confirmed_by_admin(monkeypatch):
+    _upi_on(monkeypatch)
     monkeypatch.setenv("FREE_UNTIL", "")          # the paid machinery, as it works once the launch period is over
     f, a = family(), admin()
     acc = f.get("/api/v1/pay/upi/accounts").json()
@@ -306,7 +317,7 @@ def test_upi_payment_for_plan_and_order_confirmed_by_admin(monkeypatch):
     paid = next(p for p in plans["plans"] if p["month"] > 0)
     # the old demo switch stays refused; the UPI route is the way
     st = f.post("/api/v1/pay/upi/start", json={"kind": "plan", "plan": paid["code"], "period": "year", "account": "kotak"}).json()
-    assert st["status"] == "pending" and st["amount"] == paid["year"] and st["account"]["id"] == "kotak" and st["note"].startswith("THT")
+    assert st["status"] == "pending" and st["amount"] == paid["year"] and st["account"]["id"] == "kotak" and st["note"].startswith("UH")
     assert f"am={paid['year']}.00" in st["upiLink"] and st["note"] in st["upiLink"]
     again = f.post("/api/v1/pay/upi/start", json={"kind": "plan", "plan": paid["code"], "period": "year"}).json()
     assert again["id"] == st["id"]  # one open payment per thing
@@ -453,7 +464,8 @@ def test_app_downloads_and_fitbit_off_by_default():
     assert f.post("/api/v1/fitbit/start").status_code == 503
 
 
-def test_shop_package_order_upi_and_cod():
+def test_shop_package_order_upi_and_cod(monkeypatch):
+    _upi_on(monkeypatch)
     f, a = family(), admin()
     sp = f.get("/api/v1/shop/products").json()
     assert sp["store"] == "s_tht_shop" and sp["products"][0]["sku"] == "bag-complete" and sp["products"][0]["price"] > 0 and "S" in sp["products"][0]["sizes"]

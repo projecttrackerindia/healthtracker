@@ -154,7 +154,8 @@
     if ($(".gp-me")) $(".gp-me").onclick = () => me(false);
 
     let last = null; try { last = JSON.parse(sessionStorage.getItem("gp-last") || "null"); } catch (_) {}
-    const start = pos || last || { lat: 17.385, lng: 78.4867 };
+    const start = pos || last || o.center || { lat: 13.0827, lng: 80.2707 };
+    if (!pos && !last) setTimeout(() => { const qq = $(".gp-q"); qq && qq.focus(); }, 500);   // nothing known yet: search first
     mount($(".gp-map"), start, { move, drag }).then((m) => { M = m; });
     if (!pos && o.gps !== false) me(true);
 

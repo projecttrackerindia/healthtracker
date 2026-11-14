@@ -87,7 +87,7 @@ def test_a_paid_plan_still_works_the_day_the_launch_period_ends(monkeypatch):
     paid = next(p for p in plans["plans"] if p["month"] > 0)
     assert paid["month"] == paid["listMonth"]
     r = c.post("/api/v1/subscribe", headers=H, json={"plan": paid["code"], "period": "month"})
-    assert r.status_code == 200 and r.json()["invoice"].startswith("THT-")
+    assert r.status_code == 200 and r.json()["invoice"].startswith("UH-")
     assert c.get("/api/v1/plans", headers=H).json()["current"] == paid["code"]
 
 

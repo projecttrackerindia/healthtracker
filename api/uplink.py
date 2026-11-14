@@ -289,7 +289,13 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
             txt = ai.text_from(data, mime)
         except Exception:
             txt = ""
+    from .people import ai_consent
+    from .models import Guardian
+    who = [p.owner_user] if p.owner_user else list(db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id)))
+    owner_ok = any(ai_consent(db, w) is True for w in who if w)   # their own yes, or for a child a guardian's
     try:
+        if not owner_ok:   # the person has not allowed AI reading: keep the report, read nothing
+            raise PermissionError("ai consent")
         from . import ai
         from .people import age, profile
         pr = profile(p)

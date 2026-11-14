@@ -2,6 +2,8 @@
 # Put the launch keys into Secret Manager and restart the app, from Cloud Shell. Safe to run again.
 #
 #   bash deploy/vm/set-keys.sh                 # checks every key and asks only for what is missing
+#   bash deploy/vm/set-keys.sh status          # which keys exist (names only, never values)
+#   bash deploy/vm/set-keys.sh razorpay        # online payments (key id, key secret, webhook secret)
 #   bash deploy/vm/set-keys.sh vapid           # phone notifications (generated here, nothing to paste)
 #   bash deploy/vm/set-keys.sh maps            # Google Maps browser key (live tracking, SOS map)
 #   bash deploy/vm/set-keys.sh firebase        # mobile number sign-in codes via Firebase
@@ -73,6 +75,24 @@ msg91() {
   done
 }
 
+razorpay() {
+  echo "Online payments (Razorpay): Dashboard → Account & Settings → API Keys, and Webhooks"
+  for n in RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET; do
+    if has "$n"; then echo "  ✓ $n already set"; continue; fi
+    v=$(ask "$n (hidden, Enter to skip)")
+    [[ -z "$v" ]] && { echo "  skipped $n"; continue; }
+    [[ "$n" == RAZORPAY_KEY_ID && "$v" != rzp_* ]] && { echo "  that does not look like a Razorpay key id (starts with rzp_) — skipped"; continue; }
+    put "$n" "$v"; CHANGED=1
+  done
+  echo "  Webhook URL for the Razorpay dashboard: https://urbanhealth.in/api/v1/pay/online/webhook (events: payment.captured, order.paid)"
+}
+
+status() {   # names only, never values
+  for n in RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET MSG91_AUTH_KEY RESEND_API_KEY ANTHROPIC_API_KEY VAPID_PRIVATE_KEY GOOGLE_MAPS_KEY GRIEVANCE_NAME GRIEVANCE_EMAIL ALERT_EMAIL; do
+    if has "$n"; then echo "  ✓ $n"; else echo "  ✗ $n"; fi
+  done
+}
+
 google() {
   echo "Sign in with Google"
   echo "  Console → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application."
@@ -95,9 +115,9 @@ datakey() {
 }
 
 case "${1:-all}" in
-  vapid) vapid ;; maps) maps ;; firebase) firebase ;; google) google ;; msg91) msg91 ;; datakey) datakey ;;
+  vapid) vapid ;; maps) maps ;; razorpay) razorpay ;; status) status ;; firebase) firebase ;; google) google ;; msg91) msg91 ;; datakey) datakey ;;
   all) datakey; vapid; maps; firebase; google ;;
-  *) echo "usage: $0 [vapid|maps|firebase|google|msg91|datakey]"; exit 2 ;;
+  *) echo "usage: $0 [status|razorpay|vapid|maps|firebase|google|msg91|datakey]"; exit 2 ;;
 esac
 
 if [[ "$CHANGED" == 1 ]]; then

@@ -1,6 +1,7 @@
 """Public API (/api/v1). The app sends its anonymous household key in X-DoKKo-Key; no login yet."""
 from __future__ import annotations
 
+import re
 import math
 import os
 import time
@@ -98,13 +99,21 @@ def resolve_loc(db: Session, loc: Loc, h: Household | None):
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+def _service_center(db: Session) -> dict | None:
+    """Where the live partners are: the map starts there for someone with no saved place, instead of a fixed city."""
+    rows = db.execute(select(Store.lat, Store.lng).where(Store.active == True, Store.verified == True, Store.kind.in_(("pharmacy", "lab")))).all()  # noqa: E712
+    if not rows:
+        return None
+    return {"lat": round(sum(r[0] for r in rows) / len(rows), 5), "lng": round(sum(r[1] for r in rows) / len(rows), 5)}
+
+
 @r.get("/config")
-def config():
-    return {"version": os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8], "region": os.getenv("DOKKO_REGION", "IN"),
+def config(db: Session = Depends(get_db)):
+    return {"center": _service_center(db), "version": os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8], "region": os.getenv("DOKKO_REGION", "IN"),
             "emergency": {"national": "112", "ambulance": "108"}, "languages": ["en", "hi", "te"],
             # public: only whether smart reading is available. The provider and model stay server-side (named in the privacy policy).
             "ai": {"engine": "ai" if AI.available() else "local"},
-            "payments": "razorpay" if os.getenv("RAZORPAY_KEY_ID") else ("upi" if _upi_on() else "demo"), "cities": list(CITIES),
+            "payments": "razorpay" if (os.getenv("RAZORPAY_KEY_ID") and os.getenv("RAZORPAY_KEY_SECRET")) else ("upi" if _upi_on() else "door"), "cities": list(CITIES),
             "maps": {"provider": "google" if os.getenv("GOOGLE_MAPS_KEY") else "osm", "key": os.getenv("GOOGLE_MAPS_KEY", "")},
             "launch": launch_state()}
 
@@ -355,6 +364,11 @@ def _checked_by(o: Order) -> dict | None:
             "regNo": (p.reg_no or "") if p else "", "at": o.verified_at}
 
 
+# Narcotic and psychotropic (NDPS) and Schedule X medicines: never sold online, whatever the prescription says.
+NOT_ONLINE = re.compile(r"(?i)\b(morphine|fentanyl|buprenorphine|pentazocine|pethidine|methadone|oxycodone|ketamine|codeine|methylphenidate|"
+                        r"modafinil|secobarbital|amobarbital|glutethimide|meprobamate)\b")
+
+
 @r.post("/orders")
 def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
@@ -376,11 +390,16 @@ def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db)
         disc = 0
     else:
         inv = {i.sku: i for i in db.scalars(select(StoreItem).where(StoreItem.store_id == s.id)).all()}
+        from .models import CatalogMed
+        sched = {m.sku: (m.schedule or "") for m in db.scalars(select(CatalogMed).where(CatalogMed.sku.in_([str(i.get("sku")) for i in body.items]))).all()}
         lines, sub, disc = [], 0, 0
         for i in body.items:
             it = inv.get(i.get("sku"))
             if not it:
                 continue
+            if sched.get(it.sku) == "X" or NOT_ONLINE.search(it.name or ""):
+                # Schedule X and NDPS medicines may not be sold or delivered online in India, prescription or not.
+                raise HTTPException(400, f"{it.name} can't be ordered online by law. Buy it at a pharmacy counter with the original prescription.")
             q = max(1, min(20, int(i.get("qty", 1))))
             rx = bool(i.get("rx")) or bool(CATALOG_RX.get(it.sku))  # the catalogue decides, not the browser
             line = {"sku": it.sku, "name": it.name, "qty": q, "price": it.price, "mrp": it.mrp, "rx": rx, "member": str(i.get("member", ""))[:40]}
@@ -397,8 +416,10 @@ def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db)
         raise HTTPException(400, "This order has prescription-only medicines. Upload or choose the prescription first; the pharmacist must see it before dispensing.")
     rx_files = [str(x)[:48] for x in body.rxDocs[:6]] if body.rxShared else []
     kind = "lab" if body.kind == "lab" else "shop" if s.kind == "shop" else "medicine"
-    if body.kind != "lab" and body.payment not in ("cod", "upi", "online"):
-        raise HTTPException(400, "payment must be cod or upi")
+    if body.payment not in ("cod", "upi", "online"):
+        raise HTTPException(400, "payment must be cod, upi or online")
+    if body.payment == "online" and not (os.getenv("RAZORPAY_KEY_ID") and os.getenv("RAZORPAY_KEY_SECRET")):
+        raise HTTPException(400, "Online payment is not switched on yet. Choose pay at the door.")
     from . import booking
     _ca = booking.check_order(db, s, body, h.id)
     if _ca:
@@ -619,6 +640,10 @@ async def analyze(request: Request, kind: str = Form("report"), text: str = Form
                   file: UploadFile | None = File(None), db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     if consent not in ("1", "true", "yes"):
         raise HTTPException(400, "consent required: the document leaves the device for analysis")
+    from .auth import current_user as _cu
+    from .people import ai_gate
+    _u = _cu(request, db)
+    ai_gate(db, _u.id if _u else None)
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
@@ -769,13 +794,33 @@ def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
-    if not agent.enabled():
-        raise HTTPException(503, "The health assistant is not available right now.")
     q = body.question.strip()
     if len(q) < 3:
         raise HTTPException(400, "Ask a question first.")
-    ai_budget(db, h)
+    red = bool(agent.RED.search(q) or agent.SELF_HARM.search(q))
+    blank = {"answer": "", "sources": [], "actions": [], "urgent": False, "focus": [], "commands": []}
+    from .auth import current_user as _cu
+    from .people import ai_gate
+    try:
+        u0 = _cu(request, db)
+        ai_gate(db, u0.id if u0 else None)
+    except HTTPException:
+        if red:   # the emergency line needs no AI and no consent
+            return agent.guard(q, blank)
+        raise
+    if not agent.enabled():
+        if red:   # an emergency never waits on the assistant being switched on
+            return agent.guard(q, blank)
+        raise HTTPException(503, "The health assistant is not available right now.")
+    try:
+        ai_budget(db, h)
+    except HTTPException:
+        if red:
+            return agent.guard(q, blank)
+        raise
     used, cap = _ai_quota(db, h, "ask", agent.ASK_CAP)
+    if used >= cap and red:
+        return agent.guard(q, blank)
     if used >= cap:
         raise HTTPException(429, f"You have used this month's {cap} questions. They reset on the 1st." if free_now() else f"You have used this month's {cap} questions on the {h.plan} plan. Upgrade in Family & Privacy → Plan for more.")
     t0 = time.time()
@@ -799,6 +844,10 @@ def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db), x_d
         raise HTTPException(400, "missing household key")
     if not agent.enabled():
         raise HTTPException(503, "Insights are not available right now.")
+    from .auth import current_user as _cu
+    from .people import ai_gate
+    _u = _cu(request, db)
+    ai_gate(db, _u.id if _u else None)
     key = f"{h.id}:{body.member[:32]}:{agent.ctx_key(body.context)}"
     hit = db.get(AiCache, key)
     if hit:
@@ -834,6 +883,10 @@ def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db
         raise HTTPException(400, "missing household key")
     if not agent.enabled():
         raise HTTPException(503, "The medicine check is not available right now.")
+    from .auth import current_user as _cu
+    from .people import ai_gate
+    _u = _cu(request, db)
+    ai_gate(db, _u.id if _u else None)
     meds = body.context.get("medicines") or []
     if not meds:
         return {"alerts": [], "duplicates": [], "timing": [], "ok": True, "cached": False}
@@ -938,7 +991,7 @@ def subscribe(body: SubReq, db: Session = Depends(get_db), x_dokko_key: str | No
     h.plan, h.plan_until = p.code, (start + days * 86400 if amount > 0 else None)
     n = (db.scalar(select(func.count(Subscription.id))) or 0) + 1
     sub = Subscription(household_id=h.id, plan=p.code, period=body.period, amount=amount, status="active", provider=provider, provider_ref=ref,
-                       renews=h.plan_until, invoice_no=f"THT-{time.strftime('%Y%m')}-{n:05d}")
+                       renews=h.plan_until, invoice_no=f"UH-{time.strftime('%Y%m')}-{n:05d}")
     db.add(sub)
     return {"ok": True, "plan": h.plan, "until": h.plan_until, "invoice": sub.invoice_no, "amount": amount, "provider": provider}
 

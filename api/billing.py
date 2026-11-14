@@ -62,7 +62,7 @@ def receipt_pdf(o: Order) -> bytes:
     if LOGO.exists():
         page.insert_image(pymupdf.Rect(M, y - 6, M + 150, y + 34), filename=str(LOGO), keep_proportion=True)
     page.insert_text((W - M - 190, y + 6), "ORDER RECEIPT", fontsize=9, fontname="helv", color=MUTE)
-    page.insert_text((W - M - 190, y + 24), f"THT-{o.id}", fontsize=16, fontname="hebo", color=INK)
+    page.insert_text((W - M - 190, y + 24), f"UH-{o.id}", fontsize=16, fontname="hebo", color=INK)
     y += 56
     page.draw_line((M, y), (W - M, y), color=LINE, width=1)
     y += 20
@@ -136,7 +136,7 @@ def receipt_pdf(o: Order) -> bytes:
 def receipt(oid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     o = _order(db, oid, x_dokko_key)
     pdf = receipt_pdf(o)
-    return Response(pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="THT-{o.id}.pdf"', "Cache-Control": "private, no-store"})
+    return Response(pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="UH-{o.id}.pdf"', "Cache-Control": "private, no-store"})
 
 
 class ReturnIn(BaseModel):

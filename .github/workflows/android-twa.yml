@@ -55,7 +55,7 @@ jobs:
           echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=urbanhealth\nkeyPassword=%s\n' "$RUNNER_TEMP/release.jks" "$KS_PW" "$KS_PW" > keystore.properties
       - name: Build
-        run: gradle --no-daemon assembleRelease
+        run: gradle --no-daemon assembleRelease bundleRelease   # APKs for the website, .aab bundles for Google Play
       - name: Check the signature matches the website
         if: ${{ env.HAS_KEY == 'true' }}
         run: |
@@ -68,6 +68,8 @@ jobs:
           mkdir -p ../out
           cp app/build/outputs/apk/user/release/app-user-release.apk ../out/urbanhealth.apk
           cp app/build/outputs/apk/partner/release/app-partner-release.apk ../out/urbanhealth-partner.apk
+          cp app/build/outputs/bundle/userRelease/app-user-release.aab ../out/urbanhealth.aab
+          cp app/build/outputs/bundle/partnerRelease/app-partner-release.aab ../out/urbanhealth-partner.aab
       - name: Clean up the key
         if: always()
         run: rm -f keystore.properties "$RUNNER_TEMP/release.jks"
@@ -75,7 +77,9 @@ jobs:
         if: ${{ env.HAS_KEY == 'true' }}
         with:
           name: urbanhealth-android-apks
-          path: out/*.apk
+          path: |
+            out/*.apk
+            out/*.aab
       - name: GitHub Release
         if: ${{ env.HAS_KEY == 'true' && inputs.release }}
         working-directory: .

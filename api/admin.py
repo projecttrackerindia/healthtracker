@@ -498,7 +498,7 @@ def sj(s: Store):
 
 @r.get("/stores")
 def admin_stores(kind: str = "", q: str = "", pending: int = 0, a: Admin = Depends(me), db: Session = Depends(get_db)):
-    st = select(Store).order_by(Store.created.desc())
+    st = select(Store).where(Store.kind != "shop").order_by(Store.created.desc())   # our own shop is not a partner
     if kind:
         st = st.where(Store.kind == kind)
     if pending:
@@ -592,8 +592,13 @@ class PartnerUserIn(BaseModel):
     specialty: str = ""
 
 
-def pu_json(u: PartnerUser) -> dict:
-    return {"id": u.id, "email": "" if (u.email or "").endswith(".invalid") else u.email, "name": u.name, "phone": u.phone, "role": u.role, "active": u.active,
+def pu_json(u: PartnerUser, db: Session | None = None) -> dict:
+    flag = ""
+    if db is not None and u.reg_doc:
+        from .models import StoredFile
+        f = db.get(StoredFile, ("pcred_" + u.store_id, u.reg_doc))
+        flag = (f.name or "").split("possibly edited: ", 1)[1] if f and "possibly edited: " in (f.name or "") else ""
+    return {"regEdited": flag, "id": u.id, "email": "" if (u.email or "").endswith(".invalid") else u.email, "name": u.name, "phone": u.phone, "role": u.role, "active": u.active,
             "lastLogin": u.last_login, "mustChange": u.must_change, "regNo": u.reg_no or "", "specialty": u.specialty or "", "verified": bool(u.verified),
             "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "approvedBy": u.verify_by or "", "totp": bool(u.totp_secret),
             "invited": bool(u.invite_hash and not u.pw_hash)}
@@ -602,7 +607,7 @@ def pu_json(u: PartnerUser) -> dict:
 @r.get("/stores/{sid}/users")
 def partner_users(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == sid).order_by(PartnerUser.created)).all()
-    return {"users": [pu_json(u) for u in rows]}
+    return {"users": [pu_json(u, db) for u in rows]}
 
 
 @r.post("/stores/{sid}/users")

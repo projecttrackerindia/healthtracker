@@ -209,6 +209,39 @@ def virus_scan(data: bytes) -> None:
 MEDICAL_WORDS = re.compile(r"(?i)\b(test|result|report|range|reference|patient|doctor|dr\.?|hospital|clinic|diagnos|lab|laborator|pathology|specimen|sample|mg|mg/dl|g/dl|mmol|iu|rx|tab|tablet|cap|syrup|dose|blood|urine|serum|scan|x-?ray|mri|ct|ultrasound|ecg|prescription|medicine|sign)")
 
 
+# Tools that draw or retouch documents. A real lab report comes out of the lab's system or a phone camera / scanner
+# app; one that passed through these was changed by someone, which is worth saying out loud before anyone relies on it.
+EDITORS = re.compile(rb"(?i)(photoshop|gimp|canva|picsart|snapseed|lightroom|pixlr|fotor|photo ?editor|illustrator|inkscape|affinity|paint\.net|"
+                     rb"pdfescape|sejda|pdffiller|dochub|pdf ?editor|pdf ?element|smallpdf edit|foxit phantom|nitro pro|xodo)")
+WORDPROC = re.compile(rb"(?i)/(producer|creator)\s*\((microsoft\W*word|libreoffice writer|writer|wps writer|google docs)")
+
+
+def edit_signals(data: bytes, mime: str) -> list[str]:
+    """Signs that a document was edited after it was made. Run on the bytes as uploaded (before photos are re-saved,
+    which drops the metadata). Signals, not proof: a person sees them and decides; nothing is refused for them."""
+    out: list[str] = []
+    head = data[:262144] + data[-65536:]
+    m = EDITORS.search(head)
+    if m:
+        out.append(f"Passed through an editing app ({m.group(1).decode('latin-1', 'ignore').strip().title()})")
+    if mime == "application/pdf":
+        if WORDPROC.search(head):
+            out.append("Made in a word processor, not a lab or hospital system")
+        try:
+            import io as _io
+            from pypdf import PdfReader
+            md = PdfReader(_io.BytesIO(data)).metadata or {}
+            c, mo = str(md.get("/CreationDate") or ""), str(md.get("/ModDate") or "")
+            dc, dm = re.sub(r"\D", "", c)[:14], re.sub(r"\D", "", mo)[:14]
+            if len(dc) >= 8 and len(dm) >= 8 and dm[:8] > dc[:8]:
+                out.append("Changed after it was created")
+        except Exception:
+            pass
+        if data.count(b"%%EOF") > 1 and re.search(rb"(?s)%%EOF.*?/Contents", data[data.find(b"%%EOF") + 5:] or b""):
+            out.append("Pages were changed after the file was first saved")
+    return list(dict.fromkeys(out))
+
+
 def looks_medical(text: str) -> bool:
     return len(MEDICAL_WORDS.findall(text or "")) >= 3
 

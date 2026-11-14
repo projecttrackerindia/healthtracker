@@ -1,0 +1,49 @@
+name: Screen sweep (phone + laptop)
+
+# Unit tests never open a screen. On 14 Nov 2026 a cut-off CSS rule made every long page unscrollable on phones and
+# the whole suite still passed. This opens every main screen of /app at 390 px (touch) and 1366 px, scrolls each to
+# its end, and fails on any screen that cannot get there or any script error. Screenshots of failures are attached.
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "site/**", "server.py", "api/**", "tools/ui_sweep.py", ".github/workflows/ui-sweep.yml"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: sqlite:///./data/sweep.db
+      APP_ENV: development
+      OTP_DEMO: "1"
+      PWNED_CHECK: "0"
+      DEMO_PROGRESS: "0"
+      SECRET_KEY: ci-sweep-secret-key-not-used-anywhere-else
+      DATA_KEY: ci-sweep-data-key-not-used-anywhere-else
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt playwright
+      - run: python -m playwright install --with-deps chromium
+      - name: Start the app
+        run: |
+          mkdir -p data
+          nohup python -m uvicorn server:app --port 8077 > server.log 2>&1 &
+          for i in $(seq 1 40); do curl -fs localhost:8077/api/health && break; sleep 2; done
+      - name: Sweep every screen
+        run: python tools/ui_sweep.py http://localhost:8077 sweep
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sweep-failures
+          path: |
+            sweep-*.png
+            server.log

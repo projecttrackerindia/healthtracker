@@ -76,7 +76,7 @@ def test_the_family_is_not_shown_the_prescribers_details_back():
     """They wrote it; it is their own prescription. What is new to them is who at the pharmacy checked it."""
     fam, oid, email = world()
     pharmacy(email).post(f"/api/partner/orders/{oid}/verify",
-                         json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"})
+                         json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": date.today().isoformat()})
     row = next(o for o in fam.get("/api/v1/orders").json()["orders"] if o["id"] == oid)
     assert set(row["checkedBy"]) == {"name", "regNo", "at"}
 
@@ -115,19 +115,27 @@ def test_an_old_prescription_is_flagged_and_never_refused():
     assert r.status_code == 200 and r.json()["verified"]["rxAgeDays"] == 400
 
 
-def test_an_unrecorded_or_unreadable_date_gives_no_age_rather_than_a_wrong_one():
+def test_a_prescription_without_a_date_cannot_be_signed_off():
+    """A prescription must carry its date (Drugs Rules, r.65); without it the age cannot be judged at all."""
     fam, oid, email = world()
     r = pharmacy(email).post(f"/api/partner/orders/{oid}/verify",
                              json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": ""})
-    assert r.json()["verified"]["rxAgeDays"] is None
+    assert r.status_code == 400 and "date" in r.json()["detail"]
 
 
-def test_a_future_dated_prescription_reads_as_zero_days_not_a_negative_number():
+def test_a_future_dated_prescription_is_refused():
     fam, oid, email = world()
     tomorrow = (date.today() + timedelta(days=1)).isoformat()
     r = pharmacy(email).post(f"/api/partner/orders/{oid}/verify",
                              json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": tomorrow})
-    assert r.json()["verified"]["rxAgeDays"] == 0
+    assert r.status_code == 400 and "future" in r.json()["detail"]
+
+
+def test_a_registration_number_needs_digits():
+    fam, oid, email = world()
+    r = pharmacy(email).post(f"/api/partner/orders/{oid}/verify",
+                             json={"doctor": "Dr A Sharma", "regNo": "ABCDEF", "rxDate": date.today().isoformat()})
+    assert r.status_code == 400
 
 
 def test_the_layer_is_in_the_page():

@@ -103,6 +103,8 @@ def test_app_has_no_sample_people():
 def test_card_reader_without_key_offers_manual_entry(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False); monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     c = client()
+    from tests.aiconsent import ai_yes
+    ai_yes(c)
     r = c.post("/api/v1/auth/../hello".replace("/auth/../", "/"), json={"name": "T"}, headers={"X-DoKKo-Key": "k" * 32})
     assert r.status_code == 200
     r = c.post("/api/v1/ai/analyze", data={"kind": "card", "consent": "1"}, files={"file": ("card.png", b"\x89PNG\r\n\x1a\n" + b"0" * 100, "image/png")}, headers={"X-DoKKo-Key": "k" * 32})
@@ -150,7 +152,11 @@ def test_paid_plan_needs_a_payment_provider(monkeypatch):
     c.headers["X-DoKKo-Key"] = uuid.uuid4().hex
     c.post("/api/v1/hello", json={"name": "T", "members": 1})
     plans = c.get("/api/v1/plans").json()
-    assert plans["provider"] == "upi"                       # the UPI QR route is on; the demo switch stays shut
+    assert plans["provider"] == "soon"                      # no personal UPI by default: nothing sells without a provider
+    monkeypatch.setenv("UPI_PAY", "1")
+    monkeypatch.setenv("UPI_ACCOUNTS", '[{"id":"b","vpa":"business@ybl"}]')
+    plans = c.get("/api/v1/plans").json()
+    assert plans["provider"] == "upi"                       # only when a business account is switched on deliberately
     paid = next(p["code"] for p in plans["plans"] if p["month"] > 0)
     r = c.post("/api/v1/subscribe", json={"plan": paid, "period": "month"})
     assert r.status_code == 503 and "UPI" in r.json()["detail"]
@@ -166,6 +172,8 @@ def test_ai_ask_and_insight_without_key(monkeypatch):
     c = client()
     c.headers["X-DoKKo-Key"] = uuid.uuid4().hex
     c.post("/api/v1/hello", json={"name": "T", "members": 1})
+    from tests.aiconsent import ai_yes
+    ai_yes(c)
     assert c.post("/api/v1/ai/ask", json={"question": "Is my sugar okay?", "context": {}}).status_code == 503
     assert c.post("/api/v1/ai/insight", json={"context": {}, "member": "m1"}).status_code == 503
 
@@ -182,6 +190,8 @@ def test_ai_ask_counts_quota_and_insight_caches(monkeypatch):
     c = client()
     c.headers["X-DoKKo-Key"] = uuid.uuid4().hex
     c.post("/api/v1/hello", json={"name": "T", "members": 1})
+    from tests.aiconsent import ai_yes
+    ai_yes(c)
     ctx = {"me": {"name": "T", "age": 40}, "readings": [{"glu": 96, "d": "2026-10-01"}]}
     r = c.post("/api/v1/ai/ask", json={"question": "Is my sugar okay?", "context": ctx})
     assert r.status_code == 200 and r.json()["quota"]["used"] == 1 and "96" in r.json()["answer"] and "model" not in r.json()

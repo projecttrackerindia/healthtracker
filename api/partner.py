@@ -284,8 +284,13 @@ async def my_certificate(request: Request, db: Session = Depends(get_db), u: Par
     if not (data[:5] == b"%PDF-" or data[:3] == b"\xff\xd8\xff" or data[:8] == b"\x89PNG\r\n\x1a\n"):
         raise HTTPException(400, "Upload a PDF, JPG or PNG.")
     mime = "application/pdf" if data[:5] == b"%PDF-" else "image/png" if data[:4] == b"\x89PNG" else "image/jpeg"
+    ed = storage.edit_signals(data, mime)               # shown to the two admins who approve it
+    data = storage.safe_document(data, mime)            # no scripts in the PDF, no GPS in the photo
+    if mime != "application/pdf":
+        mime = "image/jpeg"
+    storage.virus_scan(data)
     fid = "reg_" + u.id + "_" + _s.token_hex(4)
-    storage.put(db, "pcred_" + u.store_id, fid, data, mime, "registration", "partner:" + u.id)
+    storage.put(db, "pcred_" + u.store_id, fid, data, mime, ("registration · possibly edited: " + "; ".join(ed))[:120] if ed else "registration", "partner:" + u.id)
     u.reg_doc, u.reg_expiry, u.verified, u.verify_by = fid, exp, False, ""
     return {"ok": True, "regExpiry": exp, "verified": False}
 
@@ -300,6 +305,20 @@ def rx_age_days(d: str) -> int | None:
         return max(0, (date.today() - date(y, m, dd)).days)
     except Exception:
         return None
+
+
+def rx_edit_signals(db: Session, o: Order) -> list[str]:
+    """Editing signs found when the family uploaded the prescription(s) on this order (see storage.edit_signals)."""
+    from .models import HealthRecord
+    from .family import decrypt
+    out: list[str] = []
+    for fid in (o.rx_files or [])[:6]:
+        for x in db.scalars(select(HealthRecord).where(HealthRecord.file_id == fid)).all():
+            try:
+                out += decrypt(x.blob).get("edited") or []
+            except Exception:
+                pass
+    return list(dict.fromkeys(out))
 
 
 def _order(db: Session, u: PartnerUser, oid: str) -> Order:
@@ -326,6 +345,7 @@ def porder(db: Session, o: Order) -> dict:
         v = db.get(PartnerUser, o.verified_by) if o.verified_by else None
         j["rxItems"] = [i.get("name") for i in rx]
         j["needsVerify"] = bool(rx) and not o.verified_at
+        j["rxEdited"] = rx_edit_signals(db, o) if rx and o.rx_shared else []
         j["verified"] = {"by": v.name or v.email if v else "", "regNo": v.reg_no if v else "",
                          "at": o.verified_at, "doctor": o.rx_doctor, "doctorReg": o.rx_reg_no,
                          "rxDate": o.rx_date, "rxAgeDays": rx_age_days(o.rx_date),
@@ -660,8 +680,21 @@ def verify_rx(oid: str, body: VerifyIn, db: Session = Depends(get_db), u: Partne
         raise HTTPException(400, "Enter the prescriber's name as written on the prescription.")
     if len(reg) < 4:
         raise HTTPException(400, "Enter the prescriber's registration number from the prescription.")
+    if not any(ch.isdigit() for ch in reg):
+        raise HTTPException(400, "A medical council registration number has digits in it. Check it on the prescription.")
+    from datetime import date as _date
+    try:
+        rxd = _date.fromisoformat(body.rxDate.strip()[:10])
+    except ValueError:
+        raise HTTPException(400, "Enter the date written on the prescription.")
+    if rxd > _date.today():
+        raise HTTPException(400, "The prescription date is in the future. Check it with the family before dispensing.")
+    edited = rx_edit_signals(db, o)
+    if edited and len(body.note.strip()) < 15:
+        raise HTTPException(400, "This prescription shows signs of editing (" + "; ".join(edited).lower() + "). Write how you confirmed it is genuine, "
+                                 "for example that you called the doctor, or refuse the order.")
     o.verified_by, o.verified_at = u.id, now()
-    o.rx_doctor, o.rx_reg_no, o.rx_date, o.verify_note = doctor, reg, body.rxDate.strip()[:10], body.note.strip()[:400]
+    o.rx_doctor, o.rx_reg_no, o.rx_date, o.verify_note = doctor, reg, rxd.isoformat(), body.note.strip()[:400]
     o.timeline = (o.timeline or []) + [{"s": "checking", "t": now(), "by": u.email,
                                         "note": f"Checked by {u.name or u.email} (Reg {u.reg_no})"}]
     s = my_store(db, u)

@@ -927,6 +927,28 @@ def seen_suggest(rid: str, u: User = Depends(need_user), db: Session = Depends(g
     return {"ok": True}
 
 
+# Outside these, a value cannot come from a living person's sample: a typo at best, a made-up report at worst.
+PLAUSIBLE = {"hb": (2, 25), "wbc": (100, 200000), "plt": (1000, 2000000), "glu_f": (10, 1500), "glu_pp": (10, 1500), "glu_r": (10, 1500),
+             "hba1c": (2.5, 20), "tc": (40, 1500), "ldl": (5, 1000), "hdl": (3, 200), "tg": (10, 10000), "creat": (0.05, 30), "urea": (1, 500),
+             "na": (90, 200), "k": (1, 12), "tsh": (0, 500), "spo2": (40, 100), "sbp": (50, 300), "alt": (1, 20000), "ast": (1, 20000)}
+
+
+def impossible_values(findings: list) -> list[str]:
+    out = []
+    for f in findings or []:
+        rng = PLAUSIBLE.get(str(f.get("code") or ""))
+        try:
+            v = float(str(f.get("value")).replace(",", ""))
+        except (TypeError, ValueError):
+            continue
+        if rng and not (rng[0] <= v <= rng[1]):
+            # platelets and WBC are often printed in thousands or lakhs; only call it impossible on both scales
+            if f.get("code") in ("plt", "wbc") and (rng[0] <= v * 1000 <= rng[1] or rng[0] <= v * 100000 <= rng[1]):
+                continue
+            out.append(f"Impossible value: {str(f.get('test') or f.get('code'))[:40]} {f.get('value')}")
+    return out[:3]
+
+
 @r.post("/people/{pid}/reports")
 async def upload_report(pid: str, request: Request, file: UploadFile = File(...), read: str = Form("1"), doc: str = Form("report"), force: str = Form(""),
                         u: User = Depends(need_user), db: Session = Depends(get_db)):
@@ -947,6 +969,7 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     from . import storage
     fid = new_id("f")
     mime, fname = storage.checked(data, file.filename or "report")
+    edited = storage.edit_signals(data, mime)          # before re-saving: that drops the metadata that shows editing
     data = storage.safe_document(data, mime)
     if mime not in ("application/pdf", "image/heic"):
         mime = "image/jpeg"
@@ -962,6 +985,11 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
             raise HTTPException(422, "This doesn't look like a medical report or prescription, so it was not saved.")
     storage.put(db, p.id, fid, data, mime, fname, u.id)
     reading = {}
+    if read == "1" and ai_consent(db, u.id) is not True:
+        read = "0"
+        consent_note = AI_OFF if ai_consent(db, u.id) is False else "Saved without reading the values: AI reading isn't switched on. Add the values yourself, or allow AI reading in Settings → Privacy."
+    else:
+        consent_note = ""
     if read == "1":
         try:
             from . import ai
@@ -988,6 +1016,14 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
            "questions": reading.get("questions_for_doctor", []), "warnings": reading.get("warnings", []),
            "engine": reading.get("engine", ""), "mime": mime, "name": (file.filename or "")[:120], "checked": False,
            "sha": sha, "sig": _sig(reading.get("findings"))}
+    edited = list(dict.fromkeys(edited + [str(x)[:120] for x in (reading.get("authenticity") or [])][:4] + impossible_values(rec["findings"])))
+    if consent_note:
+        rec["warnings"] = [consent_note] + list(rec["warnings"] or [])
+        rec["aiOff"] = True
+    if edited:
+        rec["edited"] = edited
+        rec["warnings"] = [f"This file shows signs of editing ({'; '.join(edited).lower()}). Check the values against the original from the "
+                           f"{'doctor' if doc == 'prescription' else 'lab'} before acting on them."] + list(rec["warnings"] or [])
     rec.update({"patient": reading.get("patient") or {}, "lab": reading.get("lab", ""), "recheck": reading.get("recheck", []),
                 "doctorPhone": reading.get("doctor_phone", "")})
     rec["patient"].update({k: v for k, v in _patient_from_text(reading).items() if not rec["patient"].get(k)})
@@ -1922,6 +1958,28 @@ def _perm_state(db: Session, uid: str) -> dict:
         cur[x.kind] = {"granted": bool(x.granted), "t": x.t, "version": x.version}
     hist = [{"kind": x.kind, "label": PERMS[x.kind], "granted": bool(x.granted), "t": x.t, "version": x.version, "via": x.via} for x in reversed(rows)][:60]
     return {"items": {k: cur.get(k) for k in PERMS}, "labels": PERMS, "version": PERMS_VERSION, "asked": bool(cur), "history": hist}
+
+
+def ai_consent(db: Session, uid: str) -> bool | None:
+    """The person's answer to "AI reads my reports": True, False, or None when they were never asked."""
+    from .models import ConsentLog
+    x = db.scalar(select(ConsentLog).where(ConsentLog.user_id == uid, ConsentLog.kind == "ai_reports").order_by(ConsentLog.t.desc(), ConsentLog.id.desc()))
+    return None if x is None else bool(x.granted)
+
+
+AI_OFF = "AI reading is off for your account. Turn on \"AI reads my reports\" in Settings → Privacy to use it."
+AI_ASK = "Allow AI to read your health records first. Your records are sent only to read them, never used to train AI."
+
+
+def ai_gate(db: Session, uid: str | None) -> None:
+    """Health data goes to the AI only with the person's own yes (DPDP: consent per purpose, recorded, withdrawable)."""
+    if not uid:
+        raise HTTPException(401, "Sign in to use the health assistant.")
+    c = ai_consent(db, uid)
+    if c is False:
+        raise HTTPException(403, AI_OFF)
+    if c is None:
+        raise HTTPException(428, AI_ASK)
 
 
 class PermsIn(BaseModel):

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 import server
 from tests.test_people_v2 import person
 from api import ai
+from tests.aiconsent import ai_yes
 
 PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"
 
@@ -24,6 +25,7 @@ def _lab():
 
 def test_link_upload_review_accept_and_security(monkeypatch):
     c = person("Prasanna Kumar", {"sex": "male", "dob": "1989-06-12", "blood": "O+", "phone": "+919876504321"})
+    ai_yes(c, signed_in=True)
     link = c.post(f"/api/v2/people/{c.pid}/upload-links", json={"hours": 48, "maxFiles": 2}).json()
     assert link["live"] and len(link["code"]) == 6 and "/u/" in link["url"]
     tok = link["url"].rsplit("/", 1)[1]
@@ -139,6 +141,7 @@ def test_admin_privacy_services_messaging_and_inbox(monkeypatch):
     assert "sms" in a.get("/api/admin/messaging").json()
     # a paused upload reaches the inbox without its results
     c = person("Kumar", {"sex": "male", "dob": "1990-05-05"})
+    ai_yes(c, signed_in=True)
     tok = c.post(f"/api/v2/people/{c.pid}/upload-links", json={"code": False}).json()["url"].rsplit("/", 1)[1]
     monkeypatch.setattr(ai, "analyze", _reading("Kumar", 70, "male"))
     _lab().post(f"/u/{tok}/upload", headers=H, files={"file": ("r.pdf", io.BytesIO(PDF), "application/pdf")}, data={"lab": "City Lab", "confirm": "1", "phone": "9000000000"})
@@ -161,6 +164,7 @@ def test_report_date_and_duplicates(monkeypatch):
     assert norm_date("10/11/2026") == "2026-11-10" and norm_date("10-Nov-2026 09:12") == "2026-11-10" and norm_date("2099-01-01") == ""
     assert date_from_text("Reg Date: 09/11/2026\nCollected On : 10-Nov-2026 08:10\nReported: 11/11/2026") == "2026-11-10"
     c = person("Dup")
+    ai_yes(c, signed_in=True)
     read = {"title": "CBC", "date": "02/10/2026", "findings": [{"test": "Hb", "value": "13", "unit": "g/dL"}, {"test": "WBC", "value": "7000"}],
             "patient": {}, "engine": "test"}
     monkeypatch.setattr(ai, "analyze", lambda *a, **k: dict(read))

@@ -329,9 +329,10 @@ function verifyRx(oid){const o=(LASTO||[]).find(x=>x.id===oid);if(!o)return;
    Open the prescription above and check it against these. You cannot substitute — if something is unavailable, part-supply and message the family, or refuse.</p>
    <div class="row" style="margin:0 0 8px"><label class="grow">Prescriber<input name="doctor" required placeholder="As written on it"></label>
     <label class="grow">Their registration no.<input name="regNo" required placeholder="NMC / state council"></label>
-    <label>Dated<input name="rxDate" type="date" max="${new Date().toISOString().slice(0,10)}"></label></div>
+    <label>Dated<input name="rxDate" type="date" required max="${new Date().toISOString().slice(0,10)}"></label></div>
    <p class="items" id="vrxage" hidden></p>
-   <div class="row" style="margin:0 0 8px"><label class="grow">Note <span style="font-weight:400;color:var(--mute)">(optional — anything you queried)</span><input name="note" maxlength="300"></label></div>
+   ${(o.rxEdited||[]).length?`<div class="items" style="border:1.5px solid var(--red,#FF3B30);border-radius:12px;padding:10px 12px;margin:0 0 8px"><span class="tag warn">Possibly edited</span> ${(o.rxEdited||[]).map(E).join(' · ')}. Confirm it with the prescriber before you sign off, and write how you confirmed it below.</div>`:''}
+   <div class="row" style="margin:0 0 8px"><label class="grow">Note ${(o.rxEdited||[]).length?'<span style="font-weight:400;color:var(--red,#FF3B30)">(required — how you confirmed it)</span>':'<span style="font-weight:400;color:var(--mute)">(optional — anything you queried)</span>'}<input name="note" maxlength="300" ${(o.rxEdited||[]).length?'required minlength="15"':''}></label></div>
    <div class="row" style="margin:0"><button class="btn p sm">Checked — signed off</button>
     <button class="btn sm d" type="button" id="vrxno">Refuse to dispense</button>
     <button class="btn sm" type="button" id="vrxx">Cancel</button>

@@ -16,6 +16,8 @@ os.environ["DATABASE_URL"] = "sqlite:///./data/test_pharmacist.db"
 from fastapi.testclient import TestClient  # noqa: E402
 
 import server  # noqa: E402
+from datetime import date as _date  # noqa: E402
+_TODAY = _date.today().isoformat()
 from api.db import Base, engine, session  # noqa: E402
 from api.models import Household, Order, PartnerUser, Store, StoredFile, now  # noqa: E402
 from api.security import hash_pw  # noqa: E402
@@ -169,7 +171,7 @@ def test_there_is_nothing_to_check_until_the_family_shares_the_prescription():
     sid, owner, desk, hid = a_pharmacy()
     oid = an_order(sid, hid, shared=False)
     c, g = ready_pharmacist(sid, owner)
-    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/5551"})
+    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/5551", "rxDate": _TODAY})
     assert r.status_code == 400 and "not shared" in r.json()["detail"]
 
 
@@ -177,7 +179,7 @@ def test_it_cannot_be_checked_twice():
     sid, owner, desk, hid = a_pharmacy()
     oid = an_order(sid, hid)
     c, g = ready_pharmacist(sid, owner)
-    body = {"doctor": "Dr A Sharma", "regNo": "TSMC/55512"}
+    body = {"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": _TODAY}
     assert c.post(f"/api/partner/orders/{oid}/verify", json=body).status_code == 200
     assert c.post(f"/api/partner/orders/{oid}/verify", json=body).status_code == 409
 
@@ -187,7 +189,7 @@ def test_the_counter_assistant_cannot_sign_a_prescription_off():
     sid, owner, desk, hid = a_pharmacy()
     oid = an_order(sid, hid)
     r = signed_in(desk).post(f"/api/partner/orders/{oid}/verify",
-                             json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"})
+                             json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": _TODAY})
     assert r.status_code == 403
 
 
@@ -195,11 +197,11 @@ def test_an_owner_without_a_registration_number_is_asked_for_one_first():
     sid, owner, desk, hid = a_pharmacy()           # owner_reg deliberately blank
     oid = an_order(sid, hid)
     c = signed_in(owner)
-    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"})
+    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": _TODAY})
     assert r.status_code == 403 and "registration number" in r.json()["detail"]
     assert c.post("/api/partner/my-registration", json={"regNo": "ap/99887"}).json()["regNo"] == "AP/99887"
     # a new registration number goes back for approval before it can sign anything off
-    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"})
+    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": _TODAY})
     assert r.status_code == 403 and "checking" in r.json()["detail"]
     from api.db import SessionLocal
     from api.models import PartnerUser
@@ -208,7 +210,7 @@ def test_an_owner_without_a_registration_number_is_asked_for_one_first():
         u.verified = True
         db.commit()
     assert c.post(f"/api/partner/orders/{oid}/verify",
-                  json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"}).status_code == 200
+                  json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": _TODAY}).status_code == 200
 
 
 def test_a_pharmacist_who_has_not_chosen_a_password_cannot_sign_anything_off():
@@ -218,7 +220,7 @@ def test_a_pharmacist_who_has_not_chosen_a_password_cannot_sign_anything_off():
     c = TestClient(server.app)
     c.__enter__()
     c.post("/api/partner/login", headers=H, json={"email": ph, "password": g["tempPassword"]})
-    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"})
+    r = c.post(f"/api/partner/orders/{oid}/verify", json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": _TODAY})
     assert r.status_code == 403 and "password" in r.json()["detail"].lower()
 
 
@@ -249,4 +251,4 @@ def test_one_pharmacy_cannot_check_anothers_orders():
     oid = an_order(sid_a, hid_a)
     c, g = ready_pharmacist(sid_b, owner_b)
     assert c.post(f"/api/partner/orders/{oid}/verify",
-                  json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512"}).status_code == 404
+                  json={"doctor": "Dr A Sharma", "regNo": "TSMC/55512", "rxDate": _TODAY}).status_code == 404

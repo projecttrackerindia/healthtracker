@@ -291,6 +291,10 @@ def check_report(db: Session, o: Order, s: Store, data: bytes, mime: str) -> lis
                 flags.append(QualityFlag(store_id=s.id, order_id=o.id, kind="unsigned", serious=True, text="No pathologist name or registration found on the report"))
             if not re.search(r"(?i)reference|ref\.?\s*range|normal range|biological", text):
                 flags.append(QualityFlag(store_id=s.id, order_id=o.id, kind="no_range", text="Reference ranges are missing"))
+    from .storage import edit_signals
+    ed = edit_signals(data, mime)
+    if ed:
+        flags.append(QualityFlag(store_id=s.id, order_id=o.id, kind="edited", serious=True, text=("Possibly edited: " + "; ".join(ed))[:300]))
     col = next((x.get("t") for x in (o.timeline or []) if x.get("s") == "collected"), None)
     if col and now() - col > 36 * 3600:
         flags.append(QualityFlag(store_id=s.id, order_id=o.id, kind="late", text=f"Report came {(now() - col) // 3600} h after the sample was collected"))

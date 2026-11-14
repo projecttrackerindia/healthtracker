@@ -59,6 +59,9 @@ def ensure_shop(db: Session) -> Store:
                   rating=0, rating_n=0, owner_email=os.getenv("LEGAL_EMAIL") or "support@urbanhealth.in", notes="System store for packages and merchandise.")
         db.add(s)
         db.flush()
+    elif "healthtracker" in (s.name + s.brand).lower():   # the store predates the rename to Urban Health
+        s.name, s.brand = "Urban Health Store", "Urban Health"
+        db.flush()
     if not db.get(ShopProduct, BAG_SKU):
         db.add(ShopProduct(sku=BAG_SKU, name="Hospital Bag · Complete", tagline="Everything on the hospital-bag list, packed and delivered before the due date.",
                            description="One package that covers the mother, the baby and the partner from the checklist in your birth plan, in a Urban Health tote with a document folder for the MCP card, reports and cards. "

@@ -184,6 +184,8 @@ app.include_router(abdm_api.r)
 from api import upipay as upipay_api  # noqa: E402
 app.include_router(upipay_api.r)
 app.include_router(upipay_api.ar)
+from api import rzp as rzp_api  # noqa: E402
+app.include_router(rzp_api.r)
 from api import digilocker as digilocker_api  # noqa: E402
 app.include_router(digilocker_api.r)
 from api import apps as apps_api, fitbit as fitbit_api, shop as shop_api, wearables as wear_api  # noqa: E402
