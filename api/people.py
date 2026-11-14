@@ -17,6 +17,7 @@ from __future__ import annotations
 import datetime as _dt
 import os
 import re
+import time as _time
 import secrets
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
@@ -42,7 +43,8 @@ KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med"
               "activity": "summary",  # minutes a child (or parent) logs from Move; entered by them, never tracked in the background
               "vax": "summary",       # a vaccine visit marked as given (schedule group + date)
               "growth": "summary",    # a height/weight/head measurement for a child
-              "mood": "summary"}      # her own "how are you feeling" after a birth; women's health, so private by default
+              "mood": "summary",      # her own "how are you feeling" after a birth; women's health, so private by default
+              "visitnote": "all"}     # what the doctor said after a visit, and the follow-up date      # her own "how are you feeling" after a birth; women's health, so private by default
 WOMENS = {"preg", "kick", "cycle", "mood"}
 RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother",
              "Grandson", "Granddaughter", "Father-in-law", "Mother-in-law", "Son-in-law", "Daughter-in-law", "Brother-in-law",
@@ -98,7 +100,7 @@ def _name_key(n: str) -> str:
     return re.sub(r"[^a-z]", "", (n or "").lower())
 
 
-PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone", "legalName", "abha")
+PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone", "legalName", "abha", "callName")
 COLORS = ["#0A84FF", "#30B0C7", "#BF5AF2", "#FF9F0A", "#34C759", "#FF375F", "#5E5CE6", "#A2845E"]
 INVITE_DAYS = 7
 
@@ -320,7 +322,7 @@ def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
                                                           HouseholdInvite.expires > now() - 30 * 86400).order_by(HouseholdInvite.created.desc())):
             invites.append(invite_view(i))
     h = db.get(Household, u.household_id) if u.household_id else None
-    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role, "lang": u.lang or "en"},
+    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role, "lang": u.lang or "en", "authApp": bool(getattr(u, "totp_secret", ""))},
             "household": u.household_id, "hkey": h.key if h else None, "me": mine.id if mine else None, "people": people, "members": members,
             "invites": invites, "onboarded": bool(mine and contacts(db, mine.id))}
 
@@ -371,6 +373,22 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
         db.add(p)
         db.flush()
         db.add(Guardian(person_id=p.id, user_id=u.id))
+        # a child gets both parents: the adder's spouse (joined through a Wife/Husband invite, either way round) is a
+        # guardian from the start, so neither parent is ever locked out of their own baby
+        try:
+            dob = str(body.profile.get("dob") or "")
+            kid = (not dob) or _dt.date.fromisoformat(dob) > _dt.date.today().replace(year=_dt.date.today().year - 18)
+        except ValueError:
+            kid = False
+        if kid:
+            sp = db.scalar(select(HouseholdInvite).where(
+                HouseholdInvite.household_id == h.id, HouseholdInvite.relation.in_(("Wife", "Husband")), HouseholdInvite.used_by.is_not(None),
+                (HouseholdInvite.by_user == u.id) | (HouseholdInvite.used_by == u.id)))
+            other = sp and (sp.used_by if sp.by_user == u.id else sp.by_user)
+            m = other and db.get(User, other)
+            if m and m.household_id == h.id and m.id != u.id:
+                db.add(Guardian(person_id=p.id, user_id=m.id))
+                _note(db, h.id, "family", f"You now look after {p.name}", f"{u.name or 'Your partner'} added {p.name}. You both see and manage everything.", {"person": p.id}, to_user=m.id)
         # DPDP Act s.9 and Rule 10: a child's data is processed on the verifiable consent of a parent or lawful
         # guardian. The adult adding the child is a verified account holder (checked mobile and email, 18+ at
         # sign-up) and declares in the add screen that they are the parent or guardian; that declaration is kept.
@@ -562,6 +580,31 @@ def ask_share(pid: str, body: AskShareIn, u: User = Depends(need_user), db: Sess
     return {"ok": True, "asked": len(to)}
 
 
+class SnoozeIn(BaseModel):
+    time: str = Field(pattern=r"^\d{2}:\d{2}$")
+    minutes: int = Field(10, ge=5, le=60)
+    day: str = Field("", max_length=10)
+
+
+@r.post("/people/{pid}/snooze")
+def snooze_dose(pid: str, body: SnoozeIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """'Remind me in 10 minutes' from a dose notification: one more reminder for that dose time, once."""
+    p, a = person_or_404(db, u, pid)
+    if not (p.owner_user == u.id or a.level == "guardian"):
+        raise HTTPException(403, "Only they or a guardian can do this")
+    from .models import ReminderSent
+    day = body.day or _dt.date.today().isoformat()
+    key = f"snz:{p.id}:{day}:{body.time}"
+    at = int(_time.time()) + body.minutes * 60
+    row = db.get(ReminderSent, key)
+    if row:
+        row.t = at
+    else:
+        db.add(ReminderSent(key=key, t=at))
+    db.commit()
+    return {"ok": True, "at": at}
+
+
 @r.get("/people/{pid}/access-log")
 def access_log(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
     p, a = person_or_404(db, u, pid)
@@ -593,6 +636,11 @@ def _check_record(kind: str, data: dict, day: str):
     if kind == "contact":
         if not str(data.get("name", "")).strip() or not re.fullmatch(r"\+?[0-9 ]{8,16}", str(data.get("phone", "")).strip()):
             raise HTTPException(400, "An emergency contact needs a name and a phone number")
+    if kind == "visitnote":
+        if not (str(data.get("note", "")).strip() or data.get("follow")):
+            raise HTTPException(400, "Add what the doctor said or a follow-up date")
+        if data.get("follow") and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(data["follow"])):
+            raise HTTPException(400, "Follow-up date must be YYYY-MM-DD")
     if kind == "med" and not str(data.get("name", "")).strip():
         raise HTTPException(400, "Medicine name is required")
     if kind == "preg" and data.get("stage") not in ("trying", "pregnant", "after", "loss"):
@@ -1042,7 +1090,7 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     title = reading.get("title") or ("Prescription" if doc == "prescription" else (stem.title() if not generic else ("Lab report" if len(reading.get("findings") or []) > 1 else first.get("test") or "Lab report")))
     rec = {"title": str(title).strip()[:80],
            "doc": "prescription" if doc == "prescription" else "report", "doctor": reading.get("doctor", ""), "date": doc_date(reading, txt),
-           "findings": reading.get("findings", []), "medicines": reading.get("medicines", []), "summary": reading.get("summary", ""),
+           "findings": reading.get("findings", []), "medicines": reading.get("medicines", []), "summary": reading.get("summary", ""), "impression": str(reading.get("impression") or "")[:1200],
            "focus": reading.get("focus", []), "followups": reading.get("followups", []) + reading.get("tests_needed", []),
            "questions": reading.get("questions_for_doctor", []), "warnings": reading.get("warnings", []),
            "engine": reading.get("engine", ""), "mime": mime, "name": (file.filename or "")[:120], "checked": False,
@@ -1807,6 +1855,31 @@ def set_prefs(body: PrefIn, u: User = Depends(need_user), db: Session = Depends(
     db.merge(pr)
     db.commit()
     return {"ok": True}
+
+
+class QuietIn(BaseModel):
+    quiet: str = Field("", pattern=r"^$|^\d{2}:\d{2}-\d{2}:\d{2}$")
+    morning: bool | None = None
+
+
+@r.put("/notify-prefs/quiet")
+def set_quiet(body: QuietIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """Quiet hours, and the 8 a.m. good-morning summary on the phone."""
+    pr = db.get(NoticePref, u.id) or NoticePref(user_id=u.id, prefs={})
+    new = {**(pr.prefs or {}), "quiet": body.quiet}
+    if body.morning is not None:
+        new["morning"] = body.morning
+    pr.prefs = new
+    db.merge(pr)
+    db.commit()
+    return {"ok": True}
+
+
+@r.get("/notify-prefs/quiet")
+def get_quiet(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    pr = db.get(NoticePref, u.id)
+    p = (pr.prefs if pr else {}) or {}
+    return {"quiet": p.get("quiet", ""), "morning": p.get("morning", False) is True}
 
 
 # ---- deletion and retention --------------------------------------------------------------------------------------------

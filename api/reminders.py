@@ -81,6 +81,7 @@ def tick(now_dt: datetime | None = None) -> int:
         with session() as db:
             daily_people(db, now_dt)
             if now_dt.hour == 8:
+                morning_people(db, now_dt)
                 from .phase5 import send_morning_summary
                 send_morning_summary(db)
             if now_dt.hour == 20 and now_dt.minute < 5:
@@ -253,7 +254,7 @@ def tick_people(db, now_dt: datetime) -> int:
                 continue   # once-a-week medicines remind on their own day only
             for t in m.get("times") or []:
                 if (x.id, t) not in taken:
-                    at_time.setdefault(t, []).append(m.get("name") or "medicine")
+                    at_time.setdefault(t, []).append(_pill(m))
         first = (p.name or "").split(" ")[0]
         for t, names in at_time.items():
             try:
@@ -261,19 +262,27 @@ def tick_people(db, now_dt: datetime) -> int:
                 at = int(hh) * 60 + int(mm)
             except ValueError:
                 continue
-            for kind, start, end in (("due", at, at + 45), ("missed", at + MISSED_AFTER_MIN, at + MISSED_AFTER_MIN + 45)):
-                if not (start <= minute <= end):
+            ids = [x.id for x in rows if (m := _safe(x)) and t in (m.get("times") or []) and (x.id, t) not in taken]
+            snz = db.get(ReminderSent, f"snz:{pid}:{day}:{t}")
+            for kind, start, end in (("due", at, at + 45), ("missed", at + MISSED_AFTER_MIN, at + MISSED_AFTER_MIN + 45), ("snooze", 0, 24 * 60)):
+                if kind == "snooze":
+                    if not snz or snz.t <= 1 or snz.t > int(time.time()):
+                        continue
+                    snz.t = 1   # fired once; the 3-day sweep removes it
+                elif not (start <= minute <= end):
                     continue
-                key = f"v2:{pid}:{day}:{t}:{kind}"
-                if db.get(ReminderSent, key):
-                    continue
-                db.add(ReminderSent(key=key))
-                if kind == "due":
+                else:
+                    key = f"v2:{pid}:{day}:{t}:{kind}"
+                    if db.get(ReminderSent, key):
+                        continue
+                    db.add(ReminderSent(key=key))
+                act = {"pid": pid, "day": day, "t": t, "meds": ids}
+                if kind in ("due", "snooze"):
                     to = owner or list(guardians)
-                    msg = lambda own, lang="en": {"title": _say(lang, "due_own" if own else "due_other", t=t, first=first), "body": ", ".join(names), "url": "/app/meds", "tag": f"dose-{pid}-{t}"}
+                    msg = lambda own, lang="en": {"title": _say(lang, "due_own" if own else "due_other", t=t, first=first), "body": ", ".join(names), "url": "/app/meds", "tag": f"dose-{pid}-{t}", "act": act}
                 else:
                     to = owner + list(guardians)
-                    msg = lambda own, lang="en": {"title": _say(lang, "missed_own" if own else "missed_other", t=t, first=first), "body": ", ".join(names) + ("" if own else _say(lang, "late")), "url": "/app/meds", "tag": f"missed-{pid}-{t}"}
+                    msg = lambda own, lang="en": {"title": _say(lang, "missed_own" if own else "missed_other", t=t, first=first), "body": ", ".join(names) + ("" if own else _say(lang, "late")), "url": "/app/meds", "tag": f"missed-{pid}-{t}", "act": act}
                 from .inbox import wants_push
                 for uid in to:
                     if not wants_push(db, uid, "reminder"):
@@ -286,6 +295,50 @@ def tick_people(db, now_dt: datetime) -> int:
                             db.delete(s)
                         else:
                             s.failures += 1
+    return sent
+
+
+def morning_people(db, now_dt: datetime) -> int:
+    """8 a.m. good-morning push, for accounts that turned it on: today's doses for them and the people they look after,
+    and any follow-up visit today. Only people whose medicines they manage; one push per account per day."""
+    from .inbox import notify
+    from .models import Guardian, HealthRecord, NoticePref, Person
+    day = now_dt.strftime("%Y-%m-%d")
+    sent = 0
+    for pr in db.scalars(select(NoticePref)).all():
+        if (pr.prefs or {}).get("morning") is not True:
+            continue
+        key = f"morning:{pr.user_id}:{day}"
+        if db.get(ReminderSent, key):
+            continue
+        u = db.get(User, pr.user_id)
+        if not u or not u.household_id:
+            continue
+        ppl = list(db.scalars(select(Person).where(Person.owner_user == u.id, Person.removed.is_(None))))
+        ppl += [p for p in (db.get(Person, g) for g in db.scalars(select(Guardian.person_id).where(Guardian.user_id == u.id))) if p and not p.removed]
+        parts = []
+        for p in ppl:
+            doses, fu = 0, None
+            for x in db.scalars(select(HealthRecord).where(HealthRecord.person_id == p.id, HealthRecord.kind.in_(("med", "visitnote")))):
+                d = _safe(x) or {}
+                if x.kind == "med" and d.get("active") is not False and not (d.get("until") and str(d["until"]) < day):
+                    if d.get("weekly") is None or _dt_weekday(day) == int(d["weekly"]):
+                        doses += len(d.get("times") or [])
+                elif x.kind == "visitnote" and d.get("follow") == day:
+                    fu = d.get("doctor") or d.get("place") or "the doctor"
+            who = "You" if p.owner_user == u.id else (p.name or "").split(" ")[0]
+            bit = []
+            if doses:
+                bit.append(f"{doses} dose{'s' if doses != 1 else ''}")
+            if fu:
+                bit.append(f"follow-up with {fu}")
+            if bit:
+                parts.append(f"{who}: " + ", ".join(bit))
+        db.add(ReminderSent(key=key))
+        if not parts:
+            continue
+        notify(db, u.household_id, "reminder", "Good morning", " · ".join(parts)[:180], {}, url="/app", to_user=u.id)
+        sent += 1
     return sent
 
 
@@ -338,6 +391,24 @@ def daily_people(db, now_dt: datetime) -> int:
             for uid in set(fam) - {p.owner_user}:
                 notify(db, p.household_id, "meds", f"{first} missed {missed} doses since yesterday", "A gentle call might help. Nothing else is shared.", {"person": pid}, member_id=pid, url="/app/meds", to_user=uid)
                 done += 1
+    # follow-up visits the doctor asked for: a note the day before, to the person (or a dependent's guardians)
+    tmr = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+    for x in db.scalars(select(HealthRecord).where(HealthRecord.kind == "visitnote", HealthRecord.day >= (now_dt - timedelta(days=200)).strftime("%Y-%m-%d"))).all():
+        n = _safe(x) or {}
+        if n.get("follow") != tmr:
+            continue
+        key = f"follow:{x.id}"
+        p = db.get(Person, x.person_id)
+        if not p or p.removed or db.get(ReminderSent, key):
+            continue
+        db.add(ReminderSent(key=key))
+        first = (p.name or "").split(" ")[0]
+        who = n.get("doctor") or n.get("place") or "the doctor"
+        to = [p.owner_user] if p.owner_user else list(db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id)))
+        for uid in to:
+            notify(db, p.household_id, "visits", f"Follow-up tomorrow with {who}" if p.owner_user == uid else f"{first}'s follow-up tomorrow with {who}",
+                   "Book a time or call the OP desk.", {"person": p.id}, member_id=p.id, url="/app/visits", to_user=uid)
+            done += 1
     return done
 
 
@@ -362,6 +433,19 @@ def start() -> None:
 
     threading.Thread(target=loop, name="reminders", daemon=True).start()
     print("[reminders] server-side reminders on", flush=True)
+
+
+def _pill(m: dict) -> str:
+    """A medicine as an elder recognises it: the name, then its colour and shape."""
+    look = " ".join(x for x in (m.get("look") or "", (m.get("shape") or "").lower()) if x)
+    return (m.get("name") or "medicine") + (f" ({look})" if look else "")
+
+
+def _safe(x):
+    try:
+        return decrypt(x.blob)
+    except Exception:
+        return None
 
 
 def _dt_weekday(day: str) -> int:

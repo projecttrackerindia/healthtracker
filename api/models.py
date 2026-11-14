@@ -330,6 +330,8 @@ class User(Base):
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     two_step: Mapped[bool] = mapped_column(Boolean, default=False)  # password sign-in also needs a one-time code
+    totp_secret: Mapped[str] = mapped_column(String(200), default="")   # authenticator app (sealed with the app key); empty = off
+    totp_step: Mapped[int] = mapped_column(Integer, default=0)          # last accepted time step, so a code works once
     webauthn_id: Mapped[str] = mapped_column(String(64), default=lambda: uuid.uuid4().hex)  # opaque user handle
     household_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     member_id: Mapped[str | None] = mapped_column(String(32), nullable=True)  # which family profile is 'me' for this account
@@ -598,6 +600,7 @@ class PartnerUser(Base):
     reg_no: Mapped[str] = mapped_column(String(40), default="")     # doctors: NMC / state medical council registration
     specialty: Mapped[str] = mapped_column(String(60), default="")
     verified: Mapped[bool] = mapped_column(Boolean, default=False)   # doctors: registration checked by an admin
+    languages: Mapped[str] = mapped_column(String(80), default="")     # doctors: languages they consult in, "Tamil, English"
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     rating: Mapped[float] = mapped_column(Float, default=0)          # technicians: what the families they visited said
     rating_n: Mapped[int] = mapped_column(Integer, default=0)

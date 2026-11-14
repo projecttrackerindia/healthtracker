@@ -175,7 +175,7 @@ def me_json(db: Session, u: PartnerUser) -> dict:
     unread = db.scalar(select(func.count(Message.id)).where(Message.store_id == u.store_id, Message.sender == "family", Message.read_partner == False)) or 0  # noqa: E712
     return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith(".invalid") else u.email,
                      "phone": u.phone, "role": u.role, "mustChange": u.must_change,
-                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or "",
+                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or "", "languages": u.languages or "",
                      "verified": bool(u.verified), "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "totp": bool(u.totp_secret)},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
@@ -220,6 +220,22 @@ def my_registration(body: RegIn, db: Session = Depends(get_db), u: PartnerUser =
         u.verified, u.verify_by = False, ""   # a new number is checked again before it signs anything off
     u.reg_no = reg
     return {"ok": True, "regNo": reg}
+
+
+class LangIn(BaseModel):
+    languages: list[str] = []
+
+
+LANGS = ("English", "Tamil", "Telugu", "Hindi", "Kannada", "Malayalam", "Marathi", "Bengali", "Gujarati", "Odia", "Punjabi", "Urdu")
+
+
+@r.post("/my-languages")
+def my_languages(body: LangIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """The languages a doctor consults in, shown to families when they choose a doctor."""
+    if u.role != "doctor":
+        raise HTTPException(403, "Only a doctor sets consulting languages.")
+    u.languages = ", ".join(x for x in LANGS if x in body.languages)
+    return {"ok": True, "languages": u.languages}
 
 
 class AgreeIn(BaseModel):

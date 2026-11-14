@@ -340,3 +340,44 @@ def test_ask_to_share_notifies_owner_once_a_day():
     # someone who already sees everything (the guardian of a dependent) has nothing to ask for
     assert pr.post(f"/api/v2/people/{amma}/ask-share", json={"level": "all"}).status_code == 400
     assert pr.post(f"/api/v2/people/{si.pid}/ask-share", json={"level": "owner"}).status_code == 400
+
+
+def test_a_new_child_gets_both_parents_and_a_call_name():
+    pr, si, amma = family()
+    kid = pr.post("/api/v2/people", json={"name": "Baby Asha", "dependent": True, "profile": {"sex": "female", "dob": "2026-09-01"}}).json()
+    # Sita (joined as Wife) is a guardian of the baby from the start; an elder dependent stays with whoever added her
+    assert si.get(f"/api/v2/people/{kid['id']}").json()["access"] == "guardian"
+    assert si.get(f"/api/v2/people/{amma}").json()["access"] != "guardian"
+    r = pr.put(f"/api/v2/people/{pr.pid}", json={"name": "DADDALA PRASANNA", "profile": {**PROFILE, "callName": "Prasanna"}})
+    assert r.status_code == 200, r.text
+    assert pr.get(f"/api/v2/people/{pr.pid}").json()["profile"]["callName"] == "Prasanna"
+
+
+def test_snooze_visit_note_and_quiet_hours():
+    pr, si, amma = family()
+    assert pr.post(f"/api/v2/people/{amma}/snooze", json={"time": "08:00", "minutes": 10}).json()["ok"] is True
+    assert si.post(f"/api/v2/people/{amma}/snooze", json={"time": "08:00"}).status_code == 403   # not her guardian
+    assert pr.post(f"/api/v2/people/{pr.pid}/records", json={"kind": "visitnote", "day": "2026-11-10", "data": {}}).status_code == 400
+    r = pr.post(f"/api/v2/people/{pr.pid}/records", json={"kind": "visitnote", "day": "2026-11-10", "data": {"note": "BP better", "follow": "2026-12-10"}})
+    assert r.status_code == 200, r.text
+    assert pr.put("/api/v2/notify-prefs/quiet", json={"quiet": "22:00-07:00", "morning": True}).status_code == 200
+    assert pr.get("/api/v2/notify-prefs/quiet").json() == {"quiet": "22:00-07:00", "morning": True}
+    assert pr.put("/api/v2/notify-prefs/quiet", json={"quiet": "late"}).status_code == 422
+
+
+def test_authenticator_app_sign_in():
+    from api import totp
+    pr = person("Totp")
+    s = pr.post("/api/v1/auth/totp/setup").json()
+    assert pr.post("/api/v1/auth/totp/enable", json={"flow": s["flow"], "code": "000000"}).status_code == 400
+    import time as _t
+    code = totp._code(s["secret"], int(_t.time() // 30))
+    assert pr.post("/api/v1/auth/totp/enable", json={"flow": s["flow"], "code": code}).json()["user"]["authApp"] is True
+    c = TestClient(server.app)
+    c.__enter__()
+    c.headers.update(H)
+    r = c.post("/api/v1/auth/password/login", json={"id": pr.email, "password": "Zq!8vB#2mLp@9xT"}).json()
+    assert r.get("channel") == "app" and r.get("step"), r
+    assert c.post("/api/v1/auth/step/verify", json={"flow": r["step"], "code": code}).status_code == 400   # a code works once
+    nxt = totp._code(s["secret"], int(_t.time() // 30) + 1)
+    assert c.post("/api/v1/auth/step/verify", json={"flow": r["step"], "code": nxt}).status_code == 200

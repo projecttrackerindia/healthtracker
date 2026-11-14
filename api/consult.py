@@ -51,7 +51,8 @@ FREQ = {"od": "once a day", "bd": "twice a day", "tds": "three times a day", "qi
 
 # ---- doctors ----------------------------------------------------------------------------------------------------------------
 def doctor_json(u: PartnerUser) -> dict:
-    return {"id": u.id, "name": u.name, "specialty": u.specialty or "", "regNo": u.reg_no or "", "verified": bool(u.verified)}
+    return {"id": u.id, "name": u.name, "specialty": u.specialty or "", "regNo": u.reg_no or "", "verified": bool(u.verified),
+            "languages": [x.strip() for x in (getattr(u, "languages", "") or "").split(",") if x.strip()]}
 
 
 @r.get("/doctors")

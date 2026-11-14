@@ -15,7 +15,7 @@ LAYER = WEB[WEB.index("/*live-p36*/"):]
 
 def test_the_layer_is_applied():
     assert 'id="live36-css"' in WEB
-    assert re.search(r"const V='dk-r(3[6-9]|[4-9]\d)'", (ROOT / "web" / "sw.js").read_text(encoding="utf-8"))
+    assert re.search(r"const V='dk-r(3[6-9]|[4-9]\d|[1-9]\d{2,})'", (ROOT / "web" / "sw.js").read_text(encoding="utf-8"))
 
 
 def test_it_reads_state_through_the_exported_handle():

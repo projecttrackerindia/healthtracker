@@ -714,6 +714,7 @@ class AskIn(BaseModel):
     question: str = ""
     context: dict = {}
     member: str = ""
+    lang: str = ""      # the app's language: the answer comes back in it (Tamil, Telugu)
 
 
 class Beacon(BaseModel):
@@ -825,7 +826,8 @@ def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko
         raise HTTPException(429, f"You have used this month's {cap} questions. They reset on the 1st." if free_now() else f"You have used this month's {cap} questions on the {h.plan} plan. Upgrade in Family & Privacy → Plan for more.")
     t0 = time.time()
     try:
-        out = agent.ask(q, body.context)
+        tongue = {"ta": "Tamil", "te": "Telugu"}.get(body.lang)
+        out = agent.ask(q + (f"\n\n(Reply in {tongue}, in simple everyday words.)" if tongue else ""), body.context)
     except Exception as e:
         AI._fail("health assistant", e)
         db.add(_job(h, "ask", "error", ok=False))

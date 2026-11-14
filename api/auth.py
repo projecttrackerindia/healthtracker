@@ -323,7 +323,7 @@ def start_session(request: Request, response: Response, db: Session, u: User, me
 
 def me_json(u: User) -> dict:
     return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "emailVerified": u.email_verified, "phoneVerified": u.phone_verified,
-                     "hasPassword": bool(u.pw_hash), "twoStep": u.two_step, "passkeys": len(u.passkeys), "created": u.created,
+                     "hasPassword": bool(u.pw_hash), "twoStep": u.two_step, "authApp": bool(u.totp_secret), "passkeys": len(u.passkeys), "created": u.created,
                      "verified": bool(u.email_verified and (u.phone_verified or u.aadhaar_verified)), "nameNext": name_next(u),
                      "aadhaarVerified": u.aadhaar_verified, "aadhaarLast4": u.aadhaar_last4 or "", "dob": _iso_dob(u.aadhaar_dob)}}
 
@@ -587,6 +587,10 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
         if locked:   # already locked before this guess; the guess that sets the lock answers like any wrong one
             raise HTTPException(429, "Too many wrong passwords on this account. Your password still works, but we'll also send you a code to confirm it's you.")
         raise bad
+    if u.totp_secret and not locked:
+        # an authenticator app on their phone: no code is sent, they type the 6 digits it shows
+        f = new_flow(db, "step", 10, user_id=u.id, data={"kind": "totp", "target": ""})
+        return {"step": f.id, "channel": "app", "sentTo": "your authenticator app"}
     if u.two_step or locked:
         # A lock never shuts the real owner out (that would let anyone lock any account): the right password
         # still works, it just needs a code as well while the lock lasts.
@@ -601,8 +605,17 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
 def step_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db)):
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "step")
-    verify_code(db, f.data["target"], "step", body)
     u = db.get(User, f.user_id)
+    if f.data.get("kind") == "totp":
+        from . import totp
+        limit(request, "totp", 8, 600, subject=f.user_id)
+        st = totp.verify(totp.unseal(u.totp_secret), body.code, u.totp_step or 0) if u and u.totp_secret else 0
+        if not st:
+            raise HTTPException(400, "That code did not match. Use the newest 6 digits in your authenticator app.")
+        u.totp_step = st
+        db.delete(f)
+        return start_session(request, response, db, u, "password+app")
+    verify_code(db, f.data["target"], "step", body)
     db.delete(f)
     return start_session(request, response, db, u, "password+otp")
 
@@ -837,6 +850,53 @@ def two_step(body: Toggle, u: User = Depends(need_user)):
     if body.on and not ((u.email and messaging.email_ready()) or (u.phone and messaging.sms_ready()) or messaging.demo()):
         raise HTTPException(400, "Codes cannot be sent from this server yet, so two-step sign-in cannot be switched on.")
     u.two_step = body.on
+    return me_json(u)
+
+
+# ---- authenticator app (TOTP) -----------------------------------------------------------------------------------------
+@r.post("/totp/setup", dependencies=[Depends(csrf)])
+def totp_setup(u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """A new secret for the authenticator app, held in a 10-minute flow until the first code proves it was added."""
+    from . import totp
+    if not u.pw_hash:
+        raise HTTPException(400, "Set a password first. The authenticator code is asked after the password.")
+    sec = totp.new_secret()
+    f = new_flow(db, "totp", 10, user_id=u.id, data={"s": totp.seal(sec)})
+    acct = u.email or u.phone or "Urban Health"
+    return {"flow": f.id, "secret": sec, "uri": totp.uri(sec, acct), "qr": totp.qr_svg(totp.uri(sec, acct))}
+
+
+class TotpIn(BaseModel):
+    flow: str = ""
+    code: str
+
+
+@r.post("/totp/enable", dependencies=[Depends(csrf)])
+def totp_enable(body: TotpIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    from . import totp
+    limit(request, "totp", 8, 600, subject=u.id)
+    f = get_flow(db, body.flow, "totp")
+    if f.user_id != u.id:
+        raise HTTPException(400, "This step has expired. Please start again.")
+    st = totp.verify(totp.unseal(f.data["s"]), body.code)
+    if not st:
+        raise HTTPException(400, "That code did not match. Check the time on your phone and try the newest code.")
+    u.totp_secret, u.totp_step = f.data["s"], st
+    db.delete(f)
+    from .ops import security
+    security(db, "totp:on", u.id, request)
+    return me_json(u)
+
+
+@r.post("/totp/disable", dependencies=[Depends(csrf)])
+def totp_disable(body: TotpIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    from . import totp
+    limit(request, "totp", 8, 600, subject=u.id)
+    if u.totp_secret and not totp.verify(totp.unseal(u.totp_secret), body.code, u.totp_step or 0):
+        raise HTTPException(400, "Enter the current code from your authenticator app to turn it off.")
+    u.totp_secret, u.totp_step = "", 0
+    from .ops import security
+    security(db, "totp:off", u.id, request)
     return me_json(u)
 
 

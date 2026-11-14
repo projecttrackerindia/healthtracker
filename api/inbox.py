@@ -43,7 +43,26 @@ def wants_push(db: Session, user_id: str, kind: str) -> bool:
     if cat in ALWAYS:
         return True
     pr = db.get(NoticePref, user_id)
-    return not pr or (pr.prefs or {}).get(cat, True) is not False
+    if not pr:
+        return True
+    prefs = pr.prefs or {}
+    if prefs.get(cat, True) is False:
+        return False
+    # quiet hours ("22:00-07:00", IST): everything waits in the inbox except emergencies and the dose times people set
+    q = str(prefs.get("quiet") or "")
+    if q and kind != "reminder" and cat != "meds":
+        try:
+            import datetime as _d
+            from zoneinfo import ZoneInfo
+            a, b = q.split("-")
+            n = _d.datetime.now(ZoneInfo("Asia/Kolkata"))
+            m = n.hour * 60 + n.minute
+            s0, s1 = (int(a[:2]) * 60 + int(a[3:5])), (int(b[:2]) * 60 + int(b[3:5]))
+            if (s0 <= m < s1) if s0 < s1 else (m >= s0 or m < s1):
+                return False
+        except Exception:
+            pass
+    return True
 
 
 def notify(db: Session, household_id: str, kind: str, title: str, body: str = "", ref: dict | None = None, member_id: str = "", url: str = "/app", to_user: str = "") -> Notice:
