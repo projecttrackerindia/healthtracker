@@ -933,7 +933,7 @@ function permsBody(){const e=PSEL.emergency_location,ok=e===true;
  ${['nearby_care','reminders','ai_reports'].map(k=>{const [t0,s0,bg,fg,path]=PERMI[k],v=PSEL[k];return`<div class="mi5"><div class="ic5" style="background:${bg}">${ic(path,fg,18)}</div><div class="t"><b>${t0}</b><small>${s0}</small></div><div class="sg5"><button class="n${v===false?' on':''}" data-pk="${k}" data-pv="0">Not now</button><button class="y${v===true?' on':''}" data-pk="${k}" data-pv="1">${v===true?'✓ ':''}Allow</button></div></div>`}).join('')}`}
 function permsBind(root,redraw){root.querySelectorAll('[data-pk]').forEach(b=>b.onclick=async()=>{const k=b.dataset.pk,v=b.dataset.pv==='1';PSEL[k]=v;
  if(k==='emergency_location'&&v){redraw();const l=await locAsk();if(!l)toast('Location stays off for now. SOS still alerts your family.')}
- if(k==='reminders'&&v&&window.Notification&&Notification.permission==='default'){try{Notification.requestPermission()}catch(_){}}redraw()})}
+ if(k==='reminders'&&v&&window.Notification&&Notification.permission!=='denied'){try{Promise.resolve(Notification.requestPermission()).then(p=>{if(p==='granted')pushSync()})}catch(_){}}redraw()})}
 async function permsSave(via){const items={};for(const k in PSEL)if(typeof PSEL[k]==='boolean')items[k]=PSEL[k];if(!Object.keys(items).length)return;try{PERMS=await API('/api/v2/permissions',{method:'PUT',json:{items,via}})}catch(e){toast(e.message)}locWarm()}
 /* people who joined before this step: asked once, the same way */
 async function permsGate(n,next){if(!PERMS)await loadPerms();if(!PERMS||PERMS.asked)return next&&next();if($('#layer').children.length){if((n||0)<40)setTimeout(()=>permsGate((n||0)+1,next),3000);return}PSEL={};PGNEXT=next||null;
@@ -2020,6 +2020,13 @@ async function exportData(){const out={exported:new Date().toISOString(),people:
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='urban-health-export.json';a.click()}
 async function deleteAccount(){const pw=prompt('Your account and everything you added will be erased in 48 hours. You can change your mind until then. Type DELETE to confirm.');if((pw||'').trim().toUpperCase()!=='DELETE')return;try{await API('/api/v1/auth/account/delete',{json:{confirm:'DELETE',later:true}});toast('Deletion scheduled. You can cancel it in Privacy.');openPrivacy()}catch(e){toast(e.message)}}
 async function signOut(){try{localStorage.removeItem('uh-loc')}catch(_){}try{if(sessionStorage.getItem('uh-join-keep')){sessionStorage.removeItem('uh-join-keep');const v=invInfo();if(v&&v.token)sessionStorage.setItem('uh-join',v.token)}}catch(_){}try{await API('/api/v1/auth/logout',{method:'POST'})}catch(_){}location.href='/app'}
+/* Keep this phone registered for notifications. Permission alone is not enough: the server can only send to a
+   phone that has told it where to send. Runs at every sign-in and right after permission is given; harmless to repeat. */
+async function pushSync(){if(!ME||!window.Notification||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return;
+ try{const k=await API('/api/v1/push/key');if(!k.enabled||!k.key)return;const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+  const want=ub64(k.key);if(sub&&sub.options&&sub.options.applicationServerKey){const have=new Uint8Array(sub.options.applicationServerKey);if(have.length!==want.length||have.some((b,i)=>b!==want[i])){await sub.unsubscribe();sub=null}}
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:want});
+  await API('/api/v1/push/subscribe',{json:{subscription:sub.toJSON()}})}catch(_){}}
 async function enablePush(){const ios=/iphone|ipad/i.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
  if(ios&&!standalone)return toast('On iPhone, add Urban Health to your Home Screen first, then turn reminders on from there.');
  if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window))return toast('This browser cannot show reminders. Try Chrome or Safari.');
@@ -2751,7 +2758,7 @@ async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);i
  {let la=0;try{la=+localStorage.getItem('uh-act')||0}catch(_){}if(la&&Date.now()-la>=IDLE_MS)return idleOut();IDLET=0;idleMark()}
  closeL();document.body.classList.add('in');rcDone();if(window.UHL){UHL.adopt(ME.user.lang);if(!UHL.chosen())await UHL.picker(saveLang)}await loadPerms();locWarm();if(!ME.me||!ME.onboarded)return onboard();
  const t=location.pathname.split('/')[2];if(['summary','records','meds','cover','family','visits'].includes(t))S.tab=t;S.person=S.person&&P(S.person)?S.person:ME.me;
- await Promise.all([...ME.people.map(p=>loadRecords(p.id)),loadVisits()]);await pollInbox();renderAll();if(PERMS&&!PERMS.asked)setTimeout(()=>permsGate(0,addrGate),900);else addrGate();setTimeout(pkOffer,1600)}
+ await Promise.all([...ME.people.map(p=>loadRecords(p.id)),loadVisits()]);await pollInbox();renderAll();setTimeout(pushSync,2500);if(PERMS&&!PERMS.asked)setTimeout(()=>permsGate(0,addrGate),900);else addrGate();setTimeout(pkOffer,1600)}
 /* Sign out after 10 minutes without activity. Activity = any touch, scroll, typing, or touching the 3D body (it posts 'uh-active').
    Time keeps counting while the app is in the background, so coming back after 10+ minutes asks for sign-in again.
    A 60-second warning comes first; any touch keeps you signed in. Never signs out while SOS is on. Shared across tabs. */

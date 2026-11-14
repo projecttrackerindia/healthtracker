@@ -13,6 +13,7 @@ for _old in _glob.glob("./data/test_*.db*"):  # every run starts from an empty s
     except OSError:
         pass
 os.environ.setdefault("APP_ENV", "test")   # demo one-time codes are refused in production
+os.environ.setdefault("STANDBY", "0")      # the task standby is tested directly, not left running behind every test
 
 import pytest
 

@@ -354,7 +354,8 @@ def start() -> None:
     def loop():
         while True:
             try:
-                tick()
+                from api.tasks import _run
+                _run("reminders", 55, tick)          # through the lease, so the standby sees it ran
             except Exception as e:
                 print("[reminders] tick failed:", type(e).__name__, str(e)[:200], flush=True)
             time.sleep(60)

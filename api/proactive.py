@@ -475,7 +475,8 @@ def start() -> None:
     def loop():
         while True:
             try:
-                tick()
+                from api.tasks import _run
+                _run("proactive", 300, tick)
             except Exception as e:
                 print("[proactive] failed:", type(e).__name__, str(e)[:200], flush=True)
             time.sleep(600)

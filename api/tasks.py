@@ -193,3 +193,51 @@ def task_health(x_task_token: str | None = Header(None)):
         return {"now": t, "inProcessLoops": in_process_loops(),
                 "tasks": [{"name": x.name, "ranAt": x.ran_at, "agoS": t - x.ran_at, "heldBy": x.holder,
                            "leaseEndsIn": max(0, x.until - t)} for x in rows]}
+
+
+# ---- standby ---------------------------------------------------------------------------------------------------------
+# Reminders depend on something calling them every minute: Cloud Scheduler, or the in-process loop. If neither is
+# running (a scheduler job pointing at an old URL, a token that changed, IN_PROCESS_LOOPS=0 left over from another
+# host) nothing fails loudly: medicines simply stop being reminded. The standby watches when each task last ran and
+# runs it itself when it is overdue. While the scheduler is healthy it does nothing; sends are de-duplicated by
+# ReminderSent keys, so a race between the two can never notify anyone twice.
+STANDBY = (("reminders", 150, 55), ("proactive", 1500, 300))
+
+
+def _last_ran(name: str) -> int:
+    with session() as db:
+        row = db.get(TaskLock, name)
+        return row.ran_at if row else 0
+
+
+def standby_start() -> None:
+    import threading
+    if os.getenv("STANDBY", "1") != "1":
+        return
+    try:
+        import fcntl
+        f = open(os.getenv("STANDBY_LOCK", "/tmp/urbanhealth-standby.lock"), "w")
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        globals()["_STANDBY_FILE"] = f       # one worker only; the lock lives as long as this process
+    except OSError:
+        return
+
+    def fns():
+        from api import proactive, reminders
+        return {"reminders": lambda: {"sent": reminders.tick()} if reminders.PUSH.ready() else {"skipped": "no push key"},
+                "proactive": proactive.tick}
+
+    def loop():
+        time.sleep(90)          # let a scheduler that is working claim its slot first
+        while True:
+            for name, overdue, hold in STANDBY:
+                try:
+                    if time.time() - _last_ran(name) > overdue:
+                        out = _run(name, hold, fns()[name])
+                        if not out.get("skipped"):
+                            print(f"[standby] ran {name}: nobody else had for {overdue}s", flush=True)
+                except Exception as e:
+                    print(f"[standby] {name} failed:", type(e).__name__, str(e)[:160], flush=True)
+            time.sleep(60)
+
+    threading.Thread(target=loop, name="task-standby", daemon=True).start()

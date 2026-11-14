@@ -114,6 +114,8 @@ def _init_db():
     reminders.start()
     dispatch_api.start()
     proactive_api.start()
+    from api import tasks as _tasks
+    _tasks.standby_start()    # runs reminders itself if nothing else has for a few minutes
     from api import people as _people
     _people.start_purge()
     from api import onboard as _onboard

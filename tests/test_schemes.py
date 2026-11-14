@@ -36,9 +36,15 @@ def test_private_card_with_photo_and_pdf():
     cid = c.json()["id"]
     assert c.json()["name"] == "Star Health" and c.json()["last4"] == "4821"
     assert f.post(f"/api/v2/schemes/cards/{cid}/file/front", files={"file": ("x.txt", b"hello", "text/plain")}).status_code == 415
-    ok = f.post(f"/api/v2/schemes/cards/{cid}/file/front", files={"file": ("c.jpg", b"\xff\xd8\xff\xe0card", "image/jpeg")})
+    import io as _io
+    from PIL import Image as _Im
+    jb, pb = _io.BytesIO(), _io.BytesIO()
+    _Im.new("RGB", (60, 40), (20, 90, 200)).save(jb, "JPEG")
+    _Im.new("RGB", (60, 40), (255, 255, 255)).save(pb, "PDF")
+    assert f.post(f"/api/v2/schemes/cards/{cid}/file/front", files={"file": ("c.jpg", b"\xff\xd8\xff\xe0card", "image/jpeg")}).status_code == 415   # not really a photo
+    ok = f.post(f"/api/v2/schemes/cards/{cid}/file/front", files={"file": ("c.jpg", jb.getvalue(), "image/jpeg")})
     assert ok.status_code == 200 and ok.json()["files"] == ["front"]
-    assert f.post(f"/api/v2/schemes/cards/{cid}/file/doc", files={"file": ("p.pdf", b"%PDF-1.4 policy", "application/pdf")}).status_code == 200
+    assert f.post(f"/api/v2/schemes/cards/{cid}/file/doc", files={"file": ("p.pdf", pb.getvalue(), "application/pdf")}).status_code == 200
     g = f.get(f"/api/v2/schemes/cards/{cid}/file/doc")
     assert g.status_code == 200 and g.content.startswith(b"%PDF")
     assert R.family().get(f"/api/v2/schemes/cards/{cid}/file/doc").status_code == 404

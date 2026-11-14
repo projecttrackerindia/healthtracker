@@ -237,6 +237,7 @@
 <script>window.UH_LIBS=(()=>{let p;return()=>p||(p=new Promise((ok,no)=>{const e=document.createElement("script");e.src="/a/three.9274bbce.js";e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();</script>
 <script>window.UH_BODY_BIN="/a/female.ab5cf751.bin";window.UH_BODY_NAMES="/a/names-f.a07a3541.json";window.UH_MARK="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M21.5%2015a4%204%200%200%201%204-4h3a4%204%200%200%201%204%204v34a4%204%200%200%201-4%204h-3a4%204%200%200%201-4-4V37.5H13a4%204%200%200%201-4-4v-3a4%204%200%200%201%204-4h8.5z%22%20fill%3D%22%232F5BFF%22/%3E%3Cpath%20d%3D%22M32%2032h5l3.2-8%204.6%2016%203.2-8h0.4%22%20fill%3D%22none%22%20stroke%3D%22%232F5BFF%22%20stroke-width%3D%224.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Ccircle%20cx%3D%2255.2%22%20cy%3D%2232%22%20r%3D%223.3%22%20fill%3D%22%232F5BFF%22/%3E%3C/svg%3E";</script>
 
+<style>.wl.nd span{display:block;padding:6px 12px;border-radius:14px;background:radial-gradient(ellipse at center,rgba(0,0,0,.92) 45%,rgba(0,0,0,.6) 75%,rgba(0,0,0,0) 100%)}</style>
 <script>/* ===== Urban Health · the particle world ===== */
 (async()=>{
 const cv=document.getElementById('world'),LBL=document.getElementById('wlabels');
@@ -426,7 +427,7 @@ function pose(k,p,t,o){const s=SH[k];const P=o.p,Cc=o.c;P.set(s.p);Cc.set(s.c);o
   o.anc={tech:[w[0],w[1]+.55,w[2]+.1]};if(mob){for(let j=0;j<N3;j+=3)P[j]*=.6;o.anc.tech[0]*=.6}break}
  case 'family':{const a=Math.sin(t*.22)*.28+(p-.5)*.5,c=Math.cos(a),sn=Math.sin(a);
   for(let i=0,j=0;i<N;i++,j+=3){const x=P[j],z=P[j+2];P[j]=x*c+z*sn;P[j+2]=-x*sn+z*c;const L=s.link[i];if(L>=0){const f=L%10,fl=((f+t*.45+((L/10)|0)*.25)%1);if(fl<.08){const g=1+(1-fl/.08)*2.2;Cc[j]*=g;Cc[j+1]*=g;Cc[j+2]*=g}}}
-  o.anc={};s.nodes.forEach((n,k2)=>{o.anc['n'+k2]=[n[0]*c,n[1]-n[2]-.12,-n[0]*sn]});break}
+  o.anc={};s.nodes.forEach((n,k2)=>{const up=k2>0&&n[1]>s.nodes[0][1];o.anc['n'+k2]=[n[0]*c,up?n[1]+n[2]+.1:n[1]-n[2]-.12,-n[0]*sn,up?1:0]});break}
  case 'kids':{const F=[0,1,2,3,4].map(j=>E(seg(p,.08+j*.15,.2+j*.15))*6.2832);
   for(let i=0,j=0;i<N;i++,j+=3){const r=s.ring[i];if(r<0){const b=1+.12*Math.sin(t*2);P[j]*=b;P[j+1]*=b;P[j+2]*=b;continue}const a=s.ang[i],f=F[r];
    if(a>f){Cc[j]*=.08;Cc[j+1]*=.08;Cc[j+2]*=.08}else if(f-a<.18&&f<6.2){Cc[j]*=2.2;Cc[j+1]*=2.2;Cc[j+2]*=2.2}}
@@ -492,10 +493,12 @@ function frame(now){requestAnimationFrame(frame);const t=now/1000;
  CH.forEach((el,i)=>{const p=i===k?fr:i<k?1:0,f=textFade(i,p);const tx=el.querySelector('.tx');if(tx){tx.style.opacity=f;tx.style.transform=`translateY(${(1-f)*(i<k||(i===k&&fr>.5)?-24:24)}px)`;tx.style.visibility=f<.01?'hidden':'visible'}
   el.querySelectorAll('[data-at]').forEach(x=>x.classList.toggle('on',i===k&&fr>=+x.dataset.at||i<k))});
  const lc=mt<.5?from:to,lp=lc===from?pf:pt,lo=(to===from?1:(mt<.5?1-mt*2:(mt-.5)*2))*textFade(lc,lp);const anc=(lc===from?A:B).anc||{};
+ const ROWY={};
  for(const el of labels){const ch=+el.dataset.c,key=el.dataset.a,at=+(el.dataset.at||0);if(ch!==lc||!anc[key]){el.style.opacity=0;continue}
   const a=anc[key];vP.set(a[0],a[1],a[2]).project(cam);const sx=(vP.x*.5+.5)*W,sy=(-vP.y*.5+.5)*H,side=+(el.dataset.side||0);
   const o=lo*EO(seg(lp,at,at+.05));el.style.opacity=o;const w=el.offsetWidth,h=el.offsetHeight;
-  const Wv=document.documentElement.clientWidth;const sd=mob&&ch===1?0:side;let x=sd>0?sx+18:sd<0?sx-18-w:sx-w/2,y=sd||el.classList.contains('big')?sy-h/2:sy;x=Math.max(8,Math.min(Wv-w-8,x));el.style.transform=`translate(${x}px,${y+(1-o)*10}px)`}
+  const Wv=document.documentElement.clientWidth;const sd=mob&&ch===1?0:side;let x=sd>0?sx+18:sd<0?sx-18-w:sx-w/2,y=sd||el.classList.contains('big')?sy-h/2:a[3]?sy-h:sy;
+  if(el.classList.contains('nd')){const k=key==='n1'||key==='n2'?'t':key==='n3'||key==='n4'?'b':'';if(k){ROWY[k]=ROWY[k]==null?y:ROWY[k];y=ROWY[k]}}/* a pair of names shares one line */x=Math.max(8,Math.min(Wv-w-8,x));el.style.transform=`translate(${x}px,${y+(1-o)*10}px)`}
  // the real app screen inside the particle phone
  {const im=document.getElementById('wscr'),src=lc===from?A:B,aa=anc.scrA,bb=anc.scrB,io=(lc===2?(src.io||0):0)*lo;if(im){if(aa&&bb&&io>0){vP.set(aa[0],aa[1],aa[2]).project(cam);const x1=(vP.x*.5+.5)*W,y1=(-vP.y*.5+.5)*H;vP.set(bb[0],bb[1],bb[2]).project(cam);const x2=(vP.x*.5+.5)*W,y2=(-vP.y*.5+.5)*H;
   im.style.opacity=io;im.style.width=(x2-x1)+'px';im.style.height=(y2-y1)+'px';im.style.transform=`translate(${x1}px,${y1}px)`;im.style.borderRadius=((x2-x1)*.12)+'px'}else im.style.opacity=0}}

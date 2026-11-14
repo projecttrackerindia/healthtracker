@@ -390,8 +390,13 @@ async def card_file(cid: str, slot: str, request: Request, db: Session = Depends
     mime = (getattr(f, "content_type", "") or "").lower()
     if not (data[:4] == b"%PDF" or data[:3] == b"\xff\xd8\xff" or data[:8] == b"\x89PNG\r\n\x1a\n" or data[4:12] in (b"ftypheic", b"ftypmif1", b"ftypheix") or data[8:12] == b"WEBP"):
         raise HTTPException(415, "Use a photo (JPG, PNG, HEIC) or a PDF.")
+    real, _ = storage.checked(data, SLOTS[slot])      # the bytes decide the type, never the browser's label
+    data = storage.safe_document(data, real)           # no scripts in a PDF, no GPS in a photo
+    if real not in ("application/pdf", "image/heic"):
+        real = "image/jpeg"
+    storage.virus_scan(data)
     fid = f"ins_{c.id}_{slot}"
-    storage.put(db, u.household_id, fid, data, "application/pdf" if data[:4] == b"%PDF" else (mime if mime.startswith("image/") else "image/jpeg"), SLOTS[slot], u.id)
+    storage.put(db, u.household_id, fid, data, real, SLOTS[slot], u.id)
     c.files = {**(c.files or {}), slot: fid}
     return _card(c)
 
