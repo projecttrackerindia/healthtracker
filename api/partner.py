@@ -371,6 +371,12 @@ def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: Partn
         raise HTTPException(400, "Choose the technician who is going — use Assign on the booking.")
     if body.status not in allowed:
         raise HTTPException(400, f"From '{LABEL.get(cur, cur)}' you can go to: {', '.join(LABEL.get(a, a) for a in allowed) or 'nothing'}.")
+    if u.role == "tech":
+        # a technician works the visit they were sent on; confirming, cancelling and reports stay with the lab
+        if o.agent_id != u.id:
+            raise HTTPException(403, "This visit is assigned to someone else.")
+        if body.status not in ("en_route", "arrived", "collected"):
+            raise HTTPException(403, "Ask the lab to do this; technicians update the visit itself.")
     if body.status == "ready" and not db.get(StoredFile, (o.household_id, f"labrep_{o.id}")):
         raise HTTPException(400, "Upload the report first; 'Report ready' sends it to the family.")
     if body.status == "packing" and o.kind == "medicine" and not o.verified_at and any(i.get("rx") for i in (o.items or [])):
@@ -849,6 +855,7 @@ async def upload_report(oid: str, request: Request, db: Session = Depends(get_db
     except Exception as e:
         print("[partner] report store failed:", type(e).__name__, str(e)[:200], flush=True)
         raise HTTPException(502, "The report could not be stored right now; try again in a minute.")
+    _to_person_records(db, o, s, data, mime, name, u)
     o.timeline = (o.timeline or []) + [{"s": "report_uploaded", "t": now(), "by": u.email}]
     if order_json(o)["status"] in ("placed", "confirmed", "collected", "processing"):
         o.status = "ready"
@@ -857,6 +864,37 @@ async def upload_report(oid: str, request: Request, db: Session = Depends(get_db
     notify(db, o.household_id, "lab_result", f"Report ready · {s.name}", f"{tests}. Open Lab results and tap Analyse to read it in plain words.",
            {"order": o.id, "fileId": f"labrep_{o.id}", "store": s.name, "name": name, "mime": mime, "size": len(data), "tests": [i.get("name", "") for i in (o.items or [])]}, o.member_id or "", "/app")
     return porder(db, o)
+
+
+def _to_person_records(db: Session, o: Order, s: Store, data: bytes, mime: str, name: str, u: PartnerUser) -> None:
+    """The family's app shows reports per person (Lab > My reports). A booking made for a profile puts the lab's
+    report there too, unread, so the person sees it where they look and can tap Analyse; before this, it reached
+    only the household inbox and the person's Lab tab stayed empty."""
+    if not o.member_id:
+        return
+    try:
+        import datetime as _dt
+        import hashlib as _hl
+        from .family import encrypt
+        from .models import HealthRecord, Person, new_id
+        p = db.get(Person, o.member_id)
+        if not p or p.household_id != o.household_id:
+            return
+        sha = _hl.sha256(data).hexdigest()
+        fid = new_id("f")
+        storage.put(db, p.id, fid, data, mime, name, "partner:" + u.id)
+        tests = [i.get("name", "") for i in (o.items or [])]
+        rec = {"title": (", ".join(tests[:2]) + (f" +{len(tests) - 2}" if len(tests) > 2 else "")) or "Lab report", "doc": "report",
+               "lab": s.name, "date": _dt.date.today().isoformat(), "findings": [], "medicines": [], "summary": "", "focus": [],
+               "followups": [], "questions": [], "warnings": [], "engine": "", "mime": mime, "name": name[:120], "checked": False,
+               "sha": sha, "sig": "", "fromLab": {"order": o.id, "store": s.name}, "patient": {}, "unread": True}
+        x = HealthRecord(person_id=p.id, kind="report", blob=encrypt(rec), file_id=fid, day=rec["date"], by_user="")
+        db.add(x)
+        db.flush()
+        from .people import index_record
+        index_record(db, x, rec)
+    except Exception as e:     # the household copy is already stored; this must never block the report reaching the family
+        print("[partner] person record failed:", type(e).__name__, str(e)[:160], flush=True)
 
 
 # ---- appointments (hospitals / clinics) -----------------------------------------------------------------------------------

@@ -62,7 +62,7 @@ class Store(Base):
     licence: Mapped[str] = mapped_column(String(64), default="")  # drug licence / NABL number (admin-entered)
     gstin: Mapped[str] = mapped_column(String(20), default="")    # printed on receipts when present
     gst_pct: Mapped[int] = mapped_column(Integer, default=0)      # GST included in this seller's prices (0 = not shown separately)
-    rating: Mapped[float] = mapped_column(Float, default=4.3)
+    rating: Mapped[float] = mapped_column(Float, default=0)      # average of real ratings; 0 until the first one
     rating_n: Mapped[int] = mapped_column(Integer, default=0)
     discount_pct: Mapped[float] = mapped_column(Float, default=0)  # off MRP on medicines
     delivery: Mapped[bool] = mapped_column(Boolean, default=True)

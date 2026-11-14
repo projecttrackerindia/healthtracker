@@ -503,6 +503,10 @@ def cancel_terms(o: Order) -> dict:
     st = slot_time(o.slot) if o.slot else None
     if o.status in ("collected", "processing", "ready", "out", "delivered", "cancelled", "refunded"):
         return {"can": False, "free": False, "fee": 0, "why": "This order can't be cancelled at this stage."}
+    if o.kind != "lab":   # a medicine order has no slot: free until it is packed, then it is already on its way
+        if o.status == "packing":
+            return {"can": False, "free": False, "fee": 0, "why": "The pharmacy has packed your order, so it can't be cancelled now. You can return unopened items."}
+        return {"can": True, "free": True, "fee": 0, "why": "Free until the pharmacy packs your order."}
     if st and st - now() < FREE_CANCEL_H * 3600:
         return {"can": True, "free": False, "fee": LATE_CANCEL_FEE, "why": f"Less than {FREE_CANCEL_H} hours to your slot: a ₹{LATE_CANCEL_FEE} fee applies."}
     return {"can": True, "free": True, "fee": 0, "why": f"Free until {FREE_CANCEL_H} hours before the slot."}

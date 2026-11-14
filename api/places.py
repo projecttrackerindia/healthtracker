@@ -274,7 +274,7 @@ def places(kind: str = "hospital", lat: float | None = None, lng: float | None =
     skind = {"hospital": "hospital", "clinic": "hospital", "lab": "lab", "pharmacy": "pharmacy", "blood": None}[kind]
     partners = []
     if skind:
-        for s in db.scalars(select(Store).where(Store.kind == skind, Store.active == True)).all():  # noqa: E712
+        for s in db.scalars(select(Store).where(Store.kind == skind, Store.active == True, Store.verified == True)).all():  # noqa: E712
             d = km(lat, lng, s.lat, s.lng)
             if d <= radius / 1000 + 3:
                 partners.append(_store_json(s, d))

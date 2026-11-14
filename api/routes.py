@@ -66,7 +66,7 @@ def household(db: Session, key: str | None, create=True) -> Household | None:
 
 def store_json(s: Store, d=None, extra=None):
     o = {"id": s.id, "kind": s.kind, "name": s.name, "brand": s.brand, "area": s.area, "city": s.city, "address": s.address, "phone": s.phone,
-         "hours": s.hours, "open24": s.open_24h, "rating": s.rating, "ratingN": s.rating_n, "discount": s.discount_pct, "delivery": s.delivery,
+         "hours": s.hours, "open24": s.open_24h, "rating": (s.rating if s.rating_n else 0), "ratingN": s.rating_n, "discount": s.discount_pct, "delivery": s.delivery,
          "fee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "home": s.home_collection, "collectionFee": s.collection_fee,
          "verified": s.verified, "licence": s.licence, "lat": s.lat, "lng": s.lng}
     if d is not None:
@@ -160,7 +160,7 @@ def stores(kind: str = "pharmacy", lat: float | None = None, lng: float | None =
            db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, Loc(lat=lat, lng=lng, city=city), h)
-    rows = db.scalars(select(Store).where(Store.kind == kind, Store.active == True)).all()  # noqa: E712
+    rows = db.scalars(select(Store).where(Store.kind == kind, Store.active == True, Store.verified == True)).all()  # noqa: E712
     out = []
     for s in rows:
         d = km(la, lo, s.lat, s.lng)
@@ -186,7 +186,7 @@ def quotes(body: QuoteReq, db: Session = Depends(get_db), x_dokko_key: str | Non
     """Compare nearby pharmacies for a basket: price per store, discount, delivery fee, ETA, rating, 'ordered before'."""
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, body, h)
-    rows = db.scalars(select(Store).where(Store.kind == "pharmacy", Store.active == True)).all()  # noqa: E712
+    rows = db.scalars(select(Store).where(Store.kind == "pharmacy", Store.active == True, Store.verified == True)).all()  # noqa: E712
     near = sorted(((km(la, lo, s.lat, s.lng), s) for s in rows), key=lambda x: x[0])[:10]
     if not near:
         return {"city": cty, "approx": approx, "stores": []}
@@ -216,9 +216,14 @@ def quotes(body: QuoteReq, db: Session = Depends(get_db), x_dokko_key: str | Non
                     "total": sub + fee, "complete": not missing, "orderedBefore": s.id in prev, "eta": _eta_text(s.eta_min)})
     comp = [x for x in res if x["complete"]] or res
     tags = {}
+    # a badge only means something next to another choice, and only when it is true (rated by real orders, a real saving)
     for key, label, fn in (("total", "Cheapest", lambda x: x["total"]), ("km", "Nearest", lambda x: x["km"]), ("etaMin", "Fastest", lambda x: x["etaMin"]),
                            ("rating", "Best rated", lambda x: -x["rating"]), ("saving", "Biggest discount", lambda x: -x["saving"])):
+        if len(comp) < 2:
+            break
         best = min(comp, key=fn)
+        if (key == "rating" and (best.get("ratingN") or 0) < 3) or (key == "saving" and not best["saving"]):
+            continue
         tags.setdefault(best["id"], []).append(label)
     for x in res:
         x["tags"] = tags.get(x["id"], []) + (["Ordered before"] if x["orderedBefore"] else [])
@@ -301,8 +306,8 @@ def _status(o: Order):
     now_at = next((i for i, (k, _) in enumerate(steps) if k == o.status), -1)
     live = max(seen, now_at)
     i = live
-    if os.getenv("APP_ENV", "production") != "production":
-        # demo progression on staging only: in production, only the partner (or admin) advances an order
+    if os.getenv("APP_ENV", "production") != "production" and os.getenv("DEMO_PROGRESS", "1") != "0":
+        # demo progression on staging only (DEMO_PROGRESS=0 turns it off for end-to-end runs): in production, only the partner (or admin) advances an order
         el = now() - o.created
         i = max(live, max(i for i, s in enumerate(DEMO_SECONDS) if el >= s))
         i = min(i, len(steps) - 1)  # DEMO_SECONDS is longer than the shop and medicine step lists
@@ -360,7 +365,7 @@ def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db)
     if not order_allowed(db, current_user(request, db), body.memberId, write=True):
         raise HTTPException(403, "Only they, or someone who looks after them, can book this.")
     s = db.get(Store, body.store)
-    if not s or not s.active:
+    if not s or not s.active or not s.verified:   # a partner still in onboarding takes no orders
         raise HTTPException(404, "store not found")
     if body.kind == "lab":
         codes = [i.get("code") for i in body.items]
@@ -554,7 +559,7 @@ def lab_quotes(body: LabReq, db: Session = Depends(get_db), x_dokko_key: str | N
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, body, h)
     codes = [c for c in body.tests if c in TESTS]
-    rows = db.scalars(select(Store).where(Store.kind == "lab", Store.active == True)).all()  # noqa: E712
+    rows = db.scalars(select(Store).where(Store.kind == "lab", Store.active == True, Store.verified == True)).all()  # noqa: E712
     near = sorted(((km(la, lo, s.lat, s.lng), s) for s in rows), key=lambda x: x[0])[:8]
     ids = [s.id for _, s in near]
     tests = db.scalars(select(LabTest).where(LabTest.store_id.in_(ids), LabTest.code.in_(codes))).all() if ids and codes else []
@@ -570,12 +575,17 @@ def lab_quotes(body: LabReq, db: Session = Depends(get_db), x_dokko_key: str | N
         fee = s.collection_fee if body.home and s.home_collection else 0
         res.append({**store_json(s, d), "lines": lines, "missing": missing, "subtotal": sub, "fee": fee, "total": sub + fee, "complete": not missing,
                     "fasting": any(l["fasting"] for l in lines), "tatHours": max([l["tat"] for l in lines] or [0]),
-                    "slots": _slots(), "typical": sum(TESTS[c][1] for c in codes)})
+                    "slots": _slots(any(l["fasting"] for l in lines)), "typical": sum(TESTS[c][1] for c in codes)})
     comp = [x for x in res if x["complete"] and (not body.home or x["home"])] or res
     tags = {}
     if comp:
         for label, fn in (("Cheapest", lambda x: x["total"]), ("Nearest", lambda x: x["km"]), ("Fastest report", lambda x: x["tatHours"]), ("Best rated", lambda x: -x["rating"])):
-            tags.setdefault(min(comp, key=fn)["id"], []).append(label)
+            if len(comp) < 2:
+                break
+            best = min(comp, key=fn)
+            if label == "Best rated" and (best.get("ratingN") or 0) < 3:
+                continue
+            tags.setdefault(best["id"], []).append(label)
     for x in res:
         x["tags"] = tags.get(x["id"], []) + (["NABL"] if x["licence"].startswith("NABL") else [])
         x["score"] = round(100 - x["total"] / max(1, min(c["total"] for c in comp)) * 30 - x["km"] * 2 + x["rating"] * 4 - (40 if not x["complete"] else 0) - (15 if body.home and not x["home"] else 0), 1)
@@ -584,13 +594,14 @@ def lab_quotes(body: LabReq, db: Session = Depends(get_db), x_dokko_key: str | N
             "labs": res, "recommended": res[0]["id"] if res else None}
 
 
-def _slots():
+def _slots(fasting: bool = False):
+    """Home-collection slots in Indian time. A fasting test is drawn in the morning, so evenings are not offered."""
     import datetime as _d
     t = _d.datetime.now(_d.timezone(_d.timedelta(hours=5, minutes=30))).replace(tzinfo=None)   # slots are Indian time
     base = t.replace(minute=0, second=0, microsecond=0)
     out = []
     for dayoff in (0, 1, 2):
-        for hr in (6, 7, 8, 9, 10, 16, 17):
+        for hr in ((6, 7, 8, 9, 10) if fasting else (6, 7, 8, 9, 10, 16, 17)):
             when = base.replace(hour=hr) + __import__("datetime").timedelta(days=dayoff)
             if (when - t).total_seconds() > 3 * 3600:
                 out.append(when.strftime("%a %d %b · %I:%M %p").replace(" 0", " "))
@@ -936,6 +947,6 @@ def subscribe(body: SubReq, db: Session = Depends(get_db), x_dokko_key: str | No
 def hospitals(lat: float | None = None, lng: float | None = None, city: str | None = None, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, Loc(lat=lat, lng=lng, city=city), h)
-    rows = db.scalars(select(Store).where(Store.kind == "hospital", Store.active == True)).all()  # noqa: E712
+    rows = db.scalars(select(Store).where(Store.kind == "hospital", Store.active == True, Store.verified == True)).all()  # noqa: E712
     near = sorted(((km(la, lo, s.lat, s.lng), s) for s in rows), key=lambda x: x[0])[:5]
     return {"city": cty, "approx": approx, "hospitals": [store_json(s, d) for d, s in near]}

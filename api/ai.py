@@ -302,9 +302,28 @@ def text_from(data: bytes, mime: str) -> str:
     return ""
 
 
+# Brand names families actually type, mapped to the generic in the catalogue (same molecule, same strength band).
+BRANDS = {"dolo": "para500", "crocin": "para500", "calpol": "para500", "pacimol": "para500", "p-650": "para500", "p 650": "para500",
+          "brufen": "ibu400", "ibugesic": "ibu400", "volini": "diclogel", "moov": "diclogel", "electral": "ors", "cetzine": "cet10",
+          "okacet": "cet10", "alerid": "cet10", "lorfast": "lor10", "digene": "antacid", "gelusil": "antacid", "mucaine": "antacid",
+          "pan 40": "pan40", "pan-40": "pan40", "pantocid": "pan40", "pantop": "pan40", "emeset": "onda4", "vomikind": "onda4",
+          "udiliv": "ursod", "limcee": "vitc", "celin": "vitc", "shelcal": "cald3", "calcimax": "cald3", "uprise": "d3sach",
+          "calcirol": "d3sach", "neurobion": "b12", "methycobal": "b12", "autrin": "ifa", "livogen": "ifa", "folvite": "fol5",
+          "maxepa": "omega", "zincovit": "zinc", "betadine": "betad", "lacto calamine": "calam", "candid": "clot", "atorva": "ator10",
+          "lipitor": "ator10", "rosuvas": "rosu10", "crestor": "rosu10", "amlong": "amlo5", "stamlo": "amlo5", "telma": "telmi40",
+          "glycomet": "metf500", "gluconorm": "metf500", "thyronorm": "levo50", "eltroxin": "levo50", "augmentin": "amoxclav",
+          "clavam": "amoxclav", "moxclav": "amoxclav", "azithral": "azith500", "azee": "azith500", "septran": "cotri",
+          "montair": "montel", "asthalin": "salb", "sporlac": "probio", "econorm": "probio"}
+
+
 def match_sku(name: str, hint: str = ""):
     """Catalogue item for a medicine name; `hint` (the surrounding text) picks syrup/drops/gel forms over tablets."""
     n = name.lower()
+    for b, sku in BRANDS.items():
+        if re.search(r"(^|\W)" + re.escape(b) + r"(\W|$)", n):
+            hit = next((m for m in CATALOG if m["id"] == sku), None)
+            if hit:
+                return hit
     liquid = bool(re.search(r"syp|syrup|susp|drops|gel|cream|oint|inhaler|spray", hint.lower()))
     cands = []
     for m in CATALOG:

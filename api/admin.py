@@ -513,7 +513,8 @@ def admin_stores(kind: str = "", q: str = "", pending: int = 0, a: Admin = Depen
 
 @r.post("/stores")
 def add_store(body: StoreIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
-    s = Store(**body.model_dump())
+    # going live is the checked onboarding step (photos, licence, bank, agreement), never a box ticked at creation
+    s = Store(**{**body.model_dump(), "verified": False})
     db.add(s)
     db.flush()
     if s.kind == "pharmacy":  # start with the full catalogue at the store's discount; edit later

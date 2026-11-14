@@ -172,7 +172,11 @@ def contacts(db: Session, pid: str) -> list[dict]:
     rows = db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind == "contact").order_by(HealthRecord.created)).all()
     out = []
     for r_ in rows:
-        d = decrypt(r_.blob)
+        try:
+            d = decrypt(r_.blob)
+        except Exception as e:   # one unreadable row must not take the whole profile (and sign-in) down with it
+            print("[people] contact unreadable:", r_.id, type(e).__name__, flush=True)
+            continue
         out.append({"id": r_.id, **d})
     out.sort(key=lambda c: c.get("order", 99))
     return out
