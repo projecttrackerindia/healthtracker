@@ -100,9 +100,8 @@ def _name_key(n: str) -> str:
     return re.sub(r"[^a-z]", "", (n or "").lower())
 
 
-PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone", "legalName", "abha", "callName", "relation")
-RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother", "Father-in-law", "Mother-in-law",
-             "Son-in-law", "Daughter-in-law", "Brother-in-law", "Sister-in-law", "Uncle", "Aunt", "Nephew", "Niece", "Cousin", "Friend", "Caregiver", "Other")
+PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone", "legalName", "abha", "callName", "relation",
+                "birthTime", "birthLength", "birthHead", "birthHospital", "birthDoctor", "delivery", "namingDay")
 COLORS = ["#0A84FF", "#30B0C7", "#BF5AF2", "#FF9F0A", "#34C759", "#FF375F", "#5E5CE6", "#A2845E"]
 INVITE_DAYS = 7
 
@@ -231,6 +230,20 @@ def rel_for(db: Session, u: User, iv: HouseholdInvite) -> str:
     return ""
 
 
+_INV = {"Wife": "Husband", "Husband": "Wife", "Son": "P", "Daughter": "P", "Father": "C", "Mother": "C", "Brother": "S", "Sister": "S",
+        "Grandson": "G", "Granddaughter": "G", "Grandfather": "GC", "Grandmother": "GC", "Son-in-law": "PL", "Daughter-in-law": "PL",
+        "Father-in-law": "CL", "Mother-in-law": "CL", "Brother-in-law": "SL", "Sister-in-law": "SL", "Cousin": "Cousin", "Friend": "Friend"}
+
+
+def _inverse(rel: str, their_sex: str) -> str:
+    """The relation seen the other way round, worded by the other person's sex: I am his Daughter, so he is my Father."""
+    k = _INV.get(rel, "")
+    m = their_sex == "male"
+    return {"P": "Father" if m else "Mother", "C": "Son" if m else "Daughter", "S": "Brother" if m else "Sister", "G": "Grandfather" if m else "Grandmother",
+            "GC": "Grandson" if m else "Granddaughter", "PL": "Father-in-law" if m else "Mother-in-law", "CL": "Son-in-law" if m else "Daughter-in-law",
+            "SL": "Brother-in-law" if m else "Sister-in-law"}.get(k, k)
+
+
 def person_json(db: Session, u: User, p: Person, a: Access) -> dict:
     pr = profile(p)
     out = {"id": p.id, "name": p.name, "color": p.color, "self": p.owner_user == u.id,
@@ -247,9 +260,21 @@ def person_json(db: Session, u: User, p: Person, a: Access) -> dict:
         iv = db.scalar(select(HouseholdInvite).where(HouseholdInvite.used_by == p.owner_user, HouseholdInvite.household_id == p.household_id))
         if iv:
             out["relation"], out["relationOk"] = rel_for(db, u, iv), bool(iv.rel_ok)
+        else:
+            # they invited me: I am what they called me, so they are the reverse of that to me
+            mine = db.scalar(select(HouseholdInvite).where(HouseholdInvite.used_by == u.id, HouseholdInvite.by_user == p.owner_user))
+            if mine and mine.relation:
+                inv = _inverse(mine.relation, profile(p).get("sex", ""))
+                if inv:
+                    out["relation"], out["relationOk"] = inv, True
     if p.owner_user is None and pr.get("relation"):
         out["relation"] = pr["relation"]          # set by the guardian when adding or editing a dependent
-    out["guardians"] = [g for g in db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id))] if p.owner_user is None else []
+    out["guardians"] = [g for g in db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id))]
+    out["teen"] = bool(p.owner_user and out["guardians"])
+    if p.owner_user:
+        ou = db.get(User, p.owner_user)
+        out["given"] = ((ou.name if ou else "") or "").strip().split(" ")[0]   # the name they typed for themselves at sign-up, given name first
+    out["userId"] = p.owner_user or ""      # family members already see each other in "members"; this links the two
     return out
 
 
@@ -1444,11 +1469,15 @@ def join(body: JoinIn, u: User = Depends(need_user), db: Session = Depends(get_d
             _move_out(db, u)
         u.household_id, u.role = p.household_id, "member"
         p.owner_user = u.id
-        for g in db.scalars(select(Guardian).where(Guardian.person_id == p.id)):
-            db.merge(Grant(person_id=p.id, user_id=g.user_id, level="summary", womens=False))
-            db.delete(g)
+        yrs = age(profile(p).get("dob", ""))
+        teen = isinstance(yrs, int) and yrs < 18
+        if not teen:
+            for g in db.scalars(select(Guardian).where(Guardian.person_id == p.id)):
+                db.merge(Grant(person_id=p.id, user_id=g.user_id, level="summary", womens=False))
+                db.delete(g)
         i.used_by = u.id
-        _note(db, p.household_id, "family", f"{p.name} now has their own login", "Their records came with them. They decide what you can see now.", {"user": u.id})
+        _note(db, p.household_id, "family", f"{p.name} now has their own login",
+              "You are still their guardian until they turn 18." if teen else "Their records came with them. They decide what you can see now.", {"user": u.id})
         db.commit()
         return {**out, "handover": True}
     if u.household_id == i.household_id:
@@ -1493,14 +1522,15 @@ class HandIn(BaseModel):
 
 @r.post("/people/{pid}/handover")
 def handover(pid: str, body: HandIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
-    """A dependent turning 18 gets their own login. One invite, their records move with them, nothing is copied."""
+    """A dependent of 13 or more gets their own login. One invite, their records move with them, nothing is copied.
+    Under 18 the guardians stay guardians (a teen app, a parent who still looks after it); at 18 that ends by itself."""
     limit(request, "v2invite", 20, 3600)
     p, a = person_or_404(db, u, pid)
     if p.owner_user or not db.get(Guardian, (p.id, u.id)):
         raise HTTPException(403, "Only a guardian can hand over a profile")
     yrs = age(profile(p).get("dob", ""))
-    if not isinstance(yrs, int) or yrs < 18:
-        raise HTTPException(400, "Profiles can be handed over from 18 years of age")
+    if not isinstance(yrs, int) or yrs < 13:
+        raise HTTPException(400, "A child can have their own login from 13 years of age")
     kind, c = norm_contact(body.contact)
     db.execute(delete(HouseholdInvite).where(HouseholdInvite.person_id == p.id, HouseholdInvite.used_by.is_(None)))
     i = HouseholdInvite(token=secrets.token_urlsafe(24), household_id=p.household_id, contact=c, relation="", name=p.name,

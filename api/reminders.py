@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date as _dt_date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 
@@ -81,6 +81,8 @@ def tick(now_dt: datetime | None = None) -> int:
     try:
         with session() as db:
             daily_people(db, now_dt)
+            from .surprise import deliver_due
+            deliver_due(db)
             if now_dt.hour == 8:
                 morning_people(db, now_dt)
                 from .phase5 import send_morning_summary
@@ -445,7 +447,49 @@ def daily_people(db, now_dt: datetime) -> int:
                 notify(db, a.household_id, "visits", f"Visit at {_t12(t)} · {where}", "Leave now to arrive 15 minutes early. Tap I'm here at the desk to get your token.",
                        {"appointment": a.id}, member_id=a.member_id, url="/app/visits")
                 done += 1
+    # a child turning 18: the guardians are told a month ahead and on the day; a teen with their own login stops
+    # having guardians on their 18th birthday (the guardians keep the summary they could already see)
+    from .models import Grant as _G
+    for p in db.scalars(select(Person).where(Person.removed.is_(None))).all():
+        gs = list(db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id)))
+        if not gs:
+            continue
+        dob = (_safe_profile(p) or {}).get("dob", "")
+        try:
+            b = _dt_date.fromisoformat(dob)
+        except (TypeError, ValueError):
+            continue
+        try:
+            bday = b.replace(year=b.year + 18)
+        except ValueError:
+            bday = b.replace(year=b.year + 18, day=28)
+        days = (bday - now_dt.date()).days
+        first = (p.name or "").split(" ")[0]
+        if days in (30, 0):
+            key = f"eighteen:{p.id}:{days}"
+            if not db.get(ReminderSent, key):
+                db.add(ReminderSent(key=key))
+                for uid in gs:
+                    if p.owner_user:
+                        notify(db, p.household_id, "family", f"{first} turns 18 {'today' if days == 0 else 'next month'}",
+                               "From 18 they manage their own health. You keep seeing their summary until they change it.", {"person": p.id}, member_id=p.id, url="/app", to_user=uid)
+                    else:
+                        notify(db, p.household_id, "family", f"{first} turns 18 {'today' if days == 0 else 'next month'}",
+                               "Give them their own login from Family. Their records move with them.", {"person": p.id}, member_id=p.id, url="/app", to_user=uid)
+                done += 1
+        if days <= 0 and p.owner_user:
+            for uid in gs:
+                db.merge(_G(person_id=p.id, user_id=uid, level="summary", womens=False))
+                db.execute(Guardian.__table__.delete().where(Guardian.person_id == p.id, Guardian.user_id == uid))
     return done
+
+
+def _safe_profile(p):
+    try:
+        from .people import profile
+        return profile(p)
+    except Exception:
+        return {}
 
 
 def _t12(t: str) -> str:

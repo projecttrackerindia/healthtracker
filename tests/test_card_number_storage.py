@@ -34,3 +34,10 @@ def test_dependent_relation_is_kept_and_unknown_dropped():
     from api.people import clean_profile
     assert clean_profile({"relation": "Daughter"})["relation"] == "Daughter"
     assert clean_profile({"relation": "Boss"})["relation"] == ""
+
+
+def test_reverse_relation_reads_from_the_other_side():
+    from api.people import _inverse
+    assert _inverse("Wife", "male") == "Husband"
+    assert _inverse("Daughter", "male") == "Father" and _inverse("Daughter", "female") == "Mother"
+    assert _inverse("Mother-in-law", "female") == "Daughter-in-law"

@@ -729,6 +729,27 @@ class Appointment(Base):
     updated: Mapped[int] = mapped_column(Integer, default=now)
 
 
+class Surprise(Base):
+    """News one person chose to share: her pregnancy with her husband or parents, or a birth. The notification never carries
+    the news itself; it is opened inside the app. Unopened ones are cancelled if she says the pregnancy ended."""
+    __tablename__ = "surprises"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("sp"))
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    from_person: Mapped[str] = mapped_column(String(32), index=True)
+    from_user: Mapped[str] = mapped_column(String(32))
+    to_user: Mapped[str] = mapped_column(String(32), index=True)
+    kind: Mapped[str] = mapped_column(String(12), default="pregnancy")   # pregnancy | born
+    way: Mapped[str] = mapped_column(String(12), default="gift")         # gift | countdown | inperson | card
+    note: Mapped[str] = mapped_column(String(300), default="")
+    extra: Mapped[dict | None] = mapped_column(JSON, nullable=True)      # born: {baby, name, dob, time, weight, hospital}
+    deliver_at: Mapped[int] = mapped_column(Integer, default=now)
+    delivered: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    opened: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reply: Mapped[str] = mapped_column(String(300), default="")
+    status: Mapped[str] = mapped_column(String(10), default="active")    # active | cancelled | stopped
+    created: Mapped[int] = mapped_column(Integer, default=now)
+
+
 class Notice(Base):
     """Something that happened on the server side that the family should see: order status, report ready, visit confirmed, message."""
 

@@ -212,6 +212,8 @@ app.include_router(queue_api.r)
 app.include_router(queue_api.pr)
 from api import people as people_api  # noqa: E402
 app.include_router(people_api.r)
+from api import surprise as surprise_api  # noqa: E402
+app.include_router(surprise_api.r)
 from api import booking as booking_api
 app.include_router(booking_api.r)
 from api import schemes as schemes_api
