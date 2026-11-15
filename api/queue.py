@@ -84,6 +84,11 @@ def token_json(db: Session, t: Token, *, counter: bool = False) -> dict:
     # better thing to show a waiting room than a confident number nobody can keep to.
     out["waitMin"] = ahead * p if (p and t.state == "waiting") else None
     out["pacing"] = bool(p)
+    # who is in the room now: the board the waiting room watches
+    out["serving"] = db.scalar(select(func.max(Token.number)).where(
+        Token.store_id == t.store_id, Token.doctor_id == t.doctor_id, Token.day == t.day, Token.state.in_(("called", "in", "done")))) or 0
+    s = db.get(Store, t.store_id)
+    out["store"] = {"name": s.name, "area": s.area or "", "phone": s.phone or ""} if s else None
     return out
 
 

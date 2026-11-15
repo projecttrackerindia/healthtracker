@@ -6,6 +6,7 @@ The state is read, never written: ticking a dose still happens in the app.
 """
 from __future__ import annotations
 
+import re
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -422,7 +423,34 @@ def daily_people(db, now_dt: datetime) -> int:
             notify(db, p.household_id, "visits", f"Follow-up tomorrow with {who}" if p.owner_user == uid else f"{first}'s follow-up tomorrow with {who}",
                    "Book a time or call the OP desk.", {"person": p.id}, member_id=p.id, url="/app/visits", to_user=uid)
             done += 1
+    # confirmed hospital visits: the evening before (after 7 pm) and about an hour before
+    from .models import Appointment, Store
+    today_s = now_dt.strftime("%Y-%m-%d")
+    for a in db.scalars(select(Appointment).where(Appointment.status == "confirmed", Appointment.kind == "visit",
+                                                  ((Appointment.slot_date == tmr) | (Appointment.slot_date == today_s) |
+                                                   ((Appointment.slot_date == "") & Appointment.date.in_((tmr, today_s)))))).all():
+        d, t = (a.slot_date or a.date), (a.slot_time or a.time or "")[:5]
+        st = db.get(Store, a.store_id)
+        where = st.name if st else "the hospital"
+        who = (a.member_name or "").split(" ")[0]
+        if d == tmr and now_dt.hour >= 19 and not db.get(ReminderSent, f"visit:eve:{a.id}"):
+            db.add(ReminderSent(key=f"visit:eve:{a.id}"))
+            notify(db, a.household_id, "visits", f"Tomorrow{' ' + _t12(t) if t else ''} · {where}", f"{who + chr(39) + 's visit' if who else 'Your visit'}{' with ' + a.doctor if a.doctor else ''}. Take the insurance card and recent reports.",
+                   {"appointment": a.id}, member_id=a.member_id, url="/app/visits")
+            done += 1
+        elif d == today_s and t and re.fullmatch(r"\d{2}:\d{2}", t):
+            mins = int(t[:2]) * 60 + int(t[3:]) - (now_dt.hour * 60 + now_dt.minute)
+            if 0 < mins <= 75 and not db.get(ReminderSent, f"visit:1h:{a.id}"):
+                db.add(ReminderSent(key=f"visit:1h:{a.id}"))
+                notify(db, a.household_id, "visits", f"Visit at {_t12(t)} · {where}", "Leave now to arrive 15 minutes early. Tap I'm here at the desk to get your token.",
+                       {"appointment": a.id}, member_id=a.member_id, url="/app/visits")
+                done += 1
     return done
+
+
+def _t12(t: str) -> str:
+    h, m = int(t[:2]), t[3:5]
+    return f"{(h % 12) or 12}:{m} {'AM' if h < 12 else 'PM'}"
 
 
 def start() -> None:

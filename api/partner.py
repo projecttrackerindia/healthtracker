@@ -175,7 +175,7 @@ def me_json(db: Session, u: PartnerUser) -> dict:
     unread = db.scalar(select(func.count(Message.id)).where(Message.store_id == u.store_id, Message.sender == "family", Message.read_partner == False)) or 0  # noqa: E712
     return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith(".invalid") else u.email,
                      "phone": u.phone, "role": u.role, "mustChange": u.must_change,
-                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or "", "languages": u.languages or "",
+                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or "", "languages": u.languages or "", "fee": getattr(u, "fee", 0) or 0, "videoFee": getattr(u, "video_fee", 0) or 0,
                      "verified": bool(u.verified), "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "totp": bool(u.totp_secret)},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
@@ -236,6 +236,20 @@ def my_languages(body: LangIn, db: Session = Depends(get_db), u: PartnerUser = D
         raise HTTPException(403, "Only a doctor sets consulting languages.")
     u.languages = ", ".join(x for x in LANGS if x in body.languages)
     return {"ok": True, "languages": u.languages}
+
+
+class FeeIn(BaseModel):
+    fee: int = 0
+    videoFee: int = 0
+
+
+@r.post("/my-fee")
+def my_fee(body: FeeIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """The OP and video consultation fee, shown to families before they book."""
+    if u.role != "doctor":
+        raise HTTPException(403, "Only a doctor sets a consultation fee.")
+    u.fee, u.video_fee = max(0, min(50000, int(body.fee or 0))), max(0, min(50000, int(body.videoFee or 0)))
+    return {"ok": True, "fee": u.fee, "videoFee": u.video_fee}
 
 
 class AgreeIn(BaseModel):

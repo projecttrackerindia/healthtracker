@@ -601,6 +601,8 @@ class PartnerUser(Base):
     specialty: Mapped[str] = mapped_column(String(60), default="")
     verified: Mapped[bool] = mapped_column(Boolean, default=False)   # doctors: registration checked by an admin
     languages: Mapped[str] = mapped_column(String(80), default="")     # doctors: languages they consult in, "Tamil, English"
+    fee: Mapped[int] = mapped_column(Integer, default=0)               # doctors: OP consultation fee in rupees, shown when booking
+    video_fee: Mapped[int] = mapped_column(Integer, default=0)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     rating: Mapped[float] = mapped_column(Float, default=0)          # technicians: what the families they visited said
     rating_n: Mapped[int] = mapped_column(Integer, default=0)

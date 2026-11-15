@@ -113,7 +113,7 @@ def ensure_columns() -> None:
     wanted["users"] += [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0")]
     wanted["partner_users"] += [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0"), ("reg_doc", "VARCHAR(64) DEFAULT ''"),
                                 ("reg_expiry", "VARCHAR(10) DEFAULT ''"), ("verify_by", "VARCHAR(120) DEFAULT ''"),
-                                ("languages", "VARCHAR(80) DEFAULT ''")]
+                                ("languages", "VARCHAR(80) DEFAULT ''"), ("fee", "INTEGER DEFAULT 0"), ("video_fee", "INTEGER DEFAULT 0")]
     insp = inspect(engine)
     with engine.begin() as conn:
         for table, cols in wanted.items():

@@ -52,7 +52,8 @@ FREQ = {"od": "once a day", "bd": "twice a day", "tds": "three times a day", "qi
 # ---- doctors ----------------------------------------------------------------------------------------------------------------
 def doctor_json(u: PartnerUser) -> dict:
     return {"id": u.id, "name": u.name, "specialty": u.specialty or "", "regNo": u.reg_no or "", "verified": bool(u.verified),
-            "languages": [x.strip() for x in (getattr(u, "languages", "") or "").split(",") if x.strip()]}
+            "languages": [x.strip() for x in (getattr(u, "languages", "") or "").split(",") if x.strip()],
+            "fee": getattr(u, "fee", 0) or 0, "videoFee": getattr(u, "video_fee", 0) or 0}
 
 
 @r.get("/doctors")
@@ -80,6 +81,68 @@ def doctors(store: str, db: Session = Depends(get_db)):
         j["queue"] = {"waiting": waiting, "paceMin": p, "waitMin": waiting * p if p else None}
         out.append(j)
     return {"doctors": out, "video": bool(rows)}
+
+
+# ---- OP slots -----------------------------------------------------------------------------------------------------------------
+# Fifteen-minute OP slots the family can ask for. The hospital still confirms, so these are the times that are not
+# already asked for, not a promise. Morning and evening OP hours as most Indian clinics run them.
+MORNING = [f"{h:02d}:{m:02d}" for h in range(9, 13) for m in (0, 15, 30, 45)]
+EVENING = [f"{h:02d}:{m:02d}" for h in range(17, 20) for m in (0, 15, 30, 45)]
+
+
+def _taken(db: Session, store: str, doctor: str, day: str) -> set[str]:
+    n = (doctor or "").lower().removeprefix("dr.").removeprefix("dr ").strip()
+    rows = db.scalars(select(Appointment).where(Appointment.store_id == store, Appointment.status.notin_(("cancelled", "declined")),
+                                                (Appointment.slot_date == day) | ((Appointment.slot_date == "") & (Appointment.date == day)))).all()
+    out = set()
+    for a in rows:
+        an = (a.doctor or "").lower().removeprefix("dr.").removeprefix("dr ").strip()
+        if not n or not an or an == n:
+            out.add((a.slot_time or a.time or "")[:5])
+    return out
+
+
+def day_slots(db: Session, store: str, doctor: str, day: str, now_hm: str = "", is_today: bool = False) -> dict:
+    taken = _taken(db, store, doctor, day)
+    def row(t):
+        return {"t": t, "free": t not in taken and not (is_today and t <= now_hm)}
+    m, e = [row(t) for t in MORNING], [row(t) for t in EVENING]
+    return {"date": day, "morning": m, "evening": e, "left": sum(x["free"] for x in m + e)}
+
+
+@r.get("/doctors/{did}/slots")
+def doctor_slots(did: str, store: str, days: int = 7, db: Session = Depends(get_db)):
+    from datetime import datetime, timedelta
+    from .queue import IST
+    d = db.get(PartnerUser, did)
+    if not d or d.store_id != store or d.role != "doctor" or not d.active:
+        raise HTTPException(404, "doctor not found")
+    t0 = datetime.now(IST)
+    now_hm = (t0 + timedelta(minutes=30)).strftime("%H:%M")   # nothing in the next half hour: nobody makes it in time
+    out = [day_slots(db, store, d.name, (t0 + timedelta(days=i)).strftime("%Y-%m-%d"), now_hm, i == 0) for i in range(max(1, min(days, 14)))]
+    return {"doctor": doctor_json(d), "days": out}
+
+
+def next_free(db: Session, store: str) -> dict | None:
+    """The earliest slot anyone at this hospital can still ask for, for the hospital list."""
+    from datetime import datetime, timedelta
+    from .queue import IST
+    docs = db.scalars(select(PartnerUser).where(PartnerUser.store_id == store, PartnerUser.role == "doctor", PartnerUser.active == True, PartnerUser.verified == True)).all()  # noqa: E712
+    if not docs:
+        return None
+    t0 = datetime.now(IST)
+    now_hm = (t0 + timedelta(minutes=30)).strftime("%H:%M")
+    for i in range(7):
+        day = (t0 + timedelta(days=i)).strftime("%Y-%m-%d")
+        best = None
+        for d in docs:
+            ds = day_slots(db, store, d.name, day, now_hm, i == 0)
+            f = next((x["t"] for x in ds["morning"] + ds["evening"] if x["free"]), None)
+            if f and (best is None or f < best):
+                best = f
+        if best:
+            return {"date": day, "time": best, "doctors": len(docs)}
+    return {"date": "", "time": "", "doctors": len(docs)}
 
 
 # ---- ICE configuration ------------------------------------------------------------------------------------------------------

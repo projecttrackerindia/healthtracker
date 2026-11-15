@@ -1004,4 +1004,13 @@ def hospitals(lat: float | None = None, lng: float | None = None, city: str | No
     la, lo, cty, approx = resolve_loc(db, Loc(lat=lat, lng=lng, city=city), h)
     rows = db.scalars(select(Store).where(Store.kind == "hospital", Store.active == True, Store.verified == True)).all()  # noqa: E712
     near = sorted(((km(la, lo, s.lat, s.lng), s) for s in rows), key=lambda x: x[0])[:5]
-    return {"city": cty, "approx": approx, "hospitals": [store_json(s, d) for d, s in near]}
+    from .consult import next_free
+    out = []
+    for d, s in near:
+        j = store_json(s, d)
+        try:
+            j["next"] = next_free(db, s.id)
+        except Exception as e:   # the list still shows without the next free time
+            print("[hospitals] next free failed:", type(e).__name__, flush=True)
+        out.append(j)
+    return {"city": cty, "approx": approx, "hospitals": out}
