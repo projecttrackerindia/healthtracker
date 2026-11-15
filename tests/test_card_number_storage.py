@@ -18,3 +18,13 @@ def test_rows_saved_before_the_fix_still_read():
 
 def test_empty_or_garbage_is_none():
     assert _open("") is None and _open(None) is None and _open("b64:!!!") is None
+
+
+def test_policy_start_from_the_card_is_kept():
+    from api.schemes import CardIn, _fill
+    from api.models import SchemeCard
+    c = SchemeCard(household_id="h", scheme="private")
+    _fill(c, CardIn(scheme="private", number="58678671", insurer="Care Health", validFrom="2025-09-22"))
+    assert (c.terms or {}).get("valid_from") == "2025-09-22"
+    _fill(c, CardIn(scheme="private", number="58678671", insurer="Care Health", validFrom="22/09/2025"))
+    assert c.terms["valid_from"] == "2025-09-22"      # a bad date never overwrites a good one

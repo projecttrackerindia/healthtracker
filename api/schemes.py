@@ -197,6 +197,7 @@ class CardIn(BaseModel):
     sumInsured: int = 0
     helpline: str = ""
     helpline2: str = ""
+    validFrom: str = ""
 
 
 KINDS = {"private": "Health insurance", "employer": "Employer cover"}
@@ -253,6 +254,8 @@ def _fill(c: SchemeCard, b: CardIn) -> None:
     c.members = [m[:32] for m in b.members[:12]] or None
     c.insurer, c.plan, c.helpline, c.helpline2 = b.insurer.strip()[:80], b.plan.strip()[:80], hl, hl2
     c.sum_insured = max(0, min(100_000_000, int(b.sumInsured or 0)))
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", b.validFrom or ""):   # from the card or the insurer app: waiting periods count from here
+        c.terms = {**(c.terms or {}), "valid_from": b.validFrom}
 
 
 @r.post("/cards")
