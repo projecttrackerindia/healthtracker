@@ -389,7 +389,7 @@ body.flat .spacer{height:96px}body.flat #gl,body.flat #labels,body.flat #lines{o
 @media (min-width:980px){#herobg{display:none}}
 #h3d{display:none}
 @media (max-width:979px){#h3d{display:flex;align-items:center;gap:7px;position:fixed;z-index:4;left:50%;top:calc(52vh - 62px);transform:translate(-50%,calc(var(--hy,0px) * -1));height:42px;border:0;border-radius:21px;padding:0 16px 0 13px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 4px 16px rgba(0,0,0,.1),inset 0 0 0 .5px rgba(0,0,0,.08);font:600 14.5px var(--font,-apple-system),sans-serif;color:#1D1D1F;transition:opacity .3s}
- body.flat #h3d,body.preg #h3d,body.mini #h3d{opacity:0;pointer-events:none}}
+ body.flat #h3d,body.preg #h3d,body.mini #h3d,body.no3d #h3d{opacity:0;pointer-events:none}}
 @media (max-width:979px){#acc{transition:opacity .25s,transform .25s}body.mini #acc{opacity:0;transform:translateY(12px);pointer-events:none}}
 @media (max-width:979px){.medpass{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#1D1D1F;color:#fff;border:0;border-radius:18px;padding:12px 14px;margin:2px 0 12px;font:inherit}
  .medpass .mp-t{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;color:#FF6961;writing-mode:horizontal-tb;flex:none;width:58px;line-height:1.2}
@@ -1123,7 +1123,7 @@ async function showModel(){const p=P();if(!p){return}
  const female=p.sex==='female',sex=female?'female':'male',band=bodyBand(p),mk=band==='adult'?sex:band+'-'+sex;$('#load').style.display=MODELS[mk]?'none':'block';
  let M;try{M=MODELS[mk]||(band==='adult'?await buildModel(sex):await buildKid(sex,band).catch(()=>MODELS[sex]||buildModel(sex)))}catch(e){$('#load').textContent='The 3D body could not load. Check your connection.';return}
  $('#load').style.display='none';if(cur!==M){if(cur)root.remove(cur.grp);root.add(M.grp);cur=M}
- const locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id),f=fs[S.focus];document.body.classList.toggle('preg',!!pg);
+ const locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id),f=fs[S.focus];document.body.classList.toggle('preg',!!pg);document.body.classList.toggle('no3d',locked);
  pulseKey=(!locked&&!pg&&f&&f.org&&M.organs[f.org]&&f.flag&&f.flag!=='normal')?f.org:null;
  for(const k in M.organs){const o=M.organs[k],mt=o.mesh.material;o.mesh.visible=!locked;mt.color.copy(o.base);
   // calm: a natural body; only organs with a result to discuss come forward, the focused one strongest
