@@ -100,7 +100,9 @@ def _name_key(n: str) -> str:
     return re.sub(r"[^a-z]", "", (n or "").lower())
 
 
-PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone", "legalName", "abha", "callName")
+PROFILE_KEYS = ("dob", "sex", "blood", "height", "weight", "donated", "allergies", "conditions", "organDonor", "phone", "legalName", "abha", "callName", "relation")
+RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother", "Father-in-law", "Mother-in-law",
+             "Son-in-law", "Daughter-in-law", "Brother-in-law", "Sister-in-law", "Uncle", "Aunt", "Nephew", "Niece", "Cousin", "Friend", "Caregiver", "Other")
 COLORS = ["#0A84FF", "#30B0C7", "#BF5AF2", "#FF9F0A", "#34C759", "#FF375F", "#5E5CE6", "#A2845E"]
 INVITE_DAYS = 7
 
@@ -245,6 +247,8 @@ def person_json(db: Session, u: User, p: Person, a: Access) -> dict:
         iv = db.scalar(select(HouseholdInvite).where(HouseholdInvite.used_by == p.owner_user, HouseholdInvite.household_id == p.household_id))
         if iv:
             out["relation"], out["relationOk"] = rel_for(db, u, iv), bool(iv.rel_ok)
+    if p.owner_user is None and pr.get("relation"):
+        out["relation"] = pr["relation"]          # set by the guardian when adding or editing a dependent
     out["guardians"] = [g for g in db.scalars(select(Guardian.user_id).where(Guardian.person_id == p.id))] if p.owner_user is None else []
     return out
 
@@ -279,6 +283,8 @@ def clean_profile(d: dict) -> dict:
             raise HTTPException(400, "Date of birth must be YYYY-MM-DD")
     if out.get("blood") and out["blood"] not in ("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"):
         raise HTTPException(400, "Choose a blood group")
+    if out.get("relation") and out["relation"] not in RELATIONS:
+        out["relation"] = ""     # an unknown relation is dropped rather than refusing the whole save
     if out.get("sex") and out["sex"] not in ("male", "female", "other"):
         raise HTTPException(400, "Choose male, female or other")
     if out.get("legalName"):

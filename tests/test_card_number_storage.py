@@ -28,3 +28,9 @@ def test_policy_start_from_the_card_is_kept():
     assert (c.terms or {}).get("valid_from") == "2025-09-22"
     _fill(c, CardIn(scheme="private", number="58678671", insurer="Care Health", validFrom="22/09/2025"))
     assert c.terms["valid_from"] == "2025-09-22"      # a bad date never overwrites a good one
+
+
+def test_dependent_relation_is_kept_and_unknown_dropped():
+    from api.people import clean_profile
+    assert clean_profile({"relation": "Daughter"})["relation"] == "Daughter"
+    assert clean_profile({"relation": "Boss"})["relation"] == ""
