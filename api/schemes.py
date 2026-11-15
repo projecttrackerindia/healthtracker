@@ -92,6 +92,32 @@ class CheckIn(BaseModel):
     incomeLow: bool | None = None   # yearly family income under about ₹1.2–2.5 lakh
 
 
+
+def _seal(obj) -> str:
+    """The card column is TEXT, so the sealed bytes go in as base64 — raw bytes don't survive Postgres."""
+    import base64
+    from .family import encrypt
+    return "b64:" + base64.b64encode(encrypt(obj)).decode()
+
+
+def _open(v):
+    """Read a card number back: base64 (new), raw bytes, or the hex/str forms older rows were left in."""
+    import base64
+    from .family import decrypt
+    if not v:
+        return None
+    try:
+        if isinstance(v, (bytes, bytearray, memoryview)):
+            return decrypt(bytes(v))
+        if v.startswith("b64:"):
+            return decrypt(base64.b64decode(v[4:]))
+        if v.startswith("\\x"):
+            return decrypt(bytes.fromhex(v[2:]))
+        return decrypt(v.encode("latin-1", "ignore"))
+    except Exception:
+        return None
+
+
 def _public(k: str) -> dict:
     s = SCHEMES[k]
     return {"id": k, **{x: s.get(x) for x in ("name", "kind", "state", "cover", "who", "apply", "url", "help", "docs")}}
@@ -186,7 +212,7 @@ def _card(c: SchemeCard, full: bool = False) -> dict:
     d.update(_usage(c))
     if full:
         try:
-            d["number"] = (decrypt(c.blob) or {}).get("n", "")
+            d["number"] = (_open(c.blob) or {}).get("n", "")
             if d["number"]:
                 from . import totp
                 d["qr"] = totp.qr_svg(d["number"])   # the desk scans this instead of typing
@@ -222,7 +248,7 @@ def _fill(c: SchemeCard, b: CardIn) -> None:
     parts = [q for q in re.split(r"[/,;]|\s{2,}|(?<=\d)\s*(?=\+)", b.helpline) if re.sub(r"\D", "", q)]
     hl = _one(parts[0]) if parts else ""
     hl2 = _one(b.helpline2) if b.helpline2.strip() else (_one(parts[1]) if len(parts) > 1 else "")
-    c.scheme, c.blob, c.last4, c.valid_until = b.scheme, encrypt({"n": n}), re.sub(r"[^A-Z0-9]", "", n)[-4:], b.validUntil
+    c.scheme, c.blob, c.last4, c.valid_until = b.scheme, _seal({"n": n}), re.sub(r"[^A-Z0-9]", "", n)[-4:], b.validUntil
     c.member_id = (b.members[0] if b.members else b.memberId)[:32]
     c.members = [m[:32] for m in b.members[:12]] or None
     c.insurer, c.plan, c.helpline, c.helpline2 = b.insurer.strip()[:80], b.plan.strip()[:80], hl, hl2
