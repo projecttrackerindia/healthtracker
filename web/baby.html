@@ -33,7 +33,7 @@ input[type=range]{width:100%;margin:16px 0 2px;accent-color:#E5577A;height:28px}
 .mvs button.on{background:#FCE4EC;color:#B0284F}.mvs button i{position:absolute;left:0;bottom:0;height:3px;background:var(--pink);width:0;border-radius:3px}
 .mvt{font-size:14px;line-height:1.45;color:#3A3A3C;margin:10px 0 0;min-height:40px;transition:opacity .3s}
 #err{position:fixed;left:24px;right:24px;top:44%;text-align:center;font-size:14px;color:var(--sub);display:none}
-</style></head><body>
+</style><script>try{var o=JSON.parse(localStorage.getItem('uh-look')||'{}'),m=o.m||'light';if(m==='dark'||(m==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(_){}</script><style>html.dark{background:#000}html.dark body{filter:invert(.92) hue-rotate(180deg)}html.dark canvas,html.dark img,html.dark video,html.dark #gl{filter:invert(1) hue-rotate(180deg)}</style></head><body>
 <canvas id=c></canvas><div class=fade></div><div id=ld role=status aria-label="Loading"></div><div id=tag></div><div class=now id=now aria-live=polite><i></i><span id=nowt></span></div><div id=err>Could not load the 3D view. Check your connection.</div>
 <button id=x aria-label="Close">✕</button>
 <div class=top><div class=eb id=eb>PREGNANCY</div><h1 id=tt>Week</h1><div class=ln id=ln></div>
