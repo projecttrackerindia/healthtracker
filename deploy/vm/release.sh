@@ -32,6 +32,12 @@ if grep -q '^CLAMAV=1' /etc/urbanhealth/release.env 2>/dev/null; then
 fi
 
 sudo -E gcloud auth configure-docker "$(echo "$IMAGE" | cut -d/ -f1)" --quiet >/dev/null
+# Each release is ~1.5 GB of image; the disk filled once and a pull failed half way ("no space left on device").
+# Before pulling, drop images no container uses (the running app and ClamAV keep theirs; every build stays in
+# Artifact Registry, so a rollback just pulls it again).
+sudo docker image prune -af --filter "until=24h" >/dev/null 2>&1 || true
+sudo docker builder prune -af >/dev/null 2>&1 || true
+echo "disk: $(df -h / | awk 'NR==2{print $4" free of "$2}')"
 sudo docker pull "$IMAGE"
 sudo systemctl restart urbanhealth
 
