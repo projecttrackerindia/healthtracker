@@ -186,7 +186,8 @@ def _card(c: SchemeCard, full: bool = False) -> dict:
     if full:
         try:
             d["number"] = (decrypt(c.blob) or {}).get("n", "")
-        except Exception:
+        except Exception as e:   # the desk needs this number; say why it is missing instead of showing a blank
+            print(f"[cards] number unreadable for card {c.id}: {type(e).__name__}", flush=True)
             d["number"] = ""
     return d
 
