@@ -1385,6 +1385,7 @@ class SchemeCard(Base):
     plan: Mapped[str] = mapped_column(String(80), default="")          # "Family Floater"
     sum_insured: Mapped[int] = mapped_column(Integer, default=0)
     helpline: Mapped[str] = mapped_column(String(20), default="")
+    helpline2: Mapped[str] = mapped_column(String(20), default="")   # a second line (customer care beside the TPA)
     members: Mapped[list | None] = mapped_column(JSON, nullable=True)  # person ids covered
     files: Mapped[dict | None] = mapped_column(JSON, nullable=True)    # {front, back, doc} → stored file ids (encrypted)
     terms: Mapped[dict | None] = mapped_column(JSON, nullable=True)    # read from the policy PDF or typed: room rent, co-pay, waiting…

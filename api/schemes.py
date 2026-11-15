@@ -170,6 +170,7 @@ class CardIn(BaseModel):
     plan: str = ""
     sumInsured: int = 0
     helpline: str = ""
+    helpline2: str = ""
 
 
 KINDS = {"private": "Health insurance", "employer": "Employer cover"}
@@ -180,12 +181,15 @@ def _card(c: SchemeCard, full: bool = False) -> dict:
     sc = SCHEMES.get(c.scheme, {})
     d = {"id": c.id, "scheme": c.scheme, "name": c.insurer or sc.get("name") or KINDS.get(c.scheme, c.scheme), "plan": c.plan or sc.get("cover", ""),
          "memberId": c.member_id, "members": c.members or ([c.member_id] if c.member_id else []), "last4": c.last4, "validUntil": c.valid_until,
-         "help": c.helpline or sc.get("help", ""), "sumInsured": c.sum_insured, "kind": "gov" if c.scheme in SCHEMES else c.scheme,
+         "help": c.helpline or sc.get("help", ""), "help2": getattr(c, "helpline2", "") or "", "sumInsured": c.sum_insured, "kind": "gov" if c.scheme in SCHEMES else c.scheme,
          "files": sorted((c.files or {}).keys()), "terms": c.terms or {}, "claims": c.claims or []}
     d.update(_usage(c))
     if full:
         try:
             d["number"] = (decrypt(c.blob) or {}).get("n", "")
+            if d["number"]:
+                from . import totp
+                d["qr"] = totp.qr_svg(d["number"])   # the desk scans this instead of typing
         except Exception as e:   # the desk needs this number; say why it is missing instead of showing a blank
             print(f"[cards] number unreadable for card {c.id}: {type(e).__name__}", flush=True)
             d["number"] = ""
@@ -212,11 +216,16 @@ def _fill(c: SchemeCard, b: CardIn) -> None:
         raise HTTPException(400, "Valid-until must be a date.")
     if b.scheme in KINDS and len(b.insurer.strip()) < 2:
         raise HTTPException(400, "Enter the insurer's name.")
-    hl = re.sub(r"[^\d+]", "", b.helpline)[:20]
+    def _one(x: str) -> str:
+        return re.sub(r"(?!^\+)[^\d]", "", x.strip())[:20]
+    # one number per field; a pasted "1800… / +91…" pair is split into the two fields instead of glued together
+    parts = [q for q in re.split(r"[/,;]|\s{2,}|(?<=\d)\s*(?=\+)", b.helpline) if re.sub(r"\D", "", q)]
+    hl = _one(parts[0]) if parts else ""
+    hl2 = _one(b.helpline2) if b.helpline2.strip() else (_one(parts[1]) if len(parts) > 1 else "")
     c.scheme, c.blob, c.last4, c.valid_until = b.scheme, encrypt({"n": n}), re.sub(r"[^A-Z0-9]", "", n)[-4:], b.validUntil
     c.member_id = (b.members[0] if b.members else b.memberId)[:32]
     c.members = [m[:32] for m in b.members[:12]] or None
-    c.insurer, c.plan, c.helpline = b.insurer.strip()[:80], b.plan.strip()[:80], hl
+    c.insurer, c.plan, c.helpline, c.helpline2 = b.insurer.strip()[:80], b.plan.strip()[:80], hl, hl2
     c.sum_insured = max(0, min(100_000_000, int(b.sumInsured or 0)))
 
 

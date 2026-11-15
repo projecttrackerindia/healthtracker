@@ -391,6 +391,19 @@ def daily_people(db, now_dt: datetime) -> int:
             for uid in set(fam) - {p.owner_user}:
                 notify(db, p.household_id, "meds", f"{first} missed {missed} doses since yesterday", "A gentle call might help. Nothing else is shared.", {"person": pid}, member_id=pid, url="/app/meds", to_user=uid)
                 done += 1
+    # insurance renewal: 30, 7 and 1 day before the policy ends, to the household
+    from .models import SchemeCard
+    for days in (30, 7, 1):
+        due = (now_dt + timedelta(days=days)).strftime("%Y-%m-%d")
+        for c in db.scalars(select(SchemeCard).where(SchemeCard.valid_until == due)).all():
+            key = f"renew:{c.id}:{due}:{days}"
+            if db.get(ReminderSent, key):
+                continue
+            db.add(ReminderSent(key=key))
+            name = c.insurer or "Your health insurance"
+            notify(db, c.household_id, "insurance", f"{name} renews {'tomorrow' if days == 1 else f'in {days} days'}",
+                   "Renew before it lapses so waiting periods are not reset.", {"card": c.id}, url="/app/insurance")
+            done += 1
     # follow-up visits the doctor asked for: a note the day before, to the person (or a dependent's guardians)
     tmr = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
     for x in db.scalars(select(HealthRecord).where(HealthRecord.kind == "visitnote", HealthRecord.day >= (now_dt - timedelta(days=200)).strftime("%Y-%m-%d"))).all():
