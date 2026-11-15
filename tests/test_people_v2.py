@@ -381,3 +381,15 @@ def test_authenticator_app_sign_in():
     assert c.post("/api/v1/auth/step/verify", json={"flow": r["step"], "code": code}).status_code == 400   # a code works once
     nxt = totp._code(s["secret"], int(_t.time() // 30) + 1)
     assert c.post("/api/v1/auth/step/verify", json={"flow": r["step"], "code": nxt}).status_code == 200
+
+
+def test_photos_of_one_report_are_kept_as_one_pdf():
+    import io
+    from PIL import Image
+    from api.people import _pages_pdf
+    def jpg(c):
+        b = io.BytesIO(); Image.new("RGB", (600, 800), c).save(b, "JPEG"); return b.getvalue()
+    pdf = _pages_pdf([jpg("white"), jpg("gray"), jpg("white")])
+    assert pdf[:4] == b"%PDF"
+    from pypdf import PdfReader
+    assert len(PdfReader(io.BytesIO(pdf)).pages) == 3

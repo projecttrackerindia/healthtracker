@@ -13,6 +13,7 @@ Rules (each one is enforced here, never in the app):
 * Leaving takes your records with you. An owner cannot leave while they are the only guardian of a dependent.
 """
 from __future__ import annotations
+import io
 
 import datetime as _dt
 import os
@@ -1059,9 +1060,24 @@ def impossible_values(findings: list) -> list[str]:
     return out[:3]
 
 
+def _pages_pdf(imgs: list[bytes]) -> bytes:
+    from PIL import Image, ImageOps
+    out = []
+    for b in imgs:
+        try:
+            im = ImageOps.exif_transpose(Image.open(io.BytesIO(b))).convert("RGB")
+        except Exception:
+            raise HTTPException(415, "One of the photos could not be opened")
+        im.thumbnail((2000, 2000))
+        out.append(im)
+    buf = io.BytesIO()
+    out[0].save(buf, "PDF", save_all=True, append_images=out[1:], resolution=150)
+    return buf.getvalue()
+
+
 @r.post("/people/{pid}/reports")
 async def upload_report(pid: str, request: Request, file: UploadFile = File(...), read: str = Form("1"), doc: str = Form("report"), force: str = Form(""),
-                        u: User = Depends(need_user), db: Session = Depends(get_db)):
+                        pages: list[UploadFile] = File(default=[]), u: User = Depends(need_user), db: Session = Depends(get_db)):
     limit(request, "v2upload", 30, 600)
     p, a = person_or_404(db, u, pid)
     if not a.writer:
@@ -1072,6 +1088,17 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
     mime = file.content_type or "application/octet-stream"
     if not (mime.startswith("image/") or mime == "application/pdf"):
         raise HTTPException(415, "PDF or photo only")
+    if pages:                                             # photos of one report, page by page: kept and read as one PDF
+        if len(pages) > 11 or not mime.startswith("image/"):
+            raise HTTPException(415, "Up to 12 photos of one report")
+        imgs = [data]
+        for pg in pages:
+            b = await pg.read()
+            if not b or len(b) > 15 * 1024 * 1024 or not (pg.content_type or "").startswith("image/"):
+                raise HTTPException(415, "Pages must be photos up to 15 MB each")
+            imgs.append(b)
+        data = _pages_pdf(imgs)
+        mime = "application/pdf"
     sha = hashlib.sha256(data).hexdigest()
     same, _ = find_dup(db, p.id, sha=sha)
     if same:
@@ -1117,7 +1144,7 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
         raise HTTPException(422, "This doesn't look like a medical report or prescription, so it was not saved.")
     first = (reading.get("findings") or [{}])[0] if reading.get("findings") else {}
     stem = re.sub(r"[_-]+", " ", (file.filename or "").rsplit(".", 1)[0]).strip()
-    generic = not stem or re.fullmatch(r"(?i)(img|image|scan|document|doc|photo|pxl|file|report|download)?[\s\d()]*", stem)
+    generic = not stem or re.fullmatch(r"(?i)(img|image|scan|document|doc|photo|pxl|file|report|download|page|whatsapp image)?[\s\d()]*", stem)
     title = reading.get("title") or ("Prescription" if doc == "prescription" else (stem.title() if not generic else ("Lab report" if len(reading.get("findings") or []) > 1 else first.get("test") or "Lab report")))
     rec = {"title": str(title).strip()[:80],
            "doc": "prescription" if doc == "prescription" else "report", "doctor": reading.get("doctor", ""), "date": doc_date(reading, txt),
