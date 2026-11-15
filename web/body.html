@@ -457,10 +457,10 @@ const PARTS={
  thyroid:{main:/thyroid gland|lobe of thyroid|isthmus of thyroid/i,rel:/trachea|thyroid cartilage|cricoid/i,pin:/thyroid gland|lobe of thyroid/i,k:3.6,labels:[['Thyroid gland',/lobe of thyroid|thyroid gland/i],['Windpipe',/^trachea$/i],['Voice box',/thyroid cartilage/i]]},
  skin:{pin:/left articular cartilage of trochlear notch of ulna/i,sites:[[/elbow/i,/left articular cartilage of trochlear notch of ulna/i],[/knee/i,/left medial patellar retinaculum/i],[/scalp|head/i,/parietal/i],[/face|cheek/i,/zygomatic/i],[/hand|palm|finger/i,/left (flexor|extensor) retinaculum of wrist/i],[/foot|feet|toe|ankle/i,/left flexor retinaculum of ankle/i]]}};
 function pinFor(o){const P=PARTS[o];if(!P)return null;if(o==='skin'){const t=latest().filter(f=>f.org==='skin').map(f=>f.test+' '+f.value).join(' ');const s=(P.sites.find(([r])=>r.test(t))||[])[1];return s||P.pin}return P.pin}
-function partCenter(o){return (ORGRE[o]&&centerOf(ORGRE[o]))||(PARTS[o]&&centerOfAll(pinFor(o)))||null}
+function partCenter(o){return (ORGRE[o]&&centerOf(ORGRE[o]))||(!KID&&PARTS[o]&&centerOfAll(pinFor(o)))||null}
 let PV=null;
 function partOff(){if(PV){PV.forEach(m=>body.remove(m));PV=null}}
-function partView(o){const P=PARTS[o];if(!P||!P.main)return false;partOff();for(const l in LAY)LAY[l].visible=false;PV=[];const box=new THREE.Box3();
+function partView(o){const P=PARTS[o];if(!P||!P.main||KID)return false;partOff();for(const l in LAY)LAY[l].visible=false;PV=[];const box=new THREE.Box3();
  for(const l of [1,2,3,4,5]){if(!LAY[l])continue;const a=subsetMesh(l,P.main),b=subsetMesh(l,P.rel);if(a){body.add(a);PV.push(a);box.union(a.userData.box)}if(b){b.material.transparent=true;b.material.opacity=P.wide?.5:.85;b.material.depthWrite=false;body.add(b);PV.push(b);if(P.wide)box.union(b.userData.box)}}
  if(box.isEmpty()){partOff();return false}
  const c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3()).length();body.position.x=-c.x*body.scale.x;
