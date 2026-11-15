@@ -50,7 +50,7 @@ body.preg #bg{background:radial-gradient(80% 55% at 50% 34%,#FFFFFF 0%,#FBF1F4 5
 .lab .v{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .lab .u{font-size:13px;color:var(--ink3);font-weight:500;margin-left:2px}
 .lab.dot{min-width:0;width:22px;height:22px;padding:0;border-radius:11px;background:var(--c);border:3px solid #fff;box-shadow:0 0 0 6px color-mix(in srgb,var(--c) 25%,transparent),0 4px 10px rgba(0,0,0,.15)}
-#lines{position:fixed;inset:0;pointer-events:none;z-index:4}
+#lines{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:4}
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;margin-top:4px}
 .ok{background:#E3F5E8;color:var(--green)}.warn{background:#FFF1DC;color:var(--amber)}.bad{background:#FDE7E5;color:#B42318}.info{background:#EEEEFE;color:#4B49C8}.pink{background:#FDE7EE;color:#B8325A}
 /* content sheet */
@@ -391,7 +391,7 @@ body.flat .spacer{height:96px}body.flat #gl,body.flat #labels,body.flat #lines{o
 @media (max-width:979px){.medpass{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#1D1D1F;color:#fff;border:0;border-radius:18px;padding:12px 14px;margin:2px 0 12px;font:inherit}
  .medpass .mp-t{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;color:#FF6961;writing-mode:horizontal-tb;flex:none;width:58px;line-height:1.2}
  .medpass .mp-r{flex:1;display:grid;grid-template-columns:auto 1fr auto;gap:14px;min-width:0}.medpass small{display:block;font-size:11px;opacity:.55}.medpass b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- #scroll{pointer-events:auto}#gl{pointer-events:none}.spacer{height:48vh;pointer-events:auto!important}#lines{display:none}#labels .lab:not(.rpin){display:none}#labels{z-index:21}
+ #scroll{pointer-events:auto}#gl{pointer-events:none}.spacer{height:48vh;pointer-events:auto!important}#lines{z-index:21}#labels .lab:not(.rpin){display:none}#labels{z-index:21}
  .grid.res{grid-template-columns:1fr;gap:0;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
  .grid.res .card{border-radius:0!important;box-shadow:none!important;outline:none!important;background:none!important;border-bottom:.5px solid rgba(60,60,67,.14)}.grid.res .card:last-child{border-bottom:0}
  .top .chip{white-space:nowrap}
@@ -887,8 +887,8 @@ function placeLabels(){if(!LABS.length){$('#lines').innerHTML='';return}const r=
  LABS.forEach((o,i)=>{if(o.k==='womb'){const bb=PGH.obj&&PGH.obj.userData.baby;if(bb)bb.getWorldPosition(v3);else v3.copy(cur.wombG.position).applyMatrix4(root.matrixWorld);v3.project(cam)}else v3.copy(cur.organs[o.k].center).applyMatrix4(root.matrixWorld).project(cam);
   const x=r.left+(v3.x*.5+.5)*r.width,y=r.top+(-v3.y*.5+.5)*r.height;
   if(o.dot){o.el.style.left=x+'px';o.el.style.top=y+'px';return}
-  if(o.pin){const w=o.el.offsetWidth||110;o.el.style.left=(o.side<0?r.left+12+w/2:r.left+r.width-12-w/2)+'px';let yy=Math.max(r.top+120,Math.min(r.bottom-60,y));const u=used[o.side];u.sort((a,b)=>a-b);for(const q of u)if(Math.abs(yy-q)<70)yy=q+70;u.push(yy);o.el.style.top=yy+'px';return}const lx=Math.max(78,Math.min(r.left+r.width-78,x+o.side*Math.min(130,r.width*.3))),ly=Math.max(r.top+170,Math.min(r.bottom-60,y-24+i*8));
-  o.el.style.left=lx+'px';o.el.style.top=ly+'px';
+  if(o.pin){const w=o.el.offsetWidth||110;o.el.style.left=(o.side<0?r.left+12+w/2:r.left+r.width-12-w/2)+'px';let yy=Math.max(r.top+120,Math.min(r.bottom-60,y));const u=used[o.side];u.sort((a,b)=>a-b);for(const q of u)if(Math.abs(yy-q)<70)yy=q+70;u.push(yy);o.el.style.top=yy+'px';if(v3.z<1){const c=getComputedStyle(o.el).getPropertyValue('--c')||'#8E8E93',ex=o.side<0?r.left+12+w:r.left+r.width-12-w;svg+=`<path d="M${ex} ${yy} L${x} ${y}" stroke="${c}" stroke-width="1.4" stroke-dasharray="3 3" fill="none" opacity=".8"/><circle cx="${x}" cy="${y}" r="5.5" fill="#fff" stroke="${c}" stroke-width="3"/>`}return}const lx=Math.max(78,Math.min(r.left+r.width-78,x+o.side*Math.min(130,r.width*.3))),ly=Math.max(r.top+170,Math.min(r.bottom-60,y-24+i*8));
+  o.el.style.left=lx+'px';o.el.style.top=ly+'px';if(!o.el.offsetParent)return;
   svg+=`<line x1="${x}" y1="${y}" x2="${lx-o.side*56}" y2="${ly}" stroke="rgba(29,29,31,.28)" stroke-width="1"/><circle cx="${x}" cy="${y}" r="4" fill="#fff" stroke="rgba(29,29,31,.5)" stroke-width="1.5"/>`});
  $('#lines').innerHTML=svg}
 
@@ -967,7 +967,7 @@ function renderTop(){const p=P(),pg=preg(p),locked=!can(p,'summary'),fs=findings
   else if(bad.length)line=`<b>${bad.length} result${bad.length>1?'s':''} worth discussing</b>: ${bad.slice(0,2).map(f=>esc(f.test)+(/reactive|positive|detected/i.test(f.value||'')?' is positive':f.flag==='high'?' is high':' is low')).join(', ')}.`;
   else if(fs.length)line=`<b>All ${fs.length} results in range.</b> Shown on the body in green.`;else line=writer(p)?'Add a report and it will appear on the body.':'No reports shared yet.'}
  $('#top').innerHTML=`<div class="ttl"><p class="eyebrow" style="color:${pg?'var(--rose)':'var(--tint,#30D158)'}">${(p.self?'':esc(nameOf(p).toUpperCase())+' · ')+eyebrowOf(p)}</p><h1 class="big">${T[S.tab]}</h1>${S.tab==='summary'&&locked&&line?`<p class="line">${line}</p>`:''}</div>
- <button class="round aiorb" id="aitop" aria-label="Ask Urban Health"><span>${ic(I.spark,'#5E5CE6',19)}</span></button><button class="round glass" id="bell" aria-label="Notifications" style="position:relative">${ic(I.bell,'#1D1D1F',22)}<span id="bellc" style="position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#FF3B30;color:#fff;font-size:11px;font-weight:700;display:${BOX.unread?'flex':'none'};align-items:center;justify-content:center;border:2px solid #fff">${BOX.unread>9?'9+':BOX.unread}</span></button><button class="round glass" id="who" aria-label="Family, profile and settings"><span class="av" style="background:${p.color};position:relative">${esc(p.name[0]||'?')}<i class="wdot" style="background:${whoDot(p)}"></i></span></button>`;
+ <button class="round aiorb" id="aitop" aria-label="Ask Urban Health"><span>${ic(I.spark,'#5E5CE6',19)}</span></button><button class="round glass" id="bell" aria-label="Notifications" style="position:relative">${ic(I.bell,'#1D1D1F',22)}<span id="bellc" style="position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#FF3B30;color:#fff;font-size:11px;font-weight:700;display:${BOX.unread?'flex':'none'};align-items:center;justify-content:center;border:2px solid #fff">${BOX.unread>9?'9+':BOX.unread}</span></button><button class="round glass" id="who" aria-label="Family, profile and settings"><span class="av" style="background:${p.color};position:relative">${esc((firstName(p)||p.name||'?')[0])}<i class="wdot" style="background:${whoDot(p)}"></i></span></button>`;
  requestAnimationFrame(measureTop);$('#who').onclick=ddFamily;$('#aitop').onclick=ddAsk;$('#bell').onclick=ddBell}
 
 function eyebrowOf(p){const t=S.tab,plan=can(p,'all')?dosePlan(p.id):[];
@@ -3120,7 +3120,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r107';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r108';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
