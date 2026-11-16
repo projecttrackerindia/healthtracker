@@ -649,6 +649,12 @@ def body_page(request: Request):
     return resp
 
 
+@app.api_route("/tour", methods=["GET", "HEAD"], include_in_schema=False)
+def tour_page():
+    """The public 3D tour (marketing site) lives at /tour/; the slash keeps its relative links and #sections on one page."""
+    return RedirectResponse("/tour/", status_code=308)
+
+
 @app.api_route("/classic", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/classic/{rest:path}", methods=["GET", "HEAD"], include_in_schema=False)
 def classic_shell(request: Request, rest: str = ""):
