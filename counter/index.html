@@ -10,9 +10,9 @@
 /* A television on a wall, read from across a room. Dark by default because that is what a screen left on
    all day should be, and because a white wall of light in a waiting room is unkind to people who are ill. */
 :root{--bg:#0b0f0e;--card:#141c1b;--line:rgba(255,255,255,.09);--ink:#f2f6f5;--mute:#8e9aa0;
-  --teal:#13b5a3;--amber:#f59e0b;--font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --teal:#4FD1C5;--amber:#f59e0b;--font:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,monospace}
-*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:radial-gradient(90% 70% at 30% 20%,#12324A,#0B1220);color:var(--ink);font-family:var(--font);
   -webkit-font-smoothing:antialiased;overflow:hidden}
 .wrap{height:100%;display:flex;flex-direction:column;padding:2.2vh 2.4vw}
 header{display:flex;align-items:center;gap:1.2vw;padding-bottom:1.6vh;border-bottom:1px solid var(--line)}
@@ -57,6 +57,10 @@ footer .dot.off{background:var(--amber)}
 .room:only-child .next{justify-content:center;width:100%}
 .room:only-child .next i{font-size:4vh;padding:1.4vh 2vw}
 .room:only-child .next u{font-size:2.2vh}
+.room{background:rgba(255,255,255,.06)!important;border:0!important;border-radius:4vh!important}
+.now b{color:var(--teal)}
+.next i{border-radius:2.8vh!important;background:rgba(255,255,255,.08)!important;color:#fff!important}
+header{border-bottom:0!important}footer{border-top:0!important}
 </style>
 </head>
 <body>

@@ -17,8 +17,8 @@
      that changes is the accent, and that is not a free choice: BRAND.md assigns Care Teal #0B8A7C to
      partners (doctors, hospitals, pharmacies, labs) and Signal Blue to families. A technician glancing down
      should see Urban Health in the partner colour, not a different product. */
-  --bg:#e8e9eb; --shell:#f1f1f2; --card:#ffffff; --soft:#f7f7f8;
-  --ink:#0e1424; --mute:#6a7385; --line:#dcdde1;
+  --bg:#F5F5F7; --shell:#F5F5F7; --card:#ffffff; --soft:#F5F5F7;
+  --ink:#1D1D1F; --mute:#6E6E73; --line:rgba(0,0,0,.08);
   --brand:#0B8A7C; --brand-ink:#ffffff; --brand-soft:#e4f2f0;
   --warn:#b45309; --bad:#b91c1c; --ok:#0B8A7C;
   --r:18px; --sh:0 10px 30px rgba(20,30,60,.08);
@@ -31,7 +31,7 @@
   --sh:none; color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink);font:17px/1.45 "Geist","Noto Sans Devanagari","Noto Sans Telugu",Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+body{background:var(--bg);color:var(--ink);font:17px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Geist","Noto Sans Devanagari","Noto Sans Telugu",Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   -webkit-text-size-adjust:100%}
 button,input{font:inherit;color:inherit}
@@ -41,18 +41,18 @@ button{border:0;background:none;cursor:pointer}
 /* header */
 .top{display:flex;align-items:center;gap:10px;padding:8px 2px 14px}
 .mark{width:38px;height:30px;flex:none}
-.top b{font-size:17px;letter-spacing:-.01em}
+.top b{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .top small{display:block;color:var(--mute);font-size:12.5px}
 .top .grow{flex:1;min-width:0}
 .pill{flex:none;font-size:12.5px;padding:6px 11px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:600;white-space:nowrap}
 
 /* a job */
-.job{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:12px}
+.job{background:var(--card);border:0;border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,.04);padding:16px;margin-bottom:12px}
 .job h2{margin:0 0 2px;font-size:20px;line-height:1.2;letter-spacing:-.015em}
 .job .addr{color:var(--mute);margin:6px 0 0;font-size:15.5px}
 .slot{display:inline-block;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--brand);background:var(--brand-soft);padding:5px 10px;border-radius:999px}
 .tests{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
-.tests i{font-style:normal;font-size:13.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+.tests i{font-style:normal;font-size:13.5px;background:var(--soft);border:0;border-radius:999px;padding:6px 12px}
 .state{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;margin-bottom:10px}
 .state::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
 .s-assigned{color:var(--mute)} .s-en_route{color:var(--go)} .s-arrived{color:var(--warn)}
