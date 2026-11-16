@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from . import storage
 from .admin import log, me as admin_me
 from .db import get_db
-from .models import Admin, Approval, Complaint, Order, now
+from .models import Admin, Approval, Complaint, HealthRecord, Order, now
 
 ar = APIRouter(prefix="/api/admin")
 fr = APIRouter(prefix="/api/v2")
@@ -43,6 +43,34 @@ def rx_checks(o: Order) -> list[dict]:
     return out
 
 
+def _norm(n: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", re.sub(r"(?i)\b(tab|tabs|tablet|cap|caps|capsule|syp|syrup|inj)\b\.?", "", n or "").lower())
+
+
+def rx_reading(db: Session, o: Order) -> dict:
+    """What report reading found on the shared prescription, line by line against what was ordered.
+    Empty lines when the prescription was not read (reading switched off, or a photo it could not read)."""
+    lines, read = [], False
+    if o.rx_shared and o.rx_files:
+        for x in db.scalars(select(HealthRecord).where(HealthRecord.file_id.in_(list(o.rx_files)))).all():
+            try:
+                from .family import decrypt
+                d = decrypt(x.blob)
+            except Exception:
+                continue
+            for m in d.get("medicines") or []:
+                read = True
+                lines.append({"name": str(m.get("name") or "")[:80], "strength": str(m.get("strength") or "")[:30],
+                              "dose": str(m.get("dose") or m.get("frequency") or "")[:40], "days": str(m.get("duration") or m.get("days") or "")[:20],
+                              "sure": m.get("sure", True) is not False, "doctor": str(d.get("doctor") or "")[:80]})
+    ordered = [i.get("name", "") for i in (o.items or []) if i.get("rx")]
+    for ln in lines:
+        k = _norm(ln["name"])
+        ln["ordered"] = bool(k) and any(k[:6] in _norm(n) or _norm(n)[:6] in k for n in ordered)
+    missing = [n for n in ordered if lines and not any(_norm(n)[:6] in _norm(l["name"]) or _norm(l["name"])[:6] in _norm(n) for l in lines)]
+    return {"read": read, "lines": lines[:20], "notOnRx": missing}
+
+
 @ar.get("/rx")
 def rx_queue(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
     t = now()
@@ -51,7 +79,8 @@ def rx_queue(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
         ck = rx_checks(o)
         rows.append({"id": o.id, "store": o.store.name if o.store else "", "items": o.items or [], "wait": (t - (o.created or t)) // 60,
                      "verified": bool(o.verified_at), "doctor": o.rx_doctor, "regNo": o.rx_reg_no, "rxDate": o.rx_date,
-                     "files": list(o.rx_files or []) if o.rx_shared else [], "checks": ck, "flag": not all(c["ok"] for c in ck)})
+                     "files": list(o.rx_files or []) if o.rx_shared else [], "checks": ck, "flag": not all(c["ok"] for c in ck),
+                     "reading": rx_reading(db, o)})
     rows.sort(key=lambda r: (r["verified"], not r["flag"], -r["wait"]))
     return {"rows": rows, "waiting": sum(1 for r in rows if not r["verified"])}
 

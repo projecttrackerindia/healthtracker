@@ -73,6 +73,25 @@ body.preg #bg{background:radial-gradient(80% 55% at 50% 34%,#FFFFFF 0%,#FBF1F4 5
 .orxp{width:56px;height:70px;border-radius:12px;background:#FFFDF7;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);display:grid;place-items:center;font:28px Georgia,serif;color:#1F3A8A;flex:none}
 .otk{width:26px;height:26px;border-radius:50%;border:1.5px solid #C7C7CC;background:#fff;display:grid;place-items:center;flex:none;padding:0}.otk svg{opacity:0}.otk.on{background:#0071E3;border-color:#0071E3}.otk.on svg{opacity:1}
 .orl{gap:12px}
+.sosb{background:#F5F5F7!important;color:#1D1D1F!important;padding:0!important;display:block!important}
+.sosb .map3{position:fixed;z-index:1;left:0;right:0;top:0;height:46vh;margin:0;border-radius:0;background:#E8ECF1}
+.sosb .map3 .mapl{position:absolute!important;inset:0!important;display:block!important;overflow:hidden;height:auto!important;min-height:0!important;background:#E8ECF1}
+.tl4{position:absolute;left:50%;top:50%;display:grid;grid-template-columns:repeat(3,256px);filter:saturate(.7) brightness(1.03)}.tl4 img{width:256px;height:256px;display:block}
+.ring4{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px;border-radius:50%;background:rgba(255,59,48,.18)}
+.sosb .pin3{top:50%;background:#FF3B30;width:34px;height:34px;border-radius:50%;box-shadow:0 0 0 3px #fff,0 6px 16px rgba(0,0,0,.25)}
+.sosb .tag3{background:rgba(255,255,255,.92)!important;color:#1D1D1F!important;top:max(14px,env(safe-area-inset-top));bottom:auto}
+.sosb .nol3{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:24px;background:linear-gradient(135deg,#EEF1F6,#E1E6EE);color:#1D1D1F}.sosb .nol3 small{color:#6E6E73}
+.sosb #sos2.sh4{max-width:none;position:relative;z-index:2;margin:calc(46vh - 28px) 0 0;min-height:calc(54vh + 28px);background:#fff;border-radius:28px 28px 0 0;padding:20px 18px max(24px,env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.sosb #sos2.sh4>*{max-width:460px;width:100%;margin-left:auto;margin-right:auto}
+.hd4{display:flex;align-items:center;gap:12px}.bd4{width:52px;height:52px;border-radius:50%;background:#FF3B30;color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none;box-shadow:0 0 0 6px rgba(255,59,48,.15)}
+.sosb .eb3{color:#FF3B30!important;font-size:13px}.sosb h1{font-size:24px!important;margin:2px 0 0!important;color:#1D1D1F}.sosb #soss{color:#6E6E73;margin:10px 0 0;font-size:15px}
+.sosb .mid3{background:#F2F2F7!important;color:#1D1D1F!important}
+.chk4{margin-top:12px}.r4{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(0,0,0,.06)}.r4 b{display:block;font-size:16px}.r4 small{display:block;font-size:13px;color:#6E6E73}
+.k4{width:26px;height:26px;border-radius:50%;border:1.5px solid #C7C7CC;display:grid;place-items:center;flex:none}.k4.on{background:#34C759;border-color:#34C759}
+.sosb .grp3{background:#F5F5F7!important;margin-top:12px}.sosb .grp3 b{color:#1D1D1F}.sosb .grp3 small{color:#6E6E73!important}
+.ac4{display:flex;gap:10px;margin-top:16px;align-items:center}.ac4 .safe3{flex:1;margin:0!important;background:#E8E8ED!important;color:#1D1D1F!important}
+.cl4{width:56px;height:56px;border-radius:50%;background:#1D1D1F;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;text-decoration:none}.cl4 small{color:#fff;font-size:10px;font-weight:700;margin-top:-1px}
+.sosb .tl3 .t3{background:#F2F2F7!important;color:#1D1D1F!important}.sosb .dt3{color:#6E6E73!important}.sosb .ft3{color:#6E6E73}.sosb .txl3{color:#0071E3!important}
 .fch{flex:0 0 100%;order:9;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;pointer-events:auto;margin:10px -18px 0;padding:0 18px 4px;-webkit-overflow-scrolling:touch}
 .fch::-webkit-scrollbar{display:none}
 .fch button{flex:none;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px 0 5px;border-radius:19px;border:0;background:rgba(255,255,255,.92);box-shadow:0 0 0 1px rgba(0,0,0,.06);font-size:15px;font-weight:500;color:#1D1D1F;cursor:pointer}
@@ -3582,8 +3601,13 @@ function sosSms(nums){const ios=/iPhone|iPad|iPod/.test(navigator.userAgent),t=e
 function sosPaint(){const el=$('#sos2');if(!el)return;const c=SOSC,reached=c.filter(x=>sosGot(x.name).length).length,state=!SOSA?(SOSA===false?'err':'sending'):reached||!c.length?'ok':'text';
  const H={sending:['Sending alert…','Telling your family now.'],ok:[c.length?'Help is on the way':'Your alert is live',SOSL?'Stay where you are if it’s safe. Your family can see you, live.':'Your family has your Medical ID. Your location follows as soon as the phone finds it.'],text:['Tell your family','Send your live location on WhatsApp with one tap.'],err:['Call for help','We couldn’t reach our server. Call directly below.']}[state];
  $('#sosh').innerHTML=H[0];$('#soss').innerHTML=H[1];
+ const ck=$('#soschk');if(ck){const m=(P(ME.me).medicalId)||{},nm=(P(ME.me)&&(REC[ME.me]||[]).filter(r=>r.kind==='med'&&r.active!==false).length)||0,names=c.map(x=>x.name).filter(Boolean),sent=SOSA&&SOSA.synced,row=(ok,t,sub)=>`<div class="r4"><span class="k4 ${ok?'on':''}">${ok?ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14):''}</span><div><b>${t}</b><small>${sub}</small></div></div>`;
+  ck.innerHTML=row(!!sent,SOSL?(sent?'Location sent'+(names.length?' to '+esc(names.slice(0,2).join(' and ')):''):'Location found · sending'):'Finding your location…',sent?'Live for the next hour':'Kept up to date while this screen is open')
+   +row(!!SOSA,'Medical ID shared',esc([m.blood||'',m.allergies?m.allergies+' allergy':'',nm?nm+' medicine'+(nm>1?'s':''):''].filter(Boolean).join(' · ')||'Name and emergency details'))
+   +row(c.length&&reached===c.length,c.length?(reached===c.length?'Family alerted':reached+' of '+c.length+' reached'):'No emergency contacts yet',c.length?(reached===c.length?'By SMS, email or the app':'Send on WhatsApp below'):'Call 108 below')}
+ const eb=$('#soseb');if(eb&&state==='ok'&&c.length)eb.innerHTML='<i></i>Help is on the way';
  const mp=$('#sosmap');if(mp){if(SOSL){const age=Math.round((Date.now()-((SOSA&&SOSA.synced)||SOSL.cached||Date.now()))/1000),live=SOSA&&SOSA.synced&&age<40;
-   mp.innerHTML=`<a class="mapl" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${SOSL.lat},${SOSL.lng}"><span class="pin3"></span><span class="tag3"><i class="${live?'on':''}"></i>${live?'Live · updated '+(age<5?'just now':age+' s ago'):SOSL.cached?'Location from '+Math.max(1,Math.round((Date.now()-SOSL.cached)/60000))+' min ago · updating':'Location found'}${SOSL.acc?' · ±'+SOSL.acc+' m':''}</span></a>`}
+   mp.innerHTML=`<a class="mapl" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${SOSL.lat},${SOSL.lng}">${(()=>{const z=15,n=2**z,fx=(SOSL.lng+180)/360*n,la=SOSL.lat*Math.PI/180,fy=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n,tx=Math.floor(fx),ty=Math.floor(fy),ox=(fx-tx)*256,oy=(fy-ty)*256;return`<div class="tl4" style="transform:translate(calc(-50% - ${ox-128}px),calc(-50% - ${oy-128}px))">${[-1,0,1].flatMap(dy=>[-1,0,1].map(dx=>`<img alt="" src="https://tile.openstreetmap.org/${z}/${tx+dx}/${ty+dy}.png">`)).join('')}</div>`})()}<span class="ring4"></span><span class="pin3"></span><span class="tag3"><i class="${live?'on':''}"></i>${live?'Live · updated '+(age<5?'just now':age+' s ago'):SOSL.cached?'Location from '+Math.max(1,Math.round((Date.now()-SOSL.cached)/60000))+' min ago · updating':'Location found'}${SOSL.acc?' · ±'+SOSL.acc+' m':''}</span></a>`}
   else locState().then(st=>{if(!$('#sosmap')||SOSL)return;$('#sosmap').innerHTML=st==='denied'?`<div class="nol3"><b>Location is off for Urban Health</b><small>Your family still gets your Medical ID. To share where you are: Settings › Safari › Location › Allow, then come back.</small></div>`:`<div class="nol3"><b>Finding your location…</b><small>Your family already has your Medical ID.</small><button onclick="locAsk().then(l=>{if(l){SOSL=l;sosPush(true);sosPaint()}})">Allow location</button></div>`})}
  const fm=$('#sosfam');if(fm){const op=SOSA&&SOSA.opened;fm.innerHTML=c.length?c.map(x=>{const g=sosGot(x.name);return`<div class="r3"><span class="av3">${esc((x.name||'?')[0].toUpperCase())}</span><div class="g3"><b>${esc(x.name)}${x.relation?' · '+esc(x.relation):''}</b><small>${g.length?esc(g.join(' + '))+' sent':SOSA?'Not reached automatically':'Sending…'}</small></div>${g.length?`<span class="p3 ${op?'op':''}">${op?'Opened':'Sent'}</span>`:x.phone?`<a class="p3 wa" target="_blank" rel="noopener" href="${sosWa(x.phone)}">WhatsApp</a>`:''}</div>`}).join('')+(op?`<div class="op3">Your alert page was opened at ${new Date(op*1000).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}</div>`:''):`<div class="r3"><div class="g3"><b>No emergency contacts yet</b><small>Call 108 below. Add contacts later in Settings.</small></div></div>`}
  const tx=$('#sostx');if(tx){const nums=c.filter(x=>!sosGot(x.name).length).map(x=>x.phone).filter(Boolean),h=sosSms(nums);tx.hidden=!h;if(h)tx.href=h}const w=$('#soswa');if(w){w.href=sosWaAll();w.style.display=c.length&&reached===c.length?'none':''}}
@@ -3614,18 +3638,17 @@ function sosWa(phone){const d=String(phone||'').replace(/\D/g,''),n=d.length===1
 function sosWaAll(){const ph=SOSC.map(x=>x.phone).filter(Boolean);return ph.length===1?sosWa(ph[0]):`https://wa.me/?text=${encodeURIComponent(sosText())}`}
 async function startSOS(){const me=P(ME.me);SOSC=(me.medicalId.contacts||[]);SOSA=null;SOSL=null;SOSSENT=null;SOSLAST=0;try{getSelection().removeAllRanges()}catch(_){}if(navigator.vibrate)navigator.vibrate([400,200,400,200,400]);
  const desk=matchMedia('(pointer:fine)').matches,lc=locCached();SOSL=lc&&Date.now()-lc.t<30*60000?{lat:lc.lat,lng:lc.lng,acc:lc.acc,cached:lc.t}:null;
- layer(`<div id="sos" class="sos3"><div id="sos2">
- <div class="hd3"><div class="eb3"><i></i>SOS on · ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}</div><button class="mid3" onclick="sosMedId()">Medical ID</button></div>
- <h1 id="sosh">Sending alert…</h1><p id="soss">Telling your family now.</p>
- <div id="sosmap" class="map3"></div>
+ layer(`<div id="sos" class="sos3 sosb"><div id="sosmap" class="map3"></div><div id="sos2" class="sh4">
+ <div class="hd4"><span class="bd4">SOS</span><div style="flex:1;min-width:0"><div class="eb3" id="soseb"><i></i>SOS on · ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}</div><h1 id="sosh">Sending alert…</h1></div><button class="mid3" onclick="sosMedId()">Medical ID</button></div>
+ <p id="soss">Telling your family now.</p>
+ <div id="soschk" class="chk4"></div>
  <div id="sosfam" class="grp3"></div>
  <a class="wa3" id="soswa" target="_blank" rel="noopener">${ic('<path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 9.2c.2 2.6 2.7 5.4 5.8 5.8l1.2-1.3-1.7-1-1 .8c-1-.4-2-1.4-2.4-2.4l.8-1-1-1.7z"/>','#fff',20)} Send on WhatsApp</a><a class="txl3" id="sostx" hidden>Or send a text message</a>
- <div class="sl3" id="sosslide"><span class="kn3">${ic(I.phone,'#FF3B30',24)}</span><span class="lb3">slide to call 108</span></div>
+ <div class="ac4"><button class="safe3" id="sossafe"><i></i><span>Hold · I’m safe</span></button><a class="cl4" href="tel:108" aria-label="Call 108">${ic(I.phone,'#fff',22)}<small>108</small></a></div>
  ${desk?`<p class="ft3">This computer can’t place calls. Dial <b>108</b> from your phone.</p>`:''}
- <div class="tl3"><button id="sossnd" class="t3" onclick="if(SIRON)sirenStop();else{SIROFF=false;sirenStart()}"></button><a class="t3" href="tel:112">${ic(I.phone,'#fff',18)}<span>Call 112</span></a></div>
- <button class="safe3" id="sossafe"><i></i><span>Hold · I’m safe</span></button>
+ <div class="tl3"><button id="sossnd" class="t3" onclick="if(SIRON)sirenStop();else{SIROFF=false;sirenStart()}"></button><a class="t3" href="tel:112">${ic(I.phone,'#1D1D1F',18)}<span>Call 112</span></a></div>
  <button class="dt3" onclick="sosDetails()">Nearest hospital and details ›</button></div></div>`);
- document.body.classList.add('sosopen');sosWake(true);document.addEventListener('visibilitychange',sosVis);if(!SIRON&&!SIROFF)sirenStart();sosSoundBtn();sosSlide();sosSafeHold();sosPaint();
+ document.body.classList.add('sosopen');sosWake(true);document.addEventListener('visibilitychange',sosVis);if(!SIRON&&!SIROFF)sirenStart();sosSoundBtn();try{sosSlide()}catch(_){}sosSafeHold();sosPaint();
  const fix=await new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>res(null),{enableHighAccuracy:true,timeout:6000,maximumAge:0})});
  if(fix){SOSL=fix;locSave({coords:{latitude:fix.lat,longitude:fix.lng,accuracy:fix.acc}})}const first=SOSL?{lat:SOSL.lat,lng:SOSL.lng,acc:SOSL.acc}:null;
  const m=me.medicalId,pg=m.pregnancy&&m.pregnancy.stage==='pregnant'?`; pregnant ${m.pregnancy.week} weeks`:'';
