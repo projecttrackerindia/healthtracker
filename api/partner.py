@@ -491,7 +491,7 @@ def tech_json(db: Session, t: PartnerUser) -> dict:
     real = "" if t.email.endswith(".invalid") else t.email
     return {"id": t.id, "name": t.name or real or t.phone, "email": real, "phone": t.phone, "active": t.active,
             "openJobs": len(jobs), "lastLogin": t.last_login, "mustChange": t.must_change,
-            "rating": t.rating or 0, "ratingN": t.rating_n or 0,
+            "rating": t.rating or 0, "ratingN": t.rating_n or 0, "perVisit": getattr(t, "fee", 0) or 0,
             # What the owner needs to know before handing somebody another job: are they out on one already?
             "live": on.status if on else "", "liveOrder": on.id if on else ""}
 
@@ -519,6 +519,23 @@ def techs(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == u.store_id,
                                                 PartnerUser.role == "tech").order_by(PartnerUser.name)).all()
     return {"techs": [tech_json(db, t) for t in rows]}
+
+
+class PayIn(BaseModel):
+    perVisit: int = 0
+
+
+@r.post("/techs/{uid}/pay")
+def tech_pay(uid: str, body: PayIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+    """What the lab pays this technician per home visit, so their app can show what they earned today. The lab
+    pays them; Urban Health only shows the sum."""
+    t = db.get(PartnerUser, uid)
+    if not t or t.store_id != u.store_id or t.role != "tech":
+        raise HTTPException(404)
+    if not 0 <= body.perVisit <= 5000:
+        raise HTTPException(400, "Per visit: ₹0 to ₹5,000")
+    t.fee = body.perVisit
+    return tech_json(db, t)
 
 
 @r.get("/pharmacists")

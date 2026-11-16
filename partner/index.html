@@ -571,10 +571,12 @@ async function loadTechs(){const ph=ROLE()==='pharmacist';let r;try{r=await api(
     <td>${ph?`<span style="font-family:var(--mono)">${E(t.regNo||'—')}</span>`:t.ratingN?`<b>★ ${t.rating.toFixed(1)}</b> <small style="color:var(--mute)">${t.ratingN} visit${t.ratingN>1?'s':''}</small>`:'<span style="color:var(--mute)">no visits rated yet</span>'}</td>
     <td><a href="tel:${E(t.phone)}">${E(t.phone)}</a>${t.email?`<br><small style="color:var(--mute)">${E(t.email)}</small>`:''}</td>
     <td>${ph?(t.active?'<span class="tag ok">on the roster</span>':'<span class="tag bad">turned off</span>'):techLine(t)}</td><td style="color:var(--mute)">${t.lastLogin?fmt(t.lastLogin):'—'}</td>
-    ${isOwner?`<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-trs="${E(t.id)}">Reset password</button> <button class="btn sm ${t.active?'d':''}" data-tac="${E(t.id)}:${t.active?0:1}">${t.active?'Turn off':'Turn on'}</button></td>`:''}</tr>`).join('')+`</table>`;
+    ${isOwner?`<td style="text-align:right;white-space:nowrap">${ph?'':`<button class="btn sm" data-tpay="${E(t.id)}:${t.perVisit||0}" title="What you pay per home visit; shown in their app">${t.perVisit?'₹'+t.perVisit+' per visit':'Set pay per visit'}</button> `}<button class="btn sm" data-trs="${E(t.id)}">Reset password</button> <button class="btn sm ${t.active?'d':''}" data-tac="${E(t.id)}:${t.active?0:1}">${t.active?'Turn off':'Turn on'}</button></td>`:''}</tr>`).join('')+`</table>`;
  if(!isOwner)return;
  $('#tl').querySelectorAll('[data-trs]').forEach(b=>b.onclick=async()=>{if(!confirm('Give this technician a new one-time password? Their current one stops working.'))return;
    try{const g=await api(`/techs/${b.dataset.trs}/reset`,{method:'POST'});showCreds(g,'New set-up link sent')}catch(e){toast(e.message)}});
+ $('#tl').querySelectorAll('[data-tpay]').forEach(b=>b.onclick=async()=>{const[id,cur]=b.dataset.tpay.split(':');const v=prompt('What you pay this technician per home visit, in ₹. It is shown in their app as what they earned; 0 hides it.',cur);if(v===null)return;
+   try{await api(`/techs/${id}/pay`,{method:'POST',body:{perVisit:Math.max(0,Math.round(+v||0))}});loadTechs()}catch(e){toast(e.message)}});
  $('#tl').querySelectorAll('[data-tac]').forEach(b=>b.onclick=async()=>{const[id,on]=b.dataset.tac.split(':');
    try{await api(`/techs/${id}/active`,{method:'POST',body:{active:on==='1'}});loadTechs()}catch(e){toast(e.message)}})}
 function techForm(){if($('#tf'))return;const ph=ROLE()==='pharmacist';

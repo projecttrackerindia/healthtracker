@@ -4593,7 +4593,15 @@ async function cardDesk(id,pid){const c=CARDX[id]||await API('/api/v2/schemes/ca
  draw();document.body.appendChild(d)}
 function cardBig(no,name){if(!String(no||'').trim())return toast('The full number isn’t saved on this card. Tap Edit and type it once.');const d=document.createElement('div');d.className='cdbig';d.innerHTML=`<div><small>${esc(name)}</small><b>${esc(no)}</b><span>Tap to close</span></div>`;d.onclick=()=>d.remove();document.body.appendChild(d)}
 /* Order screen extras: doorstep code, change or cancel by the rules, invoice, help */
-function doorCard(o){if(!o.doorCode||['cancelled','collected','processing','ready','delivered'].includes(o.status))return'';
+/* Fasting tests: said once in the app, so the technician does not have to ask at the door (board 9). */
+function fastCard(o){if(!o.fastNeed||['cancelled','collected','processing','ready','delivered'].includes(o.status))return'';
+ if(o.fastOk)return`<div class="card row" style="margin-top:14px">${ic(I.check,'#1A7F37',22)}<div><div style="font-weight:600">Fasting${o.fastOk.since?' since '+esc(vT12(o.fastOk.since)):''}</div><div class="sub">Your technician can see this. Water is fine.</div></div></div>`;
+ const d=new Date(Date.now()-10*36e5),v=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+ return`<div class="card" style="margin-top:14px"><div style="font-weight:600;font-size:17px">This test needs fasting</div><div class="sub" style="margin:2px 0 10px">8 to 12 hours without food; water is fine. Tell your technician when you last ate.</div>
+ <div class="row" style="gap:10px"><label class="sub" style="flex:1">Last ate at<input type="time" id="fastt" value="${v}" style="display:block;width:100%;margin-top:4px"></label><button class="btn pri" style="flex:1;align-self:flex-end" onclick="fastSay('${o.id}')">I'm fasting</button></div></div>`}
+async function fastSay(id){const t=($('#fastt')||{}).value||'';try{await API(`/api/v1/orders/${id}/fasting`,{key:true,json:{since:t}});toast('Your technician can see it');openOrder(id,true)}catch(e){toast(e.message)}}
+function doorCard(o){return fastCard(o)+doorCard0(o)}
+function doorCard0(o){if(!o.doorCode||['cancelled','collected','processing','ready','delivered'].includes(o.status))return'';
  return`<div class="card row" style="margin-top:14px;background:#0B1B33;color:#fff"><div style="flex:1"><div style="font-size:13px;opacity:.75">DOORSTEP CODE</div><div style="font-size:34px;font-weight:700;letter-spacing:.3em;font-variant-numeric:tabular-nums">${esc(o.doorCode)}</div><div style="font-size:13px;opacity:.75">Tell this to the ${o.kind==='lab'?'technician':'rider'} only when they are at your door.</div></div>${ic(I.lock,'#fff',30)}</div>`}
 async function orderMore(o){const el=$('#omore');if(!el)return;let t={};try{t=await API(`/api/v2/orders/${o.id}/terms`)}catch(_){}
  const inv=['collected','processing','ready','delivered'].includes(o.status);

@@ -84,6 +84,49 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .spin{width:18px;height:18px;border:2.5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:r .7s linear infinite;display:inline-block}
 @keyframes r{to{transform:rotate(360deg)}}
+
+/* board 9 · technician app: today's visits with the route, and the doorstep checks with tubes */
+.wrap{padding-bottom:110px}
+.hd{display:flex;align-items:flex-end;gap:10px;padding:10px 2px 14px}.hd .grow{flex:1;min-width:0}
+.eb{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brand)}
+.hd h1,.dn{margin:2px 0 0;font-size:32px;line-height:1.08;letter-spacing:-.03em}.dn{font-size:36px}
+.av{width:42px;height:42px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px;flex:none}
+.map{position:relative;height:200px;border-radius:22px;overflow:hidden;background:#EEF1F4;margin-bottom:12px}
+.map .tl{position:absolute;inset:0;filter:saturate(.3) brightness(1.07)}.map .tl img{position:absolute;width:256px;height:256px}
+.map svg{position:absolute;inset:0;width:100%;height:100%}.osm{position:absolute;right:8px;bottom:6px;font-size:10px;color:#6E6E73;text-decoration:none}
+.map .eta{position:absolute;left:12px;top:12px;background:#fff;border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.stops{background:var(--card);border-radius:22px;padding:2px 14px;margin-bottom:12px}
+.stop{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.stop:last-child{border-bottom:0}.stop .n{width:30px;height:30px;border-radius:50%;background:#8E8E93;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700;flex:none}
+.stop.nx .n{background:var(--brand)}.stop .t{flex:1;min-width:0}.stop b{display:block;font-size:17px;letter-spacing:-.01em}.stop small{display:block;color:var(--mute);font-size:14px}
+.tag{font-size:13px;font-weight:600;border-radius:999px;padding:4px 11px;background:#F2F2F5;color:#6E6E73;flex:none}.tag.b{background:#E8F1FF;color:#0071E3}.tag.g{background:#E8F8EC;color:#1B6E30}
+.big{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;border-radius:999px;background:var(--brand);color:#fff;font-size:19px;font-weight:600;margin:4px 0 12px}
+.big[disabled]{opacity:.45}.big svg{width:22px;height:22px}
+.kp{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kp div{background:var(--card);border-radius:18px;padding:12px 14px}.kp small{display:block;color:var(--mute);font-size:13.5px}.kp b{font-size:24px;letter-spacing:-.02em}
+.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(540px,calc(100% - 24px));display:flex;justify-content:space-around;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:28px;box-shadow:0 8px 30px rgba(0,0,0,.12);padding:6px;z-index:8}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:54px;justify-content:center;font-size:12px;color:var(--mute);border-radius:22px}
+.tabs button.on{color:var(--brand)}.tabs svg{width:22px;height:22px}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--brand);font-size:18px;font-weight:500;padding:6px 0;min-height:44px}
+.sub2{color:var(--mute);font-size:16px;margin:2px 0 14px}
+.chk{background:var(--card);border-radius:22px;padding:2px 14px;margin-bottom:14px}
+.ck{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);width:100%;text-align:left;min-height:64px}
+.ck:last-child{border-bottom:0}.ck>i{width:30px;height:30px;border-radius:50%;border:2px solid #C7C7CC;flex:none;display:grid;place-items:center;font-style:normal}
+.ck.on>i{background:var(--brand);border-color:var(--brand)}.ck.on>i::after{content:"";width:12px;height:7px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:translateY(-2px) rotate(-45deg)}
+.ck b{display:block;font-size:17px}.ck small{display:block;color:var(--mute);font-size:14px}
+.ck input{width:130px;min-height:46px;margin-top:6px;font-size:20px;letter-spacing:.3em;text-align:center;font-variant-numeric:tabular-nums}
+.sec{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:4px 2px 8px}
+.tubes{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin-bottom:14px}
+.tube{background:var(--card);border-radius:20px;padding:14px 8px 12px;text-align:center;min-height:132px;border:2px solid transparent}
+.tube.cur{border-color:var(--brand)}.tube .vl{width:22px;height:54px;margin:0 auto 8px;border-radius:5px 5px 11px 11px;background:#F4ECEE;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.tube .vl::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;background:var(--c)}
+.tube b{display:block;font-size:15px}.tube small{font-size:13.5px;color:var(--mute)}.tube.ok small{color:var(--brand)}
+.note{display:flex;gap:12px;background:#FFF8EC;border-radius:20px;padding:14px;margin-bottom:12px}.note svg{flex:none;color:#C27C0E}.note b{display:block;font-size:16px}.note span span{font-size:15px}
+.foot{text-align:center;color:var(--mute);font-size:14px;margin:6px 0 0}
+textarea{width:100%;min-height:64px;border-radius:14px;border:1px solid var(--line);background:var(--card);padding:10px 12px;font:inherit;font-size:15px}
+.list{background:var(--card);border-radius:22px;padding:2px 14px}.li{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.li .t{flex:1;min-width:0}.li b{display:block}.li small{color:var(--mute);font-size:14px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.cam{position:fixed;inset:0;background:#000;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}.cam video{width:100%;max-height:70vh;object-fit:cover}
+.cam .box{position:absolute;top:30%;left:15%;right:15%;height:18%;border:3px solid #fff;border-radius:16px}.cam p{color:#fff;font-size:16px;margin:0}.cam button{color:#fff;font-size:17px;min-height:52px;padding:0 24px;border-radius:999px;background:#333}
 </style>
 </head>
 <body>
@@ -99,7 +142,7 @@ const E = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;"
 // than fetched so the first screen paints with no network.
 const MARK = `<svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="var(--brand)"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h0.4" fill="none" stroke="var(--brand)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="var(--brand)"/></svg>`;
 
-let S = { me: null, jobs: [], busy: false, err: "", mustChange: false };
+let S = { me: null, jobs: [], busy: false, err: "", mustChange: false, tab: "today", door: null, doors: {}, today: null, samples: [], week: [], perVisit: 0 };
 let watchId = null, pinging = null;
 
 function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 2600); }
@@ -167,44 +210,153 @@ function choosePw() {
   </div>`;
 }
 
-const STATE_TEXT = { assigned: "Not started", en_route: "On the way", arrived: "At the door" };
+const IC = {
+  van: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>',
+  door: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18"/><circle cx="15" cy="12" r="1"/></svg>',
+  scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  flask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg>',
+  rupee: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10M7 9h10M13 9c3 0 3 6-2 6H7l8 6"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>'
+};
+const T12 = t => t ? new Date(t * 1000).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }).toUpperCase() : "";
+const first = n => String(n || "").split(" ")[0];
+const slotTime = s => { const m = String(s || "").match(/(\d{1,2}(?::\d{2})?\s*[AP]M)/i); return m ? m[1].toUpperCase().replace(/\s+/, " ") : ""; };
+const area = j => (String(j.address || "").split(",").map(x => x.trim()).filter(Boolean).slice(-2, -1)[0]) || j.pin || "";
+const km = (a, b) => { const R = 6371, r = x => x * Math.PI / 180, dl = r(b.lat - a.lat), dg = r(b.lng - a.lng);
+  return 2 * R * Math.asin(Math.sqrt(Math.sin(dl / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dg / 2) ** 2)); };
+let HERE = null;   // the phone's own position, only to draw the route and the minutes to the next stop
+if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { HERE = { lat: p.coords.latitude, lng: p.coords.longitude }; if (S.me && S.tab === "today" && !S.door) render(); }, () => {}, { maximumAge: 60000, timeout: 8000 });
 
-function jobCard(j) {
-  const maps = j.lat && j.lng
-    ? `https://www.google.com/maps/dir/?api=1&destination=${j.lat},${j.lng}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(j.address || "")}`;
-  const next = j.status === "assigned" ? ["start", "Start — I'm on the way"]
-    : j.status === "en_route" ? ["arrived", "I've arrived"]
-    : ["collected", "Collected the sample"];
-  return `<div class="job">
-    ${j.slot ? `<span class="slot">${E(j.slot)}</span>` : ""}
-    <div class="state s-${E(j.status)}">${E(STATE_TEXT[j.status] || j.status)}</div>
-    <h2>${E(j.member || "Patient")}</h2>
-    <p class="addr">${E(j.address || "No address given")}${j.landmark ? `<br>Near ${E(j.landmark)}` : ""}</p>
-    ${j.tests && j.tests.length ? `<div class="tests">${j.tests.map(t => `<i>${E(t)}</i>`).join("")}</div>` : ""}
-    <button class="go" data-do="${next[0]}" data-id="${E(j.id)}">${E(next[1])}</button>
-    <div class="row2">
-      ${j.phone ? `<a href="tel:${E(j.phone)}">Call</a>` : `<span class="row2-x" style="flex:1 1 0"></span>`}
-      <a href="${E(maps)}" target="_blank" rel="noopener">Directions</a>
-    </div>
-    ${j.status === "en_route" || j.status === "arrived"
-      ? `<div class="sharing"><span class="dot"></span> Sharing your location with this family until the sample is collected</div>` : ""}
-  </div>`;
+// The route on real map tiles: the stops in order, numbered, joined in partner teal; the phone is the violet dot.
+function routeMap(js) {
+  const stops = js.filter(j => j.lat && j.lng), pts = stops.map(j => ({ lat: +j.lat, lng: +j.lng }));
+  const all = (HERE ? [HERE] : []).concat(pts);
+  const next = js[0], mins = HERE && next && next.lat ? Math.max(1, Math.round(km(HERE, { lat: +next.lat, lng: +next.lng }) / 20 * 60)) : 0;
+  if (!all.length) return "";
+  const W = Math.min(window.innerWidth - 28, 532), H = 200, P = 34;
+  const X = (lng, z) => (lng + 180) / 360 * 256 * 2 ** z, Y = (lat, z) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * 256 * 2 ** z; };
+  let z = 16;
+  while (z > 10) { const xs = all.map(p => X(p.lng, z)), ys = all.map(p => Y(p.lat, z)); if (Math.max(...xs) - Math.min(...xs) < W - 2 * P && Math.max(...ys) - Math.min(...ys) < H - 2 * P) break; z--; }
+  const xs = all.map(p => X(p.lng, z)), ys = all.map(p => Y(p.lat, z)), cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+  const x0 = cx - W / 2, y0 = cy - H / 2, px = p => X(p.lng, z) - x0, py = p => Y(p.lat, z) - y0;
+  let tiles = "";
+  for (let tx = Math.floor(x0 / 256); tx * 256 < x0 + W; tx++) for (let ty = Math.floor(y0 / 256); ty * 256 < y0 + H; ty++)
+    tiles += `<img alt="" src="https://tile.openstreetmap.org/${z}/${tx}/${ty}.png" style="left:${tx * 256 - x0}px;top:${ty * 256 - y0}px">`;
+  const line = all.map(p => `${px(p).toFixed(1)},${py(p).toFixed(1)}`).join(" ");
+  return `<div class="map"><div class="tl">${tiles}</div><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    <polyline points="${line}" fill="none" stroke="#0B8A7C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map((p, i) => `<circle cx="${px(p)}" cy="${py(p)}" r="12" fill="${i ? "#8E8E93" : "#0B8A7C"}" stroke="#fff" stroke-width="3"/><text x="${px(p)}" y="${py(p) + 4.5}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="system-ui">${i + 1}</text>`).join("")}
+    ${HERE ? `<circle cx="${px(HERE)}" cy="${py(HERE)}" r="9" fill="#5E5CE6" stroke="#fff" stroke-width="3"/>` : ""}</svg>
+    ${mins && next ? `<span class="eta">${mins} min to ${E(first(next.member))}</span>` : ""}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" class="osm">© OpenStreetMap</a></div>`;
 }
 
-function jobs() {
-  const open = S.jobs;
-  // Their own rating, because the families they visited gave it and they should not have to ask the lab what
-  // it says about them.
-  const r = S.me.ratingN ? `★ ${S.me.rating.toFixed(1)}` : `${open.length} ${open.length === 1 ? "job" : "jobs"}`;
-  return `<div class="top">${MARK}<div class="grow"><b>${E(S.me.name || "Collect")}</b><small>${E(S.me.store || "")}${S.me.ratingN ? ` · ${S.me.ratingN} visit${S.me.ratingN > 1 ? "s" : ""} rated` : ""}</small></div>
-    <span class="pill">${E(r)}</span></div>
-  ${open.length ? open.map(jobCard).join("")
-    : `<div class="empty"><b>Nothing assigned</b>Your lab will send jobs here. Pull down to refresh.</div>`}`;
+function header(eb, title) {
+  return `<div class="hd"><div class="grow"><div class="eb">${eb}</div><h1>${title}</h1></div><button class="av" data-tab="profile" aria-label="Profile">${E((S.me.name || "?")[0].toUpperCase())}</button></div>`;
+}
+
+function today() {
+  const js = S.jobs, live = js.find(j => j.status === "en_route" || j.status === "arrived"), next = live || js[0];
+  const T = S.today || { done: 0, total: js.length, earned: 0 };
+  const btn = !next ? "" : next.status === "assigned" ? `<button class="big" data-do="start" data-id="${E(next.id)}">${IC.van}I'm on my way</button>`
+    : next.status === "en_route" ? `<button class="big" data-do="arrived" data-id="${E(next.id)}">${IC.door}I've arrived</button>`
+    : `<button class="big" data-open="${E(next.id)}">${IC.door}At the door · ${E(first(next.member))}</button>`;
+  return `${header(`Technician · ${E(first(S.me.name))}`, "Today's visits")}
+  ${js.length ? routeMap(js) : ""}
+  ${js.length ? `<div class="stops">${js.map((j, i) => `<button class="stop ${j === next ? "nx" : ""}" data-open="${E(j.id)}"><span class="n">${i + 1}</span><span class="t"><b>${E(j.member || "Patient")}${slotTime(j.slot) ? " · " + E(slotTime(j.slot)) : ""}</b><small>${E((j.tests || []).join(" + "))}${j.fasting ? " · fasting" : ""}${area(j) ? " · " + E(area(j)) : ""}</small></span><span class="tag ${j === next ? "b" : ""}">${j.status === "en_route" ? "On the way" : j.status === "arrived" ? "At the door" : j === next ? "Next" : "Later"}</span></button>`).join("")}</div>${btn}`
+    : `<div class="empty"><b>Nothing assigned</b>Your lab will send visits here.</div>`}
+  ${live ? `<div class="sharing" style="margin:-4px 4px 12px"><span class="dot"></span> Sharing your location with ${E(first(live.member))}'s family until the sample is collected</div>` : ""}
+  <div class="kp"><div><small>Visits today</small><b>${T.done} of ${T.total}</b></div><div><small>${S.perVisit ? "Earned today" : "Samples today"}</small><b>${S.perVisit ? "₹" + (T.earned || 0).toLocaleString("en-IN") : T.done}</b></div></div>`;
+}
+
+// At the door: round ticks, then one tube per colour, each scanned so samples never get mixed.
+function door(j) {
+  const D = S.doors[j.id] || (S.doors[j.id] = { fast: !!j.fastOk, name: false, code: "", tubes: {}, note: "" });
+  const tubes = j.tubes || [], cur = tubes.find(t => !D.tubes[t.tube]);
+  const hrs = j.fastOk && j.fastOk.since ? (() => { const [h, m] = j.fastOk.since.split(":").map(Number), d = new Date(); d.setHours(h, m, 0, 0); if (d > new Date()) d.setDate(d.getDate() - 1); return Math.floor((Date.now() - d) / 36e5); })() : 0;
+  const fastTitle = hrs ? `Fasting for ${hrs} hours` : "Fasting";
+  const fastTxt = j.fastOk ? `${E(first(j.member))} confirmed in the app at ${E(T12(j.fastOk.t))}` : "Ask when they last ate, then tick";
+  const codeOk = !j.codeNeeded || /^\d{4}$/.test(D.code);
+  const ready = (!j.fasting || D.fast) && D.name && codeOk && !cur;
+  return `<button class="back" data-back="1">‹ Today</button>
+  <div class="eb">At the door · ${E(T12(Date.now() / 1000))}</div><h1 class="dn">${E(j.member || "Patient")}</h1>
+  <p class="sub2">${E((j.tests || []).join(" + "))}</p>
+  <div class="chk">
+    ${j.fasting ? `<button class="ck ${D.fast ? "on" : ""}" data-ck="fast"><i></i><span><b>${fastTitle}</b><small>${fastTxt}</small></span></button>` : ""}
+    <button class="ck ${D.name ? "on" : ""}" data-ck="name"><i></i><span><b>Name checked</b><small>Matches the booking</small></span></button>
+    ${j.codeNeeded ? `<div class="ck ${codeOk ? "on" : ""}"><i></i><span><b>Door code${codeOk ? " " + E(D.code) : ""}</b><small>${codeOk ? "Said by " + E(first(j.member)) : "Ask for the 4 digits in their app"}</small>${codeOk ? "" : `<input id="dc" inputmode="numeric" maxlength="4" autocomplete="off" value="${E(D.code)}" aria-label="Door code">`}</span></div>` : ""}
+  </div>
+  <div class="sec">Tubes</div>
+  <div class="tubes">${tubes.map(t => `<button class="tube ${D.tubes[t.tube] ? "ok" : t === cur ? "cur" : ""}" data-tube="${E(t.tube)}" style="--c:${E(t.color)}" title="${E(t.tests.join(", "))}"><div class="vl"></div><b>${E(t.tube)}</b><small>${D.tubes[t.tube] ? "Scanned" : "Scan"}</small></button>`).join("")}</div>
+  ${cur ? `<button class="big" data-scan="${E(cur.tube)}">${IC.scan}Scan ${E(cur.tube.toLowerCase())}${/tube|cup/i.test(cur.tube) ? "" : " tube"}</button>`
+    : `<label class="sec" for="tn" style="display:block">Note for the next visit <span style="text-transform:none;font-weight:500">· optional</span></label><textarea id="tn" maxlength="200" placeholder="e.g. thin veins; left arm worked first time">${E(D.note)}</textarea>
+       <button class="big" data-collect="${E(j.id)}" ${ready ? "" : "disabled"} style="margin-top:12px">Sample collected</button>${ready ? "" : `<p class="foot" style="margin:-4px 0 10px">Tick the checks above first.</p>`}`}
+  ${j.lastNote ? `<div class="note">${IC.doc}<span><b>Note from last visit</b><span>${E(j.lastNote)}</span></span></div>` : ""}
+  <p class="foot">Report reaches ${E(first(j.member))}'s body map in about ${j.reportHours || 24} hours</p>`;
+}
+
+function samples() {
+  const L = S.samples || [];
+  return `${header(`Technician · ${E(first(S.me.name))}`, "Samples")}
+  ${L.length ? `<div class="list">${L.map(x => `<div class="li"><span class="t"><b>${E(x.member || "Patient")}</b><small>${E((x.tests || []).join(", "))} · ${E((x.tubes || []).join(", "))}</small></span><span style="text-align:right"><span class="mono" style="font-size:14px">${E(x.sampleId)}</span><br><small>${E(T12(x.at))}</small></span></div>`).join("")}</div>`
+    : `<div class="empty"><b>No samples yet today</b>Each sample you collect is listed here with its barcode.</div>`}`;
+}
+
+function earnings() {
+  const W = S.week || [], tot = W.reduce((a, x) => a + x.earned, 0), v = W.reduce((a, x) => a + x.visits, 0);
+  return `${header(`Technician · ${E(first(S.me.name))}`, "Earnings")}
+  ${S.perVisit ? `<div class="kp" style="margin-bottom:12px"><div><small>Last 7 days</small><b>₹${tot.toLocaleString("en-IN")}</b></div><div><small>Visits</small><b>${v}</b></div></div>
+    <div class="list">${W.slice().reverse().map(x => `<div class="li"><span class="t"><b>${E(new Date(x.day + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" }))}</b><small>${x.visits} visit${x.visits === 1 ? "" : "s"} · ₹${S.perVisit} each</small></span><b>₹${x.earned.toLocaleString("en-IN")}</b></div>`).join("") || '<div class="li"><span class="t"><small>No visits in the last 7 days.</small></span></div>'}</div>
+    <p class="foot">Your lab pays you; this is what it set per home visit.</p>`
+    : `<div class="empty"><b>${v} visit${v === 1 ? "" : "s"} in the last 7 days</b>Your lab has not set a per-visit amount here, so no sum is shown. Ask them to set it under Technicians.</div>`}`;
+}
+
+function profile() {
+  return `${header(`Technician · ${E(first(S.me.name))}`, "Profile")}
+  <div class="list"><div class="li"><span class="t"><b>${E(S.me.name)}</b><small>${E(S.me.store)}</small></span>${S.me.ratingN ? `<span class="tag g">★ ${S.me.rating.toFixed(1)} · ${S.me.ratingN}</span>` : ""}</div>
+  <div class="li"><span class="t"><b>Location</b><small>Shared only while you are on the way to a visit or at the door</small></span></div></div>
+  <button class="big" id="so" style="background:#E8E8ED;color:var(--ink);margin-top:14px">Sign out</button>`;
+}
+
+function shell() {
+  const j = S.door && S.jobs.find(x => x.id === S.door);
+  if (S.door && !j) S.door = null;
+  const body = j ? door(j) : S.tab === "samples" ? samples() : S.tab === "earnings" ? earnings() : S.tab === "profile" ? profile() : today();
+  return body + `<nav class="tabs">${[["today", "Today", IC.home], ["samples", "Samples", IC.flask], ["earnings", "Earnings", IC.rupee], ["profile", "Profile", IC.gear]]
+    .map(([k, n, ic]) => `<button class="${!j && S.tab === k ? "on" : ""}" data-tab="${k}">${ic}${n}</button>`).join("")}</nav>`;
+}
+
+async function scanTube(tube) {
+  // The phone camera reads the tube's barcode where the browser can; otherwise it is typed from the label.
+  let code = "";
+  if ("BarcodeDetector" in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try { code = await cameraScan(); } catch (e) { code = ""; }
+  }
+  if (!code) code = (prompt(`Barcode on the ${tube.toLowerCase()}:`) || "").trim();
+  return code.replace(/[^A-Za-z0-9-]/g, "").slice(0, 24);
+}
+function cameraScan() {
+  return new Promise(async res => {
+    const d = document.createElement("div");
+    d.className = "cam";
+    d.innerHTML = `<video playsinline autoplay muted></video><div class="box"></div><p>Point at the barcode</p><button>Type it instead</button>`;
+    document.body.appendChild(d);
+    let st, done = false;
+    const end = v => { if (done) return; done = true; if (st) st.getTracks().forEach(t => t.stop()); d.remove(); res(v); };
+    d.querySelector("button").onclick = () => end("");
+    try {
+      st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      const v = d.querySelector("video"); v.srcObject = st;
+      const bd = new BarcodeDetector();
+      const tick = async () => { if (done) return; try { const r = await bd.detect(v); if (r[0]) return end(r[0].rawValue); } catch (e) {} setTimeout(tick, 250); };
+      tick();
+    } catch (e) { end(""); }
+  });
 }
 
 function render() {
-  $("#app").innerHTML = !S.me ? signIn() : S.mustChange ? choosePw() : jobs();
+  $("#app").innerHTML = !S.me ? signIn() : S.mustChange ? choosePw() : shell();
   const cf = $("#cf");
   if (cf) cf.onsubmit = async ev => {
     ev.preventDefault();
@@ -233,6 +385,25 @@ function render() {
     S.busy = false; render();
   };
   document.querySelectorAll("[data-do]").forEach(b => b.onclick = () => move(b.dataset.id, b.dataset.do, b));
+  document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.door = null; render(); scrollTo(0, 0); });
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { const j = S.jobs.find(x => x.id === b.dataset.open);
+    if (j && j.status === "arrived") { S.door = j.id; render(); scrollTo(0, 0); }
+    else if (j) toast(j.status === "en_route" ? "Tap I've arrived when you reach the door." : "Start this visit with I'm on my way."); });
+  const bk = $("[data-back]"); if (bk) bk.onclick = () => { S.door = null; render(); };
+  document.querySelectorAll("[data-ck]").forEach(b => b.onclick = () => { const D = S.doors[S.door]; D[b.dataset.ck] = !D[b.dataset.ck]; render(); });
+  const dc = $("#dc"); if (dc) dc.oninput = () => { const v = dc.value.replace(/\D/g, "").slice(0, 4); S.doors[S.door].code = v; if (v.length === 4) render(); };
+  const tn = $("#tn"); if (tn) tn.oninput = () => { S.doors[S.door].note = tn.value; };
+  const scanOne = async tube => { const code = await scanTube(tube); if (!code) return; const D = S.doors[S.door];
+    if (Object.values(D.tubes).includes(code)) { toast("That barcode is already on another tube."); return; } D.tubes[tube] = code; render(); };
+  document.querySelectorAll("[data-scan],[data-tube]").forEach(b => b.onclick = () => scanOne(b.dataset.scan || b.dataset.tube));
+  const cl = $("[data-collect]"); if (cl) cl.onclick = async () => { const D = S.doors[S.door];
+    cl.disabled = true; cl.innerHTML = '<span class="spin"></span>';
+    try {
+      // one sample id for the booking: the tubes' barcodes joined, so the lab can match every tube back
+      await api(`/partner/tech/jobs/${S.door}/collected`, { body: { note: D.note || "", code: D.code, sample: Object.values(D.tubes).join("-").slice(0, 24) } });
+      delete S.doors[S.door]; S.door = null; toast("Sample collected. The family has been told."); await load();
+    } catch (e) { toast(e.message || "Could not do that"); cl.disabled = false; cl.textContent = "Sample collected"; } };
+  const so = $("#so"); if (so) so.onclick = async () => { try { await api("/partner/logout", { body: {} }); } catch (e) {} S.me = null; stopSharing(); render(); };
 
   // share position for whichever job is live; stop when none is
   const live = S.jobs.find(j => j.status === "en_route" || j.status === "arrived");
@@ -250,7 +421,8 @@ async function move(id, what, btn) {
     }
     await api(`/partner/tech/jobs/${id}/${what}`, { body: { note: "", code, sample } });
     if (what === "collected") toast("Sample collected. The family has been told.");
-    await load();
+    if (what === "arrived") { S.door = id; }
+    await load(); scrollTo(0, 0);
   } catch (e) {
     toast(e.message || "Could not do that");
     btn.disabled = false; render();
@@ -268,7 +440,7 @@ async function load() {
     // fetch anybody's address until that slip has stopped being a way in.
     if (S.mustChange) { S.jobs = []; render(); return; }
     const j = await api("/partner/tech/jobs");
-    S.jobs = j.jobs || [];
+    S.jobs = j.jobs || []; S.today = j.today || null; S.samples = j.samples || []; S.week = j.week || []; S.perVisit = j.perVisit || 0;
   } catch (e) {
     if (e.status === 401) { S.me = null; stopSharing(); }
     else if (e.status === 403) { S.err = e.message; S.me = null; }

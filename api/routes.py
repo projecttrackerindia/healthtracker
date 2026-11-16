@@ -340,6 +340,8 @@ def order_json(o: Order):
             "status": "cancelled" if i < 0 else (o.status if o.status in ("return_requested", "returned", "refunded") else steps[i][0]), "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
             "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr, "doorCode": o.door_code, "sampleId": o.sample_id, "cancelFee": o.cancel_fee, "live": _live(o),
             "visitRating": o.visit_rating, "visitTags": o.visit_tags,
+            # Fasting tests: the family can tell the technician when they last ate, before the knock on the door
+            "fastNeed": needs_fasting(o), "fastOk": next(({"t": x.get("t"), "since": x.get("since", "")} for x in reversed(o.timeline or []) if x.get("s") == "fasting_ok"), None),
             # Asked once the sample is in the bag and the person is still fresh in mind — not days later when
             # the report lands, by which time the family is rating the report and calling it the visit.
             "canRateVisit": bool(o.kind == "lab" and o.agent_id and o.done_at and o.visit_rating is None),
@@ -480,6 +482,36 @@ class RateReq(BaseModel):
     rating: int = Field(ge=1, le=5)
     tags: list[str] = []
     note: str = ""
+
+
+def needs_fasting(o: Order) -> bool:
+    if o.kind != "lab":
+        return False
+    from .seed import TESTS
+    return any((TESTS.get(str(i.get("code") or "").lower(), (0, 0, 0, False))[3]) or "fast" in str(i.get("prep", "")).lower()
+               or re.search(r"(?i)fasting|lipid|cholesterol|triglycer", str(i.get("name", ""))) for i in (o.items or []))
+
+
+class FastReq(BaseModel):
+    since: str = ""     # "21:30", when they last ate
+
+
+@r.post("/orders/{oid}/fasting")
+def fasting(oid: str, body: FastReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    """'I have been fasting since 9:30 PM': said once in the app, so the technician does not have to ask at the door."""
+    h = household(db, x_dokko_key, create=False)
+    o = db.get(Order, oid)
+    from .auth import current_user as _cu
+    from .people import order_allowed as _oa
+    if not h or not o or o.household_id != h.id or not _oa(db, _cu(request, db), o.member_id, write=True):
+        raise HTTPException(404)
+    if not needs_fasting(o) or o.status in ("collected", "processing", "ready", "cancelled"):
+        raise HTTPException(409, "This booking does not need fasting now.")
+    since = body.since.strip()
+    if since and not re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", since):
+        raise HTTPException(400, "Time as HH:MM")
+    o.timeline = (o.timeline or []) + [{"s": "fasting_ok", "t": now(), "since": since}]
+    return order_json(o)
 
 
 @r.post("/orders/{oid}/rate")

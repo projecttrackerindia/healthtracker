@@ -225,3 +225,61 @@ def test_the_technician_app_is_its_own_installable_app():
     assert j["short_name"] == "Collect" and j["start_url"] == "/tech"
     assert j["theme_color"] == "#0B8A7C", "the partner colour is set in BRAND.md, not invented per app"
     assert "partner-icon" in j["icons"][0]["src"], "use the brand partner icon, not a one-off"
+
+
+# ---------------------------------------------------------------- board 9: route, doorstep checks, tubes, notes, pay
+def test_the_family_says_they_are_fasting_and_the_technician_sees_it():
+    store_id, owner_email, tech_email, tech_id = setup_lab()
+    fam, key = family()
+    oid = place_booking(store_id, key)            # a lipid profile: needs fasting
+    lab = partner(owner_email)
+    lab.post(f"/api/partner/orders/{oid}/status", json={"status": "confirmed"})
+    lab.post(f"/api/partner/orders/{oid}/assign", json={"agent": tech_id})
+    bad = fam.post(f"/api/v1/orders/{oid}/fasting", headers=H, json={"since": "25:99"})
+    assert bad.status_code == 400
+    r = fam.post(f"/api/v1/orders/{oid}/fasting", headers=H, json={"since": "21:30"})
+    assert r.status_code == 200 and r.json()["fastNeed"] is True and r.json()["fastOk"]["since"] == "21:30"
+    job = partner(tech_email).get("/api/partner/tech/jobs").json()["jobs"][0]
+    assert job["fasting"] is True and job["fastOk"]["since"] == "21:30"
+    assert [t["tube"] for t in job["tubes"]] == ["Red top"] and job["reportHours"] >= 6
+
+
+def test_another_household_cannot_say_someone_else_is_fasting():
+    store_id, owner_email, tech_email, tech_id = setup_lab()
+    fam, key = family()
+    oid = place_booking(store_id, key)
+    other, _ = family()
+    assert other.post(f"/api/v1/orders/{oid}/fasting", headers=H, json={"since": "21:30"}).status_code == 404
+
+
+def test_tubes_are_one_per_colour():
+    from api.tech import tubes_for
+    t = tubes_for([{"name": "Lipid profile"}, {"name": "HbA1c"}, {"name": "Fasting glucose", "code": "glu_f"}, {"name": "CBC"}, {"name": "Thyroid profile"}])
+    assert [x["tube"] for x in t] == ["Red top", "Grey", "Purple"]
+    assert sorted(next(x for x in t if x["tube"] == "Purple")["tests"]) == ["CBC", "HbA1c"]
+
+
+def test_the_note_from_this_visit_greets_the_next_one_and_pay_shows_as_earned():
+    store_id, owner_email, tech_email, tech_id = setup_lab()
+    fam, key = family()
+    lab = partner(owner_email)
+    assert lab.post(f"/api/partner/techs/{tech_id}/pay", json={"perVisit": 150}).json()["perVisit"] == 150
+    assert lab.post(f"/api/partner/techs/{tech_id}/pay", json={"perVisit": 99999}).status_code == 400
+    tech = partner(tech_email)
+    assert tech.post(f"/api/partner/techs/{tech_id}/pay", json={"perVisit": 900}).status_code == 403
+    first = place_booking(store_id, key)
+    lab.post(f"/api/partner/orders/{first}/status", json={"status": "confirmed"})
+    lab.post(f"/api/partner/orders/{first}/assign", json={"agent": tech_id})
+    tech.post(f"/api/partner/tech/jobs/{first}/start", json={})
+    tech.post(f"/api/partner/tech/jobs/{first}/arrived", json={})
+    with session() as db:
+        code = db.get(Order, first).door_code
+    r = tech.post(f"/api/partner/tech/jobs/{first}/collected", json={"code": code, "sample": "RT1-PU2", "note": "Thin veins; left arm worked"})
+    assert r.status_code == 200, r.text
+    second = place_booking(store_id, key)
+    lab.post(f"/api/partner/orders/{second}/status", json={"status": "confirmed"})
+    lab.post(f"/api/partner/orders/{second}/assign", json={"agent": tech_id})
+    j = tech.get("/api/partner/tech/jobs").json()
+    assert j["jobs"][0]["lastNote"] == "Thin veins; left arm worked"
+    assert j["today"] == {"done": 1, "total": 2, "earned": 150} and j["perVisit"] == 150
+    assert j["samples"][0]["sampleId"] == "RT1-PU2"

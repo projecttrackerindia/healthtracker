@@ -50,10 +50,52 @@ def _job(db: Session, u: PartnerUser, oid: str) -> Order:
     return o
 
 
+# Which tube each test goes in, so the technician scans one per colour and samples never get mixed.
+TUBES = [("Grey", "#8E8E93", r"(?i)glucose|sugar|fbs|ppbs|glu_"),
+         ("Purple", "#5E5CE6", r"(?i)cbc|blood count|hba1c|esr|haemoglobin|hemoglobin|platelet|wbc|\bhb\b"),
+         ("Blue", "#0071E3", r"(?i)\bpt\b|inr|coag|aptt"),
+         ("Urine cup", "#FFCC00", r"(?i)urine"),
+         ("Red top", "#E0382B", r".")]
+
+
+def tubes_for(items: list) -> list[dict]:
+    import re as _re
+    out: list[dict] = []
+    for i in items or []:
+        name = f"{i.get('name', '')} {i.get('code', '')}"
+        tube = next(t for t in TUBES if _re.search(t[2], name))
+        x = next((x for x in out if x["tube"] == tube[0]), None)
+        if not x:
+            out.append({"tube": tube[0], "color": tube[1], "tests": [i.get("name") or i.get("code")]})
+        else:
+            x["tests"].append(i.get("name") or i.get("code"))
+    order = [t[0] for t in TUBES]
+    return sorted(out, key=lambda x: order.index(x["tube"]) if x["tube"] != "Red top" else -1)
+
+
+def _last_note(db: Session, o: Order) -> str:
+    """What the last technician here wrote for the next one ('thin veins, left arm worked'), same person, same lab."""
+    q = select(Order).where(Order.store_id == o.store_id, Order.household_id == o.household_id, Order.kind == "lab",
+                            Order.id != o.id, Order.done_at.is_not(None))
+    if o.member_id:
+        q = q.where(Order.member_id == o.member_id)
+    for prev in db.scalars(q.order_by(Order.done_at.desc()).limit(3)).all():
+        n = next((x.get("note") for x in reversed(prev.timeline or []) if x.get("s") == "collected" and x.get("note")), "")
+        if n:
+            return n
+    return ""
+
+
 def job_json(db: Session, o: Order) -> dict:
     """What the technician's screen needs, and nothing else about the family."""
     a = o.addr or {}
+    from api.routes import needs_fasting
+    from api.seed import TESTS
+    fast = next(({"t": x.get("t"), "since": x.get("since", "")} for x in reversed(o.timeline or []) if x.get("s") == "fasting_ok"), None)
+    tat = max([TESTS.get(str(i.get("code") or "").lower(), (0, 0, 24, 0))[2] for i in (o.items or [])] or [24])
     return {
+        "fasting": needs_fasting(o), "fastOk": fast, "tubes": tubes_for(o.items or []), "lastNote": _last_note(db, o),
+        "reportHours": tat, "sampleId": o.sample_id or "", "codeNeeded": bool(o.door_code),
         "id": o.id, "status": o.status, "slot": o.slot, "member": o.member,
         "tests": [i.get("name") or i.get("code") for i in (o.items or [])],
         "address": o.address or ", ".join(x for x in [a.get("line1"), a.get("area"), a.get("city")] if x),
@@ -76,7 +118,26 @@ def jobs(db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
     # of thing that makes a person on a scooter open the wrong job.
     rank = {"en_route": 0, "arrived": 0, "assigned": 1}
     rows.sort(key=lambda o: (rank.get(o.status, 2), o.slot or "", o.created or 0))
-    return {"jobs": [job_json(db, o) for o in rows]}
+    # Today's numbers for the top of the screen, and the samples already in the bag.
+    import datetime as _dt
+    from api.network import IST as _IST
+    day0 = int(_dt.datetime.now(_IST).replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+    dq = select(Order).where(Order.store_id == u.store_id, Order.kind == "lab", Order.done_at >= day0)
+    if u.role == "tech":
+        dq = dq.where(Order.agent_id == u.id)
+    done = db.scalars(dq.order_by(Order.done_at.desc())).all()
+    pay = getattr(u, "fee", 0) or 0
+    wk = select(Order).where(Order.store_id == u.store_id, Order.kind == "lab", Order.done_at >= day0 - 6 * 86400)
+    if u.role == "tech":
+        wk = wk.where(Order.agent_id == u.id)
+    week: dict[str, int] = {}
+    for o in db.scalars(wk).all():
+        k = _dt.datetime.fromtimestamp(o.done_at, _IST).strftime("%Y-%m-%d")
+        week[k] = week.get(k, 0) + 1
+    return {"jobs": [job_json(db, o) for o in rows], "today": {"done": len(done), "total": len(done) + len(rows), "earned": len(done) * pay},
+            "perVisit": pay, "week": [{"day": k, "visits": v, "earned": v * pay} for k, v in sorted(week.items())],
+            "samples": [{"id": o.id, "member": o.member, "sampleId": o.sample_id or "", "tests": [i.get("name") for i in (o.items or [])],
+                         "at": o.done_at, "status": o.status, "tubes": [t["tube"] for t in tubes_for(o.items or [])]} for o in done]}
 
 
 class Move(BaseModel):
@@ -130,6 +191,10 @@ def collected(oid: str, body: Move, db: Session = Depends(get_db), u: PartnerUse
     from api.booking import check_door
     check_door(o, body.code, body.sample)
     out = _advance(db, o, "collected", u, "Sample collected. Your report will arrive in the app.")
+    note = body.note.strip()[:200]
+    if note and o.timeline and o.timeline[-1].get("s") == "collected":
+        # kept for the next visit to this person by this lab: "thin veins; left arm worked first time"
+        o.timeline = o.timeline[:-1] + [{**o.timeline[-1], "note": note}]
     return out
 
 
