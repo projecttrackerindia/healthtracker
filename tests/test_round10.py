@@ -646,3 +646,23 @@ def test_blood_bank_stock_by_group():
     assert len(s) == 1 and s[0]["group"] == "O-" and s[0]["units"] == 5
     assert pb.put("/api/partner/blood/stock", json={"group": "Z+", "units": 1}).status_code == 400
     assert pl.put("/api/partner/blood/stock", json={"group": "O+", "units": 1}).status_code == 403
+
+
+def test_doctor_running_late_reaches_waiting_families():
+    from api.models import PartnerUser
+    a = admin()
+    with DB.session() as db:
+        st = Store(kind="hospital", name="Late Clinic", city="Chennai", area="Adyar", lat=13.0, lng=80.25, verified=True)
+        db.add(st); db.flush(); sid = st.id
+    r = a.post(f"/api/admin/stores/{sid}/users", json={"email": f"o{uuid.uuid4().hex[:6]}@x.in", "name": "Desk", "role": "owner"}).json()
+    c = TestClient(server.app); c.post("/api/partner/login", json={"email": r["email"], "password": r["tempPassword"]})
+    with DB.session() as db:
+        d = PartnerUser(store_id=sid, email=f"d{uuid.uuid4().hex[:6]}@x.in", name="Dr Late", role="doctor", active=True, verified=True)
+        db.add(d); db.flush(); did = d.id
+    for n in ("Ravi", "Anand"):
+        assert c.post("/api/partner/queue/add", json={"store": sid, "doctor": did, "member": n}).status_code == 200
+    x = c.post("/api/partner/queue/late", json={"doctor": did, "minutes": 15}).json()
+    assert x["late"]["min"] == 15
+    q = c.get(f"/api/partner/queue?doctor={did}").json()
+    assert q["late"]["min"] == 15
+    assert c.post("/api/partner/queue/late", json={"doctor": did, "minutes": 0}).json()["late"] is None

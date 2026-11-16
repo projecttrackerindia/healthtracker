@@ -61,6 +61,7 @@ footer .dot.off{background:var(--amber)}
 .now b{color:var(--teal)}
 .next i{border-radius:2.8vh!important;background:rgba(255,255,255,.08)!important;color:#fff!important}
 header{border-bottom:0!important}footer{border-top:0!important}
+.late{font-size:2.6vh;color:#F5C26B;font-weight:600;margin:.4vh 0 1vh}.room:only-child .late{font-size:3.4vh}
 </style>
 </head>
 <body>
@@ -87,6 +88,7 @@ function room(r) {
     ${r.now != null
       ? `<div class="now ${r.calling ? 'calling' : ''}"><b>${r.now}</b><span>${r.calling ? 'please come in' : 'with the doctor'}</span></div>`
       : `<div class="none">Next patient, please</div>`}
+    ${r.lateMin ? `<div class="late">Running about ${r.lateMin} min late</div>` : ''}
     <div class="next">${r.next.length
       ? `<u>Next</u>${r.next.map(n => `<i>${n}</i>`).join('')}${r.waiting > r.next.length ? `<u>+${r.waiting - r.next.length} more</u>` : ''}`
       : '<u>Nobody else waiting</u>'}</div>

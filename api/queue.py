@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .inbox import notify
-from .models import Appointment, Household, PartnerUser, Store, Token, now
+from .models import Appointment, Household, PartnerUser, QueueLate, Store, Token, now
 
 r = APIRouter(prefix="/api/v1")           # the family's side
 pr = APIRouter(prefix="/api/partner")     # the counter's side
@@ -66,6 +66,11 @@ def ahead_of(db: Session, t: Token) -> int:
         Token.state.in_(OPEN_STATES), Token.number < t.number)) or 0
 
 
+def late_of(db: Session, store_id: str, doctor_id: str, day: str) -> dict | None:
+    x = db.scalar(select(QueueLate).where(QueueLate.store_id == store_id, QueueLate.doctor_id == doctor_id, QueueLate.day == day))
+    return {"min": x.minutes, "t": x.t} if x and x.minutes > 0 else None
+
+
 def token_json(db: Session, t: Token, *, counter: bool = False) -> dict:
     d = db.get(PartnerUser, t.doctor_id)
     out = {"id": t.id, "number": t.number, "state": t.state, "day": t.day, "kind": t.kind,
@@ -88,7 +93,10 @@ def token_json(db: Session, t: Token, *, counter: bool = False) -> dict:
     out["serving"] = db.scalar(select(func.max(Token.number)).where(
         Token.store_id == t.store_id, Token.doctor_id == t.doctor_id, Token.day == t.day, Token.state.in_(("called", "in", "done")))) or 0
     s = db.get(Store, t.store_id)
-    out["store"] = {"name": s.name, "area": s.area or "", "phone": s.phone or ""} if s else None
+    out["store"] = {"name": s.name, "area": s.area or "", "phone": s.phone or "", "lat": s.lat, "lng": s.lng} if s else None
+    out["late"] = late_of(db, t.store_id, t.doctor_id, t.day)
+    if out["late"] and out["waitMin"] is not None:
+        out["waitMin"] += out["late"]["min"]
     return out
 
 
@@ -223,7 +231,35 @@ def counter_queue(doctor: str = "", db: Session = Depends(get_db), u: PartnerUse
             "day": day, "paceMin": pace(db, u.store_id, d.id, day),
             "waiting": sum(1 for t in live if t.state == "waiting"),
             "seen": sum(1 for t in rows if t.state == "done"),
+            "late": late_of(db, u.store_id, d.id, day),
             "tokens": [token_json(db, t, counter=True) for t in rows]}
+
+
+class LateIn(BaseModel):
+    doctor: str
+    minutes: int
+
+
+@pr.post("/queue/late")
+def set_late(body: LateIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+    """The doctor is running late: every family still waiting is told the new time, once. 0 clears it."""
+    d = doctor_of(db, u.store_id, body.doctor)
+    day, m = today(), max(0, min(240, int(body.minutes)))
+    x = db.scalar(select(QueueLate).where(QueueLate.store_id == u.store_id, QueueLate.doctor_id == d.id, QueueLate.day == day))
+    if not x:
+        x = QueueLate(store_id=u.store_id, doctor_id=d.id, day=day)
+        db.add(x)
+    x.minutes, x.t = m, now()
+    db.flush()
+    told = 0
+    if m:
+        s = db.get(Store, u.store_id)
+        for t in db.scalars(select(Token).where(Token.store_id == u.store_id, Token.doctor_id == d.id, Token.day == day, Token.state == "waiting")).all():
+            if t.household_id:
+                notify(db, t.household_id, "appointment", f"{d.name or 'The doctor'} is running {m} min late",
+                       f"{s.name if s else 'The clinic'} · token {t.number}. Your turn moves by about {m} minutes.", ref={"token": t.id})
+                told += 1
+    return {"late": late_of(db, u.store_id, d.id, day), "told": told}
 
 
 NEXT_STATE = {"waiting": "called", "called": "in", "in": "done"}
@@ -372,7 +408,8 @@ def board(token: str, db: Session = Depends(get_db)):
             continue
         now_ = next((t for t in rows if t.state in ("called", "in")), None)
         nxt = [t.number for t in rows if t.state == "waiting"][:4]
-        out.append({"doctor": d.name or "", "specialty": d.specialty or "",
+        lt = late_of(db, s.id, d.id, day)
+        out.append({"doctor": d.name or "", "specialty": d.specialty or "", "lateMin": lt["min"] if lt else 0,
                     "now": now_.number if now_ else None,
                     "calling": bool(now_ and now_.state == "called"),
                     "next": nxt, "waiting": sum(1 for t in rows if t.state == "waiting")})

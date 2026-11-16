@@ -200,6 +200,11 @@ html,body{font-family:var(--font)}
 #evl .btn{background:#fff!important;border:0!important;border-radius:16px!important;padding:12px 14px!important;box-shadow:0 1px 2px rgba(0,0,0,.04);height:auto}
 #evl{background:none!important;box-shadow:none!important;padding:0!important}
 #evx textarea,#evx #edx{border-radius:14px!important;background:#F5F5F7!important;border:0!important}
+#ql{grid-template-columns:260px minmax(0,1fr) minmax(0,1fr) 320px!important}#ql .qside{grid-column:4;grid-row:1/3;display:flex;flex-direction:column;gap:16px}
+.qlate{background:#FFF8EC!important}.qlate.on{background:#FFF4E5!important}.qch{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.qch button{height:34px;padding:0 14px;border-radius:17px;border:0;background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);font:inherit;font-size:14px;cursor:pointer}.qch button.on{background:#1D1D1F;color:#fff;box-shadow:none}
+.qtv{display:flex;gap:14px;align-items:center;background:#0B1220;border-radius:16px;padding:14px 16px;color:#fff;margin:8px 0}.qtv b{font-size:44px;color:#4FD1C5;line-height:1}.qtv span{font-size:13px;opacity:.85}
+@media (max-width:1200px){#ql{grid-template-columns:1fr 1fr!important}#ql .qside{grid-column:1/-1;grid-row:auto}}
+.qsh{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}.qrw{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.qrw:last-child{border:0}.qrw div{flex:1;min-width:0}.qrw b{display:block;font-size:14px}.qrw small{display:block;color:var(--mute);font-size:12px}.qav{width:30px;height:30px;border-radius:50%;color:#fff;display:grid;place-items:center;font-weight:600;font-size:12px;flex:none}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -521,7 +526,10 @@ async function loadDoctors(){if(!$('#ql'))return;let r;try{r=await api('/doctors
  // The counter leaves this open all morning; a slow refresh keeps it honest without anybody tapping.
  if(QTIMER)clearInterval(QTIMER);QTIMER=setInterval(()=>{if(view==='queue')loadQueue();else{clearInterval(QTIMER);QTIMER=null}},20000)}
 const QST={waiting:['','Waiting'],called:['go','Called'],in:['ok','With the doctor'],done:['','Seen'],skipped:['bad','Passed over']};
-async function loadQueue(){if(!QDOC||!$('#ql'))return;let q;try{q=await api('/queue?doctor='+encodeURIComponent(QDOC))}catch(e){if($('#ql'))$('#ql').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+let QLATE=15,QDOCS=null;
+async function setLate(m){try{const r=await api('/queue/late',{method:'POST',body:{doctor:QDOC,minutes:m}});toast(m?`Told ${r.told} famil${r.told===1?'y':'ies'}`:'Marked on time');loadQueue()}catch(e){toast(e.message)}}
+async function openBoardLink(){try{let r=await api('/board-token');if(!r.token)r=await api('/board-token',{method:'POST'});window.open(r.url,'_blank','noopener')}catch(e){toast(e.message)}}
+async function loadQueue(){try{QDOCS=(await api('/doctors')).doctors}catch(_){}if(!QDOC||!$('#ql'))return;let q;try{q=await api('/queue?doctor='+encodeURIComponent(QDOC))}catch(e){if($('#ql'))$('#ql').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
  if(!$('#ql'))return;        // the counter navigated away while this was in flight
  const now_=q.tokens.find(t=>t.state==='called'||t.state==='in');
  // By eleven o'clock the finished rows are most of the list and the live ones are below the fold. The queue
@@ -531,7 +539,14 @@ async function loadQueue(){if(!QDOC||!$('#ql'))return;let q;try{q=await api('/qu
  $('#ql').innerHTML=`<div class="cards">
    <div class="card kpi qnow"><small>Now seeing</small><b>${now_?now_.number:'—'}</b><span>${now_?E(now_.member||'')+' · '+E(QST[now_.state][1]):'Nobody in the room'}</span><button class="btn" onclick="callNext()">Call next${(()=>{const n=q.tokens.find(t=>t.state==='waiting');return n?' · '+n.number:''})()}</button></div>
    <div class="card kpi"><small>Waiting</small><b>${q.waiting}</b><span style="color:var(--mute)">${q.paceMin?`about ${q.waiting*q.paceMin} min to clear`:'pace not known yet'}</span></div>
-   <div class="card kpi"><small>Seen today</small><b>${q.seen}</b><span style="color:var(--mute)">${q.paceMin?`${q.paceMin} min each`:'—'}</span></div></div>
+   <div class="card kpi"><small>Seen today</small><b>${q.seen}</b><span style="color:var(--mute)">${q.paceMin?`${q.paceMin} min each`:'—'}</span></div>
+   <div class="qside"><div class="card qlate${q.late?' on':''}"><div class="row" style="gap:10px;margin:0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A5B00" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b style="font-size:18px">${q.late?`Running ${q.late.min} min late`:'Running late?'}</b></div>
+    <p style="color:var(--mute);margin:6px 0 0;font-size:14px">${q.late?`Families waiting were told at ${new Date(q.late.t*1000).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}.`:'Families waiting at home see the new time. Tell them now?'}</p>
+    <div class="qch">${[15,30,45].map(m=>`<button class="${QLATE===m?'on':''}" onclick="QLATE=${m};loadQueue()">${m} min</button>`).join('')}${q.late?`<button onclick="setLate(0)">On time</button>`:''}</div>
+    <button class="btn p" style="width:100%;justify-content:center;margin-top:12px" onclick="setLate(QLATE)" ${q.waiting?'':'disabled'}>Tell ${q.waiting} famil${q.waiting===1?'y':'ies'}</button></div>
+   <div class="card"><small style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)">Waiting room TV</small><div class="qtv"><b>${now_?now_.number:'—'}</b><span>Now seeing${q.late?` · ${q.late.min} min late`:''}<br>Next: ${q.tokens.filter(t=>t.state==='waiting').slice(0,3).map(t=>t.number).join(', ')||'—'}</span></div><a href="#" onclick="event.preventDefault();openBoardLink()" style="font-size:13px">Open /counter on any TV in the clinic</a></div>
+   ${(()=>{const ob=q.tokens.filter(t=>t.appointment&&t.state==='waiting');return ob.length?`<div class="card"><small class="qsh">Online bookings for this OP</small>${ob.map(t=>`<div class="qrw"><span class="qav" style="background:#5E5CE6">${E((t.member||'?')[0])}</span><div><b>${E(t.member||'Patient')}</b><small>Token ${t.number}${t.why?' · '+E(t.why):''}</small></div></div>`).join('')}</div>`:''})()}
+   ${(QDOCS||[]).length?`<div class="card"><small class="qsh">Doctors in today</small>${QDOCS.map(d=>`<div class="qrw"><span class="qav" style="background:${d.waiting?'#0B8A7C':'#86868B'}">${E(((d.name||'?').replace(/^Dr\.?\s*/i,''))[0])}</span><div><b>${E(d.name)}</b><small>${E(d.specialty||'Doctor')}</small></div><span class="tag ${d.waiting?'go':''}">${d.waiting?d.waiting+' waiting':'No queue'}</span></div>`).join('')}</div>`:''}</div></div>
   <div class="card">${show.length?`<table><tr><th style="width:70px">No.</th><th>Patient</th><th>Reason</th><th>Waiting</th><th>State</th><th></th></tr>
    ${show.map(t=>`<tr${t.state==='done'||t.state==='skipped'?' style="opacity:.55"':''}>
      <td><b style="font-size:19px;font-family:var(--mono)">${t.number}</b></td>

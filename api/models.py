@@ -910,6 +910,17 @@ class Donor(Base):
     donations: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class QueueLate(Base):
+    """A doctor running late today, set at the OP counter. Shown on every waiting family's token and on the waiting-room screen."""
+    __tablename__ = "queue_late"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ql"))
+    store_id: Mapped[str] = mapped_column(String(32), index=True)
+    doctor_id: Mapped[str] = mapped_column(String(32), index=True)
+    day: Mapped[str] = mapped_column(String(10), index=True)
+    minutes: Mapped[int] = mapped_column(Integer, default=0)
+    t: Mapped[int] = mapped_column(Integer, default=now)
+
+
 class BloodStock(Base):
     """Units on the shelf at a blood bank, per group and component. Counted by the bank; shown on its Requests page."""
     __tablename__ = "blood_stock"
