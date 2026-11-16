@@ -136,4 +136,4 @@ const send=(a,x={})=>parent.postMessage({type:'uh-body-act',act:a,...x},location
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-data')return;const p=(e.data.data||{}).person||{};
  $('eb').textContent=(p.name?String(p.name).toUpperCase()+' · ':'')+'PREGNANCY';const w=Math.max(6,Math.min(40,(p.pregnancy&&p.pregnancy.week)||20));wkI.value=w;go(w,true)});
 resize();wkI.value=wk;go(wk,true);send('ready');
-</script><script>addEventListener('load',()=>{if(/[?&]v=m\b/.test(location.search))setTimeout(()=>{const b=document.getElementById('vm');if(b)b.click()},400)})</script></body></html>
+</script><script>addEventListener('load',()=>{if(/[?&]v=m\b/.test(location.search))setTimeout(()=>{const b=document.getElementById('vm');if(b)b.click()},400)})</script><script>if(/[?&]e=1\b/.test(location.search)){document.documentElement.classList.add('emb');const st=document.createElement('style');st.textContent='.emb .top,.emb .fade,.emb #x,.emb .sheet,.emb .now,.emb #tag{display:none!important}.emb body{background:transparent!important}';document.head.appendChild(st)}</script></body></html>

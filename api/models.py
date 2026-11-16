@@ -1268,6 +1268,12 @@ class CatalogMed(Base):
     photos: Mapped[list | None] = mapped_column(JSON, nullable=True)  # [{id, side}]
     hidden: Mapped[bool] = mapped_column(Boolean, default=False)
     updated: Mapped[int] = mapped_column(Integer, default=now)
+    # What a family reads when they type this medicine: one or two plain sentences, no brand claims.
+    about: Mapped[str] = mapped_column(String(300), default="")
+    organ: Mapped[str] = mapped_column(String(40), default="")       # body-map part it acts on, e.g. "pancreas"
+    test: Mapped[str] = mapped_column(String(40), default="")        # lab test code that follows it, e.g. "hba1c"
+    refill_days: Mapped[int] = mapped_column(Integer, default=0)     # usual days one pack lasts; 0 = not a regular medicine
+    cold: Mapped[bool] = mapped_column(Boolean, default=False)       # needs a cold-chain bag (2–8 °C)
 
 
 class CatalogTest(Base):

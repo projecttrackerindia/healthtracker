@@ -241,3 +241,48 @@ def test_an_unsettled_row_leaves_the_settled_columns_empty_rather_than_writing_n
     csv = admin().get(f"/api/admin/settlements.csv?month={THIS_MONTH}").text
     line = next(l for l in csv.strip().split("\n") if sid in l)
     assert line.endswith("False,,,") and "None" not in line
+
+
+def test_a_hold_is_written_down_and_is_not_a_payment():
+    sid, owner, staff, hid = a_store()
+    completed(sid, hid, 1000, payment="upi-paid")
+    adm = admin()
+    no_reason = adm.post(f"/api/admin/settlements/{THIS_MONTH}/{sid}", json={"status": "held", "note": ""})
+    assert no_reason.status_code == 400
+    assert adm.post(f"/api/admin/settlements/{THIS_MONTH}/{sid}", json={"status": "held", "note": "refund not confirmed"}).status_code == 200
+    r = row(adm, sid)
+    assert r["held"] is True and r["settled"] is False and r["holdNote"] == "refund not confirmed"
+    assert r["settledAt"] is None and r["history"] == []
+    twice = adm.post(f"/api/admin/settlements/{THIS_MONTH}/{sid}", json={"status": "held", "note": "again"})
+    assert twice.status_code == 409
+
+
+def test_paying_a_held_month_replaces_the_hold():
+    sid, owner, staff, hid = a_store()
+    completed(sid, hid, 1000, payment="upi-paid")
+    adm = admin()
+    adm.post(f"/api/admin/settlements/{THIS_MONTH}/{sid}", json={"status": "held", "note": "check bank"})
+    assert adm.post(f"/api/admin/settlements/{THIS_MONTH}/{sid}", json={"ref": "UTR1"}).status_code == 200
+    r = row(adm, sid)
+    assert r["settled"] is True and r["held"] is False and r["settledRef"] == "UTR1"
+    assert [h["status"] for h in r["history"]] == ["paid"]
+
+
+def test_releasing_a_hold_puts_the_month_back_to_ready():
+    sid, owner, staff, hid = a_store()
+    completed(sid, hid, 1000, payment="upi-paid")
+    adm = admin()
+    adm.post(f"/api/admin/settlements/{THIS_MONTH}/{sid}", json={"status": "held", "note": "check bank"})
+    assert adm.delete(f"/api/admin/settlements/{THIS_MONTH}/{sid}").status_code == 200
+    r = row(adm, sid)
+    assert r["held"] is False and r["settled"] is False
+
+
+def test_the_payout_panel_names_the_bank_by_its_last_four_digits_only():
+    sid, owner, staff, hid = a_store()
+    with session() as db:
+        db.get(Store, sid).profile = {"bankName": "HDFC", "bankLast4": "4417", "bankIfsc": "HDFC0001234", "bankHolder": "Lucid Labs"}
+    completed(sid, hid, 1000, payment="upi-paid")
+    r = row(admin(), sid)
+    assert r["bank"] == {"name": "HDFC", "last4": "4417", "ifsc": "HDFC0001234", "cycle": ""}
+    assert "Lucid Labs" not in str(r["bank"])

@@ -212,12 +212,19 @@ def settlement_rows(db: Session, month: str) -> list[dict]:
         payable = d["online"] - round(d["online"] * pct / 100)
         due_from_partner = round(d["cod"] * pct / 100)
         p = paid.get(sid)
+        held = bool(p) and p.status == "held"
+        done = p if p and not held else None
         out.append({"storeId": sid, "store": s.name if s else sid, "kind": s.kind if s else "", "city": s.city if s else "", **d, "feePct": pct, "fee": fee,
                     "payableToPartner": payable, "dueFromPartner": due_from_partner, "net": payable - due_from_partner,
                     # What was actually settled, if anything. The figures above are recomputed from the orders
-                    # every time; this is the part that cannot be.
-                    "settled": bool(p), "settledAt": p.paid_at if p else None, "settledRef": p.ref if p else "",
-                    "settledNet": p.net if p else None, "settledBy": p.paid_by if p else ""})
+                    # every time; this is the part that cannot be. A held row is a decision not to pay yet, not a payment.
+                    # Where the money goes: the bank the partner gave at onboarding, last 4 digits only.
+                    "bank": ({"name": (s.profile or {}).get("bankName", ""), "last4": (s.profile or {}).get("bankLast4", ""),
+                              "ifsc": (s.profile or {}).get("bankIfsc", ""), "cycle": (s.profile or {}).get("payoutCycle", "")}
+                             if s and (s.profile or {}).get("bankLast4") else None),
+                    "settled": bool(done), "held": held, "holdNote": p.note if held else "", "heldBy": p.paid_by if held else "",
+                    "settledAt": done.paid_at if done else None, "settledRef": done.ref if done else "",
+                    "settledNet": done.net if done else None, "settledBy": done.paid_by if done else ""})
     out.sort(key=lambda x: -x["gross"])
     return out
 
@@ -234,7 +241,20 @@ def settlements(month: str = "", a: Admin = Depends(admin_me), db: Session = Dep
     if len(month) != 7:
         raise HTTPException(400, "month as YYYY-MM")
     rows = settlement_rows(db, month)
-    return {"month": month, "feePct": fee_pct(), "rows": rows, "totals": {"gross": sum(r["gross"] for r in rows), "fee": sum(r["fee"] for r in rows),
+    lo, hi = month_bounds(month)
+    daily: dict[str, int] = {}
+    for o in db.scalars(select(Order).where(Order.created >= lo, Order.created < hi, Order.status.in_(SETTLED))).all():
+        if o.status == "refunded":
+            continue
+        k = datetime.fromtimestamp(o.created, IST).strftime("%Y-%m-%d")
+        daily[k] = daily.get(k, 0) + (o.total or 0)
+    hist: dict[str, list] = {}
+    for p in db.scalars(select(Payout).where(Payout.status != "held").order_by(Payout.paid_at.desc()).limit(500)).all():
+        if len(hist.setdefault(p.store_id, [])) < 3:
+            hist[p.store_id].append({"month": p.month, "net": p.net, "paidAt": p.paid_at, "ref": p.ref, "status": p.status})
+    for r in rows:
+        r["history"] = hist.get(r["storeId"], [])
+    return {"month": month, "feePct": fee_pct(), "rows": rows, "daily": [{"day": k, "gross": v} for k, v in sorted(daily.items())], "totals": {"gross": sum(r["gross"] for r in rows), "fee": sum(r["fee"] for r in rows),
             "payable": sum(r["payableToPartner"] for r in rows), "dueFromPartners": sum(r["dueFromPartner"] for r in rows), "orders": sum(r["orders"] for r in rows)}}
 
 
@@ -256,13 +276,21 @@ def settle(month: str, store_id: str, body: PayIn, a: Admin = Depends(admin_me),
     s = db.get(Store, store_id)
     if not s:
         raise HTTPException(404, "store not found")
-    if db.scalar(select(Payout).where(Payout.store_id == store_id, Payout.month == month)):
+    if body.status not in ("paid", "written_off", "held"):
+        raise HTTPException(400, "status is paid, written_off or held")
+    prev = db.scalar(select(Payout).where(Payout.store_id == store_id, Payout.month == month))
+    if prev and prev.status != "held":
         raise HTTPException(409, f"{month} is already settled for {s.name}.")
+    if prev and body.status == "held":
+        raise HTTPException(409, f"{month} is already on hold for {s.name}.")
+    if body.status == "held" and len(body.note.strip()) < 3:
+        raise HTTPException(400, "Say why it is on hold, so whoever looks next knows what to check.")
+    if prev:   # paying or writing off a held month: the hold is replaced by the real settlement
+        db.delete(prev)
+        db.flush()
     row = next((r for r in settlement_rows(db, month) if r["storeId"] == store_id), None)
     if not row:
         raise HTTPException(400, f"{s.name} has nothing to settle in {month}.")
-    if body.status not in ("paid", "written_off"):
-        raise HTTPException(400, "status is paid or written_off")
     p = Payout(store_id=store_id, month=month, orders_n=row["orders"], gross=row["gross"], fee_pct=row["feePct"],
                fee=row["fee"], payable=row["payableToPartner"], due_from=row["dueFromPartner"], net=row["net"],
                status=body.status, ref=body.ref.strip()[:60], note=body.note.strip()[:300], paid_at=now(), paid_by=a.email)

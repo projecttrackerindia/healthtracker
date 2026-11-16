@@ -109,7 +109,11 @@ def ensure_columns() -> None:
               "notices": [("to_user", "VARCHAR(32) DEFAULT ''")],
               "household_invites": [("name", "VARCHAR(80) DEFAULT ''"), ("sent_at", "INTEGER DEFAULT 0"), ("sends", "INTEGER DEFAULT 1"), ("opened", "INTEGER DEFAULT 0"), ("person_id", "VARCHAR(32) DEFAULT ''"), ("rel_ok", "INTEGER DEFAULT 0")],
               "people": [("abha_hash", "VARCHAR(64) DEFAULT ''")],
-              "admins": [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0")]}
+              "catalog_meds": [("about", "VARCHAR(300) DEFAULT ''"), ("organ", "VARCHAR(40) DEFAULT ''"), ("test", "VARCHAR(40) DEFAULT ''"),
+                               ("refill_days", "INTEGER DEFAULT 0"), ("cold", "BOOLEAN DEFAULT FALSE")]}
+    # "admins" was listed twice in the literal above, so the first list (phone, fails, locks, epoch, summary) was being
+    # dropped. Kept as one list now.
+    wanted["admins"] += [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0")]
     wanted["users"] += [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0")]
     wanted["partner_users"] += [("totp_secret", "VARCHAR(200) DEFAULT ''"), ("totp_step", "INTEGER DEFAULT 0"), ("reg_doc", "VARCHAR(64) DEFAULT ''"),
                                 ("reg_expiry", "VARCHAR(10) DEFAULT ''"), ("verify_by", "VARCHAR(120) DEFAULT ''"),
@@ -124,6 +128,9 @@ def ensure_columns() -> None:
                 if name not in have:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {typ}"))
                     print(f"[db] added column {table}.{name}", flush=True)
+                    if (table, name) == ("catalog_meds", "cold"):
+                        # Insulin and vaccines travel in a cold bag; mark the ones already in the list once.
+                        conn.execute(text("UPDATE catalog_meds SET cold = TRUE WHERE lower(name) LIKE '%insulin%' OR lower(salt) LIKE '%insulin%' OR lower(name) LIKE '%vaccin%'"))
 
 
 def ensure_indexes() -> None:
