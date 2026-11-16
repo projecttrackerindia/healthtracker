@@ -180,7 +180,10 @@ def me_json(db: Session, u: PartnerUser) -> dict:
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
                       "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct} if s else None,
-            "counts": {"openOrders": open_orders, "pendingAppointments": pending_appts, "unreadMessages": unread}}
+            "counts": {"openOrders": open_orders, "pendingAppointments": pending_appts, "unreadMessages": unread,
+                       # samples in the lab still waiting for their report (the lab's Reports badge)
+                       "reportsDue": (db.scalar(select(func.count(Order.id)).where(Order.store_id == u.store_id, Order.kind == "lab",
+                                                                               Order.status.in_(("collected", "processing")))) or 0) if s and s.kind == "lab" else 0}}
 
 
 @r.get("/me")
@@ -388,6 +391,11 @@ def porder(db: Session, o: Order) -> dict:
     if o.kind == "lab":
         a = db.get(PartnerUser, o.agent_id) if o.agent_id else None
         j["agent"] = {"id": a.id, "name": a.name or a.email, "phone": a.phone} if a else None
+        tl = o.timeline or []
+        at = lambda k: next((x.get("t") for x in reversed(tl) if x.get("s") == k), None)   # noqa: E731
+        # When each lane was entered, for the board: collected, report sent, run again
+        j["collectedAt"], j["reportAt"], j["rerunAt"] = at("collected"), at("report_uploaded"), at("rerun")
+        j["fasting"] = any(("fast" in str(i.get("prep", "")).lower()) or i.get("code") in ("fbs", "lipid", "glucose_f", "fasting", "glu_f") for i in (o.items or []))
     return j
 
 
@@ -926,6 +934,110 @@ async def upload_report(oid: str, request: Request, db: Session = Depends(get_db
     tests = ", ".join(i.get("name", "") for i in (o.items or [])[:3])
     notify(db, o.household_id, "lab_result", f"Report ready · {s.name}", f"{tests}. Open Lab results and tap Analyse to read it in plain words.",
            {"order": o.id, "fileId": f"labrep_{o.id}", "store": s.name, "name": name, "mime": mime, "size": len(data), "tests": [i.get("name", "") for i in (o.items or [])]}, o.member_id or "", "/app")
+    return porder(db, o)
+
+
+# ---- board 9: a report is read and checked before it reaches the family
+# The reading is done here, on our server, with the rules reader (text PDFs). Nothing goes to an outside AI service:
+# the family has not been asked yet, and the lab is only checking its own work.
+ORGAN_OF = {"hba1c": "pancreas", "glu_f": "pancreas", "glu_pp": "pancreas", "glu_r": "pancreas", "creat": "kidneys", "urea": "kidneys",
+            "egfr": "kidneys", "uric": "kidneys", "na": "kidneys", "k": "kidneys", "alt": "liver", "ast": "liver", "alp": "liver",
+            "bili": "liver", "alb": "liver", "tc": "heart", "ldl": "heart", "hdl": "heart", "tg": "heart", "vldl": "heart",
+            "tsh": "thyroid", "t3": "thyroid", "t4": "thyroid", "hb": "blood", "wbc": "blood", "plt": "blood", "rbc": "blood",
+            "mcv": "blood", "pcv": "blood", "esr": "blood", "crp": "blood", "ferr": "blood", "b12": "blood", "vitd": "bones", "ca": "bones",
+            "psa": "prostate"}
+
+
+def _read_report(data: bytes, mime: str) -> list[dict]:
+    from . import ai
+    text = ai.text_from(data, mime) if data else ""
+    if not text.strip():
+        return []
+    out = []
+    for f in ai.local_report(text, {}).get("findings", []):
+        lo, hi = ai.LAB[f["code"]][2], ai.LAB[f["code"]][3]
+        out.append({"code": f["code"], "test": f["test"], "value": f["value"], "unit": f["unit"], "low": lo, "high": hi,
+                    "flag": f["flag"], "organ": ORGAN_OF.get(f["code"], "")})
+    return out
+
+
+def _earlier_readings(db: Session, o: Order) -> dict[str, list[dict]]:
+    """This person's last results at this lab, read back from the reports the lab itself sent. Nothing extra is stored."""
+    q = select(Order).where(Order.store_id == o.store_id, Order.household_id == o.household_id, Order.kind == "lab",
+                            Order.id != o.id, Order.created < (o.created or now()))
+    if o.member_id:
+        q = q.where(Order.member_id == o.member_id)
+    hist: dict[str, list[dict]] = {}
+    for prev in db.scalars(q.order_by(Order.created.desc()).limit(3)).all():
+        try:
+            got = storage.get(db, prev.household_id, f"labrep_{prev.id}")
+            if not got:
+                continue
+            row, data = got
+            vals = _read_report(data, row.mime)
+        except Exception as e:      # an unreadable old report only means less history, never a failed check
+            print("[partner] earlier report unreadable:", type(e).__name__, flush=True)
+            continue
+        for v in vals:
+            hist.setdefault(v["code"], []).append({"t": prev.created, "value": v["value"]})
+    for k in hist:
+        hist[k].sort(key=lambda x: x["t"])
+    return hist
+
+
+def _jumps(values: list[dict], hist: dict) -> list[dict]:
+    """A result worth a second look: it moved out of range since last time, or moved by a fifth or more."""
+    out = []
+    for v in values:
+        prev = (hist.get(v["code"]) or [None])[-1]
+        if not prev or not prev["value"]:
+            continue
+        a, b = prev["value"], v["value"]
+        was_in = v["low"] <= a <= v["high"]
+        big = abs(b - a) / abs(a) >= 0.2 if a else False
+        if (was_in and v["flag"] != "normal") or (big and v["flag"] != "normal") or (v["code"] == "hba1c" and abs(b - a) >= 0.5):
+            out.append({"code": v["code"], "test": v["test"], "from": a, "to": b, "unit": v["unit"], "since": prev["t"]})
+    return out
+
+
+@r.post("/orders/{oid}/report/read")
+async def read_report(oid: str, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """Read a report before sending it: the values with their ranges, and anything that moved a lot since this
+    person's last test here. Nothing is stored and nothing reaches the family until Sign and send."""
+    o = _order(db, u, oid)
+    if o.kind != "lab":
+        raise HTTPException(400, "Reports belong to lab bookings.")
+    if u.role == "tech":
+        raise HTTPException(403, "Reports are checked at the lab.")
+    data = await request.body()
+    mime = (request.headers.get("content-type") or "").split(";")[0].strip()
+    if not data or len(data) > storage.MAX_FILE:
+        raise HTTPException(413, "PDF up to 15 MB")
+    if mime not in ("application/pdf", "image/jpeg", "image/png"):
+        raise HTTPException(415, "PDF or image only")
+    values = _read_report(data, mime)
+    hist = _earlier_readings(db, o)
+    jumps = _jumps(values, hist)
+    return {"read": bool(values), "values": values, "jumps": jumps,
+            "history": {k: v for k, v in hist.items() if any(x["code"] == k for x in values)},
+            "why": "" if values else ("Photos and scanned PDFs can't be read here; check the values by eye." if mime != "application/pdf"
+                                      else "No values could be read from this PDF; check them by eye.")}
+
+
+class RerunIn(BaseModel):
+    note: str = ""
+
+
+@r.post("/orders/{oid}/rerun")
+def rerun(oid: str, body: RerunIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    """The sample is run again before anything is sent. The family's booking stays 'in the lab'."""
+    o = _order(db, u, oid)
+    if o.kind != "lab" or o.status not in ("collected", "processing"):
+        raise HTTPException(409, "Only a sample in the lab can be run again.")
+    if u.role == "tech":
+        raise HTTPException(403, "Reports are checked at the lab.")
+    o.status = "processing"
+    o.timeline = (o.timeline or []) + [{"s": "rerun", "t": now(), "by": u.email, "note": body.note.strip()[:200]}]
     return porder(db, o)
 
 
