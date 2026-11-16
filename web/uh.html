@@ -62,8 +62,12 @@ body.preg #bg{background:radial-gradient(80% 55% at 50% 34%,#FFFFFF 0%,#FBF1F4 5
 .vring{display:flex;align-items:center;gap:14px;margin-top:14px}.vring b{display:block;font-size:17px}
 .gseg{display:flex}.gseg button{flex:1}
 .kmt{display:flex;align-items:center;gap:12px;margin:4px 2px 0}.kmt span{flex:1;text-align:right;font-size:15px;font-weight:600;color:#6E6E73}.kmt .kml{width:40px;height:40px;border-radius:50%;background:#fff;border:0;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.kbody{position:relative;height:330px;border-radius:24px;overflow:hidden;background:radial-gradient(80% 70% at 50% 40%,#DCE8F6,#B9CBE2);display:flex;justify-content:center}.kbody img{height:118%;margin-top:-2%}
-.kpl{position:absolute;padding:9px 16px;border:0;border-radius:980px;background:rgba(255,255,255,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 6px 18px rgba(0,0,0,.12);font:700 15px var(--font,-apple-system),sans-serif;color:#1D1D1F}
+.kbody{position:relative;height:330px;border-radius:24px;overflow:hidden;background:radial-gradient(80% 70% at 50% 40%,#DCE8F6,#B9CBE2)}
+.kfig{position:absolute;left:50%;top:-6%;height:200%;transform:translateX(-50%)}.kfig img{height:100%;width:auto;display:block}
+.kls{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.kdot{position:absolute;width:12px;height:12px;margin:-6px;border-radius:50%;background:#fff;border:3px solid var(--c);z-index:2}
+.kpl.l{left:12px;transform:translateY(-50%)}.kpl.r{right:12px;transform:translateY(-50%)}
+.kpl{position:absolute;white-space:nowrap;padding:9px 16px;border:0;border-radius:980px;background:rgba(255,255,255,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 6px 18px rgba(0,0,0,.12);font:700 15px var(--font,-apple-system),sans-serif;color:#1D1D1F}
 .kt4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.kt4 button{border:0;border-radius:22px;padding:16px;text-align:left;min-height:96px;font:inherit;color:#1D1D1F}.kt4 b{display:block;font-size:17px}.kt4 small{display:block;font-size:13px;color:#6E6E73;margin-top:2px}
 .orx{display:flex;align-items:center;gap:12px;width:100%;border:0;font:inherit;color:inherit;margin-top:14px;cursor:pointer}.orx b{display:block;margin-top:6px;font-size:16px}
 .orxp{width:56px;height:70px;border-radius:12px;background:#FFFDF7;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);display:grid;place-items:center;font:28px Georgia,serif;color:#1F3A8A;flex:none}
@@ -979,6 +983,7 @@ body.pregtheme #b5 .on,body.pregtheme .tab.on{color:#E0457B}body.pregtheme .eyeb
 .icok2{color:#0071E3!important;font-weight:700!important}
 .chk .li{display:flex;align-items:center;gap:10px}.chkb{border:0;background:#EAF3FF;color:#0071E3;font:600 14px var(--font,-apple-system),sans-serif;border-radius:16px;padding:0 14px;min-height:34px;flex:none}.chkx{width:34px;height:34px;border-radius:17px;border:0;background:none;display:grid;place-items:center;flex:none;margin-right:-8px}
 
+#top{flex-wrap:wrap!important}#top>.fch{order:20!important;flex:0 0 100%!important;max-width:100%}@media (min-width:980px){#top>.fch{margin:10px 0 0;padding:0 0 4px}}
 .page.auth .adk{display:none!important}@media (min-width:900px){.page.auth .adk{display:inline!important}.page.auth .amb{display:none!important}}
 </style>
 </head>
@@ -1019,10 +1024,39 @@ const root=new THREE.Group();scene.add(root);
 const MODELS={};let cur=null;
 const ONDEM=new Set(['bones','teeth','eye','breast','prostate']);
 /* parts without their own mesh (or on a child's body) are pinned by where they sit on the body's outline */
-function anchorOf(M,k){if(!M)return null;const o=M.organs[k];if(o&&o.mesh.visible!==false&&!(ONDEM.has(k)&&!o.mesh.visible))return o.center;
+/* lungs and kidneys come as a pair: their joint centre is the heart or the spine, so a pin points at one of the pair (the right one, on the viewer's left), at the centre of its own points */
+const PAIRED=new Set(['lung','kidney']);
+function pairAnchor(o){if(o._pa)return o._pa;const g=o.mesh.geometry,P=g.attributes.position;if(!g.boundingBox)g.computeBoundingBox();const cx=(g.boundingBox.min.x+g.boundingBox.max.x)/2;let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9,zs=0,n=0;
+ for(let i=0;i<P.count;i++){const vx=P.getX(i);if(vx<cx){const vy=P.getY(i);if(vx<x0)x0=vx;if(vx>x1)x1=vx;if(vy<y0)y0=vy;if(vy>y1)y1=vy;zs+=P.getZ(i);n++}}
+ /* the middle of that organ's own box: vertex averages lean towards the denser tissue (the top of the kidney, the hilum of a lung) */
+ o._pa=n?new THREE.Vector3((x0+x1)/2,(y0+y1)/2,zs/n):o.center;return o._pa}
+/* the heart mesh can carry the great vessels, which pull its box centre down into the liver: point at its widest band, the ventricles */
+function heartAnchor(o){if(o._ha)return o._ha;const g=o.mesh.geometry,P=g.attributes.position;if(!g.boundingBox)g.computeBoundingBox();const bb=g.boundingBox,N=40,h=(bb.max.y-bb.min.y)/N||1,mn=Array(N).fill(1e9),mx=Array(N).fill(-1e9),sx=Array(N).fill(0),sz=Array(N).fill(0),c=Array(N).fill(0);
+ for(let i=0;i<P.count;i++){const b=Math.min(N-1,Math.floor((P.getY(i)-bb.min.y)/h)),x=P.getX(i);if(x<mn[b])mn[b]=x;if(x>mx[b])mx[b]=x;sx[b]+=x;sz[b]+=P.getZ(i);c[b]++}
+ let best=-1,bw=-1;for(let b=0;b<N;b++){if(c[b]<8)continue;const w=mx[b]-mn[b];if(w>bw){bw=w;best=b}}if(best<0)return o._ha=o.center;let X=0,Z=0,C=0;for(let b=Math.max(0,best-2);b<=Math.min(N-1,best+2);b++){X+=sx[b];Z+=sz[b];C+=c[b]}
+ return o._ha=new THREE.Vector3(X/C,bb.min.y+(best+.5)*h,Z/C)}
+/* the liver is a wedge: thick on the body's right (viewer's left), thin to the left. Its box centre falls near the edge of the stomach; point at the thick lobe */
+function liverAnchor(o){if(o._la)return o._la;const g=o.mesh.geometry,P=g.attributes.position;if(!g.boundingBox)g.computeBoundingBox();const bb=g.boundingBox,cut=bb.min.x+(bb.max.x-bb.min.x)*.55;let n=0,x=0,y=0,z=0;for(let i=0;i<P.count;i++){const vx=P.getX(i);if(vx<cut){x+=vx;y+=P.getY(i);z+=P.getZ(i);n++}}return o._la=n?new THREE.Vector3(x/n,y/n,z/n):o.center}
+/* breast: the most forward point of the chest on the person's left (viewer's right), between collarbone and ribs */
+function breastAnchor(M){if(M._ba!==undefined)return M._ba;if(!M._bb){M.skinGeo.computeBoundingBox();M._bb=M.skinGeo.boundingBox}const b=M._bb,H=b.max.y-b.min.y,mc=midX(M,b.min.y+.72*H,H),P=M.skinGeo.attributes.position;let best=null;
+ for(let i=0;i<P.count;i++){const y=(P.getY(i)-b.min.y)/H,x=P.getX(i)-mc;if(y>.66&&y<.76&&x>H*.025&&x<H*.09){const z=P.getZ(i);if(!best||z>best.z)best={x:P.getX(i),y:P.getY(i),z}}}
+ return M._ba=best?new THREE.Vector3(best.x,best.y,best.z):null}
+function anchorOf(M,k){if(!M)return null;if(k==='breast'){const bp=breastAnchor(M);if(bp)return bp}const o=M.organs[k];if(o&&!LIMB[k]&&o.mesh.visible!==false&&!(ONDEM.has(k)&&!o.mesh.visible))return PAIRED.has(k)?pairAnchor(o):k==='heart'?heartAnchor(o):k==='liver'?liverAnchor(o):o.center;
  const F={thyroid:[0,.818,.75],heart:[.02,.715,.45],lung:[-.045,.735,.3],liver:[-.04,.645,.45],pancreas:[.01,.625,.2],kidney:[.04,.6,-.4],uterus:[0,.5,.3],brain:[0,.955,0],eye:[.018,.93,.85],ear:[.052,.925,0],teeth:[0,.895,.8],skin:[-.105,.56,.55],blood:[.118,.6,.4],bones:[.045,.28,.6],breast:[.055,.735,.95],prostate:[0,.475,0],gut:[0,.6,.5]}[k];if(!F)return o?o.center:null;
  const kb={baby:[1.6,.78],child:[1.25,.88],teen:[1.05,.97]}[M.kid]||[1,1];if(!M._bb){M.skinGeo.computeBoundingBox();M._bb=M.skinGeo.boundingBox}const b=M._bb,H=b.max.y-b.min.y,cz=(b.min.z+b.max.z)/2,dz=(b.max.z-cz);
- let fy=F[1];if(fy>.85)fy=1-(1-fy)*kb[0];return new THREE.Vector3((b.min.x+b.max.x)/2+F[0]*H*(fy>.85?kb[0]*.8:1),b.min.y+fy*H,cz+F[2]*dz*.9)}
+ let fy=F[1];if(fy>.85)fy=1-(1-fy)*kb[0];const yy=b.min.y+fy*H,mx=midX(M,yy,H);let xx=mx+F[0]*H*(fy>.85?kb[0]*.8:1);if(!onSkin(M,xx,yy,H)){const st=H*.006;for(let t=1;t<60;t++){if(onSkin(M,xx-Math.sign(xx-mx)*st*t,yy,H)){xx-=Math.sign(xx-mx)*st*t;break}if(onSkin(M,xx+Math.sign(xx-mx)*st*t,yy,H)){xx+=Math.sign(xx-mx)*st*t;break}}}if(LIMB[k]){const L=LIMB[k],ly=b.min.y+L[0]*H,mc=midX(M,b.min.y+.72*H,H),rs=runsAt(M,ly,H).map(r=>(r[0]+r[1])/2).filter(c=>L[1]>0?c>mc+H*.02:c<mc-H*.02);if(rs.length){const c=L[2]==='out'?(L[1]>0?Math.max(...rs):Math.min(...rs)):(L[1]>0?Math.min(...rs):Math.max(...rs));const zz2=depthAt(M,c,ly,H);if(zz2)return new THREE.Vector3(c,ly,zz2[0])}}const zz=depthAt(M,xx,yy,H);return new THREE.Vector3(xx,yy,zz?zz[0]+F[2]*.9*(zz[1]-zz[0]):cz+F[2]*dz*.9)}
+/* skin seen from the front: a ray straight back through (x,y) against the body itself. Returns [middle, front] depth or null */
+const RAY=new THREE.Raycaster(),RO=new THREE.Vector3(),RD=new THREE.Vector3(0,0,-1);
+function skinRay(M,x,y){if(!M._rm){M._rm=new THREE.Mesh(M.skinGeo,new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));M._rm.updateMatrixWorld()}const b=M._bb;RO.set(x,y,b.max.z+1);RAY.set(RO,RD);const h=RAY.intersectObject(M._rm,false);if(!h.length)return null;const f=h[0].point.z,k=h[h.length-1].point.z;return[(f+k)/2,f]}
+/* where a finding without its own organ is drawn: blood at the inner elbow, skin on the forearm, bones at the knee */
+const LIMB={blood:[.62,1,'out'],skin:[.52,-1,'out'],bones:[.28,1,'in']};
+function runsAt(M,y,H){const P=M.skinGeo.attributes.position,r=H*.006,xs=[];for(let i=0;i<P.count;i++)if(Math.abs(P.getY(i)-y)<r)xs.push(P.getX(i));xs.sort((a,b)=>a-b);const out=[],g=H*.012;let l=0;for(let i=1;i<=xs.length;i++){if(i===xs.length||xs[i]-xs[i-1]>g){if(i-l>=4)out.push([xs[l],xs[i-1]]);l=i}}return out}
+/* the middle of the limb (or torso) that contains x at height y, so a pin sits on the leg or arm rather than its edge */
+function limbMid(M,x,y,H){const P=M.skinGeo.attributes.position,r=H*.008,xs=[];for(let i=0;i<P.count;i++)if(Math.abs(P.getY(i)-y)<r)xs.push(P.getX(i));if(xs.length<6)return x;xs.sort((a,b)=>a-b);let j=0;for(let i=1;i<xs.length;i++)if(Math.abs(xs[i]-x)<Math.abs(xs[j]-x))j=i;const g=H*.015;let l=j,rr=j;while(l>0&&xs[l]-xs[l-1]<g)l--;while(rr<xs.length-1&&xs[rr+1]-xs[rr]<g)rr++;return(xs[l]+xs[rr])/2}
+function onSkin(M,x,y){return!!skinRay(M,x,y)}
+function depthAt(M,x,y){return skinRay(M,x,y)}
+/* the body's midline at a given height, from the skin's own points: the bounding box centre moves when an arm is held out */
+function midX(M,y,H){M._mid=M._mid||{};const key=Math.round(y/H*40);if(M._mid[key]!=null)return M._mid[key];const P=M.skinGeo.attributes.position,band=H*.025;let lo=1e9,hi=-1e9,n=0;const xs=[];const st=Math.max(1,Math.floor(P.count/20000));for(let i=0;i<P.count;i+=st){if(Math.abs(P.getY(i)-y)<band)xs.push(P.getX(i))}if(xs.length<8){const b=M._bb;return M._mid[key]=(b.min.x+b.max.x)/2}xs.sort((a,b)=>a-b);/* the torso is the widest connected run around the median; arms sit apart */const med=xs[Math.floor(xs.length/2)];const gap=H*.02;let l=Math.floor(xs.length/2),r=l;while(l>0&&xs[l]-xs[l-1]<gap)l--;while(r<xs.length-1&&xs[r+1]-xs[r]<gap)r++;return M._mid[key]=(xs[l]+xs[r])/2}
 /* Pregnancy on Today: the real week-by-week model (mother with the womb opened, baby inside, gently floating), the same files as the pregnancy page. */
 /* see-through layers (skin, womb, sac) draw after the organs without writing depth, front faces only for the skin, so the body
    reads as one clean shell instead of patches where its own back shows through */
@@ -1716,14 +1750,22 @@ function renderKidMode(k){let el=$('#simple');if(!el){el=document.createElement(
  const sx=(k.sex||(k.medicalId&&k.medicalId.sex))==='male'?'male':'female',d30=dayAdd(today(),-30),stars=(REC[k.id]||[]).filter(r=>r.kind==='dose'&&!r.skipped&&(r.day||'')>=d30).length+(()=>{try{return+(localStorage.getItem('uh-brush-'+k.id)||0)}catch(_){return 0}})();
  el.innerHTML=`<div class="kmw"><div class="kmt"><button class="kml" onclick="kidOff()" aria-label="For parents: leave kids mode">${ic('<path d="M6 6l12 12M18 6L6 18"/>','#1D1D1F',18)}</button><span>Kids mode · ask a grown-up to leave</span></div>
  <div class="kmh"><div><h1>Hi ${first}!</h1><p>What do you want to explore?</p></div></div>
- <div class="kbody"><img src="/brand/kid-body-${sx}.webp" alt=""><button class="kpl" style="left:6%;top:30%" onclick="kidOrgan('lungs')">Lungs</button><button class="kpl" style="right:6%;top:40%;color:#C4291C" onclick="kidOrgan('heart')">Heart</button><button class="kpl" style="left:12%;top:60%" onclick="kidOrgan('stomach')">Tummy</button></div>
+ <div class="kbody" data-sx="${sx}"><div class="kfig"><img src="/brand/kid-body-${sx}.webp" alt=""></div><svg class="kls"></svg>${[['lungs','Lungs','l','#1D1D1F'],['heart','Heart','r','#C4291C'],['stomach','Tummy','l','#1D1D1F']].map(([o,t,sd,c])=>`<i class="kdot" data-o="${o}" style="--c:${c}"></i><button class="kpl ${sd}" data-o="${o}" style="color:${c}" onclick="kidOrgan('${o}')">${t}</button>`).join('')}</div>
  <div class="kt4"><button style="background:#FFF2F2" onclick="kidOrgan('heart')"><b>Listen to my heart</b><small>Lub-dub, about 100 times a minute</small></button><button style="background:#EAF4FF" onclick="kidOrgan('lungs')"><b>Big breath in</b><small>Watch the lungs grow</small></button>
  <button style="background:#E9F7EE" onclick="${nx?`kidDose('${k.id}','${nx.m.id}','${nx.t}')`:'void 0'}"><b>Medicine time</b><small>${nx?esc(nx.m.name.replace(/\s+\d.*$/,''))+' · tap when done':meds.length?'All done · got a star':'Nothing today'}</small></button><button style="background:#FFF6E5" onclick="brushTimer()"><b>My stars · ${stars}</b><small>For brushing and medicines</small></button></div>
  <button class="kmv" onclick="moveSession('${k.id}',0)"><div><b>Move with me</b><small>${mv.slice(0,3).map(m=>m[1]).join(', ')} · ${mins} minutes</small></div><svg width="56" height="70" viewBox="0 0 60 76" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="30" cy="11" r="7"/><path d="M30 18v26M30 26l-16-8M30 26l16-8M30 44l-12 24M30 44l12 24"/></svg></button>
 ${''&&nx?`<div class="kmd"><span class="ti" style="background:#0071E3">${ic(I.pill||'<rect x="4" y="9" width="16" height="6" rx="3"/>','#fff',20)}</span><div style="flex:1;min-width:0"><b>${esc(nx.m.name)}</b><small>Ask a grown-up to help</small></div><button onclick="kidDose('${k.id}','${nx.m.id}','${nx.t}')">Done</button></div>`:''}
  ${calls.map((c,i)=>`<a class="kmc${i?' s':''}" href="tel:${esc(c[1])}"><span>${ic(I.phone,'#fff',i?20:24)}</span>Call ${c[0]}</a>`).join('')||`<a class="kmc" href="tel:108"><span style="background:#FF3B30">${ic(I.phone,'#fff',24)}</span>Call 108</a>`}
  </div>`}
+;(()=>{const _r=renderKidMode;renderKidMode=function(k){_r(k);requestAnimationFrame(kidPlace)}})();
 /* the organ screen (/kid) in a frame: the 3D heart, lungs or tummy with their sounds; it asks to close by message */
+/* kids mode body: each point sits on the organ in the picture (measured on the image, % of width and height); pills sit at the card edge */
+const KIDPT={male:{heart:[51,28],lungs:[31,24],stomach:[60,33]},female:{heart:[46,27],lungs:[28,24],stomach:[57,33]}};
+function kidPlace(){const k=document.querySelector('.kbody');if(!k)return;const f=k.querySelector('.kfig'),im=f.querySelector('img');if(!im.complete||!im.naturalWidth){im.onload=kidPlace;return}const R=k.getBoundingClientRect(),F=im.getBoundingClientRect(),P=KIDPT[k.dataset.sx]||KIDPT.female;let svg='';
+ k.querySelectorAll('.kdot').forEach(d=>{const o=d.dataset.o,x=F.left-R.left+P[o][0]/100*F.width,y=F.top-R.top+P[o][1]/100*F.height;d.style.left=x+'px';d.style.top=y+'px';const b=k.querySelector('.kpl[data-o="'+o+'"]');b.style.top=y+'px';
+  const br=b.getBoundingClientRect(),ex=b.classList.contains('l')?br.right-R.left:br.left-R.left;svg+=`<line x1="${ex}" y1="${y}" x2="${x}" y2="${y}" stroke="${getComputedStyle(d).getPropertyValue('--c')}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".75"/>`});
+ const sv=k.querySelector('.kls');sv.setAttribute('viewBox',`0 0 ${R.width} ${R.height}`);sv.innerHTML=svg}
+addEventListener('resize',()=>kidPlace());
 function kidOrgan(o){const k=P((()=>{try{return localStorage.getItem('uh-kidmode')}catch(_){return''}})());const d=document.createElement('div');d.id='kidf';d.style.cssText='position:fixed;inset:0;z-index:70;background:#F1EEFF';
  d.innerHTML=`<iframe src="/kid?o=${o}&a=${k?ageOf(k)||6:6}" title="Your body" style="border:0;width:100%;height:100%" allow="autoplay"></iframe>`;document.body.appendChild(d)}
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-kid')return;if(e.data.act==='close'){const f=$('#kidf');if(f)f.remove()}});
