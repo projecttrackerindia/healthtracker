@@ -128,3 +128,27 @@ def test_eye_page_is_served_and_frameable_only_by_the_app():
     assert "frame-ancestors 'self'" in r.headers["content-security-policy"]
     m = __import__("re").search(r"/a/(eye-orbit\.[0-9a-f]{8}\.bin)", r.text)
     assert m and c.get("/a/" + m.group(1)).status_code == 200
+
+
+def test_board_11_near_vision_other_checks_and_a_glasses_quote_reach_the_family():
+    fam, doc = person("Kavya"), hospital()
+    aid = visit(doc.sid, fam)
+    body = {"R": {"sph": "-1.25", "cyl": "-0.50", "axis": "180", "vision": "6/6", "add": "+1.00", "near": "N6"},
+            "L": {"sph": "-1.50", "near": "N6"}, "colour": "Ishihara 14 of 14", "squint": "None",
+            "glasses": {"lens": "Polycarbonate · blue filter", "lensPrice": 1800, "frame": "Kids flexible · navy", "framePrice": 1200,
+                        "ready": "Thursday", "delivery": "home", "inStock": True}}
+    r = doc.put(f"/api/partner/eye/visits/{aid}", json=body)
+    assert r.status_code == 200, r.text
+    ex = r.json()["visit"]["exam"]
+    assert ex["R"]["near"] == "N6" and ex["colour"] == "Ishihara 14 of 14" and ex["squint"] == "None"
+    assert ex["glasses"]["total"] == 3000 and ex["glasses"]["inStock"] is True
+    with session() as db:
+        n = db.query(Notice).filter(Notice.kind == "eye").order_by(Notice.id.desc()).first()
+        assert "₹3,000" in n.body and "Thursday" in n.body and n.ref["glasses"]["total"] == 3000
+
+
+def test_a_glasses_price_cannot_be_negative():
+    fam, doc = person("Kavya"), hospital()
+    aid = visit(doc.sid, fam)
+    r = doc.put(f"/api/partner/eye/visits/{aid}", json={"R": {"sph": "-1.00"}, "glasses": {"lens": "CR-39", "lensPrice": -5}})
+    assert r.status_code == 422

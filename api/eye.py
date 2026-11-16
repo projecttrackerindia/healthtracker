@@ -44,6 +44,7 @@ class EyeSide(BaseModel):
     cyl: str = Field("", max_length=8)
     axis: str = Field("", max_length=4)
     add: str = Field("", max_length=8)
+    near: str = Field("", max_length=8)       # near vision, N6, N8 ...
     iop: float | None = None                  # mmHg
     cct: float | None = None                  # µm
     cd: float | None = None                   # cup-to-disc ratio
@@ -60,12 +61,27 @@ class Finding(BaseModel):
     tone: str = "watch"
 
 
+class Glasses(BaseModel):
+    """A glasses quote from this optical counter: what is made, what it costs, when it is ready. The family
+    replies to order; nothing is charged from here."""
+    lens: str = Field("", max_length=60)
+    lensPrice: int = Field(0, ge=0, le=200000)
+    frame: str = Field("", max_length=60)
+    framePrice: int = Field(0, ge=0, le=200000)
+    ready: str = Field("", max_length=40)
+    delivery: str = Field("", max_length=20)   # "home" | "pickup"
+    inStock: bool = False
+
+
 class ExamIn(BaseModel):
     R: EyeSide = EyeSide()
     L: EyeSide = EyeSide()
     findings: list[Finding] = []
     note: str = Field("", max_length=600)     # plain words for the patient
     dx: str = Field("", max_length=160)       # diagnosis, for the hospital's own record
+    colour: str = Field("", max_length=24)    # colour vision, e.g. "Ishihara 14 of 14"
+    squint: str = Field("", max_length=40)    # cover test result, e.g. "None"
+    glasses: Glasses | None = None             # the quote sent to the family with the prescription
 
 
 POWER = re.compile(r"^[+-]?\d{1,2}(\.\d{1,2})?$")
@@ -73,7 +89,7 @@ POWER = re.compile(r"^[+-]?\d{1,2}(\.\d{1,2})?$")
 
 def _side(s: EyeSide, which: str) -> dict:
     out = {}
-    for k in ("vision", "angle", "lens", "retina"):
+    for k in ("vision", "near", "angle", "lens", "retina"):
         v = re.sub(r"\s+", " ", getattr(s, k) or "").strip()
         if v:
             out[k] = v
@@ -144,7 +160,7 @@ def save(aid: str, body: ExamIn, db: Session = Depends(get_db), u: PartnerUser =
     if not p or p.household_id != a.household_id or p.removed:
         raise HTTPException(400, "This patient's profile is no longer in their family app.")
     R, L = _side(body.R, "Right"), _side(body.L, "Left")
-    if not (R or L or body.findings or body.note.strip()):
+    if not (R or L or body.findings or body.note.strip() or body.colour.strip() or body.squint.strip()):
         raise HTTPException(400, "Enter a reading, a finding or a note.")
     if len(body.findings) > 12:
         raise HTTPException(400, "Up to 12 findings.")
@@ -162,6 +178,15 @@ def save(aid: str, body: ExamIn, db: Session = Depends(get_db), u: PartnerUser =
             "note": body.note.strip(), "appt": a.id, "t": now()}
     if body.dx.strip():
         exam["dx"] = body.dx.strip()
+    for k in ("colour", "squint"):
+        v = re.sub(r"\s+", " ", getattr(body, k) or "").strip()
+        if v:
+            exam[k] = v
+    g = body.glasses
+    if g and (g.lens.strip() or g.frame.strip()):
+        exam["glasses"] = {"lens": g.lens.strip(), "lensPrice": g.lensPrice, "frame": g.frame.strip(), "framePrice": g.framePrice,
+                           "total": g.lensPrice + g.framePrice, "ready": g.ready.strip(), "delivery": g.delivery if g.delivery in ("home", "pickup") else "",
+                           "inStock": bool(g.inStock)}
     first = not a.eye
     rid = (a.eye or {}).get("rid", "")
     x = db.get(HealthRecord, rid) if rid else None
@@ -175,7 +200,8 @@ def save(aid: str, body: ExamIn, db: Session = Depends(get_db), u: PartnerUser =
     a.updated = now()
     watch = [f["label"] for f in fs if f["tone"] != "ok"]
     notify(db, a.household_id, "eye", f"Dr {u.name} sent {'your' if first else 'an update to your'} eye check",
-           (watch[0] + (" · " + str(len(watch) - 1) + " more" if len(watch) > 1 else "") if watch else "Readings and notes, shown on your eye in 3D.")[:150],
-           {"appointment": a.id, "person": p.id, "store": s.name, "doctor": u.name}, a.member_id, "/app#eye=" + p.id)
+           ((watch[0] + (" · " + str(len(watch) - 1) + " more" if len(watch) > 1 else "") if watch else "Readings and notes, shown on your eye in 3D.")
+            + (f" Glasses ₹{exam['glasses']['total']:,}{' · ready ' + exam['glasses']['ready'] if exam['glasses']['ready'] else ''}: reply to order." if exam.get("glasses") else ""))[:200],
+           {"appointment": a.id, "person": p.id, "store": s.name, "doctor": u.name, "glasses": exam.get("glasses")}, a.member_id, "/app#eye=" + p.id)
     db.commit()
     return {"visit": exam_json(a)}

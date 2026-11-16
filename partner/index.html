@@ -253,6 +253,23 @@ nav .ns{display:none}@media (max-width:860px){nav .nl{display:none}nav .ns{displ
 .vpill{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:#E8E8ED;font-size:13px;font-weight:500}.vfin{min-height:34px;padding:0 16px;border-radius:999px;background:#0B8A7C;color:#fff;font-size:13px;font-weight:600}
 @media (max-width:1250px){.vg{grid-template-columns:280px minmax(0,1fr)}.vrx{grid-column:1/-1}}
 @media (max-width:760px){.vg{grid-template-columns:minmax(0,1fr)}.vbody{min-height:420px}.vbody iframe{min-height:400px}}
+.ec{background:var(--card);border-radius:22px;padding:18px 20px;margin-bottom:14px}.ec h3{font-size:18px}
+.eseg{display:inline-flex;background:#E8E8ED;border-radius:999px;padding:3px}.eseg button{min-height:32px;padding:0 18px;border-radius:999px;font-size:13px;font-weight:500;color:var(--ink)}.eseg button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.egr{display:grid;grid-template-columns:70px repeat(4,minmax(0,1fr));gap:8px 10px;align-items:center}.egr.n{grid-template-columns:70px repeat(2,minmax(0,1fr))}.egr[hidden]{display:none}
+.egr small{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);text-align:center}.egr>b{font-size:15px}
+.ein{border:0!important;background:#F2F2F5!important;border-radius:14px!important;min-height:44px;text-align:center;font-size:17px!important;font-weight:600;width:100%;font-variant-numeric:tabular-nums}.ein:focus{background:#fff!important;box-shadow:0 0 0 2px #0B8A7C!important;outline:none}
+.eflags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.eflags i{font-style:normal;font-size:12px;font-weight:600;border-radius:999px;padding:4px 10px}.eflags i.a{background:#FFF1E0;color:#9A5B00}.eflags i.b{background:#E8F1FF;color:#0071E3}
+.eg2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}.echart{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.snel{display:flex;flex-direction:column;align-items:center;gap:6px;font-family:Georgia,'Times New Roman',serif;margin:6px 0 4px}.snel b{letter-spacing:.3em;line-height:1}
+.egl{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.egl>div{flex:1;min-width:0}.egl small{display:block;font-size:12px;color:var(--mute)}.egl input{border:0!important;padding:2px 0!important;min-height:26px;font-size:14px;background:none!important;width:100%;font-weight:600}
+.epr{display:flex;align-items:center;gap:2px;font-weight:600}.epr input{width:64px!important;text-align:left;font-size:15px!important}.egl select{min-height:34px;border-radius:12px;font-size:13px;width:auto}
+.estk{min-height:30px;padding:0 12px;border-radius:999px;font-size:12px;font-weight:600;background:#F2F2F5;color:#6E6E73}.estk.on{background:#E8F8EC;color:#1B6E30}
+.esend{width:100%;min-height:48px;border-radius:999px;background:#0B8A7C;color:#fff;font-size:16px;font-weight:600;margin-top:14px}.esend:disabled{opacity:.45}
+.esec{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin:4px 0 8px}
+.ewt{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}.ewt button{display:flex;gap:10px;align-items:center;background:var(--card);border-radius:16px;padding:12px 14px;text-align:left}.ewt button>b{font-size:16px;color:#0B8A7C;white-space:nowrap}.ewt span b{display:block;font-size:13.5px}.ewt small{color:var(--mute);font-size:12px}
+.edet summary{cursor:pointer;list-style:none}.edet summary::-webkit-details-marker{display:none}.etb{border-collapse:separate;border-spacing:6px 6px;width:100%}.etb td:first-child{color:var(--mute);font-size:13px;white-space:nowrap}.etb .ein{min-height:38px;font-size:14px!important}
+.eoc{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.eoc b{display:block;font-size:14px}.eoc small{color:var(--mute);font-size:12px}
+@media (max-width:900px){.eg2{grid-template-columns:minmax(0,1fr)}.egr{grid-template-columns:44px repeat(4,minmax(0,1fr));gap:6px}.egr .ein{font-size:14px!important;padding:0 1px!important;min-height:40px}.egr small{font-size:9.5px;letter-spacing:0}.edet>div{grid-template-columns:minmax(0,1fr)!important}}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -298,7 +315,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
  /* One flat list in the side bar, as on the partner boards: each page is one row, nothing hides behind tabs.
     Which rows exist depends on the partner kind and the role. [view, label, icon, badge] */
  const due=(ME.counts&&ME.counts.reportsDue)||0;
- const N=(isHosp?[['today','Today','today'],['queue','OP queue','queue',c.queueWaiting],['consults','Consults','video'],['appts','Appointments','cal',c.pendingAppointments],own?['earnings','Earnings','earn']:null,['eye','Eye exam','eye'],['msgs','Messages','msgs',c.unreadMessages],['blood','Blood requests','drop'],['profile','Profile','gear']]
+ const N=(isHosp?[['today','Today','today'],['queue','OP queue','queue',c.queueWaiting],['consults','Consults','video'],['appts','Appointments','cal',c.pendingAppointments],own?['earnings','Earnings','earn']:null,['eye','Eye tests','eye'],['msgs','Messages','msgs',c.unreadMessages],['blood','Blood requests','drop'],['profile','Profile','gear']]
   :isBB?[['blood','Today','today'],['msgs','Messages','msgs',c.unreadMessages],['profile','Profile','gear']]
   :isLab?[['today','Today','today'],['orders','Bookings','flask',c.openOrders],['reports','Reports','doc',due],['prices','Tests & prices','tag'],own?['earnings','Earnings','earn']:null,['team','Technicians','team'],['msgs','Messages','msgs',c.unreadMessages],['profile','Profile','gear']]
   :[['today','Today','today'],['orders','Orders','box',c.openOrders],isShop?null:['prices','Stock & prices','pill'],own?['earnings','Earnings','earn']:null,['msgs','Messages','msgs',c.unreadMessages],isPh?['team','Team','team']:null,['profile','Profile','gear']]).filter(Boolean);
@@ -838,29 +855,76 @@ const EYETPL=[[/catar|lens/i,'The lens inside your eye has become cloudy. That i
  [/dry|tear/i,'Your eyes are not making enough tears. Lubricating drops several times a day will help.'],
  [/conjunct|red/i,'The thin skin over the white of your eye is inflamed. Use the drops as prescribed and avoid touching or rubbing the eye.'],
  [/squint|rectus|palsy|nerve vi|abducens/i,'The nerve or muscle that moves your eye is not working fully, which causes double vision. Most improve over weeks; we will review you.']];
-VIEWS.eye=()=>{$('#main').innerHTML=head('Eye exam','Enter the readings, mark findings on the 3D eye and add a few plain words. Sending puts it on the patient’s Eyes page, pinned on the exact part, and tells the family.')+
- `<div style="display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px" id="eg"><div class="card" id="evl" style="max-height:75vh;overflow:auto">Loading…</div><div id="evx"><div class="empty">Choose a visit</div></div></div>`;loadEyeVisits()};
-async function loadEyeVisits(){let r;try{r=await api('/eye/visits')}catch(e){$('#evl').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
- if(!r.visits.length){$('#evl').innerHTML='<div class="empty">No confirmed visits yet. Confirm a visit under Visit requests, or add a walk-in to the OP queue.</div>';return}
- $('#evl').innerHTML=r.visits.map(v=>`<button class="btn" style="width:100%;justify-content:space-between;margin-bottom:6px;${EYEF.aid===v.id?'border-color:var(--teal)':''}" data-ev="${E(v.id)}"><span style="text-align:left;min-width:0"><b style="display:block">${E(v.memberName||'Patient')}</b><small style="color:var(--mute)">${E(v.date)} ${E(v.time)} · ${E(v.why||v.kind)}</small></span>${v.exam?'<span class="tag ok">sent</span>':''}</button>`).join('');
- $('#evl').querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>openEyeVisit(b.dataset.ev))}
-async function openEyeVisit(aid){let r;try{r=await api('/eye/visits/'+aid)}catch(e){toast(e.message);return}EYEF.aid=aid;EYEF.hist=r.history||[];const ex=r.visit.exam||{};EYEF.findings=(ex.findings||[]).slice();loadEyeVisits();
- const doc=ME.user.role==='doctor',warn=!doc?'<p class="msg on err">Only verified doctors send eye exams. You can view the visit.</p>':(!ME.user.verified?'<p class="msg on err">Your registration is being verified by Urban Health; you can send exams once it is confirmed.</p>':'');
- const last=EYEF.hist[0],cell=(k,sd,ph)=>`<input data-k="${sd}.${k}" value="${E(((ex[sd]||{})[k])??'')}" placeholder="${E(last&&last[sd]&&last[sd][k]!=null?'last '+last[sd][k]:ph)}" style="padding:7px 9px">`;
- $('#evx').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between;margin:0"><div><h3 style="margin:0">${E(r.visit.memberName||'Patient')}</h3><span style="color:var(--mute)">${E(r.visit.date)} ${E(r.visit.time)} · ${E(r.visit.why||'')}${EYEF.hist.length?` · ${EYEF.hist.length} earlier exam${EYEF.hist.length>1?'s':''} here`:''}</span></div>${r.visit.exam?'<span class="tag ok">Sent · editing updates it</span>':''}</div>${warn}</div>
- <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:14px;align-items:start">
-  <div><div class="card"><h3>Readings</h3><table><tr><th></th><th>Right</th><th>Left</th></tr>${EYEROWS.map(([k,l,ph])=>`<tr><td style="white-space:nowrap;color:var(--mute)">${l}</td><td>${cell(k,'R',ph)}</td><td>${cell(k,'L',ph)}</td></tr>`).join('')}</table></div>
-   <div class="card"><h3>Findings</h3><p style="color:var(--mute);margin:0 0 8px">Tap a part on the 3D eye, then “Mark a finding here”.</p><div id="efl"></div></div>
-   <div class="card"><h3>Plain words for the patient</h3><div id="etp" class="row" style="margin-bottom:8px"></div><textarea id="enote" rows="4" maxlength="600" placeholder="What you found and what happens next, in everyday words">${E(ex.note||'')}</textarea>
-    <label style="display:block;margin-top:10px;font-size:12px;font-weight:600;color:var(--mute)">Diagnosis (stays with the hospital record)</label><input id="edx" maxlength="160" value="${E(ex.dx||'')}">
-    <button class="btn p" id="esend" style="width:100%;justify-content:center;margin-top:12px" ${doc&&ME.user.verified?'':'disabled'}>${r.visit.exam?'Send the update to the patient':'Send to the patient’s phone'}</button></div></div>
-  <div class="card" style="padding:0;overflow:hidden;position:sticky;top:12px"><iframe id="eyefr" src="/eye?m=doctor" title="3D eye" style="border:0;width:100%;height:78vh;display:block"></iframe></div></div>`;
- $('#evx').querySelectorAll('[data-k]').forEach(i=>i.oninput=eyePreview);$('#enote').oninput=eyePreview;$('#esend').onclick=sendEye;eyeFindings()}
-function eyeDraft(){const o={R:{},L:{}};$('#evx').querySelectorAll('[data-k]').forEach(i=>{const [sd,k]=i.dataset.k.split('.'),v=i.value.trim();if(!v)return;o[sd][k]=['iop','cct','cd','oct'].includes(k)?Number(v):v});
- return Object.assign(o,{findings:EYEF.findings,note:$('#enote').value.trim(),dx:$('#edx').value.trim()})}
+/* Board 11 · eye test: the glasses prescription in rounded fields for both eyes (distance and near), what changed
+   since last time, the chart for the patient's screen, the glasses quote, and the history on the right. The 3D eye,
+   pressures and findings stay one tap away under Clinical details. */
+VIEWS.eye=()=>{$('#main').innerHTML=`<div id="eyv"><div class="empty">Loading…</div></div><div id="eyp"></div>`;loadEyeVisits()};
+async function loadEyeVisits(){let r;try{r=await api('/eye/visits')}catch(e){$('#eyv').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ EYEF.list=r.visits;if(!r.visits.length){$('#eyv').innerHTML=head('Eye tests','')+'<div class="empty">No confirmed visits yet. Confirm a visit under Appointments, or add a walk-in to the OP queue.</div>';return}
+ if(!EYEF.aid||!r.visits.some(v=>v.id===EYEF.aid))EYEF.aid=(r.visits.find(v=>!v.exam)||r.visits[0]).id;openEyeVisit(EYEF.aid)}
+function eyeWait(){const L=(EYEF.list||[]).filter(v=>!v.exam&&v.id!==EYEF.aid).slice(0,8);
+ return L.length?`<div class="esec">Waiting for eye test</div><div class="ewt">${L.map(v=>`<button data-ev="${E(v.id)}"><b>${E(v.time||'—')}</b><span><b>${E(v.memberName||'Patient')}</b><small>${E(v.why||'Eye check')}</small></span></button>`).join('')}</div>`:''}
+async function openEyeVisit(aid){let r;try{r=await api('/eye/visits/'+aid)}catch(e){toast(e.message);return}EYEF.aid=aid;EYEF.hist=(r.history||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));EYEF.visit=r.visit;const ex=r.visit.exam||{};EYEF.findings=(ex.findings||[]).slice();EYEF.seg=EYEF.seg||'d';
+ const doc=ME.user.role==='doctor',warn=!doc?'<p class="msg on err">Only verified doctors send eye tests. You can view the visit.</p>':(!ME.user.verified?'<p class="msg on err">Your registration is being verified by Urban Health; you can send once it is confirmed.</p>':'');
+ const last=EYEF.hist[0],nm=r.visit.memberName||'Patient',first=nm.split(' ')[0],g=ex.glasses||(last&&last.glasses?{...last.glasses,ready:'',inStock:false}:{});
+ const pill=(k,sd,ph,wide)=>`<input class="ein" data-k="${sd}.${k}" value="${E(((ex[sd]||{})[k])??'')}" placeholder="${E(last&&last[sd]&&last[sd][k]!=null&&last[sd][k]!==''?String(last[sd][k]):ph)}" aria-label="${sd==='R'?'Right':'Left'} ${k}" inputmode="${['axis','iop','cct','oct','cd'].includes(k)?'decimal':'text'}">`;
+ const lastD=last?new Date(last.date+'T00:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'';
+ $('#eyv').innerHTML=`${warn}<div class="row phd" style="justify-content:space-between;align-items:flex-end"><div><div class="peb">Eye test · ${E(r.visit.date?new Date(r.visit.date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'')}${r.visit.time?' · '+E(new Date('2000-01-01T'+r.visit.time).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).toUpperCase()):''}</div><h1>${E(nm)}</h1></div><span class="vpill">${last?'Last test · '+E(lastD):'First test here'}</span></div>
+ <section class="ec"><div class="row" style="justify-content:space-between;margin:0 0 10px"><h3 style="margin:0">Glasses prescription</h3><div class="eseg"><button class="${EYEF.seg==='d'?'on':''}" data-seg="d">Distance</button><button class="${EYEF.seg==='n'?'on':''}" data-seg="n">Near</button></div></div>
+  <div class="egr" ${EYEF.seg==='d'?'':'hidden'}><span></span><small>Sphere</small><small>Cylinder</small><small>Axis</small><small>Vision</small>${['R','L'].map(sd=>`<b>${sd==='R'?'Right':'Left'}</b>${pill('sph',sd,'0.00')}${pill('cyl',sd,'0.00')}${pill('axis',sd,'180')}${pill('vision',sd,'6/6')}`).join('')}</div>
+  <div class="egr n" ${EYEF.seg==='n'?'':'hidden'}><span></span><small>Add</small><small>Near vision</small>${['R','L'].map(sd=>`<b>${sd==='R'?'Right':'Left'}</b>${pill('add',sd,'+1.00')}${pill('near',sd,'N6')}`).join('')}</div>
+  <div class="eflags" id="efg"></div></section>
+ <div class="eg2"><section class="ec echart"><small class="vmut">Chart on the patient's screen</small><div class="snel"><b style="font-size:46px">E</b><b style="font-size:28px">F P</b><b style="font-size:20px">T O Z</b><b style="font-size:15px">L P E D</b><b style="font-size:11px;color:#0B8A7C">P E C F D</b></div><button class="btn sm" id="echt">Show on the patient's screen</button></section>
+  <section class="ec"><h3 style="margin:0 0 8px">Glasses for ${E(first)}</h3>
+   <div class="egl"><div><small>Lens</small><input id="gl" value="${E(g.lens||'')}" placeholder="Polycarbonate · blue filter"></div><label class="epr">₹<input id="glp" inputmode="numeric" value="${g.lensPrice||''}" placeholder="0"></label></div>
+   <div class="egl"><div><small>Frame</small><input id="gf" value="${E(g.frame||'')}" placeholder="Kids flexible · navy"></div><label class="epr">₹<input id="gfp" inputmode="numeric" value="${g.framePrice||''}" placeholder="0"></label></div>
+   <div class="egl"><div><small>Ready</small><input id="gr" value="${E(g.ready||'')}" placeholder="Thursday"></div><select id="gd"><option value="home" ${g.delivery!=='pickup'?'selected':''}>Home delivery</option><option value="pickup" ${g.delivery==='pickup'?'selected':''}>Pick up here</option></select><button class="estk ${g.inStock?'on':''}" id="gs" type="button">${g.inStock?'In stock':'To order'}</button></div>
+   <button class="esend" id="esend" ${doc&&ME.user.verified?'':'disabled'}>${r.visit.exam?'Send the update to '+E(first)+"'s family":'Send to '+E(first)+"'s family"}</button></section></div>
+ ${eyeWait()}
+ <details class="ec edet" ${(ex.findings||[]).length||ex.note?'open':''}><summary><b>Clinical details</b><span class="vmut"> · pressure, findings on the 3D eye, plain words</span></summary>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin-top:12px">
+   <div><table class="etb"><tr><th></th><th>Right</th><th>Left</th></tr>${EYEROWS.filter(([k])=>!['vision','sph','cyl','axis','add'].includes(k)).map(([k,l,ph])=>`<tr><td>${l}</td><td>${pill(k,'R',ph)}</td><td>${pill(k,'L',ph)}</td></tr>`).join('')}
+    <tr><td>Colour vision</td><td colspan="2"><input class="ein" id="ecol" value="${E(ex.colour||'')}" placeholder="Ishihara 14 of 14"></td></tr><tr><td>Squint</td><td colspan="2"><input class="ein" id="esq" value="${E(ex.squint||'')}" placeholder="None on cover test"></td></tr></table>
+    <h4 style="margin:14px 0 6px">Findings</h4><p class="vmut" style="margin:0 0 8px">Tap a part on the 3D eye, then “Mark a finding here”.</p><div id="efl"></div>
+    <h4 style="margin:14px 0 6px">Plain words for the family</h4><div id="etp" class="row" style="margin-bottom:8px"></div><textarea id="enote" rows="3" maxlength="600" placeholder="What you found and what happens next, in everyday words">${E(ex.note||'')}</textarea>
+    <label class="vmut" style="display:block;margin-top:10px;font-size:12px;font-weight:600">Diagnosis (stays with the hospital record)</label><input id="edx" maxlength="160" value="${E(ex.dx||'')}"></div>
+   <div style="border-radius:18px;overflow:hidden;background:#000"><iframe id="eyefr" src="/eye?m=doctor" title="3D eye" style="border:0;width:100%;height:520px;display:block"></iframe></div></div></details>`;
+ $('#eyv').querySelectorAll('[data-seg]').forEach(b=>b.onclick=()=>{EYEF.seg=b.dataset.seg;$('#eyv').querySelectorAll('[data-seg]').forEach(x=>x.classList.toggle('on',x===b));$('#eyv').querySelectorAll('.egr').forEach(x=>x.hidden=x.classList.contains('n')!==(EYEF.seg==='n'))});
+ $('#eyv').querySelectorAll('[data-k],#ecol,#esq').forEach(i=>i.oninput=()=>{eyePreview();eyeSide()});$('#enote').oninput=eyePreview;$('#esend').onclick=sendEye;
+ $('#gs').onclick=()=>{const b=$('#gs');b.classList.toggle('on');b.textContent=b.classList.contains('on')?'In stock':'To order'};
+ $('#echt').onclick=()=>eyeChart(first);
+ $('#eyv').querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{EYEF.aid=b.dataset.ev;openEyeVisit(b.dataset.ev)});
+ eyeFindings();eyeSide()}
+// what changed since last time, under the prescription; history, pressure and other checks on the right
+function eyeSide(){const d=eyeDraft(),H=EYEF.hist.slice().reverse(),last=EYEF.hist[0],num=v=>v===''||v==null||isNaN(+v)?null:+v;
+ const pts=H.map(h=>({x:h.date,y:num((h.R||{}).sph)})).filter(p=>p.y!=null),cur=num(d.R.sph);if(cur!=null)pts.push({x:'Now',y:cur});
+ const flags=[];['R','L'].forEach(sd=>{const a=last&&num((last[sd]||{}).sph),b=num(d[sd].sph);if(a!=null&&b!=null&&Math.abs(b-a)>=.25)flags.push(`<i class="a">${sd==='R'?'Right':'Left'} eye ${b-a>0?'+':'−'}${Math.abs(b-a).toFixed(2)} since ${E(new Date(last.date+'T00:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}))}</i>`)});
+ let rate=null;if(pts.length>=2&&H.length){const f=H.find(h=>num((h.R||{}).sph)!=null),yrs=Math.max(.25,(Date.now()-new Date(f.date+'T00:00:00'))/3.156e10),dy=pts[pts.length-1].y-pts[0].y;rate=dy/yrs}
+ if(rate!=null&&rate<=-.4)flags.push('<i class="b">Recheck in 6 months</i>');else if(pts.length)flags.push('<i class="b">Recheck in a year</i>');
+ const fg=$('#efg');if(fg)fg.innerHTML=flags.join('');
+ const W=360,Hh=150,P=24,ys=pts.map(p=>p.y),lo=Math.min(...ys,0)-.25,hi=Math.max(...ys,0)+.25,X=i=>P+(pts.length>1?i*(W-2*P)/(pts.length-1):(W-2*P)/2),Y=v=>P+(hi-v)/(hi-lo||1)*(Hh-2*P);
+ const lab=x=>x==='Now'?'Now':new Date(x+'T00:00:00').getFullYear();
+ const iop=['R','L'].map(sd=>num(d[sd].iop)),iopOk=iop.every(v=>v==null||(v>=10&&v<=21));
+ const col=$('#ecol')?$('#ecol').value.trim():'',sq=$('#esq')?$('#esq').value.trim():'';
+ const el=$('#eyp');if(!el)return;el.className='lbpn';
+ el.innerHTML=`<h2 style="margin:4px 0 2px">Eye history</h2><p class="lbs">${pts.length?`Right eye sphere${H.length?(()=>{const y=Math.max(1,Math.round((Date.now()-new Date(H[0].date+'T00:00:00'))/3.156e10));return` over ${y} year${y>1?'s':''}`})():' today'}`:'Sphere readings appear here as you test'}</p>
+ ${pts.length?`<svg viewBox="0 0 ${W} ${Hh+22}" style="width:100%;height:auto"><polyline points="${pts.map((p,i)=>X(i)+','+Y(p.y)).join(' ')}" fill="none" stroke="#0B8A7C" stroke-width="3" stroke-linejoin="round"/>${pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.y)}" r="6" fill="#fff" stroke="#0B8A7C" stroke-width="3"/><text x="${X(i)}" y="${Y(p.y)-12}" text-anchor="middle" font-size="12" fill="#1D1D1F">${p.y>0?'+':p.y<0?'−':''}${Math.abs(p.y).toFixed(2)}</text><text x="${X(i)}" y="${Hh+14}" text-anchor="middle" font-size="11" fill="#6E6E73">${lab(p.x)}</text>`).join('')}</svg>`:''}
+ ${rate!=null&&rate<=-.25?`<div class="lbai">✦ <span><b>Short sight is rising about ${Math.abs(rate).toFixed(2)} a year.</b> Consider advising outdoor time and less screen time; note it for the parents if this is a child.</span></div>`:rate!=null&&rate>=.25?`<div class="lbai">✦ <span><b>Long sight is rising about ${rate.toFixed(2)} a year.</b> Check near vision and the add.</span></div>`:''}
+ <div class="lbsec">Shared with the family app</div><p class="vmut" style="margin:0">The prescription appears under ${E((EYEF.visit&&EYEF.visit.memberName||'their').split(' ')[0])}'s eyes on the body map${EYEF.visit&&EYEF.visit.memberName?'':''}, with the glasses quote in their messages.</p>
+ <div class="lbsec">Other checks today</div>
+ <div class="eoc"><div><b>Eye pressure</b><small>${iop.some(v=>v!=null)?`Right ${iop[0]??'—'} · Left ${iop[1]??'—'} mmHg`:'Not measured yet'}</small></div>${iop.some(v=>v!=null)?`<span class="lbt ${iopOk?'g':'a'}">${iopOk?'Normal':'Check'}</span>`:''}</div>
+ <div class="eoc"><div><b>Colour vision</b><small>${E(col||'Not tested yet')}</small></div>${col?`<span class="lbt ${/(\d+)\s*(of|\/)\s*\1\b|normal/i.test(col)?'g':'a'}">${/(\d+)\s*(of|\/)\s*\1\b|normal/i.test(col)?'Normal':'Check'}</span>`:''}</div>
+ <div class="eoc"><div><b>Squint check</b><small>${E(sq||'Not done yet')}</small></div>${sq?`<span class="lbt ${/^none|normal|ortho/i.test(sq)?'g':'a'}">${/^none|normal|ortho/i.test(sq)?'None':'Found'}</span>`:''}</div>`}
+function eyeChart(first){const w=window.open('','uh_eyechart','width=900,height=700');if(!w){toast('Allow pop-ups to open the chart');return}
+ const rows=[['E',88],['F P',64],['T O Z',46],['L P E D',34],['P E C F D',25],['E D F C Z P',19],['F E L O P Z D',14],['D E F P O T E C',10]];
+ w.document.write(`<!doctype html><title>Eye chart</title><style>body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#fff;font-family:Georgia,'Times New Roman',serif;color:#111}b{letter-spacing:.35em}p{font:14px system-ui;color:#888;position:fixed;bottom:12px}</style>${rows.map(([t,sz])=>`<b style="font-size:${sz}px">${t}</b>`).join('')}<p>${first?first+' · ':''}Read from 6 metres · press F for full screen</p><script>addEventListener('keydown',e=>{if(e.key==='f')document.documentElement.requestFullscreen()})<\/script>`);w.document.close()}
+function eyeDraft(){const o={R:{},L:{}};$('#eyv').querySelectorAll('[data-k]').forEach(i=>{const [sd,k]=i.dataset.k.split('.'),v=i.value.trim();if(!v)return;o[sd][k]=['iop','cct','cd','oct'].includes(k)?Number(v):v});
+ const n=x=>Math.max(0,Math.round(+String(x||'').replace(/\D/g,'')||0)),gl=($('#gl')||{}).value||'',gf=($('#gf')||{}).value||'';
+ return Object.assign(o,{findings:EYEF.findings,note:($('#enote')||{}).value?$('#enote').value.trim():'',dx:($('#edx')||{}).value?$('#edx').value.trim():'',colour:($('#ecol')||{}).value||'',squint:($('#esq')||{}).value||'',
+  glasses:gl.trim()||gf.trim()?{lens:gl.trim(),lensPrice:n(($('#glp')||{}).value),frame:gf.trim(),framePrice:n(($('#gfp')||{}).value),ready:(($('#gr')||{}).value||'').trim(),delivery:($('#gd')||{}).value||'home',inStock:!!($('#gs')&&$('#gs').classList.contains('on'))}:null})}
 function eyePreview(){clearTimeout(EYEF.t);EYEF.t=setTimeout(()=>{const f=$('#eyefr');if(!f||!f.contentWindow)return;const d=eyeDraft();
  f.contentWindow.postMessage({type:'uh-eye-data',data:{mode:'doctor',exams:[Object.assign({date:new Date().toISOString().slice(0,10),doctor:ME.user.name,store:ME.store.name},d),...EYEF.hist]}},location.origin)},500);
- const words=EYEF.findings.map(f=>f.label).join(' ')+' '+[...$('#evx').querySelectorAll('[data-k$="lens"],[data-k$="retina"]')].map(i=>i.value).join(' ');
+ const words=EYEF.findings.map(f=>f.label).join(' ')+' '+[...$('#eyv').querySelectorAll('[data-k$="lens"],[data-k$="retina"]')].map(i=>i.value).join(' ');
  $('#etp').innerHTML=EYETPL.filter(([rx])=>rx.test(words)).map(([,t],i)=>`<button class="btn sm" data-tp="${i}">+ ${E(t.split(/[.,]/)[0].slice(0,38))}…</button>`).join('');
  $('#etp').querySelectorAll('[data-tp]').forEach(b=>b.onclick=()=>{const t=EYETPL.filter(([rx])=>rx.test(words))[+b.dataset.tp][1],n=$('#enote');n.value=(n.value?n.value+' ':'')+t;n.focus();eyePreview()})}
 const EYEPART={cornea:'Cornea',iris:'Iris',pupil:'Pupil',lens:'Lens',nucleus:'Lens nucleus',zonules:'Zonules',ciliary:'Ciliary body','anterior chamber':'Front chamber','posterior chamber':'Back chamber',trabecular:'Drainage meshwork',schlemm:"Schlemm's canal",conjunctiva:'Conjunctiva',sclera:'Sclera',choroid:'Choroid',retina:'Retina',vitreous:'Vitreous',macula:'Macula',disc:'Optic disc',vessels:'Retinal vessels','optic nerve':'Optic nerve',ganglion:'Ciliary ganglion'};
@@ -874,7 +938,7 @@ addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.ty
  if(e.data.act==='ready')eyePreview();
  if(e.data.act==='mark'&&EYEF.findings.length<12){EYEF.findings.push({part:e.data.part,partName:e.data.label,side:e.data.side||'R',label:'',tone:'watch'});eyeFindings();const l=$('#efl').querySelectorAll('[data-fl]');l[l.length-1]&&l[l.length-1].focus()}});
 async function sendEye(){const b=$('#esend'),d=eyeDraft();if(d.findings.some(f=>!f.label.trim())){toast('Add a few words to every finding');return}
- b.disabled=true;try{await api('/eye/visits/'+EYEF.aid,{method:'PUT',body:{...d,findings:d.findings.map(({part,side,label,tone})=>({part,side,label,tone}))}});toast('Sent · the family has it on their Eyes page');openEyeVisit(EYEF.aid)}catch(e){toast(e.message);b.disabled=false}}
+ b.disabled=true;try{await api('/eye/visits/'+EYEF.aid,{method:'PUT',body:{...d,findings:d.findings.map(({part,side,label,tone})=>({part,side,label,tone}))}});toast('Sent · the family has it on their Eyes page');loadEyeVisits()}catch(e){toast(e.message);b.disabled=false}}
 
 // ---------------- video consults (doctors)
 let CALL=null;const FREQ={od:'once a day',bd:'twice a day',tds:'three times a day',qid:'four times a day',sos:'when needed',hs:'at bedtime',weekly:'once a week'};
