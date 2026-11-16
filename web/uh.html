@@ -917,6 +917,7 @@ body.pregtheme #b5 .on,body.pregtheme .tab.on{color:#E0457B}body.pregtheme .eyeb
 .icsave{position:static;box-shadow:none;background:none;padding:4px 0 24px}.icsave .btn.pri{display:none}
 .icrm{display:block;width:100%;border:0;background:none;color:#D70015;font:600 16px var(--font,-apple-system),sans-serif;padding:16px 0 6px}
 .icok2{color:#0071E3!important;font-weight:700!important}
+.chk .li{display:flex;align-items:center;gap:10px}.chkb{border:0;background:#EAF3FF;color:#0071E3;font:600 14px var(--font,-apple-system),sans-serif;border-radius:16px;padding:0 14px;min-height:34px;flex:none}.chkx{width:34px;height:34px;border-radius:17px;border:0;background:none;display:grid;place-items:center;flex:none;margin-right:-8px}
 </style>
 </head>
 <body>
@@ -941,7 +942,7 @@ const IOSW=/iP(hone|od|ad)/.test(navigator.userAgent)||(navigator.platform==='Ma
 const I={search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',share:'<path d="M12 3v12M8 7l4-4 4 4M5 13v6h14v-6"/>',sum:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',rec:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',pill:'<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/>',fam:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 1.8 6 5.5"/>',
 spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',check:'<path d="M5 12l5 5 9-10"/>',phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/>',chev:'<path d="M9 6l6 6-6 6"/>',baby:'<circle cx="12" cy="7" r="3.5"/><path d="M6 21c0-4 2.7-7 6-7s6 3 6 7"/>',heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',drop:'<path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/>',id:'<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="12" r="2.5"/><path d="M14 10h4M14 14h3"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
 I.gear='<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>';I.shield='<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>';I.down='<path d="M12 4v12M6 10l6 6 6-6M4 20h16"/>';I.bell='<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>';I.eye='<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
-const ORGCOL={heart:0xB8323F,liver:0x8E3B2C,pancreas:0xD9963A,thyroid:0xB8404E,kidney:0x7E2C2C,lung:0xD99AA2,gut:0xD69580,uterus:0xD0607A,other:0xC9A090};
+const ORGCOL={bones:0xE6DCC4,teeth:0xF4EFE2,eye:0x8FB4D6,breast:0xE7A3AE,prostate:0xC4846A,heart:0xB8323F,liver:0x8E3B2C,pancreas:0xD9963A,thyroid:0xB8404E,kidney:0x7E2C2C,lung:0xD99AA2,gut:0xD69580,uterus:0xD0607A,other:0xC9A090};
 const $=s=>document.querySelector(s);
 
 /* ---------- 3D ---------- */
@@ -954,6 +955,12 @@ const key=new THREE.DirectionalLight(0xffffff,.75);key.position.set(3,5,6);scene
 const rim=new THREE.DirectionalLight(0xbfd4ff,.55);rim.position.set(-5,2,-6);scene.add(rim);
 const root=new THREE.Group();scene.add(root);
 const MODELS={};let cur=null;
+const ONDEM=new Set(['bones','teeth','eye','breast','prostate']);
+/* parts without their own mesh (or on a child's body) are pinned by where they sit on the body's outline */
+function anchorOf(M,k){if(!M)return null;const o=M.organs[k];if(o&&o.mesh.visible!==false&&!(ONDEM.has(k)&&!o.mesh.visible))return o.center;
+ const F={thyroid:[0,.818,.75],heart:[.02,.715,.45],lung:[-.045,.735,.3],liver:[-.04,.645,.45],pancreas:[.01,.625,.2],kidney:[.04,.6,-.4],uterus:[0,.5,.3],brain:[0,.955,0],eye:[.018,.93,.85],ear:[.052,.925,0],teeth:[0,.895,.8],skin:[-.105,.56,.55],blood:[.118,.6,.4],bones:[.045,.28,.6],breast:[.055,.735,.95],prostate:[0,.475,0],gut:[0,.6,.5]}[k];if(!F)return o?o.center:null;
+ const kb={baby:[1.6,.78],child:[1.25,.88],teen:[1.05,.97]}[M.kid]||[1,1];if(!M._bb){M.skinGeo.computeBoundingBox();M._bb=M.skinGeo.boundingBox}const b=M._bb,H=b.max.y-b.min.y,cz=(b.min.z+b.max.z)/2,dz=(b.max.z-cz);
+ let fy=F[1];if(fy>.85)fy=1-(1-fy)*kb[0];return new THREE.Vector3((b.min.x+b.max.x)/2+F[0]*H*(fy>.85?kb[0]*.8:1),b.min.y+fy*H,cz+F[2]*dz*.9)}
 /* Pregnancy on Today: the real week-by-week model (mother with the womb opened, baby inside, gently floating), the same files as the pregnancy page. */
 /* see-through layers (skin, womb, sac) draw after the organs without writing depth, front faces only for the skin, so the body
    reads as one clean shell instead of patches where its own back shows through */
@@ -983,7 +990,8 @@ function geom(S0,p){const q=new Uint16Array(S0.buf,S0.base+p.o,p.v*3),ix=new Uin
  for(let j=0;j<p.v;j++){pos[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);pos[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);pos[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));g.computeVertexNormals();return g}
 function organKey(n){n=n.toLowerCase();
- if(/uter|ovar|fallop|placent/.test(n))return 'uterus';if(/thyroid gland|lobe of thyroid|isthmus of thyroid/.test(n))return 'thyroid';
+ if(/uter|ovar|fallop|placent/.test(n))return 'uterus';if(/^prostate$/.test(n))return 'prostate';if(/mammary|^breast/.test(n)&&!/ligament/.test(n))return 'breast';
+ if(/eyeball|^(right|left) (lens|cornea|retina|iris)$/.test(n)&&!/ligament/.test(n))return 'eye';if(/thyroid gland|lobe of thyroid|isthmus of thyroid/.test(n))return 'thyroid';
  if(/kidney|renal (cortex|pelvis|papill|pyramid)/.test(n)&&!/arter|vein|impression/.test(n))return 'kidney';
  if(/pancrea/.test(n))return 'pancreas';if(/liver/.test(n)&&!/impression|ligament/.test(n))return 'liver';
  if(/atri|ventric|cardiac|heart|myocard|papillary|valve|leaflet|cusp|chordae|interventricular/.test(n)&&!/fourth ventricle|lateral ventricle|third ventricle|arter|vein|conduction/.test(n))return 'heart';
@@ -1006,15 +1014,17 @@ async function buildKid(sex,band){const A=MODELS[sex]||await buildModel(sex),key
  const grp=new THREE.Group(),skin=new THREE.Mesh(skinGeo,A.skin.material.clone());skin.renderOrder=2;const back=new THREE.Mesh(skinGeo,new THREE.MeshBasicMaterial({color:0x8A5A4A,transparent:true,opacity:.12,side:THREE.BackSide,depthWrite:false}));back.renderOrder=1;grp.add(back,skin);
  /* organs: the adult torso (hip to shoulder) is stretched onto this one */
  const map=(x,y,z)=>{const u=(y-ab.min.y)/Ha,t=(u-ref.hip)/(ref.sh-ref.hip);return[cx+(x-cx)*(lm.w/ref.w),ab.min.y+(lm.hip+t*(lm.sh-lm.hip))*Ha,cz+(z-cz)*(lm.d/ref.d)+(lm.cz-ref.cz)*Ha]};
- const organs={};for(const key2 in A.organs){if(key2==='uterus'&&band!=='teen')continue;const src=A.organs[key2].mesh.geometry,g=src.clone(),a=g.attributes.position.array;for(let j=0;j<a.length;j+=3){const m=map(a[j],a[j+1],a[j+2]);a[j]=m[0];a[j+1]=m[1];a[j+2]=m[2]}g.computeVertexNormals();g.computeBoundingBox();
+ const organs={};for(const key2 in A.organs){if(key2==='uterus'&&band!=='teen')continue;if(ONDEM.has(key2))continue;const src=A.organs[key2].mesh.geometry,g=src.clone(),a=g.attributes.position.array;for(let j=0;j<a.length;j+=3){const m=map(a[j],a[j+1],a[j+2]);a[j]=m[0];a[j+1]=m[1];a[j+2]=m[2]}g.computeVertexNormals();g.computeBoundingBox();
   const mesh=new THREE.Mesh(g,A.organs[key2].mesh.material.clone());mesh.renderOrder=0;grp.add(mesh);const c=new THREE.Vector3();g.boundingBox.getCenter(c);organs[key2]={mesh,center:c,base:A.organs[key2].base.clone()}}
  const wombG=new THREE.Group();wombG.visible=false;const womb=new THREE.Object3D(),baby=new THREE.Object3D();wombG.add(womb,baby);grp.add(wombG);
  return MODELS[key]={grp,skin,skinGeo,P0:skinGeo.attributes.position.array.slice(),organs,wombG,womb,baby,uc:organs.uterus?organs.uterus.center.clone():new THREE.Vector3(0,ab.min.y+Ha*.5,cz),kid:band}}
 async function buildModel(sex){
  const set=sex==='male'?await loadSet('/a/body-lite.e9802745.bin','/a/names.f459bcee.json'):await loadSet('/a/female.ab5cf751.bin','/a/names-f.a07a3541.json');
- const grp=new THREE.Group(),skinG=[],org={};
+ const grp=new THREE.Group(),skinG=[],org={},pin={};
  set.meta.parts.forEach((p,k)=>{const l=p.l??1,n=set.names[k];
   if(l===0){if(/^skin/i.test(n))skinG.push(geom(set,p));return}
+  if(l===2){const bk=/^(right|left) (upper|lower) .*(incisor|canine|premolar|molar)( tooth)?$/i.test(n)?'teeth':/^(right|left) (femur|patella|tibia|fibula)$|^vertebra l[1-5]$|^lumbar vertebra [1-5]$/i.test(n)?'bones':null;
+   if(bk){const g=geom(set,p);(org[bk]=org[bk]||[]).push(g);if(/^right femur$/i.test(n)){g.computeBoundingBox();const bb=g.boundingBox,c=bb.getCenter(new THREE.Vector3());c.y=bb.max.y-(bb.max.y-bb.min.y)*.1;pin.bones=c}}return}
   if(l!==3)return;const key=organKey(n);if(!key)return;(org[key]=org[key]||[]).push(geom(set,p))});
  const skinGeo=mergeGeoms(skinG);
  const skinMat=new THREE.MeshPhysicalMaterial({color:0xDCE4EF,roughness:.32,metalness:0,transparent:true,opacity:.42,depthWrite:false,clearcoat:.6,clearcoatRoughness:.3,side:THREE.FrontSide});
@@ -1023,7 +1033,7 @@ async function buildModel(sex){
  grp.add(back,skin);
  const organs={};
  for(const k in org){const g=mergeGeoms(org[k]);const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:ORGCOL[k],roughness:.45,metalness:.05,transparent:true,opacity:.9,emissive:ORGCOL[k],emissiveIntensity:0}));m.renderOrder=0;grp.add(m);
-  const c=new THREE.Vector3();g.boundingBox.getCenter(c);organs[k]={mesh:m,center:c,base:new THREE.Color(ORGCOL[k]).convertSRGBToLinear()}}
+  const c=pin[k]||new THREE.Vector3();if(!pin[k])g.boundingBox.getCenter(c);organs[k]={mesh:m,center:c,base:new THREE.Color(ORGCOL[k]).convertSRGBToLinear()}}
  // pregnancy: belly morph + womb + baby
  const P0=skinGeo.attributes.position.array.slice();
  const uc=organs.uterus?organs.uterus.center.clone():new THREE.Vector3(0,-.55,.1);
@@ -1068,10 +1078,10 @@ function frame(){const dt=Math.min(clock.getDelta(),.05),tt=clock.elapsedTime;id
  if(!document.body.classList.contains('flat')&&!document.hidden&&!document.querySelector('#layer .page')){R.render(scene,cam);placeLabels()}requestAnimationFrame(frame)}
 const v3=new THREE.Vector3();
 function placeLabels(){if(!LABS.length){$('#lines').innerHTML='';return}const r=canvas.getBoundingClientRect();let svg='';const used={'-1':[],'1':[]};
- LABS.forEach((o,i)=>{if(o.k==='womb'){const bb=PGH.obj&&PGH.obj.userData.baby;if(bb)bb.getWorldPosition(v3);else v3.copy(cur.wombG.position).applyMatrix4(root.matrixWorld);v3.project(cam)}else v3.copy(cur.organs[o.k].center).applyMatrix4(root.matrixWorld).project(cam);
+ LABS.forEach((o,i)=>{if(o.k==='womb'){const bb=PGH.obj&&PGH.obj.userData.baby;if(bb)bb.getWorldPosition(v3);else v3.copy(cur.wombG.position).applyMatrix4(root.matrixWorld);v3.project(cam)}else{const a=anchorOf(cur,o.k);if(!a)return;v3.copy(a).applyMatrix4(root.matrixWorld).project(cam)}
   const x=r.left+(v3.x*.5+.5)*r.width,y=r.top+(-v3.y*.5+.5)*r.height;
   if(o.dot){o.el.style.left=x+'px';o.el.style.top=y+'px';return}
-  if(o.pin){const w=o.el.offsetWidth||110;o.el.style.left=(o.side<0?r.left+12+w/2:r.left+r.width-12-w/2)+'px';let yy=Math.max(r.top+120,Math.min(r.bottom-60,y));const u=used[o.side];u.sort((a,b)=>a-b);for(const q of u)if(Math.abs(yy-q)<70)yy=q+70;u.push(yy);o.el.style.top=yy+'px';if(v3.z<1){const c=getComputedStyle(o.el).getPropertyValue('--c')||'#8E8E93',ex=o.side<0?r.left+12+w:r.left+r.width-12-w;svg+=`<path d="M${ex} ${yy} L${x} ${y}" stroke="${c}" stroke-width="1.4" stroke-dasharray="3 3" fill="none" opacity=".8"/><circle cx="${x}" cy="${y}" r="5.5" fill="#fff" stroke="${c}" stroke-width="3"/>`}return}const lx=Math.max(78,Math.min(r.left+r.width-78,x+o.side*Math.min(130,r.width*.3))),ly=Math.max(r.top+170,Math.min(r.bottom-60,y-24+i*8));
+  if(o.pin){const w=o.el.offsetWidth||110;o.el.style.left=(o.side<0?r.left+12+w/2:r.left+r.width-12-w/2)+'px';const ymax=r.bottom-(innerWidth<980?100:60);let yy=Math.max(r.top+120,Math.min(ymax,y));const u=used[o.side];u.sort((a,b)=>a-b);for(const q of u)if(Math.abs(yy-q)<70)yy=q+70;if(yy>ymax&&u.length)yy=Math.max(r.top+60,Math.min(...u)-70);u.push(yy);o.el.style.top=yy+'px';if(v3.z<1){const c=getComputedStyle(o.el).getPropertyValue('--c')||'#8E8E93',ex=o.side<0?r.left+12+w:r.left+r.width-12-w;svg+=`<path d="M${ex} ${yy} L${x} ${y}" stroke="${c}" stroke-width="1.4" stroke-dasharray="3 3" fill="none" opacity=".8"/><circle cx="${x}" cy="${y}" r="5.5" fill="#fff" stroke="${c}" stroke-width="3"/>`}return}const lx=Math.max(78,Math.min(r.left+r.width-78,x+o.side*Math.min(130,r.width*.3))),ly=Math.max(r.top+170,Math.min(r.bottom-60,y-24+i*8));
   o.el.style.left=lx+'px';o.el.style.top=ly+'px';if(!o.el.offsetParent)return;
   svg+=`<line x1="${x}" y1="${y}" x2="${lx-o.side*56}" y2="${ly}" stroke="rgba(29,29,31,.28)" stroke-width="1"/><circle cx="${x}" cy="${y}" r="4" fill="#fff" stroke="rgba(29,29,31,.5)" stroke-width="1.5"/>`});
  $('#lines').innerHTML=svg}
@@ -1102,11 +1112,18 @@ const wkInfo=w=>{let x=WEEKS[0];WEEKS.forEach(k=>{if(w>=k[0])x=k});return x};
 const NAME_CODE=[[/hba1c|glyco?sylated|a1c/i,'hba1c'],[/fasting.*(glucose|sugar)|(glucose|sugar).*fasting|\bfbs\b/i,'glu_f'],[/post.?prandial|\bppbs\b|pp (glucose|sugar)/i,'glu_pp'],[/random.*(glucose|sugar)|\brbs\b/i,'glu_r'],[/\bldl\b/i,'ldl'],[/\bhdl\b/i,'hdl'],[/triglycer/i,'tg'],[/total cholesterol|^cholesterol/i,'tc'],[/sgpt|\balt\b|alanine/i,'alt'],[/sgot|\bast\b|aspartate/i,'ast'],[/alkaline phos/i,'alp'],[/bilirubin/i,'bili'],[/^(?!.*(urine|micro|acr|creatinine ratio)).*albumin/i,'alb'],[/creatinine/i,'creat'],[/\burea\b|\bbun\b/i,'urea'],[/uric/i,'uric'],[/egfr/i,'egfr'],[/sodium|\bna\b/i,'na'],[/potassium|\bk\b/i,'k'],[/calcium/i,'ca'],[/\btsh\b|thyroid stim/i,'tsh'],[/\bt3\b|triiodo/i,'t3'],[/\bt4\b|thyroxine/i,'t4'],[/vitamin\s*d|25.?oh|cholecalciferol/i,'vitd'],[/b.?12|cobalamin/i,'b12'],[/ferritin/i,'ferr'],[/haemoglobin|hemoglobin|\bhb\b|\bhgb\b/i,'hb'],[/platelet/i,'plt'],[/wbc|white blood|leucocyte|leukocyte|\btlc\b/i,'wbc'],[/rbc|red blood/i,'rbc'],[/\bmcv\b/i,'mcv'],[/\bpcv\b|haematocrit|hematocrit/i,'pcv'],[/\bcrp\b|c.reactive/i,'crp'],[/\besr\b|sedimentation/i,'esr'],[/\bpsa\b|prostate/i,'psa'],[/spo2|oxygen sat/i,'spo2'],[/systolic|blood pressure/i,'sbp']];
 const codeOf=f=>f.code||((NAME_CODE.find(([re])=>re.test(f.test||''))||[])[1])||'';
 const CODE_ORG={vitd:'bones',ca:'bones',b12:'blood',crp:'blood',esr:'blood',psa:'prostate',tc:'heart',ldl:'heart',hdl:'heart',tg:'heart',sbp:'heart',glu_f:'pancreas',glu_pp:'pancreas',glu_r:'pancreas',hba1c:'pancreas',alt:'liver',ast:'liver',alp:'liver',bili:'liver',alb:'liver',creat:'kidney',urea:'kidney',uric:'kidney',egfr:'kidney',na:'kidney',k:'kidney',tsh:'thyroid',t3:'thyroid',t4:'thyroid',hb:'blood',wbc:'blood',plt:'blood',rbc:'blood',mcv:'blood',pcv:'blood',ferr:'blood',spo2:'lung'};
-const ORG_NAME={eye:'Eyes',teeth:'Teeth',ear:'Ears',skin:'Skin',brain:'Brain',bones:'Bones',heart:'Heart & blood',pancreas:'Pancreas',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',uterus:'Uterus'};
+const ORG_NAME={eye:'Eyes',teeth:'Teeth',ear:'Ears',skin:'Skin',brain:'Brain',bones:'Bones & joints',blood:'Blood',breast:'Breast',prostate:'Prostate',gut:'Stomach & gut',heart:'Heart & blood',pancreas:'Pancreas',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',uterus:'Uterus'};
 const FLAGCLS={high:'bad',low:'warn',normal:'ok',unknown:'info'},FLAGTXT={high:'High',low:'Low',normal:'In range',unknown:'Check'};
-const ORG_RX=[[/\b(dexa|dxa|bmd|bone (mineral )?density|t.?score|z.?score|osteopor|osteopen|fracture|x-?ray.*(wrist|hand|ankle|foot|knee|hip|spine|shoulder|elbow|leg|arm)|(wrist|hand|ankle|foot|knee|hip|spine|shoulder|elbow).*x-?ray)/i,'bones'],[/dental|tooth|teeth|caries|cavity|gingiv|periodont|opg|orthopantom|root canal|plaque|tartar/i,'teeth'],[/intra.?ocular|\biop\b|visual acuity|vision|retin|fundus|cataract|glaucoma|cornea|refraction|spectacle|eye/i,'eye'],[/audiometr|hearing|tympan|\bear\b|otosc|tinnitus/i,'ear'],[/\b(mri|ct|eeg)\b.*(brain|head)|brain|\beeg\b|stroke|infarct/i,'brain'],[/skin|derma|psoria|eczema|biopsy.*(skin|lesion)|mole|melanoma|acne|vitiligo/i,'skin'],[/urine.*(albumin|protein|acr)|microalbumin|albumin.?creatinine/i,'kidney'],[/echo|ejection fraction|\btmt\b|stress test|holter/i,'heart'],[/\bfsh\b|\blh\b|follicle.?stim|luteini|\bamh\b|anti.?m[uü]ll|estradiol|oestradiol|progesterone|ca.?125|pap (smear|test)/i,'uterus'],[/hepatitis|hbs ?ag|hcv|hav|sgpt|sgot|bilirubin|liver/i,'liver'],[/creatinine|urea|urine|egfr|kidney|renal/i,'kidney'],[/glucose|sugar|hba1c|insulin/i,'pancreas'],[/tsh|thyro|t3|t4/i,'thyroid'],[/lipid|cholesterol|triglycer|ecg|troponin/i,'heart'],[/blood group|abo|\brh\b|rh type/i,null],[/hiv|vdrl|rpr|syphilis|haemo|hemo|platelet|wbc|rbc|cbc|esr/i,'blood'],[/chest|spo2|lung|pulmonary function|spirometr|fev1|pft/i,'lung']];
+const FEVER=/dengue|\bns1\b|malaria|plasmodium|\bmp\b.*(smear|antigen)|widal|typhidot|typhoid|salmonella|chikungunya|scrub typhus|weil.?felix|leptospir|influenza|covid|sars.?cov/i;
+const daysAgo=d=>d?Math.floor((Date.now()-new Date(d+'T00:00'))/864e5):999;
+const ORG_RX=[[/mammo|breast|bi-?rads|\bca ?15[.-]?3\b/i,'breast'],[/\bpsa\b|prostat/i,'prostate'],
+ [/\bafb\b|acid.?fast|gene ?xpert|cbnaat|truenat|tb.?pcr|tubercul|quantiferon|\bigra\b|mantoux|sputum/i,'lung'],
+ [FEVER,'blood'],[/\bafp\b|alpha.?feto/i,'liver'],[/\bcea\b|carcinoembryonic|\bca ?19[.-]?9\b|h\.? ?pylori|stool|occult blood|calprotectin|endoscop|colonoscop/i,'gut'],[/lipase|amylase/i,'pancreas'],
+ [/vitamin ?d|25.?oh|calcidiol|cholecalciferol|\bcalcium\b|phosph(orus|ate)|\bra factor\b|rheumatoid|anti.?ccp|\baso\b|antistreptolysin/i,'bones'],
+ [/ferritin|\biron\b|tibc|transferrin|vitamin ?b ?12|cobalamin|folate|folic/i,'blood'],
+ [/prolactin|testosterone|\bdheas?\b|pelvic|transvaginal|\btvs\b|pco[sd]|\bhpv\b/i,'uterus'],[/\b(dexa|dxa|bmd|bone (mineral )?density|t.?score|z.?score|osteopor|osteopen|fracture|x-?ray.*(wrist|hand|ankle|foot|knee|hip|spine|shoulder|elbow|leg|arm)|(wrist|hand|ankle|foot|knee|hip|spine|shoulder|elbow).*x-?ray)/i,'bones'],[/dental|tooth|teeth|caries|cavity|gingiv|periodont|opg|orthopantom|root canal|plaque|tartar/i,'teeth'],[/intra.?ocular|\biop\b|visual acuity|vision|retin|fundus|cataract|glaucoma|cornea|refraction|spectacle|eye/i,'eye'],[/audiometr|hearing|tympan|\bear\b|otosc|tinnitus/i,'ear'],[/\b(mri|ct|eeg)\b.*(brain|head)|brain|\beeg\b|stroke|infarct/i,'brain'],[/skin|derma|psoria|eczema|biopsy.*(skin|lesion)|mole|melanoma|acne|vitiligo/i,'skin'],[/urine.*(albumin|protein|acr)|microalbumin|albumin.?creatinine/i,'kidney'],[/echo|ejection fraction|\btmt\b|stress test|holter/i,'heart'],[/\bfsh\b|\blh\b|follicle.?stim|luteini|\bamh\b|anti.?m[uü]ll|estradiol|oestradiol|progesterone|ca.?125|pap (smear|test)/i,'uterus'],[/hepatitis|hbs ?ag|hcv|hav|sgpt|sgot|bilirubin|liver/i,'liver'],[/creatinine|urea|urine|egfr|kidney|renal/i,'kidney'],[/glucose|sugar|hba1c|insulin/i,'pancreas'],[/tsh|thyro|t3|t4/i,'thyroid'],[/lipid|cholesterol|triglycer|ecg|troponin/i,'heart'],[/blood group|abo|\brh\b|rh type/i,null],[/hiv|vdrl|rpr|syphilis|haemo|hemo|platelet|wbc|rbc|cbc|esr/i,'blood'],[/chest|spo2|lung|pulmonary function|spirometr|fev1|pft/i,'lung']];
 /* Women's-health organs (uterus, ovaries) appear only to the woman herself, as an adult — never to family, guardians or in kids views. */
-const privOrg=(o,p)=>o==='uterus'&&!(p&&p.self&&p.sex==='female'&&!(p.age!=null&&p.age<18))?null:o;
+const privOrg=(o,p)=>{const adult=p&&p.self&&!(ageOf(p)!=null&&ageOf(p)<18);if(o==='uterus'||o==='breast')return adult&&p.sex==='female'?o:null;if(o==='prostate')return adult&&p.sex!=='female'?o:null;return o};
 const nameOrg=t=>{for(const [rx,o] of ORG_RX)if(rx.test(t||''))return o;return null};const orgOf=f=>CODE_ORG[codeOf(f)]||CODE_ORG[f.code]||nameOrg(f.test);
 const qualFlag=f=>{const v=String(f.value||'').toLowerCase(),t=String(f.test||'').toLowerCase();
  if(/non[- ]?reactive|negative|absent|\bnil\b|not detected|normal/.test(v))return'normal';
@@ -1124,11 +1141,11 @@ async function showModel(){const p=P();if(!p){return}
  let M;try{M=MODELS[mk]||(band==='adult'?await buildModel(sex):await buildKid(sex,band).catch(()=>MODELS[sex]||buildModel(sex)))}catch(e){$('#load').textContent='The 3D body could not load. Check your connection.';return}
  $('#load').style.display='none';if(cur!==M){if(cur)root.remove(cur.grp);root.add(M.grp);cur=M}
  const locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id),f=fs[S.focus];document.body.classList.toggle('preg',!!pg);document.body.classList.toggle('no3d',locked);
- pulseKey=(!locked&&!pg&&f&&f.org&&M.organs[f.org]&&f.flag&&f.flag!=='normal')?f.org:null;
+ pulseKey=(!locked&&!pg&&f&&f.org&&M.organs[f.org]&&!ONDEM.has(f.org)&&f.flag&&f.flag!=='normal')?f.org:null;
  for(const k in M.organs){const o=M.organs[k],mt=o.mesh.material;o.mesh.visible=!locked;mt.color.copy(o.base);
   // calm: a natural body; only organs with a result to discuss come forward, the focused one strongest
   // see-through body (approved Today design): every organ in its own colour; one with a result to discuss glows, others stay calm
-  const flagged=!pg&&fs.some(x=>x.org===k&&x.flag&&x.flag!=='normal'),has=!pg&&fs.some(x=>x.org===k);o.mesh.visible=!locked&&(k!=='uterus'||female);mt.transparent=true;mt.opacity=pg?.78:has?1:.55;mt.depthWrite=pg||has;mt.emissiveIntensity=flagged?.1:0;mt.depthTest=true;o.mesh.renderOrder=0}
+  const flagged=!pg&&fs.some(x=>x.org===k&&x.flag&&x.flag!=='normal'),has=!pg&&fs.some(x=>x.org===k);o.mesh.visible=!locked&&(k!=='uterus'||female)&&(!ONDEM.has(k)||has);mt.transparent=true;mt.opacity=pg?.78:has?1:.55;mt.depthWrite=pg||has;mt.emissiveIntensity=flagged?.1:0;mt.depthTest=true;o.mesh.renderOrder=0}
  const anyOrg=Object.values(M.organs).some(o=>o.mesh.visible);
  M.skin.material.opacity=locked?.6:pg?.45:.34;M.skin.material.depthWrite=false;M.skin.material.color.set(pg?0xD9A090:0xDCE4EF).convertSRGBToLinear();
  const wk=S.week||(pg&&pg.week)||0;M.wombG.visible=false;const t=wk/40;M.grp.visible=!pg;if(pg&&!locked){pgShow(wk||20)}else pgHide();
@@ -1137,10 +1154,10 @@ async function showModel(){const p=P();if(!p){return}
  drawLabels()}
 function drawLabels(){const L=$('#labels');L.innerHTML='';LABS=[];const p=P();if(!cur||!p||S.tab!=='summary'||!can(p,'summary'))return;
  const pg=preg(p);if(pg)return;if(pg){const w=S.week||pg.week;const el=document.createElement('button');el.className='lab glass';el.innerHTML=`<small>Week ${w} · baby</small><span class="v">${wkInfo(w)[1].replace(/^an? /,'')}</span><br><span class="pill pink">${w<14?'1st':w<28?'2nd':'3rd'} trimester</span>`;el.onclick=openPregnancy;L.appendChild(el);LABS.push({el,k:'womb',side:1});return}
- const seen=new Set();let n=0;const rk=f=>f.flag==='high'||f.flag==='low'?2:f.flag==='normal'?0:1;findings(p.id).slice().sort((a,b)=>rk(b)-rk(a)).forEach(f=>{if(!f.org||!cur.organs[f.org]||seen.has(f.org)||n>=3||isNaN(parseFloat(f.value)))return;seen.add(f.org);const side=n%2?1:-1;n++;
+ const seen=new Set();let n=0;const rk=f=>f.flag==='high'||f.flag==='low'?2:f.flag==='normal'?0:1;findings(p.id).slice().sort((a,b)=>rk(b)-rk(a)).forEach(f=>{if(!f.org||!anchorOf(cur,f.org)||seen.has(f.org)||n>=3)return;if(isNaN(parseFloat(f.value))&&f.flag==='normal'&&!FEVER.test(f.test||''))return;if(FEVER.test(f.test||'')&&(f.flag==='normal'||daysAgo(f.date)>30))return;seen.add(f.org);const side=n%2?1:-1;n++;
   const c=f.flag==='normal'?'#30D158':f.flag==='high'&&/reactive|positive|detected/i.test(f.value||'')?'#FF3B30':f.flag==='low'||f.flag==='high'?(Math.abs(f.dev||0)>0||true?(f.flag==='low'?'#FF3B30':'#FF9500'):'#FF9500'):'#FF9500';
   const el=document.createElement('button');el.className='lab rpin';el.setAttribute('aria-label',`${f.test} ${f.value}`);el.style.setProperty('--c',c);
-  el.innerHTML=`<i></i><span><small>${esc(({heart:'Heart',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',pancreas:'Sugar',uterus:'Uterus',gut:'Gut',eye:'Eyes',teeth:'Teeth',ear:'Ears',bones:'Bones',brain:'Brain',skin:'Skin'})[f.org]||'')}${' · '+esc(plainTest(f.test).slice(0,16))}</small>${esc(plainValue(f,findings(p.id))||f.value)}${plainValue(f,findings(p.id))?'':f.flag==='high'?' ↑':f.flag==='low'?' ↓':''}</span>`;
+  el.innerHTML=`<i></i><span><small>${esc(FEVER.test(f.test||'')?'Fever':({heart:'Heart',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',pancreas:'Sugar',uterus:'Uterus',gut:'Stomach & gut',eye:'Eyes',teeth:'Teeth',ear:'Ears',bones:'Bones & joints',brain:'Brain',skin:'Skin',blood:'Blood',breast:'Breast',prostate:'Prostate'})[f.org]||'')}${' · '+esc(plainTest(f.test).slice(0,16))}</small>${esc(plainValue(f,findings(p.id))||f.value)}${plainValue(f,findings(p.id))?'':f.flag==='high'?' ↑':f.flag==='low'?' ↓':''}</span>`;
   el.onclick=()=>openBody('organ:'+f.org);L.appendChild(el);LABS.push({el,k:f.org,side,pin:true})})}
 /* ---------------- shell ---------------- */
 function renderTop(){const p=P(),pg=preg(p),locked=!can(p,'summary'),fs=findings(p.id);
@@ -1798,7 +1815,7 @@ function cycleHome(p,trying){const c=cycleInfo(p),C=2*Math.PI*50,dd=x=>x.toLocal
  h+=`<div class="h2 lh">Your checks</div><div class="list">
   <button class="li" onclick="openLabs()"><div style="flex:1;text-align:left"><div style="font-weight:600">Pap smear</div><div class="sub">Every 3 years from age 25 · book a test</div></div>${ic(I.chev,'#C7C7CC',18)}</button>
   <button class="li" onclick="openBreastCheck()"><div style="flex:1;text-align:left"><div style="font-weight:600">Breast self-check</div><div class="sub">Once a month · a 2-minute guide</div></div>${ic(I.chev,'#C7C7CC',18)}</button>
-  <button class="li" onclick="openLabs()"><div style="flex:1;text-align:left"><div style="font-weight:600">Thyroid and haemoglobin</div><div class="sub">${tsh||hb?'Last '+[tsh&&'TSH '+tsh.value,hb&&'Hb '+hb.value].filter(Boolean).join(' · '):'Once a year'}</div></div>${ic(I.chev,'#C7C7CC',18)}</button></div>
+  <button class="li" onclick="openLabs()"><div style="flex:1;text-align:left"><div style="font-weight:600">Thyroid and haemoglobin</div><div class="sub">${tsh||hb?'Last '+[tsh&&'TSH '+tsh.value,hb&&'Hb '+hb.value].filter(Boolean).join(' · '):'Once a year'}</div></div>${ic(I.chev,'#C7C7CC',18)}</button><div class="chk" style="display:contents">${checksDue(p,['pap','thy'],1)}</div></div>
  <div class="kgr" style="margin-top:12px"><button class="kgc" onclick="${trying?'pregSet(\'cycle\')':'pregSet(\'trying\')'}"><b class="kgt">${trying?'Stop trying mode':'Trying for a baby'}</b><span class="sub">${trying?'Back to cycle only':'Fertile days and folic acid'}</span></button>
  <button class="kgc" style="background:linear-gradient(135deg,#FFE3EA,#fff)" onclick="openPregnancy()"><b class="kgt">I'm pregnant</b><span class="sub">Start pregnancy mode</span></button></div>`;
  return h}
@@ -1995,7 +2012,7 @@ function runsOut(p){const ms=(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.active!
  return`<div class="card aic"><span class="aics">${ic(I.spark,'#5E5CE6',16)}</span><b>${esc(best.m.name.replace(/\s+\d.*$/,''))} runs out ${when}</b><div class="aisub">Order now · it arrives before you need it</div><button onclick="openPharmacy()">Order</button></div>`}
 /* Today's "Up next": the few things that need this person now, in time order, each with one action. */
 /* Home (approved design): the same message as the body, in words — what needs a look, then everything in range */
-const ORGNM={heart:'Heart',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',pancreas:'Sugar & pancreas',uterus:'Uterus',gut:'Intestines',blood:'Blood',bones:'Bones',prostate:'Prostate',stomach:'Stomach',brain:'Brain'};
+const ORGNM={breast:'Breast',eye:'Eyes',teeth:'Teeth',ear:'Ears',skin:'Skin',heart:'Heart',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',pancreas:'Sugar & pancreas',uterus:'Uterus',gut:'Intestines',blood:'Blood',bones:'Bones',prostate:'Prostate',stomach:'Stomach',brain:'Brain'};
 function bodyList(p){const fs=findings(p.id);if(!fs.length)return'';const rk=f=>f.flag==='high'||f.flag==='low'?2:f.flag==='normal'?0:1,by={};
  fs.forEach(f=>{const k=f.org||('t:'+f.test);if(!by[k]||rk(f)>rk(by[k]))by[k]=f});
  const bad=Object.entries(by).filter(([,f])=>rk(f)===2),ok=fs.filter(f=>f.flag==='normal').length;
@@ -2004,6 +2021,24 @@ function bodyList(p){const fs=findings(p.id);if(!fs.length)return'';const rk=f=>
  const go=(k,f)=>k.startsWith('t:')?`openReport('${f.rid}')`:`openBody('organ:${k}')`;
  const row=(dot,t,s,on)=>`<button class="hrow" onclick="${on}"><span class="hdot" style="background:${dot}"></span><span class="ht"><b>${t}</b>${s?`<small>${s}</small>`:''}</span>${ic(I.chev,'#C7C7CC',18)}</button>`;
  return`<div class="card hlist">${bad.map(([k,f])=>row(/reactive|positive|detected/i.test(f.value||'')?'#FF3B30':'#FF9F0A',esc(k.startsWith('t:')?String(f.test).replace(/\s*\(.*\)/,''):ORGNM[k]||k),k.startsWith('t:')?`${esc(f.value)} ${esc(f.unit||'')} · ${f.flag}`:line(f),go(k,f))).join('')}${ok?row('#30D158',`${ok} result${ok>1?'s':''} in range`,'',"openBody()"):''}</div>`}
+/* Checks due: common screenings by age and sex that have not been done recently. Women's and men's checks only to the person themselves. */
+const CHECKS=[
+ {k:'sugar',t:'Blood sugar (HbA1c)',why:'Every 3 years from 30',min:30,yrs:3,rx:/hba1c|glucose|sugar/i,code:'hba1c'},
+ {k:'lipid',t:'Cholesterol',why:'Every 5 years from 20',min:20,yrs:5,rx:/lipid|cholesterol|ldl/i,code:'lipid'},
+ {k:'thy',t:'Thyroid (TSH)',why:'Every 5 years for women from 35',min:35,sex:'female',yrs:5,rx:/tsh|thyro/i,code:'thy'},
+ {k:'pap',t:'Pap test',why:'Every 3 years from 30',min:30,max:65,sex:'female',self:1,yrs:3,rx:/pap|hpv|cervi/i,code:'pap'},
+ {k:'mammo',t:'Mammogram',why:'Every 2 years from 40',min:40,max:75,sex:'female',self:1,yrs:2,rx:/mammo|bi-?rads|breast (usg|ultra)/i},
+ {k:'colon',t:'Bowel check (stool test)',why:'Every year from 50',min:50,max:75,yrs:1,rx:/occult|stool|fit test|colonoscop/i},
+ {k:'psa',t:'Prostate (PSA)',why:'Worth discussing with your doctor from 50',min:50,max:75,sex:'male',self:1,yrs:2,rx:/\bpsa\b|prostat/i,code:'psa'},
+ {k:'dexa',t:'Bone density scan',why:'From 65 for women, 70 for men',min:65,minm:70,yrs:5,rx:/dexa|dxa|bone (mineral )?density|t.?score/i},
+ {k:'eye',t:'Eye check (retina)',why:'Every year with diabetes',dm:1,yrs:1,rx:/retin|fundus|eye/i}];
+function checksDue(p,skip,rows){skip=skip||[];if(!p||!writer(p)||preg(p))return'';const a=ageOf(p);if(a==null||a<18)return'';const fs=findings(p.id),reps=(REC[p.id]||[]).filter(r=>r.kind==='report');
+ const dm=fs.some(f=>codeOf(f)==='hba1c'&&parseFloat(f.value)>=6.5)||(REC[p.id]||[]).some(r=>r.kind==='med'&&/metformin|glimepiride|gliclazide|sitagliptin|vildagliptin|dapagliflozin|empagliflozin|insulin/i.test(r.name||''));
+ let hide={};try{hide=JSON.parse(localStorage.getItem('uh-chk-'+p.id)||'{}')}catch(_){}
+ const recent=(c)=>reps.some(r=>daysAgo(r.day)<=c.yrs*365&&(c.rx.test(r.title||'')||(r.findings||[]).some(f=>c.rx.test(f.test||''))));
+ const due=CHECKS.filter(c=>(c.dm?dm:true)&&a>=(c.minm&&p.sex!=='female'?c.minm:c.min||18)&&(!c.max||a<=c.max)&&(!c.sex||c.sex===(p.sex==='female'?'female':'male'))&&(!c.self||p.self)&&!recent(c)&&!skip.includes(c.k)&&!(hide[c.k]&&hide[c.k]>Date.now())).slice(0,3);
+ if(!due.length)return'';const R=due.map(c=>`<div class="li"><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(c.t)}</div><div class="sub">${esc(c.why)}</div></div>${c.code?`<button class="chkb" onclick="openLabs(['${c.code}'])">Book</button>`:`<button class="chkb" onclick="chkHide('${p.id}','${c.k}',${c.yrs})">Done</button>`}<button class="chkx" aria-label="Not now" onclick="chkHide('${p.id}','${c.k}',0.5)">${ic(I.x,'#8E8E93',14)}</button></div>`).join('');return rows?R:`<div class="sect">CHECKS DUE</div><div class="list chk">${R}</div>`}
+function chkHide(pid,k,yrs){let h={};try{h=JSON.parse(localStorage.getItem('uh-chk-'+pid)||'{}')}catch(_){}h[k]=Date.now()+yrs*365*864e5;try{localStorage.setItem('uh-chk-'+pid,JSON.stringify(h))}catch(_){}const el=document.querySelector('.chk');if(el){const rows=el.querySelectorAll('div.li');[...rows].forEach(r=>{if(r.innerHTML.includes(`'${k}'`))r.remove()});if(!el.querySelector('.li')&&el.classList.contains('list')){el.previousElementSibling&&el.previousElementSibling.remove();el.remove()}}toast(yrs>=1?'Marked as done':'Hidden for 6 months')}
 function upNext(p){if(!can(p,'all'))return'';const out=[],now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),h12=t=>{const[a,b]=t.split(':');const H=+a;return`${H%12||12}:${b} ${H<12?'AM':'PM'}`};
  out.push(...visitsNext(p));const plan=dosePlan(p.id),next=plan.find(x=>!x.done&&x.t>=hm)||plan.find(x=>!x.done),late=plan.filter(x=>!x.done&&x.t<hm),taken=plan.filter(x=>x.done).length;
  if(next)out.push(`<div class="un"><svg width="40" height="40" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="17" stroke="#E3F7E8" stroke-width="5" fill="none"/><circle cx="22" cy="22" r="17" stroke="#30D158" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="${plan.length?2*Math.PI*17*taken/plan.length:0} 200" transform="rotate(-90 22 22)"/></svg><div class="g"><b>${esc(next.m.name)} · ${h12(next.t)}</b><small>${late.length>1||(late.length&&late[0]!==next)?`${late.length} earlier dose${late.length>1?'s':''} not marked · `:''}${esc(next.m.note||next.m.dose||'')}</small></div>${writer(p)?`<button class="go" onclick="toggleDose('${p.id}','${next.m.id}','${next.t}',null)">Taken</button>`:''}</div>`);
@@ -2123,7 +2158,7 @@ addEventListener('resize',()=>{clearTimeout(railWrap.t);railWrap.t=setTimeout(()
 function renderSheet(){const p=P(),locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id);let h='';
  if(S.tab==='summary'){
   if(locked)h=(p.dependent&&bodyBand(p)!=='adult'?kidCards(p):lockCard(p))+`<div class="sect">MEDICAL ID</div>`+medIdCard(p);
-  else{const st=womStage(p);if(pg)h+=pregHome(p,pg);else if(isKid(p))h+=kidsHome(p)+schoolRow(p);else if(st==='after')h+=afterHome(p)+upNext(p);else if(st==='loss')h+=lossHome(p)+bodyList(p);else if(st==='cycle'||st==='trying')h+=cycleHome(p,st==='trying')+bodyList(p)+upNext(p);else h+=(p.dependent&&ageOf(p)==null&&bodyBand(p)!=='adult'?kidCards(p):'')+bodyList(p)+upNext(p);
+  else{const st=womStage(p);if(pg)h+=pregHome(p,pg);else if(isKid(p))h+=kidsHome(p)+schoolRow(p);else if(st==='after')h+=afterHome(p)+upNext(p);else if(st==='loss')h+=lossHome(p)+bodyList(p);else if(st==='cycle'||st==='trying')h+=cycleHome(p,st==='trying')+bodyList(p)+upNext(p);else h+=(p.dependent&&ageOf(p)==null&&bodyBand(p)!=='adult'?kidCards(p):'')+bodyList(p)+upNext(p)+checksDue(p);
    if(p.self)h=newsCards(p)+remCard(p)+weekOne(p)+h+famToday(p)+famFeed()+weekNote(p);
    if(!fs.length&&writer(p)&&!pg&&womStage(p)!=='loss')h+=`<button class="card row" style="width:100%;text-align:left" onclick="pickReport()">${ic(I.cam,'#0071E3',26)}<div><div style="font-weight:600">Add your first report</div><div class="sub">PDF or photo. It is read for you and shown on the body.</div></div></button>`;
    const lastRep=(REC[p.id]||[]).filter(r=>r.kind==='report'&&r.summary).sort((a,b)=>(b.day||'').localeCompare(a.day||''))[0];
@@ -3651,7 +3686,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r117';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r118';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
