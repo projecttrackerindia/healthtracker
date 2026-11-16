@@ -183,7 +183,13 @@ def me_json(db: Session, u: PartnerUser) -> dict:
             "counts": {"openOrders": open_orders, "pendingAppointments": pending_appts, "unreadMessages": unread,
                        # samples in the lab still waiting for their report (the lab's Reports badge)
                        "reportsDue": (db.scalar(select(func.count(Order.id)).where(Order.store_id == u.store_id, Order.kind == "lab",
-                                                                               Order.status.in_(("collected", "processing")))) or 0) if s and s.kind == "lab" else 0}}
+                                                                               Order.status.in_(("collected", "processing")))) or 0) if s and s.kind == "lab" else 0,
+                       "unitRequests": _unit_new(db, s) if s and s.kind == "bloodbank" else 0}}
+
+
+def _unit_new(db: Session, s: Store) -> int:
+    from .models import UnitRequest
+    return db.scalar(select(func.count(UnitRequest.id)).where(UnitRequest.to_store == s.id, UnitRequest.status == "new")) or 0
 
 
 @r.get("/me")

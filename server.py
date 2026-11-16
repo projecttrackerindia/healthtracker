@@ -213,6 +213,8 @@ from api import queue as queue_api  # noqa: E402
 app.include_router(queue_api.r)
 app.include_router(queue_api.pr)
 from api import visit as visit_api  # noqa: E402
+from api import bank as bank_api  # noqa: E402
+app.include_router(bank_api.pr)
 app.include_router(visit_api.r)
 app.include_router(visit_api.pr)
 from api import people as people_api  # noqa: E402

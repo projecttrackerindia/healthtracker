@@ -945,6 +945,28 @@ class QueueLate(Base):
     t: Mapped[int] = mapped_column(Integer, default=now)
 
 
+class UnitRequest(Base):
+    """A hospital asking a blood bank for units for a patient (board 12). The bank answers with what it can give."""
+    __tablename__ = "unit_requests"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("ur"))
+    from_store: Mapped[str] = mapped_column(String(32), index=True)     # the hospital (or a family, later)
+    to_store: Mapped[str] = mapped_column(String(32), index=True)       # the blood bank
+    created_by: Mapped[str] = mapped_column(String(32), default="")
+    group: Mapped[str] = mapped_column(String(4))
+    component: Mapped[str] = mapped_column(String(12), default="whole")
+    units: Mapped[int] = mapped_column(Integer, default=1)
+    given: Mapped[int] = mapped_column(Integer, default=0)
+    reason: Mapped[str] = mapped_column(String(80), default="")        # "Delivery", "Accident · ICU", "Planned surgery"
+    need_by: Mapped[str] = mapped_column(String(40), default="")       # "tonight", "surgery at 1 PM"
+    urgent: Mapped[bool] = mapped_column(Boolean, default=False)
+    patient: Mapped[str] = mapped_column(String(40), default="")
+    doctor: Mapped[str] = mapped_column(String(60), default="")
+    status: Mapped[str] = mapped_column(String(12), default="new", index=True)   # new | confirmed | partial | declined | packed | sent | cancelled
+    reply_by: Mapped[int] = mapped_column(Integer, default=0)
+    created: Mapped[int] = mapped_column(Integer, default=now)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
 class BloodStock(Base):
     """Units on the shelf at a blood bank, per group and component. Counted by the bank; shown on its Requests page."""
     __tablename__ = "blood_stock"

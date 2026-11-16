@@ -1,0 +1,168 @@
+"""Board 12 · a blood bank's Requests: hospitals ask for units, the bank answers with what it can give, packs and
+sends; stock by group at a glance; donors near the bank on standby for the group that is short.
+
+Units leave the shelf count when the bank confirms them, so the tiles stay true without a second step. Donors are
+shown by first name and initial, distance and when they last gave; their numbers stay hidden until they say yes to
+a call (that is the donor flow in api/blood.py, reused by "Ask N donors")."""
+from __future__ import annotations
+
+import time
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from .blood import GROUPS, compatible, eligible, km
+from .db import get_db
+from .models import BloodStock, Donor, PartnerUser, Store, UnitRequest, now
+from .partner import me as partner_me
+from .partner import my_store
+
+pr = APIRouter(prefix="/api/partner/bank")
+REPLY_MIN = {True: 60, False: 6 * 60}     # urgent: an hour to answer; otherwise six
+
+
+def ur_json(db: Session, q: UnitRequest, side: str) -> dict:
+    other = db.get(Store, q.from_store if side == "bank" else q.to_store)
+    return {"id": q.id, "group": q.group, "component": q.component, "units": q.units, "given": q.given, "reason": q.reason,
+            "needBy": q.need_by, "urgent": q.urgent, "patient": q.patient, "doctor": q.doctor, "status": q.status,
+            "replyBy": q.reply_by, "created": q.created, "updated": q.updated,
+            "from" if side == "bank" else "to": {"id": other.id, "name": other.name, "area": other.area or "", "phone": other.phone or ""} if other else None,
+            "km": round(km(other.lat, other.lng, *_ll(db, q.to_store if side == "bank" else q.from_store)), 1) if other and other.lat else None}
+
+
+def _ll(db: Session, sid: str) -> tuple[float, float]:
+    s = db.get(Store, sid)
+    return (s.lat or 0, s.lng or 0) if s else (0, 0)
+
+
+def _bank(db: Session, u: PartnerUser) -> Store:
+    s = my_store(db, u)
+    if s.kind != "bloodbank":
+        raise HTTPException(403, "This is for blood banks.")
+    return s
+
+
+@pr.get("/banks")
+def banks(group: str = "", db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """Verified blood banks for a hospital to ask, nearest first, with whether they have the group on the shelf."""
+    me_ = my_store(db, u)
+    out = []
+    for b in db.scalars(select(Store).where(Store.kind == "bloodbank", Store.verified == True, Store.active == True)).all():  # noqa: E712
+        st = db.scalar(select(BloodStock).where(BloodStock.store_id == b.id, BloodStock.group == group, BloodStock.component == "whole")) if group else None
+        out.append({"id": b.id, "name": b.name, "area": b.area or "", "km": round(km(me_.lat or 0, me_.lng or 0, b.lat or 0, b.lng or 0), 1) if b.lat else None,
+                    "has": (st.units > 0) if st else None})
+    out.sort(key=lambda x: (x["km"] is None, x["km"] or 0))
+    return {"banks": out[:20]}
+
+
+class AskIn(BaseModel):
+    bank: str
+    group: str
+    component: str = "whole"
+    units: int = 1
+    reason: str = ""
+    needBy: str = ""
+    urgent: bool = False
+    patient: str = ""
+
+
+@pr.post("/requests")
+def ask(body: AskIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = my_store(db, u)
+    if s.kind != "hospital":
+        raise HTTPException(403, "Hospitals ask a blood bank for units.")
+    if not s.verified:
+        raise HTTPException(403, "Your hospital is awaiting verification.")
+    b = db.get(Store, body.bank)
+    if not b or b.kind != "bloodbank" or not b.verified:
+        raise HTTPException(404, "blood bank not found")
+    if body.group not in GROUPS or body.component not in ("whole", "platelets", "plasma", "rbc"):
+        raise HTTPException(400, "Choose the group and component.")
+    if not 1 <= body.units <= 20:
+        raise HTTPException(400, "1 to 20 units.")
+    q = UnitRequest(from_store=s.id, to_store=b.id, created_by=u.id, group=body.group, component=body.component, units=body.units,
+                    reason=body.reason.strip()[:80], need_by=body.needBy.strip()[:40], urgent=bool(body.urgent),
+                    patient=body.patient.strip()[:40], doctor=(u.name if u.role == "doctor" else "")[:60],
+                    reply_by=now() + REPLY_MIN[bool(body.urgent)] * 60)
+    db.add(q)
+    db.flush()
+    return ur_json(db, q, "hospital")
+
+
+@pr.get("/requests")
+def requests(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = my_store(db, u)
+    side = "bank" if s.kind == "bloodbank" else "hospital"
+    col = UnitRequest.to_store if side == "bank" else UnitRequest.from_store
+    rows = db.scalars(select(UnitRequest).where(col == s.id, UnitRequest.created > now() - 7 * 86400).order_by(UnitRequest.created.desc()).limit(100)).all()
+    # urgent and unanswered first, then the rest newest first
+    rows.sort(key=lambda q: (q.status != "new", not q.urgent, -q.created))
+    return {"side": side, "requests": [ur_json(db, q, side) for q in rows]}
+
+
+class AnswerIn(BaseModel):
+    units: int
+
+
+@pr.post("/requests/{rid}/answer")
+def answer(rid: str, body: AnswerIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """The bank gives what it can: all of it, part of it, or none. The shelf count drops by what is given."""
+    s = _bank(db, u)
+    q = db.get(UnitRequest, rid)
+    if not q or q.to_store != s.id:
+        raise HTTPException(404)
+    if q.status != "new":
+        raise HTTPException(409, "Already answered.")
+    n = max(0, min(int(body.units), q.units))
+    if n:
+        st = db.scalar(select(BloodStock).where(BloodStock.store_id == s.id, BloodStock.group == q.group, BloodStock.component == q.component))
+        if not st or st.units < n:
+            raise HTTPException(409, f"Only {st.units if st else 0} unit{'s' if not st or st.units != 1 else ''} of {q.group} on the shelf.")
+        st.units -= n
+        st.updated = now()
+    q.given, q.status, q.updated = n, ("confirmed" if n == q.units else "partial" if n else "declined"), now()
+    return ur_json(db, q, "bank")
+
+
+class MoveIn(BaseModel):
+    to: str
+
+
+@pr.post("/requests/{rid}/status")
+def move(rid: str, body: MoveIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = my_store(db, u)
+    q = db.get(UnitRequest, rid)
+    if not q or s.id not in (q.to_store, q.from_store):
+        raise HTTPException(404)
+    nxt = {"confirmed": ("packed",), "partial": ("packed",), "packed": ("sent",)}
+    if s.id == q.from_store:
+        if body.to != "cancelled" or q.status not in ("new",):
+            raise HTTPException(409, "A hospital can cancel only before the bank answers.")
+    elif body.to not in nxt.get(q.status, ()):
+        raise HTTPException(409, f"From {q.status} the next step is {', '.join(nxt.get(q.status, ())) or 'nothing'}.")
+    q.status, q.updated = body.to, now()
+    return ur_json(db, q, "bank" if s.id == q.to_store else "hospital")
+
+
+@pr.get("/donors")
+def donors(group: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """Opted-in donors near the bank who can give for this group today. First name and initial only."""
+    s = _bank(db, u)
+    if group not in GROUPS:
+        raise HTTPException(400, "group")
+    today = time.strftime("%Y-%m-%d")
+    out, seen = [], set()
+    for d in db.scalars(select(Donor).where(Donor.active == True)).all():  # noqa: E712
+        if d.lat is None or d.household_id in seen or not compatible(d.group, group, "whole") or not eligible(d, today):
+            continue
+        dist = km(d.lat, d.lng, s.lat or 0, s.lng or 0)
+        if dist > 15:
+            continue
+        seen.add(d.household_id)
+        parts = (d.name or "Donor").split()
+        out.append({"name": parts[0] + (" " + parts[1][0] if len(parts) > 1 else ""), "group": d.group, "km": round(dist, 1),
+                    "lastGave": d.last_donation[:7] if d.last_donation else ""})
+    out.sort(key=lambda x: x["km"])
+    return {"group": group, "donors": out[:8], "total": len(out)}
