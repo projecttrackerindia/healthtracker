@@ -627,3 +627,22 @@ def test_gemini_provider_shapes_and_fallback(monkeypatch):
     assert AI.create(max_tokens=5, messages=[{"role": "user", "content": "x"}]).content[0].text == "fallback"
     monkeypatch.setenv("AI_PROVIDER", "anthropic")
     assert AI.provider_order() == ["anthropic", "gemini"]
+
+
+def test_blood_bank_stock_by_group():
+    a = admin()
+    with DB.session() as db:
+        bb = Store(kind="bloodbank", name="Stock Bank", city="Chennai", area="Mylapore", lat=13.03, lng=80.27, verified=True)
+        lab = Store(kind="lab", name="Stock Lab", city="Chennai", area="Adyar", lat=13.0, lng=80.25, verified=True)
+        db.add_all([bb, lab]); db.flush(); bid, lid = bb.id, lab.id
+    def login(sid):
+        r = a.post(f"/api/admin/stores/{sid}/users", json={"email": f"s{uuid.uuid4().hex[:6]}@x.in", "name": "Desk", "role": "owner"}).json()
+        c = TestClient(server.app); c.post("/api/partner/login", json={"email": r["email"], "password": r["tempPassword"]}); return c
+    pb, pl = login(bid), login(lid)
+    assert pb.get("/api/partner/blood/stock").json()["stock"] == []
+    assert pb.put("/api/partner/blood/stock", json={"group": "O-", "units": 3}).json()["units"] == 3
+    assert pb.put("/api/partner/blood/stock", json={"group": "O-", "units": 5}).json()["units"] == 5
+    s = pb.get("/api/partner/blood/stock").json()["stock"]
+    assert len(s) == 1 and s[0]["group"] == "O-" and s[0]["units"] == 5
+    assert pb.put("/api/partner/blood/stock", json={"group": "Z+", "units": 1}).status_code == 400
+    assert pl.put("/api/partner/blood/stock", json={"group": "O+", "units": 1}).status_code == 403

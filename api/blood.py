@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from .auth import limit
 from .db import get_db
 from .inbox import notify
-from .models import BloodRequest, Donor, DonorResponse, Household, PartnerUser, Store, User, now
+from .models import BloodRequest, BloodStock, Donor, DonorResponse, Household, PartnerUser, Store, User, now
 from .partner import me as partner_me
 from .partner import my_store
 from .routes import household
@@ -324,6 +324,36 @@ def mine(status: str = "open", db: Session = Depends(get_db), u: PartnerUser = D
         if q.status == "open" and q.expires < t:
             q.status = "expired"
     return {"requests": [preq_json(db, q) for q in rows], "can": s.kind in REQUESTER_KINDS or (u.role == "doctor" and u.verified), "store": {"lat": s.lat, "lng": s.lng, "name": s.name, "verified": s.verified}}
+
+
+class StockIn(BaseModel):
+    group: str
+    units: int
+    component: str = "whole"
+
+
+@pr.get("/stock")
+def stock(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """Units on the shelf, one row per group (whole blood unless a component is counted separately)."""
+    s = my_store(db, u)
+    rows = db.scalars(select(BloodStock).where(BloodStock.store_id == s.id)).all()
+    return {"stock": [{"group": x.group, "component": x.component, "units": x.units, "updated": x.updated} for x in rows]}
+
+
+@pr.put("/stock")
+def set_stock(body: StockIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = my_store(db, u)
+    if s.kind != "bloodbank":
+        raise HTTPException(403, "Only blood banks keep stock here.")
+    if body.group not in GROUPS or body.component not in ("whole", "platelets", "plasma", "rbc"):
+        raise HTTPException(400, "group or component")
+    x = db.scalar(select(BloodStock).where(BloodStock.store_id == s.id, BloodStock.group == body.group, BloodStock.component == body.component))
+    if not x:
+        x = BloodStock(store_id=s.id, group=body.group, component=body.component)
+        db.add(x)
+    x.units = max(0, min(9999, int(body.units)))
+    x.updated = now()
+    return {"ok": True, "units": x.units}
 
 
 @pr.get("/{rid}")

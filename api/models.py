@@ -910,6 +910,17 @@ class Donor(Base):
     donations: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class BloodStock(Base):
+    """Units on the shelf at a blood bank, per group and component. Counted by the bank; shown on its Requests page."""
+    __tablename__ = "blood_stock"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("bs"))
+    store_id: Mapped[str] = mapped_column(String(32), index=True)
+    group: Mapped[str] = mapped_column(String(4))
+    component: Mapped[str] = mapped_column(String(12), default="whole")
+    units: Mapped[int] = mapped_column(Integer, default=0)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
 class BloodRequest(Base):
     """Raised only by verified hospitals / blood banks (partner portal). Matching donors nearby are notified."""
 
