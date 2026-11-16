@@ -8,8 +8,10 @@ os.environ.setdefault("OTP_DEMO", "1")
 os.environ.setdefault("PWNED_CHECK", "0")
 os.environ["DATABASE_URL"] = "sqlite:///./data/test_labcheck.db"
 
+import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
-from reportlab.pdfgen import canvas  # noqa: E402
+
+canvas = pytest.importorskip("reportlab.pdfgen.canvas")  # the CI image may not have reportlab
 
 import server  # noqa: E402
 from api import storage  # noqa: E402
