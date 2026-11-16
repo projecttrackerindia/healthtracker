@@ -17,7 +17,7 @@ from .routes import household
 r = APIRouter(prefix="/api/v1")
 
 
-CATEGORY = {"order": "orders", "lab": "orders", "report": "reports", "prescription": "reports", "consult": "reports",
+CATEGORY = {"order": "orders", "lab": "orders", "report": "reports", "prescription": "reports", "consult": "reports", "eye": "reports",
             "family": "family", "sharing": "family", "sos": "safety", "blood": "safety", "insight": "insights", "reminder": "meds"}
 ALWAYS = {"safety"}       # emergencies are never muted
 

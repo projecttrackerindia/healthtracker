@@ -1294,6 +1294,7 @@ function famFeed(lim=5){const wk=Date.now()/1e3-7*86400,rows=[];(ME.people||[]).
   else if(r.kind==='vax'){t=`Vaccines given${r.group?' · '+r.group:''}`;c='#34C759';i=I.check}
   else if(r.kind==='growth'){t=`Growth: ${[r.w&&r.w+' kg',r.h&&r.h+' cm'].filter(Boolean).join(', ')||'measured'}`;c='#30B0C7'}
   else if(r.kind==='visitnote'){t=`Visit notes${r.doctor?' · '+r.doctor:''}`;c='#0071E3'}
+  else if(r.kind==='eye'){t=`Eye check${r.doctor?' · Dr '+r.doctor.replace(/^dr\.?\s*/i,''):''}`;c='#AF52DE';go=`openEye('${p.id}')`}
   else return;rows.push({at:r.created,who,t,c,i,go,col:p.color,ini:(firstName(p)||'?')[0]})}));
  if(!rows.length)return'';rows.sort((a,b)=>b.at-a.at);const ago=t=>{const d=Math.floor((Date.now()/1e3-t)/86400);return d<1?'Today':d<2?'Yesterday':new Date(t*1e3).toLocaleDateString('en-IN',{weekday:'short'})};
  return`<div class="sect" style="margin:18px 4px 6px">THIS WEEK IN THE FAMILY</div><div class="list">${rows.slice(0,lim).map(x=>`<button class="li" style="gap:12px" onclick="${x.go}"><span class="av" style="background:${x.col};width:32px;height:32px;border-radius:16px;font-size:13px">${esc(x.ini)}</span><div style="flex:1;min-width:0;text-align:left"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.t)}</div><div class="sub">${esc(x.who)} · ${ago(x.at)}</div></div><span class="fdot" style="background:${x.c}"></span></button>`).join('')}</div>${rows.length>lim?`<button class="btn sec" style="width:100%;margin-top:10px" onclick="page('This week',famFeed(40),'FAMILY')">See all ${rows.length}</button>`:''}`}
@@ -2158,7 +2159,7 @@ addEventListener('resize',()=>{clearTimeout(railWrap.t);railWrap.t=setTimeout(()
 function renderSheet(){const p=P(),locked=!can(p,'summary'),pg=preg(p),fs=findings(p.id);let h='';
  if(S.tab==='summary'){
   if(locked)h=(p.dependent&&bodyBand(p)!=='adult'?kidCards(p):lockCard(p))+`<div class="sect">MEDICAL ID</div>`+medIdCard(p);
-  else{const st=womStage(p);if(pg)h+=pregHome(p,pg);else if(isKid(p))h+=kidsHome(p)+schoolRow(p);else if(st==='after')h+=afterHome(p)+upNext(p);else if(st==='loss')h+=lossHome(p)+bodyList(p);else if(st==='cycle'||st==='trying')h+=cycleHome(p,st==='trying')+bodyList(p)+upNext(p);else h+=(p.dependent&&ageOf(p)==null&&bodyBand(p)!=='adult'?kidCards(p):'')+bodyList(p)+upNext(p)+checksDue(p);
+  else{const st=womStage(p);if(pg)h+=pregHome(p,pg);else if(isKid(p))h+=kidsHome(p)+schoolRow(p);else if(st==='after')h+=afterHome(p)+upNext(p);else if(st==='loss')h+=lossHome(p)+bodyList(p);else if(st==='cycle'||st==='trying')h+=cycleHome(p,st==='trying')+bodyList(p)+eyeCard(p)+upNext(p);else h+=(p.dependent&&ageOf(p)==null&&bodyBand(p)!=='adult'?kidCards(p):'')+bodyList(p)+eyeCard(p)+upNext(p)+checksDue(p);
    if(p.self)h=newsCards(p)+remCard(p)+weekOne(p)+h+famToday(p)+famFeed()+weekNote(p);
    if(!fs.length&&writer(p)&&!pg&&womStage(p)!=='loss')h+=`<button class="card row" style="width:100%;text-align:left" onclick="pickReport()">${ic(I.cam,'#0071E3',26)}<div><div style="font-weight:600">Add your first report</div><div class="sub">PDF or photo. It is read for you and shown on the body.</div></div></button>`;
    const lastRep=(REC[p.id]||[]).filter(r=>r.kind==='report'&&r.summary).sort((a,b)=>(b.day||'').localeCompare(a.day||''))[0];
@@ -2779,6 +2780,7 @@ async function openNotice(id){const x=BOX.items.find(n=>n.id===id);if(!x)return;
  if(r.surprise){closeL();return openSurprise(r.surprise)}
  if(r.grant){const sx=sheetX('',`<div style="padding:0 16px 10px"><p style="font-size:20px;font-weight:700;margin:0 0 6px">${esc(x.title)}</p><p class="cap" style="margin:0 0 14px">${esc(x.body||'')}</p><p class="cap">If you allow, support can see the dates of your reports for 1 hour, not what they say. You'll see it in Change history.</p><button class="btn pri" style="width:100%;margin-top:10px" data-y>Allow for 1 hour</button><button class="btn sec" style="width:100%;margin-top:10px" data-n>Don't allow</button></div>`);
   const ans=async a=>{try{await API('/api/v2/access/'+r.grant,{json:{allow:a}});toast(a?'Allowed for 1 hour':'Not allowed')}catch(e){toast(e.message)}sx.close()};sx.el.querySelector('[data-y]').onclick=()=>ans(true);sx.el.querySelector('[data-n]').onclick=()=>ans(false);return}
+ if(x.kind==='eye'&&r.person&&P(r.person)){closeL();await selectPerson(r.person);await loadRecords(r.person);return openEye(r.person)}
  if(r.order)return openOrder(r.order);if(x.person&&P(x.person)){closeL();await selectPerson(x.person);S.tab=x.cat==='reports'?'records':x.cat==='meds'?'meds':'summary';return renderAll()}
  if(r.person&&P(r.person)){closeL();return selectPerson(r.person)}if(x.cat==='family'){closeL();S.tab='family';return renderAll()}openInbox()}
 async function clearNotice(id){try{await API('/api/v2/inbox/clear',{json:{ids:[id]}});openInbox()}catch(e){toast(e.message)}}
@@ -3122,6 +3124,18 @@ function openBody(start){const p=P();if(!can(p,'summary'))return;closeBody();con
  d.style.cssText='position:fixed;inset:0;z-index:60;background:#F1F3F7';d.innerHTML='<iframe src="'+((start==='baby'||(!start&&preg(p)))?'/baby':'/body')+'" title="3D body" style="border:0;width:100%;height:100%" allow="fullscreen"></iframe>';document.body.appendChild(d);BODYF={el:d,start};
  if(!IOSW)history.pushState({body:1},'')}
 function closeBody(){if(BODYF){BODYF.el.remove();BODYF=null}}
+/* The 3D eye (/eye): exams the eye doctor sent (records of kind "eye"), pinned on the eye. Same frame pattern as the body. */
+let EYEF=null;const eyeExams=pid=>(REC[pid]||[]).filter(r=>r.kind==='eye').sort((a,b)=>(b.day||'').localeCompare(a.day||''));
+function openEye(pid){const p=P(pid||S.person);if(!p||!can(p,'summary'))return;closeEye();const d=document.createElement('div');d.id='eyef';
+ d.style.cssText='position:fixed;inset:0;z-index:60;background:#F2F2F7';d.innerHTML='<iframe src="/eye" title="Your eyes in 3D" style="border:0;width:100%;height:100%" allow="fullscreen"></iframe>';document.body.appendChild(d);EYEF={el:d,pid:p.id};if(!IOSW)history.pushState({eye:1},'')}
+function closeEye(){if(EYEF){EYEF.el.remove();EYEF=null}}
+addEventListener('popstate',()=>{if(EYEF)closeEye()});
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-eye-act'||!EYEF)return;const p=P(EYEF.pid);
+ if(e.data.act==='ready')EYEF.el.firstChild.contentWindow.postMessage({type:'uh-eye-data',data:{exams:eyeExams(EYEF.pid),name:p?(p.self?'Your eyes':firstName(p)+'’s eyes'):''}},location.origin);
+ if(e.data.act==='close'){closeEye();if(!IOSW)history.back()}});
+function eyeCard(p){const ex=eyeExams(p.id);if(!ex.length||!can(p,'summary'))return'';const e=ex[0],w=(e.findings||[]).filter(f=>f.tone!=='ok').length+['R','L'].reduce((n,k)=>n+((e[k]&&+e[k].iop>21)?1:0)+((e[k]&&+e[k].cd>=.6)?1:0),0);
+ const when=e.day?new Date(e.day).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
+ return`<div class="sect" style="margin:18px 4px 6px">EYES</div><div class="list"><button class="li" style="gap:12px" onclick="openEye('${p.id}')"><span style="width:40px;height:40px;border-radius:20px;background:radial-gradient(circle at 50% 50%,#2a1408 0 18%,#9b6631 19% 46%,#f3ece4 47%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);flex:none"></span><div style="flex:1;min-width:0;text-align:left"><div style="font-weight:600">${esc(e.doctor?'Dr '+e.doctor.replace(/^dr\.?\s*/i,''):'Eye check')}${when?' · '+esc(when):''}</div><div class="sub">${w?`<span style="color:#B26A00;font-weight:600">${w} to watch</span> · `:''}See it on your eye in 3D</div></div><span style="color:#C7C7CC;font-size:20px">›</span></button></div>`}
 function bodySend(){if(!BODYF)return;const d=bodyData(P());if(BODYF.start)d.start=BODYF.start;BODYF.el.firstChild.contentWindow.postMessage({type:'uh-body-data',data:d},location.origin)}
 addEventListener('popstate',()=>{if(BODYF)closeBody()});
 addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-act'||!BODYF)return;const a=e.data,p=P();
@@ -3663,7 +3677,7 @@ async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);i
  {let la=0;try{la=+localStorage.getItem('uh-act')||0}catch(_){}if(la&&Date.now()-la>=IDLE_MS)return idleOut();IDLET=0;idleMark()}
  closeL();document.body.classList.add('in');rcDone();if(window.UHL){UHL.adopt(ME.user.lang);if(!UHL.chosen())await UHL.picker(saveLang)}await loadPerms();locWarm();if(!ME.me||!ME.onboarded)return onboard();
  const t=location.pathname.split('/')[2];if(['summary','records','meds','cover','family','visits'].includes(t))S.tab=t;S.person=S.person&&P(S.person)?S.person:ME.me;
- await Promise.all([...ME.people.map(p=>loadRecords(p.id)),loadVisits(),loadNews()]);await pollInbox();renderAll();{const sm=location.hash.match(/surprise=([\w-]+)/);if(sm){history.replaceState(null,'',location.pathname);setTimeout(()=>openSurprise(sm[1]),400)}}setTimeout(offSave,1500);setTimeout(pushSync,2500);if(PERMS&&!PERMS.asked)setTimeout(()=>permsGate(0,addrGate),900);else addrGate();setTimeout(pkOffer,1600)}
+ await Promise.all([...ME.people.map(p=>loadRecords(p.id)),loadVisits(),loadNews()]);await pollInbox();renderAll();{const sm=location.hash.match(/surprise=([\w-]+)/);if(sm){history.replaceState(null,'',location.pathname);setTimeout(()=>openSurprise(sm[1]),400)}}{const em=location.hash.match(/eye=([\w-]+)/);if(em&&P(em[1])){history.replaceState(null,'',location.pathname);setTimeout(()=>selectPerson(em[1]).then(()=>openEye(em[1])),400)}}setTimeout(offSave,1500);setTimeout(pushSync,2500);if(PERMS&&!PERMS.asked)setTimeout(()=>permsGate(0,addrGate),900);else addrGate();setTimeout(pkOffer,1600)}
 /* Sign out after 10 minutes without activity. Activity = any touch, scroll, typing, or touching the 3D body (it posts 'uh-active').
    Time keeps counting while the app is in the background, so coming back after 10+ minutes asks for sign-in again.
    A 60-second warning comes first; any touch keeps you signed in. Never signs out while SOS is on. Shared across tabs. */
@@ -3686,7 +3700,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r118';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r119';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};

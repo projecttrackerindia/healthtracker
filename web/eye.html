@@ -1,0 +1,418 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Urban Health · Eyes</title><meta name="robots" content="noindex">
+<style>
+@font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900}
+:root{--ink:#1D1D1F;--ink2:#6E6E73;--mute:#8E8E93;--blue:#0071E3;--bg:#F2F2F7;--card:#fff;--ok:#34C759;--watch:#FF9F0A;--alert:#FF3B30}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Geist,-apple-system,Inter,system-ui,'Noto Sans Telugu','Noto Sans Devanagari',sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#app{height:100%;display:flex;flex-direction:column}
+.hd{display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 16px 6px;flex:none}
+.bk{width:38px;height:38px;border-radius:19px;border:0;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);display:grid;place-items:center;flex:none}
+.ttl{flex:1;min-width:0}.ttl small{display:block;font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--blue);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ttl b{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.seg{display:flex;background:rgba(120,120,128,.12);border-radius:12px;padding:3px;flex:none}.seg button{border:0;background:none;border-radius:10px;padding:7px 12px;font-size:14px;font-weight:600;color:#3A3A3C}.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+#body{flex:1;min-height:0;display:flex;flex-direction:column}
+#stage{position:relative;flex:none;height:min(52vh,460px);margin:4px 16px 0;border-radius:26px;background:radial-gradient(110% 90% at 50% 42%,#fff,#ECEEF3);overflow:hidden;touch-action:none}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#pins{position:absolute;inset:0;pointer-events:none}
+.pin{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:7px;border:3px solid #fff;box-shadow:0 0 0 5px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.25);transition:opacity .2s}
+.tg{position:absolute;background:rgba(255,255,255,.95);border-radius:12px;padding:5px 9px;font-size:11px;color:var(--ink2);line-height:1.2;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap;transform:translate(10px,-50%)}.tg b{display:block;font-size:14px;color:var(--ink)}.tg.l{transform:translate(calc(-100% - 10px),-50%)}
+.hint{position:absolute;right:10px;bottom:10px;font-size:12px;font-weight:600;background:rgba(255,255,255,.9);border-radius:12px;padding:6px 10px;display:flex;gap:5px;align-items:center;pointer-events:none}
+#load{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:var(--ink2);text-align:center}#load i{display:block;width:26px;height:26px;margin:0 auto 10px;border-radius:13px;border:3px solid #E5E5EA;border-top-color:var(--blue);animation:sp .9s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.vch{display:flex;gap:6px;margin:10px 16px 0;overflow-x:auto;scrollbar-width:none;flex:none}.vch::-webkit-scrollbar{display:none}.vch button{flex:1 0 auto;border:0;padding:9px 10px;border-radius:12px;background:#fff;font-size:13px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.05);white-space:nowrap}.vch button.on{background:var(--ink);color:#fff}
+#side{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px max(24px,env(safe-area-inset-bottom))}
+.sect{font-size:12.5px;font-weight:700;color:var(--mute);letter-spacing:.05em;margin:18px 6px 8px;text-transform:uppercase}
+.card{background:var(--card);border-radius:22px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);margin-top:10px}
+.pc .h{display:flex;align-items:center;gap:10px}.pc .h i{width:12px;height:12px;border-radius:6px;flex:none}.pc .h b{font-size:19px;letter-spacing:-.01em}.pc .h span{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--ink2);background:var(--bg);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.pc p{margin:8px 0 0;font-size:14.5px;line-height:1.45;color:#3A3A3C}.pc .v{font-size:30px;font-weight:750;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}.pc .x{float:right;border:0;background:none;color:var(--mute);font-size:22px;line-height:1;margin:-4px -4px 0 0;padding:4px}
+.list{background:#fff;border-radius:22px;padding:2px 16px;margin-top:2px}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0;border:0;border-top:.5px solid #E5E5EA;background:none;width:100%;text-align:left}.row:first-child{border-top:0}
+.row i{width:10px;height:10px;border-radius:5px;flex:none}.row .t{flex:1;min-width:0}.row .t b{display:block;font-size:15.5px;font-weight:600}.row .t small{display:block;font-size:12.5px;color:var(--mute)}
+.row .val{font-weight:650;font-size:15.5px;font-variant-numeric:tabular-nums;text-align:right}.row .ch{color:#C7C7CC;font-size:20px}.row.on{background:#F2F7FF;margin:0 -16px;padding:11px 16px;width:calc(100% + 32px)}
+.msg{display:flex;gap:12px;align-items:flex-start}.av{width:40px;height:40px;border-radius:20px;background:linear-gradient(135deg,#FFB86B,#FF7A59);color:#fff;font-weight:700;display:grid;place-items:center;flex:none}
+.q{font-size:15px;line-height:1.45;color:var(--ink);margin:10px 0 0}
+.srch{display:flex;align-items:center;gap:8px;background:rgba(120,120,128,.12);border-radius:12px;padding:0 12px;margin-top:4px}.srch input{flex:1;border:0;background:none;font:inherit;font-size:15px;padding:10px 0;outline:none;color:var(--ink)}
+.gh{font-size:12px;font-weight:700;letter-spacing:.05em;margin:16px 6px 6px}
+.bars{display:flex;align-items:flex-end;gap:10px;height:70px;margin-top:10px}.bars div{flex:1;text-align:center;font-size:11.5px;color:var(--mute)}.bars span{display:block;border-radius:8px;margin-bottom:4px}
+.mark{display:block;width:100%;border:0;border-radius:14px;padding:12px;font-weight:600;font-size:15px;background:var(--blue);color:#fff;margin-top:12px}
+.empty{color:var(--ink2);font-size:14.5px;line-height:1.45}
+/* wide (doctor portal, tablets): the eye on the right, everything else in a column on the left */
+@media (min-width:900px){
+ #body{flex-direction:row-reverse;gap:16px;padding:0 16px 16px}
+ #stage{flex:1;height:auto;margin:0;min-height:0}
+ #col{width:340px;flex:none;display:flex;flex-direction:column;min-height:0}
+ .vch{margin:0 0 4px}#side{padding:0 2px 16px}
+ .hd{padding-top:14px}
+}
+@media (max-width:899px){#col{display:contents}}
+</style>
+<script src="/a/three.9274bbce.js"></script></head><body>
+<div id="app">
+ <div class="hd"><button class="bk" id="bk" aria-label="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div class="ttl"><small id="eb">Your eyes</small><b>Eyes</b></div>
+  <div class="seg" id="side-seg"><button data-s="R" class="on">Right</button><button data-s="L">Left</button></div></div>
+ <div id="body">
+  <div id="stage"><canvas id="gl"></canvas><div id="pins"></div><div class="hint" id="hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg> Turn · pinch · tap a part</div><div id="load"><div><i></i>Building your eye…</div></div></div>
+  <div id="col">
+   <div class="vch" id="views"></div>
+   <div id="side"></div>
+  </div>
+ </div>
+</div>
+<script>
+'use strict';
+/* =====================================================================================================================
+   The 3D eye. One anatomical eyeball built to real dimensions (mm) plus the socket and the visual pathway cut from the
+   app's own HD body (web/a/eye-orbit.*.bin, made by tools/eye/orbit_asset.py). Frame: +Y forward through the cornea,
+   +Z to the nose, +X up. The page is framed by the app (patient) and by the partner portal (doctor); data arrives by
+   postMessage and nothing here talks to the server.
+   ===================================================================================================================== */
+const ORBIT_URL='/a/eye-orbit.fa96a608.bin';
+const DEG=Math.PI/180,V2=(r,y)=>new THREE.Vector2(r,y),V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const MODE=new URLSearchParams(location.search).get('m')==='doctor'?'doctor':'patient';
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function arc(R,cy,t0,t1,n,rfn){const p=[];for(let i=0;i<=n;i++){const t=t0+(t1-t0)*i/n;const RR=rfn?rfn(t):R;p.push(V2(Math.max(0,RR*Math.sin(t)),cy+RR*Math.cos(t)))}return p}
+function sph(R,cy,ra,rb,n,front){const p=[];for(let i=0;i<=n;i++){const r=ra+(rb-ra)*i/n;const d=Math.sqrt(Math.max(0,R*R-r*r));p.push(V2(r,front?cy+d:cy-d))}return p}
+
+/* ---- tissue surface: fibre / porous / lobular detail from object-space noise, no textures needed ---- */
+const NOISE=`float hsh(vec3 p){p=fract(p*0.3183099+.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.0-2.0*f);
+ return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}
+float fbm(vec3 p){float a=.5,s=0.;for(int k=0;k<4;k++){s+=a*vn(p);p=p*2.03+vec3(1.7,9.2,3.1);a*=.5;}return s;}
+vec3 pNA(vec3 sp,vec3 sn,vec2 dH,float fd){vec3 sx=dFdx(sp),sy=dFdy(sp);vec3 r1=cross(sy,sn),r2=cross(sn,sx);float det=dot(sx,r1)*fd;vec3 gr=sign(det)*(dH.x*r1+dH.y*r2);return normalize(abs(det)*sn-gr);}`;
+function tissue(m,o){m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,{uA:{value:o.A||V3(1,0,0)},uB:{value:o.B||V3(0,1,0)},uC:{value:o.C||V3(0,0,1)},uS:{value:V3(...(o.S||[1,1,1]))},uAmp:{value:o.amp??.6},uVar:{value:o.vr??.15}});
+  sh.vertexShader='varying vec3 vPL;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vPL=position;');
+  sh.fragmentShader='varying vec3 vPL;uniform vec3 uA,uB,uC,uS;uniform float uAmp,uVar;\n'+NOISE+'\n'+sh.fragmentShader
+   .replace('#include <color_fragment>','#include <color_fragment>\n vec3 qq=vec3(dot(vPL,uA)*uS.x,dot(vPL,uB)*uS.y,dot(vPL,uC)*uS.z);float hh=fbm(qq);diffuseColor.rgb*=1.0+uVar*(hh-0.5)*2.0;')
+   .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n {float h2=hh*uAmp;normal=pNA(-vViewPosition,normal,vec2(dFdx(h2),dFdy(h2)),faceDirection);}')};
+ m.customProgramCacheKey=()=>'tissue';m.userData.tissue=o;return m}
+function pca(g){const P=g.attributes.position,n=P.count,c=V3(0,0,0);for(let i=0;i<n;i++)c.add(V3(P.getX(i),P.getY(i),P.getZ(i)));c.multiplyScalar(1/n);
+ const C=[0,0,0,0,0,0,0,0,0];for(let i=0;i<n;i++){const v=[P.getX(i)-c.x,P.getY(i)-c.y,P.getZ(i)-c.z];for(let a=0;a<3;a++)for(let b=0;b<3;b++)C[a*3+b]+=v[a]*v[b]}
+ let v=V3(1,.3,.2);for(let k=0;k<30;k++)v=V3(C[0]*v.x+C[1]*v.y+C[2]*v.z,C[3]*v.x+C[4]*v.y+C[5]*v.z,C[6]*v.x+C[7]*v.y+C[8]*v.z).normalize();
+ const B=Math.abs(v.x)<.9?V3(1,0,0).cross(v).normalize():V3(0,1,0).cross(v).normalize();return [v,B,v.clone().cross(B)]}
+function merge(geos){let nv=0,ni=0;for(const g of geos){nv+=g.attributes.position.count;ni+=g.index?g.index.count:g.attributes.position.count}
+ const P=new Float32Array(nv*3),N=new Float32Array(nv*3),I=new Uint32Array(ni);let ov=0,oi=0;
+ for(const g of geos){const p=g.attributes.position,n=g.attributes.normal;P.set(p.array,ov*3);N.set(n.array,ov*3);if(g.index){for(let i=0;i<g.index.count;i++)I[oi+i]=g.index.array[i]+ov;oi+=g.index.count}else{for(let i=0;i<p.count;i++)I[oi+i]=ov+i;oi+=p.count}ov+=p.count;g.dispose()}
+ const m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.BufferAttribute(P,3));m.setAttribute('normal',new THREE.BufferAttribute(N,3));m.setIndex(new THREE.BufferAttribute(I,1));return m}
+
+/* ---- the socket / pathway asset ---- */
+let ORB=null;
+async function loadOrbit(){const r=await fetch(ORBIT_URL);if(!r.ok)throw Error('model');const buf=await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+ const jl=new DataView(buf).getUint32(0,true),head=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base=4+jl,parts={};
+ for(const p of head.parts){const q=new Uint16Array(buf,base+p.o,p.v*3),pos=new Float32Array(p.v*3),b=p.b;
+  for(let j=0;j<p.v;j++){pos[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);pos[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);pos[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}
+  const o=base+p.o+p.v*6;const ix=new Uint16Array(buf.slice(o,o+p.i*2));
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));g.computeVertexNormals();g.computeBoundingSphere();
+  parts[p.n]={g,axes:pca(g)}}
+ ORB={parts,ganglion:head.ganglion,eyeK:head.eyeK}}
+
+/* ---- textures (made once) ---- */
+const TEX={};
+function irisTex(ip){if(TEX.iris)return TEX.iris;const S=1024,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d');const C=S/2,K=S/14;
+ let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};const rP=ip*K,rC=3.3*K,rL=5.95*K;
+ const g=x.createRadialGradient(C,C,rP,C,C,rL);g.addColorStop(0,'#3a1d0a');g.addColorStop(.12,'#7b4a1f');g.addColorStop(.3,'#a46d33');g.addColorStop(.42,'#8a5626');g.addColorStop(.75,'#6b3f1b');g.addColorStop(.93,'#4a2a12');g.addColorStop(1,'#20120a');
+ x.fillStyle='#1a0e07';x.fillRect(0,0,S,S);x.fillStyle=g;x.beginPath();x.arc(C,C,rL,0,7);x.fill();
+ for(let i=0;i<2600;i++){const a=rnd()*Math.PI*2,r0=rP*(1+rnd()*.15),r1=rP+(rL-rP)*(.35+rnd()*.65);const w=(rnd()-.5)*.08;x.strokeStyle=rnd()<.55?`rgba(${200+rnd()*40|0},${140+rnd()*40|0},${80+rnd()*30|0},${.08+rnd()*.22})`:`rgba(25,12,4,${.1+rnd()*.25})`;x.lineWidth=.6+rnd()*1.8;
+  x.beginPath();x.moveTo(C+Math.cos(a)*r0,C+Math.sin(a)*r0);x.quadraticCurveTo(C+Math.cos(a+w)*(r0+r1)/2,C+Math.sin(a+w)*(r0+r1)/2,C+Math.cos(a+w*.5)*r1,C+Math.sin(a+w*.5)*r1);x.stroke()}
+ x.lineWidth=4;x.strokeStyle='rgba(205,150,90,.22)';x.beginPath();for(let i=0;i<=200;i++){const a=i/200*Math.PI*2,r=rC*(1+.06*Math.sin(a*11)+.03*Math.sin(a*23));x.lineTo(C+Math.cos(a)*r,C+Math.sin(a)*r)}x.stroke();
+ for(let i=0;i<70;i++){const a=rnd()*Math.PI*2,r=rC*(1.05+rnd()*.5);x.fillStyle=`rgba(30,14,5,${.35+rnd()*.35})`;x.beginPath();x.ellipse(C+Math.cos(a)*r,C+Math.sin(a)*r,3+rnd()*9,2+rnd()*5,a,0,7);x.fill()}
+ x.lineWidth=14;x.strokeStyle='rgba(15,8,4,.55)';x.beginPath();x.arc(C,C,rL-7,0,7);x.stroke();x.lineWidth=4;x.strokeStyle='rgba(150,80,30,.8)';x.beginPath();x.arc(C,C,rP+2,0,7);x.stroke();
+ const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return TEX.iris=t}
+function scleraTex(){if(TEX.sclera)return TEX.sclera;const c=document.createElement('canvas');c.width=2048;c.height=512;const x=c.getContext('2d');const g=x.createLinearGradient(0,0,0,512);g.addColorStop(0,'#efe2d9');g.addColorStop(.3,'#ebe0d4');g.addColorStop(1,'#e2d4c4');x.fillStyle=g;x.fillRect(0,0,2048,512);
+ let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+ for(let i=0;i<70;i++){let u=rnd()*2048,v=200+rnd()*60;x.strokeStyle=`rgba(${170+rnd()*40|0},${40+rnd()*30|0},${40+rnd()*20|0},${.25+rnd()*.35})`;x.lineWidth=.8+rnd()*1.6;x.beginPath();x.moveTo(u,v);
+  for(let k=0;k<14;k++){u+=(rnd()-.5)*14;v-=8+rnd()*10;x.lineTo(u,v);if(rnd()<.18){x.stroke();x.beginPath();x.moveTo(u,v)}}x.stroke()}
+ const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.flipY=false;return TEX.sclera=t}
+
+/* ---- the views a patient and a doctor switch between ---- */
+const VIEWS={
+ inside:{t:'Inside',wedge:1,cam:[.75,.6,-.55],d:72,tgt:[0,-1,0],fov:26},
+ socket:{t:'Socket',full:1,front:1,orbit:'socket',cam:[.12,.3,-1],d:118,tgt:[0,-11,2],fov:24,cutBack:44,cutPlanes:[[-1,0,0,21],[0,0,1,26],[0,-1,0,30]]},
+ back:{t:'Retina',full:1,clipY:.5,hide:['lens','nucleus','cornea','iris','zonules','ciliary','conjunctiva'],cam:[.35,1,-.25],d:56,tgt:[0,-6,.6],fov:26},
+ drain:{t:'Drainage',wedge:1,cam:[.75,.45,-.5],d:80,tgt:[2.5,9,-3.2],fov:10},
+ brain:{t:'Brain',full:1,front:1,orbit:'path',pathway:1,noSclTex:1,cam:[1,.45,0],d:215,tgt:[10,-58,24],up:[0,1,0],fov:30}};
+const PATHRX=/optic nerve|chiasm|tract|geniculate|calcarine|cuneus|lingual|occipital pole/i,LEFTPATH=/^Left |chiasm|tract|geniculate|calcarine|cuneus|lingual|occipital/i;
+
+/* ---- parts: what a tap on each one says ---- */
+const GROUPS={focus:['Focusing','#0A84FF'],fluid:['Fluid & drainage','#30B0C7'],wall:['Outer layers','#A2845E'],see:['Seeing','#FF9F0A'],nerve:['Nerves','#E5A800'],move:['Muscles','#FF453A'],blood:['Blood vessels','#AF52DE'],tear:['Tear system','#30B0C7'],brain:['Brain','#FF375F']};
+const PARTOF={macula:'retina',pupil:'iris','nerve sheath':'optic nerve'};const pk=k=>PARTOF[k]||k;
+const INFO={
+ 'optic nerve':['Optic nerve (II)','nerve','Carries the picture from the eye to the brain.','Glaucoma slowly damages it.'],
+ cornea:['Cornea','focus','The clear front window of the eye. It does most of the focusing.','Scratches, infection or thinning blur vision and can hurt.'],
+ iris:['Iris','focus','The coloured ring. It widens and narrows the pupil to let in the right amount of light.'],
+ pupil:['Pupil','focus','The opening in the iris that lets light in.'],
+ lens:['Lens','focus','Fine-tunes focus for near and far.','When it turns cloudy it is called a cataract; it is replaced in a short day surgery.'],
+ nucleus:['Lens nucleus','focus','The hard centre of the lens. It is the first part to cloud with age.'],
+ zonules:['Zonules','focus','Fine fibres that hold the lens in place.'],
+ ciliary:['Ciliary body','fluid','Makes the clear fluid inside the eye and holds the muscle that changes focus.'],
+ 'anterior chamber':['Front chamber','fluid','The fluid-filled space behind the cornea. Eye pressure is the pressure of this fluid.'],
+ 'posterior chamber':['Back chamber','fluid','Where fresh eye fluid collects before it flows through the pupil.'],
+ trabecular:['Drainage meshwork','fluid','The filter where eye fluid drains out.','If it drains slowly, eye pressure rises — the main risk for glaucoma.'],
+ schlemm:["Schlemm's canal",'fluid','The drain channel that carries eye fluid out of the eye.'],
+ conjunctiva:['Conjunctiva','wall','Thin clear skin over the white of the eye.','It turns red and sticky in conjunctivitis.'],
+ sclera:['Sclera','wall','The tough white outer wall of the eye.'],
+ choroid:['Choroid','wall','A layer of blood vessels that feeds the retina.'],
+ retina:['Retina','see','The light-sensing layer at the back, like the film in a camera.','Diabetes and high blood pressure show up here early.'],
+ vitreous:['Vitreous','see','Clear gel that fills the eye. Floaters are small clumps in it.'],
+ macula:['Macula','see','The centre of the retina, for sharp vision when reading and seeing faces.'],
+ disc:['Optic disc','nerve','Where the nerve leaves the eye. Its pale centre is the cup.','A cup that keeps widening is a sign of glaucoma.'],
+ vessels:['Retinal blood vessels','blood','Arteries and veins on the retina.','Bleeding or swelling here is how diabetes and blood pressure affect the eye.'],
+ ganglion:['Ciliary ganglion','nerve','A small nerve relay behind the eye that controls the pupil and focusing.'],
+ 'optic radiation':['Optic radiation','brain','Nerve fibres that fan out from the thalamus to the back of the brain.']};
+const ORBINFO=[[/superior rectus/i,'Superior rectus','move','Moves the eye up.'],[/inferior rectus/i,'Inferior rectus','move','Moves the eye down.'],[/lateral rectus/i,'Lateral rectus','move','Turns the eye out towards the ear.','If it is weak the eye drifts towards the nose and you may see double.'],
+ [/medial rectus/i,'Medial rectus','move','Turns the eye in towards the nose.'],[/superior oblique/i,'Superior oblique','move','Turns the eye down and in.'],[/inferior oblique/i,'Inferior oblique','move','Turns the eye up and out.'],
+ [/levator/i,'Eyelid lifter','move','Lifts the upper eyelid.','When it is weak the lid droops.'],[/trochlea/i,'Trochlea','move','A small pulley the superior oblique runs through.'],
+ [/optic nerve/i,'Optic nerve (II)','nerve','Carries the picture from the eye to the brain.','Glaucoma slowly damages it.'],[/oculomotor/i,'Oculomotor nerve (III)','nerve','Moves four eye muscles, lifts the lid and narrows the pupil.'],
+ [/trochlear nerve/i,'Trochlear nerve (IV)','nerve','Works the superior oblique muscle.'],[/abducens/i,'Abducens nerve (VI)','nerve','Works the lateral rectus, turning the eye out.','Diabetes can stop it working for a while, causing double vision.'],
+ [/ophthalmic nerve/i,'Ophthalmic nerve (V1)','nerve','Carries feeling from the eye, cornea and forehead.'],[/central retinal artery/i,'Central retinal artery','blood','The main blood supply of the retina.'],
+ [/ophthalmic artery/i,'Ophthalmic artery','blood','The main artery of the eye and socket.'],[/ciliary arter/i,'Ciliary arteries','blood','Feed the choroid inside the eye.'],[/lacrimal artery/i,'Lacrimal artery','blood','Feeds the tear gland.'],
+ [/ophthalmic vein/i,'Ophthalmic vein','blood','Drains blood from the eye.'],[/lacrimal gland/i,'Tear gland','tear','Makes tears.'],[/canaliculus/i,'Tear channel','tear','Drains tears from the corner of the eyelid.'],
+ [/lacrimal sac/i,'Tear sac','tear','Collects tears before they drain.'],[/nasolacrimal/i,'Tear duct','tear','Drains tears into the nose.','A blocked duct causes a watery eye.'],
+ [/chiasm/i,'Optic chiasm','nerve','Where nerve fibres from the nose side of each eye cross.','A pituitary swelling just below presses here and takes away side vision on both sides.'],
+ [/optic tract/i,'Optic tract','nerve','Carries one half of what both eyes see.'],[/geniculate/i,'Lateral geniculate body','brain','A relay station in the thalamus.'],
+ [/calcarine/i,'Visual cortex','brain','Where the brain makes the picture you see.','A stroke here takes away part of the visual field.'],[/cuneus/i,'Cuneus','brain','Sees the lower half of the visual field.'],[/lingual/i,'Lingual gyrus','brain','Sees the upper half of the visual field.'],[/occipital pole/i,'Occipital pole','brain','Handles central vision from the macula.']];
+function info(key){if(INFO[key]){const [n,g,d,w]=INFO[key];return{key,n,g,d,w}}for(const [rx,n,g,d,w] of ORBINFO)if(rx.test(key))return{key,n,g,d,w};return null}
+
+/* ---- renderer, scene, camera ---- */
+const cv=$('#gl'),stage=$('#stage');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setClearColor(0,0);R.setPixelRatio(Math.min(2,devicePixelRatio||1));
+R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=.95;R.localClippingEnabled=true;
+let ENV=null;function env(){if(ENV)return ENV;const es=new THREE.Scene(),sg=new THREE.SphereGeometry(100,32,16),cc=[],P=sg.attributes.position;for(let i=0;i<P.count;i++){const t=(P.getY(i)/100+1)/2;cc.push(.12+.3*t,.12+.29*t,.13+.29*t)}
+ sg.setAttribute('color',new THREE.Float32BufferAttribute(cc,3));es.add(new THREE.Mesh(sg,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
+ for(const [x,y,z,w,h,i] of [[-40,60,-50,50,30,1.6],[60,30,-20,30,50,.8],[0,-10,80,50,25,.4]]){const pm=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(i,i,i),side:THREE.DoubleSide}));pm.position.set(x,y,z);pm.lookAt(0,0,0);es.add(pm)}
+ return ENV=new THREE.PMREMGenerator(R).fromScene(es,.02).texture}
+const cam=new THREE.PerspectiveCamera(26,1,.1,800);
+let S={scene:null,root:null,eb:null,parts:{},caps:[],meshes:[],clip:null,view:'inside',side:'R',sel:null,ghost:false,tgt:V3(0,0,0),up:V3(1,0,0),v0:null};
+
+function build(view,opt){
+ const vo=Object.assign({},VIEWS[view],opt||{}),full=!!vo.full,WEDGE=!!vo.wedge,HALF=full?Math.PI*2:Math.PI;
+ const sc=new THREE.Scene(),G=new THREE.Group(),EB=new THREE.Group();sc.add(G);G.add(EB);
+ const parts={},caps=[];
+ const mat=(col,op,rough,extra)=>new THREE.MeshPhysicalMaterial(Object.assign({color:col,roughness:rough??.55,metalness:0,transparent:op<1,opacity:op,side:THREE.DoubleSide,depthWrite:op>=.6},extra||{}));
+ const capMat=(col,op,extra)=>new THREE.MeshStandardMaterial(Object.assign({color:col,roughness:.85,metalness:0,transparent:op<1,opacity:op,side:THREE.DoubleSide,depthWrite:op>=.6,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1},extra||{}));
+ function solid(name,prof,col,op,rough,o2){o2=o2||{};const pts=prof.slice();if(pts[0].distanceTo(pts[pts.length-1])>1e-6)pts.push(pts[0].clone());
+  const RING=full||WEDGE||o2.ring;const g=new THREE.LatheGeometry(pts,o2.segs||(RING?180:140),o2.phi0??0,o2.phiLen??(RING?Math.PI*2:HALF));
+  if(o2.hole){const P=g.attributes.position,ix=g.index.array,keep=[];const a=V3(0,0,0),b=V3(0,0,0),c=V3(0,0,0);const cosA=Math.cos(o2.hole.ang);
+   for(let i=0;i<ix.length;i+=3){a.fromBufferAttribute(P,ix[i]);b.fromBufferAttribute(P,ix[i+1]);c.fromBufferAttribute(P,ix[i+2]);a.add(b).add(c).normalize();if(a.dot(o2.hole.axis)<cosA)keep.push(ix[i],ix[i+1],ix[i+2])}g.setIndex(keep)}
+  if(o2.vcol){const P=g.attributes.position,C=new Float32Array(P.count*3),c=new THREE.Color();for(let i=0;i<P.count;i++){o2.vcol(P.getX(i),P.getY(i),P.getZ(i),c);C[i*3]=c.r;C[i*3+1]=c.g;C[i*3+2]=c.b}g.setAttribute('color',new THREE.BufferAttribute(C,3))}
+  if(o2.planarUV){const P=g.attributes.position,U=g.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/14+.5,1-(P.getZ(i)/14+.5));U.needsUpdate=true}
+  const m=mat(col,op,rough,Object.assign({vertexColors:!!o2.vcol},o2.mat||{}));if(o2.map)m.map=o2.map;
+  const me=new THREE.Mesh(g,m);me.renderOrder=o2.ro??(op<1?3:1);me.userData.part=name;if(op<.02)me.visible=false;const grp=new THREE.Group();grp.add(me);
+  const capAngles=o2.capAt||(WEDGE&&!o2.ring?[Math.PI,Math.PI/2]:[]);
+  if(capAngles.length&&!o2.nocap){const cg=new THREE.ShapeGeometry(new THREE.Shape(pts.slice(0,-1)),4);const cm=capMat(o2.capCol??col,o2.capOp??op,o2.capMat||{});
+   for(const f of capAngles){const g2=cg.clone();g2.applyMatrix4(new THREE.Matrix4().set(Math.sin(f),0,Math.cos(f),0,0,1,0,0,Math.cos(f),0,-Math.sin(f),0,0,0,0,1));g2.computeVertexNormals();
+    const cmesh=new THREE.Mesh(g2,cm);cmesh.renderOrder=o2.capRo??(op<1?4:2);cmesh.userData.part=name;cmesh.userData.cap=1;grp.add(cmesh);caps.push(cmesh)}}
+  if(o2.xf)grp.applyMatrix4(o2.xf);(o2.into||EB).add(grp);parts[name]=grp;return grp}
+ // ---------- dimensions (mm) ----------
+ const nT=15*DEG,u=V3(0,-Math.cos(nT),Math.sin(nT)),RS=12.0,RSi=11.35,th0=Math.asin(5.85/RS);
+ const scIn=t=>RSi+.35*Math.max(0,(t-1.6))/(Math.PI-1.6);
+ {const outer=arc(0,0,th0,Math.PI,120,t=>RS+(scIn(t)-RSi)),inner=arc(RSi,0,Math.PI,Math.acos(9.6/RSi),120);const st=vo.noSclTex?null:scleraTex();
+  solid('sclera',[...outer,...inner,V2(5.3,9.78)],st?0xB5ABA2:0xF2EDE4,1,.5,{capCol:0xEFE6DA,mat:{clearcoat:.3,clearcoatRoughness:.4,map:st}})}
+ solid('cornea',[...sph(8.6,4.1,0,5.85,60,true),V2(5.3,9.78),...sph(7.0,5.15,5.3,0,60,true)],0xEAF6FF,vo.front?.06:.28,.04,{capCol:0xB9DAF0,capOp:.92,mat:{clearcoat:1,clearcoatRoughness:.03,depthWrite:false},ro:6});
+ solid('conjunctiva',[...arc(RS+.12,0,th0,72*DEG,40),...arc(RS+.01,0,72*DEG,th0,40)],0xF6D6D0,.05,.6,{capCol:0xE9A8A0,capOp:.9,ro:5});
+ const choF=Math.acos(4.6/RSi);
+ solid('choroid',[...arc(RSi-.005,0,choF,Math.PI,100),...arc(RSi-.28,0,Math.PI,choF,100)],0x5E1D1C,1,.6,{capCol:0x6B2422,hole:{axis:u,ang:5.6*DEG}});
+ const RRo=RSi-.3,RRi=RSi-.58,oraT=Math.acos(4.2/RRo),fov=t=>{const d=Math.PI-t;return .14*Math.exp(-(d*d)/(2*.035*.035))};
+ const retCol=(x,y,z,c)=>{const L=Math.hypot(x,y,z),a=Math.acos(Math.min(1,-y/L));c.setHex(0xD9683F);c.lerp(new THREE.Color(0xA8402A),Math.min(1,Math.max(0,(a-.5)/1.2))*.55);
+  const mot=.5+.5*Math.sin(x*3.1+Math.sin(z*2.3)*2)*Math.sin(z*2.7+Math.cos(y*1.9)*2);c.lerp(new THREE.Color(0xC04E30),mot*.18);
+  c.lerp(new THREE.Color(0x8A2A1C),Math.exp(-(a*a)/(2*.01))*.7);c.lerp(new THREE.Color(0x5A1810),Math.exp(-(a*a)/(2*.014*.014))*.7)};
+ solid('retina',[...arc(0,0,oraT,Math.PI,160,()=>RRo),...arc(0,0,Math.PI,oraT,160,t=>RRi+fov(t))],0xffffff,1,.55,{vcol:retCol,capCol:0xE58B6D,hole:{axis:u,ang:5.6*DEG}});
+ const scAt=y=>Math.sqrt(RSi*RSi-y*y);
+ solid('ciliary',[V2(scAt(9.45),9.45),V2(scAt(8.6),8.6),V2(scAt(7.4),7.4),V2(scAt(6.2),6.2),V2(scAt(4.9),4.9),V2(scAt(4.9)-.25,4.9),V2(9.55,5.9),V2(8.4,6.9),V2(7.15,7.75),V2(6.55,8.25),V2(6.5,8.6),V2(6.15,8.95)],0x6B2A22,1,.6,{capCol:0x7C3328});
+ const ip=1.8,irisF=[V2(6.15,9.05),V2(5.9,9.22),V2(5,9.4),V2(4,9.52),V2(3.2,9.58),V2(2.6,9.5),V2(ip+.2,9.32),V2(ip,9.16)],irisB=[V2(ip,8.98),V2(ip+.6,8.93),V2(3.5,8.88),V2(5,8.85),V2(5.9,8.86),V2(6.15,8.95)];
+ solid('iris',[...irisF,...irisB],0xffffff,1,.65,{capCol:0x6A3E1E,map:irisTex(ip),planarUV:true});
+ const lensProf=(s,cy)=>{const a=[];for(let i=0;i<=48;i++){const r=4.99*Math.sin(i/48*Math.PI/2);a.push(V2(r*s,cy+((-1+Math.sqrt(100-r*r))-cy)*s))}for(let i=48;i>=0;i--){const r=4.99*Math.sin(i/48*Math.PI/2);a.push(V2(r*s,cy+((11-Math.sqrt(36-r*r))-cy)*s))}return a.reverse()};
+ const cat=vo.cataract?1:0;
+ solid('lens',lensProf(1,7.3),cat?0xE3D29A:0xF1EBD6,cat?.85:.42,.08,{capCol:cat?0xE8D59A:0xF7F0D8,capOp:cat?.95:.9,mat:{clearcoat:1,clearcoatRoughness:.05},ro:5});
+ solid('nucleus',lensProf(.62,7.3),cat?0xB58A3C:0xEBD69A,cat?.95:.6,.3,{capMat:{polygonOffsetFactor:-1,polygonOffsetUnits:-1},capCol:cat?0xB98B3E:0xE9CF8C,capOp:cat?1:.85,ro:6,capRo:7});
+ if(WEDGE){const ac=[...sph(7.0,5.15,0,5.3,40,true),V2(6.15,9.05),...irisF.slice(1),V2(ip,8.98),V2(ip,-1+Math.sqrt(100-ip*ip)),V2(0,9)];
+  solid('anterior chamber',ac,0xCFE9FF,0,.1,{capCol:0xBFE3FF,capOp:.35,capRo:3});
+  const pc=[V2(ip,8.98),...irisB.slice(1),V2(6.5,8.6),V2(6.55,8.25),V2(5.6,7.9),V2(4.99,7.67)];for(let i=1;i<=20;i++){const r=4.99-(4.99-ip)*i/20;pc.push(V2(r,-1+Math.sqrt(100-r*r)))}
+  solid('posterior chamber',pc,0xCFE9FF,0,.1,{capCol:0xBFE3FF,capOp:.35,capRo:3});
+  const vit=[];for(let i=0;i<=30;i++){const r=4.99*i/30;vit.push(V2(r,11-Math.sqrt(36-r*r)))}vit.push(V2(5.6,7.6),V2(7.15,7.6),V2(8.4,6.75),V2(9.5,5.8),...arc(0,0,oraT+.02,Math.PI,120,t=>RRi+fov(t)-.01));
+  solid('vitreous',vit,0xE6F3F8,0,.1,{capCol:0xDDEFF6,capOp:.16,capRo:3})}
+ solid('trabecular',[V2(5.3,9.78),V2(5.98,9.62),V2(6.12,9.32),V2(5.75,9.45)],0xC99A6A,1,.7,{capCol:0xD2A272,capRo:5,capMat:{polygonOffsetFactor:-2,polygonOffsetUnits:-2}});
+ {const p=[];for(let i=0;i<24;i++){const a=i/24*Math.PI*2;p.push(V2(6.45+.26*Math.cos(a),9.78+.12*Math.sin(a)))}solid('schlemm',p,0x9BB9D6,1,.4,{capCol:0x2F4E6E,capRo:5,capMat:{polygonOffsetFactor:-2,polygonOffsetUnits:-2}})}
+ {const ends=[[V2(6.6,8.25),V2(4.6,8.35)],[V2(6.9,7.95),V2(4.99,7.67)],[V2(7.3,7.65),V2(4.75,7.05)],[V2(6.75,8.1),V2(4.9,7.95)],[V2(7.1,7.8),V2(4.9,7.3)]],gs=[];
+  for(let k=0;k<120;k++){const ph=Math.PI*2*k/120;for(const [a,b] of ends){const A=V3(a.x*Math.sin(ph),a.y,a.x*Math.cos(ph)),B=V3(b.x*Math.sin(ph),b.y,b.x*Math.cos(ph));
+   const c=new THREE.CylinderGeometry(.022,.022,A.distanceTo(B),4,1,true);c.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(V3(0,1,0),B.clone().sub(A).normalize())));c.translate(...A.clone().add(B).multiplyScalar(.5).toArray());gs.push(c)}}
+  const me=new THREE.Mesh(merge(gs),new THREE.MeshStandardMaterial({color:0xF4EEE2,roughness:.6,transparent:true,opacity:.85}));me.userData.part='zonules';const zg=new THREE.Group();zg.add(me);EB.add(zg);parts.zonules=zg}
+ const nq=new THREE.Quaternion().setFromUnitVectors(V3(0,1,0),u),nX=new THREE.Matrix4().makeRotationFromQuaternion(nq);
+ if(!vo.orbit){solid('optic nerve',[V2(0,RRi+.05),V2(.95,RRi+.05),V2(.95,RSi+.1),V2(1.5,RS+.3),V2(1.55,24),V2(0,24)],0xF1E2B8,1,.6,{xf:nX,capCol:0xF3E4BC,ring:WEDGE});
+  solid('nerve sheath',[V2(1.5,RS-.15),V2(2.15,RS+.6),V2(2.25,24),V2(1.55,24),V2(1.5,RS+.3)],0xE9E2D6,1,.5,{xf:nX,capCol:0xDCD2C2,ring:WEDGE})}
+ const cupR=(vo.cd||.4)*.95;
+ solid('disc',[V2(0,RRi+.42),V2(cupR*.6,RRi+.38),V2(cupR,RRi+.12),V2(cupR*1.25,RRi-.01),V2(.95,RRi-.08),V2(1.3,RRi-.115),V2(1.3,RRi+.12),V2(0,RRi+.5)],0xD8D0C8,1,1,
+  {xf:nX,ring:WEDGE,capCol:0xEFC29A,ro:2,vcol:(x,y,z,c)=>{const v=V3(x,y,z).applyQuaternion(nq.clone().invert()),rr=Math.hypot(v.x,v.z);c.setHex(rr<cupR*.75?0xF9F0DC:rr<cupR?0xEFD6AE:rr<.8?0xF2CBA6:rr<.98?0xEDB993:rr<1.12?0xE7A47F:0xE2936C)}});
+ // retinal vessels: gnomonic map around the fovea (a = towards the nose, b = up), tapering in steps
+ const RV=RRi-.03,onR=(a,b)=>V3(b,-RRi,a).normalize().multiplyScalar(RV),dA=RRi*Math.tan(nT);
+ const VES=[['v',[[dA,.2],[dA-.5,1.2],[1,2.5],[-1,3.1],[-3.5,3.3],[-6,3.6],[-9,4.6],[-12,6.2],[-14,8.5]]],['a',[[dA,.1],[dA-.6,.95],[.8,2.1],[-1.2,2.65],[-3.6,2.75],[-6.4,3.05],[-9.6,3.6],[-12.5,5],[-14.5,7]]],
+  ['v',[[dA+.1,.25],[dA+1.2,1.6],[dA+3.2,3],[dA+6,4.6],[dA+9,6.5]]],['a',[[dA+.1,.15],[dA+1.1,1.2],[dA+3.4,2.4],[dA+6.3,3.8],[dA+9.2,5.4]]],['v',[[-3.5,3.3],[-4.3,5.6],[-5.4,8],[-6.5,10.5]]],['a',[[-3.6,2.75],[-4.8,5],[-6.2,7.2],[-7.6,9.6]]],
+  ['a',[[-6.4,3.05],[-7.4,1.6],[-8.6,.8]]],['v',[[-6,3.6],[-7,2.1],[-8.2,1.4]]],['a',[[.8,2.1],[1.4,4.6],[2.1,7.5],[2.6,10.5]]],['v',[[1,2.5],[1.9,5.2],[2.8,8.2],[3.4,11]]],
+  ['a',[[-1.2,2.65],[-1.6,1.7],[-1.9,1]]],['v',[[-3.5,3.3],[-3.1,1.9],[-2.6,1.2]]],['a',[[dA+3.4,2.4],[dA+3.8,5.2],[dA+4.4,8.4]]],['v',[[dA+.1,.3],[dA+.8,2.6],[dA+1.4,5.2],[dA+1.8,8.5]]]];
+ {const ga=[],gv=[];for(const mir of [1,-1])for(const [t,pts] of VES){const cur=new THREE.CatmullRomCurve3(pts.map(([a,b])=>onR(a,b*mir))),L=cur.getLength();const main=Math.abs(pts[0][0]-dA)<.3&&Math.abs(pts[0][1])<.4;const rad=(t==='v'?.075:.054)*(main?1:.72);
+   for(let k=0;k<5;k++){const t0=k/5,t1=Math.min(1,(k+1)/5+.004),sub=[];for(let j=0;j<=10;j++)sub.push(cur.getPoint(t0+(t1-t0)*j/10));(t==='v'?gv:ga).push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sub),Math.max(6,Math.round(L*5/5)),rad*(1-.55*k/5),8,false))}}
+  const vg=new THREE.Group();for(const [gs,col] of [[ga,0xC9402F],[gv,0x8A1E20]]){const me=new THREE.Mesh(merge(gs),new THREE.MeshPhysicalMaterial({color:col,roughness:.35,clearcoat:.4,clearcoatRoughness:.3}));me.userData.part='vessels';vg.add(me)}EB.add(vg);parts.vessels=vg}
+ if(vo.front){const g=new THREE.CircleGeometry(ip,48);g.rotateX(-Math.PI/2);g.translate(0,8.7,0);const pm=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0x050505}));pm.userData.part='pupil';EB.add(pm);
+  for(const [r,x,y,z,op] of [[.55,-1.6,12.9,-1.9,.9],[.22,1.4,12.85,1.5,.6]]){const cg=new THREE.CircleGeometry(r,24);cg.rotateX(-Math.PI/2);const m=new THREE.Mesh(cg,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:op}));m.position.set(x,y,z);m.renderOrder=9;EB.add(m)}
+  if(parts.lens&&!vo.wedge){parts.lens.visible=false;parts.nucleus.visible=false;parts.zonules.visible=false}}
+ // surface detail on the eyeball
+ for(const [k,Sx,amp,vr] of [['sclera',[.5,.5,.5],.25,.06],['choroid',[.9,.9,.9],.6,.2],['ciliary',[.3,2,2],.8,.2],['retina',[.7,.7,.7],.15,.05]])parts[k]&&parts[k].traverse(m=>{if(m.isMesh&&!m.userData.cap)tissue(m.material,{S:Sx,amp,vr})});
+ // the socket and the pathway from the app's own body model
+ let EK=1;
+ if(vo.orbit&&ORB){EK=ORB.eyeK;EB.scale.setScalar(EK);
+  const T={bone:[0xD8C9AE,.8,{S:[.28,.28,.28],amp:1.2,vr:.2}],muscle:[0x7A1C16,.55,{S:[.12,1.4,1.4],amp:1,vr:.2}],tendon:[0xE2D8C6,.45,{S:[.15,1.2,1.2],amp:.4,vr:.1}],nerve:[0xE8C870,.45,{S:[.12,1.8,1.8],amp:.7,vr:.22}],
+   artery:[0xC22E26,.3,{S:[1,1,1],amp:.15,vr:.08}],vein:[0x3B4A8A,.3,{S:[1,1,1],amp:.15,vr:.08}],gland:[0xC88A78,.6,{S:[.7,.7,.7],amp:1.2,vr:.28}],duct:[0xE39A8E,.5,{S:[.6,.6,.6],amp:.4,vr:.12}],brain:[0xC99E92,.6,{S:[.25,.25,.25],amp:1,vr:.22}]};
+  const extra=[...(vo.cutBack!=null?[new THREE.Plane(V3(0,1,0),vo.cutBack)]:[]),...(vo.cutPlanes||[]).map(c=>new THREE.Plane(V3(c[0],c[1],c[2]),c[3]))];
+  for(const [n,d] of Object.entries(ORB.parts)){const inPath=PATHRX.test(n);if(vo.orbit==='socket'&&LEFTPATH.test(n))continue;if(vo.orbit==='path'&&!inPath)continue;
+   const ty=/rectus|oblique muscle|levator/i.test(n)?'muscle':/trochlea/i.test(n)?'tendon':/nerve|tract|chiasm/i.test(n)?'nerve':/arter/i.test(n)?'artery':/vein/i.test(n)?'vein':/lacrimal gland/i.test(n)?'gland':/lacrimal|nasolacrimal/i.test(n)?'duct':'brain';
+   const t=T[ty],[A,B,C]=d.axes;const m=tissue(new THREE.MeshPhysicalMaterial({color:t[0],roughness:t[1],metalness:0,side:THREE.DoubleSide,clearcoat:/artery|vein|nerve|gland|duct/.test(ty)?.6:ty==='muscle'?.25:0,clearcoatRoughness:.35,clippingPlanes:vo.orbit==='socket'?extra:[]}),Object.assign({A,B,C},t[2]));
+   const me=new THREE.Mesh(d.g,m);me.userData.part=n;me.userData.orb=1;G.add(me);parts[n]=me}
+  {const g=new THREE.SphereGeometry(1,24,16);g.scale(1.1,1.6,.9);const me=new THREE.Mesh(g,tissue(new THREE.MeshPhysicalMaterial({color:0xE9C86A,roughness:.5,clearcoat:.5}),{S:[1,1,1],amp:.5,vr:.15}));me.position.set(...ORB.ganglion);me.userData.part='ganglion';me.userData.orb=1;if(vo.orbit==='socket')G.add(me);parts.ganglion=me}
+  if(vo.pathway){const nm=tissue(new THREE.MeshPhysicalMaterial({color:0xF0DFB0,roughness:.5,clearcoat:.3}),{S:[.1,1.6,1.6],amp:.6,vr:.15}),gs=[];
+   for(const [zs,ze] of [[7.5,11],[40.5,37]])for(let k=0;k<9;k++){const t=k/8,a=V3(20,-62,zs+(t-.5)*2),b=V3(17+t*8,-84,zs+(zs<20?-9:9)+(t-.5)*3),c=V3(20+t*8,-104,ze+(t-.5)*3);gs.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a,b,c]),30,.7,6,false))}
+   const me=new THREE.Mesh(merge(gs),nm);me.userData.part='optic radiation';me.userData.orb=1;G.add(me);parts['optic radiation']=me;
+   const L=EB.clone(true);L.scale.set(EK,EK,-EK);L.position.z=48;L.traverse(m=>{m.userData.left=1});G.add(L)}}
+ // the cut-away wedge, the back-of-eye bowl
+ const W=WEDGE?[new THREE.Plane(V3(-1,0,0),0),new THREE.Plane(V3(0,0,1),0)]:vo.clipY!=null?[new THREE.Plane(V3(0,-1,0),vo.clipY)]:null;
+ if(W)EB.traverse(m=>{if(m.material&&!m.userData.cap){m.material.clippingPlanes=W;m.material.clipIntersection=true}});
+ for(const k of vo.hide||[])parts[k]&&(parts[k].visible=false);
+ // lights
+ sc.add(new THREE.HemisphereLight(0xffffff,0xc7b8a8,.32));const k1=new THREE.DirectionalLight(0xffffff,1.8);k1.position.set(80,40,-60);sc.add(k1);
+ const k2=new THREE.DirectionalLight(0xfff2e6,.7);k2.position.set(20,-40,60);sc.add(k2);const k3=new THREE.DirectionalLight(0xe8f0ff,.6);k3.position.set(6,2,-2);sc.add(k3);
+ sc.environment=env();
+ sc.traverse(m=>{if(m.material&&!m.material._lin){m.material._lin=1;if('envMapIntensity' in m.material)m.material.envMapIntensity=.35;if(m.material.color)m.material.color.convertSRGBToLinear()}
+  if(m.geometry&&m.geometry.attributes&&m.geometry.attributes.color&&!m.geometry._lin){m.geometry._lin=1;const C=m.geometry.attributes.color,c=new THREE.Color();for(let i=0;i<C.count;i++){c.setRGB(C.getX(i),C.getY(i),C.getZ(i)).convertSRGBToLinear();C.setXYZ(i,c.r,c.g,c.b)}}});
+ const meshes=[];sc.traverse(m=>{if(m.isMesh&&m.userData.part){m.userData.mat0=m.material;meshes.push(m)}});
+ return {scene:sc,root:G,eb:EB,parts,caps,meshes,clip:W,ek:EK,onR,nq,RRi,dA}}
+
+/* ---- where each reading and part sits (eyeball mm; the cut faces of the wedge are x=0 (z<0) and z=0 (x>0)) ---- */
+const up=(r,y)=>[0,y,-r],dn=(r,y)=>[r,y,0];
+const ANCH={cornea:[up(2.6,12),dn(2.9,11.95),[0,12.6,-2]],'anterior chamber':[up(1.6,10.75),up(3.4,10.4)],iris:[up(4.4,9.22),[0,9.6,-3.5]],pupil:[[0,9.25,0],[0,9.6,.9]],lens:[up(3.9,7.3),dn(3.4,6.4),up(3.6,7.6)],nucleus:[dn(1.4,7.3)],
+ ciliary:[up(7.45,8),up(7.3,8)],zonules:[up(5.85,7.95)],'posterior chamber':[up(5.25,8.5)],trabecular:[up(5.75,9.6)],schlemm:[up(6.45,9.78)],conjunctiva:[dn(9.35,7.85)],
+ sclera:[dn(11.65,-4),[-9,3,-6],[-11.5,0,-1]],choroid:[up(8.42,-7.2)],retina:[up(6.05,-8.75)],vitreous:[dn(4,-1)],macula:['on',-.6,-.7],disc:['disc'],vessels:['on',-6,-3.6]};
+function anchorPts(key){const a=ANCH[key];if(!a)return[];const B=S.b;
+ if(a[0]==='on')return[B.onR(a[1],a[2]),B.onR(a[1],-a[2]),B.onR(-.8,.5)];if(a[0]==='disc')return[V3(0,B.RRi+.2,0).applyQuaternion(B.nq)];return a.map(p=>V3(...p))}
+const rc=new THREE.Raycaster();
+function clipped(p,m){const cp=m.material&&m.material.clippingPlanes;if(!cp||!cp.length)return false;const out=cp.map(pl=>pl.distanceToPoint(p)<-1e-3);return m.material.clipIntersection?out.every(Boolean):out.some(Boolean)}
+function firstHit(origin,dir,far){rc.set(origin,dir);rc.near=.05;rc.far=far??1e4;for(const h of rc.intersectObjects(S.meshes.filter(m=>m.visible&&isShown(m)),false)){if(clipped(h.point,h.object))continue;const mt=h.object.material;if(mt.transparent&&mt.opacity<.3&&!h.object.userData.cap)continue;return h}return null}
+function isShown(m){let o=m;while(o){if(!o.visible)return false;o=o.parent}return true}
+function screen(p){const v=p.clone().project(cam);return[(v.x+1)/2*stage.clientWidth,(1-v.y)/2*stage.clientHeight,v.z]}
+function seen(pw,part){const d=pw.clone().sub(cam.position),L=d.length();const h=firstHit(cam.position,d.normalize(),L+1);return !h||h.distance>L-.8||(part&&h.object.userData.part===part)}
+function anchor(key){S.scene.updateMatrixWorld(true);
+ for(const p of anchorPts(key)){const pw=S.eb.localToWorld(p.clone());const s=screen(pw);if(s[2]>1||s[0]<0||s[1]<0||s[0]>stage.clientWidth||s[1]>stage.clientHeight)continue;
+  if(S.clip&&S.clip.length&&(()=>{const o=S.clip.map(pl=>pl.distanceToPoint(pw)<-1e-3);return S.clip.length>1?o.every(Boolean):o.some(Boolean)})())continue;const nd=S.parts[pk(key)];if(!nd||!(nd.isMesh?isShown(nd):nd.children.some(isShown)))continue;if(seen(pw,pk(key)))return s}
+ const me=S.parts[key];if(me&&me.isMesh&&me.userData.orb&&isShown(me)){const P=me.geometry.attributes.position,step=Math.max(1,Math.floor(P.count/400)),c=me.geometry.boundingSphere;let best=null;
+  for(let i=0;i<P.count;i+=step){const v=me.localToWorld(V3(P.getX(i),P.getY(i),P.getZ(i)));if(clipped(v,me))continue;const sc=-v.distanceTo(me.localToWorld(c.center.clone()))/c.radius;if(best&&sc<best[0])continue;
+   const s=screen(v);if(s[0]<8||s[1]<8||s[0]>stage.clientWidth-8||s[1]>stage.clientHeight-8)continue;if(seen(v,key))best=[sc,s]}if(best)return best[1]}
+ return null}
+
+/* ---- view, camera, interaction ---- */
+let dirty=true;function draw(){dirty=true}
+function setView(v,keep){S.view=v;const vo=VIEWS[v];
+ const opt={};const ex=examFor(S.side);if(ex){if(ex.cd)opt.cd=+ex.cd;if(/catar|cloud|ns\s*\d|opac/i.test(ex.lens||''))opt.cataract=1}
+ if(S.scene)S.scene.traverse(m=>{if(m.geometry&&!m.userData.orb&&m.geometry.dispose&&!(ORB&&Object.values(ORB.parts).some(d=>d.g===m.geometry)))m.geometry.dispose();if(m.material&&m.material.dispose)m.material.dispose()});
+ S.b=build(v,opt);Object.assign(S,{scene:S.b.scene,root:S.b.root,eb:S.b.eb,parts:S.b.parts,meshes:S.b.meshes,clip:S.b.clip});
+ S.root.scale.z=S.side==='L'?-1:1;if(S.side==='L'){const seenP=new Set();S.scene.traverse(m=>{const cp=m.material&&m.material.clippingPlanes;if(cp)for(const pl of cp)if(!seenP.has(pl)){seenP.add(pl);pl.normal.z*=-1}})}
+ S.up=V3(...(vo.up||[1,0,0]));S.tgt=V3(...vo.tgt);const d=V3(...vo.cam).normalize().multiplyScalar(vo.d);if(S.side==='L')d.z*=-1,S.tgt.z*=-1;S.v0=d.clone();S.off=d.clone();cam.fov=vo.fov;place();
+ if(S.sel&&!S.sel.reading&&!SOFT.has(S.sel.keys[0]))highlight(S.sel.keys);document.querySelectorAll('#views button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(!keep)draw();resize()}
+function place(){cam.position.copy(S.tgt).add(S.off);cam.up.copy(S.up);cam.lookAt(S.tgt);cam.updateProjectionMatrix();draw()}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;R.setSize(w,h,false);cam.aspect=w/h;
+ // keep the whole subject in frame on narrow screens
+ const vo=VIEWS[S.view];cam.fov=Math.max(vo.fov,2*Math.atan(Math.tan(vo.fov*DEG/2)*1.02/cam.aspect)/DEG);cam.updateProjectionMatrix();draw()}
+addEventListener('resize',resize);
+let ptrs=new Map(),drag=null,pinch0=null;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);if(ptrs.size===1)drag={x:e.clientX,y:e.clientY,t:Date.now(),moved:0};if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0={d:Math.hypot(a[0]-b[0],a[1]-b[1]),l:S.off.length()};drag=null}});
+cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pr=ptrs.get(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+ if(ptrs.size===2&&pinch0){const [a,b]=[...ptrs.values()];zoomTo(pinch0.l*pinch0.d/Math.max(20,Math.hypot(a[0]-b[0],a[1]-b[1])));return}
+ if(!drag)return;const dx=e.clientX-pr[0],dy=e.clientY-pr[1];drag.moved+=Math.abs(dx)+Math.abs(dy);if(drag.moved<6)return;$('#hint').style.opacity=0;
+ const q=new THREE.Quaternion().setFromAxisAngle(S.up,-dx*.008);S.off.applyQuaternion(q);const right=S.off.clone().cross(S.up).normalize(),q2=new THREE.Quaternion().setFromAxisAngle(right,-dy*.008),o2=S.off.clone().applyQuaternion(q2);
+ const ang=o2.angleTo(S.up);if(ang>.12&&ang<Math.PI-.12)S.off.copy(o2);place()});
+const endPtr=e=>{if(drag&&drag.moved<6&&Date.now()-drag.t<450)tap(e);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=null;if(!ptrs.size)drag=null;draw()};
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);drag=null;pinch0=null});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoomTo(S.off.length()*Math.exp(e.deltaY*.0012))},{passive:false});
+function zoomTo(L){const l0=S.v0.length();S.off.setLength(Math.min(l0*1.8,Math.max(l0*.45,L)));place()}
+function tap(e){const r=cv.getBoundingClientRect(),m=V3((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1,.5);m.unproject(cam);const h=firstHit(cam.position,m.sub(cam.position).normalize());
+ if(!h){select(null);return}select(pk(h.object.userData.part))}
+function highlight(keys){const on=new Set((keys||[]).map(pk)),ghost=!!(keys&&keys.length);if(on.has('optic nerve'))on.add('nerve sheath');S.ghost=ghost;
+ for(const m of S.meshes){const k=m.userData.part,orig=m.userData.mat0;if(!ghost||on.has(k)||(k==='nucleus'&&on.has('lens'))||(k==='lens'&&on.has('nucleus'))){m.material=orig;continue}
+  if(!m.userData.gh){m.userData.gh=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5,transparent:true,opacity:m.userData.cap?.12:.14,depthWrite:false,side:THREE.DoubleSide,clippingPlanes:orig.clippingPlanes,clipIntersection:orig.clipIntersection})}m.material=m.userData.gh}draw()}
+
+/* ---- data: the exams the doctor sent, the readings, the marks ---- */
+let DATA={mode:MODE,exams:[],name:'',marks:null};
+const exams=()=>(DATA.exams||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+function examFor(side){const e=exams()[0];return e?Object.assign({},e[side]||{}):null}
+const num=v=>v===''||v==null||isNaN(+v)?null:+v;
+function readings(side){const e=exams()[0];if(!e)return[];const x=e[side]||{},out=[];
+ const add=(k,label,value,part,view,tone,why)=>{if(value!==''&&value!=null)out.push({k,label,value,part,view,tone,why})};
+ if(x.vision)add('vision','Vision',x.vision,'cornea','inside','info','Distance sight with your glasses, if you wear them. 6/6 is normal.');
+ if(x.sph||x.cyl)add('power','Glasses power',[x.sph,x.cyl&&x.cyl+(x.axis?' × '+x.axis:'')].filter(Boolean).join(' / '),'lens','inside','info','The cornea and lens focus light; glasses correct what they miss. Minus means short-sight, plus means long-sight.');
+ const iop=num(x.iop);if(iop!=null)add('iop','Eye pressure',iop+' mmHg','anterior chamber','drain',iop>21?(iop>30?'alert':'watch'):'ok',`Normal is 10–21. It is the pressure of the fluid in the front chamber; fluid is made behind the iris and drains at the angle.${iop>21?' Yours is higher than normal, so the drain is being watched.':''}`);
+ if(x.angle)add('angle','Drainage angle',x.angle,'trabecular','drain',/clos/i.test(x.angle)?'alert':/narrow/i.test(x.angle)?'watch':'ok','Where eye fluid leaves the eye. Open means fluid can reach the drain.');
+ const cct=num(x.cct);if(cct!=null)add('cct','Cornea thickness',cct+' µm','cornea','inside',cct<480?'watch':'ok','Normal is about 500–560 µm. A thin cornea makes pressure read lower than it is.');
+ if(x.lens)add('lens','Lens',x.lens,'lens','inside',/catar|cloud|ns\s*\d|opac/i.test(x.lens)?'watch':'ok','The lens fine-tunes focus. Cloudiness is a cataract.');
+ const cd=num(x.cd);if(cd!=null)add('cd','Optic nerve cup',cd+' of the disc','disc','back',cd>=.7?'alert':cd>=.6?'watch':'ok','The optic nerve has a pale centre called the cup. Healthy is usually under 0.5; a cup that keeps widening is a sign of glaucoma.');
+ const oct=num(x.oct);if(oct!=null)add('oct','Macula (OCT)',oct+' µm','macula','back',oct>320?'watch':'ok','Thickness of the centre of the retina from the scan. Swelling here blurs reading vision.');
+ if(x.retina)add('retina','Retina',x.retina,'vessels','back',/haem|hem|bleed|exud|dr\b|retinopathy|swell|detach/i.test(x.retina)?'watch':'ok','The light-sensing layer. Diabetes and blood pressure show up here early.');
+ return out}
+const TONE={ok:'#34C759',watch:'#FF9F0A',alert:'#FF3B30',info:'#0A84FF'};
+function marks(side){const e=DATA.marks?{findings:DATA.marks}:exams()[0];return((e&&e.findings)||[]).filter(f=>!f.side||f.side===side||f.side==='B')}
+
+/* ---- pins on the eye ---- */
+let PINS=[];
+function pinList(){const out=[];if(S.ghost&&S.sel){const i=S.sel.info;return[{key:S.sel.keys[0],c:GROUPS[i.g]?GROUPS[i.g][1]:'#0A84FF',label:i.n,value:'',id:'s'}]}
+ for(const r of readings(S.side))if(r.tone!=='info'||r.k==='power')out.push({key:r.part,c:TONE[r.tone],label:r.label,value:r.value,id:'r:'+r.k});
+ for(const f of marks(S.side))out.push({key:f.part,c:TONE[f.tone]||TONE.watch,label:info(f.part)?info(f.part).n:f.part,value:f.label,id:'f:'+f.part});
+ if(S.sel&&!out.some(p=>p.key===S.sel.keys[0])){const i=info(S.sel.keys[0]);if(i)out.push({key:S.sel.keys[0],c:GROUPS[i.g]?GROUPS[i.g][1]:'#0A84FF',label:i.n,value:'',id:'s'})}
+ return out}
+function layoutPins(){const box=$('#pins');let h='',tg='';const W=stage.clientWidth,used=[];
+ for(const p of pinList()){const s=anchor(p.key);if(!s)continue;const sel=S.sel&&S.sel.keys.includes(p.key);const big=sel||p.c===TONE.watch||p.c===TONE.alert;
+  h+=`<span class="pin" style="left:${s[0]}px;top:${s[1]}px;background:${p.c}"></span>`;
+  if(big&&!used.some(u=>Math.abs(u[0]-s[0])<120&&Math.abs(u[1]-s[1])<36)){used.push(s);const l=s[0]>W*.6;tg+=`<div class="tg${l?' l':''}" style="left:${s[0]}px;top:${s[1]}px;${sel?'border:1.5px solid '+p.c:''}">${esc(p.label)}${p.value?`<b>${esc(p.value)}</b>`:''}</div>`}}
+ box.innerHTML=h+tg}
+let pinT=0;function frame(){requestAnimationFrame(frame);if(!dirty||!S.scene)return;dirty=false;R.render(S.scene,cam);const busy=(drag&&drag.moved>=6)||pinch0;$('#pins').style.opacity=busy?0:1;clearTimeout(pinT);pinT=setTimeout(()=>{if(!((drag&&drag.moved>=6)||pinch0)){layoutPins();$('#pins').style.opacity=1}},busy?220:30)}
+
+/* ---- the column: card, doctor's message, readings, trends, every part ---- */
+const SOFT=new Set(['anterior chamber','posterior chamber','vitreous','pupil','macula','disc','vessels','retina','choroid']);
+const ANT=new Set(['cornea','iris','pupil','lens','nucleus','zonules','ciliary','anterior chamber','posterior chamber','trabecular','schlemm','conjunctiva']),POST=new Set(['disc','macula','vessels','retina','choroid','vitreous']),OUTER=new Set(['cornea','iris','pupil','sclera','conjunctiva']);
+function viewFor(k){if(S.view==='drain'&&!ANT.has(k))return POST.has(k)?'back':'inside';if(S.view==='back'&&ANT.has(k))return'inside';if((S.view==='socket'||S.view==='brain')&&(ANT.has(k)||POST.has(k)||k==='choroid')&&!OUTER.has(k))return POST.has(k)?'back':'inside';if(S.parts[k])return S.view;if(PATHRX.test(k)&&!/^Right optic nerve/.test(k)||k==='optic radiation')return'brain';if(/ /.test(k)&&/^(Right|Left) /.test(k)||k==='ganglion')return'socket';return/^(macula|disc|vessels)$/.test(k)?'back':'inside'}
+function select(key,fromList){if(!key){S.sel=null;highlight(null);renderSide();post({act:'pick',part:null});return}
+ key=pk(key);const i=info(key);if(!i){return}const v=viewFor(key);if(v!==S.view&&VIEWS[v])setView(v);S.sel={keys:[key],info:i};highlight(SOFT.has(key)?null:[key]);renderSide();post({act:'pick',part:key,label:i.n,group:i.g});if(fromList)$('#side').scrollTo({top:0,behavior:'smooth'})}
+function focusReading(r){S.sel={keys:[r.part],info:info(r.part),reading:r};if(S.view!==r.view)setView(r.view);highlight(null);renderSide();$('#side').scrollTo({top:0,behavior:'smooth'})}
+function partsCatalog(){const keys=Object.keys(S.parts).filter(k=>info(k)&&!/^Left /.test(k));const by={};for(const k of keys){const i=info(k);(by[i.g]=by[i.g]||[]).push(i)}return by}
+let Q='';
+function renderSide(){const ex=exams()[0],rs=readings(S.side),el=$('#side');let h='';
+ if(S.sel){const i=S.sel.info,r=S.sel.reading,g=GROUPS[i.g]||['','#0A84FF'];
+  h+=`<div class="card pc"><button class="x" aria-label="Close" data-x>×</button><div class="h"><i style="background:${r?TONE[r.tone]:g[1]}"></i><b>${esc(r?r.label:i.n)}</b><span>${esc(r?i.n:g[0])}</span></div>${r?`<div class="v">${esc(r.value)}</div><p>${esc(r.why)}</p>`:`<p>${esc(i.d)}</p>${i.w?`<p><b>If it is affected:</b> ${esc(i.w)}</p>`:''}`}
+   ${MODE==='doctor'?`<button class="mark" data-mark="${esc(i.key)}">Mark a finding here</button>`:''}</div>`}
+ if(ex&&ex.note&&MODE!=='doctor'){const ini=(ex.doctor||'Dr').replace(/^dr\.?\s*/i,'').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  h+=`<div class="card"><div class="msg"><span class="av">${esc(ini)}</span><div><b style="font-size:16px">${ex.doctor?'Dr '+esc(ex.doctor.replace(/^dr\.?\s*/i,'')):'Your doctor'}</b><div class="empty" style="font-size:13px">${esc([ex.store,ex.date&&new Date(ex.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})].filter(Boolean).join(' · '))}</div></div></div><p class="q">“${esc(ex.note)}”</p></div>`}
+ const fs=marks(S.side);if(fs.length)h+=`<div class="sect">${MODE==='doctor'?'Findings to send':'Marked by your doctor'}</div><div class="list">${fs.map(f=>{const i=info(f.part);return`<button class="row" data-part="${esc(f.part)}"><i style="background:${TONE[f.tone]||TONE.watch}"></i><div class="t"><b>${esc(f.label||'')}</b><small>${esc(i?i.n:f.part)}</small></div><span class="ch">›</span></button>`}).join('')}</div>`;
+ if(rs.length)h+=`<div class="sect">${MODE==='doctor'?'Readings':'Your readings'} · tap to see where</div><div class="list">${rs.map((r,ix)=>`<button class="row${S.sel&&S.sel.reading&&S.sel.reading.k===r.k?' on':''}" data-r="${ix}"><i style="background:${TONE[r.tone]}"></i><div class="t"><b>${esc(r.label)}</b><small>${esc(info(r.part)?info(r.part).n:'')}</small></div><span class="val">${esc(r.value)}</span><span class="ch">›</span></button>`).join('')}</div>`;
+ const hist=exams().filter(e=>e[S.side]);if(hist.length>1){for(const [k,lab,mx] of [['iop','Eye pressure · mmHg',40],['cd','Optic nerve cup',1]]){const pts=hist.slice(0,4).reverse().map(e=>[e.date,num(e[S.side][k])]).filter(p=>p[1]!=null);if(pts.length<2)continue;
+   h+=`<div class="card"><b style="font-size:15px">${lab}</b><div class="bars">${pts.map((p,i)=>`<div><span style="height:${Math.max(8,p[1]/mx*60)}px;background:${i===pts.length-1?'#FF9F0A':'#D1D1D6'}"></span>${esc((p[0]||'').slice(0,4))} · ${p[1]}</div>`).join('')}</div></div>`}}
+ if(!ex&&MODE!=='doctor'&&!S.sel)h+=`<div class="card"><b style="font-size:17px">Explore your eye</b><p class="empty" style="margin:6px 0 0">Turn it with a finger and tap any part to see what it does. When your eye doctor sends your readings, they appear here, pinned on the exact part.</p></div>`;
+ const cat=partsCatalog();h+=`<div class="sect">Every part in this view</div><div class="srch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" placeholder="Search a part" value="${esc(Q)}" autocomplete="off"></div>`;
+ for(const g of Object.keys(GROUPS)){const its=(cat[g]||[]).filter(i=>!Q||(i.n+' '+i.d).toLowerCase().includes(Q.toLowerCase()));if(!its.length)continue;
+  h+=`<div class="gh" style="color:${GROUPS[g][1]}">${esc(GROUPS[g][0]).toUpperCase()}</div><div class="list">${its.map(i=>`<button class="row${S.sel&&S.sel.keys[0]===i.key?' on':''}" data-part="${esc(i.key)}"><i style="background:${GROUPS[g][1]}"></i><div class="t"><b>${esc(i.n)}</b><small>${esc(i.d)}</small></div><span class="ch">›</span></button>`).join('')}</div>`}
+ el.innerHTML=h;
+ el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>focusReading(rs[+b.dataset.r]));
+ el.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>select(b.dataset.part,true));
+ el.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>select(null));
+ el.querySelectorAll('[data-mark]').forEach(b=>b.onclick=()=>post({act:'mark',part:b.dataset.mark,label:info(b.dataset.mark).n,side:S.side}));
+ const q=$('#q');if(q)q.oninput=()=>{Q=q.value;const p=q.selectionStart;renderSide();const n=$('#q');n.focus();n.setSelectionRange(p,p)};draw()}
+
+/* ---- chrome ---- */
+$('#views').innerHTML=Object.entries(VIEWS).map(([k,v])=>`<button data-v="${k}"${k==='inside'?' class="on"':''}>${v.t}</button>`).join('');
+$('#views').onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.v!==S.view){setView(b.dataset.v);renderSide()}};
+$('#side-seg').onclick=e=>{const b=e.target.closest('button');if(!b||b.dataset.s===S.side)return;S.side=b.dataset.s;document.querySelectorAll('#side-seg button').forEach(x=>x.classList.toggle('on',x===b));S.sel=null;setView(S.view);renderSide()};
+$('#bk').onclick=()=>post({act:'close'});
+function post(m){try{parent.postMessage(Object.assign({type:'uh-eye-act'},m),location.origin)}catch(_){}}
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data)return;const d=e.data;
+ if(d.type==='uh-eye-data'){DATA=Object.assign({mode:MODE,exams:[]},d.data||{});const ex=exams()[0];$('#eb').textContent=ex?[ex.store,ex.date&&new Date(ex.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})].filter(Boolean).join(' · '):(DATA.name||'Your eyes');
+  if(DATA.side&&DATA.side!==S.side){S.side=DATA.side;document.querySelectorAll('#side-seg button').forEach(x=>x.classList.toggle('on',x.dataset.s===S.side))}
+  if(ready){setView(DATA.view||S.view);renderSide()}else pending=true}
+ if(d.type==='uh-eye-cmd'){if(d.view&&VIEWS[d.view]){setView(d.view);renderSide()}if('marks' in d){DATA.marks=d.marks;renderSide();draw()}if(d.part!==undefined)select(d.part)}});
+if(MODE==='doctor'){$('#bk').style.display='none';$('#eb').textContent='Explain on 3D'}
+let ready=false,pending=false;
+(async()=>{frame();try{await loadOrbit()}catch(_){/* the socket and brain views need the model; the eyeball works without it */
+  for(const k of ['socket','brain'])delete VIEWS[k];$('#views').querySelectorAll('[data-v="socket"],[data-v="brain"]').forEach(b=>b.remove())}
+ $('#load').remove();ready=true;setView(DATA.view||'inside');renderSide();post({act:'ready'})})();
+</script></body></html>

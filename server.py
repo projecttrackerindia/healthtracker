@@ -162,9 +162,11 @@ app.include_router(billing_api.r)
 app.include_router(inbox_api.r)
 app.include_router(partner_api.r)
 from api import consult as consult_api  # noqa: E402
+from api import eye as eye_api  # noqa: E402
 app.include_router(consult_api.r)
 app.include_router(consult_api.pr)
 app.include_router(consult_api.ws)
+app.include_router(eye_api.pr)
 from api import proactive as proactive_api  # noqa: E402
 from api import tasks as tasks_api  # noqa: E402
 from api import tech as tech_api  # noqa: E402
@@ -335,7 +337,7 @@ TYPES = {
     ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".woff": "font/woff", ".ttf": "font/ttf", ".pdf": "application/pdf", ".apk": "application/vnd.android.package-archive",
 }
 COMPRESSIBLE = {".html", ".js", ".css", ".json", ".svg", ".webmanifest", ".txt"}
-NO_CACHE = {"index.html", "uh.html", "body.html", "baby.html", "sw.js", "manifest.webmanifest"}
+NO_CACHE = {"index.html", "uh.html", "body.html", "baby.html", "eye.html", "sw.js", "manifest.webmanifest"}
 
 
 def _safe(rel: str) -> Path:
@@ -626,6 +628,15 @@ def baby_page(request: Request):
 def kid_page(request: Request):
     """Kids mode: the child's own organ screen (heart, lungs, tummy). Framed only by the app itself."""
     resp = _send(WEB / "kid.html", request, "no-cache")
+    resp.headers["Content-Security-Policy"] = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+    return resp
+
+
+@app.api_route("/eye", methods=["GET", "HEAD"], include_in_schema=False)
+def eye_page(request: Request):
+    """The 3D eye: the patient's Eyes page (framed by the app) and the doctor's Explain view (framed by the partner portal).
+    It receives the exams by postMessage and never calls the API itself."""
+    resp = _send(WEB / "eye.html", request, "no-cache")
     resp.headers["Content-Security-Policy"] = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
     return resp
 

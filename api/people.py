@@ -45,7 +45,8 @@ KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med"
               "vax": "summary",       # a vaccine visit marked as given (schedule group + date)
               "growth": "summary",    # a height/weight/head measurement for a child
               "mood": "summary",      # her own "how are you feeling" after a birth; women's health, so private by default
-              "visitnote": "all"}     # what the doctor said after a visit, and the follow-up date      # her own "how are you feeling" after a birth; women's health, so private by default
+              "visitnote": "all",     # what the doctor said after a visit, and the follow-up date
+              "eye": "summary"}       # an eye exam sent by the eye doctor (api/eye.py); never written by the family
 WOMENS = {"preg", "kick", "cycle", "mood"}
 RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother",
              "Grandson", "Granddaughter", "Father-in-law", "Mother-in-law", "Son-in-law", "Daughter-in-law", "Brother-in-law",
@@ -661,6 +662,8 @@ def rec_json(x: HealthRecord) -> dict:
 def _check_record(kind: str, data: dict, day: str):
     if kind not in KIND_LEVEL:
         raise HTTPException(400, "Unknown kind")
+    if kind == "eye":
+        raise HTTPException(403, "Eye exams come from your eye doctor.")
     if day and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
         raise HTTPException(400, "day must be YYYY-MM-DD")
     if len(repr(data)) > 20000:

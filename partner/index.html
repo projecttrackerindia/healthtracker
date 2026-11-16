@@ -202,7 +202,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
     pages are tabs under it, so a tab never leaves its place. Which pages exist still depends on the partner kind and role. */
  const own=ME.user.role==='owner',isPh=s.kind==='pharmacy';
  const P=[];
- if(isHosp)P.push(['today','Today','queue',[['queue','OP queue'],['appts','Visit requests',c.pendingAppointments],['consults','Video consults']]]);
+ if(isHosp)P.push(['today','Today','queue',[['queue','OP queue'],['appts','Visit requests',c.pendingAppointments],['consults','Video consults'],['eye','Eye exam']]]);
  else if(isBB)P.push(['today','Today','blood',[['blood','Blood requests']]]);
  else P.push(['today','Today','today',[]]);
  if(!isBB)P.push(['orders','Orders','orders',[['orders',isLab?'Bookings':'Orders',c.openOrders],isPh?['pick','Pick list']:null,isLab?['team','Collection team']:null].filter(Boolean)]);
@@ -566,6 +566,53 @@ VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy
  $('#pf').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),b={};['phone','hours'].forEach(k=>b[k]=fd.get(k)||'');['open24','homeCollection','delivery'].forEach(k=>{if(e.target[k])b[k]=!!fd.get(k)});['collectionFee','deliveryFee','freeAbove','etaMin','discount'].forEach(k=>{if(fd.get(k)!=null&&fd.get(k)!=='')b[k]=+fd.get(k)});try{await api('/profile',{method:'PUT',body:b});toast('Saved');load()}catch(err){toast(err.message)}};
  $('#pw').onsubmit=async e=>{e.preventDefault();try{await api('/password',{method:'POST',body:{current:$('#pc').value,new:$('#pn').value}});toast('Password changed');load()}catch(err){toast(err.message)}};
  loadBoard()};
+// ---------------- eye exam (eye hospitals): readings, findings on the 3D eye, plain words → the patient's Eyes page
+const EYEF={aid:null,exam:null,hist:[],findings:[],t:0};
+const EYEROWS=[['vision','Vision','6/9'],['sph','Sphere','-2.25'],['cyl','Cylinder','-0.50'],['axis','Axis','180'],['add','Add','+1.50'],['iop','Pressure (mmHg)','16'],['cct','Cornea (µm)','540'],['cd','Cup-to-disc','0.4'],['oct','Macula OCT (µm)','260'],['angle','Angle','Open'],['lens','Lens','Clear'],['retina','Retina','Healthy']];
+const EYETPL=[[/catar|lens/i,'The lens inside your eye has become cloudy. That is a cataract. It is replaced with a clear artificial lens in a short day surgery.'],
+ [/press|glauc|cup|disc/i,'Your eye pressure and the optic nerve need watching. We will check your side vision and scan the nerve, and use drops if needed to protect it.'],
+ [/retin|diabet|haem|exud/i,'The back of your eye shows changes from blood sugar. Keeping sugar and blood pressure in control protects your sight; we will check it again.'],
+ [/dry|tear/i,'Your eyes are not making enough tears. Lubricating drops several times a day will help.'],
+ [/conjunct|red/i,'The thin skin over the white of your eye is inflamed. Use the drops as prescribed and avoid touching or rubbing the eye.'],
+ [/squint|rectus|palsy|nerve vi|abducens/i,'The nerve or muscle that moves your eye is not working fully, which causes double vision. Most improve over weeks; we will review you.']];
+VIEWS.eye=()=>{$('#main').innerHTML=head('Eye exam','Enter the readings, mark findings on the 3D eye and add a few plain words. Sending puts it on the patient’s Eyes page, pinned on the exact part, and tells the family.')+
+ `<div style="display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px" id="eg"><div class="card" id="evl" style="max-height:75vh;overflow:auto">Loading…</div><div id="evx"><div class="empty">Choose a visit</div></div></div>`;loadEyeVisits()};
+async function loadEyeVisits(){let r;try{r=await api('/eye/visits')}catch(e){$('#evl').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ if(!r.visits.length){$('#evl').innerHTML='<div class="empty">No confirmed visits yet. Confirm a visit under Visit requests, or add a walk-in to the OP queue.</div>';return}
+ $('#evl').innerHTML=r.visits.map(v=>`<button class="btn" style="width:100%;justify-content:space-between;margin-bottom:6px;${EYEF.aid===v.id?'border-color:var(--teal)':''}" data-ev="${E(v.id)}"><span style="text-align:left;min-width:0"><b style="display:block">${E(v.memberName||'Patient')}</b><small style="color:var(--mute)">${E(v.date)} ${E(v.time)} · ${E(v.why||v.kind)}</small></span>${v.exam?'<span class="tag ok">sent</span>':''}</button>`).join('');
+ $('#evl').querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>openEyeVisit(b.dataset.ev))}
+async function openEyeVisit(aid){let r;try{r=await api('/eye/visits/'+aid)}catch(e){toast(e.message);return}EYEF.aid=aid;EYEF.hist=r.history||[];const ex=r.visit.exam||{};EYEF.findings=(ex.findings||[]).slice();loadEyeVisits();
+ const doc=ME.user.role==='doctor',warn=!doc?'<p class="msg on err">Only verified doctors send eye exams. You can view the visit.</p>':(!ME.user.verified?'<p class="msg on err">Your registration is being verified by Urban Health; you can send exams once it is confirmed.</p>':'');
+ const last=EYEF.hist[0],cell=(k,sd,ph)=>`<input data-k="${sd}.${k}" value="${E(((ex[sd]||{})[k])??'')}" placeholder="${E(last&&last[sd]&&last[sd][k]!=null?'last '+last[sd][k]:ph)}" style="padding:7px 9px">`;
+ $('#evx').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between;margin:0"><div><h3 style="margin:0">${E(r.visit.memberName||'Patient')}</h3><span style="color:var(--mute)">${E(r.visit.date)} ${E(r.visit.time)} · ${E(r.visit.why||'')}${EYEF.hist.length?` · ${EYEF.hist.length} earlier exam${EYEF.hist.length>1?'s':''} here`:''}</span></div>${r.visit.exam?'<span class="tag ok">Sent · editing updates it</span>':''}</div>${warn}</div>
+ <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:14px;align-items:start">
+  <div><div class="card"><h3>Readings</h3><table><tr><th></th><th>Right</th><th>Left</th></tr>${EYEROWS.map(([k,l,ph])=>`<tr><td style="white-space:nowrap;color:var(--mute)">${l}</td><td>${cell(k,'R',ph)}</td><td>${cell(k,'L',ph)}</td></tr>`).join('')}</table></div>
+   <div class="card"><h3>Findings</h3><p style="color:var(--mute);margin:0 0 8px">Tap a part on the 3D eye, then “Mark a finding here”.</p><div id="efl"></div></div>
+   <div class="card"><h3>Plain words for the patient</h3><div id="etp" class="row" style="margin-bottom:8px"></div><textarea id="enote" rows="4" maxlength="600" placeholder="What you found and what happens next, in everyday words">${E(ex.note||'')}</textarea>
+    <label style="display:block;margin-top:10px;font-size:12px;font-weight:600;color:var(--mute)">Diagnosis (stays with the hospital record)</label><input id="edx" maxlength="160" value="${E(ex.dx||'')}">
+    <button class="btn p" id="esend" style="width:100%;justify-content:center;margin-top:12px" ${doc&&ME.user.verified?'':'disabled'}>${r.visit.exam?'Send the update to the patient':'Send to the patient’s phone'}</button></div></div>
+  <div class="card" style="padding:0;overflow:hidden;position:sticky;top:12px"><iframe id="eyefr" src="/eye?m=doctor" title="3D eye" style="border:0;width:100%;height:78vh;display:block"></iframe></div></div>`;
+ $('#evx').querySelectorAll('[data-k]').forEach(i=>i.oninput=eyePreview);$('#enote').oninput=eyePreview;$('#esend').onclick=sendEye;eyeFindings()}
+function eyeDraft(){const o={R:{},L:{}};$('#evx').querySelectorAll('[data-k]').forEach(i=>{const [sd,k]=i.dataset.k.split('.'),v=i.value.trim();if(!v)return;o[sd][k]=['iop','cct','cd','oct'].includes(k)?Number(v):v});
+ return Object.assign(o,{findings:EYEF.findings,note:$('#enote').value.trim(),dx:$('#edx').value.trim()})}
+function eyePreview(){clearTimeout(EYEF.t);EYEF.t=setTimeout(()=>{const f=$('#eyefr');if(!f||!f.contentWindow)return;const d=eyeDraft();
+ f.contentWindow.postMessage({type:'uh-eye-data',data:{mode:'doctor',exams:[Object.assign({date:new Date().toISOString().slice(0,10),doctor:ME.user.name,store:ME.store.name},d),...EYEF.hist]}},location.origin)},500);
+ const words=EYEF.findings.map(f=>f.label).join(' ')+' '+[...$('#evx').querySelectorAll('[data-k$="lens"],[data-k$="retina"]')].map(i=>i.value).join(' ');
+ $('#etp').innerHTML=EYETPL.filter(([rx])=>rx.test(words)).map(([,t],i)=>`<button class="btn sm" data-tp="${i}">+ ${E(t.split(/[.,]/)[0].slice(0,38))}…</button>`).join('');
+ $('#etp').querySelectorAll('[data-tp]').forEach(b=>b.onclick=()=>{const t=EYETPL.filter(([rx])=>rx.test(words))[+b.dataset.tp][1],n=$('#enote');n.value=(n.value?n.value+' ':'')+t;n.focus();eyePreview()})}
+const EYEPART={cornea:'Cornea',iris:'Iris',pupil:'Pupil',lens:'Lens',nucleus:'Lens nucleus',zonules:'Zonules',ciliary:'Ciliary body','anterior chamber':'Front chamber','posterior chamber':'Back chamber',trabecular:'Drainage meshwork',schlemm:"Schlemm's canal",conjunctiva:'Conjunctiva',sclera:'Sclera',choroid:'Choroid',retina:'Retina',vitreous:'Vitreous',macula:'Macula',disc:'Optic disc',vessels:'Retinal vessels','optic nerve':'Optic nerve',ganglion:'Ciliary ganglion'};
+const eyePartName=k=>EYEPART[k]||String(k).replace(/^(Right|Left) /,'').replace(/^./,c=>c.toUpperCase());
+function eyeFindings(){const el=$('#efl');if(!el)return;el.innerHTML=EYEF.findings.length?EYEF.findings.map((f,i)=>`<div class="row" style="margin-bottom:6px"><span class="tag">${E(f.partName||eyePartName(f.part))}</span><select data-fs="${i}" style="width:auto">${['R','L','B'].map(x=>`<option value="${x}" ${f.side===x?'selected':''}>${x==='B'?'Both':x==='R'?'Right':'Left'}</option>`).join('')}</select>
+  <input class="grow" data-fl="${i}" value="${E(f.label)}" placeholder="e.g. Cataract NS2" maxlength="80" list="efdl"><select data-ft="${i}" style="width:auto">${[['watch','Watch'],['alert','Urgent'],['ok','Normal']].map(([v,t])=>`<option value="${v}" ${f.tone===v?'selected':''}>${t}</option>`).join('')}</select><button class="btn sm d" data-fx="${i}">✕</button></div>`).join('')+
+  '<datalist id="efdl">'+['Cataract NS2','Raised pressure','Large cup · glaucoma suspect','Narrow angle','Diabetic retinopathy','Macular swelling','Dry eye','Conjunctivitis','Sixth nerve palsy','Blocked tear duct'].map(x=>`<option value="${x}">`).join('')+'</datalist>':'<div class="empty" style="padding:14px">No findings yet</div>';
+ el.querySelectorAll('[data-fl]').forEach(i=>i.oninput=()=>{EYEF.findings[+i.dataset.fl].label=i.value;eyePreview()});el.querySelectorAll('[data-fs]').forEach(i=>i.onchange=()=>{EYEF.findings[+i.dataset.fs].side=i.value;eyePreview()});
+ el.querySelectorAll('[data-ft]').forEach(i=>i.onchange=()=>{EYEF.findings[+i.dataset.ft].tone=i.value;eyePreview()});el.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{EYEF.findings.splice(+b.dataset.fx,1);eyeFindings();eyePreview()});eyePreview()}
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-eye-act'||!EYEF.aid)return;
+ if(e.data.act==='ready')eyePreview();
+ if(e.data.act==='mark'&&EYEF.findings.length<12){EYEF.findings.push({part:e.data.part,partName:e.data.label,side:e.data.side||'R',label:'',tone:'watch'});eyeFindings();const l=$('#efl').querySelectorAll('[data-fl]');l[l.length-1]&&l[l.length-1].focus()}});
+async function sendEye(){const b=$('#esend'),d=eyeDraft();if(d.findings.some(f=>!f.label.trim())){toast('Add a few words to every finding');return}
+ b.disabled=true;try{await api('/eye/visits/'+EYEF.aid,{method:'PUT',body:{...d,findings:d.findings.map(({part,side,label,tone})=>({part,side,label,tone}))}});toast('Sent · the family has it on their Eyes page');openEyeVisit(EYEF.aid)}catch(e){toast(e.message);b.disabled=false}}
+
 // ---------------- video consults (doctors)
 let CALL=null;const FREQ={od:'once a day',bd:'twice a day',tds:'three times a day',qid:'four times a day',sos:'when needed',hs:'at bedtime',weekly:'once a week'};
 async function loadBoard(){if(!$('#bdbox'))return;let r;try{r=await api('/board-token')}catch(e){$('#bdbox').textContent=e.message;return}

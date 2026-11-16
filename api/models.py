@@ -723,6 +723,7 @@ class Appointment(Base):
     transcript: Mapped[list | None] = mapped_column(JSON, nullable=True)   # [{who, t, text}] from the video consult
     rx: Mapped[dict | None] = mapped_column(JSON, nullable=True)           # {items:[{name,strength,form,frequency,duration,instructions,rx}], advice, doctor, t}
     summary: Mapped[str] = mapped_column(Text, default="")                 # AI visit summary, for discussion with the doctor
+    eye: Mapped[dict | None] = mapped_column(JSON, nullable=True)          # the eye exam written at this visit (api/eye.py)
     call_started: Mapped[int | None] = mapped_column(Integer, nullable=True)
     call_ended: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created: Mapped[int] = mapped_column(Integer, default=now)
