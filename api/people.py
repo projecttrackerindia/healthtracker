@@ -45,6 +45,8 @@ KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med"
               "vax": "summary",       # a vaccine visit marked as given (schedule group + date)
               "growth": "summary",    # a height/weight/head measurement for a child
               "mood": "summary",      # her own "how are you feeling" after a birth; women's health, so private by default
+              "feed": "summary",      # a baby's feed, tapped by a parent (board "After birth": Feeds today)
+              "nappy": "summary",     # a wet or dirty nappy, tapped by a parent (Nappies today)
               "visitnote": "all",     # what the doctor said after a visit, and the follow-up date
               "eye": "summary"}       # an eye exam sent by the eye doctor (api/eye.py); never written by the family
 WOMENS = {"preg", "kick", "cycle", "mood"}
@@ -355,7 +357,7 @@ def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
                                                           HouseholdInvite.expires > now() - 30 * 86400).order_by(HouseholdInvite.created.desc())):
             invites.append(invite_view(i))
     h = db.get(Household, u.household_id) if u.household_id else None
-    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role, "lang": u.lang or "en", "authApp": bool(getattr(u, "totp_secret", ""))},
+    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role, "lang": u.lang or "en", "authApp": bool(getattr(u, "totp_secret", "")), "passkeys": len(getattr(u, "passkeys", None) or [])},
             "household": u.household_id, "hkey": h.key if h else None, "me": mine.id if mine else None, "people": people, "members": members,
             "invites": invites, "onboarded": bool(mine and contacts(db, mine.id))}
 
@@ -682,6 +684,10 @@ def _check_record(kind: str, data: dict, day: str):
         raise HTTPException(400, "Choose a stage")
     if kind == "mood" and data.get("v") not in ("good", "okay", "low", "vlow"):
         raise HTTPException(400, "Choose how you feel")
+    if kind == "feed" and data.get("side") not in (None, "", "left", "right", "bottle"):
+        raise HTTPException(400, "Choose left, right or bottle")
+    if kind == "nappy" and data.get("t") not in ("wet", "dirty", "both"):
+        raise HTTPException(400, "Choose wet or dirty")
     if kind == "vax" and not re.fullmatch(r"[a-z0-9]{1,8}", str(data.get("g", ""))):
         raise HTTPException(400, "Choose which vaccines were given")
     if kind == "growth":

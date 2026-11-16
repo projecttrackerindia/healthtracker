@@ -310,8 +310,35 @@ def need_user(request: Request, db: Session = Depends(get_db)) -> User:
     return u
 
 
+def device_label(ua: str) -> str:
+    ua = ua or ""
+    if "iPhone" in ua: return "iPhone"
+    if "iPad" in ua: return "iPad"
+    if "Android" in ua: return "Android phone"
+    if "Macintosh" in ua: return "Mac"
+    if "Windows" in ua: return "Windows computer"
+    return "a new device"
+
+
+def _new_device_alert(db: Session, u: User, ua: str):
+    """Tell the person's other phones when their account is opened on a kind of device it has not used before."""
+    try:
+        prev = db.scalars(select(AuthSession.ua).where(AuthSession.user_id == u.id)).all()
+        if not prev or not getattr(u, "household_id", ""):
+            return
+        dev = device_label(ua)
+        if any(device_label(x) == dev for x in prev):
+            return
+        from .inbox import notify
+        notify(db, u.household_id, "security", f"New sign-in on {dev}",
+               "If this wasn't you, open Settings › Permissions › Sign-in and security and sign that device out.", to_user=u.id, url="/app")
+    except Exception as e:   # sign-in never fails because of the alert
+        print("[auth] new device alert failed:", type(e).__name__, flush=True)
+
+
 def start_session(request: Request, response: Response, db: Session, u: User, method: str) -> dict:
     t = secrets.token_urlsafe(32)
+    _new_device_alert(db, u, request.headers.get("user-agent", ""))
     db.add(AuthSession(id=tok_hash(t), user_id=u.id, expires=now() + SESSION_DAYS * 86400, method=method,
                        ua=request.headers.get("user-agent", "")[:200], ip=(request.client.host if request.client else "")[:64]))
     u.last_login, u.failed, u.locked_until = now(), 0, None
