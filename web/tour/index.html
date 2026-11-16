@@ -32,7 +32,7 @@ body.rose{background:#FFF6F8}
 body.sky{background:#F3F8FF}
 a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 #gl{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block;pointer-events:none;transition:opacity .5s}
-.behind{position:fixed;left:0;right:0;top:0;height:100vh;height:100svh;z-index:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;padding-bottom:12vh}
+.behind{position:fixed;left:0;right:0;top:0;height:100vh;height:100svh;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;padding-bottom:12vh}
 .behind div{font-size:clamp(64px,12.5vw,190px);font-weight:700;letter-spacing:-.055em;line-height:.92;text-align:center}
 .behind span{display:block;color:#D2D2D7}
 main,footer,.view{position:relative;z-index:2}
@@ -636,7 +636,7 @@ function create(st=1){const c=$('#ca');const prog=n=>`<div class="prog">${[1,2,3
   c.querySelectorAll('.who button').forEach(b=>b.onclick=()=>b.classList.toggle('on'));$('#fin').onclick=()=>create(4);$('#sk').onclick=e=>{e.preventDefault();create(4)}}
  if(st===4){c.innerHTML=`<div class="fadein done"><div class="ok"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h1>${NAME?'Welcome, '+esc(NAME)+'.':'You\'re all set.'}</h1><p class="sub" style="margin-left:auto;margin-right:auto">Add your first report to see it on your body.</p><a class="btn" href="#home" style="margin-top:26px">Get started</a></div>`}}
 /* never leave the loading screen up: if the 3D is slow or blocked, show the page anyway */
-setTimeout(()=>{const l=document.getElementById('load');if(l)l.classList.add('off');if(window.UH3D!=='running')uhErr(window.UH3D?'3D still loading: '+(document.getElementById('lmsg')||{}).textContent:'3D engine did not start (scripts blocked?)')},12000);
+setTimeout(()=>{const l=document.getElementById('load');if(l)l.classList.add('off');if(!window.UH3D)uhErr('3D engine did not start (scripts blocked?)')},12000);
 window.VIEW='home';
 function route(){const h=(location.hash||'#home').slice(1),v=['sign-in','create-account'].includes(h)?h:'home';VIEW=v;
  document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v-'+v));document.body.classList.remove('dark','rose','sky');
