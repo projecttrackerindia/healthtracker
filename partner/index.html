@@ -190,6 +190,8 @@ html,body{font-family:var(--font)}
 .qnow{background:#0B8A7C!important;color:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:24px!important;grid-row:span 1}
 .qnow small{color:rgba(255,255,255,.8)!important;font-weight:600}.qnow b{font-size:84px!important;line-height:1;letter-spacing:-.04em;color:#fff}.qnow span{color:rgba(255,255,255,.85)}
 .qnow .btn{margin-top:12px;background:#fff!important;color:#0B8A7C!important;border:0;width:100%;height:44px;justify-content:center;font-weight:600}
+#ql{display:grid;grid-template-columns:280px minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}#ql>.cards{display:contents}#ql .qnow{grid-column:1;grid-row:1/3;align-self:stretch;margin:0}#ql>.cards>.card:not(.qnow){grid-row:1;margin:0}#ql>.card{grid-column:2/4;grid-row:2;margin:0}
+@media (max-width:900px){#ql{grid-template-columns:1fr 1fr}#ql .qnow{grid-column:1/-1;grid-row:auto}#ql>.cards>.card:not(.qnow){grid-row:auto}#ql>.card{grid-column:1/-1;grid-row:auto}}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
