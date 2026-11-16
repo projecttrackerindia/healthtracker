@@ -341,7 +341,7 @@ class RxIn(BaseModel):
     diagnosis: str = ""     # the doctor's words, shown as the doctor's note
 
 
-def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict) -> bytes:
+def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict, visit: str = "Video consult") -> bytes:
     try:
         import pymupdf  # type: ignore
     except ImportError:  # pragma: no cover
@@ -364,7 +364,7 @@ def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict) -> bytes:
     page.insert_text((M, y), (a.member_name or "Family member")[:48], fontsize=11, fontname="hebo", color=INK)
     page.insert_text((col2, y), f"Dr {u.name}"[:48], fontsize=11, fontname="hebo", color=INK)
     y += 14
-    left = [f"Video consult on {time.strftime('%d/%m/%Y %H:%M', time.localtime(rx['t']))} IST", f"Reason: {a.why or '—'}"[:70]]
+    left = [f"{visit} on {time.strftime('%d/%m/%Y %H:%M', time.localtime(rx['t']))} IST", f"Reason: {a.why or '—'}"[:70]]
     right = [(u.specialty or "General practice")[:60], f"Reg. no. {u.reg_no}", s.name[:60], ", ".join(x for x in (s.address, s.area, s.city) if x)[:70]]
     y2 = y
     for line in left:
@@ -406,7 +406,8 @@ def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict) -> bytes:
     page.insert_text((W - M - 200, y), f"Dr {u.name}"[:40], fontsize=11, fontname="hebo", color=INK)
     page.insert_text((W - M - 200, y + 13), f"Reg. no. {u.reg_no} · signed electronically", fontsize=8, fontname="helv", color=MUTE)
     page.insert_text((W - M - 200, y + 24), f"Issued through Urban Health · {time.strftime('%d/%m/%Y %H:%M', time.localtime(rx['t']))} IST", fontsize=8, fontname="helv", color=MUTE)
-    foot = ["This e-prescription was issued after a video consult, in line with the Telemedicine Practice Guidelines, 2020 (Board of Governors, MCI).",
+    foot = (["This e-prescription was issued after a video consult, in line with the Telemedicine Practice Guidelines, 2020 (Board of Governors, MCI)."]
+            if visit == "Video consult" else ["This e-prescription was issued after an in-person outpatient visit and signed electronically by the doctor."]) + [
             "It is valid for dispensing by a licensed pharmacy. Verify the doctor's registration on the NMC Indian Medical Register if needed."]
     yy = 842 - 46
     for line in foot:

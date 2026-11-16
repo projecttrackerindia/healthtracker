@@ -234,6 +234,25 @@ html,body{font-family:var(--font)}
 @media (max-width:860px){nav button.nx{display:none!important}.memenu .mnav{display:block}#main{min-width:0;max-width:100%}main{min-width:0}}
 @media (min-width:861px){.memenu .mnav{display:none}}
 nav .ns{display:none}@media (max-width:860px){nav .nl{display:none}nav .ns{display:inline}}
+.vg{display:grid;grid-template-columns:300px minmax(0,1fr) 440px;gap:16px;align-items:stretch;min-height:calc(100vh - 140px)}
+.vcol{display:flex;flex-direction:column;gap:12px}.vc{background:var(--card);border-radius:22px;padding:16px 18px}.vc h3{margin:0 0 6px;font-size:17px}.vmut{color:var(--mute);font-size:13.5px;line-height:1.5;margin:0}
+.vv{padding:6px 18px}.vr{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.vr:last-child{border-bottom:0}.vr b{display:block;font-size:14px}.vr small{color:var(--mute);font-size:12px}.vr>b{font-size:17px}
+.val{background:#FFF1F0}.val b{color:#C4291C;display:block}.val small{color:var(--mute);font-size:12px}
+.vchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.vchips i{font-style:normal;font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#fff}
+.vbody{position:relative;background:linear-gradient(#F7F8FA,#EEF0F4);border-radius:22px;overflow:hidden;min-height:560px;display:flex;flex-direction:column}.vbody iframe{flex:1;border:0;width:100%;min-height:540px}.vbody>small{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:var(--mute);font-size:12px}.vbz{margin:auto;color:var(--mute);font-size:14px;padding:30px;text-align:center}
+.vrx{display:flex;flex-direction:column}.vli{display:flex;gap:12px;align-items:center}.vli b{display:block;font-size:17px}.vli small{color:var(--mute);font-size:12.5px}
+.vmic{width:52px;height:52px;border-radius:50%;background:#0B8A7C;display:grid;place-items:center;flex:none;box-shadow:0 0 0 6px rgba(11,138,124,.15)}.vmic.on{background:#FF3B30;box-shadow:0 0 0 8px rgba(255,59,48,.18);animation:vpu 1.6s ease-in-out infinite}@keyframes vpu{50%{box-shadow:0 0 0 12px rgba(255,59,48,.08)}}
+.vlang button{font-size:12.5px;color:var(--mute);padding:0;margin-right:5px}.vlang button.on{color:#0B8A7C;font-weight:600}.vlang button:not(:last-child)::after{content:",";color:var(--mute)}
+.vtx{width:100%;margin-top:12px;border-radius:16px;background:#F5F5F7;border:1px solid transparent;padding:12px 14px;font:inherit;font-size:13.5px;line-height:1.5;color:#3A3A3C;resize:vertical}.vtx:focus{background:#fff;border-color:#0B8A7C;outline:none}
+.vsec{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin:16px 0 4px}
+.vmed{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.vmed b{display:block;font-size:14px}.vmed small{color:var(--mute);font-size:12px}.vpi{width:30px;height:30px;border-radius:9px;background:#E6F4F1;display:grid;place-items:center;flex:none}
+.vtag{font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;flex:none}.vtag.changed{background:#FFF1E0;color:#9A5B00}.vtag.same{background:#F2F2F5;color:#6E6E73}.vtag.new{background:#E8F1FF;color:#0071E3}
+.vx{font-size:12px;color:#0B8A7C;padding:4px 6px}.ved{flex-wrap:wrap}.ved input,.ved select{min-height:34px;border-radius:10px;font-size:13px;flex:1;min-width:80px}
+.vah{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}.vah svg{flex:none;margin-top:2px}.vah b{display:block;font-size:13.5px}.vah small{color:var(--mute);font-size:12px}
+.vsend{margin-top:auto;min-height:50px;border-radius:999px;background:#0B8A7C;color:#fff;font-size:16px;font-weight:600;width:100%;position:sticky;bottom:0}.vsend:disabled{opacity:.45}.vrx .vsend{margin-top:18px}
+.vpill{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:#E8E8ED;font-size:13px;font-weight:500}.vfin{min-height:34px;padding:0 16px;border-radius:999px;background:#0B8A7C;color:#fff;font-size:13px;font-weight:600}
+@media (max-width:1250px){.vg{grid-template-columns:280px minmax(0,1fr)}.vrx{grid-column:1/-1}}
+@media (max-width:760px){.vg{grid-template-columns:minmax(0,1fr)}.vbody{min-height:420px}.vbody iframe{min-height:400px}}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -285,7 +304,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
   :[['today','Today','today'],['orders','Orders','box',c.openOrders],isShop?null:['prices','Stock & prices','pill'],own?['earnings','Earnings','earn']:null,['msgs','Messages','msgs',c.unreadMessages],isPh?['team','Team','team']:null,['profile','Profile','gear']]).filter(Boolean);
  if(ME.user.role==='doctor'&&!isHosp)N.splice(N.length-1,0,['blood','Blood requests','drop']);
  const P=N.map(([v,n,i,b])=>[v,n,v,[[v,n,b]],i]);
- const pl=P.find(x=>x[0]===view)||(view==='pick'?P.find(x=>x[0]==='orders'):null)||P[0];
+ const pl=P.find(x=>x[0]===view)||(view==='pick'?P.find(x=>x[0]==='orders'):view==='visit'?P.find(x=>x[0]==='queue'):null)||P[0];
  const IC2={today:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',box:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',flask:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/>',doc:'<path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',pill:'<rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-35 12 12.5)"/><path d="M9.5 8l5 8"/>',earn:'<path d="M7 4h10M7 9h10M13 9c3 0 3 6-2 6H7l8 6"/>',msgs:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',team:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M15 15c3 0 6 1.5 6 4"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',queue:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M15 15c3 0 6 1.5 6 4"/>',video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>'};
  const badge=k=>{const x=P.find(p=>p[0]===k);return x?+x[3][0][2]||0:0};
  root.innerHTML=`<div class="app"><aside><div class="mark" aria-label="${E(s.name)}">${E((s.name||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div><div class="plg"><img src="/brand/svg/partner-icon.svg" alt="" width="30" height="30"><span>Urban Health <span>Partner</span></span></div><nav>${P.map(([k,n,first,_s,ic],i)=>`<button class="${pl[0]===k?'on':''} ${MAIN5(P).includes(k)?'':'nx'}" data-short="${E(SHORT[n]||n)}" ${pl[0]===k?'aria-current="page"':''} data-v="${first}"><svg viewBox="0 0 24 24" aria-hidden="true">${IC2[ic]||IC2.today}</svg><span class="nl">${n}</span><span class="ns">${E(SHORT[n]||n)}</span>${badge(k)?`<em>${badge(k)}</em>`:''}</button>`).join('')}</nav>
@@ -293,7 +312,7 @@ function render(){const root=$('#root');if(!ME){root.innerHTML=`<div class="logi
   <main>${pl[3].length>1?`<div class="ptabs" role="tablist">${pl[3].map(([v,t,b])=>`<button role="tab" aria-selected="${view===v}" data-v="${v}">${t}${b?` <em>${b}</em>`:''}</button>`).join('')}</div>`:''}<div id="main"></div></main></div>`;
  root.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{view=b.dataset.v;render();load()});$('#out').onclick=async e=>{e.preventDefault();await api('/logout',{method:'POST'});ME=null;render()};
  const mb=$('#mebtn'),mm=$('#memenu');mb.onclick=e=>{e.stopPropagation();mm.hidden=!mm.hidden};document.addEventListener('click',e=>{if(!mm.hidden&&!mm.contains(e.target))mm.hidden=true});
- if(!VIEWS[view]||(!P.some(x=>x[0]===view)&&view!=='pick'))view=pl[2];
+ if(!VIEWS[view]||(!P.some(x=>x[0]===view)&&view!=='pick'&&view!=='visit'))view=pl[2];
  VIEWS[view]()}
 /* As on the partner boards: a teal line above the title (the day and the kind of partner), the page's own actions
    beside it, no paragraph under it. What the paragraph said stays on the title as its tooltip. */
@@ -369,6 +388,72 @@ async function lbReports(){let r;try{r=await api('/orders?status=all')}catch(e){
  $('#rpw').innerHTML=`<div class="lbu" style="margin-top:0"><table><tr><th>Waiting for a report</th><th>Tests</th><th>Collected</th><th>Status</th></tr>${due.map(o=>row(o,o.rerunAt?'<span class="lbt a">Run again</span>':'<span class="lbt n">Running</span>')).join('')||'<tr><td colspan="4" class="lbz">Nothing waiting.</td></tr>'}</table></div>
  <div class="lbu"><table><tr><th>Sent</th><th>Tests</th><th>Collected</th><th>Sent</th></tr>${sent.slice(0,60).map(o=>row(o,`<span class="lbt g">${E(dayLbl(o.reportAt||o.created)+' '+hm(o.reportAt))}</span>`)).join('')||'<tr><td colspan="4" class="lbz">No reports sent yet.</td></tr>'}</table></div>`;
  $('#rpw').querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(LB.sel!==b.dataset.o){LB.read=null;LB.file=null}LB.sel=b.dataset.o;lbReports()});lbPanel(r.orders.find(o=>o.id===LB.sel))}
+/* Board 10 · the doctor's consult for an OP token: what the family shared (summary, values against the last
+   visit, allergies), the same 3D body they see, and a prescription the doctor speaks, checks and signs. */
+let VISIT={id:null,d:null,text:'',draft:null,sr:null,t0:0,lang:'en-IN',sent:false};
+function openVisit(tid){VISIT={id:tid,d:null,text:'',draft:null,sr:null,t0:0,lang:VISIT.lang||'en-IN',sent:false};view='visit';render()}
+VIEWS.visit=async()=>{const m=$('#main');if(!VISIT.id){view='queue';return render()}
+ m.innerHTML='<div class="empty">Loading the visit…</div>';
+ try{VISIT.d=await api(`/queue/${VISIT.id}/visit`)}catch(e){m.innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
+ const d=VISIT.d,t=d.token,c=d.ctx,p=(c&&c.person)||{},first=(t.member||'').split(' ')[0]||'the patient',sex=p.sex?(p.sex[0]||'').toUpperCase():'';
+ const val=f=>{const fl=f.flag;return`<b style="color:${fl==='high'||fl==='low'?'#C4291C':fl==='normal'?'#1A7F37':'#9A5B00'}">${E(String(f.value))}${f.unit&&f.unit!=='mg/dL'&&f.unit!=='U/L'?' '+E(f.unit):''}</b>`};
+ const ago=s=>{if(!s)return'';const dd=Math.round((Date.now()-new Date(s+'T00:00:00'))/864e5);return dd<45?`${dd} days ago`:`${Math.round(dd/30)} months ago`};
+ const fs=(c&&c.findings||[]).slice(0,4),vit=c&&c.vitals,bp=vit&&vit.bp;
+ m.innerHTML=`<div class="row phd" style="justify-content:space-between;align-items:flex-end"><div><div class="peb">Token ${t.number} · ${E((ME.user.name||'').toUpperCase())}</div><h1>${E(t.member||'Patient')}${p.age!=null?` · ${p.age}${sex?' '+sex:''}`:''}</h1></div>
+  <div class="row" style="margin:0;gap:8px"><span class="vpill">${E(String(d.pastVisits||0))} past visit${d.pastVisits===1?'':'s'}</span><button class="vfin" id="vfin">${t.state==='done'?'Back to the queue':'Finish visit'}</button></div></div>
+ <div class="vg">
+  <div class="vcol">
+   ${c?`<section class="vc"><h3>Summary</h3><p class="vmut">${E(c.summary||t.why||'Nothing written yet.')}</p></section>
+   ${fs.length||bp?`<section class="vc vv">${fs.map(f=>`<div class="vr"><div><b>${E(f.test)}</b><small>${f.previous?E(ago(f.previous.date))+' '+E(String(f.previous.value)):f.ref?'Normal '+E(f.ref):E(f.date||'')}</small></div>${val(f)}</div>`).join('')}${bp?`<div class="vr"><div><b>BP</b><small>${vit.src?E(vit.src):'Latest reading'}</small></div><b style="color:#9A5B00">${E(String(bp))}</b></div>`:''}</section>`:''}
+   ${c.allergies&&!/^none/i.test(c.allergies)?`<section class="vc val"><b>Allergy · ${E(c.allergies)}</b><small>From ${E(first)}'s Medical ID</small></section>`:`<section class="vc"><b>No allergies recorded</b><small class="vmut">Ask, and note it if there is one</small></section>`}`
+   :`<section class="vc"><h3>Not shared yet</h3><p class="vmut">${E(first)} can share values, medicines and allergies for this visit from the token in the Urban Health app: <b>Share my summary</b>. It is gone when the visit ends.</p><button class="btn sm" id="vre" style="margin-top:8px">Check again</button></section>`}
+   ${d.lastVisit?`<section class="vc"><h3>Last visit · ${E(new Date(d.lastVisit.t*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short'}))}</h3>${d.lastVisit.doctor?`<p class="vmut">${E(d.lastVisit.doctor)}: “${E(d.lastVisit.diagnosis||d.lastVisit.advice||'No note')}”</p>`:''}${p.weight?`<div class="vchips"><i>Weight ${E(String(p.weight))} kg</i></div>`:''}</section>`:''}
+  </div>
+  <div class="vbody">${c?`<iframe id="vbf" src="/body?e=1" title="3D body with today's values" allow="fullscreen"></iframe>`:'<div class="vbz">The body map appears when the family shares.</div>'}<small>Same body map the family sees</small></div>
+  <section class="vc vrx" id="vrx"></section>
+ </div>`;
+ $('#vfin').onclick=async()=>{if(t.state==='done'){view='queue';return render()}try{if(t.state==='called')await api(`/queue/${t.id}/move`,{method:'POST',body:{to:'in'}});await api(`/queue/${t.id}/move`,{method:'POST',body:{to:'done'}});vStop();toast('Visit finished');view='queue';render()}catch(e){toast(e.message)}};
+ if($('#vre'))$('#vre').onclick=()=>VIEWS.visit();
+ const f=$('#vbf');if(f)f.onload=()=>{try{f.contentWindow.postMessage({type:'uh-body-data',data:{look:'light',person:{name:t.member,age:p.age??null,sex:p.sex||'male'},findings:c.findings||[],meds:[],vitals:c.vitals||null,canWrite:false}},location.origin)}catch(_){}};
+ vRx()}
+const VFREQ={od:'1-0-0',bd:'1-0-1',tds:'1-1-1',qid:'1-1-1-1',hs:'0-0-1',sos:'when needed',weekly:'weekly'};
+function vRx(){const el=$('#vrx');if(!el)return;const d=VISIT.d,first=(d.token.member||'').split(' ')[0]||'the patient',D=VISIT.draft,sent=VISIT.sent||d.rx&&!D;
+ const on=!!VISIT.sr,sec=on?Math.floor((Date.now()-VISIT.t0)/1000):0;
+ const items=D?D.items:(d.rx?d.rx.items.map(i=>({...i,status:'',dose:VFREQ[i.frequency]||''})):[]);
+ const tests=D?D.tests:(d.rx&&d.rx.tests)||[],adv=D?D.advice:(d.rx&&d.rx.advice?[d.rx.advice]:[]);
+ el.innerHTML=`<div class="vli"><button class="vmic ${on?'on':''}" id="vmic" aria-label="${on?'Stop listening':'Start listening'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <div><b>${on?`Listening · ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`:sent?'Signed and sent':'Speak the prescription'}</b><small>${sent?'In '+E(first)+'\'s documents':`Speak in <span class="vlang">${[['en-IN','English'],['ta-IN','Tamil'],['hi-IN','Hindi']].map(([k,n])=>`<button class="${VISIT.lang===k?'on':''}" data-lang="${k}">${n}</button>`).join('')}</span>`}</small></div></div>
+  ${sent?'':`<textarea id="vtx" class="vtx" rows="3" placeholder="Or type it: “Increase metformin to 1000 twice a day, continue atorva but make it 20, telma same. Repeat HbA1c in three months.”">${E(VISIT.text)}</textarea>
+  <div class="row" style="margin:6px 0 0;gap:8px"><button class="btn sm" id="vdr" ${VISIT.text.trim()?'':'disabled'}>Draft from this</button><span class="vmut" style="font-size:12px">${D?E(D.note):'Nothing is sent until you sign.'}</span></div>`}
+  <div class="vsec">Prescription</div>
+  ${items.length?items.map((i,k)=>`<div class="vmed"><span class="vpi"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0B8A7C" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-35 12 12.5)"/></svg></span><div style="flex:1;min-width:0"><b>${E(i.name)}${i.strength?' '+E(i.strength):''}</b><small>${E(i.dose||VFREQ[i.frequency]||'how often?')}${i.duration?' · '+E(i.duration):''}</small></div>${i.status?`<span class="vtag ${i.status}">${{changed:'Changed',same:'Same',new:'New'}[i.status]}</span>`:''}${sent?'':`<button class="vx" data-ved="${k}" aria-label="Edit">Edit</button>`}</div>`).join('')
+   :`<p class="vmut" style="margin:6px 0">Say or type the medicines; they appear here marked against what ${E(first)} takes now.</p>`}
+  ${tests.length||adv.length?`<div class="vchips">${tests.map(x=>`<i>Test · ${E(x.name)}${x.when?' in '+E(x.when):''}</i>`).join('')}${adv.map(a=>`<i>${E(a)}</i>`).join('')}</div>`:''}
+  <div class="vsec">Also happens when you sign</div>
+  <div class="vah"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#0B8A7C" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg><div><b>${d.usualPharmacy?'Medicines offered from '+E(d.usualPharmacy):'Medicines ready to order'}</b><small>${d.usualPharmacy?'Her usual pharmacy · she taps to order':'From a partner pharmacy near her'}</small></div></div>
+  ${tests.filter(x=>x.when).slice(0,1).map(x=>`<div class="vah"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#0B8A7C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/></svg><div><b>${E(x.name)} in ${E(x.when)}</b><small>On the prescription and in her follow-ups</small></div></div>`).join('')}
+  <div class="vah"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#0B8A7C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/></svg><div><b>Prescription in her documents</b><small>A PDF signed with your registration ${E(d.doctor.regNo||'')}</small></div></div>
+  ${sent?'':`<button class="vsend" id="vsend" ${items.length&&items.every(i=>i.frequency)?'':'disabled'}>✓ Sign and send to ${E(first)}</button>${items.length&&!items.every(i=>i.frequency)?'<p class="vmut" style="font-size:12px;text-align:center;margin:6px 0 0">Every medicine needs how often. Tap Edit.</p>':''}`}`;
+ const tx=$('#vtx');if(tx)tx.oninput=()=>{VISIT.text=tx.value;const b=$('#vdr');if(b)b.disabled=!tx.value.trim()};
+ el.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{VISIT.lang=b.dataset.lang;if(VISIT.sr){vStop();vListen()}else vRx()});
+ if($('#vdr'))$('#vdr').onclick=vDraft;
+ $('#vmic')&&($('#vmic').onclick=()=>VISIT.sr?(vStop(),vDraft()):vListen());
+ el.querySelectorAll('[data-ved]').forEach(b=>b.onclick=()=>vEdit(+b.dataset.ved));
+ if($('#vsend'))$('#vsend').onclick=vSign}
+function vListen(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Speech needs Chrome or Edge; type it instead');return}
+ const r=new SR();r.lang=VISIT.lang;r.continuous=true;r.interimResults=true;let base=VISIT.text?VISIT.text.trim()+' ':'';
+ r.onresult=e=>{let fin='',tmp='';for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];(x.isFinal?(fin+=x[0].transcript):(tmp+=x[0].transcript))}if(fin){base+=fin.trim()+' '}VISIT.text=(base+tmp).trim();const t=$('#vtx');if(t)t.value=VISIT.text};
+ r.onend=()=>{if(VISIT.sr===r){try{r.start()}catch(_){}}};r.onerror=e=>{if(e.error==='not-allowed'){toast('Allow the microphone to dictate');vStop()}};
+ try{r.start()}catch(_){toast('Could not start the microphone');return}VISIT.sr=r;VISIT.t0=Date.now();vRx();clearInterval(VISIT.tk);VISIT.tk=setInterval(()=>{if(!VISIT.sr||view!=='visit')return clearInterval(VISIT.tk);const b=document.querySelector('.vli b');if(b){const s=Math.floor((Date.now()-VISIT.t0)/1000);b.textContent=`Listening · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}},1000)}
+function vStop(){const r=VISIT.sr;VISIT.sr=null;clearInterval(VISIT.tk);if(r){try{r.stop()}catch(_){}}}
+async function vDraft(){if(!VISIT.text.trim()){vRx();return}try{VISIT.draft=await api(`/queue/${VISIT.id}/rx-draft`,{method:'POST',body:{text:VISIT.text}});VISIT.sent=false}catch(e){toast(e.message)}vRx()}
+function vEdit(k){const D=VISIT.draft;if(!D)return;const i=D.items[k];const row=document.querySelectorAll('.vmed')[k];if(!row)return;
+ row.outerHTML=`<div class="vmed ved"><input id="ven" value="${E(i.name)}" aria-label="Medicine"><input id="ves" value="${E(i.strength||'')}" placeholder="Strength" aria-label="Strength" style="width:90px"><select id="vef" aria-label="How often"><option value="">How often?</option>${Object.entries(VFREQ).map(([k2,v])=>`<option value="${k2}" ${i.frequency===k2?'selected':''}>${v}</option>`).join('')}</select><input id="ved" value="${E(i.duration||'')}" placeholder="For" aria-label="For how long" style="width:80px"><button class="btn sm p" id="vok">Done</button><button class="btn sm d" id="vrm">Remove</button></div>`;
+ $('#vok').onclick=()=>{Object.assign(i,{name:$('#ven').value.trim(),strength:$('#ves').value.trim(),frequency:$('#vef').value,duration:$('#ved').value.trim()});i.dose=VFREQ[i.frequency]||'';if(i.was&&i.status!=='new')i.status=(i.strength.replace(/\s/g,'').toLowerCase()!==(i.was.strength||'').replace(/\s/g,'').toLowerCase()||(i.dose&&i.was.dose&&i.dose!==i.was.dose))?'changed':'same';vRx()};
+ $('#vrm').onclick=()=>{D.items.splice(k,1);vRx()}}
+async function vSign(){const D=VISIT.draft;if(!D)return;const b=$('#vsend');b.disabled=true;b.textContent='Signing…';
+ try{await api(`/queue/${VISIT.id}/rx`,{method:'PUT',body:{items:D.items.map(i=>({name:i.name,strength:i.strength||'',form:i.form||'',frequency:i.frequency,duration:i.duration||'',instructions:i.instructions||''})),advice:(D.advice||[]).join('. '),tests:D.tests||[],diagnosis:''}});
+  vStop();VISIT.sent=true;toast('Signed and sent');VISIT.d=await api(`/queue/${VISIT.id}/visit`);VISIT.draft=null;vRx()}catch(e){toast(e.message);b.disabled=false;b.textContent='✓ Sign and send'}}
 function refreshOrders(){if(view==='reports')lbReports();else if(view==='orders'&&ME.store.kind==='lab'&&ME.user.role!=='tech'&&!LB.list)labBoard();else loadOrders()}
 /* Lab · Bookings (board 9). Four lanes from booking to report, the reports waiting to go out, and a side panel where
    a report is read on our server, shown as ranges with anything that jumped since last time, then signed and sent. */
@@ -631,7 +716,7 @@ async function loadQueue(){try{QDOCS=(await api('/doctors')).doctors}catch(_){}i
  const over=q.tokens.filter(t=>t.state==='done'||t.state==='skipped'),live=q.tokens.filter(t=>!over.includes(t));
  const show=QSHOWALL?q.tokens:live;
  $('#ql').innerHTML=`<div class="cards">
-   <div class="card kpi qnow"><small>Now seeing</small><b>${now_?now_.number:'—'}</b><span>${now_?E(now_.member||'')+' · '+E(QST[now_.state][1]):'Nobody in the room'}</span><button class="btn" onclick="callNext()">Call next${(()=>{const n=q.tokens.find(t=>t.state==='waiting');return n?' · '+n.number:''})()}</button></div>
+   <div class="card kpi qnow"><small>Now seeing</small><b>${now_?now_.number:'—'}</b><span>${now_?E(now_.member||'')+' · '+E(QST[now_.state][1]):'Nobody in the room'}</span>${now_&&ME.user.role==='doctor'?`<button class="btn" onclick="openVisit('${E(now_.id)}')">Open consult</button>`:''}<button class="btn" onclick="callNext()">Call next${(()=>{const n=q.tokens.find(t=>t.state==='waiting');return n?' · '+n.number:''})()}</button></div>
    <div class="card kpi"><small>Waiting</small><b>${q.waiting}</b><span style="color:var(--mute)">${q.paceMin?`about ${q.waiting*q.paceMin} min to clear`:'pace not known yet'}</span></div>
    <div class="card kpi"><small>Seen today</small><b>${q.seen}</b><span style="color:var(--mute)">${q.paceMin?`${q.paceMin} min each`:'—'}</span></div>
    <div class="qside"><div class="card qlate${q.late?' on':''}"><div class="row" style="gap:10px;margin:0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A5B00" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b style="font-size:18px">${q.late?`Running ${q.late.min} min late`:'Running late?'}</b></div>
@@ -650,7 +735,7 @@ async function loadQueue(){try{QDOCS=(await api('/doctors')).doctors}catch(_){}i
      <td><span class="tag ${QST[t.state][0]}">${QST[t.state][1]}</span></td>
      <td style="text-align:right;white-space:nowrap">${t.state==='waiting'?`<button class="btn sm" data-qm="${E(t.id)}:called">Call</button> <button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
        :t.state==='called'?`<button class="btn sm p" data-qm="${E(t.id)}:in">Came in</button> <button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
-       :t.state==='in'?`<button class="btn sm p" data-qm="${E(t.id)}:done">Done</button>`:''}</td></tr>`).join('')}
+       :t.state==='in'?`<button class="btn sm p" data-qm="${E(t.id)}:done">Done</button>`:''}${ME.user.role==='doctor'&&(t.state==='called'||t.state==='in')?` <button class="btn sm" onclick="openVisit('${E(t.id)}')">Consult</button>`:''}</td></tr>`).join('')}
    </table>`:'<div class="empty">Nobody in the queue. Add a walk-in, or wait for someone to take a number in the app.</div>'}
    ${over.length?`<p class="sub" style="margin:10px 0 0"><button class="btn sm" id="qall">${QSHOWALL?'Hide':'Show'} the ${over.length} already finished today</button></p>`:''}</div>`;
  if($('#qall'))$('#qall').onclick=()=>{QSHOWALL=!QSHOWALL;loadQueue()};

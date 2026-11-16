@@ -910,6 +910,30 @@ class Donor(Base):
     donations: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class VisitShare(Base):
+    """What a family chose to show the doctor for one OP visit: their summary, values, medicines and allergies.
+    Sealed with the server key, kept only until the visit ends (or 8 hours), then deleted."""
+    __tablename__ = "visit_share"
+    token_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    store_id: Mapped[str] = mapped_column(String(32), index=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    blob: Mapped[bytes] = mapped_column(LargeBinary)
+    expires: Mapped[int] = mapped_column(Integer, default=0)
+    t: Mapped[int] = mapped_column(Integer, default=now)
+
+
+class VisitRx(Base):
+    """A prescription signed in the OP room (the video consult keeps its own on the appointment)."""
+    __tablename__ = "visit_rx"
+    token_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    store_id: Mapped[str] = mapped_column(String(32), index=True)
+    household_id: Mapped[str] = mapped_column(String(32), index=True)
+    member_id: Mapped[str] = mapped_column(String(32), default="")
+    doctor_id: Mapped[str] = mapped_column(String(32), index=True)
+    rx: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    t: Mapped[int] = mapped_column(Integer, default=now)
+
+
 class QueueLate(Base):
     """A doctor running late today, set at the OP counter. Shown on every waiting family's token and on the waiting-room screen."""
     __tablename__ = "queue_late"

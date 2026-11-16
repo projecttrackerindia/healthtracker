@@ -82,6 +82,9 @@ def token_json(db: Session, t: Token, *, counter: bool = False) -> dict:
         out["householdId"] = t.household_id
         out["waitedMin"] = max(0, round((now() - t.created) / 60))
         return out
+    from .models import VisitShare
+    out["memberId"] = t.member_id or ""
+    out["shared"] = bool(db.get(VisitShare, t.id))     # the family's summary is open to the doctor for this visit
     ahead = ahead_of(db, t) if t.state == "waiting" else 0
     p = pace(db, t.store_id, t.doctor_id, t.day)
     out["ahead"] = ahead
@@ -281,10 +284,14 @@ def _move(db: Session, t: Token, to: str, u: PartnerUser) -> dict:
         t.started_at = stamp
     elif to == "done":
         t.done_at = stamp
+        from .visit import drop_share
+        drop_share(db, t.id)       # what the family shared for this visit goes with it
         if not t.started_at:
             t.started_at = t.called_at or stamp
     elif to == "skipped":
         t.done_at = stamp
+        from .visit import drop_share
+        drop_share(db, t.id)
         notify(db, t.household_id, "appointment", f"{s.name if s else 'Clinic'}: token {t.number} was passed over",
                "You were not at the room when your number came up. Ask at the counter to be put back in.",
                {"token": t.id, "number": t.number, "state": to}, t.member_id or "", "/app")
