@@ -115,6 +115,15 @@ body.preg #bg{background:radial-gradient(80% 55% at 50% 34%,#FFFFFF 0%,#FBF1F4 5
 .ino{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.88);font-size:14px;font-weight:600}
 .inw{display:flex;gap:12px;align-items:flex-start;margin-top:10px;background:#FFF2F2!important;font-size:14px;line-height:1.45}.inw b{color:#C4291C}
 .tsw{width:46px;height:28px;border-radius:999px;background:#E5E5EA;position:relative;flex:none;transition:.2s}.tsw i{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s}.tsw.on{background:#34C759}.tsw.on i{left:20px}
+/* board 1 · the phone tab bar: one white bar, five small tabs, the active one in blue (no raised bubble),
+   SOS as the red circle inside the bar's right end */
+@media (max-width:979px){
+ body:not(.fold) .dock .b5{max-width:none;flex:1;height:66px;border-radius:33px;background:#fff!important;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 10px 30px rgba(0,0,0,.10),0 1px 2px rgba(0,0,0,.05);padding:0 72px 0 8px}
+ body:not(.fold) .dock .lens{opacity:0!important}
+ .dock .t5{height:56px;gap:3px}.dock .t5 svg{width:21px;height:21px}.dock .t5 span{font-size:11px;font-weight:500;letter-spacing:0;color:#3C3C43}.dock .t5.on span{color:var(--blue);font-weight:600}
+ body:not(.fold) .dock .sos5{margin-left:-70px;align-self:flex-end;margin-bottom:2px;width:62px;height:62px;z-index:3;box-shadow:0 8px 20px rgba(215,38,61,.38),inset 0 1.5px 0 rgba(255,255,255,.45)}
+ body:not(.fold) .dock .sos5 .rg{inset:-5px}
+}
 .fch{flex:0 0 100%;order:9;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;pointer-events:auto;margin:10px -18px 0;padding:0 18px 4px;-webkit-overflow-scrolling:touch}
 .fch::-webkit-scrollbar{display:none}
 .fch button{flex:none;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px 0 5px;border-radius:19px;border:0;background:rgba(255,255,255,.92);box-shadow:0 0 0 1px rgba(0,0,0,.06);font-size:15px;font-weight:500;color:#1D1D1F;cursor:pointer}
