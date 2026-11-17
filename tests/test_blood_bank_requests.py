@@ -85,3 +85,30 @@ def test_donors_near_the_bank_show_first_name_and_initial_only():
     d = login(be).get("/api/partner/bank/donors?group=B%2B").json()
     hit = next(x for x in d["donors"] if x["name"].startswith("Arjun"))
     assert hit["name"] == "Arjun S" and "phone" not in hit and hit["km"] < 3
+
+
+def test_given_units_leave_the_oldest_bags_first_and_stay_gone():
+    import time as _t
+    bank_id, be, he = two()
+    bank, hosp = login(be), login(he)
+    d = lambda n: _t.strftime("%Y-%m-%d", _t.localtime(_t.time() + n * 86400))  # noqa: E731
+    assert bank.put("/api/partner/blood/stock", json={"group": "O+", "batches": [{"n": 3, "exp": d(30)}, {"n": 2, "exp": d(4)}]}).json()["units"] == 5
+    q = hosp.post("/api/partner/bank/requests", json={"bank": bank_id, "group": "O+", "units": 3}).json()
+    assert bank.post(f"/api/partner/bank/requests/{q['id']}/answer", json={"units": 3}).json()["given"] == 3
+    row = [x for x in bank.get("/api/partner/blood/stock").json()["stock"] if x["group"] == "O+"][0]
+    assert row["units"] == 2 and row["batches"] == [{"n": 2, "exp": d(30)}]    # the two near their date went first
+
+
+def test_earnings_count_units_at_the_banks_own_charges_and_today_sums_up():
+    bank_id, be, he = two()
+    bank, hosp = login(be), login(he)
+    q = hosp.post("/api/partner/bank/requests", json={"bank": bank_id, "group": "B+", "units": 2, "urgent": True}).json()
+    t = bank.get("/api/partner/bank/today").json()
+    assert t["counts"]["waiting"] >= 1 and t["waiting"][0]["id"] == q["id"]
+    e = bank.get("/api/partner/bank/earnings").json()
+    assert e["feesSet"] is False
+    assert bank.put("/api/partner/bank/fees", json={"fees": {"whole": 1550, "platelets": 400, "junk": 9}}).json()["fees"] == {"whole": 1550, "platelets": 400}
+    bank.post(f"/api/partner/bank/requests/{q['id']}/answer", json={"units": 2})
+    m = bank.get("/api/partner/bank/earnings").json()["months"][0]
+    assert m["units"] >= 2 and m["amount"] >= 3100 and m["byHospital"][0]["units"] >= 2
+    assert hosp.get("/api/partner/bank/earnings").status_code == 403

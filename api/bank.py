@@ -37,6 +37,23 @@ def _ll(db: Session, sid: str) -> tuple[float, float]:
     return (s.lat or 0, s.lng or 0) if s else (0, 0)
 
 
+def take_from_shelf(st: BloodStock, n: int) -> None:
+    """Units leave the shelf oldest-date first, so the bags nearest their date are issued before they are wasted.
+    With dated bags the count is their sum; without dates it is a plain number."""
+    if st.batches:
+        left, out = n, []
+        for b in sorted(st.batches, key=lambda y: y.get("exp", "9999")):
+            k = min(left, int(b.get("n") or 0))
+            left -= k
+            if int(b.get("n") or 0) - k > 0:
+                out.append({**b, "n": int(b["n"]) - k})
+        st.batches = out
+        st.units = sum(int(b["n"]) for b in out)
+    else:
+        st.units -= n
+    st.updated = now()
+
+
 def _bank(db: Session, u: PartnerUser) -> Store:
     s = my_store(db, u)
     if s.kind != "bloodbank":
@@ -120,8 +137,7 @@ def answer(rid: str, body: AnswerIn, db: Session = Depends(get_db), u: PartnerUs
         st = db.scalar(select(BloodStock).where(BloodStock.store_id == s.id, BloodStock.group == q.group, BloodStock.component == q.component))
         if not st or st.units < n:
             raise HTTPException(409, f"Only {st.units if st else 0} unit{'s' if not st or st.units != 1 else ''} of {q.group} on the shelf.")
-        st.units -= n
-        st.updated = now()
+        take_from_shelf(st, n)
     q.given, q.status, q.updated = n, ("confirmed" if n == q.units else "partial" if n else "declined"), now()
     return ur_json(db, q, "bank")
 
@@ -289,3 +305,79 @@ def family_unbook(cid: str, db: Session = Depends(get_db), u: User = Depends(nee
     ids = {d.id for d in _my_donors(db, u)}
     c.booked = [b for b in c.booked or [] if b.get("donor") not in ids]
     return camp_json(c)
+
+
+
+# ---- the blood bank's own Today, processing charges and earnings ------------------------------------------------------------
+COMPONENTS = {"whole": "Whole blood", "prbc": "Red cells", "platelets": "Platelets", "plasma": "Plasma"}
+ISSUED = ("confirmed", "partial", "packed", "sent")
+
+
+class FeesIn(BaseModel):
+    fees: dict[str, int]
+
+
+@pr.get("/fees")
+def bank_fees(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = _bank(db, u)
+    return {"fees": (s.profile or {}).get("bloodFees", {}), "components": COMPONENTS}
+
+
+@pr.put("/fees")
+def bank_fees_set(body: FeesIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = _bank(db, u)
+    if u.role not in ("owner", "manager"):
+        raise HTTPException(403, "Only the owner or a manager can change charges.")
+    fees = {k: max(0, min(20000, int(v))) for k, v in body.fees.items() if k in COMPONENTS}
+    s.profile = {**(s.profile or {}), "bloodFees": fees}
+    return {"fees": fees, "components": COMPONENTS}
+
+
+@pr.get("/earnings")
+def bank_earnings(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """Units issued, month by month, and the processing charges they carry at the bank's own rates.
+    Hospitals pay the bank directly; this is the bank's record, not a payout from Urban Health."""
+    s = _bank(db, u)
+    if u.role not in ("owner", "manager"):
+        raise HTTPException(403, "Earnings are for the owner or a manager.")
+    fees = (s.profile or {}).get("bloodFees", {})
+    rows = db.scalars(select(UnitRequest).where(UnitRequest.to_store == s.id, UnitRequest.status.in_(ISSUED), UnitRequest.given > 0)
+                      .order_by(UnitRequest.updated.desc()).limit(3000)).all()
+    months: dict[str, dict] = {}
+    for q in rows:
+        m = time.strftime("%Y-%m", time.localtime(q.updated or q.created))
+        x = months.setdefault(m, {"month": m, "units": 0, "amount": 0, "requests": 0, "byHospital": {}, "byComponent": {}})
+        amt = q.given * int(fees.get(q.component, 0) or 0)
+        x["units"] += q.given
+        x["amount"] += amt
+        x["requests"] += 1
+        h = db.get(Store, q.from_store)
+        hn = h.name if h else "Hospital"
+        bh = x["byHospital"].setdefault(hn, {"name": hn, "units": 0, "amount": 0})
+        bh["units"] += q.given
+        bh["amount"] += amt
+        x["byComponent"][q.component] = x["byComponent"].get(q.component, 0) + q.given
+    out = sorted(months.values(), key=lambda x: x["month"], reverse=True)[:12]
+    for x in out:
+        x["byHospital"] = sorted(x["byHospital"].values(), key=lambda y: -y["units"])
+    return {"months": out, "fees": fees, "components": COMPONENTS, "feesSet": any(int(v or 0) > 0 for v in fees.values())}
+
+
+@pr.get("/today")
+def bank_today(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = _bank(db, u)
+    t0 = int(time.mktime(time.strptime(time.strftime("%Y-%m-%d"), "%Y-%m-%d")))
+    reqs = db.scalars(select(UnitRequest).where(UnitRequest.to_store == s.id, UnitRequest.created > now() - 7 * 86400)).all()
+    waiting = [q for q in reqs if q.status == "new"]
+    to_pack = [q for q in reqs if q.status in ("confirmed", "partial")]
+    packed = [q for q in reqs if q.status == "packed"]
+    issued_today = sum(q.given for q in reqs if q.status in ISSUED and (q.updated or 0) >= t0)
+    stock = db.scalars(select(BloodStock).where(BloodStock.store_id == s.id)).all()
+    low = sorted([{"group": x.group, "component": x.component, "units": x.units} for x in stock if x.component == "whole" and x.units <= 3], key=lambda y: y["units"])
+    donors = db.scalars(select(Donor).where(Donor.active == True)).all()  # noqa: E712
+    near = sum(1 for d in donors if d.lat is not None and s.lat is not None and km(d.lat, d.lng, s.lat, s.lng) <= 15)
+    camp = db.scalar(select(BloodCamp).where(BloodCamp.store_id == s.id, BloodCamp.cancelled == False, BloodCamp.day >= time.strftime("%Y-%m-%d")).order_by(BloodCamp.day))  # noqa: E712
+    return {"waiting": [ur_json(db, q, "bank") for q in sorted(waiting, key=lambda q: (not q.urgent, q.created))][:5],
+            "counts": {"waiting": len(waiting), "toPack": len(to_pack), "packed": len(packed), "issuedToday": issued_today, "donorsNear": near},
+            "low": low, "camp": camp_json(camp, s.name) if camp else None,
+            "units": sum(x.units for x in stock if x.component == "whole")}
