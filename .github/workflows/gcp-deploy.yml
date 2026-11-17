@@ -73,7 +73,11 @@ jobs:
           name: phone-screens
           path: tests_e2e/out/
 
+  # Off until the Google login is set up for this repository (see deploy/gcp/wif.sh). Without it every run went
+  # red at the login step even though nothing was wrong with the code. Set the repository variable
+  # DEPLOY_ENABLED=true once GCP_WIF_PROVIDER and GCP_DEPLOY_SA are in place, and merges deploy again.
   deploy:
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     needs: [test, phones]
     runs-on: ubuntu-latest
     timeout-minutes: 25

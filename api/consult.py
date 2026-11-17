@@ -339,6 +339,7 @@ class RxIn(BaseModel):
     advice: str = ""
     followUp: str = ""      # e.g. "2 weeks" or a date
     diagnosis: str = ""     # the doctor's words, shown as the doctor's note
+    tests: list[dict] = []  # [{"code","name","when"}] tests the doctor asks for; the family books them in one tap
 
 
 def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict, visit: str = "Video consult") -> bytes:
@@ -400,6 +401,9 @@ def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict, visit: str = "Vid
         if line:
             page.insert_text((M, y), line, fontsize=9.5, fontname="helv", color=INK); y += 13
         y += 6
+    if rx.get("tests"):
+        page.insert_text((M, y), "TESTS ADVISED", fontsize=8, fontname="helv", color=MUTE); y += 13
+        page.insert_text((M, y), ("; ".join(t["name"] + (f" in {t['when']}" if t.get("when") else "") for t in rx["tests"]))[:110], fontsize=9.5, fontname="helv", color=INK); y += 18
     if rx.get("followUp"):
         page.insert_text((M, y), f"Follow-up: {rx['followUp'][:60]}", fontsize=9.5, fontname="helv", color=INK); y += 18
     y = max(y + 20, 700)
@@ -436,8 +440,9 @@ def partner_rx(aid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUs
         items.append({"name": it.name.strip()[:80], "strength": it.strength.strip()[:30], "form": it.form.strip()[:20], "frequency": it.frequency.strip()[:12],
                       "duration": it.duration.strip()[:30], "instructions": it.instructions.strip()[:80], "rx": bool(it.rx)})
     s = my_store(db, u)
-    rx = {"items": items, "advice": body.advice.strip()[:800], "followUp": body.followUp.strip()[:60], "diagnosis": body.diagnosis.strip()[:160],
-          "doctor": u.name, "regNo": u.reg_no, "specialty": u.specialty, "store": s.name, "t": now()}
+    tests = [{"code": str(x.get("code", ""))[:12], "name": str(x.get("name", "")).strip()[:60], "when": str(x.get("when", "")).strip()[:20]} for x in body.tests[:6] if str(x.get("name", "")).strip()]
+    rx = {"items": items, "advice": body.advice.strip()[:800], "followUp": (body.followUp.strip() or ", ".join(f"{x['name']} in {x['when']}" for x in tests if x["when"]))[:60],
+          "diagnosis": body.diagnosis.strip()[:160], "tests": tests, "doctor": u.name, "regNo": u.reg_no, "specialty": u.specialty, "store": s.name, "t": now()}
     try:
         pdf = rx_pdf(a, s, u, rx)
         storage.put(db, a.household_id, f"erx_{a.id}", pdf, "application/pdf", f"Prescription · Dr {u.name} · {time.strftime('%d-%m-%Y')}", "partner:" + u.id)
@@ -447,8 +452,8 @@ def partner_rx(aid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUs
         raise HTTPException(502, "The prescription could not be stored right now; try again in a minute.")
     a.rx, a.updated = rx, now()
     names = ", ".join(i["name"] for i in items[:3]) + (" …" if len(items) > 3 else "")
-    notify(db, a.household_id, "prescription", f"Prescription from Dr {u.name}", f"{names}. Open Medicines to order, or Lab results → Prescriptions to read it.",
-           {"appointment": a.id, "fileId": f"erx_{a.id}", "store": s.name, "doctor": u.name, "items": items, "mime": "application/pdf", "name": f"Prescription · Dr {u.name}", "diagnosis": rx["diagnosis"]},
+    notify(db, a.household_id, "prescription", f"Prescription from Dr {u.name}", f"{names}." + (f" Your doctor also asked for {', '.join(x['name'] for x in tests[:2])}; book it in one tap." if tests else " Open it to order or read it in your language."),
+           {"appointment": a.id, "fileId": f"erx_{a.id}", "store": s.name, "doctor": u.name, "items": items, "tests": tests, "mime": "application/pdf", "name": f"Prescription · Dr {u.name}", "diagnosis": rx["diagnosis"]},
            a.member_id, "/app")
     return consult_json(db, a, True)
 
@@ -487,9 +492,12 @@ def partner_rx_draft(aid: str, db: Session = Depends(get_db), u: PartnerUser = D
 
     system = (
         "You transcribe a doctor's spoken medicine instructions into form fields. You are not a clinician and you "
-        "do not prescribe. Input is speech captions from an Indian teleconsultation, so expect mishearings.\n"
+        "do not prescribe. Input is speech captions from an Indian teleconsultation, so expect mishearings. The doctor may "
+        "speak English, Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Marathi, Gujarati or a mix; write every field in "
+        "English, with medicine and test names in English spelling, and keep 'heard' exactly as spoken.\n"
         "Return ONLY JSON: {\"items\":[{\"name\",\"strength\",\"form\",\"frequency\",\"duration\",\"instructions\",\"heard\"}],"
-        "\"advice\":\"\",\"followUp\":\"\",\"diagnosis\":\"\",\"unclear\":[]}\n"
+        "\"tests\":[{\"name\",\"when\"}],\"advice\":\"\",\"followUp\":\"\",\"diagnosis\":\"\",\"unclear\":[]}\n"
+        "'tests' are only lab tests the doctor said to do (e.g. HbA1c in 3 months); 'when' only if they said it.\n"
         "Rules, all of them absolute:\n"
         "1. Include a medicine ONLY if the doctor said it. Never add one that would be usual for the condition.\n"
         "2. Leave a field EMPTY if the doctor did not say it. Do not infer a strength, a dose, a duration or a route. "
@@ -518,6 +526,22 @@ def partner_rx_draft(aid: str, db: Session = Depends(get_db), u: PartnerUser = D
     return draft
 
 
+def match_tests(said: list) -> list[dict]:
+    """Test names the doctor said, matched to the lab catalogue so the family can book them. Unknown names are kept
+    (the doctor asked for them) but carry no code, so they show on the prescription without a Book button."""
+    import re as _re
+
+    from .ai import CANON, LAB
+    out = []
+    for t in said[:6]:
+        nm = str((t or {}).get("name") if isinstance(t, dict) else t or "").strip()[:60]
+        if not nm:
+            continue
+        code = next((c for c, (rx, *_r) in LAB.items() if _re.search(rf"(?i){rx}", nm)), "")
+        out.append({"code": code, "name": CANON.get(code, nm) if code else nm, "when": str((t or {}).get("when", "") if isinstance(t, dict) else "")[:20]})
+    return out
+
+
 def _parse_draft(raw: str) -> dict:
     """Take the model's JSON apart defensively and keep only what the form can hold.
 
@@ -526,7 +550,7 @@ def _parse_draft(raw: str) -> dict:
     try:
         body = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
     except Exception:
-        return {"items": [], "advice": "", "followUp": "", "diagnosis": "", "unclear": [],
+        return {"items": [], "tests": [], "advice": "", "followUp": "", "diagnosis": "", "unclear": [],
                 "warning": "The captions could not be read into a draft. Please fill the form in yourself."}
     forms = {"tablet", "capsule", "syrup", "drops", "injection", "cream", "inhaler", "other"}
     items = []
@@ -545,7 +569,7 @@ def _parse_draft(raw: str) -> dict:
                       "heard": str(it.get("heard") or "").strip()[:200],
                       "rx": True})
     names = {i["name"].lower() for i in items}
-    return {"items": items,
+    return {"items": items, "tests": match_tests(body.get("tests") or []),
             "advice": str(body.get("advice") or "").strip()[:600],
             "followUp": str(body.get("followUp") or "").strip()[:60],
             "diagnosis": str(body.get("diagnosis") or "").strip()[:200],

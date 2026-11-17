@@ -252,7 +252,11 @@ def rx_draft(tid: str, body: DraftIn, db: Session = Depends(get_db), u: PartnerU
         raise HTTPException(400, "Say the prescription first.")
     ctx = _ctx(db, t) or {}
     current = [m for m in (ctx.get("medicines") or ctx.get("meds") or []) if isinstance(m, dict)][:30]
-    d = local_draft(text, current)
+    from .rxlang import to_english
+    english = to_english(text)
+    d = local_draft(english, current)
+    if english != text:
+        d["english"] = english   # shown to the doctor so they can see what was understood
     for it in d["items"]:
         it["status"] = _status(it)
         if it.get("same") and not it["frequency"]:
@@ -260,7 +264,7 @@ def rx_draft(tid: str, body: DraftIn, db: Session = Depends(get_db), u: PartnerU
             it["frequency"] = next((k for k, v in DOSE.items() if v == it["dose"]), "")
         else:
             it["dose"] = DOSE.get(it["frequency"], "")
-    d["note"] = "Drafted from what you said. Check every line and fill anything blank before you sign."
+    d["note"] = ("Drafted from what you said, read in English. " if d.get("english") else "Drafted from what you said. ") + "Check every line and fill anything blank before you sign."
     return d
 
 
@@ -322,3 +326,43 @@ def rx_sign(tid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUser 
             "mime": "application/pdf", "name": f"Prescription · Dr {u.name}", "diagnosis": rx["diagnosis"], "pharmacy": pharm},
            t.member_id or "", "/app")
     return {"ok": True, "rx": rx, "usualPharmacy": pharm}
+
+
+
+# ---- the family reads a prescription, in their own language ---------------------------------------------------------
+def family_rx(db: Session, kind: str, rid: str, key: str | None):
+    from .queue import household
+    from .models import Appointment
+    h = household(db, key)
+    if not h:
+        raise HTTPException(404)
+    if kind == "visit":
+        row = db.get(VisitRx, rid)
+        if not row or row.household_id != h.id:
+            raise HTTPException(404)
+        return row
+    a = db.get(Appointment, rid)
+    if not a or a.household_id != h.id or not a.rx:
+        raise HTTPException(404)
+    return a
+
+
+@r.get("/rx/{kind}/{rid}")
+def rx_read(kind: str, rid: str, lang: str = "", db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+    """The signed prescription as the family sees it; with ?lang=ta (etc.) also a reading in that language.
+    The English stays the record; the reading is kept on it so it says the same thing every time it is opened."""
+    from sqlalchemy.orm.attributes import flag_modified
+
+    from .rxlang import LANGS, cached
+    row = family_rx(db, kind, rid, x_dokko_key)
+    rx = dict(row.rx or {})
+    out = {"rx": {k: v for k, v in rx.items() if k != "tr"}, "langs": LANGS, "fileId": f"erx_{rid}", "kind": kind, "id": rid, "member": getattr(row, "member_id", "") or ""}
+    if lang and lang != "en":
+        reading, changed = cached(rx, lang)
+        if changed:
+            rx.setdefault("tr", {})
+            rx["tr"] = {**(rx.get("tr") or {}), lang: reading}
+            row.rx = rx
+            flag_modified(row, "rx")
+        out["reading"] = reading
+    return out

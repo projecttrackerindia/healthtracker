@@ -3,7 +3,8 @@
 Two engines, same JSON shape:
 * claude  — when ANTHROPIC_API_KEY is set: the PDF/photo/text goes to the Claude API with a strict JSON instruction.
 * local   — otherwise: PDF/plain text is parsed with a dictionary of common Indian lab panels and medicine patterns.
-            Photos cannot be read without the API (no OCR on the server), and the response says so.
+            Photos and scanned PDFs are read with on-server OCR (Tesseract) when it is installed, then the same rules run.
+            Without OCR a photo cannot be read, and the response says so.
 
 Nothing is diagnosed. Every result is phrased for discussion with a doctor, and the document is never stored.
 """
@@ -225,7 +226,7 @@ LAB = {
     "glu_f": (r"fasting (?:blood )?(?:glucose|sugar)|fbs|glucose,? fasting|fasting plasma glucose", "mg/dL", 70, 99, "Fasting sugar 100–125 is pre-diabetes range; 126 or more on two occasions suggests diabetes."),
     "glu_pp": (r"post ?prandial|\bpp(?:bs)?\b|2 ?hr? (?:glucose|sugar)|after (?:meal|food)", "mg/dL", 70, 139, "Sugar 2 hours after a meal. 140–199 is pre-diabetes range; 200 or more suggests diabetes."),
     "glu_r": (r"random (?:blood )?(?:glucose|sugar)|rbs", "mg/dL", 70, 139, "Random sugar; 200 or more with symptoms suggests diabetes."),
-    "hba1c": (r"hba1c|glycated|glycosylated", "%", 4.0, 5.6, "Average sugar over 3 months. 5.7–6.4 is pre-diabetes range; 6.5 or more suggests diabetes; people with diabetes often aim below 7."),
+    "hba1c": (r"hba1c|hba[1il|]{1,2}c\b|glycated|glycosylated", "%", 4.0, 5.6, "Average sugar over 3 months. 5.7–6.4 is pre-diabetes range; 6.5 or more suggests diabetes; people with diabetes often aim below 7."),
     "tc": (r"total cholesterol|cholesterol,? total|\bcholesterol\b(?! ?hdl| ?ldl)", "mg/dL", 0, 200, "Total cholesterol; below 200 is desirable."),
     "ldl": (r"\bldl", "mg/dL", 0, 100, "'Bad' cholesterol that builds plaque; targets are lower with diabetes or heart disease."),
     "hdl": (r"\bhdl", "mg/dL", 40, 100, "'Good' cholesterol; higher is better (40+ men, 50+ women)."),
@@ -287,6 +288,41 @@ TEST_WORDS = {"cbc": r"cbc|complete blood|h(?:ae|e)mogram", "lipid": r"lipid", "
               "echo": r"\becho\b|2d echo", "dengue": r"dengue|ns1", "malaria": r"malaria", "typhoid": r"typhoid|widal", "crp": r"\bcrp\b", "esr": r"\besr\b",
               "urea": r"\burea\b", "creat": r"creatinine", "uric": r"uric", "iron": r"ferritin|iron", "ogtt": r"ogtt|glucose tolerance", "psa": r"\bpsa\b",
               "hpylori": r"pylori", "pap": r"pap smear"}
+
+
+def _ocr_png(img) -> str:
+    import shutil
+    import subprocess
+    exe = shutil.which("tesseract")
+    if not exe:
+        return ""
+    from PIL import ImageOps
+    img = ImageOps.exif_transpose(img).convert("L")
+    if img.width < 1800:                                   # phone photos of a report: upscale small text before reading
+        f = 1800 / max(1, img.width)
+        img = img.resize((int(img.width * f), int(img.height * f)))
+    img = ImageOps.autocontrast(img, cutoff=1)
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    try:
+        r = subprocess.run([exe, "stdin", "stdout", "-l", "eng", "--psm", "6"], input=buf.getvalue(), capture_output=True, timeout=40)
+        return r.stdout.decode("utf-8", "ignore")
+    except Exception as e:
+        _fail("ocr", e)
+        return ""
+
+
+def ocr_text(data: bytes, mime: str) -> str:
+    """Words on a photo or a scanned (image-only) PDF. Empty when OCR is not installed or nothing could be read."""
+    try:
+        from PIL import Image
+        if mime == "application/pdf" or data[:4] == b"%PDF":
+            return "\n".join(_ocr_png(Image.open(io.BytesIO(j))) for j in pdf_pages_as_images(data, 4))[:20000]
+        if mime.startswith("image/"):
+            return _ocr_png(Image.open(io.BytesIO(data)))[:20000]
+    except Exception as e:
+        _fail("ocr", e)
+    return ""
 
 
 def text_from(data: bytes, mime: str) -> str:
@@ -628,11 +664,23 @@ def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, forc
             _fail("smart reading (basic reader used)", e)
     if out is None:
         txt = text or (text_from(data, mime) if data else "")
-        if not txt and data and mime.startswith("image/"):
-            out = {"summary": "Reading photos is not available right now. Upload a PDF with selectable text, or type the values.",
+        scanned = False
+        if len(txt.strip()) < 40 and data and (mime.startswith("image/") or mime == "application/pdf"):
+            got = ocr_text(data, mime)
+            if got.strip():
+                # the usual OCR slips on lab reports: l/1 in HbA1c, I for l in mg/dL, O for 0 inside numbers
+                got = re.sub(r"(?i)\bhba[1il|]{1,2}c\b", "HbA1c", got)
+                got = re.sub(r"(?i)mg\s*/\s*d[il1]\b", "mg/dL", got)
+                got = re.sub(r"(?<=\d)[oO](?=\d)|(?<=\d\.)[oO]\b", "0", got)
+                txt, scanned = got, True
+        if not txt.strip() and data and mime.startswith("image/"):
+            out = {"summary": "This photo could not be read clearly. A sharper photo in good light, flat and straight on, usually works; or type the values.",
                    "findings": [], "medicines": [], "tests_needed": [], "followups": [], "questions_for_doctor": [], "warnings": []}
         else:
             out = local_prescription(txt, ctx) if kind == "prescription" else local_report(txt, ctx)
+            if scanned:
+                out["scanned"] = True
+                out["warnings"] = list(out.get("warnings", [])) + ["Read from a photo. Please check each value against the paper report."]
         if "err" in locals():
             out["warnings"] = list(out.get("warnings", [])) + ["Smart reading is unavailable right now; this is the basic reader."]
     out.update({"engine": engine, "kind": kind, "model": current_model() if engine == "claude" else "rules-v1", "ms": int((time.time() - t0) * 1000), "disclaimer": DISCLAIMER})
