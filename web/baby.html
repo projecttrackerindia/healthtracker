@@ -51,7 +51,7 @@ const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(24,1,.001,50);
 S.add(new THREE.HemisphereLight(0xfff8f2,0x8a7f78,.65));{const k=new THREE.DirectionalLight(0xfff4ec,1.1);k.position.set(3,6,7);S.add(k);const f=new THREE.DirectionalLight(0xffe6ee,.45);f.position.set(-6,1,4);S.add(f);const r=new THREE.DirectionalLight(0xffd0dc,.7);r.position.set(-2,4,-7);S.add(r)}
 const piv=new THREE.Group();S.add(piv);
 const L=new THREE.GLTFLoader();const ready=(async()=>{if(window.MeshoptDecoder){await MeshoptDecoder.ready;L.setMeshoptDecoder(MeshoptDecoder)}})();
-const CACHE=new Map(),RIGC=new Map();let FS=null;let view='baby',wk=20,cur=null,want=null,mix=null,rotY=0,goalY=-.35,drag=null,still=matchMedia('(prefers-reduced-motion: reduce)').matches,sel=null,fitR=1,fitC=new THREE.Vector3();
+const CACHE=new Map(),RIGC=new Map();let FS=null;let view=/[?&]v=m\b/.test(location.search)?'mother':'baby',wk=20,cur=null,want=null,mix=null,rotY=0,goalY=-.35,drag=null,still=matchMedia('(prefers-reduced-motion: reduce)').matches,sel=null,fitR=1,fitC=new THREE.Vector3();
 function get(kind,w){const k=kind+w;if(CACHE.has(k))return CACHE.get(k);const url='/a/'+(kind==='baby'?D.B:D.M)[w];
  const p=ready.then(()=>new Promise((res,rej)=>L.load(url,res,undefined,rej)));CACHE.set(k,p);
  if(CACHE.size>8){const [ok,op]=CACHE.entries().next().value;if(!cur||cur.key!==ok){CACHE.delete(ok);op.then(g=>g.scene.traverse(o=>{if(o.isMesh){o.geometry.dispose();[].concat(o.material).forEach(m=>{for(const t in m)if(m[t]&&m[t].isTexture)m[t].dispose();m.dispose()})}})).catch(()=>{})}}
@@ -113,11 +113,11 @@ function frame(){const a=innerWidth/innerHeight,top=170,bot=$('sh').offsetHeight
  C.position.set(0,0,need);const shift=((bot-top)/2)/innerHeight*2*Math.tan(fov/2)*need;C.position.y=-shift;C.lookAt(0,-shift,0);C.near=need/50;C.far=need*10;C.updateProjectionMatrix()}
 let tmr=0;async function go(w,now){wk=w;sel=null;$('tag').style.display='none';text();clearTimeout(tmr);const k=view+w;want=k;
  const load=async()=>{const kind=view==='baby'?'baby':'mother';const t=setTimeout(()=>{if(want===k)$('ld').style.display='block'},250);
-  try{const [g,rg]=await Promise.all([get(kind,w),kind==='baby'?getRig(w):null]);if(want!==k)return;show(g,kind,w,rg);$('err').style.display='none';
+  try{const [g,rg]=await Promise.all([get(kind,w),kind==='baby'?getRig(w):null]);if(want!==k)return;show(g,kind,w,rg);$('err').style.display='none';if(!go.ready){go.ready=1;try{parent.postMessage({type:'uh-3d-ready'},location.origin)}catch(_){}}
    [w+1,w-1].filter(x=>x>=6&&x<=40).forEach(x=>{get(kind,x);if(kind==='baby')getRig(x)})}catch(e){if(want===k)$('err').style.display='block'}finally{clearTimeout(t);if(want===k)$('ld').style.display='none'}};
  if(now)load();else tmr=setTimeout(load,140)}
 function setView(v){if(v===view)return;view=v;if(v==='mother'){goalY=Math.atan2(Math.sin(goalY),Math.cos(goalY));rotY=Math.atan2(Math.sin(rotY),Math.cos(rotY));goalY=Math.max(-1.05,Math.min(1.05,goalY))}$('vb').classList.toggle('on',v==='baby');$('vm').classList.toggle('on',v==='mother');go(wk,true)}
-$('vb').onclick=()=>setView('baby');$('vm').onclick=()=>setView('mother');
+$('vb').onclick=()=>setView('baby');$('vm').onclick=()=>setView('mother');$('vb').classList.toggle('on',view==='baby');$('vm').classList.toggle('on',view==='mother');
 const wkI=$('wk');wkI.oninput=e=>go(+e.target.value);
 // touch: drag turns the model, a short tap picks a part (Inside you)
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
@@ -136,4 +136,4 @@ const send=(a,x={})=>parent.postMessage({type:'uh-body-act',act:a,...x},location
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-data')return;const p=(e.data.data||{}).person||{};
  $('eb').textContent=(p.name?String(p.name).toUpperCase()+' · ':'')+'PREGNANCY';const w=Math.max(6,Math.min(40,(p.pregnancy&&p.pregnancy.week)||20));wkI.value=w;go(w,true)});
 resize();wkI.value=wk;go(wk,true);send('ready');
-</script><script>addEventListener('load',()=>{if(/[?&]v=m\b/.test(location.search))setTimeout(()=>{const b=document.getElementById('vm');if(b)b.click()},400)})</script><script>if(/[?&]e=1\b/.test(location.search)){document.documentElement.classList.add('emb');const st=document.createElement('style');st.textContent='.emb .top,.emb .fade,.emb #x,.emb .sheet,.emb .now,.emb #tag{display:none!important}.emb body{background:transparent!important}';document.head.appendChild(st)}</script></body></html>
+</script><script>if(/[?&]e=1\b/.test(location.search)){document.documentElement.classList.add('emb');const st=document.createElement('style');st.textContent='.emb .top,.emb .fade,.emb #x,.emb .sheet,.emb .now,.emb #tag{display:none!important}.emb body{background:transparent!important}';document.head.appendChild(st)}</script></body></html>
