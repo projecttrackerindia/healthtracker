@@ -678,6 +678,8 @@ def _check_record(kind: str, data: dict, day: str):
             raise HTTPException(400, "Add what the doctor said or a follow-up date")
         if data.get("follow") and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(data["follow"])):
             raise HTTPException(400, "Follow-up date must be YYYY-MM-DD")
+    if kind == "dose" and data.get("site") not in (None, "") and not re.fullmatch(r"(belly|thigh|arm)-[lr](-[0-5])?", str(data["site"])):
+        raise HTTPException(400, "Choose where the injection went")
     if kind == "med" and not str(data.get("name", "")).strip():
         raise HTTPException(400, "Medicine name is required")
     if kind == "preg" and data.get("stage") not in ("trying", "pregnant", "after", "loss"):
