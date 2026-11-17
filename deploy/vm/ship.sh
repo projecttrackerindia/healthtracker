@@ -25,7 +25,11 @@ echo "== Shipping $SHA"
 ( cd ../gcp && ./stamp-env.sh "$SHA" )
 
 echo "== Build"
-gcloud builds submit ../.. --tag "$TAG" --region "$REGION" --quiet
+# Built with Docker on this machine (Cloud Shell has it), not Cloud Build: Cloud Build bills per build minute,
+# and the GitHub workflow — the normal path — builds on GitHub's runners for free.
+gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+docker build -t "$TAG" ../..
+docker push "$TAG"
 
 echo "== Release"
 gcloud compute scp --zone "$ZONE" --quiet ../gcp/env.yaml ../gcp/secrets.txt release.sh urbanhealth-env "$VM":/tmp/

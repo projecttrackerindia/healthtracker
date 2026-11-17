@@ -43,7 +43,7 @@ print(f"[db] backend={'sqlite (ephemeral!)' if IS_SQLITE else 'postgres'}", flus
 # the three daemon threads and still sits well under db-g1-small's max_connections. pool_timeout is short on
 # purpose: failing in 10s frees the thread, where waiting 30s holds it and spreads the stall.
 _POOL = {} if IS_SQLITE else {
-    "pool_size": int(os.getenv("DB_POOL_SIZE", "6")),   # per worker: 3 workers x (6+4) = 30, under db-g1-small's ~50 connections
+    "pool_size": int(os.getenv("DB_POOL_SIZE", "6")),   # per worker; production sets 3+2 in deploy/gcp/env.yaml (db-f1-micro allows 25)
     "max_overflow": int(os.getenv("DB_POOL_OVERFLOW", "4")),
     "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "10")),
     "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),   # the Cloud SQL proxy drops idle connections

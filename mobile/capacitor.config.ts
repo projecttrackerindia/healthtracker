@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   appName: 'Urban Health',
   webDir: 'www',
   server: {
-    url: process.env.APP_URL || 'https://tht-88456779070.asia-south1.run.app/app',   // Google Cloud Run (Mumbai); becomes https://urbanhealth.in/app once the domain is attached
+    url: process.env.APP_URL || 'https://urbanhealth.in/app',
     cleartext: false,
     androidScheme: 'https'
   },
