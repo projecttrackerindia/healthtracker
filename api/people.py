@@ -362,7 +362,7 @@ def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
             "invites": invites, "onboarded": bool(mine and contacts(db, mine.id))}
 
 
-LANGS = ("en", "ta", "te")
+LANGS = ("en", "ta", "te", "hi")
 
 
 class LangIn(BaseModel):
