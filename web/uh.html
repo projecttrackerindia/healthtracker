@@ -1108,6 +1108,22 @@ body.pregtheme #b5 .on,body.pregtheme .tab.on{color:#E0457B}body.pregtheme .eyeb
 <script src="/a/three.9274bbce.js"></script><script src="/a/gltfloader.5c15967b.js" defer></script><script src="/a/meshopt.0de67743.js" defer></script><script src="/fetal.js?v=1" defer></script>
 <script src="/i18n.js?v=1"></script>
 <script>
+/* Calm in-app dialogs in place of the browser's prompt() and confirm(): same words, rounded sheet, 44 px buttons. */
+function uhDlgCss(){if(!document.getElementById('uhdlgcss')){const st=document.createElement('style');st.id='uhdlgcss';st.textContent=`.uhdlg{position:fixed;inset:0;z-index:2147483000;background:rgba(10,14,24,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;padding:12px;animation:uhdf .18s ease}@media(min-width:700px){.uhdlg{align-items:center}}@keyframes uhdf{from{opacity:0}}@keyframes uhdu{from{transform:translateY(20px);opacity:0}}
+.uhdc{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:22px 20px 16px;box-shadow:0 24px 70px rgba(0,0,0,.28);animation:uhdu .28s cubic-bezier(.2,.8,.2,1);font-family:inherit}.uhdc p{margin:0 0 14px;font-size:16px;line-height:1.45;color:#1D1D1F;white-space:pre-line}
+.uhdi{display:block;width:100%;box-sizing:border-box;border:1px solid #D2D2D7;border-radius:14px;padding:12px 14px;font:inherit;font-size:17px;outline:0;margin:0 0 14px;resize:vertical;background:#fff;color:#1D1D1F}.uhdi:focus{border-color:#0071E3;box-shadow:0 0 0 4px rgba(0,113,227,.15)}
+.uhdb{display:flex;gap:10px}.uhdb button{flex:1;height:50px;border-radius:25px;border:0;font:inherit;font-size:16px;font-weight:600;cursor:pointer}.uhdn{background:#F2F2F7;color:#1D1D1F}.uhdy{background:#1D1D1F;color:#fff}.uhdy.dn{background:#FF3B30}`;document.head.appendChild(st)}}
+function uhDlg(msg,o){o=o||{};return new Promise(res=>{const d=document.createElement('div');d.className='uhdlg';const inp=o.input!==undefined;
+ const num=inp&&(/code|₹|units|number|digits|amount|per home visit|percent|%/i.test(msg)||/^\d+(\.\d+)?$/.test(String(o.input||'')));
+ d.innerHTML=`<div class="uhdc" role="dialog" aria-modal="true"><p></p>${inp?`<${o.long?'textarea rows="3"':'input'} class="uhdi" ${num?'inputmode="numeric"':''} autocomplete="off">${o.long?'</textarea>':''}`:''}<div class="uhdb"><button type="button" class="uhdn">${o.no||'Cancel'}</button><button type="button" class="uhdy${o.danger?' dn':''}">${o.ok||'OK'}</button></div></div>`;
+ d.querySelector('p').textContent=msg;const i=d.querySelector('.uhdi');if(i)i.value=o.input||'';
+ uhDlgCss();
+ const done=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)},kd=e=>{if(e.key==='Escape')done(inp?null:false);if(e.key==='Enter'&&!(i&&i.tagName==='TEXTAREA'))done(inp?i.value:true)};
+ d.querySelector('.uhdn').onclick=()=>done(inp?null:false);d.querySelector('.uhdy').onclick=()=>done(inp?i.value:true);d.onclick=e=>{if(e.target===d)done(inp?null:false)};
+ document.addEventListener('keydown',kd);document.body.appendChild(d);setTimeout(()=>(i||d.querySelector('.uhdy')).focus(),60)})}
+const uhAsk=(m,v)=>uhDlg(m,{input:v===undefined||v===null?'':String(v),long:/why|reason|note|write/i.test(m),ok:'Done'});
+const uhConfirm=(m,o)=>uhDlg(m,Object.assign({ok:/delete|remove|cancel|sign out|block|suspend|reject|stop/i.test(m)?'Yes':'OK',danger:/delete|remove|block|suspend|cannot be undone/i.test(m)},o||{}));
+
 "use strict";
 /* send crashes to the admin panel (Client errors), once per message per session */
 (()=>{const seen=new Set();const send=(m,st)=>{m=String(m||'').slice(0,300);if(!m||seen.has(m)||seen.size>20)return;seen.add(m);try{fetch('/api/v1/client-error',{method:'POST',headers:{'content-type':'application/json','x-tht':'1'},body:JSON.stringify({message:m,stack:String(st||'').slice(0,2000),page:'app2:'+location.pathname,version:'uh-p0'}),keepalive:true})}catch(_){}};
@@ -1808,7 +1824,7 @@ function vWaitRun(){const el=document.getElementById('vwait');if(!el)return;cons
   else if(c&&c.callEnded){tx.textContent='This visit has ended.';bj.textContent='See the summary';bj.disabled=false;bj.onclick=()=>{closeL();S.sub=2;renderSheet()};clearInterval(t)}
   else tx.textContent=q&&q.waiting!=null?(q.waiting?`${q.waiting} ${q.waiting===1?'person':'people'} before you${q.waitMin?' · about '+q.waitMin+' min':''}`:'You’re next. The doctor will start the call.'):'The doctor will start the call at your time.'};
  tick();const t=setInterval(tick,15000)}
-async function visitCancel(id){if(!confirm('Cancel this visit? The hospital is told.'))return;try{await API(`/api/v1/appointments/${id}/cancel`,{key:true,method:'POST'});await loadVisits();closeL();renderAll();toast('Visit cancelled')}catch(e){toast(e.message)}}
+async function visitCancel(id){if(!await uhConfirm('Cancel this visit? The hospital is told.'))return;try{await API(`/api/v1/appointments/${id}/cancel`,{key:true,method:'POST'});await loadVisits();closeL();renderAll();toast('Visit cancelled')}catch(e){toast(e.message)}}
 async function visitArrive(id){const a=APPTS.find(x=>x.id===id),p=P();if(!a||!a.store)return;let doc='';
  try{const D=await API('/api/v1/doctors?store='+encodeURIComponent(a.store.id));const n=(a.doctor||'').toLowerCase().replace(/^dr\.?\s*/,'');doc=((D.doctors||[]).find(x=>(x.name||'').toLowerCase().replace(/^dr\.?\s*/,'')===n)||(D.doctors||[])[0]||{}).id||''}catch(_){}
  if(!doc)return toast('Please check in at the OP desk; the hospital will give you a token.');
@@ -1860,7 +1876,7 @@ async function openAfterVisit(id){let c;try{c=await API('/api/v1/consults/'+id,{
  ${sum.length?`<div class="mkh">In plain words</div><div class="mkc" style="font-size:15px;line-height:1.5">${sum.map(l=>H.includes(l)?`<div style="font-weight:700;margin-top:10px">${esc(l)}</div>`:`<div>${esc(l)}</div>`).join('')}</div>`:''}</div>`,'CARE')}
 async function vzRxMeds(id){let c;try{c=await API('/api/v1/consults/'+id,{key:true})}catch(e){return toast(e.message)}const rx=c.rx||{};
  openRxImport({id:'',doctor:rx.doctor?'Dr '+rx.doctor:(c.doctor||''),medicines:(rx.items||[]).map(m=>({...m,frequency:VZF[m.frequency]||m.frequency||''}))})}
-async function tokenLeave(id){if(!confirm('Leave the queue? Your number will be given up.'))return;try{await API(`/api/v1/queue/${id}/leave`,{key:true,method:'POST'});clearTimeout(TOKT);await loadVisits();closeL();renderAll();toast('You left the queue')}catch(e){toast(e.message)}}
+async function tokenLeave(id){if(!await uhConfirm('Leave the queue? Your number will be given up.'))return;try{await API(`/api/v1/queue/${id}/leave`,{key:true,method:'POST'});clearTimeout(TOKT);await loadVisits();closeL();renderAll();toast('You left the queue')}catch(e){toast(e.message)}}
 
 /* ---------------- simple mode (for parents) ----------------
    One screen on the parent's own phone: the next tablet with one big "I've taken it", today's doses, two big call
@@ -1927,17 +1943,17 @@ async function pinHash(pin){const salt=(ME&&ME.user&&ME.user.id)||'uh';const b=a
 const PINF=(t,sub)=>`<form style="padding:4px 20px 20px;display:flex;flex-direction:column;gap:12px"><p class="cap" style="margin:0;font-size:15px;color:#3A3A3C">${sub}</p><input class="inp2" name="pin" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required placeholder="4-digit PIN" style="text-align:center;font-size:24px;letter-spacing:.5em">${t?'<input class="inp2" name="pin2" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required placeholder="Again" style="text-align:center;font-size:24px;letter-spacing:.5em">':''}<button class="btn pri" style="width:100%">${t?'Done':'Unlock'}</button></form>`;
 function kidOn(pid){const q=P(pid);const sx=sheetX('Parent PIN',PINF(1,`Kid mode keeps this phone on ${esc(q?q.name:'your child')}'s screen. Choose a PIN you'll need to leave it.`));const f=sx.el.querySelector('form');
  f.onsubmit=async e=>{e.preventDefault();const d=new FormData(f);if(d.get('pin')!==d.get('pin2'))return toast('The two PINs do not match');try{localStorage.setItem('uh-kidpin',await pinHash(d.get('pin')));localStorage.setItem('uh-kidmode',pid)}catch(_){}sx.close();closeL();renderSimple()}}
-function kidOff(){let st={};try{st=JSON.parse(localStorage.getItem('uh-kidtry')||'{}')}catch(_){}if(st.until&&Date.now()<st.until)return toast('Too many tries. Wait a minute.');
+async function kidOff(){let st={};try{st=JSON.parse(localStorage.getItem('uh-kidtry')||'{}')}catch(_){}if(st.until&&Date.now()<st.until)return toast('Too many tries. Wait a minute.');
  const done=()=>{try{['uh-kidmode','uh-kidpin','uh-kidtry'].forEach(k=>localStorage.removeItem(k))}catch(_){}const el=$('#simple');if(el)el.remove();renderAll()};
  let h=null;try{h=localStorage.getItem('uh-kidpin')}catch(_){}
- if(!h){if(confirm('Exit kid mode? (for parents)'))done();return}
+ if(!h){if(await uhConfirm('Exit kid mode? (for parents)'))done();return}
  const sx=sheetX('For parents',PINF(0,'Enter the parent PIN to leave kid mode.'));const f=sx.el.querySelector('form');
  f.onsubmit=async e=>{e.preventDefault();if(await pinHash(new FormData(f).get('pin'))===h){sx.close();return done()}st.n=(st.n||0)+1;if(st.n>=5){st={until:Date.now()+60000}}try{localStorage.setItem('uh-kidtry',JSON.stringify(st))}catch(_){}f.reset();toast(st.until?'Too many tries. Wait a minute.':'That PIN is not right')}}
 function smLine(){const L=smLang(),T=SM_T[L]||SM_T.en,me=P(ME.me),plan=dosePlan(me.id),now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),next=plan.find(x=>!x.done&&x.t<=hm)||plan.find(x=>!x.done);
  if(!next)return T.done;return`${me.name.split(' ')[0]}, ${T[smPart(next.t)]} ${T.tab}. `+(window.UHL&&UHL.doseLine?UHL.doseLine('',next.m,L):next.m.name)}
 function smSay(){if(window.UHL&&UHL.speak)UHL.speak(smLine(),smLang())}
 async function smTake(med,t){const me=P(ME.me);try{await API(`/api/v2/people/${me.id}/records`,{json:{kind:'dose',day:today(),data:{med,time:t,at:Date.now()}}});if(navigator.vibrate)navigator.vibrate(60);await loadRecords(me.id);renderSimple()}catch(e){toast(e.message)}}
-function smOff(){if(!confirm('Switch back to the normal app?'))return;try{localStorage.removeItem('uh-simple')}catch(_){}renderSimple();renderAll()}
+async function smOff(){if(!await uhConfirm('Switch back to the normal app?'))return;try{localStorage.removeItem('uh-simple')}catch(_){}renderSimple();renderAll()}
 function openSimple(){const cur=smLang();page('Simple mode',`<p class="line">For parents and elders: one big screen with the next tablet, one button to say it’s taken, today’s doses, two call buttons and SOS. Reminders are read aloud. Turn it on here, on their phone.</p>
  <div class="sect">TAP A LANGUAGE TO TURN IT ON</div><div class="list">${[['ta','தமிழ்','Tamil'],['te','తెలుగు','Telugu'],['en','English','English']].map(([k,n,e])=>`<button class="li" onclick="smOn('${k}')"><div style="flex:1;text-align:left"><div style="font-weight:600;font-size:18px">${n}</div><div class="sub">${e}</div></div>${cur===k?`<span class="sub" style="color:#1A7F37;font-weight:600;margin-right:6px">On</span>`+ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#0071E3',22):`<span class="tpill">Turn on</span>`}</button>`).join('')}</div>
  <p class="cap" style="margin-top:12px">To switch back, tap “Normal app” at the bottom of the simple screen.</p>${ME.people.filter(q=>!q.self&&isKid(q)&&ageOf(q)>=3).length?`<div class="sect">KID MODE · ON A PHONE YOUR CHILD USES</div><div class="list">${ME.people.filter(q=>!q.self&&isKid(q)&&ageOf(q)>=3).map(q=>`<button class="li" onclick="kidOn('${q.id}')"><span class="av" style="background:${q.color}">${esc(ini(q))}</span><div style="flex:1;text-align:left"><div style="font-weight:600">${esc(q.name)}</div><div class="sub">${ageOf(q)} years · games, first aid, brushing timer, call you</div></div>${ic(I.chev,'#C7C7CC',18)}</button>`).join('')}</div>`:''}`,'SETTINGS')}
@@ -2210,7 +2226,7 @@ function vaxGive(pid,g){const p=P(pid),x=VAX.find(v=>v[0]===g);if(!writer(p))ret
   <div class="sect" style="margin:6px 4px -4px">WHERE (OPTIONAL)</div><input class="inp2" name="at" maxlength="80" placeholder="Clinic or hospital">
   <button class="btn pri" style="width:100%;margin-top:4px">Done</button></form>`);const f=sx.el.querySelector('form');
  f.onsubmit=async e=>{e.preventDefault();const d=new FormData(f);try{await API(`/api/v2/people/${p.id}/records`,{json:{kind:'vax',day:d.get('day')||today(),data:{g,at:String(d.get('at')||'').trim()}}});await loadRecords(p.id);sx.close();toast('Marked as given');if($('#layer .page'))openVax(pid);else renderAll()}catch(err){toast(err.message)}}}
-async function vaxUndo(pid,rid){if(!confirm('Remove this vaccine visit?'))return;try{await API('/api/v2/records/'+rid,{method:'DELETE'});await loadRecords(pid);openVax(pid)}catch(e){toast(e.message)}}
+async function vaxUndo(pid,rid){if(!await uhConfirm('Remove this vaccine visit?'))return;try{await API('/api/v2/records/'+rid,{method:'DELETE'});await loadRecords(pid);openVax(pid)}catch(e){toast(e.message)}}
 const vIc=st=>st==='late'?`<span class="vdot" style="background:#FF3B30">${ic('<path d="M12 7v6M12 16.5v.5"/>','#fff',14)}</span>`:st==='given'?`<span class="vdot" style="background:#34C759">${ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14)}</span>`:st==='due'?`<span class="vdot" style="background:#FF9F0A">${ic('<path d="M12 7v5l3 2"/>','#fff',14)}</span>`:'<span class="vdot" style="background:#E5E5EA"></span>';
 function openVax(pid){const p=P(pid),v=vaxOf(p),w=writer(p),nl=v.list.filter(x=>x.st==='late').length;
  page('Vaccines',`<p class="line" style="max-width:none">India schedule (IAP). Tap one to add the date or a photo of the card.</p>${w&&nl>=2?`<button class="lnkb" style="margin:6px 0 0;padding:4px 0;font-size:15px" onclick="openVaxDone('${pid}')">Already had some? Mark past visits together</button>`:''}
@@ -2685,7 +2701,7 @@ function docForm(id,pre){const d=DOCS.find(x=>x.id===id)||pre||{};
  const f=sx.el.querySelector('form');let sp=d.specialty||'';
  sx.el.querySelectorAll('#dsp .chipl').forEach(b=>b.onclick=()=>{sx.el.querySelectorAll('#dsp .chipl').forEach(x=>x.classList.remove('on'));if(sp===b.dataset.v){sp=''}else{sp=b.dataset.v;b.classList.add('on')}});
  f.onsubmit=async e=>{e.preventDefault();const b={...Object.fromEntries(new FormData(f)),specialty:sp};try{id?await API('/api/v2/my-doctors/'+id,{method:'PUT',json:b}):await API('/api/v2/my-doctors',{json:b});sx.close();toast('Saved');openDoctors()}catch(err){toast(err.message)}};
- const del=sx.el.querySelector('[data-del]');if(del)del.onclick=async()=>{if(!confirm('Remove this doctor?'))return;try{await API('/api/v2/my-doctors/'+id,{method:'DELETE'});sx.close();openDoctors()}catch(err){toast(err.message)}}}
+ const del=sx.el.querySelector('[data-del]');if(del)del.onclick=async()=>{if(!await uhConfirm('Remove this doctor?'))return;try{await API('/api/v2/my-doctors/'+id,{method:'DELETE'});sx.close();openDoctors()}catch(err){toast(err.message)}}}
 function shareDoctor(rid){const p=P(),sx=sheetX('Share with a doctor',`<div style="padding:4px 16px 8px"><p class="cap" style="margin:0 0 10px">A private link to a page with ${rid?'this report,':'the last 6 months of reports,'} trends${can(p,'all')?', medicines':''} and the Medical ID. It stops working by itself. The doctor needs no app or sign-up.</p>
  <div class="sect">LINK WORKS FOR</div><div class="seg4" style="grid-template-columns:repeat(3,1fr)" id="dsh">${[[24,'24 hours'],[72,'3 days'],[168,'7 days']].map((h,i)=>`<button type="button" data-h="${h[0]}" class="${i?'':'on'}">${h[1]}</button>`).join('')}</div>
  ${can(p,'all')?`<label class="li" style="margin-top:10px;background:#fff;border-radius:14px"><span style="flex:1">Include medicines</span><span class="sw on" id="dsm"></span></label>`:''}
@@ -2698,7 +2714,7 @@ function shareDoctor(rid){const p=P(),sx=sheetX('Share with a doctor',`<div styl
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="btn sec" data-c>Copy link</button><button class="btn pri" data-w>WhatsApp</button></div></div>`;
   E.querySelector('[data-c]').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(r.url).then(()=>toast('Link copied'));E.querySelector('[data-w]').onclick=()=>location.href='https://wa.me/?text='+encodeURIComponent('My health summary from Urban Health (private link, ends by itself): '+r.url);list()}catch(e){toast(e.message)}}}
 function visitSummary(){const p=P();window.open(`/api/v2/people/${p.id}/summary?months=6`,'_blank')}
-async function delRecord(id){if(!confirm('Delete this report and its file permanently? It will be removed from trends, the body view and any doctor links. This cannot be undone.'))return;try{await API('/api/v2/records/'+id,{method:'DELETE'});await loadRecords(S.person);closeL();renderAll()}catch(e){toast(e.message)}}
+async function delRecord(id){if(!await uhConfirm('Delete this report and its file permanently? It will be removed from trends, the body view and any doctor links. This cannot be undone.'))return;try{await API('/api/v2/records/'+id,{method:'DELETE'});await loadRecords(S.person);closeL();renderAll()}catch(e){toast(e.message)}}
 /* Add / edit a medicine. Typing suggests what this family ordered or already takes first, then common medicines.
    Dose and timing are tap chips; reminders run on the person's own time zone, shown plainly. */
 const AMT=['1 tablet','½ tablet','2 tablets','1 capsule','5 mL','10 mL','1 puff','1 drop'],FOOD=['After food','Before food','With food','Empty stomach'];
@@ -2755,7 +2771,7 @@ function openMed(mid){const p=P(),m=mid?(REC[p.id]||[]).find(x=>x.id===mid):{tim
  const save=async(ex={})=>{const st=String(f.stock.value||'').replace(/\D/g,''),d=[amt,food?food.toLowerCase():''].filter(Boolean).join(' · ');
   const data={name:f.name.value.trim(),dose:d,note:f.note.value.trim(),...(st?{stock:+st,stockDay:today()}:{stock:0,stockDay:''}),times,tz,refill:$('#refill').classList.contains('on'),active:m.active!==false,look,shape,...(dur==='keep'?{until:m.until,from:m.from}:dur?{from:today(),until:dayAdd(today(),+dur-1)}:{until:'',from:''}),...ex};
   if(data.name.length<2)return toast('Enter the medicine name');if(!data.times.length)return toast('Pick at least one time');
-  try{if(mid)await API('/api/v2/records/'+mid,{method:'PUT',json:{kind:'med',data}});else await API(`/api/v2/people/${p.id}/records`,{json:{kind:'med',data}});await loadRecords(p.id);closeL();renderAll();toast(mid?'Saved':'Added · reminders on '+tzLabel(tz));if(!mid&&typeof Notification!=='undefined'&&Notification.permission==='default')setTimeout(()=>{if(confirm('Get a reminder on this phone at each dose time?'))enablePush()},400)}catch(e){toast(e.message)}};
+  try{if(mid)await API('/api/v2/records/'+mid,{method:'PUT',json:{kind:'med',data}});else await API(`/api/v2/people/${p.id}/records`,{json:{kind:'med',data}});await loadRecords(p.id);closeL();renderAll();toast(mid?'Saved':'Added · reminders on '+tzLabel(tz));if(!mid&&typeof Notification!=='undefined'&&Notification.permission==='default')setTimeout(async ()=>{if(await uhConfirm('Get a reminder on this phone at each dose time?'))enablePush()},400)}catch(e){toast(e.message)}};
  f.onsubmit=e=>{e.preventDefault();save()};const sp=$('#stopm');if(sp)sp.onclick=()=>save({active:m.active===false})}
 /* ---------------- people / family ---------------- */
 function openPeople(){layer(`<div class="pop glass">${ME.people.map(p=>`<button class="li" onclick="selectPerson('${p.id}')"><span class="av" style="background:${p.color}">${esc((firstName(p)||p.name)[0])}</span><div style="flex:1"><div style="font-weight:600">${esc(p.name)}${p.self?' (you)':''}</div><div class="sub">${p.self?'Your health':p.access==='guardian'?'You look after them':p.access==='medid'?'Medical ID only':'Shared with you'}</div></div>${p.access==='medid'?ic(I.lock,'#8E8E93',18):S.person===p.id?ic(I.check,'#0071E3',20):''}</button>`).join('')}
@@ -2791,13 +2807,13 @@ function guardianSheet(pid){const p=P(pid),pr=pron(p),w=writer(p),gs=p.guardians
  ${w&&rest.length?`<div class="sect" style="margin:14px 4px 6px">ADD FROM YOUR FAMILY</div><div class="list">${rest.map(m=>row(m,0)).join('')}</div>`:''}
  ${w?`<button class="btn sec" style="width:100%;margin-top:14px" data-inv>Invite a co-parent</button><p class="cap" style="margin:8px 4px 0">They join with their own login. Then add them here.</p>`:`<button class="btn sec" style="width:100%;margin-top:14px" data-ask>Ask to be added</button>`}</div>`);
  sx.el.querySelectorAll('[data-add]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await API(`/api/v2/people/${pid}/guardians`,{json:{user_id:b.dataset.add}});await refreshMe();sx.close();toast('Guardian added');renderAll()}catch(e){b.disabled=false;toast(e.message)}});
- sx.el.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{const m=mem.find(x=>x.id===b.dataset.rm);if(!confirm(`Stop ${m&&!m.you?m.name.split(' ')[0]:'you'} looking after ${firstName(p)}?`))return;try{await API(`/api/v2/people/${pid}/guardians/${b.dataset.rm}`,{method:'DELETE'});await refreshMe();sx.close();toast('Updated');renderAll()}catch(e){toast(e.message)}});
+ sx.el.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{const m=mem.find(x=>x.id===b.dataset.rm);if(!await uhConfirm(`Stop ${m&&!m.you?m.name.split(' ')[0]:'you'} looking after ${firstName(p)}?`))return;try{await API(`/api/v2/people/${pid}/guardians/${b.dataset.rm}`,{method:'DELETE'});await refreshMe();sx.close();toast('Updated');renderAll()}catch(e){toast(e.message)}});
  const iv=sx.el.querySelector('[data-inv]');if(iv)iv.onclick=()=>{sx.close();openInvite(pr.he==='she'?'Wife':'')};
  const ak=sx.el.querySelector('[data-ask]');if(ak)ak.onclick=()=>{sx.close();askShare(pid)}}
-async function removeDependent(pid){if(!confirm('Remove? Their records are kept for 30 days in case you change your mind.'))return;try{await API('/api/v2/people/'+pid,{method:'DELETE'});closeL();await refreshMe();S.person=ME.me;renderAll()}catch(e){toast(e.message)}}
-async function removeMember(pid){const p=P(pid),m=ME.members.find(x=>x.name===p.name&&!x.you);if(!m)return toast('Could not find their account');if(!confirm('Remove '+p.name+' from the family?'))return;
+async function removeDependent(pid){if(!await uhConfirm('Remove? Their records are kept for 30 days in case you change your mind.'))return;try{await API('/api/v2/people/'+pid,{method:'DELETE'});closeL();await refreshMe();S.person=ME.me;renderAll()}catch(e){toast(e.message)}}
+async function removeMember(pid){const p=P(pid),m=ME.members.find(x=>x.name===p.name&&!x.you);if(!m)return toast('Could not find their account');if(!await uhConfirm('Remove '+p.name+' from the family?'))return;
  try{await API('/api/v2/household/remove',{json:{user_id:m.id}});closeL();await refreshMe();S.person=ME.me;renderAll()}catch(e){toast(e.message)}}
-async function leaveHousehold(){if(!confirm('Leave this family? Your records stay with you; sharing ends both ways.'))return;try{await API('/api/v2/household/leave',{method:'POST'});await refreshMe();S.person=ME.me;renderAll();toast('You left the family')}catch(e){toast(e.message)}}
+async function leaveHousehold(){if(!await uhConfirm('Leave this family? Your records stay with you; sharing ends both ways.'))return;try{await API('/api/v2/household/leave',{method:'POST'});await refreshMe();S.person=ME.me;renderAll();toast('You left the family')}catch(e){toast(e.message)}}
 const fmtPh=c=>{c=String(c||'');const d=c.replace(/\D/g,'').slice(-10);return c.includes('@')||d.length<10?c:'+91 '+d.slice(0,5)+' '+d.slice(5)};
 const agoI=t=>{const s=Date.now()/1e3-t;return s<90?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':new Date(t*1e3).toLocaleDateString('en-IN',{day:'numeric',month:'short'})};
 const INV_ST={sent:i=>'sent '+agoI(i.sent)+(i.sends>1?' ('+i.sends+'×)':'')+' · not opened yet',opened:i=>'opened the link · not joined yet',expired:i=>'expired · send again',joined:()=>'joined'};
@@ -2805,7 +2821,7 @@ const REL_ALL=['Wife','Husband','Father','Mother','Son','Daughter','Brother','Si
 const relSel=(v,nm='rel')=>`<select class="inp2" name="${nm}"><option value="">Choose</option>${REL_ALL.map(r=>`<option ${r===v?'selected':''}>${r}</option>`).join('')}</select>`;
 function shareInvite(i,how){const url=location.origin+i.link,t=`${(ME.user.name||'Your family')} invited you to their family on Urban Health. Join with your own account: ${url}`;
  if(how==='wa'){location.href='https://wa.me/'+(i.contact.includes('@')?'':i.contact.replace(/\D/g,''))+'?text='+encodeURIComponent(t);return}
- if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>toast('Invite link copied'),()=>prompt('Copy this link',url));else prompt('Copy this link',url)}
+ if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>toast('Invite link copied'),()=>uhAsk('Copy this link',url));else uhAsk('Copy this link',url)}
 function inviteSheet(ref){const i=ME.invites.find(x=>x.ref===ref);if(!i)return;
  const A=(k,ico,t,end,red)=>`<button class="li" data-a="${k}" style="${red?'color:#FF3B30':''}"><span class="ib" style="background:${red?'#FFECEC':'#F2F2F7'}">${ico}</span><span style="flex:1;text-align:left">${t}</span><span class="end" style="font-size:13px">${end||''}</span></button>`;
  const sx=sheetX(i.name||'Invite',`<div style="padding:2px 16px 8px"><p style="text-align:center;color:#8E8E93;font-size:14px;margin:0 0 12px">${esc(fmtPh(i.contact))}${i.relation?' · '+esc(i.relation):''}<br>${esc(INV_ST[i.status](i))}</p>
@@ -2977,12 +2993,12 @@ function openDataOld(){page('Your data',`<div class="list" style="margin-top:14p
  <div class="sect">DELETE</div><div class="list"><button class="li" style="color:#C4291C" onclick="deleteAccount()">Delete my account and data</button></div><p class="cap">Deleting removes your login, profile, reports and files. Hand over anyone you look after first.</p>
  <div class="sect">WHAT WE KEEP, AND WHERE</div>${HOW([[I.rec,'#0A84FF','Reports and files','Encrypted with a key only our servers hold, stored in India (Mumbai).'],[I.pill,'#30D158','Medicines, readings, Medical ID','Encrypted in the database. Shared only at the level you choose for each person.'],[I.drop,'#E5577A','Women\'s health','Cycle, pregnancy and kick counts stay private unless you switch them on for someone.']])}
  <div class="sect">YOUR RIGHTS (DPDP ACT 2023)</div>${HOW([[I.down,'#0A84FF','See and take a copy','Download everything above at any time.'],[I.rec,'#FF9F0A','Correct','Fix anything in your profile or records; changes are kept in the access log.'],[I.x,'#FF3B30','Erase and withdraw consent','Delete your account and everything in it. You can withdraw consent for anything you shared at any time.'],[I.bell,'#5E5CE6','Grievance Officer','Write to the Grievance Officer named in the <a href="/privacy" target="_blank">privacy policy</a>.']])}`,'SETTINGS')}
-async function dataReq(kind){let detail='';if(kind==='correct'){detail=prompt('What should we correct?')||'';if(detail.trim().length<3)return}if(kind==='delete'&&!confirm('Ask Urban Health to delete your data? You can also delete it yourself now in Settings → Account.'))return;
+async function dataReq(kind){let detail='';if(kind==='correct'){detail=await uhAsk('What should we correct?')||'';if(detail.trim().length<3)return}if(kind==='delete'&&!await uhConfirm('Ask Urban Health to delete your data? You can also delete it yourself now in Settings → Account.'))return;
  try{await API('/api/v2/data-requests',{json:{kind,detail}});toast('Request sent. We will tell you when it’s done.')}catch(e){toast(e.message)}}
-async function joinCompany(){const c=(prompt('Enter the code your company gave you')||'').trim();if(!c)return;try{const r=await API('/api/v2/company/join',{json:{code:c}});toast('Joined '+r.company)}catch(e){toast(e.message)}}
+async function joinCompany(){const c=(await uhAsk('Enter the code your company gave you')||'').trim();if(!c)return;try{const r=await API('/api/v2/company/join',{json:{code:c}});toast('Joined '+r.company)}catch(e){toast(e.message)}}
 async function exportData(){const out={exported:new Date().toISOString(),people:[]};for(const p of ME.people){await loadRecords(p.id);out.people.push({...p,records:REC[p.id]})}
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='urban-health-export.json';a.click()}
-async function deleteAccount(){const pw=prompt('Your account and everything you added will be erased in 48 hours. You can change your mind until then. Type DELETE to confirm.');if((pw||'').trim().toUpperCase()!=='DELETE')return;try{await API('/api/v1/auth/account/delete',{json:{confirm:'DELETE',later:true}});toast('Deletion scheduled. You can cancel it in Privacy.');openPrivacy()}catch(e){toast(e.message)}}
+async function deleteAccount(){const pw=await uhAsk('Your account and everything you added will be erased in 48 hours. You can change your mind until then. Type DELETE to confirm.');if((pw||'').trim().toUpperCase()!=='DELETE')return;try{await API('/api/v1/auth/account/delete',{json:{confirm:'DELETE',later:true}});toast('Deletion scheduled. You can cancel it in Privacy.');openPrivacy()}catch(e){toast(e.message)}}
 async function signOut(){try{localStorage.removeItem('uh-loc');localStorage.removeItem('uh-off')}catch(_){}try{if(sessionStorage.getItem('uh-join-keep')){sessionStorage.removeItem('uh-join-keep');const v=invInfo();if(v&&v.token)sessionStorage.setItem('uh-join',v.token)}}catch(_){}try{await API('/api/v1/auth/logout',{method:'POST'})}catch(_){}location.href='/app'}
 /* Keep this phone registered for notifications. Permission alone is not enough: the server can only send to a
    phone that has told it where to send. Runs at every sign-in and right after permission is given; harmless to repeat. */
@@ -3125,7 +3141,7 @@ function reportProblem(oid,kind){const K=kind==='lab'?[['missed_visit',"Technici
  sx.el.querySelectorAll('[name=pk]').forEach(r=>r.onchange=()=>sx.el.querySelector('#pbw').style.display=r.value==='wrong_medicine'||r.value==='unsafe'?'block':'none');
  sx.el.querySelector('[data-send]').onclick=async e=>{const k=sx.el.querySelector('[name=pk]:checked').value,t=sx.el.querySelector('#pbt').value.trim();if(t.length<5)return toast('Tell us a little more, in a sentence.');e.target.disabled=true;
   try{await API('/api/v2/complaints',{json:{orderId:oid,kind:k,text:t,lang:(S.lang||'en')}});sx.close();toast('Sent. We will reply in your inbox.')}catch(x){e.target.disabled=false;toast(x.message)}}}
-async function cancelOrder(id){if(!confirm('Cancel this booking?'))return;try{await API(`/api/v1/orders/${id}/cancel`,{key:true,method:'POST'});toast('Cancelled');openOrder(id)}catch(e){toast(e.message)}}
+async function cancelOrder(id){if(!await uhConfirm('Cancel this booking?'))return;try{await API(`/api/v1/orders/${id}/cancel`,{key:true,method:'POST'});toast('Cancelled');openOrder(id)}catch(e){toast(e.message)}}
 
 /* ---------------- notifications: bell, inbox, settings ---------------- */
 let BOX={items:[],unread:0};
@@ -3143,6 +3159,7 @@ async function openInbox(f){if(f)BOXF=f;await pollInbox();const cats=[...new Set
  <button class="btn ghost" style="width:100%;margin-top:8px;color:var(--blue)" onclick="openNotifSettings()">Notification settings</button>`)}
 async function openNotice(id){const x=BOX.items.find(n=>n.id===id);if(!x)return;API('/api/v2/inbox/read',{json:{ids:[id]}}).then(pollInbox).catch(()=>{});const r=x.ref||{};
  if(r.surprise){closeL();return openSurprise(r.surprise)}
+ if(r.kind==='refill'){closeL();S.tab='meds';S.sub=0;renderAll();return inTab('bk',()=>openPharmacy())}
  if(r.grant){const sx=sheetX('',`<div style="padding:0 16px 10px"><p style="font-size:20px;font-weight:700;margin:0 0 6px">${esc(x.title)}</p><p class="cap" style="margin:0 0 14px">${esc(x.body||'')}</p><p class="cap">If you allow, support can see the dates of your reports for 1 hour, not what they say. You'll see it in Change history.</p><button class="btn pri" style="width:100%;margin-top:10px" data-y>Allow for 1 hour</button><button class="btn sec" style="width:100%;margin-top:10px" data-n>Don't allow</button></div>`);
   const ans=async a=>{try{await API('/api/v2/access/'+r.grant,{json:{allow:a}});toast(a?'Allowed for 1 hour':'Not allowed')}catch(e){toast(e.message)}sx.close()};sx.el.querySelector('[data-y]').onclick=()=>ans(true);sx.el.querySelector('[data-n]').onclick=()=>ans(false);return}
  if(x.kind==='eye'&&r.person&&P(r.person)){closeL();await selectPerson(r.person);await loadRecords(r.person);return openEye(r.person)}
@@ -3656,7 +3673,7 @@ function openUpload(rid){const p=P(S.person),u=(UPL[p.id]||[]).find(x=>x.id===ri
  const done=async(fn,msg)=>{try{await fn();sx.close();UPLT[p.id]=0;delete UPL[p.id];await loadRecords(p.id);renderAll();toast(msg)}catch(e){toast(e.message)}};
  sx.el.querySelector('#upok').onclick=()=>done(()=>API(`/api/v2/uploads/${rid}/accept`,{method:'POST'}),'Added to reports');
  const ak=sx.el.querySelector('#upask');if(ak)ak.onclick=()=>done(()=>API(`/api/v2/uploads/${rid}/ask`,{method:'POST'}),'We’ll ask the lab to check');
- sx.el.querySelector('#upno').onclick=()=>{if(confirm('Remove this report? It will be deleted.'))done(()=>API(`/api/v2/uploads/${rid}`,{method:'DELETE'}),'Removed')}}
+ sx.el.querySelector('#upno').onclick=async ()=>{if(await uhConfirm('Remove this report? It will be deleted.'))done(()=>API(`/api/v2/uploads/${rid}`,{method:'DELETE'}),'Removed')}}
 /* ---------------- lock-screen Medical ID (approved design) ----------------
    A web app cannot draw on the lock screen, so the card is made into a wallpaper image the person saves and sets.
    The QR opens urbanhealth.in/m/<token> (api/medid.py): only the fields shown here, no sign-in, can be switched off. */
@@ -3885,7 +3902,7 @@ async function googleInit(){try{if(/UrbanHealthAndroid/.test(navigator.userAgent
  google.accounts.id.initialize({client_id:c.google,callback:r=>googleDone(r.credential),ux_mode:'popup',itp_support:true});$('#gwrap').style.display='block';
  google.accounts.id.renderButton($('#gbtn'),{theme:'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'center',width:Math.min(400,$('#gbtn').clientWidth||320)})}catch(_){}}
 async function googleDone(cred,terms){try{await API('/api/v1/auth/google',{json:{credential:cred,terms:!!terms}});boot()}catch(e){
- if(/agree to the Terms/i.test(e.message)&&!terms){if(confirm('Create a new Urban Health account with this Google account?\n\nBy continuing you agree to the Terms and Privacy Policy.'))googleDone(cred,true)}else toast(e.message)}}
+ if(/agree to the Terms/i.test(e.message)&&!terms){if(await uhConfirm('Create a new Urban Health account with this Google account?\n\nBy continuing you agree to the Terms and Privacy Policy.'))googleDone(cred,true)}else toast(e.message)}}
 /* Firebase Phone Authentication: when the server says {firebase:true}, Google sends the SMS and the browser hands back an ID token */
 let FBA=null,FBC=null;
 const loadJS=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load sign-in. Check your connection.'));document.head.appendChild(s)});
@@ -4309,7 +4326,7 @@ function addrDetails(a,pos,geo,kind,store,must){const L=['Home','Work','Parents'
    const send=b=>id?API('/api/v2/addresses/'+id,{method:'PUT',json:b}):API('/api/v2/addresses',{json:b});
    let r;try{r=await send(body)}catch(err){if(err.status!==428)throw err;const c=await confirmPhone(dd.phone);if(!c)return;r=await send({...body,...c})}
    await addrLoad(true);ADDR.sel=ADDR.rows.find(x=>x.id===r.id)||ADDR.sel;try{localStorage.setItem('uh-addr-id',r.id)}catch(_){}sx.close();toast('Address saved');addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}};
- const del=sx.el.querySelector('#adel');if(del)del.onclick=async()=>{if(!confirm('Remove this address?'))return;try{await API('/api/v2/addresses/'+a.id,{method:'DELETE'});await addrLoad(true);sx.close();addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}}}
+ const del=sx.el.querySelector('#adel');if(del)del.onclick=async()=>{if(!await uhConfirm('Remove this address?'))return;try{await API('/api/v2/addresses/'+a.id,{method:'DELETE'});await addrLoad(true);sx.close();addrRefresh(kind,store);if($('#addrlist'))openAddresses()}catch(err){toast(err.message)}}}
 
 async function openAddresses(){await addrLoad(true);page('Addresses',`<div id="addrlist" class="list" style="margin-top:14px">${ADDR.rows.map(a=>`<button class="li" onclick="addrEdit(ADDR.rows.find(x=>x.id==='${a.id}'),'lab','')"><span class="ib" style="background:#0071E3;color:#fff;font-weight:700">${LBL[a.label]||'•'}</span><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(a.label)}</div><div class="sub" style="white-space:normal">${esc([addrLine(a),a.landmark?'near '+a.landmark:'',a.pin].filter(Boolean).join(' · '))}</div></div>${ic(I.chev,'#C7C7CC')}</button>`).join('')}
  <button class="li" onclick="addrEdit(null,'lab','')">${ic('<path d="M12 5v14M5 12h14"/>','#0071E3',20)}<span style="color:#0071E3;font-weight:600">Add a new address</span></button></div>
@@ -4595,7 +4612,7 @@ function cardForm(id,pre){pre=pre||{};if(!id&&!pre.manual&&!pre.f)return cardAdd
    try{const r=id?await API('/api/v2/schemes/cards/'+id,{method:'PUT',json:body}):await API('/api/v2/schemes/cards',{json:body});
     for(const [slot,file] of Object.entries(files)){const fd=new FormData();fd.append('file',file);const rr=await fetch(`/api/v2/schemes/cards/${r.id}/file/${slot}`,{method:'POST',body:fd,credentials:'same-origin',headers:{'x-tht':'1'}});if(!rr.ok){const j=await rr.json().catch(()=>({}));toast(j.detail||'A file could not be saved')}}
     sx.close();toast('Card saved');S.cov='mine';if(S.tab==='cover')coverView();else{S.tab='cover';renderAll()}}catch(err){toast(err.message);btn.disabled=false;btn.textContent='Save card'}};
-  const del=sx.el.querySelector('[data-del]');if(del)del.onclick=async()=>{if(!confirm('Remove this card and its photos?'))return;try{await API('/api/v2/schemes/cards/'+id,{method:'DELETE'});sx.close();coverView()}catch(err){toast(err.message)}}};
+  const del=sx.el.querySelector('[data-del]');if(del)del.onclick=async()=>{if(!await uhConfirm('Remove this card and its photos?'))return;try{await API('/api/v2/schemes/cards/'+id,{method:'DELETE'});sx.close();coverView()}catch(err){toast(err.message)}}};
  if(!SCH)API('/api/v2/schemes').then(x=>{SCH=x;go()}).catch(go);else go()}
 /* One card, everything on it: the photo (front, back, policy PDF), whose card it is, the number big enough to read
    out at the desk, and every detail. Edit is always top right. */
@@ -4748,7 +4765,7 @@ async function orderMore(o){const el=$('#omore');if(!el)return;let t={};try{t=aw
  ${inv?`<a class="li" href="/api/v2/orders/${o.id}/invoice" target="_blank" rel="noopener">${ic(I.down,'#1D1D1F',20)}<span style="flex:1">GST invoice</span>${ic(I.chev,'#C7C7CC')}</a>`:''}
 </div>
  <p class="cap">${esc(t.why||'')} If the ${o.kind==='lab'?'lab':'pharmacy'} cancels, you get a full refund. Grievance officer: see <a href="/privacy" target="_blank">privacy policy</a>.</p>`}
-async function cancelOrder2(id,fee){if(!confirm(fee?`Cancel? A ₹${fee} late-cancellation fee applies.`:'Cancel this booking? It is free.'))return;try{await API(`/api/v2/orders/${id}/cancel`,{method:'POST'});toast('Cancelled');openOrder(id)}catch(e){toast(e.message)}}
+async function cancelOrder2(id,fee){if(!await uhConfirm(fee?`Cancel? A ₹${fee} late-cancellation fee applies.`:'Cancel this booking? It is free.'))return;try{await API(`/api/v2/orders/${id}/cancel`,{method:'POST'});toast('Cancelled');openOrder(id)}catch(e){toast(e.message)}}
 async function moveOrder(id,sid){let rows=[];try{rows=(await API(`/api/v2/stores/${sid}/slots`)).rows}catch(e){return toast(e.message)}
  const sx=sheetX('Change the time',`<div style="padding:4px 16px 20px"><div class="chips">${rows.map(r=>`<button class="chip" ${r.left?'':'disabled style="opacity:.4"'} data-s="${esc(r.slot)}">${esc(r.slot)}${r.left?'':' · full'}</button>`).join('')}</div></div>`);
  sx.el.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{try{await API(`/api/v2/orders/${id}/reschedule`,{json:{slot:b.dataset.s}});sx.close();toast('Time changed');openOrder(id)}catch(e){toast(e.message)}})}
@@ -4787,7 +4804,7 @@ function addCard(sc,pid){const s=SCH.schemes.find(x=>x.id===sc);const sx=sheetX(
 async function showCard(id){let c;try{c=await API('/api/v2/schemes/cards/'+id)}catch(e){return toast(e.message)}
  const sx=sheetX(c.name,`<div style="padding:4px 20px 20px"><div class="card" style="background:linear-gradient(135deg,#1A7F37,#0B5A26);color:#fff"><div style="font-size:13px;opacity:.8">${esc(c.name)}</div><div style="font-size:22px;font-weight:700;letter-spacing:.08em;margin:10px 0">${esc(c.number)}</div><div style="font-size:13px;opacity:.8">${c.memberId&&P(c.memberId)?esc(nameOf(P(c.memberId))):''}${c.validUntil?' · valid till '+esc(c.validUntil):''}</div></div>
  <p class="cap">Show this at the hospital's Ayushman / Arogya Mitra desk with Aadhaar.${c.help?' Helpline '+esc(c.help)+'.':''}</p><button class="btn sec" style="width:100%;color:#C4291C" data-d>Remove card</button></div>`);
- sx.el.querySelector('[data-d]').onclick=async()=>{if(!confirm('Remove this card?'))return;try{await API('/api/v2/schemes/cards/'+id,{method:'DELETE'});sx.close();openSchemes()}catch(e){toast(e.message)}}}
+ sx.el.querySelector('[data-d]').onclick=async()=>{if(!await uhConfirm('Remove this card?'))return;try{await API('/api/v2/schemes/cards/'+id,{method:'DELETE'});sx.close();openSchemes()}catch(e){toast(e.message)}}}
 
 for(const k of Object.keys(window)){if(/^open[A-Z]/.test(k)&&typeof window[k]==='function'&&!window[k].__nav){const f=window[k];const w=function(...a){NAVCTX={fn:w,args:a};return f.apply(this,a)};w.__nav=1;window[k]=w}}
 

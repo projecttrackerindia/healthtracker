@@ -127,6 +127,10 @@ def jobs(db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
         dq = dq.where(Order.agent_id == u.id)
     done = db.scalars(dq.order_by(Order.done_at.desc())).all()
     pay = getattr(u, "fee", 0) or 0
+    if not pay:
+        # No per-visit pay set by the lab: the home-collection fee the family paid is what the visit earns.
+        st = db.get(Store, u.store_id)
+        pay = int(getattr(st, "collection_fee", 0) or 0) if st else 0
     wk = select(Order).where(Order.store_id == u.store_id, Order.kind == "lab", Order.done_at >= day0 - 6 * 86400)
     if u.role == "tech":
         wk = wk.where(Order.agent_id == u.id)
@@ -233,3 +237,30 @@ def track_for_family(db: Session, o: Order) -> dict:
     pts = [{"lat": x.lat, "lng": x.lng, "at": x.at} for x in reversed(rows)]
     return {"live": age < PING_MAX_AGE, "state": o.status, "ageS": age, "points": pts,
             "lat": last.lat, "lng": last.lng, "heading": last.heading}
+
+
+
+# ---- the bell (board "Technician app · today") ---------------------------------------------------------------------------
+@r.get("/alerts")
+def alerts(db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
+    """What changed on this person's visits in the last two days: newly given to them, taken away or cancelled,
+    the family confirming fasting, a new time. Read from the orders themselves, so nothing can be missed or invented."""
+    t0 = int(time.time()) - 2 * 86400
+    q = select(Order).where(Order.store_id == u.store_id, Order.kind == "lab")
+    if u.role == "tech":
+        q = q.where(Order.agent_id == u.id)
+    out = []
+    for o in db.scalars(q.order_by(Order.created.desc()).limit(80)).all():
+        who = (o.member or "").split(" ")[0] or "A family"
+        for e in o.timeline or []:
+            t, k = e.get("t") or 0, e.get("s")
+            if t < t0:
+                continue
+            msg = {"assigned": (f"New visit · {who}", ", ".join(str(i.get("name")) for i in (o.items or [])[:3])),
+                   "fasting_ok": (f"{who} is fasting", "Confirmed in the app"),
+                   "rescheduled": (f"{who} chose a new time", str(o.slot or "")),
+                   "cancelled": (f"{who}'s visit was cancelled", "You don't need to go"),
+                   "rerun": (f"{who}'s sample needs a repeat", "The lab will tell you when")}.get(k)
+            if msg:
+                out.append({"t": t, "order": o.id, "title": msg[0], "sub": msg[1], "kind": k})
+    return {"alerts": sorted(out, key=lambda x: -x["t"])[:30]}

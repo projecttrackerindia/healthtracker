@@ -1,0 +1,25 @@
+<!doctype html><html><head><style>html,body{margin:0;background:#F5F5F7;overflow:hidden}</style>
+<script type="importmap">{"imports":{"three":"./three.js"}}</script></head><body>
+<script type="module">
+import * as THREE from 'three';import {RoomEnvironment} from './roomenv.js';
+const Q=new URLSearchParams(location.search),view=Q.get('v')||'front',show=(Q.get('s')||'f').split(',');
+const R=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});R.setPixelRatio(1);R.setSize(innerWidth,innerHeight);R.toneMapping=THREE.ACESFilmicToneMapping;R.setClearColor(0xF5F5F7);R.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(R.domElement);
+const S=new THREE.Scene();S.environment=new THREE.PMREMGenerator(R).fromScene(new RoomEnvironment(),.04).texture;
+const kl=new THREE.DirectionalLight(0xffffff,1.6);kl.position.set(2,4,5);S.add(kl);const rl=new THREE.DirectionalLight(0xdfe8ff,.8);rl.position.set(-4,2,-3);S.add(rl);S.add(new THREE.AmbientLight(0xffffff,.25));
+async function bin(u,stride=3){const ab=await (await fetch(u)).arrayBuffer();const h=new Uint32Array(ab,0,2),nv=h[0],ni=h[1];
+ const pos=new Float32Array(ab,8,nv*3),col=new Float32Array(ab,8+nv*12,nv*stride),idx=new Uint32Array(ab,8+nv*12+nv*stride*4,ni);return{pos,col,idx,nv}}
+function mesh(d,opt={}){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(d.pos,3));
+ let c=d.col;if(c.length!==d.nv*3){const o=new Float32Array(d.nv*3);for(let i=0;i<d.nv;i++){o[i*3]=c[i*4];o[i*3+1]=c[i*4+1];o[i*3+2]=c[i*4+2]}c=o}
+ g.setAttribute('color',new THREE.BufferAttribute(c,3));g.setIndex(new THREE.BufferAttribute(d.idx,1));g.computeVertexNormals();
+ return new THREE.Mesh(g,new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.5,clearcoat:.35,clearcoatRoughness:.4,sheen:.3,...opt}))}
+const grp=new THREE.Group();S.add(grp);
+if(show.includes('f')){grp.add(mesh(await bin('mf.bin')))}
+if(show.includes('m')){const m=mesh(await bin('mm.bin'));m.scale.setScalar(3.58);m.position.set(Q.get('mx')?+Q.get('mx'):2.6,-3.06,0);grp.add(m)}
+if(show.includes('b')){const d=await bin('fb.bin',4);const lay=new Float32Array(d.nv);for(let i=0;i<d.nv;i++)lay[i]=d.col[i*4+3];
+ const sel=L=>{const ix=[];for(let i=0;i<d.idx.length;i+=3)if(lay[d.idx[i]]===L)ix.push(d.idx[i],d.idx[i+1],d.idx[i+2]);return{...d,idx:new Uint32Array(ix)}};
+ if(show.includes('skin')){const sk=mesh(sel(0),{transparent:true,opacity:.12,depthWrite:false,clearcoat:0,sheen:0});sk.renderOrder=5;grp.add(sk)}
+ if(show.includes('bone'))grp.add(mesh(sel(2)));}
+const cam=new THREE.PerspectiveCamera(22,innerWidth/innerHeight,.1,100);const z=+(Q.get('z')||20),ty=+(Q.get('ty')||0),tx=+(Q.get('tx')||0);
+({front:()=>cam.position.set(tx,ty,z),back:()=>cam.position.set(tx,ty,-z),side:()=>cam.position.set(z,ty,0),three:()=>cam.position.set(z*.6,ty,z*.8)})[view]();cam.lookAt(tx,ty,0);
+R.render(S,cam);window.__done=true;
+</script></body></html>

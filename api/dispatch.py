@@ -117,7 +117,7 @@ def _row(db: Session, o: Order) -> dict:
     a = o.addr or {}
     cands = candidates(db, o, set())
     owner = lambda s: db.scalar(select(PartnerUser).where(PartnerUser.store_id == s.id, PartnerUser.role == "owner", PartnerUser.active == True))  # noqa: E712
-    return {"id": o.id, "items": [{"name": i.get("name"), "qty": i.get("qty", 1), "rx": bool(i.get("rx"))} for i in (o.items or [])],
+    return {"id": o.id, "handover": (o.pack or {}).get("handover", "") if o.courier == "uh" else "", "items": [{"name": i.get("name"), "qty": i.get("qty", 1), "rx": bool(i.get("rx"))} for i in (o.items or [])],
             "total": o.total, "area": a.get("area", ""), "pin": a.get("pin", ""), "since": o.created, "rx": bool(o.rx_files),
             "tried": [db.get(Store, x).name for x in (o.tried or []) if db.get(Store, x)],
             "stores": [{"id": s.id, "name": s.name, "km": d, "phone": s.phone or (owner(s).phone if owner(s) else ""), "area": s.area} for d, s in cands[:8]]}

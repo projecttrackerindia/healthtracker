@@ -179,7 +179,7 @@ def me_json(db: Session, u: PartnerUser) -> dict:
                      "verified": bool(u.verified), "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "totp": bool(u.totp_secret)},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
-                      "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct} if s else None,
+                      "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct, "distributor": (s.profile or {}).get("distributor", "")} if s else None,
             "counts": {"openOrders": open_orders, "pendingAppointments": pending_appts, "unreadMessages": unread,
                        # samples in the lab still waiting for their report (the lab's Reports badge)
                        "reportsDue": (db.scalar(select(func.count(Order.id)).where(Order.store_id == u.store_id, Order.kind == "lab",
@@ -447,6 +447,9 @@ def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: Partn
         # The family's status line has said "Pharmacist checking" since the first version of this. Until a
         # registered pharmacist has actually signed the prescription off, it is a sentence we are making up.
         raise HTTPException(400, "A registered pharmacist must check the prescription before this is packed.")
+    if body.status == "out" and o.kind == "medicine" and o.courier == "uh" and (o.pack or {}).get("handover"):
+        if "".join(ch for ch in body.code if ch.isdigit()) != o.pack["handover"]:
+            raise HTTPException(400, "That code doesn't match. Ask the rider to read the handover code from their app again.")
     if body.status in ("collected", "delivered"):
         from .booking import check_door
         check_door(o, body.code, body.sample)
@@ -1207,6 +1210,7 @@ class ProfileIn(BaseModel):
     freeAbove: int | None = None
     etaMin: int | None = None
     discount: float | None = None
+    distributor: str | None = None
 
 
 @r.post("/prices/import")
@@ -1275,6 +1279,9 @@ def set_profile(body: ProfileIn, db: Session = Depends(get_db), u: PartnerUser =
             setattr(s, dst, bool(v))
     if body.discount is not None:
         s.discount_pct = max(0, min(50, float(body.discount)))
+    if body.distributor is not None:
+        d = "".join(ch for ch in body.distributor if ch.isdigit() or ch == "+")[:16]
+        s.profile = {**(s.profile or {}), "distributor": d}
     return me_json(db, u)["store"]
 
 
@@ -1380,7 +1387,13 @@ async def pack_order(oid: str, request: Request, db: Session = Depends(get_db), 
         bill = 0
     if bill <= 0:
         raise HTTPException(400, "Enter the amount on your bill.")
-    pk = {"lines": len(o.items or []), "bill": bill, "by": u.email, "t": now()}
+    import secrets as _sec
+    hc = f"{_sec.randbelow(9000) + 1000}"
+    while hc == (o.door_code or ""):
+        hc = f"{_sec.randbelow(9000) + 1000}"
+    # The handover code (board "Ready for pickup"): the rider says it at the counter, so a sealed bag only ever leaves
+    # with the person who was sent for it. It is not the family's doorstep code.
+    pk = {"lines": len(o.items or []), "bill": bill, "by": u.email, "t": now(), "handover": hc}
     for k in ("billPhoto", "bagPhoto"):
         f = form.get(k)
         if f is not None and hasattr(f, "read"):
@@ -1391,6 +1404,14 @@ async def pack_order(oid: str, request: Request, db: Session = Depends(get_db), 
                 fid = f"pack_{o.id}_{k}"
                 storage.put(db, o.household_id, fid, data, getattr(f, "content_type", "image/jpeg") or "image/jpeg", f"{k}.jpg", u.email)
                 pk[k] = fid
+    try:
+        import json as _json
+        sc = _json.loads(str(form.get("scans") or "{}"))
+        if isinstance(sc, dict) and sc:
+            # batch and expiry read off each strip's barcode at the counter (board "Pack order")
+            pk["scans"] = {str(k): {"batch": str(v.get("batch", ""))[:24], "exp": str(v.get("exp", ""))[:7]} for k, v in list(sc.items())[:40] if isinstance(v, dict)}
+    except ValueError:
+        pass
     if "billPhoto" not in pk:
         raise HTTPException(400, "Add a photo of the bill.")
     o.pack = pk
@@ -1411,3 +1432,121 @@ def need_rider(oid: str, db: Session = Depends(get_db), u: PartnerUser = Depends
     o.courier = "uh"
     o.timeline = (o.timeline or []) + [{"s": "rider_req", "t": now(), "by": u.email}]
     return porder(db, o)
+
+
+# ---- refills due (board "Pharmacy · Today": "Refills due this week · Remind") ----------------------------------------------
+def _pack_days(name: str) -> int:
+    import re
+    m = re.search(r"(\d{2,3})\s*(tabs?|tablets?|caps?|capsules?)", name or "", re.I)
+    return int(m.group(1)) if m else 0
+
+
+def refills_due(db: Session, store_id: str, days_ahead: int = 7) -> list[dict]:
+    """Families whose long-term medicines from this pharmacy are likely to run out within a week and who have not
+    ordered again anywhere since. Worked out from what was delivered; nothing is guessed about their health."""
+    from .models import CatalogMed
+    rd = {m.name.lower(): m.refill_days for m in db.scalars(select(CatalogMed).where(CatalogMed.refill_days > 0)).all()}
+    rows = db.scalars(select(Order).where(Order.store_id == store_id, Order.kind == "medicine", Order.status == "delivered")
+                      .order_by(Order.created.desc()).limit(600)).all()
+    latest: dict[str, Order] = {}
+    for o in rows:
+        latest.setdefault(o.household_id, o)
+    out, t = [], now()
+    for hid, o in latest.items():
+        long_term = [i for i in (o.items or []) if i.get("rx")]
+        if not long_term:
+            continue
+        lens = []
+        for i in long_term:
+            n = rd.get(str(i.get("name", "")).lower()) or _pack_days(str(i.get("name", ""))) * max(1, int(i.get("qty") or 1))
+            lens.append(n or 30)
+        due = (o.done_at or o.created or t) + min(lens) * 86400
+        if not (t - 3 * 86400 <= due <= t + days_ahead * 86400):
+            continue
+        newer = db.scalar(select(func.count(Order.id)).where(Order.household_id == hid, Order.kind == "medicine", Order.created > o.created))
+        if newer:
+            continue
+        sent = max([x.get("t", 0) for x in (o.timeline or []) if x.get("s") == "refill_reminded"] or [0])
+        h = db.get(Household, hid)
+        out.append({"order": o.id, "household": hid, "family": (h.name if h else "") or "Family", "due": due,
+                    "items": [i.get("name") for i in long_term][:4], "reminded": sent})
+    return sorted(out, key=lambda x: x["due"])
+
+
+@r.get("/refills")
+def refills(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    s = my_store(db, u)
+    rows = refills_due(db, s.id) if s.kind == "pharmacy" else []
+    return {"due": len(rows), "toRemind": sum(1 for x in rows if now() - x["reminded"] > 6 * 86400), "families": rows}
+
+
+@r.post("/refills/remind")
+def refills_remind(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    s = my_store(db, u)
+    n = 0
+    for x in refills_due(db, s.id) if s.kind == "pharmacy" else []:
+        if now() - x["reminded"] <= 6 * 86400:
+            continue     # one gentle reminder a week at most
+        o = db.get(Order, x["order"])
+        names = ", ".join(x["items"][:2])
+        notify(db, x["household"], "refill", "Time to refill?",
+               f"{names} from {s.name} may run out in the next few days. You can reorder in one tap, or ignore this if you have enough.",
+               {"order": o.id, "kind": "refill", "store": s.name}, o.member_id or "", "/app")
+        o.timeline = (o.timeline or []) + [{"s": "refill_reminded", "t": now(), "by": u.email}]
+        n += 1
+    return {"sent": n}
+
+
+# ---- Ask (board "Pharmacy · Today": the ask bar) — a question about this shop, answered from its own numbers ------------
+class PAskIn(BaseModel):
+    q: str
+
+
+PASK_SYSTEM = ("You help a partner {kind} on Urban Health understand its own week. Answer in at most 3 short sentences, plain "
+               "English, using ONLY the JSON numbers given. If they do not answer the question, say so kindly and say which "
+               "page in the partner app would. Never invent figures. Families are not named; never try to identify anyone.")
+
+
+def _snapshot(db: Session, s: Store) -> dict:
+    t = now()
+    rows = db.scalars(select(Order).where(Order.store_id == s.id, Order.created >= t - 7 * 86400)).all()
+    ok = [o for o in rows if o.status not in ("cancelled", "refunded", "returned")]
+    sold: dict[str, int] = {}
+    for o in ok:
+        for i in o.items or []:
+            n = str(i.get("name", ""))
+            sold[n] = sold.get(n, 0) + int(i.get("qty") or 1)
+    top = sorted(sold.items(), key=lambda x: -x[1])[:8]
+    by_day: dict[str, int] = {}
+    for o in ok:
+        d = time.strftime("%a", time.localtime(o.created or t))
+        by_day[d] = by_day.get(d, 0) + 1
+    low = []
+    if s.kind == "pharmacy":
+        low = [{"name": i.name, "stock": i.stock} for i in db.scalars(select(StoreItem).where(StoreItem.store_id == s.id, StoreItem.stock <= 10)).all()][:10]
+    return {"store": s.name, "kind": s.kind, "last7days": {"orders": len(rows), "completed": sum(1 for o in ok if o.status in ("delivered", "ready")),
+            "cancelled": len(rows) - len(ok), "revenue": sum(int(o.total or 0) for o in ok), "byDay": by_day},
+            "topItems": [{"name": n, "qty": q} for n, q in top], "lowStock": low, "rating": s.rating, "ratings": s.rating_n}
+
+
+@r.post("/ask")
+def partner_ask(body: PAskIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+    q = (body.q or "").strip()[:300]
+    if len(q) < 2:
+        raise HTTPException(400, "Type a question.")
+    s = my_store(db, u)
+    snap = _snapshot(db, s)
+    from . import ai as AI
+    if AI.available():
+        try:
+            import json
+            r2 = AI.create(max_tokens=300, system=PASK_SYSTEM.format(kind=s.kind),
+                           messages=[{"role": "user", "content": f"Numbers:\n{json.dumps(snap)[:8000]}\n\nQuestion: {q}"}])
+            text = "".join(b.text for b in r2.content if getattr(b, "type", "text") == "text").strip()
+            if text:
+                return {"answer": text[:900], "ai": True}
+        except Exception as e:  # noqa: BLE001
+            print(f"[partner.ask] {type(e).__name__}: {str(e)[:160]}", flush=True)
+    w = snap["last7days"]
+    top = ", ".join(f"{x['name']} ({x['qty']})" for x in snap["topItems"][:3]) or "nothing yet"
+    return {"answer": f"In the last 7 days: {w['orders']} orders, {w['completed']} completed, ₹{w['revenue']:,} in sales. Most sold: {top}.", "ai": False}
