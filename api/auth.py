@@ -239,7 +239,10 @@ def norm_id(s: str) -> tuple[str, str]:
 
 def find_user(db: Session, ident: str) -> User | None:
     kind, v = norm_id(ident)
-    return db.scalar(select(User).where((User.email if kind == "email" else User.phone) == v))
+    u = db.scalar(select(User).where((User.email if kind == "email" else User.phone) == v))
+    if not u and kind == "phone" and v:
+        u = db.scalar(select(User).where(User.recovery_phone == v))   # the backup mobile also gets sign-in codes
+    return u
 
 
 def rp(request: Request) -> tuple[str, str | list[str]]:
@@ -352,7 +355,8 @@ def me_json(u: User) -> dict:
     return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "emailVerified": u.email_verified, "phoneVerified": u.phone_verified,
                      "hasPassword": bool(u.pw_hash), "twoStep": u.two_step, "authApp": bool(u.totp_secret), "passkeys": len(u.passkeys), "created": u.created,
                      "verified": bool(u.email_verified and (u.phone_verified or u.aadhaar_verified)), "nameNext": name_next(u),
-                     "aadhaarVerified": u.aadhaar_verified, "aadhaarLast4": u.aadhaar_last4 or "", "dob": _iso_dob(u.aadhaar_dob)}}
+                     "aadhaarVerified": u.aadhaar_verified, "aadhaarLast4": u.aadhaar_last4 or "", "dob": _iso_dob(u.aadhaar_dob),
+                     "recoveryPhone": u.recovery_phone or ""}}
 
 
 def _iso_dob(d: str) -> str:
@@ -669,6 +673,10 @@ def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
         out = {"rsms": True}   # same answer whether or not the account exists
     elif u and not u.disabled:
         out = send_code(request, db, target, kind, purpose)
+    elif not u and kind == "phone" and purpose == "signin" and (messaging.sms_ready() or messaging.demo()):
+        # Board "Welcome": the same mobile number creates the account. The code proves the number; the name comes next.
+        f.data = {**f.data, "new": True}
+        out = send_code(request, db, target, kind, "signup")
     elif not (messaging.email_ready() if kind == "email" else messaging.sms_ready()) and not messaging.demo():
         raise HTTPException(503, ("Email" if kind == "email" else "SMS") + " codes are not set up on this server yet. Use a passkey or password.")
     elif kind == "phone" and messaging.sms_mode() == "firebase" and not messaging.demo():
@@ -681,6 +689,13 @@ def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
 def otp_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db)):
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "otp")
+    if not f.user_id and (f.data or {}).get("new"):
+        d = f.data
+        verify_code(db, d["target"], "signup", body)
+        if find_user(db, d["target"]):
+            raise HTTPException(409, "This number now has an account. Sign in instead.")
+        f.kind, f.expires = "newacct", now() + 900
+        return {"newAccount": f.id, "phone": masked("phone", d["target"])}
     if not f.user_id:
         if body.rsms:
             verify_code(db, f.data["target"], f.data["purpose"], body)
@@ -698,6 +713,43 @@ def otp_verify(body: FlowCode, request: Request, response: Response, db: Session
         return {"reset": f.id}
     db.delete(f)
     return start_session(request, response, db, u, "otp")
+
+
+class NewAcct(BaseModel):
+    flow: str
+    name: str
+    terms: bool = False
+    backup: str = ""     # optional email or second mobile, so a lost SIM never means a lost family record
+
+
+@r.post("/otp/create", dependencies=[Depends(csrf)])
+def otp_create(body: NewAcct, request: Request, response: Response, db: Session = Depends(get_db)):
+    limit(request, "signup", 8, 600)
+    f = get_flow(db, body.flow, "newacct")
+    name = re.sub(r"\s+", " ", body.name).strip()[:80]
+    if len(name) < 2:
+        raise HTTPException(400, "Please enter your name")
+    if not body.terms:
+        raise HTTPException(400, "Please accept the terms and privacy policy")
+    phone = f.data["target"]
+    if find_user(db, phone):
+        raise HTTPException(409, "This number already has an account. Sign in instead.")
+    u = User(name=name, phone=phone, phone_verified=True, pw_hash="", two_step=False)
+    db.add(u)
+    db.delete(f)
+    db.flush()
+    record_consent(db, request, u, "otp")
+    out = start_session(request, response, db, u, "otp")
+    b = body.backup.strip()
+    if b:
+        try:
+            kind, target = norm_id(b)
+            if target and target != phone:
+                cf = new_flow(db, "contact", 10, user_id=u.id, data={"kind": "phone2" if kind == "phone" else kind, "target": target})
+                out["verifyNext"] = {"flow": cf.id, "channel": kind, "sentTo": masked(kind, target), **send_code(request, db, target, kind, "contact")}
+        except HTTPException:
+            pass   # the account is made; the backup can be added later from Sign-in and security
+    return out
 
 
 class Reset(BaseModel):
@@ -987,6 +1039,27 @@ class ContactStart(BaseModel):
     method: str = "code"
 
 
+@r.post("/contact/backup", dependencies=[Depends(csrf)])
+def backup_start(body: ContactStart, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    """A second mobile for getting back in (board: account recovery). Proved by a code like any other number."""
+    limit(request, "contact", 8, 600)
+    kind, target = norm_id(body.value)
+    if kind != "phone" or not target:
+        raise HTTPException(400, "Enter a 10-digit mobile number")
+    if target == u.phone:
+        raise HTTPException(400, "That's the number you sign in with. Add a different one.")
+    if db.scalar(select(User.id).where((User.phone == target) | (User.recovery_phone == target), User.id != u.id)):
+        raise HTTPException(409, "This mobile number is linked to another account.")
+    f = new_flow(db, "contact", 10, user_id=u.id, data={"kind": "phone2", "target": target})
+    return {"flow": f.id, "sentTo": masked("phone", target), "channel": "phone", **send_code(request, db, target, "phone", "contact")}
+
+
+@r.delete("/contact/backup", dependencies=[Depends(csrf)])
+def backup_remove(u: User = Depends(need_user)):
+    u.recovery_phone = ""
+    return me_json(u)
+
+
 @r.post("/contact/start", dependencies=[Depends(csrf)])
 def contact_start(body: ContactStart, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
     limit(request, "contact", 8, 600)
@@ -1009,6 +1082,12 @@ def contact_verify(body: FlowCode, request: Request, db: Session = Depends(get_d
         raise HTTPException(400, "This step has expired. Please start again.")
     d = f.data
     verify_code(db, d["target"], "contact", body)
+    if d["kind"] == "phone2":
+        if db.scalar(select(User.id).where((User.phone == d["target"]) | (User.recovery_phone == d["target"]), User.id != u.id)):
+            raise HTTPException(409, "This is now linked to another account.")
+        u.recovery_phone = d["target"]
+        db.delete(f)
+        return me_json(u)
     col = User.email if d["kind"] == "email" else User.phone
     if db.scalar(select(User.id).where(col == d["target"], User.id != u.id)):
         raise HTTPException(409, "This is now linked to another account.")

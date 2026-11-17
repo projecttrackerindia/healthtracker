@@ -326,6 +326,7 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)  # E.164, e.g. +919876543210
     name: Mapped[str] = mapped_column(String(80), default="")
     pw_hash: Mapped[str] = mapped_column(String(200), default="")
+    recovery_phone: Mapped[str] = mapped_column(String(20), default="")     # a second, verified mobile that can also get sign-in codes
     pw_changed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)

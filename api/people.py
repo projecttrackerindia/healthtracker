@@ -357,7 +357,7 @@ def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
                                                           HouseholdInvite.expires > now() - 30 * 86400).order_by(HouseholdInvite.created.desc())):
             invites.append(invite_view(i))
     h = db.get(Household, u.household_id) if u.household_id else None
-    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role, "lang": u.lang or "en", "authApp": bool(getattr(u, "totp_secret", "")), "passkeys": len(getattr(u, "passkeys", None) or [])},
+    return {"user": {"id": u.id, "name": u.name, "email": u.email, "phone": u.phone, "role": u.role, "lang": u.lang or "en", "authApp": bool(getattr(u, "totp_secret", "")), "passkeys": len(getattr(u, "passkeys", None) or []), "recoveryPhone": u.recovery_phone or "", "emailVerified": bool(u.email_verified), "hasPassword": bool(u.pw_hash)},
             "household": u.household_id, "hkey": h.key if h else None, "me": mine.id if mine else None, "people": people, "members": members,
             "invites": invites, "onboarded": bool(mine and contacts(db, mine.id))}
 
