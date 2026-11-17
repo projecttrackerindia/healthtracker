@@ -128,12 +128,43 @@ def fan_out(db: Session, a: SosAlert, origin: str) -> list[dict]:
     return sent
 
 
+# ---- the nearest partner hospital (board "SOS in progress": "Apollo Hospital told") ------------------------------------------
+HOSP_KM = 20
+
+
+def tell_hospital(db: Session, a: SosAlert) -> None:
+    """Put the alert on the emergency desk of the nearest partner hospital that takes SOS alerts. Only the Medical ID
+    the person keeps for responders (name, blood group, allergies, conditions, medicines) and the live location go."""
+    if a.lat is None or (a.data or {}).get("hospital"):
+        return
+    from .booking import km, live
+    best = None
+    for st in live(db, "hospital"):
+        if st.lat is None or (st.profile or {}).get("sos") is False:
+            continue
+        d = km((a.lat, a.lng), (st.lat, st.lng))
+        if d <= HOSP_KM and (best is None or d < best[0]):
+            best = (d, st)
+    if not best:
+        return
+    d, st = best
+    a.data = {**(a.data or {}), "hospital": {"id": st.id, "name": st.name, "km": round(d, 1), "lat": st.lat, "lng": st.lng,
+                                            "phone": st.phone or "", "area": st.area or "", "at": now(), "ack": None}}
+    try:
+        if st.phone and messaging.alert_sms_ready():
+            messaging.send_text_sms(st.phone, f"Urban Health SOS: {a.name} needs help {round(d, 1)} km from you. "
+                                    f"Open the partner app for the Medical ID and live location.")
+    except Exception as e:
+        print("[sos] hospital sms failed:", str(e)[:160], flush=True)
+
+
 def alert_json(a: SosAlert, origin: str) -> dict:
     return {"id": a.id, "token": a.token, "url": f"{origin}/sos/{a.token}", "name": a.name, "active": a.active, "created": a.created, "updated": a.updated, "ended": a.ended,
             "loc": {"lat": a.lat, "lng": a.lng, "acc": a.acc} if a.lat is not None else None, "trail": (a.trail or [])[-50:], "sent": a.sent or [],
             "summary": a.data.get("summary", ""), "blood": a.data.get("blood", ""), "phone": a.data.get("phone", ""), "message": message(a, origin),
             "opened": (a.data or {}).get("opened"), "views": (a.data or {}).get("views", 0),
-            "maps": maps_link(a.lat, a.lng) if a.lat is not None else "", "directions": directions_link(a.lat, a.lng) if a.lat is not None else ""}
+            "maps": maps_link(a.lat, a.lng) if a.lat is not None else "", "directions": directions_link(a.lat, a.lng) if a.lat is not None else "",
+            "hospital": {k: v for k, v in ((a.data or {}).get("hospital") or {}).items() if k in ("name", "km", "lat", "lng", "phone", "area", "at", "ack")} or None}
 
 
 def channels() -> dict:
@@ -165,6 +196,7 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokk
     db.add(a)
     db.flush()
     a.sent = fan_out(db, a, origin)
+    tell_hospital(db, a)
     return alert_json(a, origin)
 
 
@@ -191,6 +223,7 @@ def update_loc(sid: str, body: LocIn, request: Request, db: Session = Depends(ge
     origin = _origin(request)
     if first:
         a.sent = (a.sent or []) + fan_out(db, a, origin)   # the first fix goes out to everyone who was told "location not available yet"
+    tell_hospital(db, a)
     return alert_json(a, origin)
 
 
@@ -274,3 +307,43 @@ def public_page(token: str, db: Session = Depends(get_db)):
     page = PAGE.replace("__NAME__", html.escape(a.name)).replace("__APP__", APP)
     return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Frame-Options": "DENY",
                                        "Content-Security-Policy": "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src https://www.google.com; connect-src 'self'; img-src data: https:; base-uri 'none'"})
+
+
+
+# ---- the hospital's side ---------------------------------------------------------------------------------------------------
+from .partner import me as partner_me, my_store  # noqa: E402
+from .models import PartnerUser  # noqa: E402
+
+
+def _desk_json(a: SosAlert) -> dict:
+    h = (a.data or {}).get("hospital") or {}
+    return {"id": a.id, "name": a.name, "active": a.active, "created": a.created, "updated": a.updated, "ended": a.ended,
+            "blood": a.data.get("blood", ""), "summary": a.data.get("summary", ""), "phone": a.data.get("phone", ""),
+            "km": h.get("km"), "ack": h.get("ack"), "loc": {"lat": a.lat, "lng": a.lng} if a.lat is not None else None,
+            "directions": directions_link(a.lat, a.lng) if a.lat is not None else ""}
+
+
+@r.get("/api/partner/sos")
+def desk(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    st = my_store(db, u)
+    if st.kind != "hospital":
+        return {"alerts": []}
+    t0 = now() - 12 * 3600
+    rows = db.scalars(select(SosAlert).where(SosAlert.created >= t0).order_by(SosAlert.created.desc()).limit(200)).all()
+    return {"alerts": [_desk_json(a) for a in rows if ((a.data or {}).get("hospital") or {}).get("id") == st.id][:20]}
+
+
+@r.post("/api/partner/sos/{sid}/ack")
+def desk_ack(sid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    st = my_store(db, u)
+    a = db.get(SosAlert, sid)
+    h = ((a.data or {}).get("hospital") or {}) if a else {}
+    if not a or h.get("id") != st.id:
+        raise HTTPException(404)
+    if not h.get("ack"):
+        a.data = {**a.data, "hospital": {**h, "ack": {"t": now(), "by": u.name or u.email}}}
+        if a.active:
+            notify(db, a.household_id, "message", f"{st.name} is ready for {a.name}",
+                   f"Their emergency team has the Medical ID and location. Emergency room {h.get('km', '')} km away.",
+                   {"sos": a.token}, a.member_id, f"/sos/{a.token}")
+    return _desk_json(a)

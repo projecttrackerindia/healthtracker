@@ -179,7 +179,7 @@ def me_json(db: Session, u: PartnerUser) -> dict:
                      "verified": bool(u.verified), "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "totp": bool(u.totp_secret)},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,
-                      "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct, "distributor": (s.profile or {}).get("distributor", "")} if s else None,
+                      "collectionFee": s.collection_fee, "delivery": s.delivery, "deliveryFee": s.delivery_fee, "freeAbove": s.free_above, "etaMin": s.eta_min, "discount": s.discount_pct, "distributor": (s.profile or {}).get("distributor", ""), "sos": (s.profile or {}).get("sos", True) is not False} if s else None,
             "counts": {"openOrders": open_orders, "pendingAppointments": pending_appts, "unreadMessages": unread,
                        # samples in the lab still waiting for their report (the lab's Reports badge)
                        "reportsDue": (db.scalar(select(func.count(Order.id)).where(Order.store_id == u.store_id, Order.kind == "lab",
@@ -1211,6 +1211,7 @@ class ProfileIn(BaseModel):
     etaMin: int | None = None
     discount: float | None = None
     distributor: str | None = None
+    sos: bool | None = None
 
 
 @r.post("/prices/import")
@@ -1282,6 +1283,8 @@ def set_profile(body: ProfileIn, db: Session = Depends(get_db), u: PartnerUser =
     if body.distributor is not None:
         d = "".join(ch for ch in body.distributor if ch.isdigit() or ch == "+")[:16]
         s.profile = {**(s.profile or {}), "distributor": d}
+    if body.sos is not None:
+        s.profile = {**(s.profile or {}), "sos": bool(body.sos)}
     return me_json(db, u)["store"]
 
 

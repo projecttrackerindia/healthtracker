@@ -3796,7 +3796,7 @@ const sosFar=(a,b)=>{if(!a||!b)return 1e9;const R=6371000,d=x=>x*Math.PI/180,dl=
 async function sosWake(on){try{if(on&&'wakeLock' in navigator&&document.visibilityState==='visible')SOSWAKE=await navigator.wakeLock.request('screen');else if(!on&&SOSWAKE){await SOSWAKE.release();SOSWAKE=null}}catch(_){}}
 function sosVis(){if(!SOSA)return;if(document.visibilityState==='visible'){sosWake(true);SOSLAST=0;sosPush()}}
 async function sosPush(force){if(!SOSA||!SOSL)return;const now=Date.now(),moved=sosFar(SOSSENT,SOSL);if(!force&&now-SOSLAST<(moved>50?3000:10000))return;SOSLAST=now;SOSSENT=SOSL;
- try{await API(`/api/v1/sos/${SOSA.id}/loc`,{key:true,json:{loc:SOSL}});SOSA.synced=now;sosPaint()}catch(_){}}
+ try{const x=await API(`/api/v1/sos/${SOSA.id}/loc`,{key:true,json:{loc:SOSL}});SOSA={...SOSA,...x,synced:now};sosPaint()}catch(_){}}
 function sosGot(n){return((SOSA&&SOSA.sent)||[]).filter(x=>x.ok&&x.n===n).map(x=>({sms:'SMS',email:'email',whatsapp:'WhatsApp',push:'app'}[x.channel]||x.channel))}
 function sosText(){const me=P(ME.me);return`EMERGENCY: ${me.name} needs help. Live location and medical details: ${SOSA?SOSA.url:''}`}
 function sosSms(nums){const ios=/iPhone|iPad|iPod/.test(navigator.userAgent),t=encodeURIComponent(sosText());return nums.length?(ios?`sms:/open?addresses=${nums.join(',')}&body=${t}`:`sms:${nums.join(',')}?body=${t}`):''}
@@ -3807,7 +3807,9 @@ function sosPaint(){const el=$('#sos2');if(!el)return;const c=SOSC,reached=c.fil
   const all=c.length&&reached===c.length,nr=c.filter(x=>!sosGot(x.name).length).map(x=>x.name).filter(Boolean);
   ck.innerHTML=row(!!sent&&all,!c.length?'No emergency contacts yet':!SOSL?'Finding your location…':all?'Location sent to '+esc(names.slice(0,2).join(' and ')):sent?'Not reached yet: '+esc(nr.slice(0,2).join(' and ')):'Location found · sending',!c.length?'Call 108 below':all?'Live for the next hour':sent?'Send it on WhatsApp below':'Kept up to date while this screen is open')
    +row(!!SOSA,'Medical ID shared',esc([m.blood||'',m.allergies?m.allergies.toLowerCase()+' allergy':'',nm?nm+' medicine'+(nm>1?'s':''):''].filter(Boolean).join(' · ')||'Name and emergency details'))
-   +(SOSH?`<a class="r4 rl4" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${SOSH.lat},${SOSH.lng}"><span class="k4 on">${ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14)}</span><div><b>${esc(SOSH.name)} is nearest</b><small>Emergency room, ${SOSH.km} km · directions</small></div></a>`:row(false,'Nearest hospital',SOSL?'Looking near you…':'Shown when your location is found'));
+   +(SOSA&&SOSA.hospital?(h=>`<a class="r4 rl4" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}"><span class="k4 on">${ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14)}</span><div><b>${esc(h.name)} ${h.ack?'is ready for you':'told'}</b><small>Emergency room, ${h.km} km · directions</small></div></a>`)(SOSA.hospital)
+   :SOSH?`<a class="r4 rl4" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${SOSH.lat},${SOSH.lng}"><span class="k4 on">${ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14)}</span><div><b>${esc(SOSH.name)} is nearest</b><small>Emergency room, ${SOSH.km} km · directions</small></div></a>`:row(false,'Nearest hospital',SOSL?'Looking near you…':'Shown when your location is found'));
+  if(SOSA&&SOSA.hospital&&(!SOSH||SOSH.name!==SOSA.hospital.name))SOSH={...SOSA.hospital};
   if(SOSL&&SOSH===null){SOSH=0;API(`/api/v1/hospitals?lat=${SOSL.lat}&lng=${SOSL.lng}`,{key:true}).then(r=>{const h=(r.hospitals||[]).find(x=>x.km!=null&&x.km<=40&&x.lat);SOSH=h||0;if(h)sosPaint()}).catch(()=>{})}}
  
  const mp=$('#sosmap');if(mp){if(SOSL){const age=Math.round((Date.now()-((SOSA&&SOSA.synced)||SOSL.cached||Date.now()))/1000),live=SOSA&&SOSA.synced&&age<40;

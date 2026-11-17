@@ -294,6 +294,12 @@ nav .ns{display:none}@media (max-width:860px){nav .nl{display:none}nav .ns{displ
 .pask{position:fixed;z-index:40;bottom:22px;left:calc(50% + 120px);transform:translateX(-50%);width:min(420px,calc(100% - 300px));display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);border-radius:26px;padding:6px 6px 6px 16px;box-shadow:0 10px 30px rgba(0,0,0,.10),0 0 0 1px rgba(0,0,0,.05)}
 .pask span{color:#5E5CE6}.pask input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;font-size:14px;color:#1D1D1F;height:36px}.pask button{width:36px;height:36px;border-radius:18px;border:0;background:#0B8A7C;color:#fff;font-size:17px;cursor:pointer;flex:none}
 @media (max-width:899px){.pask{display:none}}main{padding-bottom:90px}
+#sosd{position:fixed;inset:0;z-index:320;background:rgba(40,8,8,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:grid;place-items:center;padding:16px}
+#sosd .sdc{width:100%;max-width:440px;background:#fff;border-radius:28px;padding:24px 22px 18px;box-shadow:0 30px 80px rgba(0,0,0,.35);border-top:6px solid #FF3B30}
+#sosd .seb{display:flex;align-items:center;gap:8px;color:#C4291C;font-weight:700;font-size:13px;letter-spacing:.04em}#sosd .seb i{width:10px;height:10px;border-radius:5px;background:#FF3B30;animation:sosp 1s infinite}@keyframes sosp{50%{opacity:.3}}
+#sosd h2{margin:6px 0 2px;font-size:26px;letter-spacing:-.02em}#sosd .ssub{margin:0;color:#6E6E73;font-size:14px}
+#sosd .sgr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}#sosd .sgr>div,#sosd .ssm{background:#F5F5F7;border-radius:16px;padding:12px 14px}#sosd small{display:block;font-size:11px;font-weight:700;color:#6E6E73;letter-spacing:.04em}#sosd .sgr b{display:block;font-size:20px;margin-top:2px}#sosd .ssm{margin-top:10px}#sosd .ssm p{margin:4px 0 0;font-size:15px;line-height:1.45}
+#sosd .sbt{display:flex;gap:10px;margin-top:16px}#sosd .sbt .btn{height:52px;font-size:16px}#sosd .sla{display:block;margin:8px auto 0;border:0;background:none;color:#6E6E73;font:inherit;font-size:15px;padding:10px 16px;cursor:pointer}#sosd .sft{margin:4px 0 0;font-size:12px;color:#8E8E93;text-align:center;line-height:1.4}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -974,12 +980,12 @@ VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy
    <p class="sub" style="margin:0 0 10px">A television or tablet on the wall showing who is being seen. Open the link on it once and leave it; it signs itself in and refreshes every few seconds. It shows numbers and doctors, never patients\' names — a waiting room is a public place.</p>
    <div id="bdbox" style="color:var(--mute)">Loading…</div></div>`:'')+
  `<div class="card"><h3>${E(s.name)}</h3><p style="color:var(--mute);margin:0 0 12px">${E([s.address,s.area,s.city].filter(Boolean).join(', '))} · Licence ${E(s.licence||'—')} · ★ ${s.rating} (${s.ratingN})</p>
-  <form id="pf"><div class="row"><label>Phone <input name="phone" value="${E(s.phone||'')}"></label><label>Hours <input name="hours" value="${E(s.hours||'')}"></label><label><input type="checkbox" name="open24" ${s.open24?'checked':''}> Open 24 hours</label></div>
+  <form id="pf"><div class="row"><label>Phone <input name="phone" value="${E(s.phone||'')}"></label><label>Hours <input name="hours" value="${E(s.hours||'')}"></label><label><input type="checkbox" name="open24" ${s.open24?'checked':''}> Open 24 hours</label>${s.kind==='hospital'?`<label><input type="checkbox" name="sos" ${s.sos!==false?'checked':''}> Receive SOS alerts from families nearby</label>`:''}</div>
   ${isLab?`<div class="row"><label><input type="checkbox" name="homeCollection" ${s.homeCollection?'checked':''}> Home collection</label><label>Collection fee ₹ <input type="number" name="collectionFee" value="${s.collectionFee}" style="width:100px"></label><label>Report time (minutes) <input type="number" name="etaMin" value="${s.etaMin}" style="width:110px"></label></div>`:''}
   ${isPh?`<div class="row"><label><input type="checkbox" name="delivery" ${s.delivery?'checked':''}> Home delivery</label><label>Delivery fee ₹ <input type="number" name="deliveryFee" value="${s.deliveryFee}" style="width:100px"></label><label>Free above ₹ <input type="number" name="freeAbove" value="${s.freeAbove}" style="width:100px"></label><label>Typical delivery (minutes) <input type="number" name="etaMin" value="${s.etaMin}" style="width:110px"></label><label>Discount off MRP % <input type="number" name="discount" step="0.5" value="${s.discount}" style="width:90px"></label></div>`:''}
   <button class="btn p">Save</button></form></div>
   <div class="card"><h3>Your sign-in</h3>${ME.user.mustChange?'<p class="msg on err">Set your own password now; the one you received was temporary.</p>':''}<form id="pw" class="row"><input type="password" id="pc" placeholder="Current password" autocomplete="current-password" style="width:200px"><input type="password" id="pn" placeholder="New password (10+ characters)" autocomplete="new-password" style="width:240px"><button class="btn">Change password</button></form></div>`;
- $('#pf').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),b={};['phone','hours'].forEach(k=>b[k]=fd.get(k)||'');['open24','homeCollection','delivery'].forEach(k=>{if(e.target[k])b[k]=!!fd.get(k)});['collectionFee','deliveryFee','freeAbove','etaMin','discount'].forEach(k=>{if(fd.get(k)!=null&&fd.get(k)!=='')b[k]=+fd.get(k)});try{await api('/profile',{method:'PUT',body:b});toast('Saved');load()}catch(err){toast(err.message)}};
+ $('#pf').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),b={};['phone','hours'].forEach(k=>b[k]=fd.get(k)||'');['open24','homeCollection','delivery','sos'].forEach(k=>{if(e.target[k])b[k]=!!fd.get(k)});['collectionFee','deliveryFee','freeAbove','etaMin','discount'].forEach(k=>{if(fd.get(k)!=null&&fd.get(k)!=='')b[k]=+fd.get(k)});try{await api('/profile',{method:'PUT',body:b});toast('Saved');load()}catch(err){toast(err.message)}};
  $('#pw').onsubmit=async e=>{e.preventDefault();try{await api('/password',{method:'POST',body:{current:$('#pc').value,new:$('#pn').value}});toast('Password changed');load()}catch(err){toast(err.message)}};
  loadBoard()};
 // ---------------- eye exam (eye hospitals): readings, findings on the 3D eye, plain words → the patient's Eyes page
@@ -1237,6 +1243,22 @@ if(JOIN)joinView(JOIN[1]);else{render();load();setInterval(()=>{if(ME)load()},60
 
 // ---------------- Incoming orders: a ringing card, like a delivery app, until someone answers ----------------
 let RING=null,RINGON=false,ACTX=null,INC=null,SEEN_INC={};
+/* SOS desk (hospitals): a family nearby pressed SOS and we are their nearest emergency room. Hard to miss, one tap to say "ready". */
+let SOSSEEN={};try{SOSSEEN=JSON.parse(sessionStorage.getItem('uh-sos-seen')||'{}')}catch(_){}
+async function pollSos(){if(!ME||!ME.store||ME.store.kind!=='hospital'||document.getElementById('sosd'))return;let r;try{r=await api('/sos',{quiet:true})}catch(_){return}
+ const a=(r.alerts||[]).find(x=>x.active&&!x.ack&&!SOSSEEN[x.id]);if(!a)return;showSos(a)}
+function showSos(a){const d=document.createElement('div');d.id='sosd';const ago=Math.max(0,Math.round((Date.now()/1000-a.created)/60));
+ d.innerHTML=`<div class="sdc" role="alertdialog" aria-modal="true"><div class="seb"><i></i>SOS · ${ago<1?'just now':ago+' min ago'}</div><h2>${E(a.name)} needs help</h2><p class="ssub">${a.km!=null?a.km+' km from you · ':''}You are the nearest Urban Health emergency room</p>
+ <div class="sgr"><div><small>BLOOD</small><b>${E(a.blood||'—')}</b></div><div><small>PHONE</small><b>${a.phone?`<a href="tel:${E(a.phone)}">${E(String(a.phone).replace(/^\+91(\d{5})(\d{5})$/,'+91 $1 $2'))}</a>`:'—'}</b></div></div>
+ ${a.summary?`<div class="ssm"><small>MEDICAL ID</small><p>${E(a.summary)}</p></div>`:''}
+ <div class="sbt"><a class="btn" href="${E(a.directions||'#')}" target="_blank" rel="noopener" style="flex:1;justify-content:center;border-radius:999px">Live location</a><button class="btn p" id="sosok" style="flex:1.3;justify-content:center;border-radius:999px;background:#C4291C">✓ We're ready</button></div>
+ <button class="sla" id="soslater">Not now</button><p class="sft">Tapping "We're ready" tells the family their emergency room is expecting them. Only the Medical ID they keep for responders is shared.</p></div>`;
+ document.body.appendChild(d);if(RINGON)ringStart();if(navigator.vibrate)navigator.vibrate([200,100,200]);
+ const close=()=>{SOSSEEN[a.id]=1;try{sessionStorage.setItem('uh-sos-seen',JSON.stringify(SOSSEEN))}catch(_){}ringStop();d.remove()};
+ d.querySelector('#soslater').onclick=close;
+ d.querySelector('#sosok').onclick=async()=>{const b=d.querySelector('#sosok');b.disabled=true;try{await api(`/sos/${a.id}/ack`,{method:'POST'});toast('The family has been told you are ready');close()}catch(e){toast(e.message);b.disabled=false}}}
+setInterval(pollSos,15000);setTimeout(pollSos,3000);
+
 function beep(){try{ACTX=ACTX||new (window.AudioContext||window.webkitAudioContext)();const t=ACTX.currentTime;[0,.18,.36].forEach((d,i)=>{const o=ACTX.createOscillator(),g=ACTX.createGain();o.type='sine';o.frequency.value=i===2?1175:880;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.35,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.16);o.connect(g).connect(ACTX.destination);o.start(t+d);o.stop(t+d+.17)});if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}}
 function ringStart(){if(RING)return;beep();RING=setInterval(beep,2200)}function ringStop(){clearInterval(RING);RING=null}
 async function pollIncoming(){if(!ME||!ME.store||ME.store.kind!=='pharmacy')return;let r;try{r=await api('/orders?status=open',{quiet:true})}catch(e){return}
