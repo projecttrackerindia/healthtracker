@@ -183,6 +183,40 @@ SAY = {
 }
 
 
+# Insulin: the reminder also says where the next injection should go, the same rotation the app shows
+# (belly right/left, thighs, upper arms; the longest-rested area first).
+INSULIN = re.compile(r"insulin|glargine|aspart|lispro|glulisine|degludec|detemir|mixtard|humulin|humalog|lantus|toujeo|novorapid|novomix|basalog|tresiba|ryzodeg|apidra|levemir|insugen|wosulin", re.I)
+ZONES = ["belly-r", "belly-l", "thigh-r", "thigh-l", "arm-r", "arm-l"]
+ZONE_SAY = {
+    "en": {"belly-r": "belly, right side", "belly-l": "belly, left side", "thigh-r": "right thigh", "thigh-l": "left thigh", "arm-r": "right upper arm", "arm-l": "left upper arm", "next": "Next spot: {z}"},
+    "ta": {"belly-r": "வயிறு, வலது பக்கம்", "belly-l": "வயிறு, இடது பக்கம்", "thigh-r": "வலது தொடை", "thigh-l": "இடது தொடை", "arm-r": "வலது மேல் கை", "arm-l": "இடது மேல் கை", "next": "அடுத்த இடம்: {z}"},
+    "te": {"belly-r": "పొట్ట, కుడి వైపు", "belly-l": "పొట్ట, ఎడమ వైపు", "thigh-r": "కుడి తొడ", "thigh-l": "ఎడమ తొడ", "arm-r": "కుడి పై చేయి", "arm-l": "ఎడమ పై చేయి", "next": "తర్వాతి స్థలం: {z}"},
+    "hi": {"belly-r": "पेट, दाईं ओर", "belly-l": "पेट, बाईं ओर", "thigh-r": "दाईं जाँघ", "thigh-l": "बाईं जाँघ", "arm-r": "दाईं ऊपरी बाँह", "arm-l": "बाईं ऊपरी बाँह", "next": "अगली जगह: {z}"},
+}
+
+
+def insulin_next(db, pid: str) -> str:
+    """The area to use next: never used first, then the one used longest ago (ties in body order)."""
+    from .models import HealthRecord
+    last: dict[str, float] = {}
+    for d in db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind == "dose")):
+        dd = _safe(d) or {}
+        site = str(dd.get("site") or "")
+        z = re.sub(r"-\d$", "", site)
+        if z in ZONES:
+            try:
+                at = float(dd.get("at") or 1)
+            except (TypeError, ValueError):
+                at = 1.0
+            last[z] = max(last.get(z, 0.0), at)
+    return sorted(ZONES, key=lambda z: (last.get(z, 0.0), ZONES.index(z)))[0]
+
+
+def _zone_line(lang: str, zone: str) -> str:
+    z = ZONE_SAY.get(lang) or ZONE_SAY["en"]
+    return z["next"].format(z=z[zone])
+
+
 def _say(lang: str, key: str, **kw) -> str:
     return (SAY.get(lang) or SAY["en"])[key].format(**kw)
 
@@ -246,6 +280,7 @@ def tick_people(db, now_dt: datetime) -> int:
             except Exception:
                 continue
         at_time: dict[str, list[str]] = {}
+        ins_at: set[str] = set()
         for x in rows:
             try:
                 m = decrypt(x.blob)
@@ -258,6 +293,8 @@ def tick_people(db, now_dt: datetime) -> int:
             for t in m.get("times") or []:
                 if (x.id, t) not in taken:
                     at_time.setdefault(t, []).append(_pill(m))
+                    if INSULIN.search(str(m.get("name") or "")):
+                        ins_at.add(t)
         first = (p.name or "").split(" ")[0]
         for t, names in at_time.items():
             try:
@@ -266,6 +303,7 @@ def tick_people(db, now_dt: datetime) -> int:
             except ValueError:
                 continue
             ids = [x.id for x in rows if (m := _safe(x)) and t in (m.get("times") or []) and (x.id, t) not in taken]
+            zone = insulin_next(db, pid) if t in ins_at else ""
             snz = db.get(ReminderSent, f"snz:{pid}:{day}:{t}")
             for kind, start, end in (("due", at, at + 45), ("missed", at + MISSED_AFTER_MIN, at + MISSED_AFTER_MIN + 45), ("snooze", 0, 24 * 60)):
                 if kind == "snooze":
@@ -282,7 +320,7 @@ def tick_people(db, now_dt: datetime) -> int:
                 act = {"pid": pid, "day": day, "t": t, "meds": ids}
                 if kind in ("due", "snooze"):
                     to = owner or list(guardians)
-                    msg = lambda own, lang="en": {"title": _say(lang, "due_own" if own else "due_other", t=t, first=first), "body": ", ".join(names), "url": "/app/meds", "tag": f"dose-{pid}-{t}", "act": act}
+                    msg = lambda own, lang="en": {"title": _say(lang, "due_own" if own else "due_other", t=t, first=first), "body": ", ".join(names) + (" · " + _zone_line(lang, zone) if zone else ""), "url": "/app/meds", "tag": f"dose-{pid}-{t}", "act": act}
                 else:
                     to = owner + list(guardians)
                     msg = lambda own, lang="en": {"title": _say(lang, "missed_own" if own else "missed_other", t=t, first=first), "body": ", ".join(names) + ("" if own else _say(lang, "late")), "url": "/app/meds", "tag": f"missed-{pid}-{t}", "act": act}

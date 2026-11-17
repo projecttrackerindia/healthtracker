@@ -38,3 +38,21 @@ def test_unknown_site_refused():
     for site in ("neck-r-0", "belly-x-1", "thigh-l-9", "<script>", "belly-r-0-1"):
         r = c.post(f"/api/v2/people/{pid}/records", json={"kind": "dose", "day": "2026-11-17", "data": {"med": "m1", "time": "20:00", "site": site}})
         assert r.status_code == 400, site
+
+
+def test_reminder_names_the_longest_rested_area():
+    from api import reminders
+    from api.db import session
+    c, pid = me()
+    with session() as db:
+        assert reminders.insulin_next(db, pid) == "belly-r"          # nothing logged yet: first area
+    for site, at in (("belly-r-0", 100), ("belly-l-2", 200), ("thigh-r-1", 300), ("thigh-l-0", 400), ("arm-r-3", 500)):
+        c.post(f"/api/v2/people/{pid}/records", json={"kind": "dose", "day": "2026-11-17", "data": {"med": "m1", "time": "20:00", "at": at, "site": site}})
+    with session() as db:
+        assert reminders.insulin_next(db, pid) == "arm-l"            # never used
+    c.post(f"/api/v2/people/{pid}/records", json={"kind": "dose", "day": "2026-11-18", "data": {"med": "m1", "time": "20:00", "at": 600, "site": "arm-l-0"}})
+    with session() as db:
+        assert reminders.insulin_next(db, pid) == "belly-r"          # used longest ago
+    assert reminders._zone_line("en", "thigh-l") == "Next spot: left thigh"
+    assert reminders._zone_line("ta", "belly-r").startswith("அடுத்த இடம்")
+    assert reminders._zone_line("xx", "arm-r") == "Next spot: right upper arm"
