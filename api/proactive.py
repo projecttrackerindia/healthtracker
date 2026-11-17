@@ -388,9 +388,45 @@ def housekeeping(db, today: date) -> int:
             notify(db, h.id, "plan", f"Your {h.plan.title()} plan renews in {max(1, (h.plan_until - t) // 86400)} days", "Pay by UPI from the plan page to continue without a break; nothing is charged automatically.",
                    {"plan": h.plan, "until": h.plan_until}, "", "/app#page=plan")
             n += 1
+    n += tests_due(db, t)
     for a in db.scalars(select(Appointment).where(Appointment.call_started != None, Appointment.call_ended == None)).all():  # noqa: E711
         if t - a.call_started > 3 * 3600:
             a.call_ended, a.status, a.updated = t, "done", t
+            n += 1
+    return n
+
+
+def due_at(signed: int, when: str) -> int | None:
+    """'3 months' after the prescription was signed, as a timestamp; None when the doctor gave no time."""
+    import re as _re
+    m = _re.search(r"(\d+)\s*(day|week|month|year)", (when or "").lower())
+    if not m:
+        return None
+    return int(signed + int(m.group(1)) * {"day": 1, "week": 7, "month": 30, "year": 365}[m.group(2)] * 86400)
+
+
+def tests_due(db, t: int, lead_days: int = 3) -> int:
+    """A test the doctor asked for 'in 3 months' is offered to the family a few days before it falls due, once,
+    with one tap to book it. Nothing is booked or paid without them."""
+    from .models import Appointment, VisitRx
+    n, since = 0, t - 400 * 86400
+    rows = [("visit", v.token_id, v.household_id, v.member_id, v.rx) for v in db.scalars(select(VisitRx).where(VisitRx.t > since)).all()]
+    rows += [("consult", a.id, a.household_id, a.member_id, a.rx) for a in db.scalars(select(Appointment).where(Appointment.rx != None, Appointment.updated > since)).all()]  # noqa: E711
+    for kind, rid, hh, member, rx in rows:
+        tests = [x for x in ((rx or {}).get("tests") or []) if x.get("when")]
+        for x in tests:
+            due = due_at(int((rx or {}).get("t") or 0), x["when"])
+            if not due or not (due - lead_days * 86400 <= t <= due + 14 * 86400):
+                continue
+            k = f"testdue:{rid}:{x.get('code') or x.get('name')}"[:120]
+            if db.get(ReminderSent, k):
+                continue
+            db.add(ReminderSent(key=k))
+            db.flush()
+            day = datetime.fromtimestamp(due, IST).strftime("%-d %b")
+            notify(db, hh, "lab", f"{x['name']} is due around {day}",
+                   f"Dr {(rx or {}).get('doctor', '')} asked for it on your prescription. Book a home collection in one tap, whenever suits you.".replace("Dr  ", "Your doctor "),
+                   {"testsDue": [x], "rxKind": kind, "rx": rid}, member or "", "/app")
             n += 1
     return n
 

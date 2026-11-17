@@ -67,3 +67,24 @@ def test_the_family_reads_a_signed_visit_prescription_in_their_language(monkeypa
 def test_spoken_test_names_are_matched_to_the_catalogue():
     t = match_tests([{"name": "HbA1c", "when": "3 months"}, {"name": "thyroid profile"}, {"name": "Some rare test"}])
     assert t[0]["code"] == "hba1c" and t[0]["when"] == "3 months" and t[2] == {"code": "", "name": "Some rare test", "when": ""}
+
+
+def test_an_ordered_test_is_offered_to_the_family_once_when_it_falls_due():
+    import time
+
+    from api.db import session
+    from api.models import Notice, VisitRx
+    from api.proactive import due_at, tests_due
+    t0 = int(time.time()) - 88 * 86400              # signed 88 days ago: "3 months" falls due in 2 days
+    assert due_at(t0, "3 months") == t0 + 90 * 86400 and due_at(t0, "before next visit") is None
+    import uuid
+    tid, hh = "tk" + uuid.uuid4().hex[:10], "h" + uuid.uuid4().hex[:10]
+    with session() as db:
+        db.add(VisitRx(token_id=tid, store_id="s", household_id=hh, member_id="m1", doctor_id="d", t=t0,
+                       rx={"t": t0, "doctor": "Anitha", "tests": [{"code": "hba1c", "name": "HbA1c", "when": "3 months"}, {"code": "cbc", "name": "CBC", "when": ""}]}))
+    with session() as db:
+        assert tests_due(db, int(time.time())) >= 1
+        assert tests_due(db, int(time.time())) == 0      # once only
+        db.flush()
+        n = db.query(Notice).filter_by(household_id=hh).all()
+        assert len(n) == 1 and n[0].title.startswith("HbA1c is due around") and n[0].ref["testsDue"][0]["code"] == "hba1c"

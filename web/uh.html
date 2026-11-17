@@ -3235,6 +3235,7 @@ async function openInbox(f){if(f)BOXF=f;await pollInbox();const cats=[...new Set
 async function openNotice(id){const x=BOX.items.find(n=>n.id===id);if(!x)return;API('/api/v2/inbox/read',{json:{ids:[id]}}).then(pollInbox).catch(()=>{});const r=x.ref||{};
  if(r.surprise){closeL();return openSurprise(r.surprise)}
  if(x.kind==='blood'||r.camp||r.request){closeL();return openDonor()}
+ if(r.testsDue){closeL();return rxBook(r.testsDue,x.person||r.member)}
  if(x.kind==='prescription'&&(r.token||r.appointment)){closeL();return r.token?openRxRead('visit',r.token):openAfterVisit(r.appointment)}
  if(r.kind==='refill'){closeL();S.tab='meds';S.sub=0;renderAll();return inTab('bk',()=>openPharmacy())}
  if(r.grant){const sx=sheetX('',`<div style="padding:0 16px 10px"><p style="font-size:20px;font-weight:700;margin:0 0 6px">${esc(x.title)}</p><p class="cap" style="margin:0 0 14px">${esc(x.body||'')}</p><p class="cap">If you allow, support can see the dates of your reports for 1 hour, not what they say. You'll see it in Change history.</p><button class="btn pri" style="width:100%;margin-top:10px" data-y>Allow for 1 hour</button><button class="btn sec" style="width:100%;margin-top:10px" data-n>Don't allow</button></div>`);
