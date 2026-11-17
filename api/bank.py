@@ -162,7 +162,130 @@ def donors(group: str, db: Session = Depends(get_db), u: PartnerUser = Depends(p
             continue
         seen.add(d.household_id)
         parts = (d.name or "Donor").split()
-        out.append({"name": parts[0] + (" " + parts[1][0] if len(parts) > 1 else ""), "group": d.group, "km": round(dist, 1),
+        out.append({"id": d.id, "name": parts[0] + (" " + parts[1][0] if len(parts) > 1 else ""), "group": d.group, "km": round(dist, 1), "donations": d.donations or 0,
                     "lastGave": d.last_donation[:7] if d.last_donation else ""})
     out.sort(key=lambda x: x["km"])
-    return {"group": group, "donors": out[:8], "total": len(out)}
+    return {"group": group, "donors": out[:12], "total": len(out)}
+
+
+
+# ---- donation camps (blood bank) and booking a slot (family) ---------------------------------------------------------------
+from fastapi import APIRouter as _AR  # noqa: E402
+
+from .auth import need_user  # noqa: E402
+from .inbox import notify  # noqa: E402
+from .models import BloodCamp, User  # noqa: E402
+
+CAMP_KM = 15
+fr = _AR(prefix="/api/v2/camps")
+
+
+def camp_json(c: BloodCamp, store_name: str = "", mine: bool = False, dist: float | None = None) -> dict:
+    return {"id": c.id, "day": c.day, "start": c.start, "end": c.end, "place": c.place, "address": c.address, "lat": c.lat, "lng": c.lng,
+            "slots": c.slots, "booked": len(c.booked or []), "left": max(0, c.slots - len(c.booked or [])), "notified": c.notified,
+            "cancelled": c.cancelled, "bank": store_name, "mine": mine, "km": round(dist, 1) if dist is not None else None}
+
+
+class CampIn(BaseModel):
+    day: str
+    start: str = "09:00"
+    end: str = "14:00"
+    place: str
+    address: str = ""
+    slots: int = 40
+
+
+@pr.get("/camps")
+def bank_camps(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = _bank(db, u)
+    today = time.strftime("%Y-%m-%d")
+    rows = db.scalars(select(BloodCamp).where(BloodCamp.store_id == s.id, BloodCamp.day >= today).order_by(BloodCamp.day)).all()
+    return {"camps": [camp_json(c, s.name) for c in rows]}
+
+
+@pr.post("/camps")
+def bank_camp_new(body: CampIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    import re as _re
+    s = _bank(db, u)
+    if not _re.fullmatch(r"\d{4}-\d{2}-\d{2}", body.day) or body.day < time.strftime("%Y-%m-%d"):
+        raise HTTPException(400, "Choose a date from today on.")
+    if not body.place.strip():
+        raise HTTPException(400, "Where is the camp?")
+    lat, lng = s.lat, s.lng
+    c = BloodCamp(store_id=s.id, day=body.day, start=body.start[:5], end=body.end[:5], place=body.place.strip()[:120],
+                  address=(body.address.strip() or ", ".join(x for x in (s.address, s.area, s.city) if x))[:240], lat=lat, lng=lng,
+                  slots=max(5, min(500, int(body.slots))))
+    db.add(c)
+    db.flush()
+    n, seen = 0, set()
+    when = time.strftime("%a %d %b", time.strptime(c.day, "%Y-%m-%d"))
+    for d in db.scalars(select(Donor).where(Donor.active == True)).all():  # noqa: E712
+        if d.lat is None or d.household_id in seen or lat is None or km(d.lat, d.lng, lat, lng) > CAMP_KM:
+            continue
+        seen.add(d.household_id)
+        notify(db, d.household_id, "blood", f"Blood donation camp · {when}",
+               f"{s.name} at {c.place}, {c.start}–{c.end}. Book a slot if you'd like to give; no pressure if you can't.",
+               {"camp": c.id}, d.member_id, "/app#page=mid")
+        n += 1
+    c.notified = n
+    return camp_json(c, s.name)
+
+
+@pr.post("/camps/{cid}/cancel")
+def bank_camp_cancel(cid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    s = _bank(db, u)
+    c = db.get(BloodCamp, cid)
+    if not c or c.store_id != s.id:
+        raise HTTPException(404)
+    c.cancelled = True
+    for b in c.booked or []:
+        d = db.get(Donor, b.get("donor"))
+        if d:
+            notify(db, d.household_id, "blood", "Blood donation camp cancelled", f"{s.name} cancelled the camp on {c.day}. Thank you for offering.", {"camp": c.id}, d.member_id, "/app")
+    return camp_json(c, s.name)
+
+
+def _my_donors(db: Session, u: User) -> list:
+    return db.scalars(select(Donor).where(Donor.household_id == (u.household_id or "-"), Donor.active == True)).all()  # noqa: E712
+
+
+@fr.get("")
+def family_camps(db: Session = Depends(get_db), u: User = Depends(need_user)):
+    ds = _my_donors(db, u)
+    if not ds:
+        return {"camps": [], "donor": False}
+    today = time.strftime("%Y-%m-%d")
+    out = []
+    for c in db.scalars(select(BloodCamp).where(BloodCamp.day >= today, BloodCamp.cancelled == False).order_by(BloodCamp.day).limit(100)).all():  # noqa: E712
+        near = [km(d.lat, d.lng, c.lat, c.lng) for d in ds if d.lat is not None and c.lat is not None]
+        if not near or min(near) > CAMP_KM:
+            continue
+        st = db.get(Store, c.store_id)
+        mine = any(b.get("donor") in {d.id for d in ds} for b in c.booked or [])
+        out.append(camp_json(c, st.name if st else "", mine, min(near)))
+    return {"camps": out[:6], "donor": True}
+
+
+@fr.post("/{cid}/book")
+def family_book(cid: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    c = db.get(BloodCamp, cid)
+    ds = _my_donors(db, u)
+    if not c or c.cancelled or not ds:
+        raise HTTPException(404)
+    ids = {d.id for d in ds}
+    if any(b.get("donor") in ids for b in c.booked or []):
+        return camp_json(c, mine=True)
+    if len(c.booked or []) >= c.slots:
+        raise HTTPException(409, "This camp is full. Thank you for wanting to give.")
+    c.booked = (c.booked or []) + [{"donor": ds[0].id, "t": now()}]
+    return camp_json(c, mine=True)
+
+
+@fr.post("/{cid}/unbook")
+def family_unbook(cid: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    c = db.get(BloodCamp, cid)
+    if not c:
+        raise HTTPException(404)
+    ids = {d.id for d in _my_donors(db, u)}
+    c.booked = [b for b in c.booked or [] if b.get("donor") not in ids]
+    return camp_json(c)

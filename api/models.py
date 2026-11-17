@@ -977,6 +977,26 @@ class BloodStock(Base):
     component: Mapped[str] = mapped_column(String(12), default="whole")
     units: Mapped[int] = mapped_column(Integer, default=0)
     updated: Mapped[int] = mapped_column(Integer, default=now)
+    batches: Mapped[list | None] = mapped_column(JSON, nullable=True)   # [{"n": 4, "exp": "2026-12-01"}] — expiry per batch of bags
+
+
+class BloodCamp(Base):
+    """A donation camp a blood bank runs: where, when, how many slots. Donors nearby are told and book a slot."""
+    __tablename__ = "blood_camps"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("bc"))
+    store_id: Mapped[str] = mapped_column(String(32), index=True)
+    day: Mapped[str] = mapped_column(String(10), index=True)
+    start: Mapped[str] = mapped_column(String(5), default="09:00")
+    end: Mapped[str] = mapped_column(String(5), default="14:00")
+    place: Mapped[str] = mapped_column(String(120), default="")
+    address: Mapped[str] = mapped_column(String(240), default="")
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    slots: Mapped[int] = mapped_column(Integer, default=40)
+    booked: Mapped[list] = mapped_column(JSON, default=list)          # [{"donor": id, "t": ts}]
+    notified: Mapped[int] = mapped_column(Integer, default=0)
+    cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created: Mapped[int] = mapped_column(Integer, default=now)
 
 
 class BloodRequest(Base):

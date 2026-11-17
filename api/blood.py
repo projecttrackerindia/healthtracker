@@ -259,13 +259,16 @@ class ReqIn(BaseModel):
     radiusKm: int = 25
     lat: float | None = None
     lng: float | None = None
+    donors: list[str] = []      # only these donors (chosen by the bank); empty = everyone who matches nearby
 
 
-def notify_donors(db: Session, q: BloodRequest) -> int:
+def notify_donors(db: Session, q: BloodRequest, only: set[str] | None = None) -> int:
     today = time.strftime("%Y-%m-%d")
     n = 0
     seen_h = set()
     for d in db.scalars(select(Donor).where(Donor.active == True)).all():  # noqa: E712
+        if only and d.id not in only:
+            continue
         if d.lat is None or d.household_id in seen_h or not compatible(d.group, q.group, q.component) or not eligible(d, today):
             continue
         dist = km(d.lat, d.lng, q.lat, q.lng)
@@ -308,7 +311,7 @@ def create(body: ReqIn, request: Request, db: Session = Depends(get_db), u: Part
                      ward=body.ward.strip()[:80], phone=(body.phone or s.phone or "").strip()[:20], notes=body.notes.strip()[:300], radius_km=max(5, min(100, body.radiusKm)), expires=now() + EXPIRES[urgency])
     db.add(q)
     db.flush()
-    q.notified = notify_donors(db, q)
+    q.notified = notify_donors(db, q, set(body.donors[:50]) or None)
     return preq_json(db, q)
 
 
@@ -326,10 +329,16 @@ def mine(status: str = "open", db: Session = Depends(get_db), u: PartnerUser = D
     return {"requests": [preq_json(db, q) for q in rows], "can": s.kind in REQUESTER_KINDS or (u.role == "doctor" and u.verified), "store": {"lat": s.lat, "lng": s.lng, "name": s.name, "verified": s.verified}}
 
 
+class Batch(BaseModel):
+    n: int
+    exp: str
+
+
 class StockIn(BaseModel):
     group: str
-    units: int
+    units: int = 0
     component: str = "whole"
+    batches: list[Batch] | None = None    # when given, the count is the sum of the batches not yet expired
 
 
 @pr.get("/stock")
@@ -337,7 +346,18 @@ def stock(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
     """Units on the shelf, one row per group (whole blood unless a component is counted separately)."""
     s = my_store(db, u)
     rows = db.scalars(select(BloodStock).where(BloodStock.store_id == s.id)).all()
-    return {"stock": [{"group": x.group, "component": x.component, "units": x.units, "updated": x.updated} for x in rows]}
+    today = time.strftime("%Y-%m-%d")
+    soon = time.strftime("%Y-%m-%d", time.localtime(time.time() + 7 * 86400))
+    out = []
+    for x in rows:
+        b = [y for y in (x.batches or []) if y.get("exp", "9999") >= today]
+        if x.batches is not None and sum(int(y.get("n") or 0) for y in b) != x.units:
+            x.units = sum(int(y.get("n") or 0) for y in b)    # bags past their date leave the count by themselves
+            x.batches = b
+        out.append({"group": x.group, "component": x.component, "units": x.units, "updated": x.updated, "batches": b,
+                    "expiring": sum(int(y.get("n") or 0) for y in b if y.get("exp", "9999") <= soon),
+                    "nextExpiry": min((y["exp"] for y in b if y.get("exp")), default="")})
+    return {"stock": out}
 
 
 @pr.put("/stock")
@@ -351,7 +371,17 @@ def set_stock(body: StockIn, db: Session = Depends(get_db), u: PartnerUser = Dep
     if not x:
         x = BloodStock(store_id=s.id, group=body.group, component=body.component)
         db.add(x)
-    x.units = max(0, min(9999, int(body.units)))
+    if body.batches is not None:
+        import re as _re
+        today = time.strftime("%Y-%m-%d")
+        b = [{"n": max(0, min(999, int(y.n))), "exp": y.exp} for y in body.batches[:40] if _re.fullmatch(r"\d{4}-\d{2}-\d{2}", y.exp or "") and y.n > 0]
+        if any(y["exp"] < today for y in b):
+            raise HTTPException(400, "One of those dates has passed. Bags past their date can't be issued; leave them out.")
+        x.batches = sorted(b, key=lambda y: y["exp"])
+        x.units = sum(y["n"] for y in x.batches)
+    else:
+        x.units = max(0, min(9999, int(body.units)))
+        x.batches = None
     x.updated = now()
     return {"ok": True, "units": x.units}
 
