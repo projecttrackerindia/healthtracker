@@ -167,6 +167,7 @@ app.include_router(consult_api.r)
 app.include_router(consult_api.pr)
 app.include_router(consult_api.ws)
 app.include_router(eye_api.pr)
+app.include_router(eye_api.fr)
 from api import proactive as proactive_api  # noqa: E402
 from api import tasks as tasks_api  # noqa: E402
 from api import tech as tech_api  # noqa: E402

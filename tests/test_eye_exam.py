@@ -152,3 +152,24 @@ def test_a_glasses_price_cannot_be_negative():
     aid = visit(doc.sid, fam)
     r = doc.put(f"/api/partner/eye/visits/{aid}", json={"R": {"sph": "-1.00"}, "glasses": {"lens": "CR-39", "lensPrice": -5}})
     assert r.status_code == 422
+
+
+def test_family_orders_glasses_and_the_counter_moves_it_on():
+    fam, doc = person("Meena"), hospital()
+    aid = visit(doc.sid, fam)
+    body = {"R": {"sph": "-1.25"}, "L": {"sph": "-1.00"},
+            "glasses": {"lens": "CR-39", "lensPrice": 900, "frame": "Metal · black", "framePrice": 1100, "ready": "Friday", "delivery": "pickup"}}
+    assert doc.put(f"/api/partner/eye/visits/{aid}", json=body).status_code == 200
+    # the counter cannot mark them ready before the family orders
+    assert doc.post(f"/api/partner/eye/{aid}/glasses", json={"status": "ready"}).status_code == 400
+    g = fam.get("/api/v2/glasses").json()["glasses"]
+    assert g and g[0]["total"] == 2000 and g[0]["status"] == "quoted"
+    o = fam.post(f"/api/v2/glasses/{aid}/order", json={"pay": "counter"}).json()
+    assert o["status"] == "ordered" and o["pay"] == "counter"
+    # an edited exam keeps the order
+    assert doc.put(f"/api/partner/eye/visits/{aid}", json=body).json()["visit"]["exam"]["glasses"]["status"] == "ordered"
+    r = doc.post(f"/api/partner/eye/{aid}/glasses", json={"status": "ready"})
+    assert r.status_code == 200 and r.json()["status"] == "ready"
+    with session() as db:
+        n = db.query(Notice).filter(Notice.title == "Your glasses are ready").order_by(Notice.id.desc()).first()
+        assert n and "₹2,000 to pay" in n.body

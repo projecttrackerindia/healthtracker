@@ -300,6 +300,7 @@ nav .ns{display:none}@media (max-width:860px){nav .nl{display:none}nav .ns{displ
 #sosd h2{margin:6px 0 2px;font-size:26px;letter-spacing:-.02em}#sosd .ssub{margin:0;color:#6E6E73;font-size:14px}
 #sosd .sgr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}#sosd .sgr>div,#sosd .ssm{background:#F5F5F7;border-radius:16px;padding:12px 14px}#sosd small{display:block;font-size:11px;font-weight:700;color:#6E6E73;letter-spacing:.04em}#sosd .sgr b{display:block;font-size:20px;margin-top:2px}#sosd .ssm{margin-top:10px}#sosd .ssm p{margin:4px 0 0;font-size:15px;line-height:1.45}
 #sosd .sbt{display:flex;gap:10px;margin-top:16px}#sosd .sbt .btn{height:52px;font-size:16px}#sosd .sla{display:block;margin:8px auto 0;border:0;background:none;color:#6E6E73;font:inherit;font-size:15px;padding:10px 16px;cursor:pointer}#sosd .sft{margin:4px 0 0;font-size:12px;color:#8E8E93;text-align:center;line-height:1.4}
+.egs{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#F2F1FF;border-radius:14px;padding:12px 14px;margin:10px 0}.egs b{display:block;font-size:15px}.egs small{display:block;font-size:12.5px;color:#6E6E73;margin-top:2px}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -989,6 +990,8 @@ VIEWS.profile=()=>{const s=ME.store,isLab=s.kind==='lab',isPh=s.kind==='pharmacy
  $('#pw').onsubmit=async e=>{e.preventDefault();try{await api('/password',{method:'POST',body:{current:$('#pc').value,new:$('#pn').value}});toast('Password changed');load()}catch(err){toast(err.message)}};
  loadBoard()};
 // ---------------- eye exam (eye hospitals): readings, findings on the 3D eye, plain words → the patient's Eyes page
+async function eyeGlassStep(st){try{await api(`/eye/${EYEF.aid}/glasses`,{method:'POST',body:{status:st}});toast(st==='ready'?'The family has been told':'Marked as handed over');VIEWS.eye()}catch(e){toast(e.message)}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-gst]');if(b)eyeGlassStep(b.dataset.gst)});
 const EYEF={aid:null,exam:null,hist:[],findings:[],t:0};
 const EYEROWS=[['vision','Vision','6/9'],['sph','Sphere','-2.25'],['cyl','Cylinder','-0.50'],['axis','Axis','180'],['add','Add','+1.50'],['iop','Pressure (mmHg)','16'],['cct','Cornea (µm)','540'],['cd','Cup-to-disc','0.4'],['oct','Macula OCT (µm)','260'],['angle','Angle','Open'],['lens','Lens','Clear'],['retina','Retina','Healthy']];
 const EYETPL=[[/catar|lens/i,'The lens inside your eye has become cloudy. That is a cataract. It is replaced with a clear artificial lens in a short day surgery.'],
@@ -1021,6 +1024,7 @@ async function openEyeVisit(aid){let r;try{r=await api('/eye/visits/'+aid)}catch
    <div class="egl"><div><small>Lens</small><input id="gl" value="${E(g.lens||'')}" placeholder="Polycarbonate · blue filter"></div><label class="epr">₹<input id="glp" inputmode="numeric" value="${g.lensPrice||''}" placeholder="0"></label></div>
    <div class="egl"><div><small>Frame</small><input id="gf" value="${E(g.frame||'')}" placeholder="Kids flexible · navy"></div><label class="epr">₹<input id="gfp" inputmode="numeric" value="${g.framePrice||''}" placeholder="0"></label></div>
    <div class="egl"><div><small>Ready</small><input id="gr" value="${E(g.ready||'')}" placeholder="Thursday"></div><select id="gd"><option value="home" ${g.delivery!=='pickup'?'selected':''}>Home delivery</option><option value="pickup" ${g.delivery==='pickup'?'selected':''}>Pick up here</option></select><button class="estk ${g.inStock?'on':''}" id="gs" type="button">${g.inStock?'In stock':'To order'}</button></div>
+   ${g.status&&g.status!=='quoted'?`<div class="egs"><div><b>${g.status==='ordered'?'Ordered':g.status==='ready'?(g.delivery==='home'?'On the way':'Ready to collect'):'Delivered'}</b><small>${g.paid?'Paid online · Razorpay':'Pay at the counter · '+money(g.total||0)}</small></div>${g.status==='ordered'?`<button class="btn sm p" data-gst="ready" style="border-radius:999px">${g.delivery==='home'?'Sent out':'Ready to collect'}</button>`:g.status==='ready'?`<button class="btn sm p" data-gst="delivered" style="border-radius:999px">Handed over</button>`:''}</div>`:''}
    <button class="esend" id="esend" ${doc&&ME.user.verified?'':'disabled'}>${r.visit.exam?'Send the update to '+E(first)+"'s family":'Send to '+E(first)+"'s family"}</button></section></div>
  ${eyeWait()}
  <details class="ec edet" ${(ex.findings||[]).length||ex.note?'open':''}><summary><b>Clinical details</b><span class="vmut"> · pressure, findings on the 3D eye, plain words</span></summary>

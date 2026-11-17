@@ -66,7 +66,18 @@ def _amount(db: Session, h: Household, body: StartIn) -> tuple[int, str]:
         if amt <= 0:
             raise HTTPException(400, "This plan is free; nothing to pay.")
         return int(amt), f"{p.code}:{period}"
-    raise HTTPException(400, "kind must be order or plan")
+    if body.kind == "glasses":
+        from .models import Appointment
+        a = db.get(Appointment, body.orderId)
+        g = ((a.eye or {}).get("glasses") or {}) if a else {}
+        if not a or a.household_id != h.id or not g:
+            raise HTTPException(404, "glasses not found")
+        if g.get("paid"):
+            raise HTTPException(400, "These glasses are already paid for.")
+        if int(g.get("total") or 0) <= 0:
+            raise HTTPException(400, "Nothing to pay.")
+        return int(g["total"]), a.id
+    raise HTTPException(400, "kind must be order, glasses or plan")
 
 
 @r.post("/start", dependencies=[Depends(csrf)])
@@ -91,7 +102,7 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokk
         cur = Payment(household_id=h.id, user_id=u.id if u else "", kind=body.kind, ref=ref, amount=amount, account=ACCOUNT, vpa="", note=rz["orderId"])
         db.add(cur)
         db.flush()
-    return {"payment": cur.id, **rz, "name": "Urban Health", "description": f"Order {ref}" if body.kind == "order" else "Urban Health plan",
+    return {"payment": cur.id, **rz, "name": "Urban Health", "description": f"Order {ref}" if body.kind == "order" else "Glasses" if body.kind == "glasses" else "Urban Health plan",
             "prefill": {"name": h.name or "", "contact": h.phone or ""}}
 
 
@@ -108,6 +119,15 @@ def settle(db: Session, p: Payment, payment_id: str, by: str) -> Payment:
         sub = activate_plan(db, h, code, period, p.amount, "razorpay", payment_id)
         notify(db, h.id, "payment", f"Payment received · {sub.invoice_no}", f"Your {code.title()} plan is active till {time.strftime('%d/%m/%Y', time.localtime(h.plan_until))}. Thank you.",
                {"payment": p.id, "plan": code, "invoice": sub.invoice_no}, "", "/app#page=plan")
+    elif p.kind == "glasses":
+        from .models import Appointment
+        a = db.get(Appointment, p.ref)
+        if a and (a.eye or {}).get("glasses"):
+            g = {**a.eye["glasses"], "paid": now(), "payRef": payment_id[:40], "pay": "online"}
+            if g.get("status", "quoted") == "quoted":
+                g.update({"status": "ordered", "orderedAt": now()})
+            a.eye = {**a.eye, "glasses": g}
+            notify(db, h.id, "payment", "Glasses paid", f"₹{p.amount:,} paid online. The optical counter has your order.", {"payment": p.id, "appointment": a.id}, a.member_id or "", "/app")
     else:
         o = db.get(Order, p.ref)
         if o:

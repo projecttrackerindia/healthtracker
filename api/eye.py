@@ -187,6 +187,10 @@ def save(aid: str, body: ExamIn, db: Session = Depends(get_db), u: PartnerUser =
         exam["glasses"] = {"lens": g.lens.strip(), "lensPrice": g.lensPrice, "frame": g.frame.strip(), "framePrice": g.framePrice,
                            "total": g.lensPrice + g.framePrice, "ready": g.ready.strip(), "delivery": g.delivery if g.delivery in ("home", "pickup") else "",
                            "inStock": bool(g.inStock)}
+        prev = (a.eye or {}).get("glasses") or {}
+        for k in ("status", "pay", "paid", "payRef", "orderedAt"):     # an edited exam never forgets the order or the payment
+            if k in prev:
+                exam["glasses"][k] = prev[k]
     first = not a.eye
     rid = (a.eye or {}).get("rid", "")
     x = db.get(HealthRecord, rid) if rid else None
@@ -205,3 +209,78 @@ def save(aid: str, body: ExamIn, db: Session = Depends(get_db), u: PartnerUser =
            {"appointment": a.id, "person": p.id, "store": s.name, "doctor": u.name, "glasses": exam.get("glasses")}, a.member_id, "/app#eye=" + p.id)
     db.commit()
     return {"visit": exam_json(a)}
+
+
+# ---- glasses: the family orders the quote and pays online or at the counter ------------------------------------------------
+
+from .auth import need_user  # noqa: E402
+from .models import User  # noqa: E402
+
+fr = APIRouter(prefix="/api/v2/glasses")
+GSTEP = ("quoted", "ordered", "ready", "delivered")
+
+
+def glasses_json(a: Appointment, store_name: str = "") -> dict:
+    g = (a.eye or {}).get("glasses") or {}
+    return {"id": a.id, "member": a.member_name or "", "memberId": a.member_id or "", "store": store_name, "doctor": a.doctor or "",
+            "lens": g.get("lens", ""), "lensPrice": g.get("lensPrice", 0), "frame": g.get("frame", ""), "framePrice": g.get("framePrice", 0),
+            "total": g.get("total", 0), "ready": g.get("ready", ""), "delivery": g.get("delivery", ""), "inStock": g.get("inStock", False),
+            "status": g.get("status", "quoted"), "pay": g.get("pay", ""), "paid": bool(g.get("paid")), "orderedAt": g.get("orderedAt")}
+
+
+@fr.get("")
+def family_glasses(db: Session = Depends(get_db), u: User = Depends(need_user)):
+    if not u.household_id:
+        return {"glasses": []}
+    from .models import Store
+    rows = db.scalars(select(Appointment).where(Appointment.household_id == u.household_id).order_by(Appointment.updated.desc()).limit(60)).all()
+    out = []
+    for a in rows:
+        if (a.eye or {}).get("glasses"):
+            st = db.get(Store, a.store_id) if getattr(a, "store_id", None) else None
+            out.append(glasses_json(a, st.name if st else ""))
+    return {"glasses": out}
+
+
+class GOrder(BaseModel):
+    pay: str = "counter"     # counter | online (online is settled by Razorpay, see rzp.py kind "glasses")
+
+
+@fr.post("/{aid}/order")
+def family_order(aid: str, body: GOrder, db: Session = Depends(get_db), u: User = Depends(need_user)):
+    a = db.get(Appointment, aid)
+    if not a or not u.household_id or a.household_id != u.household_id or not (a.eye or {}).get("glasses"):
+        raise HTTPException(404)
+    g = dict(a.eye["glasses"])
+    if g.get("status", "quoted") == "quoted":
+        g.update({"status": "ordered", "pay": "online" if body.pay == "online" else "counter", "orderedAt": now()})
+        a.eye = {**a.eye, "glasses": g}
+        a.updated = now()
+    return glasses_json(a)
+
+
+class GStep(BaseModel):
+    status: str
+
+
+@pr.post("/eye/{aid}/glasses")
+def partner_glasses_step(aid: str, body: GStep, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """The optical counter moves the order on: ready (for pickup or on its way), then delivered."""
+    s = my_store(db, u)
+    a = db.get(Appointment, aid)
+    if not a or getattr(a, "store_id", None) != s.id or not (a.eye or {}).get("glasses"):
+        raise HTTPException(404)
+    if body.status not in ("ready", "delivered"):
+        raise HTTPException(400, "Choose ready or delivered")
+    g = dict(a.eye["glasses"])
+    if g.get("status") not in ("ordered", "ready"):
+        raise HTTPException(400, "The family has not ordered these glasses yet.")
+    g["status"] = body.status
+    a.eye = {**a.eye, "glasses": g}
+    a.updated = now()
+    who = (a.member_name or "").split(" ")[0] or "Your"
+    if body.status == "ready":
+        notify(db, a.household_id, "order", "Your glasses are ready",
+               (f"{s.name} is sending them to you." if g.get("delivery") == "home" else f"Collect them from {s.name}.")
+               + ("" if g.get("paid") else f" ₹{g.get('total', 0):,} to pay."), {"appointment": a.id, "glasses": True}, a.member_id or "", "/app")
+    return glasses_json(a, s.name)
