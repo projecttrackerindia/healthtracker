@@ -3705,13 +3705,13 @@ function medChecked(p){const meds=(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.ac
  if(!got){try{got=JSON.parse(localStorage.getItem('uh-mchk')||'{}')[key]}catch(_){}}
  if(!got&&!MCHK[key+':run']){MCHK[key+':run']=1;const pr=p.profile||{},m=p.medicalId||{};
   API('/api/v1/ai/medcheck',{key:true,json:{member:p.id,context:{medicines:meds.map(x=>({name:x.name,dose:x.dose||'',times:x.times||[]})),allergies:String(pr.allergies||m.allergies||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),conditions:String(m.conditions||pr.conditions||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),age:ageOf(p),sex:pr.sex||''}}})
-   .then(r=>{MCHK[key]=r;try{const c=JSON.parse(localStorage.getItem('uh-mchk')||'{}');Object.keys(c).forEach(k=>{if(!k.includes(today()))delete c[k]});c[key]=r;localStorage.setItem('uh-mchk',JSON.stringify(c))}catch(_){}if(S.tab==='meds')renderSheet()}).catch(()=>{MCHK[key]={err:1};if(S.tab==='meds')renderSheet()});got=null}
+   .then(r=>{MCHK[key]=r;if(!r.limited)try{const c=JSON.parse(localStorage.getItem('uh-mchk')||'{}');Object.keys(c).forEach(k=>{if(!k.includes(today()))delete c[k]});c[key]=r;localStorage.setItem('uh-mchk',JSON.stringify(c))}catch(_){}if(S.tab==='meds')renderSheet()}).catch(()=>{MCHK[key]={err:1};if(S.tab==='meds')renderSheet()});got=null}
  const row=(col,glyph,a,b)=>`<div class="rrow" style="cursor:default"><span class="rk" style="background:${col}">${glyph}</span><span style="flex:1;min-width:0"><b style="white-space:normal">${a}</b><small>${b}</small></span></div>`;
  let body;
  if(!got)body=row('#E5E5EA',ic(I.spark,'#8E8E93',15),'Checking your medicines together…','Interactions, repeats and your allergies');
  else if(got.err)return'';
  else{const al=(got.alerts||[]).slice(0,3),dup=(got.duplicates||[]).slice(0,1),tip=(got.timing||[])[0];
-  body=(al.length?al.map(a=>row(a.level==='stop'?'#FF3B30':a.level==='ask'?'#FF9500':'#0A84FF','<b style="color:#fff">!</b>',esc(a.title),esc(a.detail))).join(''):row('#30D158',ic(I.check,'#fff',15),`Your ${meds.length} medicine${meds.length>1?'s':''} work well together`,'Checked against each other and your allergies'))
+  body=(al.length?al.map(a=>row(a.level==='stop'?'#FF3B30':a.level==='ask'?'#FF9500':'#0A84FF','<b style="color:#fff">!</b>',esc(a.title),esc(a.detail))).join(''):got.limited?row('#30D158',ic(I.check,'#fff',15),'No allergy clash or repeat found','The full check of how they work together isn’t available just now. Your pharmacist can confirm.'):row('#30D158',ic(I.check,'#fff',15),`Your ${meds.length} medicine${meds.length>1?'s':''} work well together`,'Checked against each other and your allergies'))
    +dup.map(d=>row('#FF9500','<b style="color:#fff">2×</b>',`${esc(d.ingredient)} appears twice`,esc((d.medicines||[]).join(' and '))+' · ask your pharmacist')).join('')
    +(tip?row('#5E5CE6',ic(I.spark,'#fff',15),'A timing tip',esc(tip)):'')}
  return`<div class="sec2" style="margin-top:14px">CHECKED FOR YOU</div><div class="rlist">${body}</div><p class="cap" style="margin:-4px 6px 0">Guidance only. Your doctor or pharmacist has the final word.</p>`}

@@ -915,19 +915,35 @@ def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
-    if not agent.enabled():
-        raise HTTPException(503, "The medicine check is not available right now.")
-    from .auth import current_user as _cu
-    from .people import ai_gate
-    _u = _cu(request, db)
-    ai_gate(db, _u.id if _u else None)
     meds = body.context.get("medicines") or []
     if not meds:
         return {"alerts": [], "duplicates": [], "timing": [], "ok": True, "cached": False}
-    # local checks first: an allergy named in a medicine's name is never allowed to wait for the model
+    # local checks first: an allergy named in a medicine's name, or the same medicine twice, never waits for the model,
+    # and still runs when the model is off, over quota or failing (the family then sees a "limited" check, not nothing)
     allergies = [str(a).lower() for a in (body.context.get("allergies") or [])]
-    local = [{"level": "stop", "about": [m.get("name", "")], "title": "Listed allergy", "detail": f"{m.get('name', '')} matches an allergy on this profile ({a}). Do not take it; call the doctor or pharmacist."}
+    local = [{"level": "stop", "about": [m.get("name", "")], "title": "Listed allergy", "detail": f"{m.get('name', '')} matches an allergy on this profile ({a}). Please don't take it until you've spoken to the doctor or pharmacist."}
              for m in meds for a in allergies if a and len(a) > 3 and a in str(m.get("name", "") + " " + m.get("generic", "")).lower()]
+    seen_n: dict[str, str] = {}
+    dups = []
+    for m in meds:
+        nm = str(m.get("name", "")).strip()
+        k = re.sub(r"[^a-z]", "", (nm.lower().split() or [""])[0])
+        if len(k) > 3 and k in seen_n and seen_n[k] != nm:
+            dups.append({"ingredient": k.capitalize(), "medicines": [seen_n[k], nm]})
+        seen_n.setdefault(k, nm)
+
+    def limited(why: str) -> dict:
+        return {"alerts": local, "duplicates": dups[:2], "timing": [], "ok": not local and not dups, "cached": False, "limited": True, "why": why}
+
+    if not agent.enabled():
+        return limited("off")
+    from .auth import current_user as _cu
+    from .people import ai_gate
+    _u = _cu(request, db)
+    try:
+        ai_gate(db, _u.id if _u else None)
+    except HTTPException:
+        return limited("gate")
     key = f"{h.id}:medcheck:{body.member[:32]}:{agent.ctx_key(body.context)}"
     hit = db.get(AiCache, key)
     if hit:
@@ -937,16 +953,17 @@ def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db
     ai_budget(db, h)
     used, cap = _ai_quota(db, h, "insight", agent.INSIGHT_CAP)
     if used >= cap:
-        raise HTTPException(429, "This month's checks are used up; they reset on the 1st." if free_now() else f"This month's checks on the {h.plan} plan are used up. Upgrade in Family & Privacy → Plan.")
+        return limited("quota")
     t0 = time.time()
     try:
         out = AI.medcheck(body.context)
     except Exception as e:
         AI._fail("medicine check", e)
         db.add(_job(h, "insight", "error", ok=False))
-        raise HTTPException(502, "The medicine check could not run right now.")
+        return limited("error")
     db.add(_job(h, "insight", "claude", ms=int((time.time() - t0) * 1000)))
     out["alerts"] = local + out.get("alerts", [])
+    out["duplicates"] = out.get("duplicates") or dups[:2]
     out["ok"] = not any(a["level"] != "note" for a in out["alerts"])
     db.merge(AiCache(key=key, household_id=h.id, value=out))
     return {**out, "cached": False}

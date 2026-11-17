@@ -20,7 +20,6 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response, RedirectResponse
 
-from sqlalchemy.exc import OperationalError
 
 from api.db import Base, engine, ensure_columns, ensure_indexes, session
 from api import admin as admin_api, auth as auth_api, family as family_api, more as more_api, reminders, routes as public_api
@@ -97,14 +96,30 @@ def _variant(p: Path, request: Request) -> tuple[Path, str | None]:
 
 
 
-def _init_db():
+def _migrate():
     try:
         Base.metadata.create_all(engine)
-    except OperationalError as e:
-        if "already exists" not in str(e):
+    except Exception as e:  # another worker made it a moment earlier
+        if "already exists" not in str(e) and "duplicate" not in str(e).lower():
             raise
     ensure_columns()
     ensure_indexes()
+
+
+def _init_db():
+    # Several workers start together. On Postgres they take turns (an advisory lock), so a new table or column is
+    # made once instead of every worker racing to make it and one of them failing the start.
+    if engine.dialect.name == "postgresql":
+        from sqlalchemy import text as _t
+        with engine.connect() as c:
+            c.execute(_t("SELECT pg_advisory_lock(7240311)"))
+            try:
+                _migrate()
+            finally:
+                c.execute(_t("SELECT pg_advisory_unlock(7240311)"))
+                c.commit()
+    else:
+        _migrate()
     with session() as db:
         seed_all(db)
         try:

@@ -53,7 +53,9 @@ def test_assistant_needs_a_recorded_yes(monkeypatch):
     consent(c, False)
     r = c.post("/api/v1/ai/ask", json={"question": "Is my sugar okay?", "context": {}})
     assert r.status_code == 403 and "Settings" in r.json()["detail"]
-    assert c.post("/api/v1/ai/medcheck", json={"context": {"medicines": [{"name": "Dolo"}]}}).status_code == 403
+    # without a yes the medicine check never reaches the AI; only the on-server allergy and repeat checks run
+    mc = c.post("/api/v1/ai/medcheck", json={"context": {"medicines": [{"name": "Dolo"}]}})
+    assert mc.status_code == 200 and mc.json()["limited"] is True and mc.json()["why"] == "gate"
     assert not called
     consent(c, True)
     assert c.post("/api/v1/ai/ask", json={"question": "Is my sugar okay?", "context": {}}).json()["answer"] == "ok"
