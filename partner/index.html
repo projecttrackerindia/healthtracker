@@ -319,6 +319,20 @@ nav .ns{display:none}@media (max-width:860px){nav .nl{display:none}nav .ns{displ
 .rxts{margin:12px 0 4px;background:#F7F8FA;border-radius:16px;padding:12px 14px}.rxtsh b{font-size:14px}.rxtsh small{color:var(--mute);font-size:12.5px;margin-left:8px}.rxtc{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.rxtc button,.rxtw button{min-height:36px;border-radius:18px;border:1px solid #E5E5EA;background:#fff;padding:0 13px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}.rxtc button.on{background:#0B8A7C;border-color:#0B8A7C;color:#fff}
 .rxtw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rxtw span{font-size:12.5px;color:var(--mute);margin-right:4px}.rxtw button.on{background:#1D1D1F;border-color:#1D1D1F;color:#fff}
 /* Touch screens: every control gets a 44 pt touch area; the look stays the same */@media (pointer:coarse){.btn,.bkgs button,.bcmx,.vx,a.sm,button.sm,.qch button{position:relative}.btn::after,.bkgs button::after,.bcmx::after,.vx::after,button.sm::after,.qch button::after{content:'';position:absolute;inset:-6px -2px}select{min-height:44px}.bkgs{gap:10px 8px}}
+#ql{display:block!important}.qdsel{height:40px;border-radius:20px;border:1px solid var(--line);padding:0 14px;font:inherit;background:#fff;max-width:280px}.qwalk{border-radius:20px;height:40px;gap:6px;background:#E8E8ED!important;border:0!important;padding:0 16px}
+.qgrid{display:grid;grid-template-columns:minmax(220px,250px) minmax(0,1fr);gap:16px;align-items:stretch}.qnow2{background:#0B8A7C;color:#fff;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 22px;min-height:420px}
+.qnow2 small{font-size:14px;font-weight:600;color:rgba(255,255,255,.82)}.qnow2 b{font-size:96px;line-height:1;letter-spacing:-.05em;margin:6px 0 4px}.qnow2 strong{font-size:20px}.qnow2 span{font-size:13.5px;color:rgba(255,255,255,.8);margin-top:2px}
+.qnb{margin-top:18px;width:100%;height:48px;border-radius:24px;border:0;background:#fff;color:#0B8A7C;font:inherit;font-size:16px;font-weight:600;cursor:pointer}.qnb.sec{background:rgba(255,255,255,.16);color:#fff;margin-top:22px}.qnb.sec+.qnb{margin-top:10px}
+.qtab{padding:6px 10px!important;margin:0!important;overflow-x:auto}.qtab table{width:100%}.qtab th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);font-weight:600}.qtab td{padding:11px 8px;vertical-align:middle}.qno{font-size:18px;font-family:var(--mono)}
+.qtab tr.qcur td{background:#EEF8F6}.qtab tr.qcur td:first-child{border-radius:12px 0 0 12px}.qtab tr.qcur td:last-child{border-radius:0 12px 12px 0}.qtab tr.qold{opacity:.5}
+.qpill{display:inline-block;background:#F2F2F5;border-radius:11px;padding:3px 9px;font-size:12px;font-weight:600;color:#3A3A3C;white-space:nowrap}.qpill.now{background:#E5F0FF;color:#0071E3}
+.qact{text-align:right;white-space:nowrap;width:1%}.qtab td:nth-child(2){white-space:nowrap}.qact .btn{margin-left:4px}@media (hover:hover){.qtab tr.qcur:not(:hover) .qact .btn.d{display:none}.qact .btn{opacity:0;transition:opacity .15s}.qtab tr:hover .qact .btn,.qtab tr.qcur .qact .btn,.qact .btn:focus-visible{opacity:1}}
+.qstats{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.qstats .kpi{margin:0}.qstats .kpi span.g{color:#1A7F37}.qstats .kpi span.a{color:#9A5B00}
+.qlate2{background:#FFF4E5;border-radius:20px;padding:16px 18px}.qlate2 p{color:var(--mute);margin:6px 0 0;font-size:14px;line-height:1.45}.qtell{width:100%;justify-content:center;margin-top:12px;height:46px;border-radius:23px;font-size:16px}
+.qpanel .lbsec{margin-top:22px}.qtvl{font-size:13px}.qdr{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit;border-radius:12px}.qdr.on{background:#F2F8F7}
+@media (max-width:1100px){.qgrid{grid-template-columns:1fr}.qnow2{min-height:0;padding:22px}.qnow2 b{font-size:72px}}
+@media (max-width:700px){.qtab{overflow:visible}.qtab table,.qtab tbody{display:block}.qtab tr:first-child{display:none}.qtab tr{display:flex;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);padding:4px 0}.qtab tr:last-child{border:0}.qtab td{border:0!important;padding:8px 6px!important}.qtab td:first-child{width:36px}.qtab td:nth-child(2){flex:1;min-width:0}.qtab td:nth-child(3){display:none}.qtab td.qact{flex-basis:100%;text-align:left;padding:0 6px 8px 48px!important;width:auto}.qtab td.qact:empty{display:none}.qtab td.qact .btn{margin:0 6px 0 0}.qtab tr.qcur{border-radius:14px;background:#EEF8F6}.qtab tr.qcur td{background:none}
+ .qstats{grid-template-columns:1fr 1fr}.qstats .kpi:last-child{grid-column:1/-1}.qact .btn{opacity:1}.qtab td{padding:10px 4px}}
 </style>
 <script src="/geopick.js?v=3" defer></script>
 </head>
@@ -684,8 +698,8 @@ function lbPanel(o){const el=$('#lbpn');if(!el)return;if(!o){el.className='';el.
  const close=()=>{LB.sel=null;LB.read=null;LB.file=null;refreshOrders()};
  if(!['collected','processing'].includes(o.status)){el.innerHTML=`<div class="lbph"><span class="lbt ${o.status==='ready'?'g':'n'}">${E((o.labels&&o.labels[o.status])||o.status.replace(/_/g,' '))}</span>${x}</div><div class="lbpo">${ordCard(o)}</div>`;wireOrd(el);$('#lbx').onclick=close;return}
  if(!LB.read){el.innerHTML=`<div class="lbph"><span class="lbt n">${o.rerunAt?'Running again':'In the lab'}</span>${x}</div><h2>${E(nm)} · report</h2><p class="lbs">${E((o.items||[]).map(i=>i.name).join(', '))}${o.collectedAt?' · collected '+E(hm(o.collectedAt)):''}</p>
-  <label class="lbdrop"><input type="file" accept="application/pdf,image/*" id="lbf" hidden><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4M12 17v-6M9 14l3-3 3 3"/></svg><b>Add the report PDF</b><small>It is read here first. Nothing reaches the family until you sign and send.</small></label>
-  <div class="lbpb"><button class="lbg" id="lbrr">Re-run</button></div>`;
+  <label class="lbdrop"><input type="file" accept="application/pdf,image/*" id="lbf" hidden><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4M12 17v-6M9 14l3-3 3 3"/></svg><b>Add the report</b><small>PDF or a clear photo. It is read here first; nothing reaches the family until you sign and send.</small></label>
+  <div class="lbpb"><button class="lbg" id="lbrr">Run the sample again</button></div>`;
   $('#lbx').onclick=close;$('#lbrr').onclick=()=>lbRerun(o);
   $('#lbf').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>15e6){toast('Up to 15 MB');return}LB.file=f;el.querySelector('.lbdrop b').textContent='Reading…';
    try{LB.read=await api(`/orders/${o.id}/report/read`,{method:'POST',raw:true,headers:{'content-type':f.type||'application/pdf'},body:f})}catch(x){toast(x.message);LB.file=null;lbPanel(o);return}refreshOrders()};return}
@@ -887,8 +901,8 @@ function showCreds(g,title){$('#tcreds').innerHTML=`<div class="card" style="bor
 // tap away, and the wait estimate only appears once the doctor's own day can support one — a confident
 // wrong number is why people stop watching the board and crowd the door.
 let QDOC='',QTIMER=null,QSHOWALL=false;
-VIEWS.queue=()=>{$('#main').innerHTML=head('OP queue','Today\'s list, in the order people arrived. Walk-ins and booked visits share one queue, because one list the counter can see beats two it reconciles in its head.',
-  `<select id="qd" style="min-width:190px"></select><button class="btn" id="qadd">Add walk-in</button><button class="btn p" id="qnext">Call next</button>`)
+VIEWS.queue=()=>{$('#main').innerHTML=head('OP queue','',
+  `<select id="qd" class="qdsel" aria-label="Doctor"></select><button class="btn qwalk" id="qadd"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Walk-in</button>`)
  +`<div id="ql"><div class="empty">Loading…</div></div>`;
  loadDoctors()};
 async function loadDoctors(){if(!$('#ql'))return;let r;try{r=await api('/doctors')}catch(e){if($('#ql'))$('#ql').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
@@ -897,16 +911,18 @@ async function loadDoctors(){if(!$('#ql'))return;let r;try{r=await api('/doctors
  // counter opens on an empty queue while a room full of people is one dropdown away.
  const docs=r.doctors.filter(d=>d.active).sort((a,b)=>(b.withNow?1:0)-(a.withNow?1:0)||b.waiting-a.waiting||a.name.localeCompare(b.name));
  if(!docs.length){$('#ql').innerHTML=`<div class="empty">No doctors on this clinic yet. Urban Health adds them and verifies the registration — write to partner@urbanhealth.in.</div>`;
-  $('#qd').hidden=true;$('#qnext').hidden=true;$('#qadd').hidden=true;return}
- if(!QDOC||!docs.some(d=>d.id===QDOC))QDOC=(ME.user.role==='doctor'?ME.user.id:docs[0].id);
+  $('#qd').hidden=true;$('#qadd').hidden=true;return}
+ if(!QDOC||!docs.some(d=>d.id===QDOC))QDOC=(ME.user.role==='doctor'&&docs.some(d=>d.id===ME.user.id)?ME.user.id:docs[0].id);
+ $('#qd').hidden=docs.length<2;
  $('#qd').innerHTML=docs.map(d=>`<option value="${E(d.id)}" ${d.id===QDOC?'selected':''}>${E(d.name)}${d.specialty?' · '+E(d.specialty):''} — ${d.waiting} waiting</option>`).join('');
  $('#qd').onchange=()=>{QDOC=$('#qd').value;loadQueue()};
- $('#qnext').onclick=callNext;$('#qadd').onclick=addWalkIn;
+ $('#qadd').onclick=addWalkIn;
  loadQueue();
  // The counter leaves this open all morning; a slow refresh keeps it honest without anybody tapping.
  if(QTIMER)clearInterval(QTIMER);QTIMER=setInterval(()=>{if(view==='queue')loadQueue();else{clearInterval(QTIMER);QTIMER=null}},20000)}
 const QST={waiting:['','Waiting'],called:['go','Called'],in:['ok','With the doctor'],done:['','Seen'],skipped:['bad','Passed over']};
 let QLATE=15,QDOCS=null;
+async function qCustomLate(){const v=await uhAsk('How many minutes late? Families waiting see the new time.',String([15,30].includes(QLATE)?45:QLATE));if(v===null)return;const n=parseInt(v,10);if(!(n>0&&n<=240)){toast('Between 1 and 240 minutes');return}QLATE=n;loadQueue()}
 async function setLate(m){try{const r=await api('/queue/late',{method:'POST',body:{doctor:QDOC,minutes:m}});toast(m?`Told ${r.told} famil${r.told===1?'y':'ies'}`:'Marked on time');loadQueue()}catch(e){toast(e.message)}}
 async function openBoardLink(){try{let r=await api('/board-token');if(!r.token)r=await api('/board-token',{method:'POST'});window.open(r.url,'_blank','noopener')}catch(e){toast(e.message)}}
 async function loadQueue(){try{QDOCS=(await api('/doctors')).doctors}catch(_){}if(!QDOC||!$('#ql'))return;let q;try{q=await api('/queue?doctor='+encodeURIComponent(QDOC))}catch(e){if($('#ql'))$('#ql').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}
@@ -916,33 +932,45 @@ async function loadQueue(){try{QDOCS=(await api('/doctors')).doctors}catch(_){}i
  // is the point of this screen, so the day's history folds away behind a line.
  const over=q.tokens.filter(t=>t.state==='done'||t.state==='skipped'),live=q.tokens.filter(t=>!over.includes(t));
  const show=QSHOWALL?q.tokens:live;
- $('#ql').innerHTML=`<div class="cards">
-   <div class="card kpi qnow"><small>Now seeing</small><b>${now_?now_.number:'—'}</b><span>${now_?E(now_.member||'')+' · '+E(QST[now_.state][1]):'Nobody in the room'}</span>${now_&&ME.user.role==='doctor'?`<button class="btn" onclick="openVisit('${E(now_.id)}')">Open consult</button>`:''}<button class="btn" onclick="callNext()">Call next${(()=>{const n=q.tokens.find(t=>t.state==='waiting');return n?' · '+n.number:''})()}</button></div>
-   <div class="card kpi"><small>Waiting</small><b>${q.waiting}</b><span style="color:var(--mute)">${q.paceMin?`about ${q.waiting*q.paceMin} min to clear`:'pace not known yet'}</span></div>
-   <div class="card kpi"><small>Seen today</small><b>${q.seen}</b><span style="color:var(--mute)">${q.paceMin?`${q.paceMin} min each`:'—'}</span></div>
-   <div class="qside"><div class="card qlate${q.late?' on':''}"><div class="row" style="gap:10px;margin:0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A5B00" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b style="font-size:18px">${q.late?`Running ${q.late.min} min late`:'Running late?'}</b></div>
-    <p style="color:var(--mute);margin:6px 0 0;font-size:14px">${q.late?`Families waiting were told at ${new Date(q.late.t*1000).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}.`:'Families waiting at home see the new time. Tell them now?'}</p>
-    <div class="qch">${[15,30,45].map(m=>`<button class="${QLATE===m?'on':''}" onclick="QLATE=${m};loadQueue()">${m} min</button>`).join('')}${q.late?`<button onclick="setLate(0)">On time</button>`:''}</div>
-    <button class="btn p" style="width:100%;justify-content:center;margin-top:12px" onclick="setLate(QLATE)" ${q.waiting?'':'disabled'}>Tell ${q.waiting} famil${q.waiting===1?'y':'ies'}</button></div>
-   <div class="card"><small style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)">Waiting room TV</small><div class="qtv"><b>${now_?now_.number:'—'}</b><span>Now seeing${q.late?` · ${q.late.min} min late`:''}<br>Next: ${q.tokens.filter(t=>t.state==='waiting').slice(0,3).map(t=>t.number).join(', ')||'—'}</span></div><a href="#" onclick="event.preventDefault();openBoardLink()" style="font-size:13px">Open /counter on any TV in the clinic</a></div>
-   ${(()=>{const ob=q.tokens.filter(t=>t.appointment&&t.state==='waiting');return ob.length?`<div class="card"><small class="qsh">Online bookings for this OP</small>${ob.map(t=>`<div class="qrw"><span class="qav" style="background:#5E5CE6">${E((t.member||'?')[0])}</span><div><b>${E(t.member||'Patient')}</b><small>Token ${t.number}${t.why?' · '+E(t.why):''}</small></div></div>`).join('')}</div>`:''})()}
-   ${(QDOCS||[]).length?`<div class="card"><small class="qsh">Doctors in today</small>${QDOCS.map(d=>`<div class="qrw"><span class="qav" style="background:${d.waiting?'#0B8A7C':'#86868B'}">${E(((d.name||'?').replace(/^Dr\.?\s*/i,''))[0])}</span><div><b>${E(d.name)}</b><small>${E(d.specialty||'Doctor')}</small></div><span class="tag ${d.waiting?'go':''}">${d.waiting?d.waiting+' waiting':'No queue'}</span></div>`).join('')}</div>`:''}</div></div>
-  <div class="card">${show.length?`<table><tr><th style="width:70px">No.</th><th>Patient</th><th>Reason</th><th>Waiting</th><th>State</th><th></th></tr>
-   ${show.map(t=>`<tr${t.state==='done'||t.state==='skipped'?' style="opacity:.55"':''}>
-     <td><b style="font-size:19px;font-family:var(--mono)">${t.number}</b></td>
-     <td><b>${E(t.member||'—')}</b>${t.phone?`<br><a href="tel:${E(t.phone)}" style="font-size:12px">${E(t.phone)}</a>`:''}${t.kind==='appointment'?' <span class="tag">booked</span>':''}</td>
-     <td style="color:var(--mute)">${E(t.why||'—')}</td>
-     <td style="color:var(--mute)">${t.state==='waiting'?t.waitedMin+' min':'—'}</td>
-     <td><span class="tag ${QST[t.state][0]}">${QST[t.state][1]}</span></td>
-     <td style="text-align:right;white-space:nowrap">${t.state==='waiting'?`<button class="btn sm" data-qm="${E(t.id)}:called">Call</button> <button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
-       :t.state==='called'?`<button class="btn sm p" data-qm="${E(t.id)}:in">Came in</button> <button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
-       :t.state==='in'?`<button class="btn sm p" data-qm="${E(t.id)}:done">Done</button>`:''}${ME.user.role==='doctor'&&(t.state==='called'||t.state==='in')?` <button class="btn sm" onclick="openVisit('${E(t.id)}')">Consult</button>`:''}</td></tr>`).join('')}
+ const doc=(QDOCS||[]).find(d=>d.id===QDOC)||{},pace=q.paceMin||0,step=pace||doc.slotMin||10,wait=q.tokens.filter(t=>t.state==='waiting'),nxt=wait[0];
+ const eb=document.querySelector('.phd .peb');if(eb&&doc.name)eb.textContent=[doc.name,doc.room?'Room '+doc.room:'',doc.hours||'OP today'].filter(Boolean).join(' · ');
+ let VC=[];try{const c=await api('/consults');const td=new Date().toISOString().slice(0,10);VC=(c.consults||c.appointments||c||[]).filter(a=>(a.slotDate||a.date)===td&&a.kind==='video'&&a.status!=='declined'&&a.status!=='cancelled')}catch(_){}
+ const vNext=VC.filter(a=>!a.callEnded).sort((x,y)=>String(x.slotTime||x.time).localeCompare(String(y.slotTime||y.time)))[0];
+ const t12=t=>{if(!t)return'';const[h,m]=String(t).split(':').map(Number);return`${h%12||12}:${String(m||0).padStart(2,'0')} ${h<12?'AM':'PM'}`};
+ const est=i=>`~${(i+1)*step} min`;
+ const act=t=>(t.state==='waiting'?`<button class="btn sm" data-qm="${E(t.id)}:called">Call</button><button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
+   :t.state==='called'?`<button class="btn sm p" data-qm="${E(t.id)}:in">Came in</button><button class="btn sm d" data-qm="${E(t.id)}:skipped">Pass over</button>`
+   :t.state==='in'?`<button class="btn sm p" data-qm="${E(t.id)}:done">Done</button>`:'');
+ const ob=q.tokens.filter(t=>t.appointment&&t.state==='waiting');
+ $('#ql').innerHTML=`<div class="qgrid">
+  <div class="qnow2"><small>Now seeing</small><b>${now_?now_.number:'—'}</b><strong>${now_?E(now_.member||''):'Nobody in the room'}</strong><span>${now_?E(QST[now_.state][1])+(now_.calledAt?' · since '+E(new Date(now_.calledAt*1000).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})):''):(nxt?'Ready when you are':'The queue is clear')}</span>
+   ${now_&&ME.user.role==='doctor'?`<button class="qnb sec" onclick="openVisit('${E(now_.id)}')">Open consult</button>`:''}${nxt?`<button class="qnb" id="qnext" onclick="callNext()">Call ${nxt.number} · ${E((nxt.member||'').split(' ')[0])}</button>`:''}</div>
+  <div class="card qtab">${show.length?`<table><tr><th style="width:64px">Token</th><th>Patient</th><th>Reason</th><th style="width:96px">Wait</th><th class="qact-h"></th></tr>
+   ${show.map(t=>{const wi=wait.indexOf(t);return`<tr class="${now_&&t.id===now_.id?'qcur':''}${t.state==='done'||t.state==='skipped'?' qold':''}">
+     <td><b class="qno">${t.number}</b></td>
+     <td><b>${E(t.member||'—')}</b>${t.kind==='appointment'||t.appointment?' <span class="tag">booked</span>':''}</td>
+     <td class="vmut">${E(t.why||'—')}</td>
+     <td>${t.state==='called'||t.state==='in'?'<span class="qpill now">Now</span>':t.state==='waiting'?`<span class="qpill">${est(wi)}</span>`:`<span class="qpill">${E(QST[t.state][1])}</span>`}</td>
+     <td class="qact">${act(t)}</td></tr>`}).join('')}
    </table>`:'<div class="empty">Nobody in the queue. Add a walk-in, or wait for someone to take a number in the app.</div>'}
-   ${over.length?`<p class="sub" style="margin:10px 0 0"><button class="btn sm" id="qall">${QSHOWALL?'Hide':'Show'} the ${over.length} already finished today</button></p>`:''}</div>`;
+   ${over.length?`<p class="sub" style="margin:10px 0 0"><button class="btn sm" id="qall">${QSHOWALL?'Hide':'Show'} the ${over.length} already finished today</button></p>`:''}</div>
+  <div class="qstats"><div class="card kpi"><small>Seen today</small><b>${q.seen}</b><span class="g">${pace?`Average ${pace} min each`:'Pace shows after a few visits'}</span></div>
+   <div class="card kpi"><small>Waiting</small><b>${q.waiting}</b><span>${ob.length?`${ob.length} booked online`:pace&&q.waiting?`About ${q.waiting*pace} min to clear`:'Walk-ins and bookings together'}</span></div>
+   <div class="card kpi"><small>Video consults</small><b>${VC.length}</b><span class="${vNext?'a':''}">${vNext?'Next at '+t12(vNext.slotTime||vNext.time):'None left today'}</span></div></div></div>
+ <div class="lbpn qpanel" role="complementary" aria-label="Queue tools">
+  <div class="qlate2${q.late?' on':''}"><div class="row" style="gap:10px;margin:0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A5B00" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b style="font-size:18px">${q.late?`Running ${q.late.min} min late`:'Running late?'}</b></div>
+   <p>${q.late?`Families waiting were told at ${new Date(q.late.t*1000).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}. Change it if the wait grows.`:'Families waiting at home see the new time. Tell them now?'}</p>
+   <div class="qch">${[15,30].map(m=>`<button class="${QLATE===m?'on':''}" onclick="QLATE=${m};loadQueue()">${m} min</button>`).join('')}<button class="${[15,30].includes(QLATE)?'':'on'}" onclick="qCustomLate()">${[15,30].includes(QLATE)?'Custom':QLATE+' min'}</button>${q.late?`<button onclick="setLate(0)">Back on time</button>`:''}</div>
+   <button class="btn p qtell" onclick="setLate(QLATE)" ${q.waiting?'':'disabled'}>${q.waiting?`Tell ${q.waiting} famil${q.waiting===1?'y':'ies'}`:'Nobody waiting to tell'}</button></div>
+  <div class="lbsec">Waiting room TV</div><div class="qtv"><b>${now_?now_.number:'—'}</b><span>Now seeing${doc.room?' · Room '+E(doc.room):''}${q.late?` · ${q.late.min} min late`:''}<br>Next: ${wait.slice(0,3).map(t=>t.number).join(', ')||'—'}</span></div><a href="#" class="qtvl" onclick="event.preventDefault();openBoardLink()">Open /counter on any TV in the clinic</a>
+  ${ob.length?`<div class="lbsec">Online bookings for this OP</div>${ob.map(t=>`<div class="qrw"><span class="qav" style="background:#5E5CE6">${E((t.member||'?')[0])}</span><div><b>${E(t.member||'Patient')}</b><small>Token ${t.number}${t.why?' · '+E(t.why):''}</small></div></div>`).join('')}`:''}
+  ${(QDOCS||[]).length?`<div class="lbsec">Doctors in today</div>${QDOCS.filter(d=>d.active!==false).map(d=>`<button class="qrw qdr${d.id===QDOC?' on':''}" data-qdoc="${E(d.id)}"><span class="qav" style="background:${d.waiting?'#0B8A7C':'#86868B'}">${E(((d.name||'?').replace(/^Dr\.?\s*/i,''))[0])}</span><div><b>${E(d.name)}</b><small>${E(d.specialty||'Doctor')}</small></div><span class="tag ${d.waiting?'go':''}">${d.waiting?d.waiting+' waiting':'No queue'}</span></button>`).join('')}`:''}
+ </div>`;
+ $('#ql').querySelectorAll('[data-qdoc]').forEach(b=>b.onclick=()=>{QDOC=b.dataset.qdoc;if($('#qd'))$('#qd').value=QDOC;loadQueue()});
  if($('#qall'))$('#qall').onclick=()=>{QSHOWALL=!QSHOWALL;loadQueue()};
  $('#ql').querySelectorAll('[data-qm]').forEach(b=>b.onclick=async()=>{const[id,to]=b.dataset.qm.split(':');b.disabled=true;
   try{await api(`/queue/${id}/move`,{method:'POST',body:{to}});loadQueue()}catch(e){toast(e.message);b.disabled=false}})}
-async function callNext(){const b=$('#qnext');b.disabled=true;
+async function callNext(){const b=$('#qnext')||{};b.disabled=true;
  try{const r=await api('/queue/next?doctor='+encodeURIComponent(QDOC),{method:'POST'});
   toast(r.called?`Token ${r.called.number} · ${r.called.member||''}`:'Nobody else is waiting');loadQueue()}
  catch(e){toast(e.message)}finally{b.disabled=false}}

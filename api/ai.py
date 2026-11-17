@@ -312,6 +312,21 @@ def _ocr_png(img) -> str:
         return ""
 
 
+def readable_text(data: bytes, mime: str) -> tuple[str, bool]:
+    """(text, read_from_a_scan). Text PDFs give their text; photos and scanned PDFs go through OCR."""
+    txt = text_from(data, mime)
+    if len(txt.strip()) >= 40 or not (mime.startswith("image/") or mime == "application/pdf" or data[:4] == b"%PDF"):
+        return txt, False
+    got = ocr_text(data, mime)
+    if not got.strip():
+        return txt, False
+    # the usual OCR slips on lab reports: l/1 in HbA1c, I for l in mg/dL, O for 0 inside numbers
+    got = re.sub(r"(?i)\bhba[1il|]{1,2}c\b", "HbA1c", got)
+    got = re.sub(r"(?i)mg\s*/\s*d[il1]\b", "mg/dL", got)
+    got = re.sub(r"(?<=\d)[oO](?=\d)|(?<=\d\.)[oO]\b", "0", got)
+    return got, True
+
+
 def ocr_text(data: bytes, mime: str) -> str:
     """Words on a photo or a scanned (image-only) PDF. Empty when OCR is not installed or nothing could be read."""
     try:
@@ -663,16 +678,10 @@ def analyze(kind: str, data: bytes | None, mime: str, text: str, ctx: dict, forc
             err = str(e)[:160]
             _fail("smart reading (basic reader used)", e)
     if out is None:
-        txt = text or (text_from(data, mime) if data else "")
-        scanned = False
-        if len(txt.strip()) < 40 and data and (mime.startswith("image/") or mime == "application/pdf"):
-            got = ocr_text(data, mime)
-            if got.strip():
-                # the usual OCR slips on lab reports: l/1 in HbA1c, I for l in mg/dL, O for 0 inside numbers
-                got = re.sub(r"(?i)\bhba[1il|]{1,2}c\b", "HbA1c", got)
-                got = re.sub(r"(?i)mg\s*/\s*d[il1]\b", "mg/dL", got)
-                got = re.sub(r"(?<=\d)[oO](?=\d)|(?<=\d\.)[oO]\b", "0", got)
-                txt, scanned = got, True
+        if text:
+            txt, scanned = text, False
+        else:
+            txt, scanned = readable_text(data, mime) if data else ("", False)
         if not txt.strip() and data and mime.startswith("image/"):
             out = {"summary": "This photo could not be read clearly. A sharper photo in good light, flat and straight on, usually works; or type the values.",
                    "findings": [], "medicines": [], "tests_needed": [], "followups": [], "questions_for_doctor": [], "warnings": []}

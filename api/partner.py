@@ -976,7 +976,7 @@ ORGAN_OF = {"hba1c": "pancreas", "glu_f": "pancreas", "glu_pp": "pancreas", "glu
 
 def _read_report(data: bytes, mime: str) -> list[dict]:
     from . import ai
-    text = ai.text_from(data, mime) if data else ""
+    text = ai.readable_text(data, mime)[0] if data else ""     # a phone photo of the report works too
     if not text.strip():
         return []
     out = []
