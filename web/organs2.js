@@ -10,7 +10,7 @@ const O2A={eye:'/a/organ-eye.7a4a5814.glb',teeth:'/a/organ-teeth.ce05eba8.glb',p
  urine:'/a/tour-urine.20cbc96d.glb',bloodtour:'/a/tour-blood.6d57cae5.glb'};
 const O2HD={"kidney":"/a/hd-kidneys.12183e3b.glb","liver":"/a/hd-liver.92d8c06d.glb","lung":"/a/hd-lungs.49c72407.glb","stomach":"/a/hd-stomach.b5f00da1.glb","gut":"/a/hd-intestines.5744978f.glb","pancreas":"/a/hd-pancreas.cd45ca4f.glb","spleen":"/a/hd-spleen.71b696f9.glb","bladder":"/a/hd-bladder.404971b8.glb","brain":"/a/hd-brain.d2c57a4b.glb","eye":"/a/hd-eye.098c9684.glb","knee":"/a/hd-knee.0ccbfec3.glb","spine":"/a/hd-spine.896a50ab.glb","hip":"/a/hd-hip.298a7e49.glb","shoulder":"/a/hd-shoulder.22cac574.glb","hand":"/a/hd-hand.15c716b8.glb","foot":"/a/hd-foot.b99795b7.glb","teeth":"/a/hd-teeth.439f3881.glb","prostate":"/a/hd-male_reproductive.ea6ad577.glb","footlod":"/a/organ-foot.10bb9c44.glb"};O2A.foot=O2HD.footlod;delete O2HD.footlod;
 const O2NEW=new Set(['eye','teeth','prostate','bones','urine','bloodtour']);
-const O2=window.O2={bone:'knee',mode:{},ao:null,env:null,muscles:false,hd:(()=>{try{const v=localStorage.getItem('uh-hd');if(v)return v==='1'}catch(_){}return null})()};
+const O2=window.O2={cs:(()=>{const m=location.search.match(/[?&]cs=(num|edge|tap)/);return m?m[1]:'card'})(),bone:'knee',mode:{},ao:null,env:null,muscles:false,hd:(()=>{try{const v=localStorage.getItem('uh-hd');if(v)return v==='1'}catch(_){}return null})()};
 const O2BONES=[['knee','Knee'],['spine','Spine'],['hip','Hip'],['shoulder','Shoulder'],['hand','Hand'],['foot','Foot']];
 const O2BEND={knee:'Bend the knee',hip:'Lift the leg',shoulder:'Raise the arm',hand:'Bend the wrist',foot:'Point the foot'};
 
@@ -141,8 +141,8 @@ function o2Fit(o){const root=OG.root,piv=OG.piv;piv.updateMatrixWorld(true);cons
  piv.updateMatrixWorld(true);const w=new THREE.Vector3();piv.getWorldPosition(w);const ws=s.clone().multiplyScalar(k*body.scale.y);o2Frame(w,ws);OG.labels.forEach(l=>l.av=undefined)}
 /* frame a box: its height fills about 40% of the screen (the part above the sheet), its width at most 78%, centred about a third down */
 function o2Frame(c,sz){const H=innerHeight,cd=$('#card'),bar=$('#o2bar')&&!$('#o2bar').hidden?$('#o2bar'):$('#orgbar');
- const top=bar?bar.getBoundingClientRect().bottom+12:90,bot=cd&&cd.classList.contains('on')?H-8-cd.offsetHeight-12:H-24,fill=Math.max(.2,(bot-top)/H*.82),ndc=1-(top+bot)/H;
- const t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=Math.max(sz.y/2/(t*fill),sz.x/2/(t*cam.aspect*.8))+sz.z/2;
+ const top=bar?bar.getBoundingClientRect().bottom+12:90,bot=cd&&cd.classList.contains('on')?H-8-cd.offsetHeight-12:H-24,bot2=O2.cs==='num'?bot-52:bot,fill=Math.max(.2,(bot2-top)/H*.82),ndc=1-(top+bot2)/H,wf=O2.cs==='edge'?Math.max(.4,(innerWidth-2*112)/innerWidth):.8;
+ const t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=Math.max(sz.y/2/(t*fill),sz.x/2/(t*cam.aspect*wf))+sz.z/2;
  CAM(d,c.y-ndc*d*t,0);camZ=goalZ;camY=goalY}
 /* turn the model so a named front part (the cornea, the front teeth) faces the viewer */
 function o2Face(re){const root=OG.root,piv=OG.piv,c0=new THREE.Box3(),f=new THREE.Box3();root.updateMatrixWorld(true);c0.setFromObject(root);root.traverse(n=>{if(n.isMesh&&re.test(o2Name(n)))f.expandByObject(n)});if(f.isEmpty())return;
@@ -281,7 +281,7 @@ function o2Call(items){let el=$('#o2call');if(!items||!items.length){if(el)el.hi
  const sv=el.firstChild,box=el.lastChild,sig=items.map(i=>i.k+'|'+i.name+'|'+(i.sel?1:0)).join(';');
  if(el.dataset.sig!==sig){el.dataset.sig=sig;box.innerHTML=items.map((i,j)=>`<button class="o2lab2${i.sel?' sel':''}" data-j="${j}"><b>${esc(i.name)}</b>${i.def?`<small>${esc(i.def)}</small>`:''}</button>`).join('');
   box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=O2.calls&&O2.calls[+b.dataset.j];it&&it.on&&it.on()})}
- O2.calls=items;const W=innerWidth,LW=Math.min(164,W*.4),P=10,{top,bot}=o2Band(),btn=box.children;
+ O2.calls=items;const W=innerWidth,LW=O2.cs==='edge'?96:Math.min(164,W*.4),P=O2.cs==='edge'?12:10,{top,bot}=o2Band(),btn=box.children;
  const vis=items.map((i,j)=>Object.assign(i,{j,h:btn[j]?btn[j].offsetHeight||34:34})).filter(i=>i.ok&&i.y>top&&i.y<bot&&i.x>0&&i.x<W);
  const cx=vis.length?vis.reduce((a,i)=>a+i.x,0)/vis.length:W/2;let L=vis.filter(i=>i.x<cx),R=vis.filter(i=>i.x>=cx);
  while(L.length-R.length>1){L.sort((a,b)=>b.x-a.x);R.push(L.shift())}while(R.length-L.length>1){R.sort((a,b)=>a.x-b.x);L.push(R.shift())}
@@ -291,6 +291,36 @@ function o2Call(items){let el=$('#o2call');if(!items||!items.length){if(el)el.hi
   const ey=i.ly+Math.min(i.h/2,16),ex=left?P+LW:W-P-LW,kx=left?ex+10:ex-10;path+=`<path d="M${i.x.toFixed(1)} ${i.y.toFixed(1)}L${kx} ${ey.toFixed(1)}L${ex} ${ey.toFixed(1)}" class="${i.sel?'s':''}"/><circle cx="${i.x.toFixed(1)}" cy="${i.y.toFixed(1)}" r="4" class="${i.sel?'s':''}"/>`};
  L.forEach(i=>put(i,true));R.forEach(i=>put(i,false));sv.setAttribute('viewBox',`0 0 ${W} ${innerHeight}`);sv.innerHTML=path;
  [...btn].forEach((b,j)=>{const on=show.has(j);b.style.opacity=on?1:0;b.style.pointerEvents=on?'auto':'none'})}
+/* label styles under test (?cs=num|edge|tap): keep the model readable */
+const _o2Call=o2Call;o2Call=function(items){if(O2.cs==='card')return _o2Call(items);let el=$('#o2call');
+ if(!items||!items.length){if(el)el.hidden=true;const lg=$('#o2leg');if(lg)lg.hidden=true;return}
+ const sel=items.find(i=>i.sel);
+ if(O2.cs==='tap'){const one=sel?[Object.assign({},sel)]:[];if(el)el.classList.add('tap');_o2Call(one.length?one:null);const h=$('#o2hint');const show=!sel;let hh=h;if(!hh){hh=document.createElement('div');hh.id='o2hint';hh.textContent='Tap any part to name it';document.body.appendChild(hh)}hh.hidden=!show;const {bot}=o2Band();hh.style.top=(bot-40)+'px';return}
+ if(O2.cs==='edge'){items=items.map(i=>Object.assign(i,{def:i.sel?i.def:''}));if(el)el.classList.add('edge');const r=_o2Call(items);el=$('#o2call');el.classList.add('edge');return r}
+ /* num: numbered dots on the parts, names in a strip above the sheet */
+ if(!el){el=document.createElement('div');el.id='o2call';el.innerHTML='<svg aria-hidden="true"></svg><div></div>';document.body.appendChild(el)}el.hidden=false;el.classList.add('num');el.firstChild.innerHTML='';
+ const {top,bot}=o2Band(),W=innerWidth,box=el.lastChild;
+ if(!O2.numOrder||O2.numSig!==items.map(i=>i.k).join()){O2.numSig=items.map(i=>i.k).join();O2.numOrder=items.map((i,j)=>j).sort((a,b)=>items[a].y-items[b].y||items[a].x-items[b].x)}
+ const no={};O2.numOrder.forEach((j,n)=>no[j]=n+1);
+ const sig='n'+items.map(i=>i.k+(i.sel?'*':'')).join();if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=items.map((i,j)=>`<button class="o2num${i.sel?' sel':''}" data-j="${j}" aria-label="${esc(i.name)}">${no[j]}</button>`).join('');box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()})}
+ [...box.children].forEach((b,j)=>{const i=items[j],on=i&&i.ok&&i.y>top&&i.y<bot-52&&i.x>0&&i.x<W;b.style.opacity=on?1:0;b.style.pointerEvents=on?'auto':'none';if(on)b.style.transform=`translate(${Math.round(i.x-11)}px,${Math.round(i.y-11)}px)`});
+ let lg=$('#o2leg');if(!lg){lg=document.createElement('div');lg.id='o2leg';document.body.appendChild(lg)}lg.hidden=false;lg.style.top=(bot-44)+'px';
+ const ls='l'+sig;if(lg.dataset.sig!==ls){lg.dataset.sig=ls;lg.innerHTML=O2.numOrder.map(j=>{const i=items[j];return`<button class="${i.sel?'sel':''}" data-j="${j}"><i>${no[j]}</i>${esc(i.name)}</button>`}).join('');lg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()});const s=lg.querySelector('.sel');if(s)s.scrollIntoView({inline:'center',block:'nearest'})}};
+(()=>{const st=document.createElement('style');st.textContent=`
+#o2call.num svg{display:none}
+.o2num{position:absolute;left:0;top:0;width:22px;height:22px;border-radius:11px;border:0;padding:0;background:rgba(255,255,255,.94);color:#1D1D1F;font:700 11.5px/22px Geist,Inter,sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.06);transition:opacity .2s}
+.o2num::before{content:'';position:absolute;inset:-11px}
+.o2num.sel{background:#0071E3;color:#fff;transform-origin:center;box-shadow:0 0 0 4px rgba(0,113,227,.22)}
+#o2leg{position:fixed;left:0;right:0;z-index:5;display:flex;gap:8px;overflow-x:auto;padding:0 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+#o2leg[hidden]{display:none}#o2leg::-webkit-scrollbar{display:none}
+#o2leg button{flex:none;scroll-snap-align:start;display:flex;align-items:center;gap:7px;height:36px;padding:0 13px 0 6px;border:0;border-radius:18px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 1px 4px rgba(0,0,0,.08);font:600 13px Geist,Inter,sans-serif;color:#1D1D1F;white-space:nowrap}
+#o2leg i{font-style:normal;width:24px;height:24px;border-radius:12px;background:#F2F2F7;font:700 11.5px/24px Geist,Inter,sans-serif;text-align:center}
+#o2leg button.sel{background:#0071E3;color:#fff}#o2leg button.sel i{background:rgba(255,255,255,.25);color:#fff}
+#o2call.edge .o2lab2{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:2px 0}
+#o2call.edge .o2lab2 b{font-size:12px;font-weight:600;line-height:1.25;text-shadow:0 0 3px #F2F2F7,0 0 6px #F2F2F7}
+#o2call.edge .o2lab2.sel{background:none;color:#0071E3}#o2call.edge .o2lab2.sel small{display:none}
+#o2hint{position:fixed;left:50%;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:16px;padding:8px 14px;font:600 13px Geist,Inter,sans-serif;color:#3A3A3C;box-shadow:0 1px 4px rgba(0,0,0,.08);pointer-events:none}#o2hint[hidden]{display:none}
+`;document.head.appendChild(st)})();
 const O2P=new THREE.Vector3();
 function o2Scr(v){const r=$('#gl').getBoundingClientRect();O2P.copy(v).project(cam);return{x:r.left+(O2P.x+1)/2*r.width,y:r.top+(1-O2P.y)/2*r.height,ok:O2P.z<1}}
 /* organ views */

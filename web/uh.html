@@ -162,7 +162,7 @@ body.preg #herobg::after{content:'';position:absolute;left:14%;top:10%;width:46%
 .sheetx .sh:has(.pkw){background:#fff}.sheetx .sh:has(.pkw)>.hd{display:none}.pkw{padding:26px 20px 18px;text-align:center}.pkic{width:80px;height:80px;border-radius:22px;background:#EAF2FF;display:grid;place-items:center;margin:0 auto}.pkt{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:16px;line-height:1.2}.pks{font-size:14.5px;line-height:1.45;color:#6E6E73;margin:8px 4px 0}
 .pkl{background:#F5F5F7;border-radius:16px;padding:4px 14px;margin-top:16px;text-align:left}.pko{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.06)}.pko:last-child{border-bottom:0}.pko>span{width:22px;height:22px;border-radius:11px;background:#0071E3;display:grid;place-items:center;flex:none}.pko b{display:block;font-size:14.5px;font-weight:600}.pko small{display:block;font-size:12.5px;color:#6E6E73}
 .trk{position:fixed;inset:0;z-index:60;background:#F2F2F7;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.trkm{position:fixed;left:0;right:0;top:0;height:46vh;background:#E8ECF1;overflow:hidden}.trkm .tl4{position:absolute;left:50%;top:50%;display:grid;grid-template-columns:repeat(3,256px)}.trkm .tl4 img{width:256px;height:256px;display:block;filter:saturate(.7) brightness(1.04)}
+.trkm{position:fixed!important;left:0;right:0;top:0;height:46vh;background:#E8ECF1;overflow:hidden}.trkm .tl4{position:absolute;left:50%;top:50%;display:grid;grid-template-columns:repeat(3,256px)}.trkm .tl4 img{width:256px;height:256px;display:block;filter:saturate(.7) brightness(1.04)}
 .trkhome{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:15px;background:#1D1D1F;display:grid;place-items:center;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .trkb,.trkc{position:fixed;z-index:3;top:max(14px,env(safe-area-inset-top));width:42px;height:42px;border-radius:21px;background:#fff;border:0;display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,0,0,.12)}.trkb{left:14px}.trkc{right:14px}
 .trkchip{position:fixed;z-index:3;top:calc(max(14px,env(safe-area-inset-top)) + 5px);left:50%;transform:translateX(-50%);background:#fff;border-radius:16px;padding:7px 14px;font-size:14px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.12)}
@@ -3195,7 +3195,7 @@ function trkPage(o,tr,pt,home,live,who){const tl=o.timeline||[],tAt=k=>{const x=
    +trkStep(st(i>=6,i===5),'Sample collected','You confirm in the app')
    +trkStep(st(i>=7,i===6),'Report on your body',i>=7?'Ready to read':'Usually by tonight');
  }else{const ph=L.phase||'',eta=L.etaMin,by=eta?new Date(Date.now()+eta*6e4):null;
-  head=`<p class="tre">${cx?'CANCELLED':ph==='done'||i>=4?'DELIVERED '+esc(tT(tAt('delivered'))):by?'ARRIVING BY '+esc(tT(by/1000)):'ORDER '+esc((o.steps[i]||'').toUpperCase())}</p><h2 class="trt">${cx?'Order cancelled':i>=4?'Delivered':i===3?'On the way to you':i>=1?'Being packed':'Order placed'}</h2>`;
+  head=`<p class="tre">${cx?'CANCELLED':ph==='done'||i>=4?'DELIVERED '+esc(tT(tAt('delivered'))):by?'ARRIVING BY '+esc(tT(by/1000)):esc(((/^order\b/i.test(o.steps[i]||'')?'':'Order ')+(o.steps[i]||'')+(i===0&&o.created?' · '+tT(o.created):'')).toUpperCase())}</p><h2 class="trt">${cx?'Order cancelled':i>=4?'Delivered':i===3?'On the way to you':i>=1?'Being packed':'Order placed'}</h2>`;
   body=trkStep(st(i>=1,!i),'Order placed',esc([tT(o.created),store.name?store.name+' accepted':''].filter(Boolean).join(' · ')))
    +trkStep(st(i>=3,i===1||i===2),'Packed and checked',esc([tT(tAt('packing')||tAt('packed')),o.checkedBy?'pharmacist '+o.checkedBy.name:''].filter(Boolean).join(' · ')))
    +trkStep(st(i>=4,i===3),'On the way',esc(agent&&agent.name?agent.name+' · Urban Health delivery':'Urban Health delivery'))
@@ -3272,7 +3272,8 @@ function dotIcon(col,r){return{path:google.maps.SymbolPath.CIRCLE,scale:r||9,fil
 /* a live map: returns update({me,them}) — Google Maps when the key is set, a Google embed otherwise */
 async function liveMap(el,opts){const g=await gmaps();if(!el||!el.isConnected)return{update(){}};
  if(!g){let last='';return{update:({them,me})=>{const p=them||me;if(!p)return;const src=`https://www.google.com/maps?q=${+p.lat||0},${+p.lng||0}&z=15&output=embed`;if(src!==last){last=src;el.innerHTML=`<iframe title="Map" style="width:100%;height:100%;border:0" loading="lazy" src="${src}"></iframe>`}}}}
- const map=new g.Map(el,{center:opts.center||(CFG1&&CFG1.center)||{lat:13.0827,lng:80.2707},zoom:15,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAPSTYLE,clickableIcons:false});
+ const host=document.createElement('div');host.style.cssText='width:100%;height:100%';el.innerHTML='';el.appendChild(host);/* Google sets position:relative on the element it draws into; drawing into an inner box keeps the outer map pinned */
+ const map=new g.Map(host,{center:opts.center||(CFG1&&CFG1.center)||{lat:13.0827,lng:80.2707},zoom:15,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAPSTYLE,clickableIcons:false});
  const mk={},line=new g.Polyline({map,strokeColor:'#0A84FF',strokeOpacity:.9,strokeWeight:4,geodesic:true}),trail=[];
  return{map,update:({them,me,home})=>{const b=new g.LatLngBounds();let n=0;
   for(const [k,p,col,r] of [['them',them,'#0A84FF',10],['me',me,'#FF3B30',9],['home',home,'#1D1D1F',8]]){if(!p)continue;const ll={lat:+p.lat,lng:+p.lng};
