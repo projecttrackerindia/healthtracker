@@ -15,4 +15,5 @@ qrcode>=7.4
 Pillow>=10.4
 google-auth>=2.29
 requests>=2.31
+httpx==0.28.1          # Gemini calls (api/ai.py) and ABDM
 defusedxml==0.7.1

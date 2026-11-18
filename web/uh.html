@@ -4334,7 +4334,7 @@ function layer(html){const L=$('#layer'),keep=[...L.querySelectorAll(':scope>.pg
 /* each open page carries its own address (/app/records/r/<person>/<report>, /app/meds/o/<order>, /app/visits/v/<visit>) so it can be reopened or linked; closing goes back to the tab's address */
 function deepURL(u){try{if(location.pathname!==u)history.replaceState(history.state,'',u)}catch(_){}}
 async function deepOpen(){const m=location.pathname.match(/^\/app\/(\w+)\/(r|o|v)\/([\w-]+)(?:\/([\w-]+))?$/);if(!m)return;const[,t,k,a,b]=m;try{if(k==='r'&&b&&P(a)){if(a!==S.person)await selectPerson(a);openReport(b)}else if(k==='o')openOrder(a);else if(k==='v'&&APPTS.some(x=>x.id===a))openVisit(a)}catch(_){}}
-function closeL(){deepURL('/app/'+S.tab);const L=$('#layer');[...L.children].forEach(c=>{if(!c.classList.contains('pgghost')&&!c.classList.contains('pgdim2'))c.remove()});NAV.length=0}
+function closeL(){const L=$('#layer');if(L&&L.querySelector('.page')&&/^\/app\/\w+\/[rov]\//.test(location.pathname))deepURL('/app/'+S.tab);[...L.children].forEach(c=>{if(!c.classList.contains('pgghost')&&!c.classList.contains('pgdim2'))c.remove()});NAV.length=0}
 /* Strict back navigation: every page opened from another page goes back to that page, not to the home screen. */
 const NAV=[];let NAVCTX=null,NAVPENDING=false;
 function navBackAnim(){const pg=$('#layer .page');if(!pg||innerWidth>=980||matchMedia('(prefers-reduced-motion: reduce)').matches)return navBack();
