@@ -80,7 +80,7 @@ body.holo #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 7
 /* Results never cover the body: a short sheet on phones, a side panel on wide screens */
 #card{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 @media (min-width:900px){
- #card{left:auto;right:16px;top:92px;bottom:16px;width:min(420px,38vw);max-height:none!important;transform:translateX(calc(100% + 32px))}
+ #card{left:auto;right:16px;top:92px;bottom:auto;width:min(420px,38vw);max-height:calc(100vh - 108px)!important;transform:translateX(calc(100% + 32px))}
  #card.on{transform:none}
  #card .grab{display:none}
 }

@@ -1,4 +1,4 @@
-const V='dk-r123',SHELL=['/app','/manifest.webmanifest','/icon.svg','/brand/png/user-icon-192.png','/brand/png/user-icon-512.png','/a/fa-body.5aa85d80.webp','/a/fa-chest.9f8362f8.webp'];
+const V='dk-r124',SHELL=['/app','/manifest.webmanifest','/icon.svg','/brand/png/user-icon-192.png','/brand/png/user-icon-512.png','/a/fa-body.5aa85d80.webp','/a/fa-chest.9f8362f8.webp'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==V+'-api'&&x.startsWith('dk-')).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 const SWR=/^\/api\/v1\/(config|plans|shop\/products|app\/(android|ios)|seasonal|videos|hospitals|places|labs\/quotes)/;

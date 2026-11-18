@@ -265,6 +265,19 @@ def add_card(b: CardIn, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(400, "Up to 20 cards.")
     c = SchemeCard(household_id=u.household_id)
     _fill(c, b)
+    # the same card added again (a second scan, a double tap) updates the one already saved instead of making a copy
+    for o in db.scalars(select(SchemeCard).where(SchemeCard.household_id == u.household_id, SchemeCard.scheme == c.scheme,
+                                                SchemeCard.last4 == c.last4, SchemeCard.member_id == c.member_id)).all():
+        if (o.insurer or "").strip().lower() == (c.insurer or "").strip().lower():
+            for f in ("valid_until", "plan", "helpline", "helpline2", "members"):
+                if not getattr(o, f) and getattr(c, f):
+                    setattr(o, f, getattr(c, f))
+            if not o.sum_insured and c.sum_insured:
+                o.sum_insured = c.sum_insured
+            if c.terms and c.terms.get("valid_from") and not (o.terms or {}).get("valid_from"):
+                o.terms = {**(o.terms or {}), "valid_from": c.terms["valid_from"]}
+            db.flush()
+            return _card(o)
     db.add(c)
     db.flush()
     return _card(c)
