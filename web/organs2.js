@@ -392,3 +392,38 @@ function o2BodyPt(re,bias=0){let best=null,bz=-Infinity,near=null,nd=Infinity;co
 const _partView=partView;partView=function(o){const r=_partView(o);if(r){tags([]);const P=PARTS[o];O2.pv=(P.labels||[]).map(([n,re])=>({lab:n,p:o2BodyPt(re,O2BIAS[n]||0)})).filter(x=>x.p)}return r};
 const _partOff=partOff;partOff=function(){_partOff();if(O2.pv){O2.pv=null;o2Call(null)}};
 (function o2PvLoop(){if(O2.pv&&!OG&&!H3)o2Call(O2.pv.map((g,i)=>{O2Q.copy(g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'p'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}));requestAnimationFrame(o2PvLoop)})();
+
+/* ===================== Lymphatic system (19 Nov): nodes, spleen, thymus and tonsils on the body (Z-Anatomy, CC BY-SA 4.0);
+   inside a lymph node (HuBMAP CCF reference organ, NIH, CC BY 4.0) ===================== */
+O2A.lnode='/a/lymph-node.c4c3ad6c.glb';O2NEW.add('lnode');
+Object.assign(ORGI,{lymph:['Lymphatic system','Lymph nodes, spleen, thymus and tonsils','Lymph nodes filter the fluid that drains from the tissues and are where immune cells meet germs.'],lnode:['Lymph node','Inside a lymph node','A bean-shaped filter: lymph flows in, past immune cells, and out again.']});
+OGL.lnode=[[/capsule/i,'Capsule'],[/follicle/i,'Follicles'],[/paracortex/i,'Paracortex'],[/medulla/i,'Medulla'],[/afferent/i,'Lymph in'],[/efferent/i,'Lymph out'],[/blood_vasc/i,'Blood vessels']];
+Object.assign(O2D,{'Capsule':'A tough outer coat of connective tissue.','Follicles':'Clusters of B cells in the outer cortex; they swell when fighting an infection.','Paracortex':'The T-cell zone, between the follicles and the medulla.','Medulla':'The inner part, with cords of plasma cells and channels that collect lymph.','Lymph in':'Afferent lymphatic vessels bring lymph from the tissues.','Lymph out':'The efferent vessel carries filtered lymph on toward the blood.','Blood vessels':'Arteries and veins enter at the hilum to feed the node.',
+ 'Neck nodes':'Cervical nodes drain the head and neck; often swollen with a sore throat.','Armpit nodes':'Axillary nodes drain the arm and breast.','Groin nodes':'Inguinal nodes drain the leg and lower belly wall.','Gut nodes':'Mesenteric nodes drain the intestines.','Thymus':'Where T cells mature; large in children, it shrinks after puberty.','Spleen':'Filters old red blood cells and helps fight infection.','Tonsils':'Lymphoid tissue at the back of the throat that meets germs first.'});
+const O2LC={lnode:{capsule:[.93,.88,.82,.18],follicle:[.78,.62,.66],paracortex:[.88,.78,.70],medulla:[.84,.56,.52],afferent:[.96,.92,.74,.55],efferent:[.96,.92,.74,.55],blood:[.75,.12,.14]}};
+const _o2Nat=o2Nat;o2Nat=async function(root,key){await _o2Nat(root,key);const C=O2LC[key];if(!C)return;root.traverse(n=>{if(!n.isMesh)return;const nm=(o2Name(n)||n.name||'').toLowerCase();const k=Object.keys(C).find(k=>nm.includes(k));if(!k)return;const c=C[k],m=n.material;m.vertexColors=false;m.map=null;m.color.setRGB(c[0],c[1],c[2]);if(c[3]!=null){m.transparent=true;m.opacity=c[3];m.depthWrite=false}m.needsUpdate=true})};
+const O2LY=[[/\bnodes?\b/i,0xC9A27E],[/^spleen\b/i,0x7A2A3A],[/thymus|palatine tonsil/i,0xD9B49A]];
+function o2LayMesh(l,re,col){const m=LAY[l];if(!m||!m.userData.ranges)return null;const ia=[];for(const rg of m.userData.ranges){const nm=SET.names[rg[2]];if(re.test(nm)&&!/cerebell/i.test(nm)){const s=m.geometry.index.array.subarray(rg[5],rg[5]+rg[6]);for(const v of s)ia.push(v)}}if(!ia.length)return null;
+ const g=new THREE.BufferGeometry();g.setAttribute('position',m.geometry.attributes.position);if(m.geometry.attributes.normal)g.setAttribute('normal',m.geometry.attributes.normal);g.setIndex(new THREE.BufferAttribute(new Uint32Array(ia),1));
+ const h=new THREE.Mesh(g,new THREE.MeshPhysicalMaterial({color:col,roughness:.45,clearcoat:.35,clearcoatRoughness:.3,sheen:new THREE.Color(0x5a1c14)}));h.renderOrder=8;h.frustumCulled=false;body.add(h);if(O2.env){h.material.envMap=O2.env;h.material.envMapIntensity=.5}return h}
+function o2Lymph(){shape();if(VIEW)VIEW.o='lymph';head(who()+' · LYMPHATIC SYSTEM','Lymph nodes, spleen, thymus and tonsils','');document.body.classList.add('orgv','o2lab');orgBar('Lymphatic system','lymph');setLayer('organs');o2Env();
+ for(const l in LAY){const m=LAY[l];if(+l===0){m.visible=true;m.material.opacity=.1}else if(+l===3||+l===2){m.visible=true;m.material.transparent=true;m.material.opacity=+l===3?.07:.08;m.material.depthWrite=false}else m.visible=false}
+ O2.nv=O2LY.map(([re,c])=>o2LayMesh(3,re,c)).filter(Boolean);rot.y=0;rot.x=0;goal.y=0;goal.x=0;body.position.x=0;CAM(HOME0.z*1.2,HOME0.y+.25);
+ let b=$('#o2bar');if(!b){b=document.createElement('div');b.id='o2bar';document.body.appendChild(b)}b.hidden=false;b.innerHTML=o2Seg([['','Whole body'],['in','Inside a node']],'','o2LymphMode');
+ const nn=(LAY[3]&&LAY[3].userData.ranges||[]).filter(rg=>/\bnodes?\b/i.test(SET.names[rg[2]])).length,wbc=o2Find(/^wbc|white (blood )?cell|total leu/i),ly=o2Find(/lymphocyte/i),crp=o2Find(/^crp|c.?reactive/i);
+ sheet(`<div class="o2stat"><div><b>~600</b><small>lymph nodes in the body</small></div><div><b>${nn||'–'}</b><small>node groups shown</small></div><div><b>1 in 4</b><small>white cells are lymphocytes</small></div></div>
+  <p class="cd" style="color:#1D1D1F">Lymph drains from the tissues through the nodes, where immune cells check it for germs, and returns to the blood near the heart. Swollen nodes usually mean the body is fighting an infection nearby.</p>
+  <div class="o2box">${o2Row('White blood cells',wbc)}${o2Row('Lymphocytes',ly)}${o2Row('CRP (inflammation)',crp)}</div>
+  <button class="btn pri" style="width:100%;margin-top:12px" onclick="o2LymphMode('in')">Inside a lymph node</button>`);
+ let el=$('#o2tags');if(!el){el=document.createElement('div');el.id='o2tags';document.body.appendChild(el)}
+ O2.ntags=[[/cervical nodes|jugulodigastric/i,'Neck nodes'],[/axillary nodes/i,'Armpit nodes'],[/inguinal nodes/i,'Groin nodes'],[/mesenteric nodes/i,'Gut nodes'],[/thymus/i,'Thymus'],[/^spleen$/i,'Spleen'],[/palatine tonsil/i,'Tonsils']].map(([re,lab])=>({lab,p:o2BodyPt(re)})).filter(t=>t.p)}
+function o2LymphMode(k){if(k==='in')return vgo({k:'organ',o:'lnode'},'Lymphatic system')}
+const _vOrgan3=vOrgan;vOrgan=async function(o){if(o==='lymph'){o2Clean();return o2Lymph()}return _vOrgan3(o)};
+O2EX.splice(O2EX.findIndex(x=>x[0]==='nerves')+1,0,['lymph','Lymphatic system']);
+const _o2Spec=o2Spec;o2Spec=function(d){const s=String(d.specialty||'').toLowerCase();if(/haemat|hemat|oncol|immunol/.test(s))return'organ:lymph';return _o2Spec(d)};
+/* files without part names in their metadata (HuBMAP): name the parts from their node names */
+const _ogGet=ogGet;ogGet=async function(o){const g=await _ogGet(o);if(g&&!g.userData.o2named){g.userData.o2named=1;g.scene.traverse(n=>{if(n.name&&!(n.userData&&n.userData.display_name)&&n.children.some(c=>c.isMesh)){
+ const nm=n.name.replace(/^(Yao|VH|NIH|SBU|Allen)_([MF]_)?/i,'').replace(/_/g,' ').replace(/\s+/g,' ').trim();n.userData.display_name=nm.charAt(0).toUpperCase()+nm.slice(1);
+ n.userData.anatomy_kind=/vessel|vascul|efferent|afferent/i.test(nm)?'Vessel':'Organ'}})}return g};
+/* the whole lymphatic system fills the screen above the sheet */
+const _o2Lymph=o2Lymph;o2Lymph=function(){_o2Lymph();const h=O2.nv&&O2.nv[0];if(h)setTimeout(()=>{if(O2.nv&&O2.nv[0]===h)o2FrameMesh(h,1.04)},60)};

@@ -1351,7 +1351,7 @@ const ORG_NAME={eye:'Eyes',teeth:'Teeth',ear:'Ears',skin:'Skin',brain:'Brain',bo
 const FLAGCLS={high:'bad',low:'warn',normal:'ok',unknown:'info'},FLAGTXT={high:'High',low:'Low',normal:'In range',unknown:'Check'};
 const FEVER=/dengue|\bns1\b|malaria|plasmodium|\bmp\b.*(smear|antigen)|widal|typhidot|typhoid|salmonella|chikungunya|scrub typhus|weil.?felix|leptospir|influenza|covid|sars.?cov/i;
 const daysAgo=d=>d?Math.floor((Date.now()-new Date(d+'T00:00'))/864e5):999;
-const ORG_RX=[[/mammo|breast|bi-?rads|\bca ?15[.-]?3\b/i,'breast'],[/nerve conduction|\bncv\b|\bncs\b|\bemg\b|electromyo|neuropath|monofilament|biothesiometr|\bvpt\b|vibration perception/i,'nerves'],[/\bpsa\b|prostat/i,'prostate'],
+const ORG_RX=[[/mammo|breast|bi-?rads|\bca ?15[.-]?3\b/i,'breast'],[/lymph ?node|lymphaden|\bfnac\b|lymphoma/i,'lymph'],[/nerve conduction|\bncv\b|\bncs\b|\bemg\b|electromyo|neuropath|monofilament|biothesiometr|\bvpt\b|vibration perception/i,'nerves'],[/\bpsa\b|prostat/i,'prostate'],
  [/\bafb\b|acid.?fast|gene ?xpert|cbnaat|truenat|tb.?pcr|tubercul|quantiferon|\bigra\b|mantoux|sputum/i,'lung'],
  [FEVER,'blood'],[/\bafp\b|alpha.?feto/i,'liver'],[/\bcea\b|carcinoembryonic|\bca ?19[.-]?9\b|h\.? ?pylori|stool|occult blood|calprotectin|endoscop|colonoscop/i,'gut'],[/lipase|amylase/i,'pancreas'],
  [/vitamin ?d|25.?oh|calcidiol|cholecalciferol|\bcalcium\b|phosph(orus|ate)|\bra factor\b|rheumatoid|anti.?ccp|\baso\b|antistreptolysin/i,'bones'],
@@ -2341,7 +2341,7 @@ function runsOut(p){const ms=(REC[p.id]||[]).filter(r=>r.kind==='med'&&r.active!
  return`<div class="card mlow"><span class="ti" style="background:#FF9F0A">${ic('<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/>','#fff',19)}</span><div style="flex:1;min-width:0"><b>${esc(best.m.name.replace(/\s+\d.*$/,''))} · ${Math.floor(best.left)} left</b><div class="sub">Runs out ${when}</div></div><button class="btn pri sm" onclick="openPharmacy()">Reorder</button></div>`}
 /* Today's "Up next": the few things that need this person now, in time order, each with one action. */
 /* Home (approved design): the same message as the body, in words — what needs a look, then everything in range */
-const ORGNM={nerves:'Nerves',breast:'Breast',eye:'Eyes',teeth:'Teeth',ear:'Ears',skin:'Skin',heart:'Heart',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',pancreas:'Sugar & pancreas',uterus:'Uterus',gut:'Intestines',blood:'Blood',bones:'Bones',prostate:'Prostate',stomach:'Stomach',brain:'Brain'};
+const ORGNM={lymph:'Lymph nodes',nerves:'Nerves',breast:'Breast',eye:'Eyes',teeth:'Teeth',ear:'Ears',skin:'Skin',heart:'Heart',liver:'Liver',kidney:'Kidneys',thyroid:'Thyroid',lung:'Lungs',pancreas:'Sugar & pancreas',uterus:'Uterus',gut:'Intestines',blood:'Blood',bones:'Bones',prostate:'Prostate',stomach:'Stomach',brain:'Brain'};
 function bodyList(p){const fs=findings(p.id);if(!fs.length)return'';const rk=f=>f.flag==='high'||f.flag==='low'?2:f.flag==='normal'?0:1,by={};
  fs.forEach(f=>{const k=f.org||('t:'+f.test);if(!by[k]||rk(f)>rk(by[k]))by[k]=f});
  const bad=Object.entries(by).filter(([,f])=>rk(f)===2),ok=fs.filter(f=>f.flag==='normal').length;
