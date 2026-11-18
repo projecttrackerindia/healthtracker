@@ -8,10 +8,11 @@
 const O2A={eye:'/a/organ-eye.7a4a5814.glb',teeth:'/a/organ-teeth.ce05eba8.glb',prostate:'/a/organ-male_reproductive.70fcbed3.glb',
  knee:'/a/organ-knee.ec530d5e.glb',spine:'/a/organ-spine.db5489b4.glb',hip:'/a/organ-hip.e836e480.glb',shoulder:'/a/organ-shoulder.8c1fd5f0.glb',hand:'/a/organ-hand.21b70443.glb',
  urine:'/a/tour-urine.20cbc96d.glb',bloodtour:'/a/tour-blood.6d57cae5.glb'};
+const O2HD={"kidney":"/a/hd-kidneys.12183e3b.glb","liver":"/a/hd-liver.92d8c06d.glb","lung":"/a/hd-lungs.49c72407.glb","stomach":"/a/hd-stomach.b5f00da1.glb","gut":"/a/hd-intestines.5744978f.glb","pancreas":"/a/hd-pancreas.cd45ca4f.glb","spleen":"/a/hd-spleen.71b696f9.glb","bladder":"/a/hd-bladder.404971b8.glb","brain":"/a/hd-brain.d2c57a4b.glb","eye":"/a/hd-eye.098c9684.glb","knee":"/a/hd-knee.0ccbfec3.glb","spine":"/a/hd-spine.896a50ab.glb","hip":"/a/hd-hip.298a7e49.glb","shoulder":"/a/hd-shoulder.22cac574.glb","hand":"/a/hd-hand.15c716b8.glb","foot":"/a/hd-foot.b99795b7.glb","teeth":"/a/hd-teeth.439f3881.glb","prostate":"/a/hd-male_reproductive.ea6ad577.glb","footlod":"/a/organ-foot.10bb9c44.glb"};O2A.foot=O2HD.footlod;delete O2HD.footlod;
 const O2NEW=new Set(['eye','teeth','prostate','bones','urine','bloodtour']);
-const O2=window.O2={bone:'knee',mode:{},ao:null,env:null,muscles:false};
-const O2BONES=[['knee','Knee'],['spine','Spine'],['hip','Hip'],['shoulder','Shoulder'],['hand','Hand']];
-const O2BEND={knee:'Bend the knee',hip:'Lift the leg',shoulder:'Raise the arm',hand:'Bend the wrist'};
+const O2=window.O2={bone:'knee',mode:{},ao:null,env:null,muscles:false,hd:(()=>{try{const v=localStorage.getItem('uh-hd');if(v)return v==='1'}catch(_){}return null})()};
+const O2BONES=[['knee','Knee'],['spine','Spine'],['hip','Hip'],['shoulder','Shoulder'],['hand','Hand'],['foot','Foot']];
+const O2BEND={knee:'Bend the knee',hip:'Lift the leg',shoulder:'Raise the arm',hand:'Bend the wrist',foot:'Point the foot'};
 
 /* plain words for every label we show (the model files' own texts are not always right) */
 const O2D={'Right lung':'Has three lobes. Air reaches it through the right main airway.','Left lung':'Has two lobes, leaving room for the heart.','Windpipe':'The trachea carries air from the throat down to the lungs.','Bronchus':'One of the two main airways branching from the windpipe into each lung.',
@@ -29,6 +30,8 @@ const O2D={'Right lung':'Has three lobes. Air reaches it through the right main 
  'Neck (C1)':'The atlas, the top vertebra. It holds the skull and lets you nod.','Upper back':'Twelve thoracic vertebrae; each holds a pair of ribs.','Lower back':'Five lumbar vertebrae carry most of the body’s weight, so back pain often starts here.','Sacrum':'Five vertebrae joined into one bone that links the spine to the hips.','Disc':'A cushion between two vertebrae that absorbs shocks.',
  'Hip bone':'Forms the socket where the thigh bone turns.','Upper arm bone':'The humerus. Its round head turns in the shoulder socket.','Shoulder blade':'The scapula, a flat bone that holds the shoulder socket and anchors the shoulder muscles.','Collarbone':'The clavicle, a strut that holds the shoulder away from the chest.',
  'Thumb':'Two bones and a mobile base joint let the thumb touch each finger.','Palm bones':'Five metacarpals form the palm.','Wrist bones':'Eight small carpal bones in two rows make the wrist flexible.','Forearm bone':'The radius turns around the ulna when you turn your palm up or down.',
+ 'Ankle bone':'The talus carries the body’s weight from the shin bone to the foot.','Heel bone':'The calcaneus, the largest foot bone; the Achilles tendon attaches to it.','Big toe metatarsal':'The long bone behind the big toe; it takes much of the push when you walk.','Big toe':'Two bones; the big toe gives the final push of every step.',
+ 'Spinal cord':'Carries messages between the brain and the body; nerves leave it in 31 pairs.','Sciatic nerve':'The thickest nerve, from the lower back down the back of each leg.','Nerves to the arm':'Branches of the brachial plexus that move and feel the arm and hand.','Brain':'Receives every message from the body and decides what to do.','Median nerve':'Runs down the middle of the forearm to the thumb side of the hand.','Brachial plexus':'A web of nerves at the neck and shoulder that supplies the arm.','Fingertip':'Dense touch and temperature sensors; the signal starts here.','Tibial nerve':'Runs down the back of the leg to the sole of the foot.','Sole of the foot':'Plantar nerves give feeling to the sole; diabetes can dull them.',
  'Prostate':'A walnut-sized gland under the bladder, around the tube that carries urine out. It often grows with age.','Seminal vesicle':'Small glands behind the bladder that add fluid to semen.',
  'Urine drop':'Follow it from the kidney down to the bladder.','Red blood cell':'Carries oxygen from the lungs to every part of the body.','Right atrium':'Collects blood returning from the body.','Left ventricle':'The strongest chamber. It pumps oxygen-rich blood to the whole body.','Aorta':'The body’s main artery.'};
 Object.assign(OGL,{
@@ -42,6 +45,7 @@ const O2BL={knee:[[/^Right femur$/,'Thigh bone'],[/^Right patella$/,'Kneecap'],[
  spine:[[/^Atlas$/,'Neck (C1)'],[/^Thoracic vertebra \(sixth\)$/,'Upper back'],[/^Lumbar vertebra \(fourth\)$/,'Lower back'],[/^Sacrum$/,'Sacrum']],
  hip:[[/^Right hip bone$/,'Hip bone'],[/^Right femur$/,'Thigh bone'],[/^Lumbar vertebra \(fifth\)$/,'Lower back']],
  shoulder:[[/^Right humerus$/,'Upper arm bone'],[/^Right scapula$/,'Shoulder blade'],[/^Right clavicle$/,'Collarbone']],
+ foot:[[/^Right talus$/,'Ankle bone'],[/^Right calcaneus$/,'Heel bone'],[/^Right metatarsal \(first\)$/,'Big toe metatarsal'],[/^Right phalanx \(proximal big toe\)$/,'Big toe']],
  hand:[[/^Right phalanx \(distal thumb\)$/,'Thumb'],[/^Right metacarpal \(third\)$/,'Palm bones'],[/^Right lunate$/,'Wrist bones'],[/^Right radius$/,'Forearm bone']]};
 Object.assign(ORGI,{eye:ORGI.eye||['Eyes','Your eyes','Your eyes focus light onto the retina and send what you see to the brain.'],
  urine:['Kidneys','Follow a drop','How urine is made and leaves the body.'],bloodtour:['Heart','Follow a red cell','One trip round the body takes about a minute.'],
@@ -49,7 +53,8 @@ Object.assign(ORGI,{eye:ORGI.eye||['Eyes','Your eyes','Your eyes focus light ont
 
 /* which file an organ opens */
 const _ogf=ogf;
-ogf=function(o){if(o==='bones')return O2A[O2.bone]||O2A.knee;if(o==='prostate')return DATA&&DATA.person&&DATA.person.priv&&STATE.base!=='female'?O2A.prostate:null;if(O2A[o])return O2A[o];return _ogf(o)};
+function o2Hd(){return O2.hd===null?o2Strong():O2.hd}
+ogf=function(o){if(o==='prostate'&&!(DATA&&DATA.person&&DATA.person.priv&&STATE.base!=='female'))return null;const k=o==='bones'?O2.bone:o;if(o2Hd()&&O2HD[k]&&(STATE.base!=='female'||!OGF_F[o]))return O2HD[k];if(o==='bones')return O2A[O2.bone]||O2A.knee;if(o==='prostate')return DATA&&DATA.person&&DATA.person.priv&&STATE.base!=='female'?O2A.prostate:null;if(O2A[o])return O2A[o];return _ogf(o)};
 
 /* ---------- natural look ---------- */
 function o2Env(){if(O2.env)return Promise.resolve(O2.env);if(O2.envP)return O2.envP;
@@ -58,7 +63,9 @@ function o2Env(){if(O2.env)return Promise.resolve(O2.env);if(O2.envP)return O2.e
 const O2TINT={lung:[.95,.72,.70],kidney:[.86,.6,.56],liver:[.78,.5,.46],heart:[.85,.62,.58],brain:[.9,.76,.74],stomach:[.9,.7,.66],gut:[.9,.7,.66],pancreas:[.92,.8,.7],spleen:[.8,.55,.55],bladder:[.9,.75,.68],uterus:[.9,.68,.66],eye:[1,.96,.95],bones:[.98,.93,.86],teeth:[1,.97,.94],prostate:[.9,.7,.66],urine:[.86,.6,.56],bloodtour:[.85,.62,.58]};
 const O2DRY=new Set(['bones','teeth']);
 function o2Name(n){let e=n;while(e){if(e.userData&&e.userData.display_name)return e.userData.display_name;e=e.parent}return''}
-function o2Kind(n){let e=n;while(e){if(e.userData&&e.userData.anatomy_kind)return e.userData.anatomy_kind;e=e.parent}return''}
+function o2Kind(n){let e=n,k='';while(e){if(e.userData&&e.userData.anatomy_kind){k=e.userData.anatomy_kind;break}e=e.parent}const nm=o2Name(n);
+ if(k==='Bone'&&/fibularis|tibialis|flexor|extensor|abductor|adductor|lumbrical|interosseous muscle|opponens|gastrocnemius|soleus|popliteus|plantaris/i.test(nm))return'Muscle';
+ if(k==='Bone'&&/iliotibial tract|interosseous membrane/i.test(nm))return'Connective tissue';return k}
 async function o2Nat(root,key){const env=await o2Env();const tint=new THREE.Color(...(O2TINT[key]||[.9,.72,.68])),dry=O2DRY.has(key);
  root.traverse(n=>{if(!n.isMesh||n.userData.o2nat)return;const m0=n.material,nm=o2Name(n);if(!m0||!m0.color)return;
   const m=new THREE.MeshPhysicalMaterial({map:m0.map||null,normalMap:m0.normalMap||null,roughnessMap:m0.roughnessMap||null,color:m0.color.clone().multiply(/blood cell|urine drop/i.test(nm)?new THREE.Color(1,1,1):tint),vertexColors:m0.vertexColors,
@@ -264,3 +271,124 @@ body.orgv.o2lab #h3tags{display:block}body.orgv.o2lab #ogpin{display:none!import
 #o2tags{position:fixed;inset:0;pointer-events:none;z-index:4}#o2tags .h3t{pointer-events:none}
 body.dk #o2bar .h3seg,body.dk #o2bar .chip,body.dk .o2sl,body.dk #o2cap{background:rgba(44,44,46,.92);color:#fff}body.dk .o2box,body.dk .o2stat div,body.dk .o2grid button{background:#2C2C2E;color:#fff}
 `;document.head.appendChild(st)})();
+
+/* ===================== Callouts (19 Nov): a dot on the part, a thin line, the name and what it does at the side ===================== */
+function o2Band(){const H=innerHeight,cd=$('#card');let top=70;for(const id of ['o2bar','orgbar','sub']){const e=$('#'+id);if(e&&!e.hidden&&e.getClientRects().length&&getComputedStyle(e).display!=='none'){const b=e.getBoundingClientRect().bottom;if(b>top&&b<H*.5)top=b}}
+ return{top:top+8,bot:cd&&cd.classList.contains('on')?cd.getBoundingClientRect().top-8:H-16}}
+function o2Short(t){t=String(t||'').replace(/^[^:]{0,60}:\s*/,'');const m=t.match(/^.{20,}?[.;](\s|$)/);return(m?m[0]:t).trim().replace(/[;]$/,'.').replace(/^./,c=>c.toUpperCase())}
+function o2Call(items){let el=$('#o2call');if(!items||!items.length){if(el)el.hidden=true;return}
+ if(!el){el=document.createElement('div');el.id='o2call';el.innerHTML='<svg aria-hidden="true"></svg><div></div>';document.body.appendChild(el)}el.hidden=false;
+ const sv=el.firstChild,box=el.lastChild,sig=items.map(i=>i.k+'|'+i.name+'|'+(i.sel?1:0)).join(';');
+ if(el.dataset.sig!==sig){el.dataset.sig=sig;box.innerHTML=items.map((i,j)=>`<button class="o2lab2${i.sel?' sel':''}" data-j="${j}"><b>${esc(i.name)}</b>${i.def?`<small>${esc(i.def)}</small>`:''}</button>`).join('');
+  box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=O2.calls&&O2.calls[+b.dataset.j];it&&it.on&&it.on()})}
+ O2.calls=items;const W=innerWidth,LW=Math.min(164,W*.4),P=10,{top,bot}=o2Band(),btn=box.children;
+ const vis=items.map((i,j)=>Object.assign(i,{j,h:btn[j]?btn[j].offsetHeight||34:34})).filter(i=>i.ok&&i.y>top&&i.y<bot&&i.x>0&&i.x<W);
+ const cx=vis.length?vis.reduce((a,i)=>a+i.x,0)/vis.length:W/2;let L=vis.filter(i=>i.x<cx),R=vis.filter(i=>i.x>=cx);
+ while(L.length-R.length>1){L.sort((a,b)=>b.x-a.x);R.push(L.shift())}while(R.length-L.length>1){R.sort((a,b)=>a.x-b.x);L.push(R.shift())}
+ const lay=g=>{g.sort((a,b)=>a.y-b.y);let y=top;g.forEach(i=>{i.ly=Math.max(i.y-i.h/2,y);y=i.ly+i.h+6});const over=y-6-bot;if(over>0){let lim=bot;for(let k=g.length-1;k>=0;k--){g[k].ly=Math.min(g[k].ly,lim-g[k].h);lim=g[k].ly-6}}g.forEach(i=>i.ly=Math.max(top,i.ly))};lay(L);lay(R);
+ let path='';const show=new Set();
+ const put=(i,left)=>{const b=btn[i.j];if(!b)return;show.add(i.j);const x=left?P:W-P-LW;b.style.width=LW+'px';b.style.textAlign=left?'right':'left';b.style.transform=`translate(${x}px,${Math.round(i.ly)}px)`;
+  const ey=i.ly+Math.min(i.h/2,16),ex=left?P+LW:W-P-LW,kx=left?ex+10:ex-10;path+=`<path d="M${i.x.toFixed(1)} ${i.y.toFixed(1)}L${kx} ${ey.toFixed(1)}L${ex} ${ey.toFixed(1)}" class="${i.sel?'s':''}"/><circle cx="${i.x.toFixed(1)}" cy="${i.y.toFixed(1)}" r="4" class="${i.sel?'s':''}"/>`};
+ L.forEach(i=>put(i,true));R.forEach(i=>put(i,false));sv.setAttribute('viewBox',`0 0 ${W} ${innerHeight}`);sv.innerHTML=path;
+ [...btn].forEach((b,j)=>{const on=show.has(j);b.style.opacity=on?1:0;b.style.pointerEvents=on?'auto':'none'})}
+const O2P=new THREE.Vector3();
+function o2Scr(v){const r=$('#gl').getBoundingClientRect();O2P.copy(v).project(cam);return{x:r.left+(O2P.x+1)/2*r.width,y:r.top+(1-O2P.y)/2*r.height,ok:O2P.z<1}}
+/* organ views */
+ogPlace=function(){if(!OG){o2Call(null);return}const items=OG.labels.map((l,i)=>{const ok=o2Anch(l,O2Q),p=o2Scr(O2Q);return{k:'l'+i,x:p.x,y:p.y,ok:ok&&p.ok,name:l.lab,def:O2D[l.lab]||o2Short(l.n.userData.description),sel:OG.sel===l.n,on:()=>ogPick(l.n)}});
+ if(OG.sel&&!OG.labels.some(l=>l.n===OG.sel)){const l={n:OG.sel};if(!OG.selL||OG.selL.n!==OG.sel)OG.selL=l;const ok=o2Anch(OG.selL,O2Q),p=o2Scr(O2Q),t=o2Text(OG.sel.userData);items.push({k:'sel',x:p.x,y:p.y,ok:ok&&p.ok,name:t.n,def:o2Short(t.d),sel:true,on:()=>{}})}
+ o2Call(items)};
+/* the heart: same callouts */
+h3Place=function(){const el=$('#h3tags');if(el)el.style.display='none';if(!H3||!H3.root){o2Call(null);return}const items=[];
+ h3L().forEach(([code,name])=>{const o=H3.nodes[name];if(!o)return;const info=H3P.find(p=>p[3]===code);if(!o.userData.o2l)o.userData.o2l={n:o};const l=o.userData.o2l;if(l.av===undefined)l.av=o2Spot(o,H3.piv||H3.root);if(!l.av)return;o2Pos(l.av.m,l.av.i,O2Q);l.av.m.localToWorld(O2Q);const p=o2Scr(O2Q);
+  items.push({k:code,x:p.x,y:p.y,ok:p.ok,name:info[1].replace('Coronary arteries','Coronary artery'),def:o2Short(info[2]),sel:!!(H3.sel&&h3Info(H3.sel.name)===info),on:()=>h3Go(code)})});o2Call(items)};
+const _h3Show2=h3Show;h3Show=async function(k){await _h3Show2(k);if(H3&&H3.root)H3.root.traverse(o=>{if(o.userData&&o.userData.o2l)o.userData.o2l.av=undefined})};
+/* nervous system */
+o2NPlace=function(){if(!O2.ntags||!$('#o2tags')){return}const t=$('#o2tags');t.innerHTML='';o2Call(O2.ntags.map((g,i)=>{O2Q.copy(g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'n'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}))};
+const _o2Clean=o2Clean;o2Clean=function(){_o2Clean();o2Call(null);O2.ntags=null};
+const _h3Off2=h3Off;h3Off=function(){_h3Off2();o2Call(null)};
+
+/* ===================== Selecting a part: everything else fades, nothing is painted ===================== */
+function o2Ghost(root,keep){root.traverse(m=>{if(!m.isMesh||!m.material)return;let on=!keep,q=m;while(q&&!on){if(q===keep)on=true;q=q.parent}const mt=m.material;
+ if(!m.userData.o2m)m.userData.o2m={t:mt.transparent,o:mt.opacity,d:mt.depthWrite};const o=m.userData.o2m;if(mt.emissive){mt.emissive.set(0);mt.emissiveIntensity=0}
+ if(on){mt.transparent=o.t;mt.opacity=o.o;mt.depthWrite=o.d}else{mt.transparent=true;mt.opacity=Math.min(o.o,.12);mt.depthWrite=false}mt.needsUpdate=true})}
+function o2Facts(u,n){const k=o2Kind(n)||u.anatomy_kind||'',f=String(u.fma_ids||'').split(/[,; ]+/).filter(Boolean).map(x=>x.replace(/^FMA:?/i,'FMA '));return[k,u.system&&u.system!=='organ'&&u.system.toLowerCase()!==k.toLowerCase()?u.system:'',...f].filter(Boolean)}
+ogPick=function(n){if(!OG||!n)return;OG.sel=n;o2Ghost(OG.root,n);const u=n.userData||{},t=o2Text(u),fx=o2Facts(u,n),lab=(OG.labels.find(l=>l.n===n)||{}).lab;
+ sheet(`<div class="row" style="justify-content:space-between"><button class="lk" onclick="ogClear()">‹ ${esc((ORGI[OG.o]||[OG.o,OG.o])[1])}</button><button class="x" onclick="ogClear()" aria-label="Close">✕</button></div>
+ <div class="cn" style="font-size:22px;margin-top:4px">${esc(lab||t.n.replace(/\s*\((reconstructed surface|parenchyma)\)/i,''))}</div>${lab&&lab!==t.n?`<div class="o2tn">${esc(u.display_name||'')}</div>`:''}
+ ${fx.length?`<div class="o2fx">${fx.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}
+ <p class="cd" style="color:#1D1D1F">${esc(String(lab&&O2D[lab]?O2D[lab]:t.d).replace(/^[^:]{0,60}:\s*/,'').replace(/^./,c=>c.toUpperCase()))}</p>
+ <div class="ova"><button class="btn sec" onclick="o2Atlas()">All parts</button><button class="btn pri" onclick="send('ask',{q:'Explain the ${esc((lab||t.n).toLowerCase().replace(/'/g,''))}: what it does and what can go wrong'})">${T('ask')}</button></div>`)};
+ogClear=function(){if(!OG)return;OG.sel=null;o2Ghost(OG.root,null);vshow(VIEW,true)};
+/* every part of the model, grouped and searchable */
+const O2KO=['Organ','Bone','Cartilage','Muscle','Connective tissue','Artery','Vein','Nerve','Gland','Duct'];
+function o2Atlas(q){if(!OG)return;const seen=new Map();OG.root.traverse(n=>{const u=n.userData;if(u&&u.display_name&&!seen.has(u.display_name)){let vis=false;n.traverse(m=>{if(m.isMesh&&m.visible)vis=true});if(vis)seen.set(u.display_name,n)}});
+ const all=[...seen.entries()],by={};all.forEach(([nm,n])=>{const k=o2Kind(n)||'Other';(by[k]=by[k]||[]).push([nm,n])});OG.atlas=all.map(x=>x[1]);
+ const ks=Object.keys(by).sort((a,b)=>(O2KO.indexOf(a)+99)%99-(O2KO.indexOf(b)+99)%99||a.localeCompare(b)),hdOn=o2Hd(),hasHd=!!O2HD[OG.o==='bones'?O2.bone:OG.o];
+ sheet(`<div class="row" style="justify-content:space-between"><b style="font-size:20px">All parts · ${all.length}</b><button class="x" onclick="ogClear()" aria-label="Close">✕</button></div>
+ <input class="o2q" type="search" placeholder="Search ${all.length} parts" aria-label="Search parts" oninput="o2AtlasF(this.value)" value="${esc(q||'')}">
+ ${hasHd?`<div class="o2hd"><span>Detail</span><div class="h3seg"><button class="${hdOn?'':'on'}" onclick="o2SetHd(false)">Standard</button><button class="${hdOn?'on':''}" onclick="o2SetHd(true)">Full</button></div></div>`:''}
+ <div id="o2al">${ks.map(k=>`<div class="o2ak" data-k="${esc(k)}">${esc(k==='Organ'?'Organs and parts':k+(by[k].length>1&&!/s$/.test(k)?'s':''))} · ${by[k].length}</div>${by[k].sort((a,b)=>a[0].localeCompare(b[0])).map(([nm,n])=>`<button class="o2ar" data-i="${OG.atlas.indexOf(n)}" onclick="ogPick(OG.atlas[${OG.atlas.indexOf(n)}])"><span>${esc(nm)}</span><small>${esc((String(n.userData.fma_ids||'').split(/[,; ]+/)[0]||'').replace(/^FMA:?/i,'FMA '))}</small></button>`).join('')}`).join('')}</div>
+ <p class="o2s">Names and FMA identifiers from the Foundational Model of Anatomy; shapes from BodyParts3D (CC BY 4.0).</p>`);if(q)o2AtlasF(q)}
+function o2AtlasF(q){q=String(q||'').toLowerCase().trim();const l=$('#o2al');if(!l)return;l.querySelectorAll('.o2ar').forEach(b=>{b.hidden=!!q&&!b.textContent.toLowerCase().includes(q)});l.querySelectorAll('.o2ak').forEach(h=>{let n=h.nextElementSibling,any=false;while(n&&n.classList.contains('o2ar')){if(!n.hidden)any=true;n=n.nextElementSibling}h.hidden=!any})}
+function o2SetHd(on){O2.hd=on;try{localStorage.setItem('uh-hd',on?'1':'0')}catch(_){}vshow(VIEW,true).then(()=>setTimeout(o2Atlas,400))}
+const _o2Bar=o2Bar;o2Bar=function(o){_o2Bar(o);const b=$('#o2bar');if(!b||!OG)return;b.insertAdjacentHTML('beforeend',`<button class="chip o2c" onclick="o2Atlas()">All parts</button>`);b.hidden=false};
+
+/* the heart: a picked part stays, the rest fades (no paint on the part) */
+function o2GhostP(root,on){root.traverse(m=>{if(!m.isMesh||!m.material)return;const mt=m.material;if(!m.userData.o2m)m.userData.o2m={t:mt.transparent,o:mt.opacity,d:mt.depthWrite};const o=m.userData.o2m;if(mt.emissive){mt.emissive.set(0);mt.emissiveIntensity=0}
+ if(on(m)){mt.transparent=o.t;mt.opacity=o.o;mt.depthWrite=o.d}else{mt.transparent=true;mt.opacity=Math.min(o.o,.14);mt.depthWrite=false}mt.needsUpdate=true})}
+const _h3Pick=h3Pick;h3Pick=function(o,keep){_h3Pick(o,keep);if(!H3||!H3.root)return;const info=h3Info(o.name);o2GhostP(H3.root,m=>{const n=h3Name(m);return !!(n&&h3Info(n.name)===info)})};
+const _h3Back=h3Back;h3Back=function(){if(H3&&H3.root)o2GhostP(H3.root,()=>true);_h3Back()};
+/* ===================== Reports, medicines and specialists open on the right part ===================== */
+function o2BonePick(){const t=latest().filter(f=>f.org==='bones').map(f=>(f.raw||'')+' '+f.test+' '+(f.rep||'')).join(' ');
+ return /\b(dexa|dxa|bmd|bone (mineral )?density|t.?score|lumbar|spine|vertebr|cervical|thoracic)/i.test(t)?'spine':/\bhip\b|femoral neck|pelvi/i.test(t)?'hip':/knee|patell/i.test(t)?'knee':/shoulder|humer|clavic/i.test(t)?'shoulder':/wrist|hand|finger|carpal/i.test(t)?'hand':/ankle|foot|heel|toe|calcan/i.test(t)?'foot':null}
+const _vOrgan2=vOrgan;vOrgan=async function(o){if(o==='bones'&&!O2.boneUser){const b=O2.boneStart||o2BonePick();if(b)O2.bone=b}return _vOrgan2(o)};
+const _o2Bone=o2Bone;o2Bone=function(k){O2.boneUser=true;_o2Bone(k)};
+/* the nervous system shows any nerve tests on file */
+const _o2NervMode=o2NervMode;o2NervMode=function(k){_o2NervMode(k);if(k)return;const fs=latest().filter(f=>f.org==='nerves');if(!fs.length)return;const c=$('#card');if(!c)return;
+ c.insertAdjacentHTML('beforeend',`<div class="o2box"><div class="ove" style="color:#8E8E93">YOUR NERVE TESTS</div>${fs.map(f=>`<div class="o2r"><span>${esc(f.test.replace(/\s*\(.*\)/,''))}</span><b style="color:${FCOL(f)}">${esc(f.value)}${f.unit?' '+esc(f.unit):''}</b></div>`).join('')}</div>`)};
+/* a specialist's consult opens on the part they look after (the uterus and prostate never open here) */
+function o2Spec(d){const s=String(d.specialty||'').toLowerCase(),F=d.findings||[],v=c=>{const f=F.find(x=>String(x.code||'').toLowerCase()===c);return f?parseFloat(f.value):NaN};
+ if(/ophthal|eye|retina|optom|cornea|glaucoma/.test(s))return'organ:eye';if(/dent|orthodont|oral|maxillo|periodont|endodont/.test(s))return'organ:teeth';
+ if(/neuro/.test(s))return'organ:nerves';if(/ortho|bone|joint|spine|rheumat|sports med/.test(s)){O2.boneStart=null;O2.boneUser=false;return'organ:bones'}
+ if(/cardio|heart/.test(s))return'heartv';if(/pulmo|chest|respir|lung|tb\b/.test(s))return'organ:lung';if(/nephro|kidney|urolog|androl/.test(s))return'organ:kidney';
+ if(/endocrin|diabet|thyroid/.test(s)){const t=v('tsh');return t>4.5||t<.4?'organ:thyroid':'organ:pancreas'}if(/hepat|liver/.test(s))return'organ:liver';if(/gastro|digest/.test(s))return'organ:stomach';return''}
+const _boot=boot;boot=async function(d){if(d&&d.specialty&&!d.start){const st=o2Spec(d);if(st)d.start=st}return _boot(d)};
+/* medicines: where they work (prostate only for the man himself) */
+(function(){const P=(re,o)=>DRUGS.unshift([re,o]);
+ const cal=DRUGS.find(x=>x[0].test('calcium'));if(cal){cal[1].works=[['bones','Keeps bones strong (absorbed in the gut)']];cal[1].watch=[['bones','Vitamin D and calcium levels yearly']]}
+ const met=DRUGS.find(x=>x[0].test('metformin'));if(met){met[1].watch=(met[1].watch||[]).concat([['nerves','Check vitamin B12 once a year; low B12 can cause tingling']])}
+ P(/alendron|risedron|ibandron|zoledron|denosumab/i,{works:[['bones','Slows bone loss so bones stay stronger']],side:[['stomach','Heartburn; take with a full glass of water and stay upright 30 minutes']],watch:[['bones','Bone density (DEXA) every 2 years']],avoid:'Lying down right after the tablet.'});
+ P(/timolol|latanoprost|bimatoprost|travoprost|brimonidine|dorzolamide|brinzolamide/i,{works:[['eye','Lowers the pressure inside the eye to protect the optic nerve']],side:[['eye','Mild stinging or redness.']],watch:[['eye','Eye pressure check as advised']],avoid:'Stopping the drops without the eye doctor.'});
+ P(/pregabalin|gabapentin|lyrica|duloxetine|amitriptyline/i,{works:[['nerves','Calms nerve pain and tingling']],side:[['brain','Drowsiness or dizziness.']],watch:[['nerves','Tell the doctor how the pain changes']],avoid:'Alcohol. Driving if drowsy.'});
+ P(/methylcobalamin|mecobalamin|cyanocobalamin|vitamin b ?12|neurobion/i,{works:[['nerves','Helps nerves repair and work properly']],side:[],watch:[['nerves','B12 level after 3 months']],avoid:''});
+ P(/tamsulosin|silodosin|alfuzosin|finasteride|dutasteride|urimax/i,{works:[['prostate','Relaxes the prostate so urine flows more easily']],side:[['heart','Dizziness on standing up.']],watch:[['prostate','PSA and urine flow as advised']],avoid:'Standing up quickly after the first dose.'})})();
+const _vMed=vMed;vMed=function(name){const d=(DRUGS.find(x=>x[0].test(name))||[])[1];let keep=null;if(d&&!(DATA.person&&DATA.person.priv)){keep=d.works;d.works=d.works.filter(w=>!/prostate|uterus/.test(w[0]))}try{return _vMed(name)}finally{if(keep)d.works=keep}};
+
+(function(){const st=document.createElement('style');st.textContent=`
+#h3tags{display:none!important}
+#o2call{position:fixed;inset:0;pointer-events:none;z-index:5}#o2call[hidden]{display:none}#o2call svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#o2call path{fill:none;stroke:rgba(29,29,31,.55);stroke-width:1}#o2call path.s{stroke:#0071E3;stroke-width:1.5}
+#o2call circle{fill:#fff;stroke:#1D1D1F;stroke-width:1.5}#o2call circle.s{fill:#0071E3;stroke:#fff;stroke-width:2}
+.o2lab2{position:absolute;left:0;top:0;border:0;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:12px;padding:5px 9px 6px;font-family:Geist,Inter,sans-serif;color:#1D1D1F;box-shadow:0 1px 6px rgba(0,0,0,.08);transition:opacity .2s;box-sizing:border-box;min-height:32px}
+.o2lab2 b{display:block;font-size:12.5px;font-weight:700;line-height:1.25}.o2lab2 small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;line-height:1.3;color:#5A5A5F;margin-top:1px}
+.o2lab2.sel{background:#0071E3;color:#fff}.o2lab2.sel small{color:rgba(255,255,255,.88)}
+body.dk .o2lab2{background:rgba(44,44,46,.88);color:#fff}body.dk .o2lab2 small{color:#C7C7CC}body.dk #o2call path{stroke:rgba(255,255,255,.55)}body.dk #o2call circle{fill:#1C1C1E;stroke:#fff}
+.o2tn{font-size:13px;color:#6E6E73;margin-top:2px}.o2fx{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.o2fx span{background:#F2F2F7;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:600;color:#3A3A3C}
+.o2q{width:100%;box-sizing:border-box;height:44px;border-radius:22px;border:0;background:#F2F2F7;padding:0 16px;font:500 15px Geist,Inter,sans-serif;margin-top:10px;outline:none}
+.o2hd{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:14px;font-weight:600;color:#3A3A3C}.o2hd .h3seg{background:#F2F2F7;border:0}
+.o2ak{font-size:12px;font-weight:700;letter-spacing:.05em;color:#8E8E93;text-transform:uppercase;margin:16px 2px 6px}
+.o2ar{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;border:0;background:none;border-bottom:1px solid #F2F2F7;min-height:44px;padding:0 2px;font:500 15px Geist,Inter,sans-serif;color:#1D1D1F;text-align:left}.o2ar small{color:#8E8E93;font-size:12px;flex:none}
+body.dk .o2fx span,body.dk .o2q,body.dk .o2hd .h3seg{background:#2C2C2E;color:#fff}body.dk .o2ar{color:#fff;border-color:#2C2C2E}
+`;document.head.appendChild(st)})();
+
+/* ===================== Body close-ups (thyroid, ears, skin…): callouts on a point of the part itself ===================== */
+Object.assign(O2D,{'Thyroid gland':'Two lobes around the windpipe below the voice box. It makes the hormones that set how fast the body uses energy.','Voice box':'The larynx, with the vocal cords inside; the thyroid cartilage is its front (the Adam’s apple).','Right ear':'The outer ear collects sound; the middle and inner ear turn it into nerve signals.','Left ear':'The outer ear collects sound; the middle and inner ear turn it into nerve signals.','Inner ear':'The cochlea turns sound into nerve signals; the canals beside it sense balance.','Molars':'Back teeth with broad tops that grind food.','Front teeth':'Incisors cut food.','Lower jaw':'The mandible holds the lower teeth.','Spine':'Thirty-three vertebrae protect the spinal cord and carry the body’s weight.','Hip':'The hip bone forms the socket where the thigh bone turns.','Right eye':'Focuses light onto the retina and sends what you see to the brain.','Left eye':'Focuses light onto the retina and sends what you see to the brain.'});
+/* parts partly covered from the front (the voice box sits behind the thyroid's upper lobes): aim higher on the part */
+const O2BIAS={'Voice box':.32};
+function o2BodyPt(re,bias=0){let best=null,bz=-Infinity,near=null,nd=Infinity;const p=new THREE.Vector3(),b=new THREE.Box3(),hits=[];
+ for(const l of [0,1,2,3,4,5]){const m=LAY[l];if(!m||!m.userData.ranges)continue;const ix=m.geometry.index.array,pa=m.geometry.attributes.position;for(const rg of m.userData.ranges){if(!re.test(SET.names[rg[2]]))continue;const s=ix.subarray(rg[5],rg[5]+rg[6]);hits.push([pa,s]);for(let i=0;i<s.length;i+=3){o2Denorm(pa,s[i],p);b.expandByPoint(p)}}}
+ if(b.isEmpty())return null;const c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3()),r=Math.max(1e-5,Math.min(sz.x,sz.y)*.3);c.y+=sz.y*bias;
+ for(const [pa,s] of hits)for(let i=0;i<s.length;i++){o2Denorm(pa,s[i],p);const dx=p.x-c.x,dy=p.y-c.y,d2=dx*dx+dy*dy;if(d2<r*r&&p.z>bz){bz=p.z;best=p.clone()}const d3=d2+(p.z-c.z)**2;if(d3<nd){nd=d3;near=p.clone()}}return best||near}
+const _partView=partView;partView=function(o){const r=_partView(o);if(r){tags([]);const P=PARTS[o];O2.pv=(P.labels||[]).map(([n,re])=>({lab:n,p:o2BodyPt(re,O2BIAS[n]||0)})).filter(x=>x.p)}return r};
+const _partOff=partOff;partOff=function(){_partOff();if(O2.pv){O2.pv=null;o2Call(null)}};
+(function o2PvLoop(){if(O2.pv&&!OG&&!H3)o2Call(O2.pv.map((g,i)=>{O2Q.copy(g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'p'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}));requestAnimationFrame(o2PvLoop)})();

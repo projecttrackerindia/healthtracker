@@ -175,7 +175,7 @@ def me_json(db: Session, u: PartnerUser) -> dict:
     unread = db.scalar(select(func.count(Message.id)).where(Message.store_id == u.store_id, Message.sender == "family", Message.read_partner == False)) or 0  # noqa: E712
     return {"user": {"id": u.id, "name": u.name, "email": "" if u.email.endswith(".invalid") else u.email,
                      "phone": u.phone, "role": u.role, "mustChange": u.must_change,
-                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or "", "languages": u.languages or "", "fee": getattr(u, "fee", 0) or 0, "videoFee": getattr(u, "video_fee", 0) or 0,
+                     "rating": u.rating or 0, "ratingN": u.rating_n or 0, "regNo": u.reg_no or "", "specialty": getattr(u, "specialty", "") or "", "languages": u.languages or "", "fee": getattr(u, "fee", 0) or 0, "videoFee": getattr(u, "video_fee", 0) or 0,
                      "verified": bool(u.verified), "regDoc": bool(u.reg_doc), "regExpiry": u.reg_expiry or "", "totp": bool(u.totp_secret)},
             "store": {"id": s.id, "kind": s.kind, "name": s.name, "verified": s.verified, "active": s.active, "address": s.address, "area": s.area, "city": s.city, "phone": s.phone,
                       "hours": s.hours, "open24": s.open_24h, "licence": s.licence, "rating": s.rating, "ratingN": s.rating_n, "homeCollection": s.home_collection,

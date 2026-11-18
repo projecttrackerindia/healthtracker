@@ -577,7 +577,7 @@ VIEWS.visit=async()=>{const m=$('#main');if(!VISIT.id){view='queue';return rende
  </div>`;
  $('#vfin').onclick=async()=>{if(t.state==='done'){view='queue';return render()}try{if(t.state==='called')await api(`/queue/${t.id}/move`,{method:'POST',body:{to:'in'}});await api(`/queue/${t.id}/move`,{method:'POST',body:{to:'done'}});vStop();toast('Visit finished');view='queue';render()}catch(e){toast(e.message)}};
  if($('#vre'))$('#vre').onclick=()=>VIEWS.visit();
- const f=$('#vbf');if(f)f.onload=()=>{try{f.contentWindow.postMessage({type:'uh-body-data',data:{look:'light',person:{name:t.member,age:p.age??null,sex:p.sex||'male'},findings:c.findings||[],meds:[],vitals:c.vitals||null,canWrite:false}},location.origin)}catch(_){}};
+ const f=$('#vbf');if(f)f.onload=()=>{try{f.contentWindow.postMessage({type:'uh-body-data',data:{look:'light',person:{name:t.member,age:p.age??null,sex:p.sex||'male'},specialty:(ME&&ME.user&&ME.user.specialty)||'',findings:c.findings||[],meds:[],vitals:c.vitals||null,canWrite:false}},location.origin)}catch(_){}};
  vRx()}
 const SPEECH=[['en-IN','English'],['ta-IN','Tamil'],['hi-IN','Hindi'],['te-IN','Telugu'],['kn-IN','Kannada'],['ml-IN','Malayalam'],['bn-IN','Bengali'],['mr-IN','Marathi'],['gu-IN','Gujarati']];
 const VFREQ={od:'1-0-0',bd:'1-0-1',tds:'1-1-1',qid:'1-1-1-1',hs:'0-0-1',sos:'when needed',weekly:'weekly'};
