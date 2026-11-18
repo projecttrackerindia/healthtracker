@@ -560,7 +560,8 @@ body.flat .spacer{height:96px}body.flat #gl,body.flat #labels,body.flat #lines{o
 @media (min-width:980px){#herobg{display:none}}
 #h3d{display:none}
 @media (max-width:979px){#h3d{display:flex;align-items:center;gap:7px;position:fixed;z-index:4;left:50%;top:calc(52vh - 62px);transform:translate(-50%,calc(var(--hy,0px) * -1));height:42px;border:0;border-radius:21px;padding:0 16px 0 13px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 4px 16px rgba(0,0,0,.1),inset 0 0 0 .5px rgba(0,0,0,.08);font:600 14.5px var(--font,-apple-system),sans-serif;color:#1D1D1F;transition:opacity .3s}
- body.flat #h3d,body.preg #h3d,body.mini #h3d,body.no3d #h3d{opacity:0;pointer-events:none}}
+ body.flat #h3d,body.mini #h3d,body.no3d #h3d{opacity:0;pointer-events:none}
+ body.preg #h3d{left:24px;transform:translateY(calc(var(--hy,0px) * -1))}}
 @media (max-width:979px){#acc{transition:opacity .25s,transform .25s}body.mini #acc{opacity:0;transform:translateY(12px);pointer-events:none}}
 @media (max-width:979px){.medpass{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#1D1D1F;color:#fff;border:0;border-radius:18px;padding:12px 14px;margin:2px 0 12px;font:inherit}
  .medpass .mp-t{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;color:#FF6961;writing-mode:horizontal-tb;flex:none;width:58px;line-height:1.2}
@@ -655,8 +656,11 @@ html,body{max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;-webkit-te
  #herobg{display:block!important;position:fixed;z-index:0;left:24px;right:424px;top:132px;bottom:104px;border-radius:34px;background:linear-gradient(180deg,#FFFFFF 0%,#EEF1F7 100%);box-shadow:0 1px 2px rgba(0,0,0,.04);pointer-events:none;transition:opacity .4s}
  body.flat #herobg{opacity:0}
  #gl{right:auto!important;top:132px!important;transform:none!important;border-radius:34px}
- body:not(.flat) .dock{right:400px!important}
- body:not(.flat) .sos5{right:432px!important}
+ .dock{right:400px!important}
+ .sos5{right:auto!important;left:calc((100% - 400px) / 2 + var(--b5w,590px) / 2 + 16px)!important}
+ #h3d{display:flex;align-items:center;gap:7px;position:fixed;z-index:4;top:148px;right:440px;height:40px;border:0;border-radius:20px;padding:0 16px 0 13px;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 4px 16px rgba(0,0,0,.1),inset 0 0 0 .5px rgba(0,0,0,.08);font:600 14.5px var(--font,-apple-system),sans-serif;color:#1D1D1F;cursor:pointer;transition:opacity .3s}
+ #h3d:hover{background:#fff}
+ body.flat #h3d,body.mini #h3d,body.no3d #h3d{opacity:0;pointer-events:none}
  body:not(.flat) .top{right:420px!important;left:28px!important}
  body.flat #scroll{left:0!important}
  body.flat .sheet{max-width:720px!important}
@@ -712,7 +716,7 @@ body.st-loss #bg{background:linear-gradient(180deg,#EEEDF4 0%,#F2F1F6 60%,#F4F4F
 body.preg #herobg{background:radial-gradient(80% 80% at 45% 40%,#FFFFFF,#FBE3EA 70%,#F4D3DE)}
 #pghud{position:fixed;z-index:3;left:12px;right:12px;top:calc(var(--ht,150px) + 4px);height:calc(52vh - var(--ht,150px) - 14px);pointer-events:none;transform:translateY(calc(var(--hy,0px) * -1))}
 body.flat #pghud,body.mini #pghud{opacity:0;pointer-events:none!important}#pghud>*{pointer-events:auto}
-@media (min-width:980px){#pghud{display:none}}
+@media (min-width:980px){#pghud{left:24px;right:424px;top:132px;bottom:104px;height:auto;transform:none}#pghud .phs{left:16px;top:16px}#pghud .phw{right:16px;bottom:16px}}
 .phw{position:absolute;right:18px;top:16px;text-align:right}
 .phs{position:absolute;left:12px;top:12px;display:flex;padding:2px;border-radius:12px;background:rgba(236,236,240,.82);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
 .phs button{height:32px;padding:0 14px;border:0;border-radius:10px;background:none;font:500 14px var(--font,-apple-system),sans-serif;color:#1D1D1F}
@@ -1485,6 +1489,7 @@ function liveFor(p){const t=tabOf(S.tab),fs=findings(p.id),bad=fs.filter(f=>f.fl
  return bad.length?{t:`${bad.length} to look at`,s:bad.slice(0,2).map(f=>esc(f.test.replace(/\s*\(.*\)/,''))).join(' · '),i:I.heart||`<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>`,a:()=>openReport(bad[0].rid)}:{t:innerWidth<380?'All good':'All good today',s:fs.length?`${fs.length} results in range`:'Add a report',i:fs.length?'<path d="M5 12.5l4.5 4.5L19 7.5"/>':'<path d="M12 5v14M5 12h14"/>',c:fs.length?'#30D158':null}}
 function renderDock(){const p=P(),t=tabOf(S.tab),L=liveFor(p),plan=can(p,'all')?dosePlan(p.id):[],fs=findings(p.id),bad=fs.filter(f=>f.flag&&f.flag!=='normal');
  const mini=k=>k==='records'&&bad.length?`<i class="mn" style="background:#FF3B30">${bad.length}</i>`:k==='meds'&&plan.length?`<svg class="mn ring" width="18" height="18" viewBox="-9 -9 18 18"><circle r="6.5" fill="none" stroke="#30D158" stroke-opacity=".25" stroke-width="2.6"/><circle r="6.5" fill="none" stroke="#30D158" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="${(40.8*plan.filter(x=>x.done).length/plan.length).toFixed(1)} 41" transform="rotate(-90)"/></svg>`:k==='visits'&&TOKS[0]?`<i class="mn" style="background:#0A84FF">${TOKS[0].number}</i>`:'';
+ requestAnimationFrame(()=>{const b=$('#b5');if(b&&b.offsetWidth)document.documentElement.style.setProperty('--b5w',b.offsetWidth+'px')});
  $('#dock').innerHTML=`<div class="b5 glass" id="b5" role="tablist"><i class="lens" id="lens"></i>${TABS5.map(([k,n,i],j)=>`<button class="t5${t===k?' on':''}" data-t="${k}" data-j="${j}" role="tab" aria-selected="${t===k}">${ic(i||(k==='meds'?I.pill:I.shield),t===k?'var(--blue)':'#3C3C43',23)}<span>${n}</span>${mini(k)}</button>`).join('')}</div>
  <div class="rp glass" id="rp"><span class="rpi"${L.c?` style="background:${L.c}"`:''}>${ic(L.i,'#fff',20)}</span><span class="rpt"><b>${L.t}</b><small>${L.s}</small></span>${L.a&&L.ok?`<button class="rpa" id="rpa" aria-label="Done">${ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',20)}</button>`:''}</div>
  <button class="sos5" id="sos5" aria-label="SOS. Hold for one second.">SOS<svg class="rg" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="33" fill="none" stroke="rgba(215,38,61,.22)" stroke-width="4"/><circle id="sosarc" cx="36" cy="36" r="33" fill="none" stroke="#D7263D" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 208" transform="rotate(-90 36 36)" style="opacity:0"/></svg><span class="tip">Hold for 1 second</span></button>`;
@@ -2533,8 +2538,8 @@ function familyView(){const mine=P(ME.me);let h=callPrompt()+`<div class="list f
 `;return h}
 /* the pill on the body: "Open in 3D" (board 1); for a child it opens kids mode (board 14) */
 function h3dSet(p){const b=$('#h3d');if(!b||!p)return;const kid=isKid(p)&&ageOf(p)!=null&&kidBand(ageOf(p))!=='teen'&&kidBand(ageOf(p))!=='baby';
- b.innerHTML=kid?`${ic(I.spark,'#5E5CE6',16)}Kids mode`:`${ic('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>','currentColor',16)}Open in 3D`;
- b.setAttribute('aria-label',kid?'Kids mode for '+firstName(p):'Open your body in 3D');b.onclick=kid?()=>kidOn(p.id):()=>openBody()}
+ b.innerHTML=kid?`${ic(I.spark,'#5E5CE6',16)}Kids mode`:`${ic('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>','currentColor',16)}${preg(p)?'Your body in 3D':'Open in 3D'}`;
+ b.setAttribute('aria-label',kid?'Kids mode for '+firstName(p):preg(p)?'Your body in 3D: your results, medicines and organs':'Open your body in 3D');b.onclick=kid?()=>kidOn(p.id):()=>openBody(preg(p)?'self':undefined)}
 function renderAll(){try{const me=P(ME.me);document.body.classList.toggle('pregtheme',!!(me&&preg(me)&&S.person===me.id))}catch(_){}try{renderSimple()}catch(_){}if(!ME||!P())return;seen(S.tab);document.body.classList.toggle('flat',S.tab!=='summary'||kidFlat(P())||firstRun(P())||(P()&&can(P(),'summary')&&womStage(P())==='after'));{const st=P()&&can(P(),'summary')?womStage(P()):'';['cycle','trying','after','loss'].forEach(k=>document.body.classList.toggle('st-'+k,st===k))}renderTop();renderDock();renderSheet();showModel();pgHud();h3dSet(P())}
 async function selectPerson(id){S.person=id;S.focus=0;S.week=null;closeL();if(!REC[id])await loadRecords(id);renderAll()}
 /* ---------------- actions ---------------- */
@@ -3631,7 +3636,7 @@ function openInside(p){const pg=preg(p),w=S.week||pg.week,fs=findings(p.id),hb=f
  <div class="card inw">${ic(I.bell,'#C4291C',20)}<div><b>Call your doctor now if</b> you have bleeding, strong headache with blurred vision, or the baby moves much less.</div></div>`,'WEEK '+w);
  const fr=document.querySelector('#layer .inb iframe');if(fr){BODYF={el:fr.parentNode,start:'mother',emb:1};fr.addEventListener('load',()=>setTimeout(()=>{try{bodySend()}catch(_){}},300))}}
 function openBody(start){const p=P();if(!can(p,'summary'))return;if(LAB&&!LAB.all)API('/api/v1/labs/tests').then(r=>{LAB.all=r.tests;if(BODYF)bodySend()}).catch(()=>{});if(start==='mother'&&preg(p)&&!openBody.full)return openInside(p);openBody.full=false;closeBody();const d=document.createElement('div');d.id='bodyf';
- const pk=start==='mother'||start==='baby'||(!start&&preg(p));d.style.cssText='position:fixed;inset:0;z-index:60;background:'+(pk?'radial-gradient(80% 60% at 50% 40%,#FFFFFF 0%,#FBF1F4 55%,#F2E3E9 100%)':'#F1F3F7');
+ const pk=start==='mother'||start==='baby'||(!start&&!!preg(p));d.style.cssText='position:fixed;inset:0;z-index:60;background:'+(pk?'radial-gradient(80% 60% at 50% 40%,#FFFFFF 0%,#FBF1F4 55%,#F2E3E9 100%)':'#F1F3F7');
  d.innerHTML='<iframe src="'+(start==='mother'?'/baby?v=m':pk?'/baby':'/body')+'" title="3D body" style="border:0;width:100%;height:100%;opacity:0;transition:opacity .25s" allow="fullscreen"></iframe><div class="b3dl" role="status" aria-label="Loading the 3D view"><i style="border-top-color:'+(pk?'#D63A6A':'#0071E3')+'"></i><button class="b3dx" onclick="IOSW?closeBody():history.back()" aria-label="Close">×</button></div>';document.body.appendChild(d);BODYF={el:d,start};
  const fr=d.querySelector('iframe'),lift=()=>{fr.style.opacity='1';const c=d.querySelector('.b3dl');if(c){c.style.opacity='0';setTimeout(()=>c.remove(),260)}};BODYF.lift=lift;fr.addEventListener('load',()=>setTimeout(()=>{if(BODYF&&BODYF.el===d&&!pk)lift()},150));setTimeout(()=>{if(BODYF&&BODYF.el===d)lift()},6000);
  if(!IOSW)history.pushState({body:1},'')}
