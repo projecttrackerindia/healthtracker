@@ -31,6 +31,12 @@ from .inbox import notify
 from .models import SosAlert, now
 from .routes import household
 
+
+def _norm_name(n: str) -> str:
+    from .people import norm_name   # one way of writing a name everywhere ("DADDALA PRASANNA" -> "Daddala Prasanna")
+    return norm_name(n)
+
+
 r = APIRouter()
 APP = "Urban Health"
 
@@ -187,7 +193,7 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokk
     origin = _origin(request)
     for old in db.scalars(select(SosAlert).where(SosAlert.household_id == h.id, SosAlert.member_id == body.member[:32], SosAlert.active == True)).all():  # noqa: E712
         old.active, old.ended = False, now()      # one open alert per person
-    a = SosAlert(household_id=h.id, token=secrets.token_urlsafe(36)[:48], member_id=body.member[:32], name=(body.name or "Someone")[:80],
+    a = SosAlert(household_id=h.id, token=secrets.token_urlsafe(36)[:48], member_id=body.member[:32], name=(_norm_name(body.name or "") or "Someone")[:80],
                  data={"summary": body.summary[:1200], "blood": body.blood[:8], "phone": body.phone[:20], "lang": body.lang[:5],
                        "contacts": [{"n": c.n[:40], "ph": c.ph[:20], "em": c.em[:160]} for c in body.contacts[:12]]})
     if body.loc:
