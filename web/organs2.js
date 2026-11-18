@@ -217,10 +217,13 @@ function o2NervMode(k){O2.nmode=k;if(O2.nv){O2.nv.forEach(m=>body.remove(m));O2.
   if(h)o2FrameMesh(h,1.15);
   const show=()=>{const st=S[i];o2NTags([[st[0],st[1]]],pts[i]);sheet(`<div class="o2step"><div class="o2n">STEP ${i+1} OF ${S.length}</div><div class="o2t">${esc(st[2])}</div><div class="o2d">${S.map((_,j)=>`<i class="${j<i?'d':j===i?'on':''}"></i>`).join('')}</div></div><div class="ova"><button class="btn pri" onclick="o2NervMode('signal')">Replay</button></div>`);
    };show();if(!U.still)O2.ntm=setInterval(()=>{if(i>=S.length-1){clearInterval(O2.ntm);O2.ntm=0;return}i++;show()},2600)}
- else{const h=o2NervMesh(O2NS.feet.re);O2.nv=h?[h]:[];if(h)o2FrameMesh(h,1.1);
-  o2NTags([[/^Right sciatic nerve/i,'Sciatic nerve'],[/^Right .*plantar nerve|plantar/i,'Sole']]);const a1=o2Find(/hba1c/i),b12=o2Find(/b12|cobalamin/i);
+ else{const h=o2NervMesh(O2NS.feet.re);O2.nv=h?[h]:[];
+  o2NTags([[/^Right tibial nerve/i,'Tibial nerve'],[/^Right (medial|lateral) plantar nerve/i,'Sole of the foot']]);const a1=o2Find(/hba1c/i),b12=o2Find(/b12|cobalamin/i);
   sheet(`<div class="o2box" style="margin-top:0"><div class="ove" style="color:#9A5B00">FOOT NERVE CHECK${a1&&parseFloat(a1.value)>=6.5?' · YEARLY':''}</div><p class="o2s" style="margin:4px 0 0">High sugar over years can dull the nerves in the feet, so people with diabetes have their feet checked once a year and look at them daily for cuts.</p></div>
-   <div class="o2box">${o2Row('HbA1c',a1)}${o2Row('Vitamin B12',b12)}<p class="o2s">Low B12 can also cause tingling. Metformin can lower B12 over time.</p></div>`)}}
+   <div class="o2box">${o2Row('HbA1c',a1)}${o2Row('Vitamin B12',b12)}<p class="o2s">Low B12 can also cause tingling. Metformin can lower B12 over time.</p></div>`);o2FrameRe(/tibial nerve|plantar|fibular nerve|peroneal|sural/i,1.15)}}
+/* frame the body on the nerves matching a name (after the sheet is in, so the space above it is known) */
+function o2FrameRe(re,pad){const m=LAY[5];if(!m)return;const ix=o2NervIdx(re),pa=m.geometry.attributes.position,b=new THREE.Box3(),q=new THREE.Vector3();for(let i=0;i<ix.length;i+=3){o2Denorm(pa,ix[i],q);b.expandByPoint(q)}if(b.isEmpty())return;
+ body.updateMatrixWorld(true);b.applyMatrix4(body.matrixWorld);const c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3()).multiplyScalar(pad);body.position.x-=c.x;c.x=0;o2Frame(c,sz)}
 function o2FrameMesh(h,pad){const ix=h.geometry.index.array,pa=h.geometry.attributes.position,b=new THREE.Box3(),q=new THREE.Vector3();for(let i=0;i<ix.length;i+=3){o2Denorm(pa,ix[i],q);b.expandByPoint(q)}body.updateMatrixWorld(true);b.applyMatrix4(body.matrixWorld);const c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3()).multiplyScalar(pad);body.position.x-=c.x;c.x=0;o2Frame(c,sz)}
 function o2NTags(list,pt){let el=$('#o2tags');if(!el){el=document.createElement('div');el.id='o2tags';document.body.appendChild(el)}
  O2.ntags=list.map(([re,lab],i)=>({lab,p:i===0&&pt?pt:o2NervPt(re)})).filter(t=>t.p);el.innerHTML=O2.ntags.map((t,i)=>`<span class="h3t o2nt" data-i="${i}"><i></i>${esc(t.lab)}</span>`).join('');o2NPlace()}
