@@ -2936,7 +2936,7 @@ function openLook(){const o=LOOKP(),th=(m,t)=>`<button class="lkth${o.m===m?' on
  <div class="sect">MOTION</div><div class="list"><button class="li" onclick="try{localStorage.setItem('uh-rm',localStorage.getItem('uh-rm')?'':'1')}catch(_){}applyLook();lookRe()"><span style="flex:1;text-align:left">Reduce motion</span><span class="sw ${document.documentElement.classList.contains('rm')?'on':''}"></span></button></div>`,'SETTINGS');
  const r=$('#lktz');if(r){const pv=$('#lkpv');r.oninput=()=>{r.style.setProperty('--p',(r.value-100)*2+'%');pv.style.fontSize=17*r.value/100+'px';pv.nextElementSibling.textContent='Preview · '+r.value+'%'};r.onchange=()=>{const v=Math.round(r.value/5)*5,t=[100,115,130,150].reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);try{localStorage.setItem('uh-look',JSON.stringify({...LOOKP(),t}))}catch(_){}applyLook();hap(10)}}}
 applyLook();try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyLook)}catch(_){}
-function appVersion(){let v='1.2.0';try{if(localStorage.getItem('uh-twa')==='1')v+=' · Android app'}catch(_){}return v+' ('+APPV.replace(/^dk-/,'')+')'}
+function appVersion(){let v='1.2.1';try{if(localStorage.getItem('uh-twa')==='1')v+=' · Android app'}catch(_){}return v+' ('+APPV.replace(/^dk-/,'')+')'}
 /* Language: the app's language for this account (saved, so reminders arrive in it too), each family member's
    reminder language on this phone, and reading reminders aloud for elders who prefer listening. */
 function saveLang(l){API('/api/v2/me/lang',{method:'PUT',json:{lang:l}}).then(()=>{if(ME&&ME.user)ME.user.lang=l}).catch(()=>{})}
@@ -4272,7 +4272,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r122';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r123';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};

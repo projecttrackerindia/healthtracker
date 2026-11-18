@@ -246,7 +246,7 @@ const _h3Sub=h3Sub;h3Sub=function(){_h3Sub();const s=$('#sub .h3seg');if(s&&!s.q
 const O2EX=[['heart','Heart'],['lung','Lungs'],['kidney','Kidneys'],['liver','Liver'],['brain','Brain'],['stomach','Stomach'],['gut','Intestines'],['pancreas','Pancreas'],['spleen','Spleen'],['bladder','Bladder'],['eye','Eyes'],['teeth','Teeth and mouth'],['bones','Bones and joints'],['nerves','Nervous system']];
 function o2Explore(){const P=DATA.person||{},list=O2EX.slice();if(P.priv&&STATE.base!=='female')list.push(['prostate','Prostate']);if(P.priv&&STATE.base==='female')list.push(['uterus','Uterus and ovaries']);
  sheet(`<div class="row" style="justify-content:space-between"><b style="font-size:20px">Explore your body</b><button class="x" onclick="vshow({k:'body'})" aria-label="Close">✕</button></div><div class="o2grid">${list.map(([o,t])=>`<button onclick="vgo({k:'${o==='heart'?'heart':'organ'}',o:'${o}'})">${esc(t)}</button>`).join('')}</div>`)}
-const _vBody=vBody;vBody=function(){_vBody();if(KID)return;const c=$('#card');if(c&&c.classList.contains('on')&&!c.querySelector('.o2ex')){const a=c.querySelector('button.lk[onclick*="credits"]');const h=`<button class="btn sec o2ex" style="width:100%;margin-top:10px" onclick="o2Explore()">Explore organs and systems</button>`;a?a.insertAdjacentHTML('beforebegin',h):c.insertAdjacentHTML('beforeend',h)}};
+const _vBody=vBody;vBody=function(){_vBody();if(KID)return;const c=$('#card');if(c&&c.classList.contains('on')&&!c.querySelector('.o2ex')){const a=c.querySelector('button.lk[onclick*="credits"]');const h=`<button class="btn sec o2ex" style="width:100%;margin-top:10px" onclick="vgo({k:'explore'},'Body')">Explore your body</button>`;a?a.insertAdjacentHTML('beforebegin',h):c.insertAdjacentHTML('beforeend',h)}};
 
 (function(){const st=document.createElement('style');st.textContent=`
 body.orgv.o2lab #h3tags{display:block}body.orgv.o2lab #ogpin{display:none!important}
@@ -274,7 +274,7 @@ body.dk #o2bar .h3seg,body.dk #o2bar .chip,body.dk .o2sl,body.dk #o2cap{backgrou
 
 /* ===================== Callouts (19 Nov): a dot on the part, a thin line, the name and what it does at the side ===================== */
 /* wide screens put the sheet in a side panel on the right: the free space is then everything to its left */
-function o2Side(){const cd=$('#card');if(!cd||!cd.classList.contains('on'))return null;const r=cd.getBoundingClientRect();return r.left>innerWidth*.4&&r.height>innerHeight*.45?r:null}
+function o2Side(){const cd=$('#card');if(!cd||!cd.classList.contains('on'))return null;const r=cd.getBoundingClientRect();return r.left>innerWidth*.4&&(r.height>innerHeight*.45||innerWidth>=980)?r:null}
 function o2Band(){const H=innerHeight,cd=$('#card'),sd=o2Side();let top=70;for(const id of ['o2bar','orgbar','sub']){const e=$('#'+id);if(e&&!e.hidden&&e.getClientRects().length&&getComputedStyle(e).display!=='none'){const b=e.getBoundingClientRect().bottom;if(b>top&&b<H*.5)top=b}}
  return{top:top+8,bot:sd?H-16:cd&&cd.classList.contains('on')?cd.getBoundingClientRect().top-8:H-16,right:sd?sd.left-12:innerWidth}}
 function o2Short(t){t=String(t||'').replace(/^[^:]{0,60}:\s*/,'');const m=t.match(/^.{20,}?[.;](\s|$)/);return(m?m[0]:t).trim().replace(/[;]$/,'.').replace(/^./,c=>c.toUpperCase())}
