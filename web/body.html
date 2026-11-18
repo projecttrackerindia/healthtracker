@@ -91,7 +91,7 @@ body.orgv .top{display:none}#orgbar{display:none}body.orgv #orgbar{display:flex;
 .ovb{position:relative;height:4px;border-radius:2px;background:#E5E5EA;margin:14px 2px 6px}.ovb i{position:absolute;top:0;bottom:0;border-radius:2px;background:#A6E3B7}.ovb b{position:absolute;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:8px;background:#fff;border:3.5px solid #FF9F0A;box-sizing:border-box}
 .ovs{display:block;width:100%;height:58px;margin-top:8px}.ovp{background:#E8F8EE;color:#1A7F37;font-size:12.5px;font-weight:600;padding:4px 9px;border-radius:12px;flex:none;align-self:center}
 .ovn{display:flex;gap:10px;background:#F2F1FF;border-radius:16px;padding:12px 14px;margin-top:12px;color:#5E5CE6;font-size:14px}.ovn span{color:#1D1D1F;line-height:1.4}
-.ova{display:flex;gap:10px;margin-top:14px}.ova .btn{flex:1;margin:0}.ovr{width:52px;height:52px;border-radius:26px;border:0;background:#F2F2F7;display:grid;place-items:center;flex:none}
+.ova{display:flex;gap:10px;margin-top:14px}.ova .btn{flex:1;margin:0;white-space:nowrap;padding:0 12px;min-width:0}.ova .btn.sec{flex:.8}.ovr{width:52px;height:52px;border-radius:26px;border:0;background:#F2F2F7;display:grid;place-items:center;flex:none}
 body.orgv #h3tags{display:none}#ogpin{position:fixed;left:0;top:0;z-index:6;width:20px;height:20px;border-radius:10px;background:#fff;border:4px solid #FF9F0A;box-sizing:border-box;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:none}
 </style></head><body>
 <div id="bg"></div><canvas id="gl"></canvas><svg id="lines"></svg><div id="tags"></div><div id="load">Loading anatomy…</div>
@@ -1065,7 +1065,7 @@ addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.ty
 /* ?e=1: embedded in another screen (the doctor's consult): the body and its organ tags only, no page chrome */
 if(/[?&]e=1\b/.test(location.search)){document.body.classList.add('emb');const st=document.createElement('style');st.textContent='body.emb .top,body.emb #zbar,body.emb #card,body.emb #extra{display:none!important}';document.head.appendChild(st)}
 /* preview without the app: /body?demo */
-fit();frame();</script><script src="/organs2.js?v=4"></script><script>
+fit();frame();</script><script src="/organs2.js?v=5"></script><script>
 if(/[?&]demo\b/.test(location.search))boot({person:{name:'You',age:35,sex:'male'},findings:[],meds:[],vitals:null,canWrite:false});
 send('ready');
 

@@ -10,7 +10,7 @@ const O2A={eye:'/a/organ-eye.7a4a5814.glb',teeth:'/a/organ-teeth.ce05eba8.glb',p
  urine:'/a/tour-urine.20cbc96d.glb',bloodtour:'/a/tour-blood.6d57cae5.glb'};
 const O2HD={"kidney":"/a/hd-kidneys.12183e3b.glb","liver":"/a/hd-liver.92d8c06d.glb","lung":"/a/hd-lungs.49c72407.glb","stomach":"/a/hd-stomach.b5f00da1.glb","gut":"/a/hd-intestines.5744978f.glb","pancreas":"/a/hd-pancreas.cd45ca4f.glb","spleen":"/a/hd-spleen.71b696f9.glb","bladder":"/a/hd-bladder.404971b8.glb","brain":"/a/hd-brain.d2c57a4b.glb","eye":"/a/hd-eye.098c9684.glb","knee":"/a/hd-knee.0ccbfec3.glb","spine":"/a/hd-spine.896a50ab.glb","hip":"/a/hd-hip.298a7e49.glb","shoulder":"/a/hd-shoulder.22cac574.glb","hand":"/a/hd-hand.15c716b8.glb","foot":"/a/hd-foot.b99795b7.glb","teeth":"/a/hd-teeth.439f3881.glb","prostate":"/a/hd-male_reproductive.ea6ad577.glb","footlod":"/a/organ-foot.10bb9c44.glb"};O2A.foot=O2HD.footlod;delete O2HD.footlod;
 const O2NEW=new Set(['eye','teeth','prostate','bones','urine','bloodtour']);
-const O2=window.O2={cs:(()=>{const m=location.search.match(/[?&]cs=(num|edge|tap)/);return m?m[1]:'card'})(),bone:'knee',mode:{},ao:null,env:null,muscles:false,hd:(()=>{try{const v=localStorage.getItem('uh-hd');if(v)return v==='1'}catch(_){}return null})()};
+const O2=window.O2={cs:(()=>{const m=location.search.match(/[?&]cs=(num|edge|tap|card)/);return m?m[1]:'num'})(),bone:'knee',mode:{},ao:null,env:null,muscles:false,hd:(()=>{try{const v=localStorage.getItem('uh-hd');if(v)return v==='1'}catch(_){}return null})()};
 const O2BONES=[['knee','Knee'],['spine','Spine'],['hip','Hip'],['shoulder','Shoulder'],['hand','Hand'],['foot','Foot']];
 const O2BEND={knee:'Bend the knee',hip:'Lift the leg',shoulder:'Raise the arm',hand:'Bend the wrist',foot:'Point the foot'};
 
@@ -299,15 +299,20 @@ const _o2Call=o2Call;o2Call=function(items){if(O2.cs==='card')return _o2Call(ite
  if(O2.cs==='edge'){items=items.map(i=>Object.assign(i,{def:i.sel?i.def:''}));if(el)el.classList.add('edge');const r=_o2Call(items);el=$('#o2call');el.classList.add('edge');return r}
  /* num: numbered dots on the parts, names in a strip above the sheet */
  if(!el){el=document.createElement('div');el.id='o2call';el.innerHTML='<svg aria-hidden="true"></svg><div></div>';document.body.appendChild(el)}el.hidden=false;el.classList.add('num');el.firstChild.innerHTML='';
- const {top,bot}=o2Band(),W=innerWidth,box=el.lastChild;
- if(!O2.numOrder||O2.numSig!==items.map(i=>i.k).join()){O2.numSig=items.map(i=>i.k).join();O2.numOrder=items.map((i,j)=>j).sort((a,b)=>items[a].y-items[b].y||items[a].x-items[b].x)}
+ const {top,bot:bot0}=o2Band(),W=innerWidth,box=el.lastChild;let bot=bot0;{const cp=$('#o2cap');if(cp&&!cp.hidden&&cp.getClientRects().length&&getComputedStyle(cp).display!=='none'){const r=cp.getBoundingClientRect();if(r.height&&r.top<bot-4)bot=Math.min(bot,r.top+8)}}
+ const ks=items.map(i=>i.k+':'+i.name).join('|');if(!O2.numOrder||O2.numSig!==ks){O2.numSig=ks;O2.numOrder=items.map((i,j)=>j).sort((a,b)=>items[a].y-items[b].y||items[a].x-items[b].x)}
  const no={};O2.numOrder.forEach((j,n)=>no[j]=n+1);
- const sig='n'+items.map(i=>i.k+(i.sel?'*':'')).join();if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=items.map((i,j)=>`<button class="o2num${i.sel?' sel':''}" data-j="${j}" aria-label="${esc(i.name)}">${no[j]}</button>`).join('');box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()})}
- [...box.children].forEach((b,j)=>{const i=items[j],on=i&&i.ok&&i.y>top&&i.y<bot-52&&i.x>0&&i.x<W;b.style.opacity=on?1:0;b.style.pointerEvents=on?'auto':'none';if(on)b.style.transform=`translate(${Math.round(i.x-11)}px,${Math.round(i.y-11)}px)`});
- let lg=$('#o2leg');if(!lg){lg=document.createElement('div');lg.id='o2leg';document.body.appendChild(lg)}lg.hidden=false;lg.style.top=(bot-44)+'px';
- const ls='l'+sig;if(lg.dataset.sig!==ls){lg.dataset.sig=ls;lg.innerHTML=O2.numOrder.map(j=>{const i=items[j];return`<button class="${i.sel?'sel':''}" data-j="${j}"><i>${no[j]}</i>${esc(i.name)}</button>`}).join('');lg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()});const s=lg.querySelector('.sel');if(s)s.scrollIntoView({inline:'center',block:'nearest'})}};
+ const sig='n'+items.map(i=>i.k+':'+i.name+(i.sel?'*':'')).join('|');if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=items.map((i,j)=>`<button class="o2num${i.sel?' sel':''}" data-j="${j}" aria-label="${esc(i.name)}">${no[j]}</button>`).join('');box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()})}
+ /* keep dots apart: a dot that would sit on another moves clear, with a hairline back to its exact spot */
+ const placed=[];let lines='';O2.numOrder.forEach(j=>{const i=items[j],bt=box.children[j];if(!bt)return;const on=i&&i.ok&&i.y>top&&i.y<bot-52&&i.x>0&&i.x<W;bt.style.opacity=on?1:0;bt.style.pointerEvents=on?'auto':'none';if(!on)return;
+  let x=i.x,y=i.y;for(let it=0;it<8;it++){let hit=null;for(const q of placed){const dx=x-q.x,dy=y-q.y;if(dx*dx+dy*dy<24*24){hit=q;break}}if(!hit)break;let dx=x-hit.x,dy=y-hit.y,l=Math.hypot(dx,dy);if(l<.5){dx=i.x<W/2?-1:1;dy=0;l=1}x=hit.x+dx/l*25;y=hit.y+dy/l*25}
+  x=Math.max(14,Math.min(W-14,x));placed.push({x,y});bt.style.transform=`translate(${Math.round(x-11)}px,${Math.round(y-11)}px)`;
+  if(Math.hypot(x-i.x,y-i.y)>4)lines+=`<path d="M${i.x.toFixed(1)} ${i.y.toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}" class="${i.sel?'s':''}"/><circle cx="${i.x.toFixed(1)}" cy="${i.y.toFixed(1)}" r="2.5" class="nd${i.sel?' s':''}"/>`});
+ el.firstChild.setAttribute('viewBox',`0 0 ${W} ${innerHeight}`);el.firstChild.innerHTML=lines;
+ let lg=$('#o2leg');if(!lg){lg=document.createElement('div');lg.id='o2leg';document.body.appendChild(lg)}lg.hidden=false;let lt=bot-44;{const cp=$('#o2cap');if(cp&&!cp.hidden&&cp.getClientRects().length&&getComputedStyle(cp).display!=='none'){const r=cp.getBoundingClientRect();if(r.height&&r.top<lt+40)lt=r.top-44}}lg.style.top=lt+'px';
+ const ls='l'+sig;if(lg.dataset.sig!==ls){lg.dataset.sig=ls;lg.innerHTML=O2.numOrder.map(j=>{const i=items[j];return`<button class="${i.sel?'sel':''}" data-j="${j}"><i>${no[j]}</i>${esc(i.name)}</button>`}).join('');lg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()});const s=lg.querySelector('.sel');if(s)s.scrollIntoView({inline:'center',block:'nearest'});else if(lg.dataset.org!==ks){lg.scrollLeft=0}lg.dataset.org=ks}};
 (()=>{const st=document.createElement('style');st.textContent=`
-#o2call.num svg{display:none}
+#o2call.num circle.nd{fill:#1D1D1F;stroke:none}#o2call.num circle.nd.s{fill:#0071E3}
 .o2num{position:absolute;left:0;top:0;width:22px;height:22px;border-radius:11px;border:0;padding:0;background:rgba(255,255,255,.94);color:#1D1D1F;font:700 11.5px/22px Geist,Inter,sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.06);transition:opacity .2s}
 .o2num::before{content:'';position:absolute;inset:-11px}
 .o2num.sel{background:#0071E3;color:#fff;transform-origin:center;box-shadow:0 0 0 4px rgba(0,113,227,.22)}
@@ -319,6 +324,9 @@ const _o2Call=o2Call;o2Call=function(items){if(O2.cs==='card')return _o2Call(ite
 #o2call.edge .o2lab2{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:2px 0}
 #o2call.edge .o2lab2 b{font-size:12px;font-weight:600;line-height:1.25;text-shadow:0 0 3px #F2F2F7,0 0 6px #F2F2F7}
 #o2call.edge .o2lab2.sel{background:none;color:#0071E3}#o2call.edge .o2lab2.sel small{display:none}
+body.dk .o2num{background:rgba(44,44,46,.94);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.12)}body.dk #o2leg button{background:rgba(44,44,46,.9);color:#fff}body.dk #o2leg i{background:#3A3A3C;color:#fff}body.dk #o2leg button.sel,body.dk .o2num.sel{background:#0A84FF;color:#fff}
+body.dk #orgbar span,body.dk #orgbar button{background:rgba(44,44,46,.92);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}body.dk #orgbar svg[stroke]{stroke:#fff}body.dk #orgbar svg[fill='#1D1D1F']{fill:#fff}body.dk .h3seg{background:rgba(44,44,46,.92);border-color:transparent}body.dk .h3seg button{color:#EBEBF5}body.dk .h3seg .on{background:#F5F5F7;color:#1D1D1F}body.dk .fx[style*='EEF0FF']{background:#2A2A3C!important;color:#F5F5F7}
+@media (max-height:740px){#card.og,body.h3 #card,body.ov #card{max-height:38vh!important}}
 #o2hint{position:fixed;left:50%;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:16px;padding:8px 14px;font:600 13px Geist,Inter,sans-serif;color:#3A3A3C;box-shadow:0 1px 4px rgba(0,0,0,.08);pointer-events:none}#o2hint[hidden]{display:none}
 `;document.head.appendChild(st)})();
 const O2P=new THREE.Vector3();
@@ -331,7 +339,11 @@ ogPlace=function(){if(!OG){o2Call(null);return}const items=OG.labels.map((l,i)=>
 h3Place=function(){const el=$('#h3tags');if(el)el.style.display='none';if(!H3||!H3.root){o2Call(null);return}const items=[];
  h3L().forEach(([code,name])=>{const o=H3.nodes[name];if(!o)return;const info=H3P.find(p=>p[3]===code);if(!o.userData.o2l)o.userData.o2l={n:o};const l=o.userData.o2l;if(l.av===undefined)l.av=o2Spot(o,H3.piv||H3.root);if(!l.av)return;o2Pos(l.av.m,l.av.i,O2Q);l.av.m.localToWorld(O2Q);const p=o2Scr(O2Q);
   items.push({k:code,x:p.x,y:p.y,ok:p.ok,name:info[1].replace('Coronary arteries','Coronary artery'),def:o2Short(info[2]),sel:!!(H3.sel&&h3Info(H3.sel.name)===info),on:()=>h3Go(code)})});o2Call(items)};
-const _h3Show2=h3Show;h3Show=async function(k){await _h3Show2(k);if(H3&&H3.root)H3.root.traverse(o=>{if(o.userData&&o.userData.o2l)o.userData.o2l.av=undefined})};
+/* frame the heart in the space left between the controls and the sheet, so short screens never put it under the buttons */
+function o2FrameBand(c,sz){const H=innerHeight,{top,bot}=o2Band(),b2=O2.cs==='num'?bot-52:bot,fill=Math.max(.18,(b2-top)/H*.86),ndc=1-(top+b2)/H;
+ const t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=Math.max(sz.y/2/(t*fill),sz.x/2/(t*cam.aspect*.8))+sz.z/2;CAM(d,c.y-ndc*d*t,0);camZ=goalZ;camY=goalY}
+function o2HeartFit(){if(!H3||!H3.root||MODE!=='heartv'||innerHeight>=740||innerWidth>=700)return;body.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(H3.root);if(b.isEmpty())return;o2FrameBand(b.getCenter(new THREE.Vector3()),b.getSize(new THREE.Vector3()))}
+const _h3Show2=h3Show;h3Show=async function(k){await _h3Show2(k);requestAnimationFrame(()=>requestAnimationFrame(o2HeartFit));if(H3&&H3.root)H3.root.traverse(o=>{if(o.userData&&o.userData.o2l)o.userData.o2l.av=undefined})};
 /* nervous system */
 o2NPlace=function(){if(!O2.ntags||!$('#o2tags')){return}const t=$('#o2tags');t.innerHTML='';o2Call(O2.ntags.map((g,i)=>{O2Q.copy(g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'n'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}))};
 const _o2Clean=o2Clean;o2Clean=function(){_o2Clean();o2Call(null);O2.ntags=null};
