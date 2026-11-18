@@ -164,6 +164,9 @@ def hello(body: Hello, request: Request, db: Session = Depends(get_db), x_dokko_
 
 
 # ---- partners -------------------------------------------------------------------------------------------------------
+NEAR_KM, DELIVER_KM = 50, 15   # how far a listed partner may be; how far a pharmacy delivers
+
+
 @r.get("/stores")
 def stores(kind: str = "pharmacy", lat: float | None = None, lng: float | None = None, city: str | None = None, q: str = "", limit: int = 12,
            db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
@@ -171,9 +174,12 @@ def stores(kind: str = "pharmacy", lat: float | None = None, lng: float | None =
     la, lo, cty, approx = resolve_loc(db, Loc(lat=lat, lng=lng, city=city), h)
     rows = db.scalars(select(Store).where(Store.kind == kind, Store.active == True, Store.verified == True)).all()  # noqa: E712
     out = []
+    lim = NEAR_KM * (2 if approx else 1)   # only partners that can actually serve this place
     for s in rows:
         d = km(la, lo, s.lat, s.lng)
         if q and q.lower() not in (s.name + s.area + s.city).lower():
+            continue
+        if d > lim:
             continue
         out.append((d, s))
     out.sort(key=lambda x: x[0])
@@ -196,7 +202,8 @@ def quotes(body: QuoteReq, db: Session = Depends(get_db), x_dokko_key: str | Non
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, body, h)
     rows = db.scalars(select(Store).where(Store.kind == "pharmacy", Store.active == True, Store.verified == True)).all()  # noqa: E712
-    near = sorted(((km(la, lo, s.lat, s.lng), s) for s in rows), key=lambda x: x[0])[:10]
+    lim = DELIVER_KM * (2 if approx else 1)   # a pharmacy far away cannot deliver in an hour, so it is not offered
+    near = sorted(((d, s) for d, s in ((km(la, lo, s.lat, s.lng), s) for s in rows) if d <= lim), key=lambda x: x[0])[:10]
     if not near:
         return {"city": cty, "approx": approx, "stores": []}
     ids = [s.id for _, s in near]
@@ -613,7 +620,7 @@ def lab_quotes(body: LabReq, db: Session = Depends(get_db), x_dokko_key: str | N
     la, lo, cty, approx = resolve_loc(db, body, h)
     codes = [c for c in body.tests if c in TESTS]
     rows = db.scalars(select(Store).where(Store.kind == "lab", Store.active == True, Store.verified == True)).all()  # noqa: E712
-    near = sorted(((km(la, lo, s.lat, s.lng), s) for s in rows), key=lambda x: x[0])[:8]
+    near = sorted(((d, s) for d, s in ((km(la, lo, s.lat, s.lng), s) for s in rows) if d <= NEAR_KM * (2 if approx else 1)), key=lambda x: x[0])[:8]
     ids = [s.id for _, s in near]
     tests = db.scalars(select(LabTest).where(LabTest.store_id.in_(ids), LabTest.code.in_(codes))).all() if ids and codes else []
     by = {}
@@ -1052,7 +1059,8 @@ def hospitals(lat: float | None = None, lng: float | None = None, city: str | No
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, Loc(lat=lat, lng=lng, city=city), h)
     rows = db.scalars(select(Store).where(Store.kind == "hospital", Store.active == True, Store.verified == True)).all()  # noqa: E712
-    near = sorted(((km(la, lo, s.lat, s.lng), s) for s in rows), key=lambda x: x[0])[:5]
+    lim = NEAR_KM * (2 if approx else 1)
+    near = sorted(((d, s) for d, s in ((km(la, lo, s.lat, s.lng), s) for s in rows) if d <= lim), key=lambda x: x[0])[:5]
     from .consult import next_free
     out = []
     for d, s in near:

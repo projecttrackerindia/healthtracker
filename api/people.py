@@ -250,7 +250,7 @@ def _inverse(rel: str, their_sex: str) -> str:
 
 def person_json(db: Session, u: User, p: Person, a: Access) -> dict:
     pr = profile(p)
-    out = {"id": p.id, "name": p.name, "color": p.color, "self": p.owner_user == u.id,
+    out = {"id": p.id, "name": norm_name(p.name), "nameCaps": bool(p.name) and p.name.isupper(), "color": p.color, "self": p.owner_user == u.id,
            "dependent": p.owner_user is None, "access": a.level, "womens": a.womens,
            "sex": pr.get("sex", ""), "age": age(pr.get("dob", "")), "medicalId": medical_id(db, p, a)}
     if a.can("summary"):
@@ -350,7 +350,7 @@ def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
     members = []
     if u.household_id:
         for m in db.scalars(select(User).where(User.household_id == u.household_id)):
-            members.append({"id": m.id, "name": m.name, "role": m.role, "you": m.id == u.id})
+            members.append({"id": m.id, "name": norm_name(m.name), "role": m.role, "you": m.id == u.id})
     invites = []
     if u.household_id:
         for i in db.scalars(select(HouseholdInvite).where(HouseholdInvite.household_id == u.household_id, HouseholdInvite.used_by.is_(None),
@@ -392,6 +392,7 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
     limit(request, "v2people", 30, 600)
     h = ensure_household(db, u)
     n = len(db.scalars(select(Person.id).where(Person.household_id == h.id)).all())
+    raw_name = re.sub(r"\s+", " ", (body.name or "").strip())[:80]  # kept as typed: capitals mean surname first (Aadhaar style); shown normalised
     body.name = norm_name(body.name)
     if not body.name:
         raise HTTPException(400, "Enter the full name")
@@ -404,7 +405,7 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
             if _name_key(q.name) == k or r_ > 0.88 or (same_dob and (r_ > 0.6 or k[:5] == _name_key(q.name)[:5])):
                 raise HTTPException(409, f"SAME:{q.id}:{q.name} is already in your family. Is this the same person?")
     if body.dependent:
-        p = Person(household_id=h.id, owner_user=None, name=body.name.strip(), color=COLORS[n % len(COLORS)], blob=encrypt(clean_profile(body.profile)))
+        p = Person(household_id=h.id, owner_user=None, name=raw_name or body.name.strip(), color=COLORS[n % len(COLORS)], blob=encrypt(clean_profile(body.profile)))
         db.add(p)
         db.flush()
         db.add(Guardian(person_id=p.id, user_id=u.id))
@@ -439,7 +440,7 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
     else:
         if my_person(db, u):
             raise HTTPException(409, "You already have a profile")
-        p = Person(household_id=h.id, owner_user=u.id, name=body.name.strip(), color=COLORS[n % len(COLORS)], blob=encrypt(clean_profile(body.profile)))
+        p = Person(household_id=h.id, owner_user=u.id, name=raw_name or body.name.strip(), color=COLORS[n % len(COLORS)], blob=encrypt(clean_profile(body.profile)))
         db.add(p)
         db.flush()
     set_abha(db, p, profile(p).get("abha", ""))
@@ -926,7 +927,8 @@ def _num(v):
 def compare_findings(db: Session, pid: str, findings: list, day: str) -> list[dict]:
     prev = {}
     for x in db.scalars(select(HealthRecord).where(HealthRecord.person_id == pid, HealthRecord.kind == "report").order_by(HealthRecord.day.desc())):
-        if (x.day or "") > day[:10]:
+        # "since last time" means an EARLIER report: the report itself (same day) never counts
+        if not x.day or x.day >= day[:10]:
             continue
         d = decrypt(x.blob) or {}
         for f in d.get("findings") or []:
@@ -978,11 +980,17 @@ def _compare_line(cmp: list) -> str:
 def other_person(db: Session, u: User, p: Person, pt: dict):
     """A report printed with someone else's name: which family member it probably belongs to."""
     import difflib
-    n = _name_key(pt.get("name", ""))
+    TITLES = {"mr", "mrs", "ms", "miss", "master", "mstr", "dr", "baby", "bo", "smt", "shri", "sri", "kum", "kumari", "selvi", "thiru", "md"}
+    words = [w for w in (_name_key(w) for w in re.split(r"[\s.,/]+", pt.get("name", ""))) if w and w not in TITLES]
+    n = "".join(words)
     if len(n) < 3:
         return None
-    mine = max(difflib.SequenceMatcher(None, n, _name_key(x)).ratio() for x in (p.name, profile(p).get("legalName") or p.name))
-    if mine > 0.6 or any(_name_key(w) in n for w in p.name.split() if len(w) > 3):
+    pr = profile(p)
+    own = [x for x in (p.name, pr.get("legalName"), pr.get("callName")) if x]
+    own_words = [_name_key(w) for x in own for w in re.split(r"[\s.,]+", x) if len(_name_key(w)) > 2]
+    mine = max(difflib.SequenceMatcher(None, n, _name_key(x)).ratio() for x in own)
+    # the same person: names alike, or a name word of one side found inside the other ("PRASANNA" in "Prasannakrishna")
+    if mine > 0.6 or any(w in n for w in own_words if len(w) > 3) or any(len(w) > 3 and any(w in o or o in w for o in own_words) for w in words):
         return None
     best, score = None, 0.0
     for q in db.scalars(select(Person).where(Person.household_id == p.household_id, Person.id != p.id, Person.removed.is_(None))):

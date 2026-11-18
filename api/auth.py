@@ -332,9 +332,15 @@ def _new_device_alert(db: Session, u: User, ua: str):
         dev = device_label(ua)
         if any(device_label(x) == dev for x in prev):
             return
+        # sessions end after 10 idle minutes, so "no live session on this kind of device" is not "new": a device
+        # that already alerted this account in the last 180 days is a known one
+        from .models import Notice
+        title = f"New sign-in on {dev}"
+        if db.scalar(select(Notice.id).where(Notice.to_user == u.id, Notice.kind == "security", Notice.title == title, Notice.t > now() - 180 * 86400).limit(1)):
+            return
         from .inbox import notify
-        notify(db, u.household_id, "security", f"New sign-in on {dev}",
-               "If this wasn't you, open Settings › Permissions › Sign-in and security and sign that device out.", to_user=u.id, url="/app")
+        notify(db, u.household_id, "security", title,
+               "If this wasn't you, open Settings › Sign-in and security and sign that device out.", to_user=u.id, url="/app#security")
     except Exception as e:   # sign-in never fails because of the alert
         print("[auth] new device alert failed:", type(e).__name__, flush=True)
 
