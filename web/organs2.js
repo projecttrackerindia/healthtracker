@@ -131,7 +131,7 @@ async function o2After(o){const g=OGC[ogf(o)];OG.g=g;document.body.classList.add
   n.visible=!hide});
  if(o==='urine'||o==='bloodtour'||o==='eye'||o==='bones'){const act=OG.mix.existingAction(OG.g.animations.find(a=>a.name!=='Explode'));if(act){act.stop();OG.mix.uncacheAction(act._clip)}}
  const front={eye:/^Right cornea$/,teeth:/upper central secondary incisor/,prostate:/^Prostate gland$/}[o];if(front)o2Face(front);
- o2Bar(o);o2Sheet(o);if(O2NEW.has(o))o2Fit(o);else if(LAY[0]){const m=LAY[0].material;m.transparent=true;m.opacity=.06;m.depthWrite=false}
+ o2Bar(o);o2Sheet(o);if(O2NEW.has(o)){o2Fit(o);if(innerWidth>=900)o2WideShift()}else{if(LAY[0]){const m=LAY[0].material;m.transparent=true;m.opacity=.06;m.depthWrite=false}if(innerWidth>=900)o2WideFit()}
  o2Nat(OG.root,o).catch(()=>{});
  if(o==='lung')o2Breath(false);if(o==='urine'||o==='bloodtour')o2Tour(o);if(o==='bones')o2Bend(0)}
 /* size and centre a standalone model by its visible parts; the camera keeps it above the sheet */
@@ -141,7 +141,7 @@ function o2Fit(o){const root=OG.root,piv=OG.piv;piv.updateMatrixWorld(true);cons
  piv.updateMatrixWorld(true);const w=new THREE.Vector3();piv.getWorldPosition(w);const ws=s.clone().multiplyScalar(k*body.scale.y);o2Frame(w,ws);OG.labels.forEach(l=>l.av=undefined)}
 /* frame a box: its height fills about 40% of the screen (the part above the sheet), its width at most 78%, centred about a third down */
 function o2Frame(c,sz){const H=innerHeight,cd=$('#card'),bar=$('#o2bar')&&!$('#o2bar').hidden?$('#o2bar'):$('#orgbar');
- const top=bar?bar.getBoundingClientRect().bottom+12:90,bot=cd&&cd.classList.contains('on')?H-8-cd.offsetHeight-12:H-24,bot2=O2.cs==='num'?bot-52:bot,fill=Math.max(.2,(bot2-top)/H*.82),ndc=1-(top+bot2)/H,wf=O2.cs==='edge'?Math.max(.4,(innerWidth-2*112)/innerWidth):.8;
+ const top=bar?bar.getBoundingClientRect().bottom+12:90,bot=o2Side()?H-24:cd&&cd.classList.contains('on')?H-8-cd.offsetHeight-12:H-24,bot2=O2.cs==='num'?bot-52:bot,fill=Math.max(.2,(bot2-top)/H*.82),ndc=1-(top+bot2)/H,wf=O2.cs==='edge'?Math.max(.4,(innerWidth-2*112)/innerWidth):.8;
  const t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=Math.max(sz.y/2/(t*fill),sz.x/2/(t*cam.aspect*wf))+sz.z/2;
  CAM(d,c.y-ndc*d*t,0);camZ=goalZ;camY=goalY}
 /* turn the model so a named front part (the cornea, the front teeth) faces the viewer */
@@ -273,8 +273,10 @@ body.dk #o2bar .h3seg,body.dk #o2bar .chip,body.dk .o2sl,body.dk #o2cap{backgrou
 `;document.head.appendChild(st)})();
 
 /* ===================== Callouts (19 Nov): a dot on the part, a thin line, the name and what it does at the side ===================== */
-function o2Band(){const H=innerHeight,cd=$('#card');let top=70;for(const id of ['o2bar','orgbar','sub']){const e=$('#'+id);if(e&&!e.hidden&&e.getClientRects().length&&getComputedStyle(e).display!=='none'){const b=e.getBoundingClientRect().bottom;if(b>top&&b<H*.5)top=b}}
- return{top:top+8,bot:cd&&cd.classList.contains('on')?cd.getBoundingClientRect().top-8:H-16}}
+/* wide screens put the sheet in a side panel on the right: the free space is then everything to its left */
+function o2Side(){const cd=$('#card');if(!cd||!cd.classList.contains('on'))return null;const r=cd.getBoundingClientRect();return r.left>innerWidth*.4&&r.height>innerHeight*.45?r:null}
+function o2Band(){const H=innerHeight,cd=$('#card'),sd=o2Side();let top=70;for(const id of ['o2bar','orgbar','sub']){const e=$('#'+id);if(e&&!e.hidden&&e.getClientRects().length&&getComputedStyle(e).display!=='none'){const b=e.getBoundingClientRect().bottom;if(b>top&&b<H*.5)top=b}}
+ return{top:top+8,bot:sd?H-16:cd&&cd.classList.contains('on')?cd.getBoundingClientRect().top-8:H-16,right:sd?sd.left-12:innerWidth}}
 function o2Short(t){t=String(t||'').replace(/^[^:]{0,60}:\s*/,'');const m=t.match(/^.{20,}?[.;](\s|$)/);return(m?m[0]:t).trim().replace(/[;]$/,'.').replace(/^./,c=>c.toUpperCase())}
 function o2Call(items){let el=$('#o2call');if(!items||!items.length){if(el)el.hidden=true;return}
  if(!el){el=document.createElement('div');el.id='o2call';el.innerHTML='<svg aria-hidden="true"></svg><div></div>';document.body.appendChild(el)}el.hidden=false;
@@ -299,7 +301,7 @@ const _o2Call=o2Call;o2Call=function(items){if(O2.cs==='card')return _o2Call(ite
  if(O2.cs==='edge'){items=items.map(i=>Object.assign(i,{def:i.sel?i.def:''}));if(el)el.classList.add('edge');const r=_o2Call(items);el=$('#o2call');el.classList.add('edge');return r}
  /* num: numbered dots on the parts, names in a strip above the sheet */
  if(!el){el=document.createElement('div');el.id='o2call';el.innerHTML='<svg aria-hidden="true"></svg><div></div>';document.body.appendChild(el)}el.hidden=false;el.classList.add('num');el.firstChild.innerHTML='';
- const {top,bot:bot0}=o2Band(),W=innerWidth,box=el.lastChild;let bot=bot0;{const cp=$('#o2cap');if(cp&&!cp.hidden&&cp.getClientRects().length&&getComputedStyle(cp).display!=='none'){const r=cp.getBoundingClientRect();if(r.height&&r.top<bot-4)bot=Math.min(bot,r.top+8)}}
+ const {top,bot:bot0,right:RX}=o2Band(),W=RX||innerWidth,box=el.lastChild;let bot=bot0;{const cp=$('#o2cap');if(cp&&!cp.hidden&&cp.getClientRects().length&&getComputedStyle(cp).display!=='none'){const r=cp.getBoundingClientRect();if(r.height&&r.top<bot-4)bot=Math.min(bot,r.top+8)}}
  const ks=items.map(i=>i.k+':'+i.name).join('|');if(!O2.numOrder||O2.numSig!==ks){O2.numSig=ks;O2.numOrder=items.map((i,j)=>j).sort((a,b)=>items[a].y-items[b].y||items[a].x-items[b].x)}
  const no={};O2.numOrder.forEach((j,n)=>no[j]=n+1);
  const sig='n'+items.map(i=>i.k+':'+i.name+(i.sel?'*':'')).join('|');if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=items.map((i,j)=>`<button class="o2num${i.sel?' sel':''}" data-j="${j}" aria-label="${esc(i.name)}">${no[j]}</button>`).join('');box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()})}
@@ -308,8 +310,8 @@ const _o2Call=o2Call;o2Call=function(items){if(O2.cs==='card')return _o2Call(ite
   let x=i.x,y=i.y;for(let it=0;it<8;it++){let hit=null;for(const q of placed){const dx=x-q.x,dy=y-q.y;if(dx*dx+dy*dy<24*24){hit=q;break}}if(!hit)break;let dx=x-hit.x,dy=y-hit.y,l=Math.hypot(dx,dy);if(l<.5){dx=i.x<W/2?-1:1;dy=0;l=1}x=hit.x+dx/l*25;y=hit.y+dy/l*25}
   x=Math.max(14,Math.min(W-14,x));placed.push({x,y});bt.style.transform=`translate(${Math.round(x-11)}px,${Math.round(y-11)}px)`;
   if(Math.hypot(x-i.x,y-i.y)>4)lines+=`<path d="M${i.x.toFixed(1)} ${i.y.toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}" class="${i.sel?'s':''}"/><circle cx="${i.x.toFixed(1)}" cy="${i.y.toFixed(1)}" r="2.5" class="nd${i.sel?' s':''}"/>`});
- el.firstChild.setAttribute('viewBox',`0 0 ${W} ${innerHeight}`);el.firstChild.innerHTML=lines;
- let lg=$('#o2leg');if(!lg){lg=document.createElement('div');lg.id='o2leg';document.body.appendChild(lg)}lg.hidden=false;let lt=bot-44;{const cp=$('#o2cap');if(cp&&!cp.hidden&&cp.getClientRects().length&&getComputedStyle(cp).display!=='none'){const r=cp.getBoundingClientRect();if(r.height&&r.top<lt+40)lt=r.top-44}}lg.style.top=lt+'px';
+ el.firstChild.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);el.firstChild.innerHTML=lines;
+ let lg=$('#o2leg');if(!lg){lg=document.createElement('div');lg.id='o2leg';document.body.appendChild(lg)}lg.hidden=false;let lt=bot-44;{const cp=$('#o2cap');if(cp&&!cp.hidden&&cp.getClientRects().length&&getComputedStyle(cp).display!=='none'){const r=cp.getBoundingClientRect();if(r.height&&r.top<lt+40)lt=r.top-44}}lg.style.top=lt+'px';lg.style.right=(innerWidth-W)+'px';
  const ls='l'+sig;if(lg.dataset.sig!==ls){lg.dataset.sig=ls;lg.innerHTML=O2.numOrder.map(j=>{const i=items[j];return`<button class="${i.sel?'sel':''}" data-j="${j}"><i>${no[j]}</i>${esc(i.name)}</button>`}).join('');lg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()});const s=lg.querySelector('.sel');if(s)s.scrollIntoView({inline:'center',block:'nearest'});else if(lg.dataset.org!==ks){lg.scrollLeft=0}lg.dataset.org=ks}};
 (()=>{const st=document.createElement('style');st.textContent=`
 #o2call.num circle.nd{fill:#1D1D1F;stroke:none}#o2call.num circle.nd.s{fill:#0071E3}
@@ -326,6 +328,7 @@ const _o2Call=o2Call;o2Call=function(items){if(O2.cs==='card')return _o2Call(ite
 #o2call.edge .o2lab2.sel{background:none;color:#0071E3}#o2call.edge .o2lab2.sel small{display:none}
 body.dk .o2num{background:rgba(44,44,46,.94);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.12)}body.dk #o2leg button{background:rgba(44,44,46,.9);color:#fff}body.dk #o2leg i{background:#3A3A3C;color:#fff}body.dk #o2leg button.sel,body.dk .o2num.sel{background:#0A84FF;color:#fff}
 body.dk #orgbar span,body.dk #orgbar button{background:rgba(44,44,46,.92);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}body.dk #orgbar svg[stroke]{stroke:#fff}body.dk #orgbar svg[fill='#1D1D1F']{fill:#fff}body.dk .h3seg{background:rgba(44,44,46,.92);border-color:transparent}body.dk .h3seg button{color:#EBEBF5}body.dk .h3seg .on{background:#F5F5F7;color:#1D1D1F}body.dk .fx[style*='EEF0FF']{background:#2A2A3C!important;color:#F5F5F7}
+@media (min-width:900px){#o2bar{right:calc(min(420px,38vw) + 32px)}}
 @media (max-height:740px){#card.og,body.h3 #card,body.ov #card{max-height:38vh!important}}
 #o2hint{position:fixed;left:50%;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:16px;padding:8px 14px;font:600 13px Geist,Inter,sans-serif;color:#3A3A3C;box-shadow:0 1px 4px rgba(0,0,0,.08);pointer-events:none}#o2hint[hidden]{display:none}
 `;document.head.appendChild(st)})();
@@ -339,9 +342,16 @@ ogPlace=function(){if(!OG){o2Call(null);return}const items=OG.labels.map((l,i)=>
 h3Place=function(){const el=$('#h3tags');if(el)el.style.display='none';if(!H3||!H3.root){o2Call(null);return}const items=[];
  h3L().forEach(([code,name])=>{const o=H3.nodes[name];if(!o)return;const info=H3P.find(p=>p[3]===code);if(!o.userData.o2l)o.userData.o2l={n:o};const l=o.userData.o2l;if(l.av===undefined)l.av=o2Spot(o,H3.piv||H3.root);if(!l.av)return;o2Pos(l.av.m,l.av.i,O2Q);l.av.m.localToWorld(O2Q);const p=o2Scr(O2Q);
   items.push({k:code,x:p.x,y:p.y,ok:p.ok,name:info[1].replace('Coronary arteries','Coronary artery'),def:o2Short(info[2]),sel:!!(H3.sel&&h3Info(H3.sel.name)===info),on:()=>h3Go(code)})});o2Call(items)};
+/* wide screens: the side panel takes the right; frame the organ in the space to its left, centred there, big enough to read */
+function o2Free(){const W=innerWidth;return innerWidth>=900?W-(Math.min(420,W*.38)+32):W}
+function o2WideFit(){if(!OG||!OG.root)return;body.updateMatrixWorld(true);const b=new THREE.Box3();OG.root.traverse(n=>{if(n.isMesh&&n.visible)b.expandByObject(n)});if(b.isEmpty())return;
+ const W=innerWidth,F=o2Free(),c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3());o2FrameBand(c,sz,F/W*.86);
+ const t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=goalZ-c.z;body.position.x+=-c.x-((W-F)/2/W)*2*d*t*cam.aspect;OG.labels&&OG.labels.forEach(l=>l.av=undefined)}
+function o2WideShift(){if(!OG||!OG.root)return;body.updateMatrixWorld(true);const b=new THREE.Box3();OG.root.traverse(n=>{if(n.isMesh&&n.visible)b.expandByObject(n)});if(b.isEmpty())return;
+ const W=innerWidth,F=o2Free(),c=b.getCenter(new THREE.Vector3()),t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=goalZ-c.z;body.position.x+=-c.x-((W-F)/2/W)*2*d*t*cam.aspect;OG.labels&&OG.labels.forEach(l=>l.av=undefined)}
 /* frame the heart in the space left between the controls and the sheet, so short screens never put it under the buttons */
-function o2FrameBand(c,sz){const H=innerHeight,{top,bot}=o2Band(),b2=O2.cs==='num'?bot-52:bot,fill=Math.max(.18,(b2-top)/H*.86),ndc=1-(top+b2)/H;
- const t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=Math.max(sz.y/2/(t*fill),sz.x/2/(t*cam.aspect*.8))+sz.z/2;CAM(d,c.y-ndc*d*t,0);camZ=goalZ;camY=goalY}
+function o2FrameBand(c,sz,wf){wf=wf||.8;const H=innerHeight,{top,bot}=o2Band(),b2=O2.cs==='num'?bot-52:bot,fill=Math.max(.18,(b2-top)/H*.86),ndc=1-(top+b2)/H;
+ const t=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)),d=Math.max(sz.y/2/(t*fill),sz.x/2/(t*cam.aspect*wf))+sz.z/2;CAM(d,c.y-ndc*d*t,0);camZ=goalZ;camY=goalY}
 function o2HeartFit(){if(!H3||!H3.root||MODE!=='heartv'||innerHeight>=740||innerWidth>=700)return;body.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(H3.root);if(b.isEmpty())return;o2FrameBand(b.getCenter(new THREE.Vector3()),b.getSize(new THREE.Vector3()))}
 const _h3Show2=h3Show;h3Show=async function(k){await _h3Show2(k);requestAnimationFrame(()=>requestAnimationFrame(o2HeartFit));if(H3&&H3.root)H3.root.traverse(o=>{if(o.userData&&o.userData.o2l)o.userData.o2l.av=undefined})};
 /* nervous system */
