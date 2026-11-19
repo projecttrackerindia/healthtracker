@@ -116,6 +116,7 @@ body.nolabs #o2call,body.nolabs #o2leg{display:none!important}
 body.orgv #h3tags{display:none}#ogpin{position:fixed;left:0;top:0;z-index:6;width:20px;height:20px;border-radius:10px;background:#fff;border:4px solid #FF9F0A;box-sizing:border-box;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:none}
 
 .fcab{display:flex;gap:6px}.fcab button{width:30px;height:30px;border-radius:15px;border:0;background:#F2F2F7;color:#1D1D1F;font:600 17px/30px system-ui;cursor:pointer;padding:0}.fcab button:hover{background:#E5E5EA}
+body.dk #exrail .exs.on{background:rgba(10,132,255,.22)!important;color:#fff!important}body.dk #exrail .exs.on small{color:#9CC7FF}body.dk .exrg button.on{background:#F5F5F7!important;color:#1D1D1F!important}body.dk #exrail .exs:hover{background:rgba(255,255,255,.08)}body.dk .ovdo{color:#C7C7CC}body.dk .ovtl{color:#E5E5EA}
 </style></head><body>
 <div id="bg"></div><canvas id="gl"></canvas><svg id="lines"></svg><div id="tags"></div><div id="load">Loading anatomy…</div>
 <header class="top"><div class="row" style="justify-content:space-between"><p class="eb" id="eb"></p><button class="x" onclick="send('close')" aria-label="Close" style="pointer-events:auto">✕</button></div><h1 class="big" id="ttl">Body</h1><p class="line" id="ln"></p><div class="chips" id="modes"></div><div class="chips" id="sub" style="margin-top:0"></div><div id="chips" hidden></div></header>
@@ -200,6 +201,7 @@ const SYS_COL={Heart:'#FF375F',Arteries:'#FF453A',Veins:'#5E5CE6',Respiratory:'#
 const LAYERS=[['organs','Organs',3],['muscle','Muscles',1],['skeleton','Skeleton',2],['vessels','Vessels',4],['nerves','Nerves',5],['skin','Skin',0]];
 const R=new THREE.WebGLRenderer({canvas:$('#gl'),antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;
 R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
+const SKINC=()=>document.body.classList.contains('preg')?0xF2C9D3:0x9CC0EE;
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(24,1,.1,100);
 scene.add(new THREE.HemisphereLight(0xfff8f2,0x8a7f78,.6));
 const kl=new THREE.DirectionalLight(0xfff6ee,1.05);kl.position.set(3,6,7);scene.add(kl);
@@ -236,7 +238,7 @@ function build(S){LAY={};PICK=[];body.clear();
   const pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni),ranges=[];let vo=0,io=0;
   ks.forEach(k=>{const p=S.meta.parts[k],P=partPos(S,p),I=partIdx(S,p),c=colOf(p,+l,S.names[k]);pos.set(P,vo*3);for(let j=0;j<p.v;j++){col[(vo+j)*3]=c.r;col[(vo+j)*3+1]=c.g;col[(vo+j)*3+2]=c.b}for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;ranges.push([io/3,(io+I.length)/3,k,vo,p.v,io,I.length]);vo+=p.v;io+=I.length});
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();
-  let m;if(+l===0){m=new THREE.MeshPhysicalMaterial({color:0xE6ECF4,roughness:.35,transparent:true,opacity:.18,depthWrite:false,clearcoat:.6});m.onBeforeCompile=FRESNEL}
+  let m;if(+l===0){m=new THREE.MeshPhysicalMaterial({color:SKINC(),roughness:.35,transparent:true,opacity:.22,depthWrite:false,clearcoat:.6});m.onBeforeCompile=FRESNEL}
   else{m=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:+l===2?.7:+l===1?.5:.38,metalness:0,clearcoat:+l===3?.55:+l===1?.35:.1,clearcoatRoughness:.35,sheen:0,transparent:true,opacity:1});m.onBeforeCompile=TISSUE(+l)}
   const mesh=new THREE.Mesh(g,m);mesh.renderOrder=+l===0?5:1;mesh.userData={l:+l,ranges};body.add(mesh);LAY[l]=mesh;PICK.push(mesh)}}
 function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];
@@ -285,7 +287,7 @@ function frame(){const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle
  rot.y+=(goal.y-rot.y)*Math.min(1,dt*6);rot.x+=(goal.x-rot.x)*Math.min(1,dt*6);const piv=(OG&&OG.piv)||(H3&&H3.piv);if(piv){body.rotation.set(0,0,0);piv.rotation.set(rot.x,rot.y,0)}else body.rotation.set(rot.x,rot.y,0);
  camZ+=(goalZ-camZ)*Math.min(1,dt*3);camY+=(goalY-camY)*Math.min(1,dt*3);PAN.x+=(PANG.x-PAN.x)*Math.min(1,dt*8);PAN.y+=(PANG.y-PAN.y)*Math.min(1,dt*8);cam.position.set(PAN.x,camY+.15+PAN.y,camZ);cam.lookAt(PAN.x,camY+PAN.y,0);
  if(HL)HL.material.emissiveIntensity=.35+.25*Math.sin(clock.elapsedTime*3.5);if(!U.still)pregAnimate(clock.elapsedTime,dt);if(typeof animFeat==='function')animFeat(clock.elapsedTime);
- if(H3)h3Tick(dt);if(OG){OG.mix.update(dt)}R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
+ if(H3)h3Tick(dt);if(OG){OG.mix.update(dt)}R.toneMappingExposure=document.body.classList.contains('dk')?1.3:1.05;R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
 /* tags: report findings pinned to organs + atlas labels */
 /* a pair (both kidneys, both lungs) shares a box whose centre is the spine or the heart: when no part crosses the middle, keep only the parts on one side */
 function centerOf(re){if(!SET||!re)return null;const bx=[];SET.meta.parts.forEach((p,k)=>{if((p.l??1)===3&&re.test(SET.names[k]))bx.push(p.b)});if(!bx.length)return null;
@@ -363,7 +365,7 @@ function pregAnimate(t,dt){if(!PG||!BABYON)return;const P=PG,w=P.w,b=P.baby,amp=
  const from=new THREE.Vector3(0,-.05,.3).applyMatrix4(b.g.matrixWorld),to=P.plac.position.clone();body.worldToLocal(from);const mid=from.clone().lerp(to,.5).add(new THREE.Vector3(.12*Math.sin(t),.1,.08));
  P.cord.geometry.dispose();P.cord.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3([from,from.clone().lerp(mid,.5).add(new THREE.Vector3(.05,-.05,.05)),mid,mid.clone().lerp(to,.5).add(new THREE.Vector3(-.06,.04,0)),to]),40,.028*Math.max(.6,P.r[0]),8);P.cord.visible=w>=10&&!!window.BABY_MODEL}
 var BABYON=false;
-function pregView2(w){document.body.classList.add('preg');setLayer('organs');tags([]);BABYON=true;pregSet(w);
+function pregView2(w){document.body.classList.add('preg');document.body.classList.remove('dk');setLayer('organs');tags([]);BABYON=true;pregSet(w);
  const u=PG.c;goalZ=5.2+2.6*sst(8,40,w);goalY=u.y+.15;HOME={z:goalZ,y:goalY};goal.y=-.95;goal.x=.08;
  const d=WK[w]||WK[Object.keys(WK).map(Number).reduce((a,b)=>Math.abs(b-w)<Math.abs(a-w)?b:a)];
  $('#eb').textContent='SITA · PREGNANCY';$('#eb').style.color='#E5577A';$('#ttl').textContent='Week '+w;$('#ln').innerHTML=`About <b>${d[0]}</b>, <b>${d[1]}</b> · the size of ${d[2]}.`;
@@ -443,7 +445,7 @@ function sheet(html){$('#card').innerHTML='<div class="grab"></div>'+html;$('#ca
 const CAM=(z,y,ry=0,rx=0)=>{goalZ=z;goalY=y;HOME={z,y};goal.y=ry;goal.x=rx};
 function modes(){const pg=DATA&&DATA.person.pregnancy;const MAIN=[['explore','Results'],['meds',T('meds')],['heartv','Heart']];const MORE=[];
  $('#modes').innerHTML=pg?`<button class="chip ${MODE==='baby'?'on':''}" onclick="mode('baby')">${T('baby')}</button>`:''}
-function reset(){h3Off();ogOff();$('#card').classList.remove('og');document.body.classList.remove('ov');if(window.EX)EX.clear();if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');if(LAY[0])LAY[0].material.color.set(0xE6ECF4);BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
+function reset(){h3Off();ogOff();$('#card').classList.remove('og');document.body.classList.remove('ov');if(window.EX)EX.clear();if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');document.body.classList.add('dk');if(LAY[0])LAY[0].material.color.set(SKINC());BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
  if(HOLO)unholo();R.localClippingEnabled=false;for(const l in LAY){LAY[l].material.clippingPlanes=[];LAY[l].material.side=THREE.FrontSide}$('#sub').innerHTML='';$('#extra').innerHTML='';body.position.x=0;setLayer('organs');QZ=null;HURT=null}
 /* Only three screens remain (approved revamp): the body, an organ/heart, a report or medicine — plus pregnancy and credits.
    Every older view name now lands on the body. */
@@ -752,7 +754,7 @@ function fRank(f){return RANK[f.flag]||0}
 function orgsWith(fs){const by={};fs.forEach(f=>{if(!f.org)return;const b=by[f.org];if(!b||fRank(f)>fRank(b))by[f.org]=f});return by}
 function onBody(o){return !!partCenter(o)}
 /* the body: see-through, organs with something to show in their true colour */
-function xbody(orgs){setLayer('organs');for(const l in LAY){const m=LAY[l];if(+l===3){m.visible=true;m.material.transparent=true;m.material.opacity=.16;m.material.depthWrite=false}else if(+l===2){m.visible=true;m.material.transparent=true;m.material.opacity=.12;m.material.depthWrite=false}else if(+l===0){m.visible=true}else m.visible=false}
+function xbody(orgs){setLayer('organs');for(const l in LAY){const m=LAY[l];if(+l===3){m.visible=true;m.material.transparent=false;m.material.opacity=1;m.material.depthWrite=true;m.material.needsUpdate=true}else if(+l===2){m.visible=true;m.material.transparent=true;m.material.opacity=.18;m.material.depthWrite=false}else if(+l===0){m.visible=true}else m.visible=false}
  clearGlows();orgs.forEach(o=>{if(!ORGRE[o]||!onBody(o))return;const g=glow(ORGRE[o],NATC[o]||0xC05050,3,1);if(g){g.userData.org=o;const mm=g.children[0].material;mm.emissiveIntensity=.08}})}
 function vback(){$('#sub').innerHTML=VSTACK.length?`<button class="chip vbk" onclick="vpop()">‹ ${esc(VSTACK[VSTACK.length-1].label)}</button>`:''}
 function vgo(v,label){if(VIEW)VSTACK.push({v:VIEW,label:label||'Body'});vshow(v)}
@@ -1188,7 +1190,7 @@ let HOME0={z:16,y:0};
 function parseSet(buf,names){const dv=new DataView(buf),n=dv.getUint32(0,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,n)));return{buf,base:4+n,meta,names}}
 const PLAIN=[[/hbs ?ag|hepatitis b surface/i,'Hepatitis B'],[/anti[- ]?hcv|hepatitis c/i,'Hepatitis C'],[/\bhiv\b/i,'HIV'],[/rpr|vdrl|syphilis|treponema/i,'Syphilis'],[/abo\b|blood group/i,'Blood group'],[/\brh\b/i,'Rh factor'],[/hba1c|glycated|glycosylated/i,'3-month sugar'],[/fasting.*(glucose|sugar)|\bfbs\b/i,'Fasting sugar'],[/(pp|post ?prandial).*(glucose|sugar)|\bppbs\b/i,'Sugar after food'],[/random.*(glucose|sugar)|\brbs\b/i,'Sugar'],[/haemoglobin|hemoglobin|^hb$/i,'Haemoglobin'],[/\btsh\b/i,'Thyroid TSH'],[/creatinine/i,'Creatinine'],[/\burea\b|\bbun\b/i,'Urea'],[/sgpt|\balt\b/i,'Liver ALT'],[/sgot|\bast\b/i,'Liver AST'],[/bilirubin/i,'Bilirubin'],[/\bldl\b/i,'LDL'],[/\bhdl\b/i,'HDL'],[/triglycer/i,'Triglycerides'],[/total cholesterol|cholesterol,? total|^cholesterol/i,'Cholesterol'],[/vitamin d|25[- ]?oh/i,'Vitamin D'],[/\bb12\b|cobalamin/i,'Vitamin B12'],[/platelet/i,'Platelets'],[/\bwbc\b|leu[ck]ocyte|white blood/i,'White cells'],[/\besr\b/i,'ESR'],[/\bcrp\b/i,'CRP'],[/uric acid/i,'Uric acid'],[/ferritin/i,'Ferritin'],[/serum iron|^iron/i,'Iron']];
 function plainTest(t){t=String(t||'');for(const [re,n] of PLAIN)if(re.test(t))return n;return t.replace(/\s*\(.*\)/,'').replace(/[,\s]+(serum|plasma|whole blood|od value|s\/co|cmia|elisa)\b.*$/i,'').trim()||t}
-async function boot(d){DATA=d;document.body.classList.toggle('dk',d.look==='dark');{const NOORG=/\bhiv\b|hbsag|hepatitis|\bhcv\b|anti.?hcv|vdrl|\brpr\b|syphilis|tpha|chlamydia|gonorr|herpes|\bhsv\b|\bhpv\b|\bsti\b/i,ID=/blood group|\babo\b|\brh\b|rh (type|factor)/i,od=f=>/\bod value\b|\bindex value\b|s\/co/i.test(f.test||''),k2=f=>String(f.test||'').toLowerCase().split(/[\s,()]+/).filter(w=>w&&!/^(od|value|serum|index)$/.test(w)).slice(0,2).join(' ');
+async function boot(d){DATA=d;document.body.classList.add('dk');{const NOORG=/\bhiv\b|hbsag|hepatitis|\bhcv\b|anti.?hcv|vdrl|\brpr\b|syphilis|tpha|chlamydia|gonorr|herpes|\bhsv\b|\bhpv\b|\bsti\b/i,ID=/blood group|\babo\b|\brh\b|rh (type|factor)/i,od=f=>/\bod value\b|\bindex value\b|s\/co/i.test(f.test||''),k2=f=>String(f.test||'').toLowerCase().split(/[\s,()]+/).filter(w=>w&&!/^(od|value|serum|index)$/.test(w)).slice(0,2).join(' ');
   /* a screening test (HIV, hepatitis) says nothing about how an organ works, and blood group is who you are, not a result: neither tints an organ. A lab's raw "OD value" row sits behind its plain result. */
   const F0=d.findings||[];d.findings=F0.filter(f=>!ID.test(f.test||'')&&!(od(f)&&F0.some(g=>g!==f&&g.rid===f.rid&&!od(g)&&k2(g)===k2(f))));d.findings.forEach(f=>{if(NOORG.test(f.test||'')){f.org=null;f.screen=1}})}
  (d.findings||[]).forEach(f=>{if(f.test&&!f.raw){f.raw=f.test;const pl=plainTest(f.test);f.test=pl+(/od value|index|s\/co ratio/i.test(f.raw)&&pl!==f.raw?' (level)':'');f.value=String(f.value||'').replace(/^non ?reactive$/i,'Not detected').replace(/^reactive$/i,'Detected')}});document.documentElement.lang=U.lang;const sex=d.person.sex==='female'?'female':'male';STATE.base=sex;STATE.sex=sex;STATE.hd=false;
