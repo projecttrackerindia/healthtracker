@@ -744,7 +744,15 @@ def set_prices(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depen
         for k in ("price", "stock", "tat_hours", "fasting", "name", "mrp"):
             if k in row and hasattr(o, k):
                 setattr(o, k, row[k])
+    have = {(o.code if s.kind == "lab" else o.sku): o for o in (s.tests if s.kind == "lab" else s.items)}
     for row in body.get("add", []):
+        key = row.get("code" if s.kind == "lab" else "sku", "custom")[:40]
+        if key != "custom" and key in have:   # the same test or product again updates the price instead of listing it twice
+            o = have[key]
+            for k in ("price", "stock", "tat_hours", "fasting", "mrp"):
+                if k in row and hasattr(o, k):
+                    setattr(o, k, row[k])
+            continue
         if s.kind == "lab":
             db.add(LabTest(store_id=s.id, code=row.get("code", "custom")[:40], name=row.get("name", "")[:120], price=int(row.get("price", 0)), tat_hours=int(row.get("tat_hours", 24)), fasting=bool(row.get("fasting"))))
         else:

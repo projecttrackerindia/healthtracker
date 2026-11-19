@@ -23,6 +23,8 @@ ar = APIRouter(prefix="/api/admin/catalog")
 pub = APIRouter(prefix="/api/v2/catalog")
 NS = "catalog"
 SIDES = ("front", "strip", "back")
+# not every test is a blood sample: imaging and tracings are done at the centre, a Pap smear is a swab
+SAMPLE = {"xray": "Imaging", "usg": "Imaging", "echo": "Imaging", "ecg": "ECG tracing", "pap": "Cervical swab"}
 VALUES = {"cbc": 24, "lipid": 8, "lft": 11, "kft": 9, "thy": 3, "urine": 18}
 
 
@@ -37,7 +39,11 @@ def ensure(db: Session) -> None:
     if not db.scalar(select(func.count(CatalogTest.code))):
         for code, (name, price, tat, fast) in TESTS.items():
             db.add(CatalogTest(code=code, name=name, tat_hours=tat, fasting=fast, values=VALUES.get(code, 1),
-                               sample="Urine" if "urine" in code else "Blood"))
+                               sample=SAMPLE.get(code, "Urine" if "urine" in code else "Blood")))
+    for code, smp in SAMPLE.items():
+        t = db.get(CatalogTest, code)
+        if t and t.sample == "Blood":
+            t.sample = smp
     if not db.scalar(select(func.count(Package.code))):
         have = set(TESTS)
         for code, name, who, tests, color, icon in [

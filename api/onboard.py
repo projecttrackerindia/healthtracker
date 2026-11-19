@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from . import storage
 from .admin import log, me as admin_me
 from .db import get_db
-from .models import Admin, PartnerUser, Store, StoreItem, new_id, now
+from .models import LabTest, Admin, PartnerUser, Store, StoreItem, new_id, now
 from .partner import me as partner_me, my_store
 
 ar = APIRouter(prefix="/api/admin/onboard")
@@ -80,7 +80,15 @@ def checks(db: Session, s: Store) -> list[dict]:
     p = s.profile or {}
     shots = {x.get("slot") for x in (s.photos or [])}
     users = db.scalar(select(func.count(PartnerUser.id)).where(PartnerUser.store_id == s.id, PartnerUser.active == True)) or 0  # noqa: E712
-    items = db.scalar(select(func.count(StoreItem.id)).where(StoreItem.store_id == s.id)) or 0
+    # a lab's price list is its tests; a pharmacy's is its items
+    # a lab's price list is its tests; a pharmacy's is its items; a hospital's is its doctors' consultation fees
+    if s.kind == "lab":
+        items = db.scalar(select(func.count(LabTest.id)).where(LabTest.store_id == s.id)) or 0
+    elif s.kind == "hospital":
+        items = db.scalar(select(func.count(PartnerUser.id)).where(PartnerUser.store_id == s.id, PartnerUser.role == "doctor",
+                                                                    PartnerUser.active == True, PartnerUser.fee > 0)) or 0  # noqa: E712
+    else:
+        items = db.scalar(select(func.count(StoreItem.id)).where(StoreItem.store_id == s.id)) or 0
     exp = exp_of(p)
     expired = bool(exp) and exp < _today()
     miss = [
@@ -90,7 +98,7 @@ def checks(db: Session, s: Store) -> list[dict]:
         + ([] if s.landmark else ["landmark"]),
         ([] if s.licence else ["licence / NABL number"]) + (["licence has expired"] if expired else [])
         + ([] if exp else ["licence valid-until date"]) + ([] if s.gstin else ["GSTIN"]),
-        [] if items else ["price list"],
+        [] if items else (["a doctor with a consultation fee"] if s.kind == "hospital" else ["price list"]),
         ([] if users else ["owner sign-in"]) + ([] if s.kind != "lab" or p.get("pathologist") else ["signing pathologist"]),
         ([] if p.get("bankLast4") and p.get("bankIfsc") and p.get("bankHolder") else ["payout bank account (holder, IFSC, last 4)"])
         + ([] if (p.get("agreement") or {}).get("v") == AGREEMENT_VERSION else ["partner agreement accepted by the owner"]),
@@ -170,7 +178,8 @@ def board(kind: str = "lab", tab: str = "review", q: str = "", a: Admin = Depend
         if s.verified and s.active:
             pins.update(str(x).strip() for x in ((s.profile or {}).get("pins") or "").replace(",", " ").split() if x.strip())
     soon = sum(1 for s in rows if s.verified and (s.profile or {}).get("nablExpiry") and (s.profile or {})["nablExpiry"] < _plus_days(30))
-    items = db.scalar(select(func.count(StoreItem.id)).join(Store, Store.id == StoreItem.store_id).where(Store.kind == kind, Store.verified == True)) or 0  # noqa: E712
+    items = (db.scalar(select(func.count(LabTest.id)).join(Store, Store.id == LabTest.store_id).where(Store.kind == kind, Store.verified == True)) if kind == "lab"  # noqa: E712
+             else db.scalar(select(func.count(StoreItem.id)).join(Store, Store.id == StoreItem.store_id).where(Store.kind == kind, Store.verified == True))) or 0  # noqa: E712
     return {"counts": counts, "rows": shown, "kpi": {"live": counts["live"], "waiting": sum(1 for c in cards if c["tab"] == "review" and c["tag"] == "Ready to go live") or counts["review"],
                                                      "items": items, "pins": len(pins), "expiring": soon}}
 
