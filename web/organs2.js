@@ -355,7 +355,7 @@ function o2FrameBand(c,sz,wf){wf=wf||.8;const H=innerHeight,{top,bot}=o2Band(),b
 function o2HeartFit(){if(!H3||!H3.root||MODE!=='heartv'||innerHeight>=740||innerWidth>=700)return;body.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(H3.root);if(b.isEmpty())return;o2FrameBand(b.getCenter(new THREE.Vector3()),b.getSize(new THREE.Vector3()))}
 const _h3Show2=h3Show;h3Show=async function(k){await _h3Show2(k);requestAnimationFrame(()=>requestAnimationFrame(o2HeartFit));if(H3&&H3.root)H3.root.traverse(o=>{if(o.userData&&o.userData.o2l)o.userData.o2l.av=undefined})};
 /* nervous system */
-o2NPlace=function(){if(!O2.ntags||!$('#o2tags')){return}const t=$('#o2tags');t.innerHTML='';o2Call(O2.ntags.map((g,i)=>{O2Q.copy(g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'n'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}))};
+o2NPlace=function(){if(!O2.ntags||!$('#o2tags')){return}const t=$('#o2tags');t.innerHTML='';o2Call(O2.ntags.map((g,i)=>{O2Q.copy(typeof g.p==='function'?g.p():g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'n'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}))};
 const _o2Clean=o2Clean;o2Clean=function(){_o2Clean();o2Call(null);O2.ntags=null};
 const _h3Off2=h3Off;h3Off=function(){_h3Off2();o2Call(null)};
 
@@ -434,6 +434,7 @@ body.dk .o2fx span,body.dk .o2q,body.dk .o2hd .h3seg{background:#2C2C2E;color:#f
 `;document.head.appendChild(st)})();
 
 /* ===================== Body close-ups (thyroid, ears, skin…): callouts on a point of the part itself ===================== */
+Object.assign(O2D,{'Isthmus':'The thin bridge of thyroid tissue that joins the two lobes across the front of the windpipe.','Windpipe':'The trachea carries air from the voice box down to the lungs.','Red cells':'Carry oxygen on haemoglobin. Haemoglobin and RBC count measure them.','White cells':'Fight infection. Your WBC count measures them.','Platelets':'Tiny cell pieces that plug cuts and start clotting. Your platelet count measures them.','Right breast':'Milk-making glands and fat, held to the chest wall by fine ligaments. Check monthly for lumps or changes.','Left breast':'Milk-making glands and fat, held to the chest wall by fine ligaments. Check monthly for lumps or changes.','Bladder':'A muscular bag that stores urine until you pass it.','Womb':'The uterus, where a baby grows; it sits just behind the bladder.'});
 Object.assign(O2D,{'Thyroid gland':'Two lobes around the windpipe below the voice box. It makes the hormones that set how fast the body uses energy.','Voice box':'The larynx, with the vocal cords inside; the thyroid cartilage is its front (the Adam’s apple).','Right ear':'The outer ear collects sound; the middle and inner ear turn it into nerve signals.','Left ear':'The outer ear collects sound; the middle and inner ear turn it into nerve signals.','Inner ear':'The cochlea turns sound into nerve signals; the canals beside it sense balance.','Molars':'Back teeth with broad tops that grind food.','Front teeth':'Incisors cut food.','Lower jaw':'The mandible holds the lower teeth.','Spine':'Thirty-three vertebrae protect the spinal cord and carry the body’s weight.','Hip':'The hip bone forms the socket where the thigh bone turns.','Right eye':'Focuses light onto the retina and sends what you see to the brain.','Left eye':'Focuses light onto the retina and sends what you see to the brain.'});
 /* parts partly covered from the front (the voice box sits behind the thyroid's upper lobes): aim higher on the part */
 const O2BIAS={'Voice box':.32};
@@ -441,9 +442,9 @@ function o2BodyPt(re,bias=0){let best=null,bz=-Infinity,near=null,nd=Infinity;co
  for(const l of [0,1,2,3,4,5]){const m=LAY[l];if(!m||!m.userData.ranges)continue;const ix=m.geometry.index.array,pa=m.geometry.attributes.position;for(const rg of m.userData.ranges){if(!re.test(SET.names[rg[2]]))continue;const s=ix.subarray(rg[5],rg[5]+rg[6]);hits.push([pa,s]);for(let i=0;i<s.length;i+=3){o2Denorm(pa,s[i],p);b.expandByPoint(p)}}}
  if(b.isEmpty())return null;const c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3()),r=Math.max(1e-5,Math.min(sz.x,sz.y)*.3);c.y+=sz.y*bias;
  for(const [pa,s] of hits)for(let i=0;i<s.length;i++){o2Denorm(pa,s[i],p);const dx=p.x-c.x,dy=p.y-c.y,d2=dx*dx+dy*dy;if(d2<r*r&&p.z>bz){bz=p.z;best=p.clone()}const d3=d2+(p.z-c.z)**2;if(d3<nd){nd=d3;near=p.clone()}}return best||near}
-const _partView=partView;partView=function(o){const r=_partView(o);if(r){tags([]);const P=PARTS[o];O2.pv=(P.labels||[]).map(([n,re])=>({lab:n,p:o2BodyPt(re,O2BIAS[n]||0)})).filter(x=>x.p)}return r};
+const _partView=partView;partView=function(o){const r=_partView(o);if(r){tags([]);const L=PVL||(PARTS[o]&&PARTS[o].labels||[]).map(([n,re])=>({lab:n,re}));PVL=null;O2.pv=L.map(x=>x.p?{lab:x.lab,p:x.p}:{lab:x.lab,p:o2BodyPt(x.re,O2BIAS[x.lab]||0)}).filter(x=>x.p)}return r};
 const _partOff=partOff;partOff=function(){_partOff();if(O2.pv){O2.pv=null;o2Call(null)}};
-(function o2PvLoop(){if(O2.pv&&!OG&&!H3)o2Call(O2.pv.map((g,i)=>{O2Q.copy(g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'p'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}));requestAnimationFrame(o2PvLoop)})();
+(function o2PvLoop(){if(O2.pv&&!OG&&!H3)o2Call(O2.pv.map((g,i)=>{O2Q.copy(typeof g.p==='function'?g.p():g.p);body.localToWorld(O2Q);const p=o2Scr(O2Q);return{k:'p'+i,x:p.x,y:p.y,ok:p.ok,name:g.lab,def:O2D[g.lab]||'',sel:false,on:()=>{}}}));requestAnimationFrame(o2PvLoop)})();
 
 /* ===================== Lymphatic system (19 Nov): nodes, spleen, thymus and tonsils on the body (Z-Anatomy, CC BY-SA 4.0);
    inside a lymph node (HuBMAP CCF reference organ, NIH, CC BY 4.0) ===================== */
