@@ -74,12 +74,15 @@ def receipt_pdf(o: Order) -> bytes:
     page.insert_text((M, y), (o.member or "Family member")[:48], fontsize=11, fontname="hebo", color=INK)
     page.insert_text((col2, y), (store.name if store else "Partner")[:48], fontsize=11, fontname="hebo", color=INK)
     y += 14
-    for line in [o.address[:70] or "—", time.strftime("%d/%m/%Y %H:%M", time.localtime(o.created)) + " IST",
-                 f"Payment: {o.payment or 'as agreed with seller'}"]:
+    bill = (o.addr or {}).get("bill") if isinstance(o.addr, dict) else None
+    y_top = y
+    for line in [o.address[:70] or "—"] + ([f"Bill to: {bill.get('name', '')}, {bill.get('line', '')}"[:70]] if bill else []) + [
+                 time.strftime("%d/%m/%Y %H:%M", time.localtime(o.created)) + " IST", f"Payment: {o.payment or 'as agreed with seller'}"]:
         page.insert_text((M, y), line, fontsize=9, fontname="helv", color=MUTE); y += 12
-    y2 = y - 36
+    y2 = y_top
     if store:
-        for line in [", ".join(x for x in (store.address, store.area, store.city) if x)[:70] or "—", f"Licence: {store.licence or 'on the seller invoice'}",
+        ident = (f"GSTIN: {store.gstin}" if store.gstin else "Ships across India") if o.kind == "shop" else f"Licence: {store.licence or 'on the seller invoice'}"
+        for line in [", ".join(x for x in (store.address, store.area, store.city) if x)[:70] or "—", ident,
                      f"Phone: {store.phone or '—'}"]:
             page.insert_text((col2, y2), line, fontsize=9, fontname="helv", color=MUTE); y2 += 12
     y = max(y, y2) + 18
@@ -97,6 +100,8 @@ def receipt_pdf(o: Order) -> bytes:
         name = str(it.get("name", ""))[:56] + (" (Rx)" if it.get("rx") else "")
         page.insert_text((M + 8, y), name, fontsize=10, fontname="helv", color=INK)
         price = int(it.get("price", 0) or 0)
+        if o.kind == "shop" and it.get("list"):
+            price = int(it["list"])   # hospital bag: the brand's price here, the offer as one line below, so the column adds up
         qty = int(it.get("qty", 1) or 1)
         if not kind_lab:
             page.insert_text((W - M - 180, y), str(qty), fontsize=10, fontname="helv", color=INK)
@@ -106,7 +111,7 @@ def receipt_pdf(o: Order) -> bytes:
     y += 22
     rows = [("Subtotal", o.subtotal), ("Home collection" if kind_lab else "Delivery", o.fee)]
     if o.discount:
-        rows.append(("Savings off MRP", -o.discount))
+        rows.append(("Offer: " + (f"{o.discount * 100 // o.subtotal}% off brand prices" if o.kind == "shop" and o.subtotal else "savings off MRP"), -o.discount))
     for label, val in rows:
         page.insert_text((W - M - 200, y), label, fontsize=9.5, fontname="helv", color=MUTE)
         page.insert_text((W - M - 60, y), (("- " if val < 0 else "") + money(abs(val))[4:]), fontsize=9.5, fontname="helv", color=INK)
@@ -119,10 +124,18 @@ def receipt_pdf(o: Order) -> bytes:
     st = order_json(o)
     page.insert_text((M, y), f"Status: {st['status'].replace('_', ' ')}", fontsize=9.5, fontname="helv", color=INK)
     y += 26
-    foot = ["This receipt records an order placed through Urban Health (urbanhealth.in). The tax invoice under the seller's",
-            "drug licence / NABL registration and GSTIN is issued by the seller and is available from them on request.",
-            "Returns: sealed, unexpired medicines within 7 days of delivery; prescription, refrigerated and opened items cannot be returned.",
-            "Raise a return or a claim from Bills in the app. Support: " + (os.getenv("LEGAL_EMAIL") or "support@urbanhealth.in") + "."]
+    support = "Support: " + (os.getenv("LEGAL_EMAIL") or "support@urbanhealth.in") + "."
+    if o.kind == "shop":
+        foot = ["Sold and shipped by Urban Health (urbanhealth.in). Prices include taxes.",
+                "Returns: unused items in their original packing within 7 days of delivery; a size that doesn't fit is exchanged once, free.",
+                "Maternity pads, disposable underwear, nursing bras, breast pads, intimate wash and wipes can't be returned once opened,",
+                "unless they arrive damaged or wrong. Damaged or wrong item: tell us within 48 hours of delivery, with a photo.",
+                "Start a return from Orders in the app. Full policy: urbanhealth.in/hospital-bag/policies. " + support]
+    else:
+        foot = ["This receipt records an order placed through Urban Health (urbanhealth.in). The tax invoice under the seller's",
+                "drug licence / NABL registration and GSTIN is issued by the seller and is available from them on request.",
+                "Returns: sealed, unexpired medicines within 7 days of delivery; prescription, refrigerated and opened items cannot be returned.",
+                "Raise a return or a claim from Bills in the app. " + support]
     for line in foot:
         page.insert_text((M, y), line, fontsize=8, fontname="helv", color=MUTE); y += 11
     page.insert_text((M, 842 - 30), f"Generated {time.strftime('%d/%m/%Y %H:%M')} IST · Urban Health", fontsize=7.5, fontname="helv", color=MUTE)
@@ -154,21 +167,30 @@ def request_return(oid: str, body: ReturnIn, db: Session = Depends(get_db), x_do
     if o.status in ("cancelled", "return_requested", "returned", "refunded"):
         raise HTTPException(400, "This order already has a return or cancellation.")
     if o.kind != "lab":
-        blocked = [i.get("name") for i in o.items if i.get("rx") or any(k in str(i.get("name", "")).lower() for k in NON_RETURNABLE)]
+        blocked = [i.get("name") for i in o.items if i.get("rx") or i.get("returnable") is False or any(k in str(i.get("name", "")).lower() for k in NON_RETURNABLE)]
         wanted = [i for i in o.items if not body.items or i.get("sku") in body.items or i.get("name") in body.items]
         if wanted and all((w.get("name") in blocked) for w in wanted) and body.reason not in ("damaged", "wrong"):
-            raise HTTPException(400, "Prescription, refrigerated and opened items can only be returned if damaged or wrong.")
-        if o.created < now() - 7 * 86400 and body.reason not in ("damaged", "wrong", "quality"):
+            raise HTTPException(400, "Hygiene items and food can only be returned if they arrive damaged or wrong." if o.kind == "shop" else
+                                "Prescription, refrigerated and opened items can only be returned if damaged or wrong.")
+        # the 7 days count from delivery: a hospital bag is often ordered weeks before it arrives
+        delivered = max((t.get("t") or 0 for t in (o.timeline or []) if t.get("s") == "delivered"), default=0) or o.created
+        if delivered < now() - 7 * 86400 and body.reason not in ("damaged", "wrong", "quality"):
             raise HTTPException(400, "Returns are accepted within 7 days of delivery.")
     o.status = "return_requested"
     o.timeline = list(o.timeline or []) + [{"s": "return_requested", "t": now(), "reason": body.reason, "note": body.note[:300], "items": body.items[:20]}]
     return {"ok": True, "status": o.status, "reason": RETURN_REASONS[body.reason], "next": "The seller reviews the request within 2 working days. You will see the answer on this order and in notifications."}
 
 
+def _shop_policy() -> list[str]:
+    from .bagshop import POLICY
+    return POLICY
+
+
 @r.get("/returns/policy")
 def policy():
     return {"reasons": RETURN_REASONS, "medicines": ["Sealed and unexpired, within 7 days of delivery", "Prescription-only, refrigerated (insulin, vaccines) and opened items are not returnable unless damaged or wrong",
             "Refund goes back the way you paid within 5-7 working days after the seller receives the item"],
+            "shop": _shop_policy(),
             "labs": ["Cancel free up to 2 hours before the sample is collected", "A re-test is free if the lab reports a sample problem", "Refunds for cancelled bookings within 5-7 working days"],
             "insurance": ["Keep the original bill, the prescription and the discharge summary", "Cashless: show the card at the TPA desk before admission; planned treatment needs pre-authorisation 1-3 days ahead",
                           "Reimbursement: file within the insurer's window (usually 30 days of discharge) with the claim form, bills, reports and ID"]}

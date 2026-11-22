@@ -35,7 +35,17 @@ def _on(monkeypatch):
     return made
 
 
+def _listed():
+    """The old in-app hospital-bag package is off sale (the bag is on /hospital-bag); list it again to have a product to pay for."""
+    from api.models import ShopProduct
+    from api.shop import ensure_shop
+    with DB.session() as db:
+        ensure_shop(db)
+        db.get(ShopProduct, "bag-complete").active = True
+
+
 def _order(f):
+    _listed()
     sp = f.get("/api/v1/shop/products").json()["products"][0]
     return f.post("/api/v1/orders", json={"store": "s_tht_shop", "kind": "medicine", "items": [{"sku": sp["sku"], "qty": 1, "size": "M"}],
                                           "address": "4 Beach Rd, Chennai - 600021", "member": "K", "payment": "online"}).json()
@@ -56,6 +66,7 @@ def test_online_refused_without_razorpay(monkeypatch):
     monkeypatch.delenv("RAZORPAY_KEY_ID", raising=False)
     f = family()
     assert f.get("/api/v1/config").json()["payments"] == "door"
+    _listed()
     sp = f.get("/api/v1/shop/products").json()["products"][0]
     r = f.post("/api/v1/orders", json={"store": "s_tht_shop", "kind": "medicine", "items": [{"sku": sp["sku"], "qty": 1}], "address": "x", "member": "K", "payment": "online"})
     assert r.status_code == 400

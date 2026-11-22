@@ -889,6 +889,31 @@ class ShopProduct(Base):
     updated: Mapped[int] = mapped_column(Integer, default=now)
 
 
+class BagItem(Base):
+    """One item on the hospital bag page (/hospital-bag): its price, its stock for each size or colour, and whether it
+    is on sale. What the item is (name, group, quantity in the complete bag, choices) is defined in api/bagshop.py; the
+    team changes price, stock and availability in Admin → Shop. A stock of None means "not counted yet"."""
+
+    __tablename__ = "bag_items"
+    id: Mapped[str] = mapped_column(String(24), primary_key=True)
+    price: Mapped[int] = mapped_column(Integer)
+    stock: Mapped[dict] = mapped_column(JSON, default=dict)        # {"": 40} or {"S": 10, "M": 12, ...}; a value of None is not counted
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+    updated_by: Mapped[str] = mapped_column(String(160), default="")
+
+
+class BagChecklist(Base):
+    """A family's packing list from /hospital-bag: what is in the bag, and the reminders (weeks 34 and 36) they asked
+    for. Only the reminder dates are kept, never the due date itself."""
+
+    __tablename__ = "bag_checklists"
+    household_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    packed: Mapped[dict] = mapped_column(JSON, default=dict)       # {"nighty": true, "mcp": true}
+    remind: Mapped[list] = mapped_column(JSON, default=list)       # [{"week": 34, "on": "2026-12-06"}]
+    updated: Mapped[int] = mapped_column(Integer, default=now)
+
+
 class Donor(Base):
     """A family member who opted in to be called for blood: group, where they are, when they last gave.
     Registered from Medical ID with explicit consent; hospitals see name, group and phone only after they respond."""

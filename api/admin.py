@@ -809,6 +809,9 @@ def set_status(oid: str, body: Advance, a: Admin = Depends(me), db: Session = De
         raise HTTPException(400, "unknown status")
     o.status = body.status
     o.timeline = (o.timeline or []) + [{"s": body.status, "t": now(), "by": a.email}]
+    if body.status == "cancelled":
+        from .bagshop import restock
+        restock(db, o)
     log(db, a.email, f"order.status {oid} → {body.status}")
     return order_json(o)
 

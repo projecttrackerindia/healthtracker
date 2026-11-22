@@ -500,6 +500,12 @@ def _mine(request: Request, db: Session, oid: str) -> Order:
 
 
 def cancel_terms(o: Order) -> dict:
+    if o.kind == "shop":   # the hospital bag: free until it is packed (the customer policy at /hospital-bag/policies)
+        if o.status in ("placed", "checking"):
+            return {"can": True, "free": True, "fee": 0, "why": "Free until we pack your bag."}
+        if o.status in ("packing", "out"):
+            return {"can": False, "free": False, "fee": 0, "why": "We've packed your bag, so it can't be cancelled now. You can decline it at the door, or return unused items within 7 days of delivery."}
+        return {"can": False, "free": False, "fee": 0, "why": ""}
     st = slot_time(o.slot) if o.slot else None
     if o.status in ("collected", "processing", "ready", "out", "delivered", "cancelled", "refunded"):
         return {"can": False, "free": False, "fee": 0, "why": "This order can't be cancelled at this stage."}
@@ -528,6 +534,20 @@ def cancel(oid: str, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(409, t["why"])
     o.status, o.cancel_fee = "cancelled", t["fee"]
     o.timeline = (o.timeline or []) + [{"s": "cancelled", "t": now(), "by": "family", "fee": t["fee"]}]
+    from .bagshop import restock
+    restock(db, o)
+    paid = (o.payment or "").endswith("paid") and not (o.payment or "").startswith("cod")
+    if o.kind == "shop":
+        notify(db, o.household_id, "order", f"Order cancelled · {o.id}",
+               f"We'll refund ₹{o.total:,} the way you paid, usually within 5 to 7 working days." if paid else "Nothing was charged. We hope to see you again.", {"order": o.id})
+        if paid:
+            try:
+                from .partner import alert_store
+                alert_store(db, o.store_id, f"Refund due: {o.id} was cancelled", f"{o.member} cancelled hospital bag order {o.id} after paying ₹{o.total:,} online.\n"
+                            "Refund it from Admin → Orders → Returns and refunds.")
+            except Exception as e:
+                print("[booking] refund alert failed:", str(e)[:120], flush=True)
+        return {"ok": True, "fee": t["fee"]}
     notify(db, o.household_id, "order", "Booking cancelled", ("A ₹%d late-cancellation fee applies. " % t["fee"] if t["fee"] else "") +
            ("Your refund is on its way." if o.payment != "cod" else ""), {"order": o.id})
     return {"ok": True, "fee": t["fee"]}
@@ -563,7 +583,9 @@ def invoice(oid: str, request: Request, db: Session = Depends(get_db)):
     s = db.get(Store, o.store_id)
     h = db.get(Household, o.household_id)
     E = html.escape
-    rows = "".join(f"<tr><td>{E(str(i.get('name', '')))}</td><td>{i.get('qty', 1)}</td><td>₹{i.get('price', 0):,}</td><td>₹{i.get('price', 0) * (i.get('qty') or 1):,}</td></tr>" for i in (o.items or []))
+    unit = (lambda i: int(i.get("list") or i.get("price", 0))) if o.kind == "shop" else (lambda i: int(i.get("price", 0)))   # bag: brand price, offer below
+    off_label = f"Offer: {o.discount * 100 // o.subtotal}% off brand prices" if o.kind == "shop" and o.subtotal else "Discount"
+    rows = "".join(f"<tr><td>{E(str(i.get('name', '')))}</td><td>{i.get('qty', 1)}</td><td>₹{unit(i):,}</td><td>₹{unit(i) * (i.get('qty') or 1):,}</td></tr>" for i in (o.items or []))
     gst = s.gst_pct or 0
     tax = round((o.total or 0) * gst / (100 + gst)) if gst else 0
     when = time.strftime("%d %b %Y", _ist(o.created or now()))
@@ -573,7 +595,7 @@ table{{width:100%;border-collapse:collapse;margin:16px 0}}td,th{{text-align:left
 <div class="top"><div><h1>Tax invoice</h1><div>#{E(o.id)} · {when}</div></div><div style="text-align:right"><b>{E(s.name if s else '')}</b><br>{E(s.address if s else '')}, {E(s.city if s else '')}<br>{('GSTIN ' + E(s.gstin)) if s and s.gstin else 'GST not registered'}<br>{('Licence ' + E(s.licence)) if s and s.licence else ''}</div></div>
 <p>Billed to: <b>{E(o.member or (h.name if h else ''))}</b><br>{E(o.address or '')}</p>
 <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr>{rows}
-<tr><td colspan="3">Home visit / delivery</td><td>₹{o.fee or 0:,}</td></tr>{f'<tr><td colspan="3">Discount</td><td>− ₹{o.discount:,}</td></tr>' if o.discount and o.kind != 'medicine' else ''}
+<tr><td colspan="3">Home visit / delivery</td><td>₹{o.fee or 0:,}</td></tr>{f'<tr><td colspan="3">{off_label}</td><td>− ₹{o.discount:,}</td></tr>' if o.discount and o.kind != 'medicine' else ''}
 <tr><th colspan="3">Total (incl. GST{' ₹' + format(tax, ',') if tax else ''})</th><th>₹{o.total or 0:,}</th></tr></table>
 <p style="color:#666;font-size:12.5px">Paid by {E((o.payment or '').upper())}. Booked through Urban Health. Questions: support in the app, or the grievance officer at urbanhealth.in/privacy.</p>
 <button onclick="print()">Print or save as PDF</button>"""

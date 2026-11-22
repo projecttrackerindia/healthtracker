@@ -1113,6 +1113,71 @@ body.pregtheme #b5 .on,body.pregtheme .tab.on{color:#E0457B}body.pregtheme .eyeb
 #top{flex-wrap:wrap!important}#top>.fch{order:20!important;flex:0 0 100%!important;max-width:100%}@media (min-width:980px){#top>.fch{margin:10px 0 0;padding:0 0 4px}}
 .page.auth .adk{display:none!important}@media (min-width:900px){.page.auth .adk{display:inline!important}.page.auth .amb{display:none!important}}
 @media (min-width:1100px){.pin:has(.dgrid){max-width:1180px!important;width:100%}.dgrid{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);grid-template-rows:min-content 1fr;column-gap:28px;align-items:start}.dgrid>.dA{grid-column:1;grid-row:1}.dgrid>.dB{grid-column:1;grid-row:2;align-self:start}.dgrid>.dF{grid-column:2;grid-row:1/3}.dgrid>.dF>.sect:first-child,.dgrid>.dF>.card:first-child{margin-top:12px}}
+/* hospital bag: return or exchange (openReturn) and the return's progress on the order (retCard) */
+.rtx{padding:0 16px}
+.rtx h4{font-size:13px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.03em;margin:18px 14px 7px}
+.rtx h4:first-child{margin-top:6px}
+.rtx .grp{background:#fff;border-radius:16px;overflow:hidden}
+.rtx .row{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:58px;width:100%;text-align:left;font:inherit;font-size:16px;background:none;border:0;border-bottom:1px solid #F0F0F3;color:inherit;cursor:pointer}
+.rtx .grp>.row:last-child{border-bottom:0}
+.rtx .it{border-bottom:1px solid #F0F0F3}.rtx .it:last-child{border-bottom:0}.rtx .it>.row{border-bottom:0}
+.rtx .tx{flex:1;min-width:0}
+.rtx .tx b{display:block;font-weight:500;line-height:1.25}
+.rtx .tx small{display:block;font-size:13px;color:var(--ink2);margin-top:2px;line-height:1.3}
+.rtx .tick{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 2px #C7C7CC;transition:background .2s,box-shadow .2s}
+.rtx [aria-pressed=true] .tick{background:#0071E3;box-shadow:none}
+.rtx .amt{font-size:15px;color:var(--ink2);font-variant-numeric:tabular-nums;flex:none}
+.rtx .tag{display:inline-block;font-size:11px;font-weight:600;color:#9A5B00;background:#FFF4E0;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.rtx .qrow{display:flex;align-items:center;justify-content:space-between;padding:0 14px 12px 50px;font-size:14px;color:var(--ink2)}
+.rtx .qty{display:flex;align-items:center;gap:4px;background:#F2F2F7;border-radius:980px;padding:3px}
+.rtx .qty button{width:32px;height:32px;border-radius:50%;border:0;background:#fff;font-size:18px;line-height:1;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.rtx .qty button:disabled{opacity:.35}
+.rtx .qty>span{min-width:22px;text-align:center;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+.rtx .rseg{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px 50px;background:none}
+.rtx .rseg button{flex:none;height:36px;min-width:52px;padding:0 16px;border-radius:980px;border:1px solid #D2D2D7;background:#fff;font:inherit;font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;box-shadow:none}
+.rtx .rseg button[aria-pressed=true]{background:#1D1D1F;border-color:#1D1D1F;color:#fff}
+.rtx .rseg button:disabled{opacity:.35;cursor:default}
+.rtx .rsw{display:flex;gap:2px;margin:12px 0 0;padding:2px;border-radius:10px;background:#E3E3E8}
+.rtx .rsw button{flex:1;height:34px;border:0;border-radius:8px;background:none;font:inherit;font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;transition:background .2s,box-shadow .2s}
+.rtx .rsw button[aria-pressed=true]{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.rtx .field{background:#fff;border-radius:16px;padding:10px 14px 8px}
+.rtx .field label{display:block;font-size:12px;color:var(--ink2)}
+.rtx .field input,.rtx .field textarea{display:block;width:100%;height:auto!important;min-height:0;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;outline:0;padding:4px 0 2px!important;margin:0;font:inherit;font-size:17px!important;font-weight:400!important;color:var(--ink);resize:none}
+.rtx .pics{display:flex;gap:10px;flex-wrap:wrap;padding:12px 14px}
+.rtx .pic{position:relative;width:68px;height:68px;border:0;padding:0;border-radius:14px;overflow:hidden;background:#F2F2F7;cursor:pointer}
+.rtx .pic img{width:100%;height:100%;object-fit:cover}
+.rtx .pic i{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-style:normal;font-size:14px;line-height:20px;text-align:center}
+.rtx .add{width:68px;height:68px;border-radius:14px;border:1.5px dashed #C7C7CC;background:#F9F9FB;display:grid;place-items:center;cursor:pointer}
+.rtx .note{font-size:13px;color:var(--ink2);line-height:1.45;margin:8px 14px 0}
+.rtx .foot{position:sticky;bottom:0;background:linear-gradient(rgba(242,242,247,0),#F2F2F7 22px);padding:22px 0 6px;margin-top:6px}
+.rtx .sum{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;color:var(--ink2);margin:0 6px 10px}
+.rtx .sum b{color:var(--ink);font-size:20px;font-variant-numeric:tabular-nums}
+.rtx .go{width:100%;height:52px;border-radius:14px;border:0;background:#0071E3;color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer}
+.rtx .go:disabled{background:#E3E3E8;color:#6E6E73;cursor:default}
+.rtx .pl{display:block;text-align:center;font-size:14px;margin:12px 0 2px;color:#0071E3;text-decoration:none}
+.rts{margin-top:14px;background:#fff;border-radius:22px;padding:16px 16px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.rts .h{display:flex;align-items:center;gap:10px}
+.rts .h b{font-size:17px}
+.rts .bar{display:flex;gap:4px;margin:14px 0 6px}
+.rts .bar i{flex:1;height:4px;border-radius:2px;background:#E5E5EA}
+.rts .bar i.on{background:#34C759}
+.rts .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2)}
+.rts p{font-size:14px;color:var(--ink2);line-height:1.45;margin:10px 0 0}
+/* the shopper's first screen (shopFirst) */
+.shopv{position:relative;z-index:40;min-height:100vh;background:#F5F5F7}
+.sv{max-width:640px;margin:0 auto;padding:max(32px,env(safe-area-inset-top)) 16px 48px}
+.sv .sve{font-size:15px;font-weight:600;color:#FF375F;margin:0 4px}
+.sv h1{font-size:34px;letter-spacing:-.03em;margin:4px 4px 18px}
+.svl{background:#fff;border-radius:22px;overflow:hidden}
+.svo{display:flex;align-items:center;gap:14px;width:100%;padding:16px;border:0;border-bottom:1px solid #F0F0F3;background:none;font:inherit;text-align:left;color:inherit;cursor:pointer;min-height:72px}
+.svo:last-child{border-bottom:0}
+.svi{width:44px;height:44px;border-radius:50%;background:#FFF0F3;display:grid;place-items:center;flex:none}
+.svp .svi{background:#E8F1FF;margin-bottom:10px}
+.svt{flex:1;min-width:0}.svt b{display:block;font-size:17px;font-weight:600}.svt small{display:block;font-size:14px;color:var(--ink2);margin-top:2px}
+.svp{margin-top:14px;background:#fff;border-radius:22px;padding:20px}
+.svp b{display:block;font-size:19px;letter-spacing:-.02em}.svp p{font-size:15px;line-height:1.45;color:var(--ink2);margin:6px 0 16px}
+.svp .btn{width:100%}
+.svb{display:block;text-align:center;margin:22px 0 0;font-size:16px;color:#0071E3;text-decoration:none}
 </style>
 <script>/* Start the two calls every launch needs while the page is still downloading */try{window.__pf={};['/api/v2/me','/api/v1/config'].forEach(u=>{window.__pf[u]=fetch(u,{headers:{'x-tht':'1'},credentials:'same-origin'}).then(r=>r.ok?r.json():null).catch(()=>null)})}catch(_){}</script>
 <link rel="preload" href="/a/three.9274bbce.js" as="script">
@@ -2049,7 +2114,7 @@ function openScans(){const pg=preg(P(ME.me))||{week:0},w=pg.week;
  <p class="cap">Add the report after each scan from Lab, so your doctor sees everything in one place.</p>`,'PREGNANCY','var(--rose)')}
 const BAG=['Hospital file and scan reports','Aadhaar and insurance card','Phone charger','2 loose nighties','Feeding bras','Maternity pads','Slippers','Toothbrush and toiletries','Hair ties and comb','Water bottle','Light snacks','Baby clothes (3 sets)','Baby caps and socks','Soft towel for baby','Swaddle cloths','Nappies (newborn size)','Baby wipes','Car seat or carrier','Going-home clothes','Small cash','Glasses or lenses','Your medicines'];
 function bagState(){let a=[];try{a=JSON.parse(localStorage.getItem('uh-bag-'+(ME&&ME.me))||'[]')}catch(_){}return{a,n:a.length}}
-function openBag(){const st=bagState();page('Hospital bag',`<p class="line">Pack it by week 36. Tap each thing as it goes in.</p><div class="list" style="margin-top:14px">${BAG.map((x,i)=>`<button class="li bagi" data-i="${i}"><span class="rd ${st.a.includes(i)?'on':'off'}">${st.a.includes(i)?ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14):''}</span><div style="flex:1;text-align:left">${esc(x)}</div></button>`).join('')}</div><p class="cap">Saved on this phone.</p>`,'PREGNANCY','var(--rose)');
+function openBag(){const st=bagState();page('Hospital bag',`<p class="line">Pack it by week 36. Tap each thing as it goes in.</p><div class="list" style="margin-top:14px"><a class="li" href="/hospital-bag#build" style="text-decoration:none;color:inherit"><span class="av" style="background:#FF375F">${ic('<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>','#fff',16)}</span><div style="flex:1;min-width:0;text-align:left"><div style="font-weight:600">Get the bag delivered</div><div class="sub">14 essentials from Mee Mee, SuperBottoms and Pee Safe, at your door before week 36</div></div>${ic(I.chev,'#C7C7CC',18)}</a></div><div class="list" style="margin-top:14px">${BAG.map((x,i)=>`<button class="li bagi" data-i="${i}"><span class="rd ${st.a.includes(i)?'on':'off'}">${st.a.includes(i)?ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14):''}</span><div style="flex:1;text-align:left">${esc(x)}</div></button>`).join('')}</div><p class="cap">Saved on this phone.</p>`,'PREGNANCY','var(--rose)');
  document.querySelectorAll('.bagi').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,s2=bagState().a,j=s2.indexOf(i);if(j<0)s2.push(i);else s2.splice(j,1);try{localStorage.setItem('uh-bag-'+ME.me,JSON.stringify(s2))}catch(_){}const r=b.querySelector('.rd');const on=j<0;r.className='rd '+(on?'on':'off');r.innerHTML=on?ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>','#fff',14):'';if(navigator.vibrate)navigator.vibrate(8)})}
 let CT=null;
 function openContractions(){if(!CT)CT={list:[],on:null};const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
@@ -4251,11 +4316,24 @@ function offPage(){let o=null;try{o=JSON.parse(localStorage.getItem('uh-off')||'
  const L=document.getElementById('load');if(L)L.remove();const d=document.createElement('div');d.className='offp';
  d.innerHTML=`<div class="offh"><b>No internet</b><span>Saved on this phone ${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · <button onclick="location.reload()">Try again</button></span></div>${o.ppl.map(p=>`<div class="offc"><div class="offn"><i style="background:${esc(p.c||'#0A84FF')}">${esc((p.n||'?')[0])}</i><div><b>${esc(p.n)}</b><small>${esc([p.a,p.b&&'Blood '+p.b].filter(Boolean).join(' · '))}</small></div></div>${p.al||p.co?`<div class="offr"><small>Allergies</small>${esc(p.al||'None noted')}</div><div class="offr"><small>Conditions</small>${esc(p.co||'None noted')}</div>`:''}${p.ct.map(c=>`<a class="offr" href="tel:${esc(c[1])}"><small>Call</small>${esc(c[0])} · ${esc(c[1])}</a>`).join('')}${o.d===today()&&p.md.length?`<div class="offr"><small>Today</small>${p.md.map(m=>esc(hm12(m[0])+' '+m[1])).join('<br>')}</div>`:''}</div>`).join('')}${o.cards.length?`<div class="offc">${o.cards.map(c=>`<div class="offr"><small>${esc(c.n)}</small>${esc(c.id)}${c.m?' · '+esc(c.m):''}</div>`).join('')}</div>`:''}<a class="offsos" href="tel:112">Call 112</a>`;
  document.body.appendChild(d);addEventListener('online',()=>location.reload(),{once:true});return true}
+/* Someone who bought a hospital bag and has not set up the app yet sees their order first. The health profile
+   (language, their details, an emergency contact) waits until they choose to set it up. */
+function shopFirst(os){const d=document.createElement('div');d.className='shopv';
+ const st=o=>o.status==='cancelled'?'Cancelled':o.ret&&o.ret.open&&!['refunded','exchanged','declined'].includes(o.ret.open.state)?'Return in progress':((o.steps||[])[o.step]||'Order placed');
+ const bagI='<path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>';
+ d.innerHTML=`<div class="sv"><p class="sve">Urban Health</p><h1>Your orders</h1>
+ <div class="svl">${os.map(o=>`<button class="svo" data-o="${esc(o.id)}"><span class="svi">${ic(bagI,'#FF375F',22)}</span><span class="svt"><b>Hospital bag</b><small>${esc(st(o))} · ${(o.items||[]).reduce((a,i)=>a+(+i.qty||1),0)} items · ${money(o.total)}</small>${o.slot?`<small>${esc(o.slot)}</small>`:''}</span>${ic(I.chev,'#C7C7CC')}</button>`).join('')}</div>
+ <div class="svp"><span class="svi">${ic('<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/>','#0071E3',22)}</span><b>Your family’s health, in one place</b><p>Add your profile and an emergency contact for SOS, reports and reminders. It takes about two minutes, whenever you’re ready.</p><button class="btn pri" data-setup>Set up my profile</button></div>
+ <a class="svb" href="/hospital-bag">Back to the hospital bag</a></div>`;
+ document.body.appendChild(d);
+ d.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>openOrder(b.dataset.o));
+ d.querySelector('[data-setup]').onclick=async()=>{d.remove();if(window.UHL&&!UHL.chosen())await UHL.picker(saveLang);onboard()};
+ const m=location.pathname.match(/\/o\/(\w+)/);if(m&&os.some(o=>o.id===m[1]))openOrder(m[1]);else if(os.length===1&&/page=orders/.test(location.hash))openOrder(os[0].id)}
 async function boot(){const m=location.pathname.match(/\/app\/join\/([\w-]+)/);if(m){try{sessionStorage.setItem('uh-join',m[1])}catch(_){}try{const ir=await fetch('/api/v2/household/invite/'+m[1],{headers:{'x-tht':'1'}});if(ir.ok)sessionStorage.setItem('uh-invite',JSON.stringify({...(await ir.json()),token:m[1]}))}catch(_){}history.replaceState(null,'','/app')}
  try{await refreshMe();const gb=()=>window.UHFX&&UHFX.banner('user');if(window.UHFX)gb();else addEventListener('load',gb,{once:true})}catch(e){if(e.status===401){const w=sessionStorage.getItem('uh-idle');{const q=new URLSearchParams(location.search).get('auth');if(q)history.replaceState(null,'','/app');q==='reset'?pwPage():authPage(sessionStorage.getItem('uh-join')||q==='signup'?'signup':'signin')}if(w){sessionStorage.removeItem('uh-idle');toast('Signed out after 10 minutes without activity')}return}if(offPage())return;$('#load').textContent='Could not connect. Check your internet and reload.';return}
  const jt=sessionStorage.getItem('uh-join');if(jt){try{const j=await API('/api/v2/household/join',{json:{token:jt}});if(j.handover)toast('Welcome. Your records are now in your own account.');else{toast('You joined the family');if(j.relation)setTimeout(()=>confirmRel(j),600)}sessionStorage.removeItem('uh-invite')}catch(e){if(e.status===403){sessionStorage.removeItem('uh-join');await refreshMe();setTimeout(()=>inviteMismatch(e.message),400)}else toast(e.message)}sessionStorage.removeItem('uh-join');await refreshMe()}
  {let la=0;try{la=+localStorage.getItem('uh-act')||0}catch(_){}if(la&&Date.now()-la>=IDLE_MS)return idleOut();IDLET=0;idleMark()}
- closeL();document.body.classList.add('in');rcDone();if(window.UHL){UHL.adopt(ME.user.lang);if(!UHL.chosen())await UHL.picker(saveLang)}await loadPerms();locWarm();if(!ME.me||!ME.onboarded)return onboard();
+ closeL();document.body.classList.add('in');rcDone();let shopOrders=[];if(!ME.me||!ME.onboarded){try{shopOrders=((await API('/api/v1/orders',{key:true})).orders||[]).filter(o=>o.kind==='shop')}catch(_){}}if(window.UHL){UHL.adopt(ME.user.lang);if(!UHL.chosen()&&!shopOrders.length)await UHL.picker(saveLang)}await loadPerms();if(!shopOrders.length)locWarm();if(!ME.me||!ME.onboarded)return shopOrders.length?shopFirst(shopOrders):onboard();
  const t=location.pathname.split('/')[2];if(['summary','records','meds','cover','family','visits'].includes(t))S.tab=t;S.person=S.person&&P(S.person)?S.person:ME.me;
  await Promise.all([...ME.people.map(p=>loadRecords(p.id)),loadVisits(),loadNews()]);await pollInbox();renderAll();{const sm=location.hash.match(/surprise=([\w-]+)/);if(sm){history.replaceState(null,'',location.pathname);setTimeout(()=>openSurprise(sm[1]),400)}}{if(/page=mid/.test(location.hash)){history.replaceState(null,'',location.pathname);setTimeout(()=>openDonor(),400)}}{if(/^#security$/.test(location.hash)){history.replaceState(null,'',location.pathname);setTimeout(()=>openSecurity(),400)}}{const em=location.hash.match(/eye=([\w-]+)/);if(em&&P(em[1])){history.replaceState(null,'',location.pathname);setTimeout(()=>selectPerson(em[1]).then(()=>openEye(em[1])),400)}}setTimeout(deepOpen,450);setTimeout(offSave,1500);setTimeout(pushSync,2500);if(PERMS&&!PERMS.asked)setTimeout(()=>permsGate(0,addrGate),900);else addrGate();setTimeout(pkOffer,1600)}
 /* Sign out after 10 minutes without activity. Activity = any touch, scroll, typing, or touching the 3D body (it posts 'uh-active').
@@ -4280,7 +4358,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r127';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r129';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
@@ -4943,14 +5021,78 @@ function doorCard(o){return fastCard(o)+doorCard0(o)}
 function doorCard0(o){if(!o.doorCode||['cancelled','collected','processing','ready','delivered'].includes(o.status))return'';
  return`<div class="card row" style="margin-top:14px;background:#0B1B33;color:#fff"><div style="flex:1"><div style="font-size:13px;opacity:.75">DOORSTEP CODE</div><div style="font-size:34px;font-weight:700;letter-spacing:.3em;font-variant-numeric:tabular-nums">${esc(o.doorCode)}</div><div style="font-size:13px;opacity:.75">Tell this to the ${o.kind==='lab'?'technician':'rider'} only when they are at your door.</div></div>${ic(I.lock,'#fff',30)}</div>`}
 async function orderMore(o){const el=$('#omore');if(!el)return;let t={};try{t=await API(`/api/v2/orders/${o.id}/terms`)}catch(_){}
- const inv=['collected','processing','ready','delivered'].includes(o.status);
+ const inv=['collected','processing','ready','delivered','return_requested','returned','refunded'].includes(o.status),bag=o.kind==='shop'&&o.ret;
  el.innerHTML=`${o.sampleId?`<div class="card row" style="margin-top:10px">${ic(I.rec,'#5E5CE6',20)}<div><div style="font-weight:600">Sample ${esc(o.sampleId)}</div><div class="sub">Labelled at your door; the lab scans it on arrival.</div></div></div>`:''}
+ ${bag?retCard(o):''}
  <div class="list" style="margin-top:14px">${t.canMove?`<button class="li" onclick="moveOrder('${o.id}','${o.store?o.store.id:''}')">${ic(I.cal||I.rec,'#0071E3',20)}<span style="flex:1">Change the time</span><span class="sub">Free</span></button>`:''}
- ${t.can?`<button class="li" onclick="cancelOrder2('${o.id}',${t.fee||0})">${ic(I.x,'#C4291C',20)}<span style="flex:1;color:#C4291C">Cancel</span><span class="sub">${t.free?'Free':'₹'+t.fee+' fee'}</span></button>`:''}
- ${inv?`<a class="li" href="/api/v2/orders/${o.id}/invoice" target="_blank" rel="noopener">${ic(I.down,'#1D1D1F',20)}<span style="flex:1">GST invoice</span>${ic(I.chev,'#C7C7CC')}</a>`:''}
+ ${t.can?`<button class="li" onclick="cancelOrder2('${o.id}',${t.fee||0},'${o.kind}')">${ic(I.x,'#C4291C',20)}<span style="flex:1;color:#C4291C">Cancel${o.kind==='shop'?' order':''}</span><span class="sub">${t.free?'Free':'₹'+t.fee+' fee'}</span></button>`:''}
+ ${bag&&o.ret.can?`<button class="li" onclick="openReturn('${o.id}')">${ic(RTI.ret,'#0071E3',20)}<span style="flex:1">Return or exchange</span><span class="sub">Until ${rtDay(o.ret.until)}</span></button>`:''}
+ ${inv?`<a class="li" href="/api/v2/orders/${o.id}/invoice" target="_blank" rel="noopener">${ic(I.down,'#1D1D1F',20)}<span style="flex:1">${o.kind==='shop'?'Receipt':'GST invoice'}</span>${ic(I.chev,'#C7C7CC')}</a>`:''}
+ ${bag?`<a class="li" href="/hospital-bag/policies" target="_blank" rel="noopener">${ic(RTI.doc,'#1D1D1F',20)}<span style="flex:1">Returns and refunds policy</span>${ic(I.chev,'#C7C7CC')}</a>`:''}
 </div>
- <p class="cap">${esc(t.why||'')} If the ${o.kind==='lab'?'lab':'pharmacy'} cancels, you get a full refund. Grievance officer: see <a href="/privacy" target="_blank">privacy policy</a>.</p>`}
-async function cancelOrder2(id,fee){if(!await uhConfirm(fee?`Cancel? A ₹${fee} late-cancellation fee applies.`:'Cancel this booking? It is free.'))return;try{await API(`/api/v2/orders/${id}/cancel`,{method:'POST'});toast('Cancelled');openOrder(id)}catch(e){toast(e.message)}}
+ <p class="cap">${esc(t.why||'')} ${o.kind==='shop'?'If we can’t send something you ordered, we refund it in full.':`If the ${o.kind==='lab'?'lab':'pharmacy'} cancels, you get a full refund.`} Grievance officer: see <a href="/privacy" target="_blank">privacy policy</a>.</p>`}
+/* ---------------- hospital bag: return or exchange. The rules live in api/bagreturns.py and the words in /hospital-bag/policies ---------------- */
+const RTI={ret:'<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>'};
+const rtDay=t=>new Date(t*1000).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+function retCard(o){const r=o.ret&&o.ret.open;if(!r)return'';const k=r.kind,ex=k==='exchange'||k==='replace',st=r.state;
+ const steps=ex?['Requested','Received',k==='exchange'?'New size sent':'Replacement sent']:['Requested','Received','Refunded'],at={requested:0,received:1,refunded:2,exchanged:2}[st];
+ const title={requested:k==='exchange'?'Exchange requested':k==='replace'?'Replacement requested':'Return requested',received:'Return received',refunded:'Refunded '+money(r.amount||r.refund),exchanged:k==='exchange'?'New size on its way':'Replacement on its way',declined:'Return not accepted'}[st]||'Return';
+ const what=(r.lines||[]).map(l=>`${l.qty} × ${esc(l.name)}${k==='exchange'&&l.to?' → '+esc(l.to):''}`).join('<br>');
+ const msg={requested:'We’ll arrange the pickup from your door and keep you posted here.'+(ex?'':` Then we refund ${money(r.refund)} ${r.to==='upi'?'to '+esc(r.upi):'the way you paid'}.`),
+  received:ex?`Your ${k==='exchange'?'new size':'replacement'} goes out shortly.`:`We’re starting your refund of ${money(r.refund)} today.`,
+  refunded:'It usually shows within 5 to 7 working days.',exchanged:'Thank you for your patience.',
+  declined:esc(r.why||'')+' If you think we’ve got this wrong, write to <a href="mailto:support@urbanhealth.in">support@urbanhealth.in</a> and we’ll gladly look again.'}[st]||'';
+ return `<div class="rts"><div class="h">${ic(RTI.ret,st==='declined'?'#9A5B00':'#0071E3',22)}<b>${title}</b></div>${at!=null?`<div class="bar">${steps.map((_,i)=>`<i class="${i<=at?'on':''}"></i>`).join('')}</div><div class="lbl">${steps.map(x=>`<span>${x}</span>`).join('')}</div>`:''}<p>${what}</p><p>${msg}</p></div>`}
+async function openReturn(id){let R;try{R=await API(`/api/v1/shop/bag/orders/${id}/return`)}catch(e){return toast(e.message)}
+ if(!R.can)return toast(R.why||'This order can’t be returned now.');
+ const C={sel:{},qty:{},to:{},reason:'',want:'refund',unused:false,upi:R.upi||'',note:'',pics:[],busy:false},L=R.lines.filter(l=>l.qty>0);
+ const sx=sheetX('Return or exchange','<div class="rtx" id="rtx"></div>'),box=sx.el.querySelector('#rtx');
+ const quick=()=>C.reason==='damaged'||C.reason==='wrong';
+ const kind=()=>!C.reason?'':C.reason==='size'?'exchange':quick()&&C.want==='replace'?'replace':'refund';
+ const shown=()=>C.reason==='size'?L.filter(l=>l.sizes.length&&!l.exchanged):L;
+ const picked=()=>shown().filter(l=>C.sel[l.sku]);
+ const count=()=>picked().reduce((a,l)=>a+(C.qty[l.sku]||1),0);
+ const amount=()=>kind()==='refund'?picked().reduce((a,l)=>a+l.unit*(C.qty[l.sku]||1),0):0;
+ const upiOk=()=>/^[A-Za-z0-9.\-_]{2,128}@[A-Za-z][A-Za-z0-9]{1,63}$/.test(C.upi.replace(/\s+/g,''));
+ const missing=()=>!C.reason?'Choose a reason':!picked().length?'Choose the items':kind()==='exchange'&&picked().some(l=>!C.to[l.sku])?'Choose the new size':quick()&&!C.pics.length?'Add a photo':!quick()&&!C.unused?'Confirm they’re unused':kind()==='refund'&&R.pay==='cod'&&!upiOk()?'Enter your UPI ID':'';
+ const tick=on=>`<span class="tick">${on?ic(RTI.ok,'#fff',14):''}</span>`;
+ const hyg=()=>picked().some(l=>l.hygiene);
+ const sub=k=>({size:'Exchanged once, free',damaged:'Replaced or refunded in full',wrong:'Replaced or refunded in full',late:'Full refund for what comes back'})[k]||'Unused, in the original packing';
+ function foot(){const f=box.querySelector('.foot');if(!f)return;const m=missing(),k=kind(),n=count();
+  f.innerHTML=`<div class="sum"><span>${k==='exchange'?'Exchange':k==='replace'?'Replacement':'Refund'}</span><b>${k==='refund'?money(amount()):n?n+' item'+(n>1?'s':''):'—'}</b></div><button class="go" data-go ${m||C.busy?'disabled':''}>${C.busy?'Sending…':m||(k==='exchange'?'Request exchange':k==='replace'?'Request replacement':'Request return')}</button><a class="pl" href="/hospital-bag/policies" target="_blank" rel="noopener">Returns and refunds policy</a>`;
+  f.querySelector('[data-go]').onclick=send}
+ function draw(){const y=box.scrollTop,k=kind();
+  box.innerHTML=`<h4>Why are you sending it back?</h4><div class="grp">${R.reasons.map(x=>`<button class="row" data-r="${x.k}" aria-pressed="${C.reason===x.k}">${tick(C.reason===x.k)}<span class="tx"><b>${esc(x.label)}</b><small>${sub(x.k)}</small></span></button>`).join('')}</div>
+  ${R.quickUntil&&Date.now()/1000>R.quickUntil?`<p class="note">Damaged or wrong? It’s been more than 48 hours since delivery. Write to <a href="mailto:${esc(R.support)}">${esc(R.support)}</a> with a photo, and we’ll do our best to help.</p>`:''}
+  ${quick()?`<div class="rsw" role="group" aria-label="What would you like?"><button data-w="refund" aria-pressed="${C.want==='refund'}">Refund</button><button data-w="replace" aria-pressed="${C.want==='replace'}">Replacement</button></div>`:''}
+  ${C.reason?`<h4>Which items?</h4><div class="grp">${shown().map(l=>{const on=!!C.sel[l.sku],q=C.qty[l.sku]||1;return `<div class="it"><button class="row" data-s="${l.sku}" aria-pressed="${on}">${tick(on)}<span class="tx"><b>${esc(l.name)}</b><small>${esc(l.brand)}${l.opt?' · '+esc(l.opt):''}${l.hygiene&&!quick()?'<span class="tag">Sealed only</span>':''}</small></span>${k==='refund'?`<span class="amt">${money(l.unit*(on?q:1))}</span>`:''}</button>
+   ${on&&l.qty>1?`<div class="qrow"><span>How many?</span><span class="qty"><button data-q="${l.sku}:-1" aria-label="One less" ${q<=1?'disabled':''}>−</button><span>${q}</span><button data-q="${l.sku}:1" aria-label="One more" ${q>=l.qty?'disabled':''}>+</button></span></div>`:''}
+   ${on&&k==='exchange'?`<div class="rseg" role="group" aria-label="New size">${l.sizes.filter(z=>z.k!==l.opt).map(z=>`<button data-z="${l.sku}|${esc(z.k)}" aria-pressed="${C.to[l.sku]===z.k}" ${z.left===0?'disabled':''}>${esc(z.k)}${z.left===0?' · sold out':''}</button>`).join('')}</div>`:''}</div>`}).join('')||'<p class="note" style="padding:12px 14px;margin:0">Nothing here can be exchanged for another size. You can still return it for a refund.</p>'}</div>`:''}
+  ${C.reason&&quick()?`<h4>Photo</h4><div class="grp"><div class="pics">${C.pics.map((p,i)=>`<button class="pic" data-px="${i}" aria-label="Remove photo ${i+1}"><img src="${p}" alt=""><i>×</i></button>`).join('')}${C.pics.length<3?`<label class="add" aria-label="Add a photo">${ic(RTI.cam,'#0071E3',24)}<input type="file" accept="image/*" data-pic hidden></label>`:''}</div></div><p class="note">A clear photo of the item and its pack helps us sort it out quickly.</p>`:''}
+  ${C.reason&&!quick()?`<div class="grp" style="margin-top:14px"><button class="row" data-u aria-pressed="${C.unused}">${tick(C.unused)}<span class="tx"><b>Unused, in the original packing</b><small>${hyg()?'And the hygiene items are still sealed':'Packs and tags as they arrived'}</small></span></button></div>`:''}
+  ${C.reason&&k==='refund'?(R.pay==='cod'?`<h4>Refund to</h4><div class="field"><label for="rupi">UPI ID</label><input id="rupi" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="name@okbank" value="${esc(C.upi)}"></div><p class="note">You paid on delivery, so we refund to your UPI ID. We will never ask for your UPI PIN or an OTP.</p>`:`<p class="note" style="margin-top:14px">Your refund goes back the way you paid.</p>`):''}
+  ${C.reason?`<h4>Anything we should know?</h4><div class="field"><textarea id="rnote" rows="2" maxlength="300" placeholder="Optional" aria-label="Anything we should know">${esc(C.note)}</textarea></div>`:''}
+  <div class="foot"></div>`;
+  box.scrollTop=y;foot();wire()}
+ function wire(){box.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{C.reason=b.dataset.r;if(C.reason==='size')Object.keys(C.sel).forEach(k=>{if(!shown().some(l=>l.sku===k))delete C.sel[k]});draw()});
+  box.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{C.want=b.dataset.w;draw()});
+  box.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const k=b.dataset.s;if(C.sel[k])delete C.sel[k];else C.sel[k]=1;draw()});
+  box.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const [k,d]=b.dataset.q.split(':'),l=L.find(x=>x.sku===k);C.qty[k]=Math.max(1,Math.min(l.qty,(C.qty[k]||1)+Number(d)));draw()});
+  box.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{const i=b.dataset.z.indexOf('|');C.to[b.dataset.z.slice(0,i)]=b.dataset.z.slice(i+1);draw()});
+  box.querySelectorAll('[data-px]').forEach(b=>b.onclick=()=>{C.pics.splice(+b.dataset.px,1);draw()});
+  const u=box.querySelector('[data-u]');if(u)u.onclick=()=>{C.unused=!C.unused;draw()};
+  const pi=box.querySelector('[data-pic]');if(pi)pi.onchange=async()=>{const f=pi.files&&pi.files[0];if(!f)return;try{C.pics.push(await shrinkPic(f));draw()}catch(_){toast('That photo couldn’t be read. Try another one.')}};
+  const up=box.querySelector('#rupi');if(up)up.oninput=()=>{C.upi=up.value;foot()};
+  const nt=box.querySelector('#rnote');if(nt)nt.oninput=()=>{C.note=nt.value}}
+ async function send(){if(missing()||C.busy)return;C.busy=true;foot();
+  try{await API(`/api/v1/shop/bag/orders/${id}/return`,{json:{reason:C.reason,want:C.want,unused:C.unused,note:C.note.trim(),upi:C.upi.replace(/\s+/g,''),photos:C.pics,
+   lines:picked().map(l=>({sku:l.sku,qty:C.qty[l.sku]||1,to:C.to[l.sku]||''}))}});
+   sx.close();toast(kind()==='exchange'?'Exchange requested':kind()==='replace'?'Replacement requested':'Return requested');openOrder(id)}
+  catch(e){C.busy=false;foot();toast(e.message)}}
+ draw()}
+/* a phone photo is several MB: send a 1600px JPEG instead */
+function shrinkPic(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.82))};im.onerror=()=>{URL.revokeObjectURL(u);no()};im.src=u})}
+async function cancelOrder2(id,fee,kind){if(!await uhConfirm(fee?`Cancel? A ₹${fee} late-cancellation fee applies.`:kind==='lab'?'Cancel this booking? It is free.':'Cancel this order? It’s free.'))return;try{await API(`/api/v2/orders/${id}/cancel`,{method:'POST'});toast('Cancelled');openOrder(id)}catch(e){toast(e.message)}}
 async function moveOrder(id,sid){let rows=[];try{rows=(await API(`/api/v2/stores/${sid}/slots`)).rows}catch(e){return toast(e.message)}
  const sx=sheetX('Change the time',`<div style="padding:4px 16px 20px"><div class="chips">${rows.map(r=>`<button class="chip" ${r.left?'':'disabled style="opacity:.4"'} data-s="${esc(r.slot)}">${esc(r.slot)}${r.left?'':' · full'}</button>`).join('')}</div></div>`);
  sx.el.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{try{await API(`/api/v2/orders/${id}/reschedule`,{json:{slot:b.dataset.s}});sx.close();toast('Time changed');openOrder(id)}catch(e){toast(e.message)}})}

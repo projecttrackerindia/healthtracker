@@ -1,0 +1,119 @@
+<body>
+<nav class="gnav" aria-label="Main"><div class="gin">
+  /*LOGO*/
+  <a class="lk" href="/#labs">Lab reports</a><a class="lk" href="/#medicines">Medicines</a><a class="lk" href="/#book">Appointments</a><a class="lk" href="/#pregnancy">Pregnancy</a><a class="lk on" href="/hospital-bag">Hospital bag</a><a class="bagi on" href="/hospital-bag" aria-label="Hospital bag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></a><a class="lk" href="/#kids">Kids</a><a class="lk red" href="/#sos">SOS</a>
+  <div class="acct" id="acct"><a class="lk si" href="/signin">Sign in</a><a class="av" href="/app" aria-label="Your account"></a><a class="pill" href="/signup">Get started</a></div>
+</div></nav>
+<script>/* the account corner: same width signed in or out, so nothing in the header moves */
+window.uhNav=function(u){try{var a=document.getElementById("acct");if(!a)return;var p=a.querySelector(".pill"),v=a.querySelector(".av"),i=u?String(u.name||u.email||"").trim().charAt(0).toUpperCase():"";
+if(u&&i){a.classList.add("signed");v.textContent=i;v.title=u.name||"Your account";p.textContent="Open app";p.href="/app";localStorage.setItem("uh-nav",i)}
+else{a.classList.remove("signed");v.textContent="";p.textContent="Get started";p.href="/signup";localStorage.removeItem("uh-nav")}}catch(e){}};
+(function(){try{var i=localStorage.getItem("uh-nav");if(i&&/^[^<>&"']$/.test(i))uhNav({name:i})}catch(e){}})();</script>
+
+<main class="top">
+<header class="hero"><div class="pw">
+  <a class="back" href="/hospital-bag"><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M7.5 1.5 2 7l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hospital bag</a>
+  <h1>Returns, refunds and delivery.</h1>
+  <p class="lead">Simple terms, written plainly, so you always know where you stand. They apply to everything you buy on the Urban Health hospital bag page, and sit alongside your rights under the Consumer Protection Act, 2019.</p>
+  <p class="upd">Updated 22 November 2026</p>
+  <ul class="promise" aria-label="In short">
+    <li><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 9.5 14 5l9 4.5v9L14 23l-9-4.5z M5 9.5l9 4.5 9-4.5 M14 14v9"/></svg><b>7 days</b><span>to return or exchange anything unused</span></li>
+    <li><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="9"/><path d="m10.5 14.2 2.4 2.4 4.8-5"/></svg><b>Free</b><span>to cancel until your bag is packed</span></li>
+    <li><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M6 8.5h16v12.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 6 21z M10 5v6 M18 5v6 M10 15.5h3"/></svg><b>48 hours</b><span>to tell us about anything damaged or wrong</span></li>
+    <li><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="9"/><path d="M10.5 9.5h7 M10.5 12.5h7 M12.5 9.5c2.6 0 3.6 1.3 3.6 3s-1.4 3-3.6 3h-1.5l4.6 4.2"/></svg><b>5–7 days</b><span>working days for a refund to reach you</span></li>
+  </ul>
+</div></header>
+
+<section class="how" aria-labelledby="howT"><div class="pw">
+  <h2 id="howT">How a return works.</h2>
+  <ol class="steps">
+    <li><i>1</i><b>Open the order</b><span>In Orders in the Urban Health app, tap your bag, then Return or exchange.</span></li>
+    <li><i>2</i><b>Choose what and why</b><span>Pick the items and a reason. Add a photo if something arrived damaged or wrong.</span></li>
+    <li><i>3</i><b>We collect it</b><span>Our courier picks it up from your door, free. Where it can’t reach, we refund the postage.</span></li>
+    <li><i>4</i><b>Refund or new size</b><span>We check it within 2 working days and send your refund or the new size.</span></li>
+  </ol>
+</div></section>
+
+<div class="pw body">
+<nav class="toc" aria-label="On this page">
+  <a href="#returns">Returns and exchanges</a><a href="#refunds">Refunds</a><a href="#cancellations">Cancellations</a><a href="#delivery">Delivery</a><a href="#damaged">Damaged or wrong items</a><a href="#warranty">Warranty</a><a href="#payment">Payment</a><a href="#prices">Prices</a><a href="#product">Product information</a><a href="#privacy">Your information</a><a href="#help">Questions and complaints</a><a href="#seller">Seller</a>
+</nav>
+<article>
+<section id="returns"><h2>Returns and exchanges</h2>
+<p>We want everything in your bag to be right for you. If something isn’t, you’re welcome to return or exchange it within 7 days of delivery, as long as it’s unused and in its original packing.</p>
+<p>A few items can’t be taken back once opened, for everyone’s hygiene: maternity pads, disposable underwear, nursing bras, breast pads, intimate wash and wipes. If any of these arrive damaged, faulty or not what you ordered, we’ll gladly replace or refund them.</p>
+<p>If a size doesn’t fit, we’ll exchange it once at no cost, while that size is in stock.</p>
+<p>To start a return or exchange, open the order in Orders in the <a href="/app">Urban Health app</a>, or write to us at <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>. Where our courier serves your PIN code, we’ll collect the item from your door. Where it doesn’t, we’ll share an address to send it to and refund the postage.</p>
+</section>
+
+<section id="refunds"><h2>Refunds</h2>
+<p>Once a returned item reaches us, we check it within 2 working days and start your refund the same day.</p>
+<ul>
+<li><b>Paid online.</b> The money goes back the way you paid, usually within 5 to 7 working days.</li>
+<li><b>Paid on delivery.</b> We refund to a UPI ID you share with us when you start the return. We will never ask for your card PIN, OTP or UPI PIN.</li>
+<li><b>Part of a bag.</b> You get back what you paid for that item, after the offer.</li>
+</ul>
+<p>If we can’t send something you ordered, we’ll tell you straight away and refund it in full.</p>
+</section>
+
+<section id="cancellations"><h2>Cancellations</h2>
+<p>You can cancel free of charge until your bag is packed, from the order in the app. After that, you can still decline it at the door, or return it unused within 7 days. We never charge a cancellation fee.</p>
+</section>
+
+<section id="delivery"><h2>Delivery</h2>
+<p>We deliver across India, free of charge. You choose the delivery day at checkout, from 3 days after you order. Once your bag ships, you can follow it in Orders in the Urban Health app.</p>
+<p>If your delivery is going to be late, we’ll let you know before the day. If it arrives later than promised for reasons within our control, you may return it for a full refund. If your baby decides to arrive early, write to us and we’ll do our best to send your bag the same or the next working day.</p>
+</section>
+
+<section id="damaged"><h2>Damaged, faulty or wrong items</h2>
+<p>We pack every bag with care, but if something arrives damaged, faulty or different from your order, please tell us within 48 hours of delivery, with a photo. We’ll replace it or refund it in full, and arrange any pickup ourselves.</p>
+</section>
+
+<section id="warranty"><h2>Warranty</h2>
+<p>If an item comes with a maker’s warranty, that warranty applies in full. Keep the receipt from the Urban Health app, and we’ll help you make a claim with the maker.</p>
+</section>
+
+<section id="payment"><h2>Payment</h2>
+<p>You can pay when your bag arrives, in cash or by UPI. Where online payment is offered at checkout, you can also pay with UPI, a card or netbanking through Razorpay. There’s no extra charge either way.</p>
+<p>Razorpay handles card and bank details; we never see or store them. Questions about an online payment: <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>, or <a href="https://razorpay.com/support/" rel="noopener" target="_blank">Razorpay support</a>.</p>
+</section>
+
+<section id="prices"><h2>Prices</h2>
+<p>Prices are in Indian rupees and include all taxes. Delivery is free, so the total you see is the total you pay. Every item sells at least 30% below the brand’s own price, and your saving is shown on each item, at checkout and on your receipt.</p>
+<p>If we ever make a mistake with a price, we’ll contact you before your bag ships, and you can choose to continue or cancel for a full refund.</p>
+</section>
+
+<section id="product"><h2>Product information</h2>
+<p>Every item is the maker’s own product, sold in its original sealed pack. Sizes, materials and descriptions come from each maker, and the maker’s name, address and country of origin are printed on each pack.</p>
+<p>These are everyday care items, not medical treatment. Please follow your doctor’s advice, and check the ingredients if you have an allergy.</p>
+</section>
+
+<section id="privacy"><h2>Your information</h2>
+<p>We use your name, phone number and address only to deliver your order and help you with it. We share them only with our courier and payment partners, and nothing else leaves Urban Health. Our <a href="/privacy">Privacy Policy</a> has the details.</p>
+</section>
+
+<section id="help"><h2>Questions and complaints</h2>
+<p>We’re here to help. Write to <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>{{PHONE_PART}}, and tell us your order number if you have one.</p>
+<p>If you’re not happy with our answer, please write to our Grievance Officer. We’ll acknowledge your complaint within 48 hours and resolve it within one month.</p>
+<div class="gro"><span>Grievance Officer</span><b>{{GRIEVANCE_NAME}}</b><a href="mailto:{{GRIEVANCE_EMAIL}}?subject=Grievance">{{GRIEVANCE_EMAIL}}</a></div>
+</section>
+
+<section id="seller"><h2>Seller</h2>
+<p>Sold and shipped by {{ENTITY}}, {{ADDRESS}}.{{GSTIN_PART}}</p>
+</section>
+
+<div class="ask">
+  <div><b>Need help with an order?</b><span>Start a return from the order in the app, or write to us.</span></div>
+  <div class="acts"><a class="btn sec" href="mailto:{{SUPPORT_EMAIL}}">Email us</a><a class="btn" href="/app">Open Orders</a></div>
+</div>
+</article>
+</div>
+</main>
+/*FOOTER*/
+<script>fetch("/api/v1/auth/me",{credentials:"same-origin",cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){uhNav(d&&d.user)}).catch(function(){});
+/* the contents list follows the reader */
+(function(){var L=[].slice.call(document.querySelectorAll(".toc a")),S=L.map(function(a){return document.querySelector(a.getAttribute("href"))});
+if(!("IntersectionObserver" in window))return;var on=null,io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var i=S.indexOf(e.target);if(i>=0&&on!==i){on=i;L.forEach(function(a,j){a.classList.toggle("on",j===i);if(j===i)a.setAttribute("aria-current","true");else a.removeAttribute("aria-current")});
+var t=L[i],n=t.parentNode;if(n.scrollWidth>n.clientWidth+4)n.scrollTo({left:t.offsetLeft-20,behavior:"smooth"})}}})},{rootMargin:"-96px 0px -70% 0px"});S.forEach(function(s){s&&io.observe(s)})})();</script>
+</body>
+</html>

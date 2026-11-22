@@ -222,6 +222,13 @@ from api import i18n as i18n_api  # noqa: E402
 app.include_router(i18n_api.r)
 app.include_router(shop_api.r)
 app.include_router(shop_api.ar)
+from api import bagshop as bagshop_api  # noqa: E402  the hospital bag page's checkout
+app.include_router(bagshop_api.r)
+app.include_router(bagshop_api.ar)
+app.include_router(bagshop_api.sr)
+from api import bagreturns as bagreturns_api  # noqa: E402  returns, exchanges and refunds for hospital bag orders
+app.include_router(bagreturns_api.r)
+app.include_router(bagreturns_api.xr)
 from api import blood as blood_api  # noqa: E402
 app.include_router(blood_api.r)
 app.include_router(blood_api.pr)
@@ -439,6 +446,41 @@ def home(request: Request):
     return _send(SITE / "home" / "index.html", request, "no-cache")
 
 
+@app.api_route("/hospital-bag", methods=["GET", "HEAD"], include_in_schema=False)
+def hospital_bag(request: Request):
+    """The hospital bag shop (site/home/bag.html), linked from the landing page header next to Pregnancy."""
+    return _send(SITE / "home" / "bag.html", request, "no-cache")
+
+
+@app.api_route("/hospital-bag/policies", methods=["GET", "HEAD"], include_in_schema=False)
+def hospital_bag_policies(request: Request):
+    """Returns, refunds, delivery and the rest of the shop's customer policy (site/home/policies.html). The seller and
+    grievance details come from the same legal settings as the privacy policy and terms."""
+    import html as _html
+    s = (SITE / "home" / "policies.html").read_text(encoding="utf-8")
+    vals = {**LEGAL, "SUPPORT_PHONE": os.getenv("SUPPORT_PHONE", "").strip(), "GSTIN": os.getenv("LEGAL_GSTIN", "").strip()}
+    # the page labels the officer itself, so the placeholder "Grievance Officer, Urban Health" reads as "Urban Health"
+    vals["GRIEVANCE_NAME"] = vals["GRIEVANCE_NAME"].removeprefix("Grievance Officer, ").strip() or "Urban Health"
+    s = s.replace("{{PHONE_PART}}", f' or call <a href="tel:{_html.escape(vals["SUPPORT_PHONE"].replace(" ", ""))}">{_html.escape(vals["SUPPORT_PHONE"])}</a>' if vals["SUPPORT_PHONE"] else "")
+    s = s.replace("{{GSTIN_PART}}", f" GSTIN {_html.escape(vals['GSTIN'])}." if vals["GSTIN"] else "")
+    for k, v in vals.items():
+        s = s.replace("{{" + k + "}}", _html.escape(v))
+    return Response(s, media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache"})
+
+
+# The usual addresses for a shop's policies (payment providers and people both try these) land on the one page.
+@app.api_route("/returns", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/refunds", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/refund-policy", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/return-policy", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/cancellation-policy", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/shipping-policy", methods=["GET", "HEAD"], include_in_schema=False)
+def policy_aliases(request: Request):
+    p = request.url.path.strip("/")
+    anchor = {"cancellation-policy": "#cancellations", "shipping-policy": "#delivery"}.get(p, "#returns")
+    return RedirectResponse("/hospital-bag/policies" + anchor, 301)
+
+
 @app.api_route("/signin", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/signup", methods=["GET", "HEAD"], include_in_schema=False)
 @app.api_route("/reset", methods=["GET", "HEAD"], include_in_schema=False)
@@ -464,7 +506,7 @@ def join_link(request: Request, token: str = ""):
 # either a signed-in surface or the same landing HTML under another path (/signin, /signup, /reset, /join/<token>),
 # which is duplicate content — those carry a canonical back to "/" as well, but keeping crawlers out is cheaper than
 # relying on it. The sitemap is generated rather than written by hand so a new public page cannot be forgotten here.
-PUBLIC_PAGES = ("/", "/privacy", "/terms")
+PUBLIC_PAGES = ("/", "/hospital-bag", "/hospital-bag/policies", "/privacy", "/terms")
 CRAWL_BLOCKED = ("/app", "/partner", "/admin", "/counter", "/tech", "/api/", "/signin", "/signup",
                  "/reset", "/join/", "/d/", "/s/", "/dr/", "/healthz")
 
@@ -556,10 +598,10 @@ def sitemap(request: Request):
     # lastmod is the file's own mtime: it changes when the page changes and not when the server restarts, which is
     # exactly what the spec asks for. A wrong lastmod is worse than none — Google stops trusting the field.
     def entry(path: str) -> str:
-        f = SITE / ("home/index.html" if path == "/" else path.strip("/") + ".html")
+        f = SITE / {"/": "home/index.html", "/hospital-bag": "home/bag.html", "/hospital-bag/policies": "home/policies.html"}.get(path, path.strip("/") + ".html")
         when = datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc).date().isoformat() if f.exists() else ""
         mod = f"<lastmod>{when}</lastmod>" if when else ""
-        pri = "1.0" if path == "/" else "0.3"
+        pri = "1.0" if path == "/" else ("0.8" if path == "/hospital-bag" else "0.3")
         return f"<url><loc>{_x.escape(origin + path)}</loc>{mod}<priority>{pri}</priority></url>"
     xml = ('<?xml version="1.0" encoding="UTF-8"?>'
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -573,8 +615,9 @@ LEGAL = {
     "ENTITY": os.getenv("LEGAL_ENTITY", "Urban Health"),
     "ADDRESS": os.getenv("LEGAL_ADDRESS", "Hyderabad, Telangana, India"),
     "GRIEVANCE_NAME": os.getenv("GRIEVANCE_NAME", "Grievance Officer, Urban Health"),
-    "GRIEVANCE_EMAIL": os.getenv("GRIEVANCE_EMAIL") or os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
-    "SUPPORT_EMAIL": os.getenv("SUPPORT_EMAIL") or os.getenv("ADMIN_EMAIL", ""),
+    # the company's public address is support@urbanhealth.in; the admin sign-in address is never shown to the public
+    "GRIEVANCE_EMAIL": os.getenv("GRIEVANCE_EMAIL") or os.getenv("SUPPORT_EMAIL") or "support@urbanhealth.in",
+    "SUPPORT_EMAIL": os.getenv("SUPPORT_EMAIL") or "support@urbanhealth.in",
     "UPDATED": os.getenv("POLICY_UPDATED", "14 November 2026"),
 }
 

@@ -134,7 +134,12 @@ def test_nudges_and_weekly_report_from_the_record():
     assert me["labs"][0]["name"] == "LDL cholesterol"
     # the morning pass writes notices once, and never twice for the same key
     f = family()
-    assert f.put("/api/v1/sync", headers=H, json={"base": 0, "state": st, "sect": {"members": 1}}).status_code == 200
+    # the weekly report endpoint reads the last four weeks from the real clock, so the synced readings are dated from
+    # today (the checks above use a fixed date); dated from October they would fall out of the window as time passes
+    live = json.loads(json.dumps(st))
+    now_ms = int(_t.time()) * 1000
+    live["vitals"]["m1"] = [{**v, "t": now_ms - (40 - i) * 86400000} for i, v in enumerate(st["vitals"]["m1"])]
+    assert f.put("/api/v1/sync", headers=H, json={"base": 0, "state": live, "sect": {"members": 1}}).status_code == 200
     n1 = proactive.run_morning(today, force=True)
     n2 = proactive.run_morning(today, force=True)
     assert n1 >= 3 and n2 == 0
@@ -467,6 +472,10 @@ def test_app_downloads_and_fitbit_off_by_default():
 def test_shop_package_order_upi_and_cod(monkeypatch):
     _upi_on(monkeypatch)
     f, a = family(), admin()
+    # the hospital bag is sold on /hospital-bag now: the old in-app package is off sale until the team lists it again
+    assert all(x["sku"] != "bag-complete" for x in f.get("/api/v1/shop/products").json()["products"])
+    assert a.put("/api/admin/products/bag-complete", json={"sku": "bag-complete", "name": "Hospital Bag · Complete", "price": 2999, "mrp": 3999, "stock": 20,
+                                                          "sizes": ["S", "M", "L"], "includes": [{"group": "Mother", "name": "Nighties", "qty": 3}]}).status_code == 200
     sp = f.get("/api/v1/shop/products").json()
     assert sp["store"] == "s_tht_shop" and sp["products"][0]["sku"] == "bag-complete" and sp["products"][0]["price"] > 0 and "S" in sp["products"][0]["sizes"]
     p = sp["products"][0]

@@ -231,8 +231,7 @@ def decide(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session =
     if x.kind == "refund":
         o = db.get(Order, x.ref)
         if o:
-            o.status = "refunded"
-            o.timeline = (o.timeline or []) + [{"s": "refunded", "t": now(), "by": a.email, "amount": x.amount}]
+            _refund_done(db, o, x.amount, a.email, (x.payload or {}).get("method", ""), (x.payload or {}).get("ref", ""))
     elif x.kind == "role":
         t = db.scalar(select(Admin).where(Admin.email == x.ref))
         if t:
@@ -266,6 +265,26 @@ def export_download(aid: str, a: Admin = Depends(admin_me), db: Session = Depend
 class RefundIn(BaseModel):
     amount: int
     reason: str
+    method: str = ""   # how the money went back: Razorpay, UPI or bank transfer
+    ref: str = ""      # the Razorpay refund id or the UPI / bank reference, so the family can trace it
+
+
+REFUND_HOW = {"razorpay": "the way you paid", "upi": "to your UPI ID", "bank": "to your bank account"}
+
+
+def _refund_done(db: Session, o: Order, amount: int, by: str, method: str = "", ref: str = "") -> None:
+    """Record a refund on the order and tell the family. Partial refunds (one item from a bag) add up; the order's
+    status becomes refunded either way."""
+    o.status = "refunded"
+    o.timeline = (o.timeline or []) + [{"s": "refunded", "t": now(), "by": by, "amount": amount, "method": method, "ref": ref}]
+    try:
+        from .inbox import notify
+        how = REFUND_HOW.get(method, "")
+        notify(db, o.household_id, "order", f"Refund of ₹{amount:,} sent · {o.id}",
+               (f"We've sent ₹{amount:,} {how}" if how else f"We've sent your refund of ₹{amount:,}") + (f" (reference {ref})" if ref else "")
+               + ". It usually shows within 5 to 7 working days.", {"order": o.id}, o.member_id or "", "/app#page=orders")
+    except Exception as e:
+        print("[refund] family notice failed:", str(e)[:120], flush=True)
 
 
 @ar.post("/orders/{oid}/refund")
@@ -274,17 +293,23 @@ def refund(oid: str, body: RefundIn, a: Admin = Depends(admin_me), db: Session =
     o = db.get(Order, oid)
     if not o:
         raise HTTPException(404, "No such order")
-    if o.status == "refunded":
+    done = sum(int(t.get("amount") or 0) for t in (o.timeline or []) if t.get("s") == "refunded")
+    left = int(o.total or 0) - done
+    if left <= 0:
         raise HTTPException(409, "Already refunded")
-    if body.amount <= 0 or body.amount > (o.total or 0):
-        raise HTTPException(400, f"Refund must be between ₹1 and the order total ₹{o.total}.")
+    if body.amount <= 0 or body.amount > left:
+        raise HTTPException(400, f"Refund must be between ₹1 and ₹{left:,}" + (f" (₹{done:,} of ₹{o.total:,} is already refunded)." if done else f", the order total."))
     if len(body.reason.strip()) < 5:
         raise HTTPException(400, "Give a reason in a few words.")
+    method = body.method if body.method in REFUND_HOW else ""
+    ref = re.sub(r"[^A-Za-z0-9_\-]", "", body.ref or "")[:40]
     if body.amount > REFUND_LIMIT:
         r = ask(AskIn(kind="refund", ref=oid, amount=body.amount, reason=body.reason), a, db)
+        x = db.get(Approval, r["id"])
+        if x:
+            x.payload = {**(x.payload or {}), "method": method, "ref": ref}
         return {"approval": r["id"], "message": f"Over ₹{REFUND_LIMIT:,}: sent to another admin to approve."}
-    o.status = "refunded"
-    o.timeline = (o.timeline or []) + [{"s": "refunded", "t": now(), "by": a.email, "amount": body.amount}]
+    _refund_done(db, o, body.amount, a.email, method, ref)
     log(db, a.email, f"order.refund {oid} ₹{body.amount}", body.reason[:300])
     return {"ok": True, "message": f"₹{body.amount:,} refunded."}
 

@@ -1,4 +1,4 @@
-const V='dk-r127',SHELL=['/app','/manifest.webmanifest','/icon.svg','/brand/png/user-icon-192.png','/brand/png/user-icon-512.png','/a/fa-body.5aa85d80.webp','/a/fa-chest.9f8362f8.webp'];
+const V='dk-r129',SHELL=['/app','/manifest.webmanifest','/icon.svg','/brand/png/user-icon-192.png','/brand/png/user-icon-512.png','/a/fa-body.5aa85d80.webp','/a/fa-chest.9f8362f8.webp'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==V+'-api'&&x.startsWith('dk-')).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 const SWR=/^\/api\/v1\/(config|plans|shop\/products|app\/(android|ios)|seasonal|videos|hospitals|places|labs\/quotes)/;
@@ -18,4 +18,4 @@ async function doseAct(a,act){if(a==='snooze')return post(`/api/v2/people/${act.
  const ws=await clients.matchAll({type:'window',includeUncontrolled:true});ws.forEach(w=>w.postMessage({uh:'dose'}))}
 self.addEventListener('notificationclick',e=>{const act=e.notification.data&&e.notification.data.act;if(act&&['take','snooze','skip'].includes(e.action)){e.notification.close();e.waitUntil(doseAct(e.action,act).catch(()=>self.registration.showNotification('Could not save',{body:'Open Urban Health to tick it.',icon:'/brand/png/user-icon-192.png',data:{url:'/app/meds'}})));return}
  e.notification.close();const url=(e.notification.data&&e.notification.data.url)||'/app';
- e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(ws=>{for(const w of ws){if(w.url.includes('/app')&&'focus' in w)return w.focus()}return clients.openWindow(url)}))});
+ e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(ws=>{for(const w of ws){if(url.startsWith('/app')&&w.url.includes('/app')&&'focus' in w)return w.focus()}return clients.openWindow(url)}))});

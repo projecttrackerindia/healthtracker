@@ -7,6 +7,7 @@ the shop store).
 from __future__ import annotations
 
 import os
+import re
 import time
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -24,6 +25,7 @@ from .models import ShopProduct, Store, StoreItem, now
 r = APIRouter(prefix="/api/v1/shop")
 ar = APIRouter(prefix="/api/admin")
 SHOP_ID = "s_tht_shop"
+OLD_NAME = re.compile(r"The\s*Health\s*Tracker")   # the product's name before the rename, found in rows seeded before it
 BAG_SKU = "bag-complete"
 BAG_INCLUDES = [
     {"group": "Mother", "name": "Front-open cotton nighties (Urban Health Mother line)", "qty": 3},
@@ -62,12 +64,21 @@ def ensure_shop(db: Session) -> Store:
     elif "healthtracker" in (s.name + s.brand).lower():   # the store predates the rename to Urban Health
         s.name, s.brand = "Urban Health Store", "Urban Health"
         db.flush()
-    if not db.get(ShopProduct, BAG_SKU):
+    old = db.get(ShopProduct, BAG_SKU)
+    if old and OLD_NAME.search((old.description or "") + str(old.includes or "")):
+        # The package seeded before the rename, and before the hospital bag page. There is one bag now, sold on
+        # /hospital-bag with its own prices and stock (bagshop.py), so this one comes off sale; the team can list it
+        # again from Admin → Shop. Its old name is corrected either way.
+        old.description = OLD_NAME.sub("Urban Health", old.description or "").replace(" a Urban Health", " an Urban Health")
+        old.includes = [{**i, "name": OLD_NAME.sub("Urban Health", str(i.get("name", "")))} for i in (old.includes or [])]
+        old.active, old.updated = False, now()
+        db.flush()
+    if not old:
         db.add(ShopProduct(sku=BAG_SKU, name="Hospital Bag · Complete", tagline="Everything on the hospital-bag list, packed and delivered before the due date.",
                            description="One package that covers the mother, the baby and the partner from the checklist in your birth plan, in a Urban Health tote with a document folder for the MCP card, reports and cards. "
                                        "Mother's wear comes in your size; baby items are newborn size (0–3 months). Packed in Hyderabad and shipped across India.",
                            includes=BAG_INCLUDES, sizes=["S", "M", "L", "XL", "XXL"], size_note="Mother's nighties and nursing bras — pick your usual size; maternity fit.",
-                           badge="Birth plan", ships_in="3–5 days", sort=1, active=True))
+                           badge="Birth plan", ships_in="3–5 days", sort=1, active=False))   # the bag is sold on /hospital-bag
         db.add(StoreItem(store_id=SHOP_ID, sku=BAG_SKU, name="Hospital Bag · Complete", mrp=3999, price=2999, stock=50))
         db.flush()
     return s

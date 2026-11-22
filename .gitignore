@@ -4,3 +4,8 @@ __pycache__/
 .env
 /data/
 tests_e2e/out/
+
+# review screenshots and deploy bundles
+/hospital-bag-*.png
+/hospital-bag-*.pdf
+uhpatch*.tgz

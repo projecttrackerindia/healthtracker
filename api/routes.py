@@ -340,13 +340,21 @@ def _live(o):
         return None
 
 
+def _bag_return(o: Order):
+    """Hospital bag orders: whether a return can be asked for, and where the latest request stands (bagreturns.py)."""
+    if o.kind != "shop":
+        return None
+    from .bagreturns import summary
+    return summary(o)
+
+
 def order_json(o: Order):
     steps, i = _status(o)
     return {"id": o.id, "kind": o.kind, "store": store_json(o.store) if o.store else None, "items": o.items, "subtotal": o.subtotal, "fee": o.fee,
             "discount": o.discount, "total": o.total, "address": o.address, "member": o.member, "rxShared": o.rx_shared, "slot": o.slot,
             "status": "cancelled" if i < 0 else (o.status if o.status in ("return_requested", "returned", "refunded") else steps[i][0]), "step": i, "steps": [s[1] for s in steps], "created": o.created, "eta": o.eta,
             "payment": o.payment, "rating": o.rating, "ratingTags": o.rating_tags, "ratingNote": o.rating_note, "timeline": o.timeline, "addr": o.addr, "doorCode": o.door_code, "sampleId": o.sample_id, "cancelFee": o.cancel_fee, "live": _live(o),
-            "visitRating": o.visit_rating, "visitTags": o.visit_tags,
+            "visitRating": o.visit_rating, "visitTags": o.visit_tags, "ret": _bag_return(o),
             # Fasting tests: the family can tell the technician when they last ate, before the knock on the door
             "fastNeed": needs_fasting(o), "fastOk": next(({"t": x.get("t"), "since": x.get("since", "")} for x in reversed(o.timeline or []) if x.get("s") == "fasting_ok"), None),
             # Asked once the sample is in the bag and the person is still fresh in mind — not days later when
@@ -406,6 +414,11 @@ def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db)
             it = inv.get(i.get("sku"))
             if not it:
                 continue
+            if s.kind == "shop":
+                from .models import ShopProduct
+                sp = db.get(ShopProduct, it.sku)
+                if sp and not sp.active:
+                    continue   # off sale (the hospital bag is sold on /hospital-bag)
             if sched.get(it.sku) == "X" or NOT_ONLINE.search(it.name or ""):
                 # Schedule X and NDPS medicines may not be sold or delivered online in India, prescription or not.
                 raise HTTPException(400, f"{it.name} can't be ordered online by law. Buy it at a pharmacy counter with the original prescription.")
@@ -600,10 +613,12 @@ def cancel(oid: str, request: Request, db: Session = Depends(get_db), x_dokko_ke
     if not h or not o or o.household_id != h.id or not _oa(db, _cu(request, db), o.member_id, write=True):
         raise HTTPException(404)
     steps, i = _status(o)
-    if i >= 3:
-        raise HTTPException(409, "already out for delivery")
+    if i >= 3 or (o.kind == "shop" and i >= 2) or o.status in ("cancelled", "return_requested", "returned", "refunded"):
+        raise HTTPException(409, "We've packed your bag, so it can't be cancelled now. You can decline it at the door, or return unused items within 7 days." if o.kind == "shop" else "already out for delivery")
     o.status = "cancelled"
     o.timeline = (o.timeline or []) + [{"s": "cancelled", "t": now()}]
+    from .bagshop import restock
+    restock(db, o)
     return order_json(o)
 
 

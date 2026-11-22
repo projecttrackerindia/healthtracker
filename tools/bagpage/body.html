@@ -1,0 +1,65 @@
+<body>
+<nav class="gnav" aria-label="Main"><div class="gin">
+  /*LOGO*/
+  <a class="lk" href="/#labs">Lab reports</a><a class="lk" href="/#medicines">Medicines</a><a class="lk" href="/#book">Appointments</a><a class="lk" href="/#pregnancy">Pregnancy</a><a class="lk on" href="/hospital-bag" aria-current="page">Hospital bag</a><a class="bagi on" href="/hospital-bag" aria-label="Hospital bag" aria-current="page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></a><a class="lk" href="/#kids">Kids</a><a class="lk red" href="/#sos">SOS</a>
+  <div class="acct" id="acct"><a class="lk si" href="/signin">Sign in</a><a class="av" href="/app" aria-label="Your account"></a><a class="pill" href="/signup">Get started</a></div>
+</div></nav>
+<script>/* the account corner: same width signed in or out, so nothing in the header moves */
+window.uhNav=function(u){try{var a=document.getElementById("acct");if(!a)return;var p=a.querySelector(".pill"),v=a.querySelector(".av"),i=u?String(u.name||u.email||"").trim().charAt(0).toUpperCase():"";
+if(u&&i){a.classList.add("signed");v.textContent=i;v.title=u.name||"Your account";p.textContent="Open app";p.href="/app";localStorage.setItem("uh-nav",i)}
+else{a.classList.remove("signed");v.textContent="";p.textContent="Get started";p.href="/signup";localStorage.removeItem("uh-nav")}}catch(e){}};
+(function(){try{var i=localStorage.getItem("uh-nav");if(i&&/^[^<>&"']$/.test(i))uhNav({name:i})}catch(e){}})();</script>
+<main class="top">
+  <!-- one buy page: the bag stays on the left, everything you choose is on the right -->
+  <section class="buy" id="build"><div class="wrap"><div class="bgrid">
+    <aside class="scol">
+      <div class="bstage"><div class="bcount"><small>In your bag</small><b id="bUnits">23 items</b></div><div class="host" id="buildBag"></div><div class="cap">Drag to turn</div><div class="smeta" id="smeta"></div></div>
+    </aside>
+    <div>
+      <section class="intro">
+        <p class="eyebrow">Hospital bag</p>
+        <h1>Packed for the big day.</h1>
+        <p class="sub">14 essentials for you and your baby, from brands you know, shaped around your delivery and at your door before week&nbsp;36.</p>
+        <ul class="brands" aria-label="Brands in the bag"><li><b>Mee Mee</b><span>Baby care and nursing</span></li><li><b>SuperBottoms</b><span>Baby clothes</span></li><li><b>Pee Safe</b><span>Care after birth</span></li></ul>
+        <div class="price"><b id="pTotal">₹8,314</b><s id="pMrp">₹11,890</s><span class="offb" id="pOff">30% off</span></div>
+        <p class="psave" id="pNote">Complete bag · you save ₹3,576 on brand prices</p>
+        <ul class="trust"><li><i><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></i>Free delivery</li><li><i><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></i>UPI or pay on delivery</li><li><i><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></i>Sealed packs, MRP printed</li></ul>
+      </section>
+      <div id="config"></div>
+    </div>
+  </div></div></section>
+
+  <section class="tool faq" id="faq"><div class="wrap">
+    <div class="head" style="text-align:left;margin:0 0 36px;max-width:none"><h2>Questions.</h2></div>
+    <details><summary>What’s in the complete bag?</summary><p>14 essentials. For you, Mee Mee nursing bras and breast pads, with Pee Safe maternity pads, disposable underwear and intimate wash. For your baby, SuperBottoms jhablas and newborn sets, with Mee Mee diapers, wipes, swaddles, towels and a padded carry nest. It all comes in a Mee Mee diaper backpack, with a free Urban Health emergency card.</p></details>
+    <details><summary>Are these the brands’ own products?</summary><p>Yes. Every item comes sealed in its maker’s own pack, with the maker’s name, address and MRP printed on it, and we never charge more than the MRP.</p></details>
+    <details><summary>What should I bring from home?</summary><p>Your MCP card, reports, ID and insurance card, two or three front-open nighties, clothes to go home in, slippers, toiletries, a water bottle, snacks and your phone charger. Many hospitals provide a gown and slippers, so it’s worth asking yours. The packing checklist keeps this list with your account.</p></details>
+    <details><summary>When will it arrive?</summary><p>We suggest a day before week 36, worked out from your due date. You can pick an earlier or later day at checkout.</p></details>
+    <details><summary>How can I pay?</summary><p id="faqPay">Pay when the bag arrives, by cash or UPI. Your receipt appears in the Urban Health app.</p></details>
+    <details><summary>Can I return something?</summary><ul class="pl" id="faqRet"><li>Cancel free of charge until your bag is packed.</li><li>Return or exchange unused items in their original packing within 7 days of delivery. A size that doesn’t fit is exchanged once, free.</li><li>For hygiene reasons, maternity pads, disposable underwear, nursing bras, breast pads, intimate wash and wipes can’t be returned once opened, unless they arrive damaged or wrong.</li><li>Damaged or wrong item? Tell us within 48 hours of delivery with a photo, and we’ll replace it or refund it.</li><li>Refunds go back the way you paid, or to your UPI ID if you paid on delivery, usually within 5–7 working days of the item reaching us.</li></ul><p class="plk"><a class="more" href="/hospital-bag/policies">Read the full policy</a></p></details>
+  </div></section>
+</main>
+/*FOOTER*/
+
+<div class="sumbar" id="sumbar" aria-label="Your bag">
+  <div class="sbst" id="sbst"></div>
+  <div class="sb1"><b>Your Hospital Bag</b><span id="sbMeta"></span></div>
+  <div class="sb2"><b id="sbTotal">₹8,314</b><span id="sbSave"><span class="sbo">30% off · </span>you save ₹3,576</span></div>
+  <button class="btn" data-buy>Check out</button>
+</div>
+
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Product">
+  <div class="vbg"></div>
+  <div class="vtop"><button class="vback" id="vClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Your bag</button><div class="vseg" id="vSeg"></div></div>
+  <div id="vcard"><div id="vinfo"></div></div>
+  <div id="vstage"></div>
+  <div class="varr" id="vArr"><button class="ar" id="vPrev" aria-label="Previous item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><span class="vpos" id="vPos"></span><button class="ar" id="vNext" aria-label="Next item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><i>/*CK*/</i><span id="toastT"></span></div>
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Checkout">
+  <div class="shtop"><button class="x" data-close aria-label="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="prog" id="prog"><i></i><i></i><i></i><i></i></div><span style="width:30px"></span></div>
+  <div class="shbody" id="shbody"></div>
+  <div class="shfoot" id="shfoot"></div>
+</aside>
