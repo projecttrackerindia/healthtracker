@@ -233,7 +233,7 @@ function o2Find(re){return latest().find(f=>re.test(String(f.code||'')+' '+f.tes
 function o2Row(lab,f,unit){return`<div class="o2r"><span>${esc(lab)}</span><b>${f?esc(f.value)+(f.unit?' '+esc(f.unit):unit?' '+unit:''):'<em>Not on file</em>'}</b></div>`}
 function o2Sheet(o){if(o==='urine'||o==='bloodtour'){const S=O2STEPS[o];sheet(`<div id="o2step" class="o2step"><div class="o2n">STEP 1 OF ${S.length}</div><div class="o2t">${esc(S[0][1])}</div><div class="o2d">${S.map((_,j)=>`<i class="${j?'':'on'}"></i>`).join('')}</div>
   ${o==='bloodtour'?'<p class="o2s">The cell turns bright red when it picks up oxygen in the lungs and darker red after the body has used it. The heart and lungs are see-through so you can follow it.</p>':STATE.base==='female'?'<p class="o2s">Shown on a male body; in women the urethra is much shorter.</p>':''}</div>
-  ${o==='urine'?`<div class="o2box"><div class="ove" style="color:#8E8E93">KIDNEY RESULTS</div>${o2Row('Kidney filtering (eGFR)',o2Find(/egfr/i))}${o2Row('Creatinine',o2Find(/^creat/i))}</div>`:''}`);$('#card').classList.add('og');return}
+  ${o==='urine'?`<div class="o2box"><div class="ove" style="color:var(--ink3)">KIDNEY RESULTS</div>${o2Row('Kidney filtering (eGFR)',o2Find(/egfr/i))}${o2Row('Creatinine',o2Find(/^creat/i))}</div>`:''}`);$('#card').classList.add('og');return}
  if(o==='prostate'){const card=$('#card');if(card)card.insertAdjacentHTML('afterbegin','<div class="o2lock">Only you see this. Not shown to family.</div>')}
  if(o==='eye'){const a1=o2Find(/hba1c/i);if(a1&&parseFloat(a1.value)>=6.5){const card=$('#card');card.insertAdjacentHTML('beforeend',`<div class="o2box"><div class="ove" style="color:#9A5B00">DIABETIC EYE CHECK · YEARLY</div><p class="o2s" style="margin:4px 0 0">With HbA1c ${esc(a1.value)}%, a yearly retina check is advised. Eye tests from your doctor show here.</p></div>`)}}}
 
@@ -289,18 +289,18 @@ body.orgv.o2lab #h3tags{display:block}body.orgv.o2lab #ogpin{display:none!import
 #o2bar .chip,.o2chips .chip{height:36px;border-radius:18px;border:0;background:rgba(255,255,255,.92);box-shadow:0 2px 10px rgba(0,0,0,.08);font:600 13.5px Geist,Inter,sans-serif;color:#1D1D1F;padding:0 14px}
 #o2bar .chip.on,.o2chips .chip.on{background:#1D1D1F;color:#fff}
 .o2chips{display:flex;gap:6px;overflow-x:auto;max-width:100%;scrollbar-width:none;padding:2px}.o2chips::-webkit-scrollbar{display:none}
-.o2sl{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.92);border-radius:22px;padding:0 16px;height:44px;box-shadow:0 2px 10px rgba(0,0,0,.08);font:600 12.5px Geist,Inter,sans-serif;color:#6E6E73;width:min(360px,100%);box-sizing:border-box}
+.o2sl{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.92);border-radius:22px;padding:0 16px;height:44px;box-shadow:0 2px 10px rgba(0,0,0,.08);font:600 12.5px Geist,Inter,sans-serif;color:var(--ink2);width:min(360px,100%);box-sizing:border-box}
 .o2sl input{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:#E5E5EA;outline:none}
 .o2sl input::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:14px;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3);border:0}
 .o2sl input::-moz-range-thumb{width:28px;height:28px;border-radius:14px;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3);border:0}
 #o2cap{position:fixed;z-index:7;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none}#o2cap[hidden]{display:none}#o2cap:not([hidden]){display:block;width:max-content;max-width:calc(100vw - 48px);box-sizing:border-box;background:rgba(255,255,255,.92);border-radius:16px;padding:7px 14px;font:600 13px Geist,Inter,sans-serif;color:#1D1D1F;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .o2seg button{white-space:nowrap}.o2cell{border:0;background:none;border-radius:15px;padding:0 14px;font:600 14px Geist,Inter,sans-serif;color:#3A3A3C;white-space:nowrap}
 .o2step .o2n{font-size:12px;font-weight:700;letter-spacing:.06em;color:#0062C4}.o2step .o2t{font-size:19px;font-weight:700;letter-spacing:-.01em;margin-top:4px;line-height:1.3}
-.o2d{display:flex;gap:5px;margin-top:12px}.o2d i{flex:1;height:4px;border-radius:2px;background:#E5E5EA}.o2d i.d{background:#7FB5F0}.o2d i.on{background:#0071E3}
-.o2s{font-size:13.5px;color:#6E6E73;line-height:1.45;margin:10px 0 0}
-.o2box{background:#F5F5F7;border-radius:18px;padding:12px 14px;margin-top:12px}.o2r{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:15px}.o2r b{font-size:17px}.o2r em{font-style:normal;font-weight:500;font-size:13px;color:#8E8E93}
+.o2d{display:flex;gap:5px;margin-top:12px}.o2d i{flex:1;height:4px;border-radius:2px;background:#E5E5EA}.o2d i.d{background:#7FB5F0}.o2d i.on{background:#0066CC}
+.o2s{font-size:13.5px;color:var(--ink2);line-height:1.45;margin:10px 0 0}
+.o2box{background:#F5F5F7;border-radius:18px;padding:12px 14px;margin-top:12px}.o2r{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:15px}.o2r b{font-size:17px}.o2r em{font-style:normal;font-weight:500;font-size:13px;color:var(--ink3)}
 .o2lock{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#1A7F37;background:#E8F8EE;border-radius:14px;padding:5px 11px;margin:4px 0 8px}
-.o2stat{display:flex;gap:8px}.o2stat div{flex:1;background:#F5F5F7;border-radius:16px;padding:10px 12px}.o2stat b{display:block;font-size:19px;letter-spacing:-.02em;white-space:nowrap}.o2stat small{font-size:11.5px;color:#6E6E73}
+.o2stat{display:flex;gap:8px}.o2stat div{flex:1;background:#F5F5F7;border-radius:16px;padding:10px 12px}.o2stat b{display:block;font-size:19px;letter-spacing:-.02em;white-space:nowrap}.o2stat small{font-size:11.5px;color:var(--ink2)}
 .o2grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.o2grid button{border:0;background:#F5F5F7;border-radius:16px;min-height:52px;font:600 15px Geist,Inter,sans-serif;color:#1D1D1F;text-align:left;padding:0 14px}
 #o2tags{position:fixed;inset:0;pointer-events:none;z-index:4}#o2tags .h3t{pointer-events:none}
 body.dk #o2bar .h3seg,body.dk #o2bar .chip,body.dk .o2sl,body.dk #o2cap{background:rgba(44,44,46,.92);color:#fff}body.dk .o2box,body.dk .o2stat div,body.dk .o2grid button{background:#2C2C2E;color:#fff}
@@ -348,18 +348,18 @@ const _o2Call=o2Call;o2Call=function(items){if(O2.cs==='card')return _o2Call(ite
  let lg=$('#o2leg');if(!lg){lg=document.createElement('div');lg.id='o2leg';document.body.appendChild(lg)}lg.hidden=false;let lt=bot-44;{const cp=$('#o2cap');if(cp&&!cp.hidden&&cp.getClientRects().length&&getComputedStyle(cp).display!=='none'){const r=cp.getBoundingClientRect();if(r.height&&r.top<lt+40)lt=r.top-44}}lg.style.top=lt+'px';lg.style.right=(innerWidth-W)+'px';
  const ls='l'+sig;if(lg.dataset.sig!==ls){lg.dataset.sig=ls;lg.innerHTML=O2.numOrder.map(j=>{const i=items[j];return`<button class="${i.sel?'sel':''}" data-j="${j}"><i>${no[j]}</i>${esc(i.name)}</button>`}).join('');lg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.j];it&&it.on&&it.on()});const s=lg.querySelector('.sel');if(s)s.scrollIntoView({inline:'center',block:'nearest'});else if(lg.dataset.org!==ks){lg.scrollLeft=0}lg.dataset.org=ks}};
 (()=>{const st=document.createElement('style');st.textContent=`
-#o2call.num circle.nd{fill:#1D1D1F;stroke:none}#o2call.num circle.nd.s{fill:#0071E3}
+#o2call.num circle.nd{fill:#1D1D1F;stroke:none}#o2call.num circle.nd.s{fill:#0066CC}
 .o2num{position:absolute;left:0;top:0;width:22px;height:22px;border-radius:11px;border:0;padding:0;background:rgba(255,255,255,.94);color:#1D1D1F;font:700 11.5px/22px Geist,Inter,sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.06);transition:opacity .2s}
 .o2num::before{content:'';position:absolute;inset:-11px}
-.o2num.sel{background:#0071E3;color:#fff;transform-origin:center;box-shadow:0 0 0 4px rgba(0,113,227,.22)}
+.o2num.sel{background:#0066CC;color:#fff;transform-origin:center;box-shadow:0 0 0 4px rgba(0,113,227,.22)}
 #o2leg{position:fixed;left:0;right:0;z-index:5;display:flex;gap:8px;overflow-x:auto;padding:0 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
 #o2leg[hidden]{display:none}#o2leg::-webkit-scrollbar{display:none}
 #o2leg button{flex:none;scroll-snap-align:start;display:flex;align-items:center;gap:7px;height:36px;padding:0 13px 0 6px;border:0;border-radius:18px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 1px 4px rgba(0,0,0,.08);font:600 13px Geist,Inter,sans-serif;color:#1D1D1F;white-space:nowrap}
 #o2leg i{font-style:normal;width:24px;height:24px;border-radius:12px;background:#F2F2F7;font:700 11.5px/24px Geist,Inter,sans-serif;text-align:center}
-#o2leg button.sel{background:#0071E3;color:#fff}#o2leg button.sel i{background:rgba(255,255,255,.25);color:#fff}
+#o2leg button.sel{background:#0066CC;color:#fff}#o2leg button.sel i{background:rgba(255,255,255,.25);color:#fff}
 #o2call.edge .o2lab2{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:2px 0}
 #o2call.edge .o2lab2 b{font-size:12px;font-weight:600;line-height:1.25;text-shadow:0 0 3px #F2F2F7,0 0 6px #F2F2F7}
-#o2call.edge .o2lab2.sel{background:none;color:#0071E3}#o2call.edge .o2lab2.sel small{display:none}
+#o2call.edge .o2lab2.sel{background:none;color:#0066CC}#o2call.edge .o2lab2.sel small{display:none}
 body.dk .o2num{background:rgba(44,44,46,.94);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.12)}body.dk #o2leg button{background:rgba(44,44,46,.9);color:#fff}body.dk #o2leg i{background:#3A3A3C;color:#fff}body.dk #o2leg button.sel,body.dk .o2num.sel{background:#0A84FF;color:#fff}
 body.dk #orgbar span,body.dk #orgbar button{background:rgba(44,44,46,.92);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}body.dk #orgbar svg[stroke]{stroke:#fff}body.dk #orgbar svg[fill='#1D1D1F']{fill:#fff}body.dk .h3seg{background:rgba(44,44,46,.92);border-color:transparent}body.dk .h3seg button{color:#EBEBF5}body.dk .h3seg .on{background:#F5F5F7;color:#1D1D1F}body.dk .fx[style*='EEF0FF']{background:#2A2A3C!important;color:#F5F5F7}
 @media (min-width:900px){#o2bar{right:calc(min(420px,38vw) + 32px)}}
@@ -431,7 +431,7 @@ const _vOrgan2=vOrgan;vOrgan=async function(o){if(o==='bones'&&!O2.boneUser){con
 const _o2Bone=o2Bone;o2Bone=function(k){O2.boneUser=true;_o2Bone(k)};
 /* the nervous system shows any nerve tests on file */
 const _o2NervMode=o2NervMode;o2NervMode=function(k){_o2NervMode(k);if(k)return;const fs=latest().filter(f=>f.org==='nerves');if(!fs.length)return;const c=$('#card');if(!c)return;
- c.insertAdjacentHTML('beforeend',`<div class="o2box"><div class="ove" style="color:#8E8E93">YOUR NERVE TESTS</div>${fs.map(f=>`<div class="o2r"><span>${esc(f.test.replace(/\s*\(.*\)/,''))}</span><b style="color:${FCOL(f)}">${esc(f.value)}${f.unit?' '+esc(f.unit):''}</b></div>`).join('')}</div>`)};
+ c.insertAdjacentHTML('beforeend',`<div class="o2box"><div class="ove" style="color:var(--ink3)">YOUR NERVE TESTS</div>${fs.map(f=>`<div class="o2r"><span>${esc(f.test.replace(/\s*\(.*\)/,''))}</span><b style="color:${FCOL(f)}">${esc(f.value)}${f.unit?' '+esc(f.unit):''}</b></div>`).join('')}</div>`)};
 /* a specialist's consult opens on the part they look after (the uterus and prostate never open here) */
 function o2Spec(d){const s=String(d.specialty||'').toLowerCase(),F=d.findings||[],v=c=>{const f=F.find(x=>String(x.code||'').toLowerCase()===c);return f?parseFloat(f.value):NaN};
  if(/ophthal|eye|retina|optom|cornea|glaucoma/.test(s))return'organ:eye';if(/dent|orthodont|oral|maxillo|periodont|endodont/.test(s))return'organ:teeth';
@@ -453,17 +453,17 @@ const _vMed=vMed;vMed=function(name){const d=(DRUGS.find(x=>x[0].test(name))||[]
 (function(){const st=document.createElement('style');st.textContent=`
 #h3tags{display:none!important}
 #o2call{position:fixed;inset:0;pointer-events:none;z-index:5}#o2call[hidden]{display:none}#o2call svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-#o2call path{fill:none;stroke:rgba(29,29,31,.55);stroke-width:1}#o2call path.s{stroke:#0071E3;stroke-width:1.5}
-#o2call circle{fill:#fff;stroke:#1D1D1F;stroke-width:1.5}#o2call circle.s{fill:#0071E3;stroke:#fff;stroke-width:2}
+#o2call path{fill:none;stroke:rgba(29,29,31,.55);stroke-width:1}#o2call path.s{stroke:#0066CC;stroke-width:1.5}
+#o2call circle{fill:#fff;stroke:#1D1D1F;stroke-width:1.5}#o2call circle.s{fill:#0066CC;stroke:#fff;stroke-width:2}
 .o2lab2{position:absolute;left:0;top:0;border:0;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:12px;padding:5px 9px 6px;font-family:Geist,Inter,sans-serif;color:#1D1D1F;box-shadow:0 1px 6px rgba(0,0,0,.08);transition:opacity .2s;box-sizing:border-box;min-height:32px}
 .o2lab2 b{display:block;font-size:12.5px;font-weight:700;line-height:1.25}.o2lab2 small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;line-height:1.3;color:#5A5A5F;margin-top:1px}
-.o2lab2.sel{background:#0071E3;color:#fff}.o2lab2.sel small{color:rgba(255,255,255,.88)}
+.o2lab2.sel{background:#0066CC;color:#fff}.o2lab2.sel small{color:rgba(255,255,255,.88)}
 body.dk .o2lab2{background:rgba(44,44,46,.88);color:#fff}body.dk .o2lab2 small{color:#C7C7CC}body.dk #o2call path{stroke:rgba(255,255,255,.55)}body.dk #o2call circle{fill:#1C1C1E;stroke:#fff}
-.o2tn{font-size:13px;color:#6E6E73;margin-top:2px}.o2fx{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.o2fx span{background:#F2F2F7;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:600;color:#3A3A3C}
+.o2tn{font-size:13px;color:var(--ink2);margin-top:2px}.o2fx{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.o2fx span{background:#F2F2F7;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:600;color:#3A3A3C}
 .o2q{width:100%;box-sizing:border-box;height:44px;border-radius:22px;border:0;background:#F2F2F7;padding:0 16px;font:500 15px Geist,Inter,sans-serif;margin-top:10px;outline:none}
 .o2hd{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:14px;font-weight:600;color:#3A3A3C}.o2hd .h3seg{background:#F2F2F7;border:0}
-.o2ak{font-size:12px;font-weight:700;letter-spacing:.05em;color:#8E8E93;text-transform:uppercase;margin:16px 2px 6px}
-.o2ar{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;border:0;background:none;border-bottom:1px solid #F2F2F7;min-height:44px;padding:0 2px;font:500 15px Geist,Inter,sans-serif;color:#1D1D1F;text-align:left}.o2ar small{color:#8E8E93;font-size:12px;flex:none}
+.o2ak{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--ink3);text-transform:uppercase;margin:16px 2px 6px}
+.o2ar{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;border:0;background:none;border-bottom:1px solid #F2F2F7;min-height:44px;padding:0 2px;font:500 15px Geist,Inter,sans-serif;color:#1D1D1F;text-align:left}.o2ar small{color:var(--ink3);font-size:12px;flex:none}
 body.dk .o2fx span,body.dk .o2q,body.dk .o2hd .h3seg{background:#2C2C2E;color:#fff}body.dk .o2ar{color:#fff;border-color:#2C2C2E}
 `;document.head.appendChild(st)})();
 
@@ -596,8 +596,8 @@ async function o2CellsPanel(o){const k=o2CtKey(o),D=await o2Cells();if(!D||!k||!
 const _o2SheetC=o2Sheet;o2Sheet=function(o){_o2SheetC(o);const k=o2CtKey(o);if(!k)return;o2Cells().then(D=>{if(!D||!D.organs[k]||!OG||OG.o!==o)return;const card=$('#card');if(!card||card.querySelector('.o2cbtn'))return;const T=D.organs[k],n=T.structures.reduce((a,s)=>a+s.cells.length,0);
  card.insertAdjacentHTML('beforeend',`<button class="btn sec o2cbtn" style="width:100%;margin-top:10px" onclick="o2CellsPanel('${o}')">Cells and markers · ${n} entries</button>`)})};
 const _ogPickC=ogPick;ogPick=function(n){_ogPickC(n);if(!OG||!n)return;const k=o2CtKey(OG.o);if(!k)return;o2Cells().then(D=>{if(!D||!D.organs[k]||!OG||OG.sel!==n)return;const u=n.userData||{},lab=(OG.labels.find(l=>l.n===n)||{}).lab;const s=o2Match(D.organs[k],lab||u.display_name)||o2Match(D.organs[k],u.display_name);if(!s)return;
- const card=$('#card');if(!card||card.querySelector('.o2cbox'))return;card.insertAdjacentHTML('beforeend',`<div class="o2box o2cbox"><div class="ove" style="color:#8E8E93">CELLS HERE · ${esc(s.as.toUpperCase())}</div>${o2CellList(s.cells,5)}${o2Cite(D.organs[k])}</div>`)})};
-(()=>{const st=document.createElement('style');st.textContent=`.o2cl{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}.o2cl li{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}.o2cl b{font-size:14px;font-weight:600}.o2id{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#8E8E93}.o2mk{display:flex;flex-wrap:wrap;gap:4px;width:100%}.o2mk i{font:500 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-style:normal;padding:2px 8px;border-radius:10px;background:rgba(94,92,230,.14);color:#BFBDFF}.o2src{font-size:12px;line-height:16px;color:#8E8E93;margin:10px 0 0}.o2src a{color:#64D2FF}.o2cs{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:52vh;overflow-y:auto}.o2cs details{border-radius:14px;background:rgba(255,255,255,.06);padding:10px 12px}.o2cs summary{display:flex;flex-direction:column;gap:2px;cursor:pointer;list-style:none}.o2cs summary span{font-size:12px;color:#8E8E93}`;document.head.appendChild(st)})();
+ const card=$('#card');if(!card||card.querySelector('.o2cbox'))return;card.insertAdjacentHTML('beforeend',`<div class="o2box o2cbox"><div class="ove" style="color:var(--ink3)">CELLS HERE · ${esc(s.as.toUpperCase())}</div>${o2CellList(s.cells,5)}${o2Cite(D.organs[k])}</div>`)})};
+(()=>{const st=document.createElement('style');st.textContent=`.o2cl{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}.o2cl li{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}.o2cl b{font-size:14px;font-weight:600}.o2id{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink3)}.o2mk{display:flex;flex-wrap:wrap;gap:4px;width:100%}.o2mk i{font:500 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-style:normal;padding:2px 8px;border-radius:10px;background:rgba(94,92,230,.14);color:#BFBDFF}.o2src{font-size:12px;line-height:16px;color:var(--ink3);margin:10px 0 0}.o2src a{color:#64D2FF}.o2cs{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:52vh;overflow-y:auto}.o2cs details{border-radius:14px;background:rgba(255,255,255,.06);padding:10px 12px}.o2cs summary{display:flex;flex-direction:column;gap:2px;cursor:pointer;list-style:none}.o2cs summary span{font-size:12px;color:var(--ink3)}`;document.head.appendChild(st)})();
 
 /* ===================== Research-team review (23 Nov 2026): close-ups with parts we built ourselves say whether the
    research team has checked them (Admin → Library → Anatomy review, api/anatomy_review.py). The line is placed at
@@ -608,7 +608,7 @@ const _o2SheetR=o2Sheet;o2Sheet=function(o){_o2SheetR(o);const id=o2RvId(o),card
  card.insertAdjacentHTML('beforeend','<p class="o2rv"><i></i><span>Being checked by our research team</span></p>');const p=card.lastElementChild;
  o2Rev().then(D=>{const s=D&&D.items&&D.items[id];if(!p.isConnected||!s||s.state!=='approved')return;p.classList.add('ok');
   p.lastElementChild.textContent='Checked by our research team'+(s.at?' · '+new Date(s.at*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'')})};
-(()=>{const st=document.createElement('style');st.textContent=`.o2rv{display:flex;align-items:center;gap:7px;font-size:12px;line-height:16px;color:#8E8E93;margin:10px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.o2rv i{flex:none;width:7px;height:7px;border-radius:50%;background:#FF9F0A}.o2rv.ok i{background:#30D158}.o2rv span{overflow:hidden;text-overflow:ellipsis}`;document.head.appendChild(st)})();
+(()=>{const st=document.createElement('style');st.textContent=`.o2rv{display:flex;align-items:center;gap:7px;font-size:12px;line-height:16px;color:var(--ink3);margin:10px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.o2rv i{flex:none;width:7px;height:7px;border-radius:50%;background:#FF9F0A}.o2rv.ok i{background:#30D158}.o2rv span{overflow:hidden;text-overflow:ellipsis}`;document.head.appendChild(st)})();
 /* while the cells panel is open, the numbered labels step aside so nothing sits over the model; any move away brings them back */
 const _vshowC=vshow;vshow=function(...a){document.body.classList.remove('o2cellson');return _vshowC.apply(this,a)};
 (()=>{const st=document.createElement('style');st.textContent='body.o2cellson #h3tags,body.o2cellson #ogpin,body.o2cellson #o2leg{display:none!important}';document.head.appendChild(st)})();

@@ -1,9 +1,9 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>Urban Health · Kids</title><meta name="robots" content="noindex"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>
 @font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
-:root{--ink:#1D1D1F;--sub:#3A3A3C}
+:root{--ink:#1D1D1F;--sub:#3A3A3C;--ink2:#515154;--ink3:#6E6E73}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
-body{background:radial-gradient(90% 60% at 50% 30%,#FFFFFF 0%,#F1EEFF 55%,#E6E9FF 100%);font-family:Geist,-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+body{background:radial-gradient(90% 60% at 50% 30%,#FFFFFF 0%,#EAF4FD 55%,#D8EEFC 100%);font-family:Geist,-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
 canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 .top{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 12px);display:flex;align-items:center;gap:10px;z-index:5}
 #x{width:44px;height:44px;border-radius:22px;border:0;background:rgba(255,255,255,.9);box-shadow:0 1px 4px rgba(0,0,0,.1);display:grid;place-items:center;flex:none}
@@ -13,19 +13,31 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 .lb{position:fixed;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;background:#fff;border:0;border-radius:999px;padding:8px 13px;font:600 15px Geist,-apple-system,sans-serif;color:var(--ink);box-shadow:0 3px 12px rgba(40,30,90,.16);white-space:nowrap;z-index:3;min-height:36px;transition:opacity .2s,box-shadow .2s}
 .lb i{width:10px;height:10px;border-radius:5px;flex:none}
 .lb.on{box-shadow:0 0 0 3px currentColor,0 3px 12px rgba(40,30,90,.2)}
+/* design system: names never cover the model. Each part carries a small coloured pin; its name sits in the card below */
+.lb{width:44px;height:44px;min-height:44px;padding:0;background:none;box-shadow:none;justify-content:center}.lb.on{box-shadow:none}
+.lb span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lb i{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 3px #fff,0 2px 8px rgba(40,30,90,.35);transition:transform .2s,box-shadow .2s}
+.lb.on i{transform:scale(1.3);box-shadow:0 0 0 3px #fff,0 0 0 7px color-mix(in srgb,currentColor 35%,transparent)}
+.kpr{display:flex;gap:8px;overflow-x:auto;margin:12px -20px 0;padding:2px 20px 4px;scrollbar-width:none}.kpr::-webkit-scrollbar{display:none}
+.kpc{flex:none;display:flex;align-items:center;gap:7px;height:40px;padding:0 14px;border-radius:20px;border:0;background:#F2F2F7;font:600 15px Geist,-apple-system,sans-serif;color:#1D1D1F;cursor:pointer}
+.kpc i{width:10px;height:10px;border-radius:50%;flex:none}.kpc.on{background:#1D1D1F;color:#fff}.kpc.on i{box-shadow:0 0 0 2px #fff}
+body.k35 .kpc{height:48px;font-size:17px;padding:0 16px}
 .card{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);max-height:52vh;overflow-y:auto;border-radius:30px;padding:20px 20px 16px;background:rgba(255,255,255,.96);box-shadow:0 10px 36px rgba(40,30,90,.14);z-index:4}
 .card h2{font-size:30px;font-weight:700;letter-spacing:-.03em;margin:0}
-.card p{font-size:18px;line-height:1.4;margin:6px 0 0;color:var(--sub)}.card p.cr{font-size:11px;color:#8E8E93;margin:10px 0 0}
+.card p{font-size:18px;line-height:1.4;margin:6px 0 0;color:var(--sub)}.card p.cr{font-size:13px;color:var(--ink2);margin:10px 0 0}
 .wow{margin-top:12px;background:#FFF6DA;border-radius:18px;padding:12px 14px;font-size:17px;line-height:1.4;color:#3A2E00}.wow b{color:#9A5B00}
 .btns{display:flex;gap:10px;margin-top:14px}
+/* kids' age bands (design system): 3–5 read bigger with bigger buttons; 9–12 a little smaller and denser */
+body.k35 .card h2{font-size:34px}body.k35 .card p{font-size:21px}body.k35 .btns button{height:64px;font-size:20px}body.k35 .lb i{width:20px;height:20px}
+body.k912 .card p{font-size:17px}body.k912 .card h2{font-size:28px}
 .btns button{flex:1;height:58px;border-radius:29px;border:0;font:700 18px Geist,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
-#play{background:#E5352B;color:#fff}#fast{background:#F2F2F7;color:var(--ink)}
-#play.on{background:#1D1D1F}
+#play{background:#0066CC;color:#fff}#fast{background:#FFE7A3;color:#3A2E00}
+#play.on{background:#004F9E}
 .back{border:0;background:#F2F2F7;color:#5E5CE6;font:600 15px Geist,-apple-system,sans-serif;padding:8px 14px;border-radius:999px;margin-top:12px;min-height:36px}
-.cr{font-size:11px;color:#8E8E93;margin:12px 0 0;line-height:1.4}
+.cr{font-size:11px;color:var(--ink3);margin:12px 0 0;line-height:1.4}
 #ld{position:fixed;left:50%;top:38%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(94,92,230,.18);border-top-color:#5E5CE6;animation:sp .9s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-#err{position:fixed;left:24px;right:24px;top:36%;text-align:center;font-size:15px;color:#6E6E73;display:none}
+#err{position:fixed;left:24px;right:24px;top:36%;text-align:center;font-size:15px;color:var(--ink2);display:none}
 </style></head><body>
 <canvas id=c></canvas><div id=ld role=status aria-label="Loading"></div><div id=err>Could not load this. Check the internet and try again.</div><div id=lbs></div>
 <div class=top><button id=x aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -68,17 +80,19 @@ const O={heart:{g:'heart3-full.2ab48028.glb',s:'kd-heart_beat.69376950.m4a',t:'Y
   hide:/Eustachian tube|nerve/i,zoom:1.7,pr:[[/^Eardrum$/,'Eardrum','A thin skin that wobbles when sound hits it.','#3a63e0'],[/^Hammer/,'Tiny bones','Three tiny bones pass the wobble along. The smallest is the size of a grain of rice.','#e8364a'],[/^Cochlea$/,'Snail shell','It turns sounds into messages for your brain.','#ff8a1f'],[/^Semicircular canals$/,'Balance loops','Three loops full of liquid help you keep your balance.','#18a058']]},
  spine:{g:'hd-spine.896a50ab.glb',t:'Your backbone',play:'Take apart',fast:0,ic:'',f:{little:'Your backbone holds you up and protects the nerves inside it.',big:['It is made of 33 little bones stacked like a tower.','Soft cushions between the bones let you bend and twist.','Sitting up tall and playing outside keep your back strong.'],size:'a tall ruler'},
   pr:[[/^Atlas$/,'Top bone','The top bone holds up your head and lets you nod yes.','#3a63e0'],[/^Intervertebral disc \(disk fifth lumbar vertebra\)$/,'Cushion','A soft cushion between two bones, like a little pillow.','#18a058'],[/^Lumbar vertebra \(fourth\)$/,'Lower back bone','The big bones low in your back carry most of your weight.','#e8364a']]}};
-const $=id=>document.getElementById(id),Q=new URLSearchParams(location.search),AGE=+Q.get('a')||6,esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=id=>document.getElementById(id),Q=new URLSearchParams(location.search),AGE=+Q.get('a')||6,KB=(document.body&&document.body.classList.add(AGE<6?'k35':AGE>=9?'k912':'k68')),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const R=new THREE.WebGLRenderer({canvas:$('c'),antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.1;
 const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(26,1,.001,50);
 S.add(new THREE.HemisphereLight(0xffffff,0x9a90c0,.9));{const k=new THREE.DirectionalLight(0xffffff,1.1);k.position.set(3,5,7);S.add(k);const f=new THREE.DirectionalLight(0xf0e8ff,.5);f.position.set(-6,1,4);S.add(f)}
 const piv=new THREE.Group();S.add(piv);const L=new THREE.GLTFLoader();const ready=(async()=>{if(window.MeshoptDecoder){await MeshoptDecoder.ready;L.setMeshoptDecoder(MeshoptDecoder)}})();
 const still=matchMedia('(prefers-reduced-motion: reduce)').matches;let org=null,cur=null,mix=null,act=null,au=null,sel=null,rotY=0,goalY=0,drag=null,fitR=1,labels=[],playing=0;
 const CACHE={};const load=o=>CACHE[o]||(CACHE[o]=ready.then(()=>new Promise((res,rej)=>L.load('/a/'+O[o].g,res,undefined,rej))).catch(e=>{delete CACHE[o];throw e}));
-function card(){const o=O[org];if(sel){const p=o.p[sel];$('cd').innerHTML=`<h2 style="color:${p[2]}">${esc(p[0])}</h2><p>${esc(p[1])}</p><button class=back id=bk>‹ ${esc(o.t)}</button>`;$('bk').onclick=()=>pick(null);return}
- const f=o.f;$('cd').innerHTML=`<h2>${esc(o.t)}</h2><p>${esc(f.little)} It is about as big as ${esc(f.size)}.</p><div class=wow><b>Wow!</b> ${esc(f.big[1])}</div>${AGE>=7?`<p style="font-size:16px">${esc(f.big[2])}</p>`:''}
- ${o.play?`<div class=btns><button id=play>${o.ic}<span>${o.play}</span></button>${o.fast?'<button id=fast>After running</button>':''}</div>`:''}<p class=cr>Tap a part to learn more · Real body shapes from Z-Anatomy (CC BY-SA 4.0) and the Human Reference Atlas (CC BY 4.0)</p>`;
- if($('play'))$('play').onclick=()=>playing?stop():play(1);if($('fast'))$('fast').onclick=()=>play(1.6);if(playing)setBtn()}
+function kChips(o){const ps=Object.entries(o.p||{}).filter(([n])=>labels.some(l=>l.n===n));return ps.length?`<div class=kpr role=group aria-label="Parts">${ps.map(([n,p])=>`<button class="kpc${sel===n?' on':''}" data-n="${esc(n)}" aria-pressed="${sel===n}"><i style="background:${p[2]}"></i>${esc(p[0])}</button>`).join('')}</div>`:''}
+function kWire(){$('cd').querySelectorAll('.kpc').forEach(b=>b.onclick=()=>pick(sel===b.dataset.n?null:b.dataset.n));const on=$('cd').querySelector('.kpc.on');if(on)on.scrollIntoView({inline:'center',block:'nearest'})}
+function card(){const o=O[org];if(sel){const p=o.p[sel];$('cd').innerHTML=`<h2 style="color:${p[2]}">${esc(p[0])}</h2><p>${esc(p[1])}</p>${kChips(o)}<button class=back id=bk>‹ ${esc(o.t)}</button>`;$('bk').onclick=()=>pick(null);kWire();return}
+ const f=o.f;$('cd').innerHTML=`<h2>${esc(o.t)}</h2><p>${esc(f.little)} It is about as big as ${esc(f.size)}.</p>${kChips(o)}<div class=wow><b>Wow!</b> ${esc(f.big[1])}</div>${AGE>=7?`<p style="font-size:16px">${esc(f.big[2])}</p>`:''}
+ ${o.play?`<div class=btns><button id=play>${o.ic}<span>${o.play}</span></button>${o.fast?'<button id=fast>After running</button>':''}</div>`:''}<p class=cr>Tap a dot or a name to learn more · Real body shapes from Z-Anatomy (CC BY-SA 4.0) and the Human Reference Atlas (CC BY 4.0)</p>`;
+ kWire();if($('play'))$('play').onclick=()=>playing?stop():play(1);if($('fast'))$('fast').onclick=()=>play(1.6);if(playing)setBtn()}
 function setBtn(){const b=$('play');if(!b)return;b.classList.toggle('on',!!playing);b.lastChild.textContent=playing?'Stop':O[org].play}
 function stop(){playing=0;if(act)act.stop();if(au){au.pause();au.currentTime=0}setBtn()}
 function play(rate){stop();if(!cur)return;const clip=cur.animations.find(a=>a.name!=='Explode')||cur.animations[0];if(clip&&!still){act=mix.clipAction(clip);act.reset();act.setLoop(THREE.LoopOnce);act.clampWhenFinished=false;act.timeScale=rate;act.play()}
@@ -91,7 +105,7 @@ async function show(o){if(o===org)return;stop();org=o;sel=null;document.querySel
  const b=new THREE.Box3();sc.traverse(m=>{if(m.isMesh&&m.visible)b.expandByObject(m)});if(b.isEmpty())b.setFromObject(sc);const ctr=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3());/* fit what is shown, not hidden parts */fitR=Math.max(sz.x,sz.y,sz.z)*.5;sc.position.sub(ctr);piv.add(sc);cur=g;mix=new THREE.AnimationMixer(sc);
  if(O[o].pr&&!O[o].p){O[o].p={};O[o].pr.forEach(([re,t,d,c])=>{let nd=null;sc.traverse(n=>{if(!nd&&n.userData&&n.userData.display_name&&re.test(n.userData.display_name))nd=n});if(nd&&nd.name)O[o].p[nd.name]=[t,d,c]})}
  Object.entries(O[o].p).forEach(([n,p])=>{const nd=sc.getObjectByName(n);if(!nd)return;const an=!O[o].pr&&nd.userData&&nd.userData.label_anchor;const v=an?new THREE.Vector3(...an):new THREE.Box3().setFromObject(nd).getCenter(new THREE.Vector3());
-  const el=document.createElement('button');el.className='lb';el.style.color=p[2];el.innerHTML=`<i style="background:${p[2]}"></i><span style="color:#1D1D1F">${esc(p[0])}</span>`;el.onclick=()=>pick(sel===n?null:n);$('lbs').appendChild(el);labels.push({n,el,v,nd})});
+  const el=document.createElement('button');el.className='lb';el.style.color=p[2];el.innerHTML=`<i style="background:${p[2]}"></i><span style="color:#1D1D1F">${esc(p[0])}</span>`;el.onclick=()=>pick(sel===n?null:n);el.setAttribute('aria-label',p[0]);$('lbs').appendChild(el);labels.push({n,el,v,nd})});card();
  goalY=rotY=0;frame()}
 function frame(){const a=innerWidth/innerHeight,top=80,bot=$('cd').offsetHeight+20,hv=innerHeight-top-bot,fov=C.fov*Math.PI/180;
  const need=Math.max(fitR/Math.tan(fov/2)*(innerHeight/Math.max(hv,150)),fitR/(Math.tan(fov/2)*a)*1.2)*1.02/((org&&O[org].zoom)||1);const shift=((bot-top)/2)/innerHeight*2*Math.tan(fov/2)*need;
