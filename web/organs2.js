@@ -11,7 +11,9 @@ const O2A={eye:'/a/organ-eye.7a4a5814.glb',teeth:'/a/organ-teeth.ce05eba8.glb',p
 const O2HD={"kidney":"/a/hd-kidneys.12183e3b.glb","liver":"/a/hd-liver.92d8c06d.glb","lung":"/a/hd-lungs.49c72407.glb","stomach":"/a/hd-stomach.b5f00da1.glb","gut":"/a/hd-intestines.5744978f.glb","pancreas":"/a/hd-pancreas.cd45ca4f.glb","spleen":"/a/hd-spleen.71b696f9.glb","bladder":"/a/hd-bladder.404971b8.glb","brain":"/a/hd-brain.d2c57a4b.glb","eye":"/a/hd-eye.098c9684.glb","knee":"/a/hd-knee.0ccbfec3.glb","spine":"/a/hd-spine.896a50ab.glb","hip":"/a/hd-hip.298a7e49.glb","shoulder":"/a/hd-shoulder.22cac574.glb","hand":"/a/hd-hand.15c716b8.glb","foot":"/a/hd-foot.b99795b7.glb","teeth":"/a/hd-teeth.439f3881.glb","prostate":"/a/hd-male_reproductive.ea6ad577.glb","footlod":"/a/organ-foot.10bb9c44.glb"};O2A.foot=O2HD.footlod;delete O2HD.footlod;
 const O2NEW=new Set(['eye','teeth','prostate','bones','urine','bloodtour']);
 const O2=window.O2={cs:(()=>{const m=location.search.match(/[?&]cs=(num|edge|tap|card)/);return m?m[1]:'num'})(),bone:'knee',mode:{},ao:null,env:null,muscles:false,hd:(()=>{try{const v=localStorage.getItem('uh-hd');if(v)return v==='1'}catch(_){}return null})()};
-const O2BONES=[['knee','Knee'],['spine','Spine'],['hip','Hip'],['shoulder','Shoulder'],['hand','Hand'],['foot','Foot']];
+/* joints built from the HD body (Z-Anatomy, CC BY-SA 4.0) with every named ligament, cartilage, nerve and vessel: tools/make_joints.py */
+const O2JOINT={"elbow":"/a/joint-elbow.b0ecc3ab.glb","wrist":"/a/joint-wrist.db2f3e50.glb","ankle":"/a/joint-ankle.b863f327.glb","neck":"/a/joint-neck.714aa225.glb"};Object.assign(O2A,O2JOINT);Object.assign(O2HD,O2JOINT);
+const O2BONES=[['knee','Knee'],['spine','Spine'],['hip','Hip'],['shoulder','Shoulder'],['elbow','Elbow'],['wrist','Wrist'],['hand','Hand'],['ankle','Ankle'],['foot','Foot'],['neck','Neck']];
 const O2BEND={knee:'Bend the knee',hip:'Lift the leg',shoulder:'Raise the arm',hand:'Bend the wrist',foot:'Point the foot'};
 
 /* plain words for every label we show (the model files' own texts are not always right) */
@@ -29,7 +31,16 @@ const O2D={'Right lung':'Has three lobes. Air reaches it through the right main 
  'Thigh bone':'The femur, the longest and strongest bone in the body.','Kneecap':'The patella, a small bone in front of the knee that helps the thigh muscle straighten the leg.','Shin bone':'The tibia carries the body’s weight from the knee to the ankle.','Fibula':'The thin bone beside the shin bone. It steadies the ankle.',
  'Neck (C1)':'The atlas, the top vertebra. It holds the skull and lets you nod.','Upper back':'Twelve thoracic vertebrae; each holds a pair of ribs.','Lower back':'Five lumbar vertebrae carry most of the body’s weight, so back pain often starts here.','Sacrum':'Five vertebrae joined into one bone that links the spine to the hips.','Disc':'A cushion between two vertebrae that absorbs shocks.',
  'Hip bone':'Forms the socket where the thigh bone turns.','Upper arm bone':'The humerus. Its round head turns in the shoulder socket.','Shoulder blade':'The scapula, a flat bone that holds the shoulder socket and anchors the shoulder muscles.','Collarbone':'The clavicle, a strut that holds the shoulder away from the chest.',
- 'Thumb':'Two bones and a mobile base joint let the thumb touch each finger.','Palm bones':'Five metacarpals form the palm.','Wrist bones':'Eight small carpal bones in two rows make the wrist flexible.','Forearm bone':'The radius turns around the ulna when you turn your palm up or down.',
+ 'Thumb':'Two bones and a mobile base joint let the thumb touch each finger.',
+ 'Ulna':'The forearm bone on the little-finger side. Its hook at the back is the point of your elbow.','Radius':'The forearm bone on the thumb side. It turns around the ulna when you turn your palm up or down.',
+ 'Annular ligament':'A ring of ligament that holds the head of the radius against the ulna while it turns.','Inner elbow ligament':'The ulnar collateral ligament steadies the inner elbow; throwing sports can strain it.',
+ 'Ulnar nerve':'Runs behind the inner elbow, the "funny bone". It feels the little finger and moves the small hand muscles.',
+ 'Scaphoid':'The wrist bone most often broken in a fall on an outstretched hand.','Lunate':'A moon-shaped wrist bone in the middle of the first row.',
+ 'Cartilage cushion':'The triangular fibrocartilage cushions the little-finger side of the wrist.','Median nerve':'Passes through the carpal tunnel; pressure on it causes carpal tunnel syndrome.',
+ 'Achilles tendon':'The strongest tendon in the body, joining the calf muscles to the heel bone.',
+ 'Neck (C1)':'The atlas, the ring-shaped top vertebra that holds the skull and lets you nod.','C2':'The axis; its peg lets the head turn side to side.',
+ 'Disc C5–C6':'The disc most often worn or bulging in the neck.','Vertebral artery':'Runs up through holes in the neck vertebrae to supply the back of the brain.',
+ 'Carotid artery':'The main artery to the head and brain; the pulse you feel at the side of the neck.','Palm bones':'Five metacarpals form the palm.','Wrist bones':'Eight small carpal bones in two rows make the wrist flexible.','Forearm bone':'The radius turns around the ulna when you turn your palm up or down.',
  'Ankle bone':'The talus carries the body’s weight from the shin bone to the foot.','Heel bone':'The calcaneus, the largest foot bone; the Achilles tendon attaches to it.','Big toe metatarsal':'The long bone behind the big toe; it takes much of the push when you walk.','Big toe':'Two bones; the big toe gives the final push of every step.',
  'Spinal cord':'Carries messages between the brain and the body; nerves leave it in 31 pairs.','Sciatic nerve':'The thickest nerve, from the lower back down the back of each leg.','Nerves to the arm':'Branches of the brachial plexus that move and feel the arm and hand.','Brain':'Receives every message from the body and decides what to do.','Median nerve':'Runs down the middle of the forearm to the thumb side of the hand.','Brachial plexus':'A web of nerves at the neck and shoulder that supplies the arm.','Fingertip':'Dense touch and temperature sensors; the signal starts here.','Tibial nerve':'Runs down the back of the leg to the sole of the foot.','Sole of the foot':'Plantar nerves give feeling to the sole; diabetes can dull them.',
  'Prostate':'A walnut-sized gland under the bladder, around the tube that carries urine out. It often grows with age.','Seminal vesicle':'Small glands behind the bladder that add fluid to semen.',
@@ -46,7 +57,11 @@ const O2BL={knee:[[/^Right femur$/,'Thigh bone'],[/^Right patella$/,'Kneecap'],[
  hip:[[/^Right hip bone$/,'Hip bone'],[/^Right femur$/,'Thigh bone'],[/^Lumbar vertebra \(fifth\)$/,'Lower back']],
  shoulder:[[/^Right humerus$/,'Upper arm bone'],[/^Right scapula$/,'Shoulder blade'],[/^Right clavicle$/,'Collarbone']],
  foot:[[/^Right talus$/,'Ankle bone'],[/^Right calcaneus$/,'Heel bone'],[/^Right metatarsal \(first\)$/,'Big toe metatarsal'],[/^Right phalanx \(proximal big toe\)$/,'Big toe']],
- hand:[[/^Right phalanx \(distal thumb\)$/,'Thumb'],[/^Right metacarpal \(third\)$/,'Palm bones'],[/^Right lunate$/,'Wrist bones'],[/^Right radius$/,'Forearm bone']]};
+ hand:[[/^Right phalanx \(distal thumb\)$/,'Thumb'],[/^Right metacarpal \(third\)$/,'Palm bones'],[/^Right lunate$/,'Wrist bones'],[/^Right radius$/,'Forearm bone']],
+ elbow:[[/^Right humerus$/,'Upper arm bone'],[/^Right ulna$/,'Ulna'],[/^Right radius$/,'Radius'],[/^Right annular ligament of radius$/,'Annular ligament'],[/^Right ulnar collateral ligament$/,'Inner elbow ligament'],[/^Right ulnar nerve$/,'Ulnar nerve']],
+ wrist:[[/^Right scaphoid bone$/,'Scaphoid'],[/^Right lunate bone$/,'Lunate'],[/^Right articular disc of distal radio-ulnar joint$/,'Cartilage cushion'],[/^Right median nerve$/,'Median nerve'],[/^Right radius$/,'Radius']],
+ ankle:[[/^Right talus$/,'Ankle bone'],[/^Right calcaneus$/,'Heel bone'],[/^Right tibia$/,'Shin bone'],[/^Right fibula$/,'Fibula'],[/^Right calcaneal tendon$/,'Achilles tendon']],
+ neck:[[/^Atlas C1$/,'Neck (C1)'],[/^Axis C2$/,'C2'],[/^Intervertebral disc C5-C6$/,'Disc C5–C6'],[/^Right vertebral artery$/,'Vertebral artery'],[/^Right common carotid artery$/,'Carotid artery']]};
 Object.assign(ORGI,{eye:ORGI.eye||['Eyes','Your eyes','Your eyes focus light onto the retina and send what you see to the brain.'],
  urine:['Kidneys','Follow a drop','How urine is made and leaves the body.'],bloodtour:['Heart','Follow a red cell','One trip round the body takes about a minute.'],
  nerves:['Nervous system','Brain, spinal cord and nerves','Your nerves carry messages between the brain and every part of the body.']});
@@ -66,17 +81,33 @@ function o2Name(n){let e=n;while(e){if(e.userData&&e.userData.display_name)retur
 function o2Kind(n){let e=n,k='';while(e){if(e.userData&&e.userData.anatomy_kind){k=e.userData.anatomy_kind;break}e=e.parent}const nm=o2Name(n);
  if(k==='Bone'&&/fibularis|tibialis|flexor|extensor|abductor|adductor|lumbrical|interosseous muscle|opponens|gastrocnemius|soleus|popliteus|plantaris/i.test(nm))return'Muscle';
  if(k==='Bone'&&/iliotibial tract|interosseous membrane/i.test(nm))return'Connective tissue';return k}
+/* soft shadow in creases, worked out once per model on the CPU (so phones without SSAO get it too):
+   each vertex is darkened by how far it sits below the average of its neighbours */
+function o2Cav(g){if(!g||g.attributes.o2cav)return;const P=g.attributes.position,n=P.count,cav=new Float32Array(n).fill(1),Na=g.attributes.normal;
+ if(g.index&&Na&&n<400000){/* raw (possibly quantised) values are fine: the measure is relative to edge length */
+  const p=new Float32Array(n*3),N=new Float32Array(n*3);for(let i=0;i<n;i++){p[i*3]=P.getX(i);p[i*3+1]=P.getY(i);p[i*3+2]=P.getZ(i);const x=Na.getX(i),y=Na.getY(i),z=Na.getZ(i),L=Math.hypot(x,y,z)||1;N[i*3]=x/L;N[i*3+1]=y/L;N[i*3+2]=z/L}
+  const I=g.index.array,S=new Float32Array(n*3),K=new Uint16Array(n),E=new Float32Array(n);
+  for(let i=0;i<I.length;i+=3)for(let e=0;e<3;e++){const a=I[i+e],b=I[i+(e+1)%3],l=Math.hypot(p[a*3]-p[b*3],p[a*3+1]-p[b*3+1],p[a*3+2]-p[b*3+2]);S[a*3]+=p[b*3];S[a*3+1]+=p[b*3+1];S[a*3+2]+=p[b*3+2];K[a]++;E[a]+=l;S[b*3]+=p[a*3];S[b*3+1]+=p[a*3+1];S[b*3+2]+=p[a*3+2];K[b]++;E[b]+=l}
+  for(let i=0;i<n;i++){if(!K[i])continue;const d=((S[i*3]/K[i]-p[i*3])*N[i*3]+(S[i*3+1]/K[i]-p[i*3+1])*N[i*3+1]+(S[i*3+2]/K[i]-p[i*3+2])*N[i*3+2])/((E[i]/K[i])||1);cav[i]=1-.5*Math.min(1,Math.max(0,d*2.4))}}
+ g.setAttribute('o2cav',new THREE.BufferAttribute(cav,1))}
 async function o2Nat(root,key){const env=await o2Env();const tint=new THREE.Color(...(O2TINT[key]||[.9,.72,.68])),dry=O2DRY.has(key);
  root.traverse(n=>{if(!n.isMesh||n.userData.o2nat)return;const m0=n.material,nm=o2Name(n);if(!m0||!m0.color)return;
   const m=new THREE.MeshPhysicalMaterial({map:m0.map||null,normalMap:m0.normalMap||null,roughnessMap:m0.roughnessMap||null,color:m0.color.clone().multiply(/blood cell|urine drop/i.test(nm)?new THREE.Color(1,1,1):tint),vertexColors:m0.vertexColors,
    roughness:Math.min(1,(m0.roughness??.6)*(dry?1:.8)),metalness:0,clearcoat:dry?.2:.38,clearcoatRoughness:dry?.5:.32,sheen:new THREE.Color(dry?0x30281c:0x5a1c14),
    envMap:env,envMapIntensity:env?.55:0,transparent:m0.transparent,opacity:m0.opacity,side:m0.side,depthWrite:m0.depthWrite,morphTargets:m0.morphTargets,morphNormals:m0.morphNormals,skinning:m0.skinning});
   if(m0.normalScale&&m.normalMap)m.normalScale.copy(m0.normalScale).multiplyScalar(1.4);
-  const sss=dry?.15:.35;m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nfloat o2fr=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.0);totalEmissiveRadiance+=diffuseColor.rgb*vec3(1.0,0.55,0.45)*o2fr*'+sss.toFixed(2)+';')};
+  /* reflections kept low so form reads from the key light, as in an atlas photograph */
+  m.envMapIntensity=env?(dry?.16:.3):0;if(dry)m.color.multiplyScalar(.9);o2Cav(n.geometry);
+  const sss=dry?.15:.35;m.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute float o2cav;varying float vCav;').replace('#include <begin_vertex>','#include <begin_vertex>\nvCav=o2cav;');
+   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vCav;').replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb*=vCav;').replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nfloat o2fr=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.0);totalEmissiveRadiance+=diffuseColor.rgb*vec3(1.0,0.55,0.45)*o2fr*'+sss.toFixed(2)+';')};
+  m.customProgramCacheKey=()=>'o2nat-cav-'+sss;
   if(key==='eye'){if(/iris/i.test(nm)){m.color.setRGB(.2,.1,.035);m.vertexColors=false;m.map=null}if(/vitreous|retina|choroid/i.test(nm)){m.color.setRGB(.05,.02,.02);m.vertexColors=false;m.map=null}if(/^Right lens/i.test(nm)){m.color.setRGB(.06,.05,.04);m.vertexColors=false;m.map=null}
    if(/cornea|chamber/i.test(nm)){m.transparent=true;m.opacity=.1;m.depthWrite=false;m.clearcoat=.6;m.clearcoatRoughness=.05}}
   if(m0.userData&&m0.userData.o2glass){m.transparent=true;m.opacity=.18;m.depthWrite=false}
-  n.material=m;n.userData.o2nat=1});o2AoWanted(true)}
+  n.material=m;n.userData.o2nat=1;
+  /* a bone cut where the close-up ends shows a solid cut face (the inside drawn flat, the colour of cut bone) */
+  let q=n,cut=false;while(q){if(q.userData&&q.userData.cut){cut=true;break}q=q.parent}
+  if(cut&&!n.userData.o2cap){m.side=THREE.FrontSide;const cm=new THREE.MeshBasicMaterial({color:new THREE.Color(0xC9A98A).convertSRGBToLinear(),side:THREE.BackSide});const cap=new THREE.Mesh(n.geometry,cm);cap.raycast=()=>{};cap.userData.o2cap=1;cap.userData.o2nat=1;n.add(cap);n.userData.o2cap=1}});o2AoWanted(true)}
 
 /* soft shadows in the folds (screen-space ambient occlusion), only where the phone can afford it */
 function o2Strong(){const mem=navigator.deviceMemory||4,cpu=navigator.hardwareConcurrency||4;return !U.still&&mem>=4&&cpu>=6&&!/[?&]noao\b/.test(location.search)||/[?&]ao=1\b/.test(location.search)}
@@ -124,7 +155,7 @@ async function o2After(o){const g=OGC[ogf(o)];OG.g=g;document.body.classList.add
  if(O2NEW.has(o)){for(const l in LAY)LAY[l].visible=false}
  OG.root.traverse(n=>{if(!n.isMesh)return;const nm=o2Name(n),k=o2Kind(n);let hide=false;
   if(o==='eye')hide=(k==='Artery'||k==='Nerve')&&!/optic nerve/i.test(nm)||/chiasm|optic tract|lamina terminalis/i.test(nm);
-  if(o==='bones')hide=!(k==='Bone'||(O2.muscles&&k==='Muscle'));
+  if(o==='bones')hide=O2JOINT[O2.bone]?(k==='Muscle'&&!O2.muscles):!(k==='Bone'||(O2.muscles&&k==='Muscle'));
   if(o==='prostate')hide=/penis|glans|testis|epididymis|corpus|deferens/i.test(nm);
   if(o==='urine'&&STATE.base==='female')hide=/deferens|seminal|prostate/i.test(nm);
   if(o==='bloodtour'&&/lobe|atrium|ventricle|auricle/i.test(nm)){n.material.userData.o2glass=1;n.material.transparent=true;n.material.opacity=.18;n.material.depthWrite=false}
