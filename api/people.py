@@ -838,6 +838,32 @@ def edit_record(rid: str, body: RecordIn, u: User = Depends(need_user), db: Sess
     return rec_json(x)
 
 
+class RecJoinIn(BaseModel):
+    to: str
+
+
+@r.post("/records/{rid}/join")
+def join_record(rid: str, body: RecJoinIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+    """Page 2 of a report uploaded on another day: put it with page 1, so both sit under one visit (same day and lab).
+    Only the date and the lab move; what was read from the page stays as it is."""
+    x, y = db.get(HealthRecord, rid), db.get(HealthRecord, body.to)
+    if not x or not y or x.id == y.id:
+        raise HTTPException(404, "Not found")
+    if x.person_id != y.person_id or x.kind != y.kind:
+        raise HTTPException(400, "These two cannot go together")
+    p, a = person_or_404(db, u, x.person_id)
+    if not a.writer:
+        raise HTTPException(403, "Only they can change this")
+    d, e = decrypt(x.blob), decrypt(y.blob)
+    if e.get("lab") and not d.get("lab"):
+        d["lab"] = e["lab"]
+    d["joined"] = y.id
+    x.blob, x.day = encrypt(d), y.day or x.day
+    index_record(db, x, d)
+    db.commit()
+    return rec_json(x)
+
+
 @r.delete("/records/{rid}")
 def delete_record(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
     x = db.get(HealthRecord, rid)
