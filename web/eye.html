@@ -1,8 +1,8 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Urban Health · Eyes</title><meta name="robots" content="noindex">
 <style>
-@font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900}
-:root{--ink:#1D1D1F;--ink2:#6E6E73;--mute:#8E8E93;--blue:#0071E3;--bg:#F2F2F7;--card:#fff;--ok:#34C759;--watch:#FF9F0A;--alert:#FF3B30}
-*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Geist,-apple-system,Inter,system-ui,'Noto Sans Telugu','Noto Sans Devanagari',sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+@font-face{font-family:Manrope,Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900}
+:root{--ink:#1D1D1F;--ink2:#6E6E73;--mute:#8E8E93;--blue:#2F5BFF;--bg:#F2F2EF;--card:#fff;--ok:#34C759;--watch:#FF9F0A;--alert:#FF3B30}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Manrope,Geist,-apple-system,Inter,system-ui,'Noto Sans Telugu','Noto Sans Devanagari',sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #app{height:100%;display:flex;flex-direction:column}
 .hd{display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 16px 6px;flex:none}
@@ -132,7 +132,7 @@ const VIEWS={
 const PATHRX=/optic nerve|chiasm|tract|geniculate|calcarine|cuneus|lingual|occipital pole/i,LEFTPATH=/^Left |chiasm|tract|geniculate|calcarine|cuneus|lingual|occipital/i;
 
 /* ---- parts: what a tap on each one says ---- */
-const GROUPS={focus:['Focusing','#0A84FF'],fluid:['Fluid & drainage','#30B0C7'],wall:['Outer layers','#A2845E'],see:['Seeing','#FF9F0A'],nerve:['Nerves','#E5A800'],move:['Muscles','#FF453A'],blood:['Blood vessels','#AF52DE'],tear:['Tear system','#30B0C7'],brain:['Brain','#FF375F']};
+const GROUPS={focus:['Focusing','#2F5BFF'],fluid:['Fluid & drainage','#30B0C7'],wall:['Outer layers','#A2845E'],see:['Seeing','#FF9F0A'],nerve:['Nerves','#E5A800'],move:['Muscles','#FF453A'],blood:['Blood vessels','#AF52DE'],tear:['Tear system','#30B0C7'],brain:['Brain','#FF375F']};
 const PARTOF={macula:'retina',pupil:'iris','nerve sheath':'optic nerve'};const pk=k=>PARTOF[k]||k;
 const INFO={
  'optic nerve':['Optic nerve (II)','nerve','Carries the picture from the eye to the brain.','Glaucoma slowly damages it.'],
@@ -352,15 +352,15 @@ function readings(side){const e=exams()[0];if(!e)return[];const x=e[side]||{},ou
  const oct=num(x.oct);if(oct!=null)add('oct','Macula (OCT)',oct+' µm','macula','back',oct>320?'watch':'ok','Thickness of the centre of the retina from the scan. Swelling here blurs reading vision.');
  if(x.retina)add('retina','Retina',x.retina,'vessels','back',/haem|hem|bleed|exud|dr\b|retinopathy|swell|detach/i.test(x.retina)?'watch':'ok','The light-sensing layer. Diabetes and blood pressure show up here early.');
  return out}
-const TONE={ok:'#34C759',watch:'#FF9F0A',alert:'#FF3B30',info:'#0A84FF'};
+const TONE={ok:'#34C759',watch:'#FF9F0A',alert:'#FF3B30',info:'#2F5BFF'};
 function marks(side){const e=DATA.marks?{findings:DATA.marks}:exams()[0];return((e&&e.findings)||[]).filter(f=>!f.side||f.side===side||f.side==='B')}
 
 /* ---- pins on the eye ---- */
 let PINS=[];
-function pinList(){const out=[];if(S.ghost&&S.sel){const i=S.sel.info;return[{key:S.sel.keys[0],c:GROUPS[i.g]?GROUPS[i.g][1]:'#0A84FF',label:i.n,value:'',id:'s'}]}
+function pinList(){const out=[];if(S.ghost&&S.sel){const i=S.sel.info;return[{key:S.sel.keys[0],c:GROUPS[i.g]?GROUPS[i.g][1]:'#2F5BFF',label:i.n,value:'',id:'s'}]}
  for(const r of readings(S.side))if(r.tone!=='info'||r.k==='power')out.push({key:r.part,c:TONE[r.tone],label:r.label,value:r.value,id:'r:'+r.k});
  for(const f of marks(S.side))out.push({key:f.part,c:TONE[f.tone]||TONE.watch,label:info(f.part)?info(f.part).n:f.part,value:f.label,id:'f:'+f.part});
- if(S.sel&&!out.some(p=>p.key===S.sel.keys[0])){const i=info(S.sel.keys[0]);if(i)out.push({key:S.sel.keys[0],c:GROUPS[i.g]?GROUPS[i.g][1]:'#0A84FF',label:i.n,value:'',id:'s'})}
+ if(S.sel&&!out.some(p=>p.key===S.sel.keys[0])){const i=info(S.sel.keys[0]);if(i)out.push({key:S.sel.keys[0],c:GROUPS[i.g]?GROUPS[i.g][1]:'#2F5BFF',label:i.n,value:'',id:'s'})}
  return out}
 function layoutPins(){const box=$('#pins');let h='',tg='';const W=stage.clientWidth,used=[];
  for(const p of pinList()){const s=anchor(p.key);if(!s)continue;const sel=S.sel&&S.sel.keys.includes(p.key);const big=sel||p.c===TONE.watch||p.c===TONE.alert;
@@ -379,7 +379,7 @@ function focusReading(r){S.sel={keys:[r.part],info:info(r.part),reading:r};if(S.
 function partsCatalog(){const keys=Object.keys(S.parts).filter(k=>info(k)&&!/^Left /.test(k));const by={};for(const k of keys){const i=info(k);(by[i.g]=by[i.g]||[]).push(i)}return by}
 let Q='';
 function renderSide(){const ex=exams()[0],rs=readings(S.side),el=$('#side');let h='';
- if(S.sel){const i=S.sel.info,r=S.sel.reading,g=GROUPS[i.g]||['','#0A84FF'];
+ if(S.sel){const i=S.sel.info,r=S.sel.reading,g=GROUPS[i.g]||['','#2F5BFF'];
   h+=`<div class="card pc"><button class="x" aria-label="Close" data-x>×</button><div class="h"><i style="background:${r?TONE[r.tone]:g[1]}"></i><b>${esc(r?r.label:i.n)}</b><span>${esc(r?i.n:g[0])}</span></div>${r?`<div class="v">${esc(r.value)}</div><p>${esc(r.why)}</p>`:`<p>${esc(i.d)}</p>${i.w?`<p><b>If it is affected:</b> ${esc(i.w)}</p>`:''}`}
    ${MODE==='doctor'?`<button class="mark" data-mark="${esc(i.key)}">Mark a finding here</button>`:''}</div>`}
  if(ex&&ex.note&&MODE!=='doctor'){const ini=(ex.doctor||'Dr').replace(/^dr\.?\s*/i,'').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();

@@ -12,16 +12,17 @@
    holding a bag in the other hand — so: 17px floor on body text, 56px floor on anything tappable, and no
    control that needs precision. The palette is its own: a technician who glances down should never wonder
    which app they are in. */
+@font-face{font-family:Manrope;src:url(/a/manrope.a30ddcd3.woff2) format('woff2');font-weight:200 800;font-display:swap}
 :root{
   /* Same system as the family app — same greys, same radii, same shadow language, same type. The only thing
      that changes is the accent, and that is not a free choice: BRAND.md assigns Care Teal #0B8A7C to
      partners (doctors, hospitals, pharmacies, labs) and Signal Blue to families. A technician glancing down
      should see Urban Health in the partner colour, not a different product. */
-  --bg:#F5F5F7; --shell:#F5F5F7; --card:#ffffff; --soft:#F5F5F7;
-  --ink:#1D1D1F; --mute:#6E6E73; --line:rgba(0,0,0,.08);
+  --bg:#F2F2EF; --shell:#F2F2EF; --card:#ffffff; --soft:#F2F2EF;
+  --ink:#111214; --mute:#6E6E73; --line:rgba(0,0,0,.08);
   --brand:#0B8A7C; --brand-ink:#ffffff; --brand-soft:#e4f2f0;
   --warn:#b45309; --bad:#b91c1c; --ok:#0B8A7C;
-  --r:18px; --sh:0 10px 30px rgba(20,30,60,.08);
+  --r:26px; --sh:0 10px 30px rgba(20,30,60,.08);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
@@ -90,7 +91,7 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
 .hd{display:flex;align-items:flex-end;gap:10px;padding:10px 2px 14px}.hd .grow{flex:1;min-width:0}
 .eb{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brand)}
 .hd h1,.dn{margin:2px 0 0;font-size:32px;line-height:1.08;letter-spacing:-.03em}.dn{font-size:36px}
-.bell{position:relative;width:42px;height:42px;border-radius:21px;border:0;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);display:grid;place-items:center;flex:none;cursor:pointer}.bell em{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:#FF3B30;color:#fff;font-style:normal;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}.alr{padding:10px 0;border-bottom:1px solid #F0F0F3}.alr b{display:block;font-size:15px}.alr small{display:block;font-size:13px;color:#6E6E73;margin-top:2px}.alr.nw b:before{content:'';display:inline-block;width:8px;height:8px;border-radius:4px;background:#0071E3;margin-right:8px;vertical-align:1px}
+.bell{position:relative;width:42px;height:42px;border-radius:21px;border:0;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);display:grid;place-items:center;flex:none;cursor:pointer}.bell em{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:#FF3B30;color:#fff;font-style:normal;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}.alr{padding:10px 0;border-bottom:1px solid #F0F0F3}.alr b{display:block;font-size:15px}.alr small{display:block;font-size:13px;color:#6E6E73;margin-top:2px}.alr.nw b:before{content:'';display:inline-block;width:8px;height:8px;border-radius:4px;background:#2F5BFF;margin-right:8px;vertical-align:1px}
 .av{width:42px;height:42px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px;flex:none}
 .map{position:relative;height:200px;border-radius:22px;overflow:hidden;background:#EEF1F4;margin-bottom:12px}
 .map .tl{position:absolute;inset:0;filter:saturate(.3) brightness(1.07)}.map .tl img{position:absolute;width:256px;height:256px}
@@ -100,7 +101,7 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
 .stop{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
 .stop:last-child{border-bottom:0}.stop .n{width:30px;height:30px;border-radius:50%;background:#8E8E93;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700;flex:none}
 .stop.nx .n{background:var(--brand)}.stop .t{flex:1;min-width:0}.stop b{display:block;font-size:17px;letter-spacing:-.01em}.stop small{display:block;color:var(--mute);font-size:14px}
-.tag{font-size:13px;font-weight:600;border-radius:999px;padding:4px 11px;background:#F2F2F5;color:#6E6E73;flex:none}.tag.b{background:#E8F1FF;color:#0071E3}.tag.g{background:#E8F8EC;color:#1B6E30}
+.tag{font-size:13px;font-weight:600;border-radius:999px;padding:4px 11px;background:#F2F2F5;color:#6E6E73;flex:none}.tag.b{background:#E8F1FF;color:#2F5BFF}.tag.g{background:#E8F8EC;color:#1B6E30}
 .big{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;border-radius:999px;background:var(--brand);color:#fff;font-size:19px;font-weight:600;margin:4px 0 12px}
 .big[disabled]{opacity:.45}.big svg{width:22px;height:22px}
 .kp{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kp div{background:var(--card);border-radius:18px;padding:12px 14px}.kp small{display:block;color:var(--mute);font-size:13.5px}.kp b{font-size:24px;letter-spacing:-.02em}
@@ -139,8 +140,8 @@ textarea{width:100%;min-height:64px;border-radius:14px;border:1px solid var(--li
 /* Calm in-app dialogs in place of the browser's prompt() and confirm(): same words, rounded sheet, 44 px buttons. */
 function uhDlgCss(){if(!document.getElementById('uhdlgcss')){const st=document.createElement('style');st.id='uhdlgcss';st.textContent=`.uhdlg{position:fixed;inset:0;z-index:2147483000;background:rgba(10,14,24,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;padding:12px;animation:uhdf .18s ease}@media(min-width:700px){.uhdlg{align-items:center}}@keyframes uhdf{from{opacity:0}}@keyframes uhdu{from{transform:translateY(20px);opacity:0}}
 .uhdc{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:22px 20px 16px;box-shadow:0 24px 70px rgba(0,0,0,.28);animation:uhdu .28s cubic-bezier(.2,.8,.2,1);font-family:inherit}.uhdc p{margin:0 0 14px;font-size:16px;line-height:1.45;color:#1D1D1F;white-space:pre-line}
-.uhdi{display:block;width:100%;box-sizing:border-box;border:1px solid #D2D2D7;border-radius:14px;padding:12px 14px;font:inherit;font-size:17px;outline:0;margin:0 0 14px;resize:vertical;background:#fff;color:#1D1D1F}.uhdi:focus{border-color:#0071E3;box-shadow:0 0 0 4px rgba(0,113,227,.15)}
-.uhdb{display:flex;gap:10px}.uhdb button{flex:1;height:50px;border-radius:25px;border:0;font:inherit;font-size:16px;font-weight:600;cursor:pointer}.uhdn{background:#F2F2F7;color:#1D1D1F}.uhdy{background:#1D1D1F;color:#fff}.uhdy.dn{background:#FF3B30}`;document.head.appendChild(st)}}
+.uhdi{display:block;width:100%;box-sizing:border-box;border:1px solid #D2D2D7;border-radius:14px;padding:12px 14px;font:inherit;font-size:17px;outline:0;margin:0 0 14px;resize:vertical;background:#fff;color:#1D1D1F}.uhdi:focus{border-color:#2F5BFF;box-shadow:0 0 0 4px rgba(47,91,255,.15)}
+.uhdb{display:flex;gap:10px}.uhdb button{flex:1;height:50px;border-radius:25px;border:0;font:inherit;font-size:16px;font-weight:600;cursor:pointer}.uhdn{background:#F2F2EF;color:#1D1D1F}.uhdy{background:#1D1D1F;color:#fff}.uhdy.dn{background:#FF3B30}`;document.head.appendChild(st)}}
 function uhDlg(msg,o){o=o||{};return new Promise(res=>{const d=document.createElement('div');d.className='uhdlg';const inp=o.input!==undefined;
  const num=inp&&(/code|₹|units|number|digits|amount|per home visit|percent|%/i.test(msg)||/^\d+(\.\d+)?$/.test(String(o.input||'')));
  d.innerHTML=`<div class="uhdc" role="dialog" aria-modal="true"><p></p>${inp?`<${o.long?'textarea rows="3"':'input'} class="uhdi" ${num?'inputmode="numeric"':''} autocomplete="off">${o.long?'</textarea>':''}`:''}<div class="uhdb"><button type="button" class="uhdn">${o.no||'Cancel'}</button><button type="button" class="uhdy${o.danger?' dn':''}">${o.ok||'OK'}</button></div></div>`;

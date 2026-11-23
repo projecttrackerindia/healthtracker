@@ -32,15 +32,15 @@
 :root{
   /* Apple product page: white and light grey, one black chapter (heart), a whisper of rose (pregnancy) and sky (kids).
      Apple blue only for actions. The 3D scene is one fixed layer; chapters over it are transparent, tool sections are solid. */
-  --bg:#FFFFFF; --bg2:#F5F5F7; --ink:#1D1D1F; --ink2:#6E6E73; --ink3:#86868B; --line:rgba(0,0,0,.08);
-  --blue:#0071E3; --blueH:#0077ED; --green:#34C759; --orange:#FF9F0A; --red:#FF3B30; --pink:#FF375F;
+  --bg:#F2F2EF; --bg2:#F2F2EF; --ink:#1D1D1F; --ink2:#6E6E73; --ink3:#86868B; --line:rgba(0,0,0,.08);
+  --blue:#2F5BFF; --blueH:#0077ED; --green:#34C759; --orange:#FF9F0A; --red:#FF3B30; --pink:#FF375F;
   --sf:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Geist,system-ui,sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
 html,body{overflow-x:clip;margin:0;background:var(--bg);color:var(--ink);font-family:var(--sf);-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
 body{transition:background-color .7s ease,color .7s;touch-action:pan-y}
-body.dark{background:#000;color:#F5F5F7}
+body.dark{background:#000;color:#F2F2EF}
 body.rose{background:#FFF6F8}
 body.sky{background:#F3F8FF}
 a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
@@ -55,7 +55,7 @@ main,footer,.view{position:relative;z-index:2}
 .btn.sec{background:#E8E8ED;color:var(--ink)}.btn.sec:hover{background:#DCDCE0}
 .btn.sm{height:34px;padding:0 15px;font-size:14px;font-weight:500}
 .more{font-size:17px}.more::after{content:" ›"}
-:focus-visible{outline:3px solid rgba(0,113,227,.45);outline-offset:2px}
+:focus-visible{outline:3px solid rgba(47,91,255,.45);outline-offset:2px}
 
 /* nav */
 .gnav{position:fixed;top:0;left:0;right:0;z-index:40;height:52px;display:flex;justify-content:center;background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);transition:background .7s}
@@ -83,7 +83,7 @@ body.dark .gnav{background:rgba(22,22,23,.72);border-color:rgba(255,255,255,.08)
 h2.t{font-size:clamp(40px,5.2vw,64px);line-height:1.05;font-weight:700;letter-spacing:-.042em;margin:8px 0 0;text-wrap:balance}
 p.l{font-size:clamp(17px,1.6vw,21px);line-height:1.42;color:var(--ink2);font-weight:500;margin:16px 0 0}
 p.l b{color:var(--ink);font-weight:600}
-body.dark p.l{color:#A1A1A6}body.dark p.l b{color:#F5F5F7}
+body.dark p.l{color:#A1A1A6}body.dark p.l b{color:#F2F2EF}
 .card{border-radius:22px;background:rgba(255,255,255,.86);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 10px rgba(0,0,0,.05),0 0 0 1px var(--line)}
 body.dark .card{background:rgba(28,28,30,.86);box-shadow:0 0 0 1px rgba(255,255,255,.08)}
 .res{margin-top:24px;padding:4px 18px}
@@ -94,7 +94,7 @@ body.dark .card{background:rgba(28,28,30,.86);box-shadow:0 0 0 1px rgba(255,255,
 .b-ok{background:rgba(52,199,89,.12);color:#1A7F37}.b-warn{background:rgba(255,159,10,.14);color:#9A5B00}.b-bad{background:rgba(255,59,48,.1);color:#C4291C}
 .fine{font-size:12px;color:var(--ink3);margin-top:12px}
 .stats{display:flex;gap:34px;margin-top:28px;flex-wrap:wrap}
-.stats div{font-size:13px;color:#A1A1A6;font-weight:500}.stats b{display:block;font-size:48px;line-height:1;font-weight:700;letter-spacing:-.04em;color:#F5F5F7;margin-bottom:6px;font-variant-numeric:tabular-nums}.stats b small{font-size:17px;color:#A1A1A6;margin-left:4px;font-weight:600}
+.stats div{font-size:13px;color:#A1A1A6;font-weight:500}.stats b{display:block;font-size:48px;line-height:1;font-weight:700;letter-spacing:-.04em;color:#F2F2EF;margin-bottom:6px;font-variant-numeric:tabular-nums}.stats b small{font-size:17px;color:#A1A1A6;margin-left:4px;font-weight:600}
 .stats .r b{background:linear-gradient(180deg,#FF6B6B,#FF2D55);-webkit-background-clip:text;background-clip:text;color:transparent}
 .seg{display:inline-flex;margin-top:24px;padding:2px;border-radius:10px;background:rgba(118,118,128,.12);flex-wrap:wrap}
 .seg button{height:34px;padding:0 14px;border:0;border-radius:8px;background:none;font:500 14px var(--sf);color:var(--ink);cursor:pointer}
@@ -131,9 +131,9 @@ body.dark .card{background:rgba(28,28,30,.86);box-shadow:0 0 0 1px rgba(255,255,
 .mtag span{position:absolute;transform:translateY(-50%);background:rgba(255,255,255,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:10px;padding:5px 9px;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.1)}
 .mtag span em{font-style:normal;font-weight:500;color:var(--ink2);margin-left:4px}
 /* heart: pinned, dark */
-.heartp{position:relative;z-index:2;height:300vh;color:#F5F5F7}
+.heartp{position:relative;z-index:2;height:300vh;color:#F2F2EF}
 .heartp .pin .wrap{height:100%;display:flex;align-items:center}
-.heartp p.l{color:#A1A1A6}.heartp p.l b{color:#F5F5F7}
+.heartp p.l{color:#A1A1A6}.heartp p.l b{color:#F2F2EF}
 .hs{opacity:0;transform:translateY(14px)}
 .tool,.sos,.privacy,.final,.kids,footer{color:var(--ink)}
 .scrub .tk em{font-style:normal}
@@ -173,7 +173,7 @@ body.dark .card{background:rgba(28,28,30,.86);box-shadow:0 0 0 1px rgba(255,255,
 .doc .dl span{flex:1}.doc .dl b{font-variant-numeric:tabular-nums;font-weight:600;min-width:70px;text-align:right}
 .doc .dl em{font-style:normal;font-size:11px;font-weight:600;border-radius:980px;padding:2px 8px;opacity:0;transform:scale(.8);transition:all .3s}
 .doc .dl.on em{opacity:1;transform:none}
-.doc .sweep{position:absolute;left:0;right:0;height:46px;top:-46px;background:linear-gradient(180deg,transparent,rgba(0,113,227,.14));border-bottom:2px solid var(--blue);opacity:0}
+.doc .sweep{position:absolute;left:0;right:0;height:46px;top:-46px;background:linear-gradient(180deg,transparent,rgba(47,91,255,.14));border-bottom:2px solid var(--blue);opacity:0}
 .doc.run .sweep{opacity:1;animation:sweep 2.2s ease-in-out forwards}
 @keyframes sweep{to{top:100%}}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;min-height:34px}
@@ -204,7 +204,7 @@ body.dark .card{background:rgba(28,28,30,.86);box-shadow:0 0 0 1px rgba(255,255,
 .slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
 .slot{height:42px;border-radius:12px;border:1px solid #D2D2D7;background:#fff;font:500 15px var(--sf);cursor:pointer;color:var(--ink)}
 .slot.on{background:var(--ink);color:#fff;border-color:var(--ink)}.slot:disabled{color:#C7C7CC;text-decoration:line-through;cursor:default}
-.pass{border-radius:22px;padding:22px;color:#fff;background:linear-gradient(135deg,#0A84FF,#0060DF);box-shadow:0 20px 40px rgba(0,113,227,.3);animation:pop .5s cubic-bezier(.3,1.5,.5,1) both}
+.pass{border-radius:22px;padding:22px;color:#fff;background:linear-gradient(135deg,#2F5BFF,#0060DF);box-shadow:0 20px 40px rgba(47,91,255,.3);animation:pop .5s cubic-bezier(.3,1.5,.5,1) both}
 @keyframes pop{from{transform:scale(.85);opacity:0}}
 .pass small{opacity:.8;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}.pass b{display:block;font-size:24px;margin-top:4px;letter-spacing:-.02em}
 .pass .pr{display:flex;gap:26px;margin-top:16px}.pass .pr div{font-size:12px;opacity:.85}.pass .pr b{font-size:17px;margin-top:2px}
@@ -269,7 +269,7 @@ footer .wrap{display:flex;flex-direction:column;gap:6px;max-width:1100px;margin:
 .auth .sub{font-size:17px;color:var(--ink2);margin:10px 0 0;text-align:center;max-width:36ch;line-height:1.45}
 .box{width:min(460px,100%);margin-top:30px}
 .field{position:relative;border:1px solid #D2D2D7;border-radius:12px;background:#fff;height:56px;transition:border-color .2s,box-shadow .2s}
-.field:focus-within{border-color:var(--blue);box-shadow:0 0 0 4px rgba(0,113,227,.15)}
+.field:focus-within{border-color:var(--blue);box-shadow:0 0 0 4px rgba(47,91,255,.15)}
 .field input{width:100%;height:100%;border:0;background:none;border-radius:12px;padding:20px 52px 4px 16px;font:400 17px var(--sf);color:var(--ink);outline:none}
 .field label{position:absolute;left:16px;top:17px;font-size:17px;color:var(--ink2);pointer-events:none;transition:all .18s}
 .field input:focus+label,.field input:not(:placeholder-shown)+label{top:7px;font-size:12px}
@@ -460,7 +460,7 @@ else{a.classList.remove("signed");v.textContent="";p.textContent="Get started";p
       <div class="panel">
         <h3>Looks out for you</h3><p class="sub">Checks every new medicine against what you already take.</p>
         <div class="alert" style="background:rgba(255,159,10,.12);color:#7A4A00"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg><span><b>Calcium and thyroxine</b><br>Keep them about 4 hours apart, so thyroxine is absorbed fully.</span></div>
-        <div class="alert" style="background:rgba(0,113,227,.08);color:#004E9E"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6"/></svg><span><b>Metformin · 6 tablets left</b><br>Enough until Saturday. Reorder from your pharmacy?</span></div>
+        <div class="alert" style="background:rgba(47,91,255,.08);color:#004E9E"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6"/></svg><span><b>Metformin · 6 tablets left</b><br>Enough until Saturday. Reorder from your pharmacy?</span></div>
         <div class="alert" style="background:rgba(52,199,89,.1);color:#1A5C2B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span><b>Amma took her 8 AM dose</b><br>Family can see doses only if each person allows it.</span></div>
         <p class="fine">Example medicines. Always follow your doctor's prescription.</p>
       </div>
@@ -643,7 +643,7 @@ function create(st=1){const c=$('#ca');const prog=n=>`<div class="prog">${[1,2,3
   $('#ag').onclick=e=>e.currentTarget.classList.toggle('on');$('#c1').onsubmit=e=>{e.preventDefault();if(!$('#ag').classList.contains('on'))return toast('Please agree to continue');NAME=$('#nm').value.trim().split(' ')[0];create(2)}}
  if(st===2){c.innerHTML=`<div class="fadein" style="display:flex;flex-direction:column;align-items:center;width:100%">${MARK}${prog(2)}<h1>Confirm your number</h1><p class="sub">One text from your phone proves it's yours.</p><div class="box">${verify(()=>create(3))}</div></div>`}
  if(st===3){c.innerHTML=`<div class="fadein" style="display:flex;flex-direction:column;align-items:center;width:100%">${MARK}${prog(3)}<h1>Who do you care for?</h1><p class="sub">Add them now or later. Each person gets their own record.</p><div class="box"><div class="who">
-  ${[['P','#0071E3','Partner'],['C','#FF9F0A','A child'],['M','#34C759','A parent'],['+','#8E8E93','Someone else']].map(x=>`<button type="button"><span class="av" style="background:${x[1]}">${x[0]}</span>${x[2]}<span class="r"></span></button>`).join('')}</div>
+  ${[['P','#2F5BFF','Partner'],['C','#FF9F0A','A child'],['M','#34C759','A parent'],['+','#8E8E93','Someone else']].map(x=>`<button type="button"><span class="av" style="background:${x[1]}">${x[0]}</span>${x[2]}<span class="r"></span></button>`).join('')}</div>
   <button class="btn wide" id="fin">Continue</button><div class="links"><a href="#" id="sk">Skip for now</a></div></div></div>`;
   c.querySelectorAll('.who button').forEach(b=>b.onclick=()=>b.classList.toggle('on'));$('#fin').onclick=()=>create(4);$('#sk').onclick=e=>{e.preventDefault();create(4)}}
  if(st===4){c.innerHTML=`<div class="fadein done"><div class="ok"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h1>${NAME?'Welcome, '+esc(NAME)+'.':'You\'re all set.'}</h1><p class="sub" style="margin-left:auto;margin-right:auto">Add your first report to see it on your body.</p><a class="btn" href="#home" style="margin-top:26px">Get started</a></div>`}}
@@ -675,7 +675,7 @@ function meds(){$('#doses').innerHTML=MEDS.map((m,i)=>`<div class="dose"><span c
 meds();
 
 /* appointments */
-const DOCS={doc:[['AR','#5E5CE6','Dr. Anitha Rao','Gynaecologist · 14 yrs','Rainbow Hospital, Adyar','₹800'],['SK','#0071E3','Dr. Suresh Kumar','General physician · 9 yrs','Apollo Clinic, Velachery','₹500'],['PM','#FF9F0A','Dr. Priya Menon','Paediatrician · 11 yrs','Kauvery, Alwarpet','₹700']],
+const DOCS={doc:[['AR','#5E5CE6','Dr. Anitha Rao','Gynaecologist · 14 yrs','Rainbow Hospital, Adyar','₹800'],['SK','#2F5BFF','Dr. Suresh Kumar','General physician · 9 yrs','Apollo Clinic, Velachery','₹500'],['PM','#FF9F0A','Dr. Priya Menon','Paediatrician · 11 yrs','Kauvery, Alwarpet','₹700']],
  lab:[['LP','#34C759','Lipid profile','Fasting 10–12 hours · report in 24 hrs','Sample collected at home','₹450'],['TF','#32ADE6','Thyroid profile (T3, T4, TSH)','No fasting · report in 24 hrs','Sample collected at home','₹550'],['FB','#FF375F','Full body check-up','58 tests · fasting','Sample collected at home','₹1,499']]};
 let bk={k:'doc',d:0,day:0,slot:-1};
 const today=new Date();const dayN=i=>{const d=new Date(today);d.setDate(d.getDate()+i);return d};
@@ -840,7 +840,7 @@ document.querySelectorAll('.kpick button').forEach(b=>b.onclick=()=>{kidSel=b.da
 const OC={heart:['#FF375F','Your heart',[['64','BPM','Resting'],['162','mg/dL','LDL · recheck in Feb']],'LDL is above the ideal range. Diet, walking and a recheck in 3 months are the usual next steps. Ask your doctor.'],
  liver:['#C77700','Your liver',[['58','U/L','SGPT (ALT)'],['32','U/L','SGOT (AST)']],'SGPT rose from 41 in March. Often temporary; recheck with your next test.'],
  kidney:['#248A3D','Your kidneys',[['0.9','mg/dL','Creatinine'],['104','','eGFR']],'Both in range. Nothing to do.'],
- lungs:['#0A84FF','Your lungs',[['98','%','Oxygen (SpO₂)'],['16','/min','Breathing rate']],'Normal. A chest X-ray or lung test, when you add one, shows here.'],
+ lungs:['#2F5BFF','Your lungs',[['98','%','Oxygen (SpO₂)'],['16','/min','Breathing rate']],'Normal. A chest X-ray or lung test, when you add one, shows here.'],
  stomach:['#FF9F0A','Your stomach',[['—','','No reports yet']],'Add an endoscopy or H. pylori test and it appears here.'],
  intestine:['#FF9F0A','Your intestines',[['—','','No reports yet']],'Stool tests and colonoscopy reports appear here.'],
  brain:['#5E5CE6','Your brain and nerves',[['380','pg/mL','Vitamin B12'],['2.1','µIU/mL','TSH']],'Both in range. Low B12 can cause tiredness and tingling, so it is worth a yearly check.'],

@@ -10,9 +10,9 @@
 <link rel="icon" href="/icon.svg"><link rel="apple-touch-icon" href="/brand/png/user-icon-180.png"><link rel="manifest" href="/manifest.webmanifest">
 <link rel="preload" href="/s/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-@font-face{font-family:Geist;src:url(/s/fonts/geist.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:Manrope,Geist;src:url(/s/fonts/geist.woff2) format("woff2");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Geist Mono";src:url(/s/fonts/geist-mono.woff2) format("woff2");font-weight:100 900;font-display:swap}
-:root{--bg:#F4F5F8;--bg2:#ECEEF3;--card:#fff;--ink:#0F1220;--ink2:#2B2F3D;--mute:#646B7E;--line:rgba(15,18,32,.08);--line2:rgba(15,18,32,.14);--blue:#2F5BFF;--blue2:#1E46E6;--teal:#0B8A7C;--red:#EF3B4F;--amber:#D98A00;--glass:rgba(255,255,255,.72);--sh:0 1px 2px rgba(15,18,32,.06),0 20px 50px -24px rgba(15,18,32,.28);--r:22px;--font:Geist,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;--ease:cubic-bezier(.2,.8,.2,1)}
+:root{--bg:#F2F2EF;--bg2:#ECECE8;--card:#fff;--ink:#0F1220;--ink2:#2B2F3D;--mute:#646B7E;--line:rgba(15,18,32,.08);--line2:rgba(15,18,32,.14);--blue:#2F5BFF;--blue2:#1E46E6;--teal:#0B8A7C;--red:#EF3B4F;--amber:#D98A00;--glass:rgba(255,255,255,.72);--sh:0 1px 2px rgba(15,18,32,.06),0 20px 50px -24px rgba(15,18,32,.28);--r:22px;--font:Geist,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;--ease:cubic-bezier(.2,.8,.2,1)}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0A0C12;--bg2:#10131C;--card:#141824;--ink:#EEF1FA;--ink2:#C9CFDE;--mute:#8A92A8;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);--glass:rgba(20,24,36,.72);--sh:0 1px 0 rgba(255,255,255,.04) inset,0 24px 60px -24px rgba(0,0,0,.7);--blue:#5B7CFF}}
 *{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -183,7 +183,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--mute);fo
 .appgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.appcard{border:1px solid var(--line,#e5e7eb);border-radius:24px;padding:26px 24px;background:var(--card,#fff)}.appic{font-size:30px;margin-bottom:8px}.appcard h3{margin:0 0 8px;font-size:20px}.appcard p{color:var(--mute,#5f6577);margin:0;font-size:15px;line-height:1.5}.appmeta{display:block;color:var(--mute,#5f6577);font-size:12px;margin-top:10px}@media(max-width:900px){.appgrid{grid-template-columns:1fr}}
 
 /* ===== standalone sign-in page: stage on the left, the form on the right; phones: stage banner above a sheet */
-body{background:#fff}
+body{background:#F2F2EF}
 body .ustage{position:fixed;left:0;top:0;bottom:0;width:50%;margin:0}
 .ov,.ov.on{position:static;display:flex;align-items:center;justify-content:center;min-height:100dvh;margin-left:50%;padding:48px clamp(28px,6vw,96px);background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;opacity:1;pointer-events:auto}
 .sheet{width:100%;max-width:400px;max-height:none;overflow:visible;background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;transform:none!important;color:#1D1D1F}
@@ -192,10 +192,10 @@ body .ustage{position:fixed;left:0;top:0;bottom:0;width:50%;margin:0}
 .sheet .sub{font-size:16.5px;color:#6E6E73}
 .sheet .inp input{height:54px;border-radius:14px;font-size:17px}
 .sheet .btn{height:54px;font-size:17px}
-.sheet .btn.b{background:#0071E3}.sheet .btn.p{background:#1D1D1F;color:#fff}
-.gen2{display:inline-block;margin:10px 2px 4px;color:#0071E3;font-weight:600;font-size:14px;cursor:pointer}
+.sheet .btn.b{background:#2F5BFF}.sheet .btn.p{background:#1D1D1F;color:#fff}
+.gen2{display:inline-block;margin:10px 2px 4px;color:#2F5BFF;font-weight:600;font-size:14px;cursor:pointer}
 /* verify-with choices */
-.sheet .vsel{display:flex;flex-direction:column;gap:8px}.sheet .vsel .ck{display:flex;gap:10px;align-items:flex-start;justify-content:flex-start;padding:12px 14px;border-radius:14px;background:#F5F5F7;font-size:14.5px;text-align:left}
+.sheet .vsel{display:flex;flex-direction:column;gap:8px}.sheet .vsel .ck{display:flex;gap:10px;align-items:flex-start;justify-content:flex-start;padding:12px 14px;border-radius:14px;background:#F2F2EF;font-size:14.5px;text-align:left}
 @media (max-width:899px){
  body .ustage{position:relative;width:auto;height:clamp(230px,34vh,310px)}
  .ov,.ov.on{margin:-26px 0 0;position:relative;z-index:2;min-height:0;align-items:flex-start;border-radius:26px 26px 0 0;padding:28px 22px max(28px,env(safe-area-inset-bottom));box-shadow:0 -10px 30px -18px rgba(0,0,0,.5)}
@@ -287,7 +287,7 @@ body .ustage{position:fixed;left:0;top:0;bottom:0;width:50%;margin:0}
 </div></div>
 
 <script src="/s/auth.js?v=20"></script>
-<script src="/s/authfx.js?v=1"></script>
+<script src="/s/authfx.js?v=5"></script>
 <script>
 (()=>{
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];

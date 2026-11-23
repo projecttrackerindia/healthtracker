@@ -1,9 +1,9 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>Urban Health · Kids</title><meta name="robots" content="noindex"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>
-@font-face{font-family:Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
+@font-face{font-family:Manrope,Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
 :root{--ink:#1D1D1F;--sub:#3A3A3C;--ink2:#515154;--ink3:#6E6E73}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
-body{background:radial-gradient(90% 60% at 50% 30%,#FFFFFF 0%,#EAF4FD 55%,#D8EEFC 100%);font-family:Geist,-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+body{background:radial-gradient(90% 60% at 50% 30%,#FFFFFF 0%,#EAF4FD 55%,#D8EEFC 100%);font-family:Manrope,Geist,-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
 canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 .top{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 12px);display:flex;align-items:center;gap:10px;z-index:5}
 #x{width:44px;height:44px;border-radius:22px;border:0;background:rgba(255,255,255,.9);box-shadow:0 1px 4px rgba(0,0,0,.1);display:grid;place-items:center;flex:none}
@@ -19,7 +19,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 .lb i{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 3px #fff,0 2px 8px rgba(40,30,90,.35);transition:transform .2s,box-shadow .2s}
 .lb.on i{transform:scale(1.3);box-shadow:0 0 0 3px #fff,0 0 0 7px color-mix(in srgb,currentColor 35%,transparent)}
 .kpr{display:flex;gap:8px;overflow-x:auto;margin:12px -20px 0;padding:2px 20px 4px;scrollbar-width:none}.kpr::-webkit-scrollbar{display:none}
-.kpc{flex:none;display:flex;align-items:center;gap:7px;height:40px;padding:0 14px;border-radius:20px;border:0;background:#F2F2F7;font:600 15px Geist,-apple-system,sans-serif;color:#1D1D1F;cursor:pointer}
+.kpc{flex:none;display:flex;align-items:center;gap:7px;height:40px;padding:0 14px;border-radius:20px;border:0;background:#F2F2EF;font:600 15px Geist,-apple-system,sans-serif;color:#1D1D1F;cursor:pointer}
 .kpc i{width:10px;height:10px;border-radius:50%;flex:none}.kpc.on{background:#1D1D1F;color:#fff}.kpc.on i{box-shadow:0 0 0 2px #fff}
 body.k35 .kpc{height:48px;font-size:17px;padding:0 16px}
 .card{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);max-height:52vh;overflow-y:auto;border-radius:30px;padding:20px 20px 16px;background:rgba(255,255,255,.96);box-shadow:0 10px 36px rgba(40,30,90,.14);z-index:4}
@@ -31,9 +31,9 @@ body.k35 .kpc{height:48px;font-size:17px;padding:0 16px}
 body.k35 .card h2{font-size:34px}body.k35 .card p{font-size:21px}body.k35 .btns button{height:64px;font-size:20px}body.k35 .lb i{width:20px;height:20px}
 body.k912 .card p{font-size:17px}body.k912 .card h2{font-size:28px}
 .btns button{flex:1;height:58px;border-radius:29px;border:0;font:700 18px Geist,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
-#play{background:#0066CC;color:#fff}#fast{background:#FFE7A3;color:#3A2E00}
+#play{background:#2F5BFF;color:#fff}#fast{background:#FFE7A3;color:#3A2E00}
 #play.on{background:#004F9E}
-.back{border:0;background:#F2F2F7;color:#5E5CE6;font:600 15px Geist,-apple-system,sans-serif;padding:8px 14px;border-radius:999px;margin-top:12px;min-height:36px}
+.back{border:0;background:#F2F2EF;color:#5E5CE6;font:600 15px Geist,-apple-system,sans-serif;padding:8px 14px;border-radius:999px;margin-top:12px;min-height:36px}
 .cr{font-size:11px;color:var(--ink3);margin:12px 0 0;line-height:1.4}
 #ld{position:fixed;left:50%;top:38%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(94,92,230,.18);border-top-color:#5E5CE6;animation:sp .9s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}

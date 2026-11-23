@@ -70,7 +70,7 @@
 @keyframes ufxDrop{from{transform:translateY(-120%);opacity:0}}
 .ufx-bar i{width:38px;height:38px;flex:none;display:grid;place-items:center}.ufx-bar i svg{width:38px;height:38px;color:#2F5BFF}.ufx-bar.partner i svg{color:#0E9B8C}
 .ufx-bar b{display:block;font-size:14.5px}.ufx-bar span{flex:1;font-size:12.5px;color:rgba(235,235,245,.65);line-height:1.3}
-.ufx-bar a{height:34px;padding:0 16px;border-radius:17px;background:#0A84FF;color:#fff;font-weight:600;font-size:14px;display:inline-flex;align-items:center;text-decoration:none}
+.ufx-bar a{height:34px;padding:0 16px;border-radius:17px;background:#2F5BFF;color:#fff;font-weight:600;font-size:14px;display:inline-flex;align-items:center;text-decoration:none}
 .ufx-bar.partner a{background:#0E9B8C}
 .ufx-bar button{width:30px;height:30px;border:0;border-radius:15px;background:rgba(255,255,255,.1);color:#fff;font-size:15px;cursor:pointer}
 @media (max-width:899px){
@@ -222,7 +222,7 @@
     host.classList.remove('ufx', 'user', 'partner');
     host.classList.add('ubody');
     host.innerHTML = `<a class="ufx-logo" href="/">${MARK}Urban Health</a>` +
-      `<div class="ub-fig"><img src="/brand/auth-body.webp" alt="" width="632" height="1027" decoding="async">` +
+      `<div class="ub-fig"><img src="/brand/auth-body2.webp" alt="" width="632" height="1027" decoding="async">` +
       `<span class="ub-c l"><b>Heart</b><i>LDL 98 · good</i></span><span class="ub-c r"><b>Liver</b><i>ALT 28 · good</i></span></div>` +
       `<div class="ufx-copy"><h2>Your family's health,<br>on one body.</h2><p>Reports, medicines and doctors for everyone you look after.</p>${apps('user')}</div>`;
   }

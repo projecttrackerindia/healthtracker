@@ -17,8 +17,8 @@
 <style>
 :root{
   /* Same tokens as the landing page: white and Apple grey, Apple blue only for actions, rose for this chapter. */
-  --bg:#FFFFFF;--bg2:#F5F5F7;--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#86868B;--line:rgba(0,0,0,.08);--hair:#E8E8ED;--edge:#D2D2D7;
-  --blue:#0071E3;--blueH:#0077ED;--green:#34C759;--okT:#1A7F37;--warnT:#9A5B00;--red:#FF3B30;--pink:#FF375F;--rose:#FFF6F8;
+  --bg:#FFFFFF;--bg2:#F2F2EF;--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#86868B;--line:rgba(0,0,0,.08);--hair:#E8E8ED;--edge:#D2D2D7;
+  --blue:#2F5BFF;--blueH:#0077ED;--green:#34C759;--okT:#1A7F37;--warnT:#9A5B00;--red:#FF3B30;--pink:#FF375F;--rose:#FFF6F8;
   --ease:cubic-bezier(.65,0,.25,1);--spring:cubic-bezier(.3,1.4,.5,1);
   --sf:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Geist,system-ui,sans-serif;
   --gut:clamp(22px,4.5vw,64px);
@@ -1064,7 +1064,7 @@ async function payOnline(){
     await loadScript("https://checkout.razorpay.com/v1/checkout.js");
     const u=ACC.user||{};
     const rz=new Razorpay({key:st.keyId,amount:st.amount,currency:st.currency||"INR",name:"Urban Health",description:st.description||"Hospital bag",order_id:st.orderId,
-      prefill:{name:u.name||"",contact:u.phone||"",email:u.email||""},theme:{color:"#0071E3"},
+      prefill:{name:u.name||"",contact:u.phone||"",email:u.email||""},theme:{color:"#2F5BFF"},
       handler:async p=>{try{await API("v1/pay/online/verify",{payment:st.payment,razorpay_order_id:p.razorpay_order_id,razorpay_payment_id:p.razorpay_payment_id,razorpay_signature:p.razorpay_signature},{key:ACC.key});
         C.order.payment="online-paid";C.pending=false;done()}catch(e){C.pending=true;C.step=3;busy(false);C.err=e.message;renderSheet()}},
       modal:{ondismiss:()=>{if(String(C.order.payment).endsWith("paid"))return;C.pending=true;C.step=3;busy(false);renderSheet()}}});
