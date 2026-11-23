@@ -18,9 +18,11 @@ JOINTS = {
     'wrist': ([-1.13, -0.16, -0.24, -0.78, 0.16, 0.20], 'Right wrist'),
     'ankle': ([-0.47, -3.07, -0.40, -0.08, -2.55, 0.26], 'Right ankle'),
     'neck':  ([-0.22, 2.02, -0.36, 0.22, 2.55, 0.12], 'Neck'),
+    'skull': ([-0.40, 2.30, -0.45, 0.40, 3.10, 0.45], 'Skull'),
 }
 # what each close-up keeps: layers, and a name filter for the busy neck
-ONLY = {'neck': (2, 4, 5)}
+ONLY = {'neck': (2, 4, 5), 'skull': (2,)}
+SKULL = re.compile(r'frontal bone|parietal bone|occipital bone|temporal bone|sphenoid bone|ethmoid bone|zygomatic bone|maxilla|mandible|nasal bone|lacrimal bone|vomer|palatine bone|inferior nasal concha|tooth|teeth|hyoid', re.I)
 # sheets that hide the joint, and the main named vessels and nerves worth showing at each joint
 SHEET = re.compile(r'retinacul|aponeuros|fascia|interosseous membrane|sheath', re.I)
 MAIN = {'elbow': re.compile(r'^Right (brachial artery|radial artery|ulnar artery|ulnar nerve|median nerve|radial nerve)$', re.I),
@@ -132,6 +134,8 @@ def build(key, box, title, raw, base, P, names, onto):
             continue
         if key == 'neck' and not NECK.search(names[k]):
             continue
+        if key == 'skull' and not SKULL.search(names[k]):
+            continue
         if SHEET.search(names[k]):
             continue
         if l in (4, 5) and key in MAIN and not MAIN[key].search(names[k]):
@@ -209,8 +213,13 @@ def build(key, box, title, raw, base, P, names, onto):
           'materials': mats, 'accessors': accessors, 'bufferViews': views, 'buffers': [{'byteLength': len(bins)}]}
     js = json.dumps(gl, separators=(',', ':')).encode(); js += b' ' * ((-len(js)) % 4)
     glb = struct.pack('<III', 0x46546C67, 2, 12 + 8 + len(js) + 8 + len(bins)) + struct.pack('<II', len(js), 0x4E4F534A) + js + struct.pack('<II', len(bins), 0x004E4942) + bytes(bins)
-    h = hashlib.sha256(glb).hexdigest()[:8]
     for old in glob.glob(os.path.join(A, f'joint-{key}.*.glb')): os.remove(old)
+    raw = os.path.join(A, f'joint-{key}.raw.glb'); tmp = os.path.join(A, f'joint-{key}.tmp.glb')
+    open(raw, 'wb').write(glb)
+    import subprocess   # meshopt compression, keeping names, materials and extras (the viewer already decodes meshopt)
+    subprocess.run(['gltfpack', '-i', raw, '-o', tmp, '-cc', '-kn', '-km', '-ke', '-vc', '12', '-vp', '16'], check=True, capture_output=True)
+    os.remove(raw); glb = open(tmp, 'rb').read(); os.remove(tmp)
+    h = hashlib.sha256(glb).hexdigest()[:8]
     name = f'joint-{key}.{h}.glb'
     open(os.path.join(A, name), 'wb').write(glb)
     print(name, kept, 'structures', round(len(glb) / 1e6, 2), 'MB')

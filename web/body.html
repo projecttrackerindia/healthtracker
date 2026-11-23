@@ -211,7 +211,7 @@ const rl=new THREE.DirectionalLight(0xbfd4ff,.75);rl.position.set(-2,4,-7);scene
 const body=new THREE.Group();scene.add(body);
 let SET=null,LAY={},PICK=[],SEL=null,HL=null,KIDB=null;
 async function gunz(u){const r=await fetch(u);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
-async function load(sex){const [buf,names]=await Promise.all([gunz(sex==='female'?'/a/female.ab5cf751.bin':'/a/body-lite.e9802745.bin'),fetch(sex==='female'?'/a/names-f.a07a3541.json':'/a/names.f459bcee.json').then(r=>r.json())]);
+async function load(sex){const [buf,names]=await Promise.all([gunz(sex==='female'?'/a/female-full.83439150.bin':'/a/body-lite.e9802745.bin'),fetch(sex==='female'?'/a/names-ff.d40e8e18.json':'/a/names.f459bcee.json').then(r=>r.json())]);
  const jl=new DataView(buf).getUint32(0,true);return{buf,meta:JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base:4+jl,names}}
 function partPos(S,p){const q=new Uint16Array(S.buf,S.base+p.o,p.v*3),b=p.b,o=new Float32Array(p.v*3);for(let j=0;j<p.v;j++){o[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);o[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);o[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}return o}
 function partIdx(S,p){return new Uint16Array(S.buf,S.base+p.o+p.v*6,p.i)}
@@ -268,12 +268,15 @@ function tissueAttrs(g,ranges,names,l){const P=g.attributes.position.array,n=P.l
 /* sharper layers: after the fast body is on screen, fetch the HD pack of the layer being looked at.
    Organs (3.6 MB) on any connection that is not data-saver or 2G/3G; the bigger packs on Wi-Fi or a computer. */
 const HDL={"1":"/a/hd-l1.a3e9fd3a.bin","2":"/a/hd-l2.4ed24875.bin","3":"/a/hd-l3.078eda01.bin","4":"/a/hd-l4.a5e3f78d.bin","5":"/a/hd-l5.93b15afd.bin"};
+/* the female body: her own skin and organs, with the atlas muscles, bones, vessels and nerves reshaped to her (tools/make_female.py) */
+const HDLF={"1":"/a/hdf-l1.562eff77.bin","2":"/a/hdf-l2.7abe8cc0.bin","4":"/a/hdf-l4.579b47c5.bin","5":"/a/hdf-l5.c80c9bf6.bin"};
+const hdMap=()=>STATE.sex==='female'?HDLF:HDL;
 let HDD={};
-function hdOk(l){const c=navigator.connection||{};if(typeof KID!=='undefined'&&KID)return false;if(STATE.hd||STATE.sex!=='male'||!HDL[l]||c.saveData)return false;
+function hdOk(l){const c=navigator.connection||{};if(typeof KID!=='undefined'&&KID)return false;if(STATE.hd||!hdMap()[l]||c.saveData)return false;
  if(/(^|-)2g|3g/.test(c.effectiveType||''))return false;if(l===3)return true;
  const mobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);return !mobile||c.type==='wifi'||c.type==='ethernet'}
 async function hdLayer(l){l=+l;if(HDD[l]||!LAY[l]||!hdOk(l))return;HDD[l]=1;const set0=SET;
- try{const buf=await gunz(HDL[l]);if(SET!==set0||STATE.hd||!LAY[l])return;const S2=parseSet(buf,null);
+ try{const sex0=STATE.sex,buf=await gunz(hdMap()[l]);if(STATE.sex!==sex0)return;if(SET!==set0||STATE.hd||!LAY[l])return;const S2=parseSet(buf,null);
   const list=S2.meta.parts.filter(p=>!(l===3&&HIDE_ORG.test(SET.names[p.k])));let nv=0,ni=0;list.forEach(p=>{nv+=p.v;ni+=p.i});
   const pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni),ranges=[];let vo=0,io=0;
   list.forEach(p=>{const P=partPos(S2,p),I=partIdx(S2,p),c=colOf(p,l,SET.names[p.k]);pos.set(P,vo*3);for(let j=0;j<p.v;j++){col[(vo+j)*3]=c.r;col[(vo+j)*3+1]=c.g;col[(vo+j)*3+2]=c.b}for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;ranges.push([io/3,(io+I.length)/3,p.k,vo,p.v,io,I.length]);vo+=p.v;io+=I.length});
@@ -1128,7 +1131,7 @@ function mSettings(){shape();CAM(HOME0.z,HOME0.y);head(who()+' · '+T('body').to
  <p class="eb" style="margin-top:6px">${STATE.hd?'HD body loaded.':'Fast body loaded'}${conn.saveData?' · Data saver is on':''}. HD loads only on Wi-Fi or when you choose it.</p>
  <div class="q">Motion</div><div class="chips2"><span class="${!U.still?'on':''}" onclick="U.still=false;saveU();mode('settings')">On</span><span class="${U.still?'on':''}" onclick="U.still=true;saveU();mode('settings')">Reduce motion</span></div>`)}
 /* lite first; HD in the background on Wi-Fi, or when asked */
-const SRC={male:{lite:['/a/body-lite.e9802745.bin','/a/names.f459bcee.json'],hd:['/a/body-hd.5098f0cf.bin','/a/names.f459bcee.json']},female:{lite:['/a/female.ab5cf751.bin','/a/names-f.a07a3541.json']}};
+const SRC={male:{lite:['/a/body-lite.e9802745.bin','/a/names.f459bcee.json'],hd:['/a/body-hd.5098f0cf.bin','/a/names.f459bcee.json']},female:{lite:['/a/female-full.83439150.bin','/a/names-ff.d40e8e18.json']}};
 async function loadSex(sex,hd){const s=SRC[sex][hd&&SRC[sex].hd?'hd':'lite'];const [buf,names]=await Promise.all([gunz(s[0]),fetch(s[1]).then(r=>r.json())]);return parseSet(buf,names)}
 async function swap(sex){$('#load').style.display='block';STATE.sex=sex;SET=await loadSex(sex,STATE.hd&&sex==='male');build(SET);SHAPED=null;shape();$('#load').style.display='none'}
 async function detail(){if(KID)return;const want=U.hd||(!(navigator.connection||{}).saveData&&(navigator.connection||{}).type==='wifi');if(want===!!STATE.hd||!SRC[STATE.sex].hd){if(MODE==='settings')mode('settings');return}
@@ -1303,7 +1306,7 @@ addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.ty
 /* ?e=1: embedded in another screen (the doctor's consult): the body and its organ tags only, no page chrome */
 if(/[?&]e=1\b/.test(location.search)){document.body.classList.add('emb');const st=document.createElement('style');st.textContent='body.emb .top,body.emb #zbar,body.emb #card,body.emb #extra{display:none!important}';document.head.appendChild(st)}
 /* preview without the app: /body?demo */
-fit();frame();</script><script src="/organs2.js?v=8"></script><script>
+fit();frame();</script><script src="/organs2.js?v=9"></script><script>
 if(/[?&]demo\b/.test(location.search))boot({person:{name:'You',age:35,sex:'male'},findings:[],meds:[],vitals:null,canWrite:false});
 send('ready');
 
