@@ -28,7 +28,8 @@ COOKIE = "dk_admin"
 #   owner    everything
 #   ops      runs the business day to day: partners, orders, families' accounts, privacy queue. Not money settings,
 #            other admins, platform settings, deleting partners or rewriting a family's record.
-#   content  first-aid videos, seasonal tips, the medicine and test catalogue, products and offers. Nothing about people.
+#   content  first-aid videos, seasonal tips, the medicine and test catalogue, products, offers and the anatomy
+#            model review. Nothing about people.
 import re as _re
 
 _OWNER_ONLY = [
@@ -38,7 +39,7 @@ _OWNER_ONLY = [
     ("PUT", r"/services/.+"), ("POST", r"/settlements/.+"), ("DELETE", r"/settlements/.+"), ("POST", r"/payments/[^/]+/(confirm|reject)"),
 ]
 _EVERYONE = r"/(me(/.*)?|devices(/.*)?|signout-everywhere|logout|login|totp(/.*)?)"
-_CONTENT = r"/(seasonal|videos|catalog|products|offers)(/.*)?"
+_CONTENT = r"/(seasonal|videos|catalog|products|offers|anatomy)(/.*)?"
 ROLE_LABEL = {"owner": "Owner", "ops": "Operations", "content": "Content"}
 
 

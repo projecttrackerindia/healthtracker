@@ -229,6 +229,9 @@ app.include_router(bagshop_api.sr)
 from api import bagreturns as bagreturns_api  # noqa: E402  returns, exchanges and refunds for hospital bag orders
 app.include_router(bagreturns_api.r)
 app.include_router(bagreturns_api.xr)
+from api import anatomy_review as anatomy_api  # noqa: E402  research-team review of the anatomy models we built
+app.include_router(anatomy_api.r)
+app.include_router(anatomy_api.xr)
 from api import blood as blood_api  # noqa: E402
 app.include_router(blood_api.r)
 app.include_router(blood_api.pr)

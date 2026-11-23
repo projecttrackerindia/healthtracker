@@ -96,6 +96,12 @@ body.orgv .top{display:none}#orgbar{display:none}body.orgv #orgbar{display:flex;
 .exrg{display:flex;flex-wrap:wrap;gap:6px;padding:0 6px 6px}.exrg button{border:0;border-radius:16px;background:#F2F2F7;padding:7px 12px;font:600 13px Geist,Inter,sans-serif;color:#1D1D1F;cursor:pointer}.exrg button.on{background:#1D1D1F;color:#fff}
 body.exv #sub{display:none}#exbar .chip.bk{color:#0071E3}@media (min-width:980px){body.exv #exbar .chip:not(.bk){display:none}body.exv #exbar{left:24px;right:auto;top:96px}body.exv #card{bottom:auto;max-height:calc(100vh - 108px)!important}}
 .exq{display:flex;align-items:center;gap:8px;height:44px;border-radius:22px;background:#F2F2F7;padding:0 14px;margin-top:12px}.exq input{flex:1;border:0;outline:0;background:none;font:15px Geist,Inter,sans-serif;color:inherit;min-width:0}
+.lnm{font-size:17px;font-weight:600;margin-top:4px;color:var(--ink)}.lnm span{font-size:13px;font-weight:500;color:#8E8E93}body.dk .lnm{color:#F5F5F7}
+#arov{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 20px calc(20px + env(safe-area-inset-bottom));pointer-events:none}#arov p{margin:0;max-width:340px;text-align:center;font:600 15px/1.35 Geist,Inter,sans-serif;color:#fff;background:rgba(0,0,0,.55);border-radius:20px;padding:10px 16px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}#arov .btn{pointer-events:auto;width:160px}
+.armsg{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;background:rgba(28,28,30,.92);color:#fff;border-radius:22px;padding:12px 18px;font:600 14px Geist,Inter,sans-serif}
+.mss{margin:12px 0 0;font-size:14px;line-height:20px;min-height:20px;color:#6E6E73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mss b{color:var(--ink)}body.dk .mss{color:#AEAEB2}body.dk .mss b{color:#F5F5F7}
+.msl{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:22vh;overflow-y:auto;overscroll-behavior:contain}.msl li{display:flex;align-items:center;border-radius:16px;background:rgba(120,120,128,.12)}.msl li.on{background:rgba(10,132,255,.18)}.msr{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;color:inherit;font:inherit;text-align:left;padding:0 4px 0 14px;min-height:48px;cursor:pointer}.msr i{flex:none;width:10px;height:10px;border-radius:50%}.msr b{flex:none;font-size:17px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.msr span{font-size:13px;color:#8E8E93;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.msx{flex:none;width:44px;height:44px;border:0;background:none;color:#8E8E93;font-size:15px;border-radius:22px;cursor:pointer}.msn{margin-top:8px;height:40px;border-radius:20px;border:0;background:rgba(120,120,128,.16);padding:0 16px;font:400 15px Geist,Inter,sans-serif;color:inherit;width:100%;box-sizing:border-box}
+.msf{margin:10px 0 0;font-size:12px;line-height:16px;color:#8E8E93}
 .exgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.exgrid button{border:0;border-radius:14px;background:#F2F2F7;min-height:44px;font:600 13.5px Geist,Inter,sans-serif;color:#1D1D1F;cursor:pointer;padding:4px}.exgrid button.on{background:#EAF3FF;color:#0071E3}
 .exr{background:#F5F5F7;border-radius:14px;padding:10px 12px;margin-top:10px}.btn2 .exask{background:#EEEEFB;color:#4B48C9}
 body.dk #exrail{background:rgba(44,44,46,.95)}body.dk #exrail .exs,body.dk .exrg button,body.dk .exgrid button,body.dk .exq{color:#F5F5F7}body.dk .exrg button,body.dk .exgrid button,body.dk .exq,body.dk .exr{background:#2C2C2E}body.dk #exbar .chip{background:rgba(44,44,46,.94);color:#fff}body.dk #exbar .chip.on{background:#fff;color:#1D1D1F}
@@ -350,8 +356,8 @@ GL.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(e.deltaY*(e.c
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='+'||e.key==='=')zoomBy(.85);if(e.key==='-')zoomBy(1.18);if(e.key==='0')resetView();
  if(e.key==='ArrowLeft')goal.y-=.25;if(e.key==='ArrowRight')goal.y+=.25;if(e.key==='ArrowUp')goal.x=Math.max(-1.35,goal.x-.2);if(e.key==='ArrowDown')goal.x=Math.min(1.35,goal.x+.2)});
 const clock=new THREE.Clock(),v3=new THREE.Vector3();
-function frame(){const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle>3&&!SEL&&!BABYON&&!U.still&&MODE==='explore'&&!(VIEW&&VIEW.k==='explore'&&body.position.x))goal.y+=dt*.1;
- rot.y+=(goal.y-rot.y)*Math.min(1,dt*6);rot.x+=(goal.x-rot.x)*Math.min(1,dt*6);const piv=(OG&&OG.piv)||(H3&&H3.piv);if(piv){body.rotation.set(0,0,0);piv.rotation.set(rot.x,rot.y,0)}else body.rotation.set(rot.x,rot.y,0);
+function frame(){if(XRS)return;const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle>3&&!SEL&&!BABYON&&!U.still&&MODE==='explore'&&!MS&&!(VIEW&&VIEW.k==='explore'&&body.position.x))goal.y+=dt*.1;
+ rot.y+=(goal.y-rot.y)*Math.min(1,dt*6);rot.x+=(goal.x-rot.x)*Math.min(1,dt*6);const piv=(OG&&OG.piv)||(H3&&H3.piv);if(piv){body.rotation.set(0,0,0);piv.rotation.set(rot.x,rot.y,0)}else body.rotation.set(rot.x,rot.y,0);if(CUTP&&CUTL){body.updateMatrixWorld();CUTP.copy(CUTL).applyMatrix4(body.matrixWorld)}
  camZ+=(goalZ-camZ)*Math.min(1,dt*3);camY+=(goalY-camY)*Math.min(1,dt*3);PAN.x+=(PANG.x-PAN.x)*Math.min(1,dt*8);PAN.y+=(PANG.y-PAN.y)*Math.min(1,dt*8);cam.position.set(PAN.x,camY+.15+PAN.y,camZ);cam.lookAt(PAN.x,camY+PAN.y,0);
  if(HL)HL.material.emissiveIntensity=.35+.25*Math.sin(clock.elapsedTime*3.5);if(!U.still)pregAnimate(clock.elapsedTime,dt);if(typeof animFeat==='function')animFeat(clock.elapsedTime);
  if(H3)h3Tick(dt);if(BLOOD)BLOOD.tick(dt);if(OG){OG.mix.update(dt)}R.toneMappingExposure=document.body.classList.contains('dk')?1.12:1.0;R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
@@ -650,7 +656,7 @@ function organCard(o,still){const f=orgFindings()[o];const fs=latest().filter(x=
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 const fmtD=d=>{if(!d)return'';const x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})};
 /* tap on any part, in any mode that allows it */
-function tap(x,y){if(VIEW&&VIEW.k==='explore')return exTap(x,y);if(MODE==='heartv'&&H3)return h3Tap(x,y);if(VIEW&&VIEW.k==='organ'){if(ogTap(x,y))return;return}if(VIEW&&(VIEW.k==='body'||VIEW.k==='report'||VIEW.k==='med')){const rr=$('#gl').getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((x-rr.left)/rr.width*2-1,-(y-rr.top)/rr.height*2+1),cam);const gh=ray.intersectObjects(GLOWS,true)[0];
+function tap(x,y){if(VIEW&&VIEW.k==='measure')return msTap(x,y);if(VIEW&&VIEW.k==='explore')return exTap(x,y);if(MODE==='heartv'&&H3)return h3Tap(x,y);if(VIEW&&VIEW.k==='organ'){if(ogTap(x,y))return;return}if(VIEW&&(VIEW.k==='body'||VIEW.k==='report'||VIEW.k==='med')){const rr=$('#gl').getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((x-rr.left)/rr.width*2-1,-(y-rr.top)/rr.height*2+1),cam);const gh=ray.intersectObjects(GLOWS,true)[0];
  if(gh){let g=gh.object;while(g&&!GLOWS.includes(g))g=g.parent;const o=g&&g.userData.org;if(o){vgo({k:o==='heart'?'heart':'organ',o},VIEW.k==='body'?'Body':VIEW.k==='report'?'Report':'Medicine');return}}
  const h=pick(x,y);if(h){const nm=SET.names[h.k];for(const o in ORGRE)if(ORGRE[o].test(nm)&&ORGI[o]){vgo({k:o==='heart'?'heart':'organ',o},VIEW.k==='body'?'Body':VIEW.k==='report'?'Report':'Medicine');return}}return}if(MODE==='hurt')return hurtTap(x,y);if(MODE==='quiz')return quizTap(x,y);const h=pick(x,y);if(!h){closeCard();return}
  const nm=SET.names[h.k];for(const o in ORGRE)if(LAYK==='organs'&&ORGRE[o].test(nm)&&MODE==='explore'){return FOCUS[o]?focusOrgan(o):organCard(o)}
@@ -882,9 +888,11 @@ function xbody(orgs){setLayer('organs');for(const l in LAY){const m=LAY[l];if(+l
 function vback(){$('#sub').innerHTML=VSTACK.length?`<button class="chip vbk" onclick="vpop()">‹ ${esc(VSTACK[VSTACK.length-1].label)}</button>`:''}
 function vgo(v,label){if(VIEW)VSTACK.push({v:VIEW,label:label||'Body'});vshow(v)}
 function vpop(){const p=VSTACK.pop();if(p)vshow(p.v,true);else send('close')}
-async function vshow(v,back){if(v.k!=='explore')exOff();else{['exbar','exrail'].forEach(id=>{const e=$('#'+id);if(e)e.remove()})}VIEW=v;document.body.classList.remove('nolabs');document.body.classList.toggle('ov',v.k!=='body');ogOff();partOff();h3Off();closeCard();clearGlows();tags([]);body.position.x=0;
+async function vshow(v,back){if(CUTP&&v.k!=='cut')cutOff();if(MS&&v.k!=='measure')msOff();if(v.k!=='explore')exOff();else{['exbar','exrail'].forEach(id=>{const e=$('#'+id);if(e)e.remove()})}VIEW=v;document.body.classList.remove('nolabs');document.body.classList.toggle('ov',v.k!=='body');ogOff();partOff();h3Off();closeCard();clearGlows();tags([]);body.position.x=0;
  if(v.k==='heart'){MODE='heartv';mHeart();document.body.classList.add('ov');vback();return}
  MODE=v.k==='body'?'explore':v.k;
+ if(v.k==='cut'){shape();mCut();vback();return}
+ if(v.k==='measure'){shape();mMeasure();vback();return}
  if(v.k==='body')vBody();else if(v.k==='organ')await vOrgan(v.o);else if(v.k==='report')vReport(v.rid);else if(v.k==='med')vMed(v.name);else if(v.k==='then')vThen(v.w||'now');else if(v.k==='explore')await vExplore(v.sys);vback()}
 function vRow(dot,t,s,on){return`<div class="mi" onclick="${on}" style="align-items:center"><span class="dot" style="background:${dot};width:12px;height:12px;border-radius:6px"></span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${t}</b><div style="font-size:13px;color:#8E8E93;margin-top:1px">${s}</div></div><span style="color:#C7C7CC">›</span></div>`}
 const FCOL=f=>f.flag==='normal'?'#34C759':URG(f)?'#FF3B30':(f.flag==='high'||f.flag==='low')?'#FF9F0A':'#8E8E93';
@@ -928,6 +936,38 @@ let EXP={sys:'organs',sel:null,solo:null,sw:false};
 /* plain words first, the medical name under it */
 const EXPLAIN=[[/^femur$/,'Thigh bone'],[/^tibia$/,'Shin bone'],[/^fibula$/,'Calf bone'],[/^patella$/,'Kneecap'],[/^humerus$/,'Upper arm bone'],[/^radius$/,'Forearm bone (thumb side)'],[/^ulna$/,'Forearm bone (little-finger side)'],[/^clavicle$/,'Collarbone'],[/^scapula$/,'Shoulder blade'],[/^sternum$/,'Breastbone'],[/^mandible$/,'Lower jaw'],[/^maxilla$/,'Upper jaw'],[/^hip bone$/,'Hip bone'],[/^sacrum$/,'Base of the spine'],[/^coccyx$/,'Tailbone'],[/^calcaneus$/,'Heel bone'],[/^talus$/,'Ankle bone'],[/biceps brachii/,'Biceps'],[/triceps brachii/,'Triceps'],[/^deltoid/,'Shoulder muscle'],[/gluteus maximus/,'Buttock muscle'],[/gastrocnemius/,'Calf muscle'],[/quadriceps|rectus femoris|vastus/,'Front thigh muscle'],[/rectus abdominis/,'Six-pack muscle'],[/pectoralis major/,'Chest muscle'],[/latissimus dorsi/,'Back muscle'],[/tympanic membrane/,'Eardrum'],[/^cochlea/,'Inner ear (hearing)'],[/malleus|incus|stapes/,'Tiny ear bone'],[/retina/,'Back of the eye (sees light)'],[/cornea/,'Clear front of the eye'],[/sclera/,'White of the eye'],[/^lens$/,'Lens of the eye']];
 const FING={first:'thumb',second:'index finger',third:'middle finger',fourth:'ring finger',fifth:'little finger'},TOE={first:'big toe',second:'second toe',third:'third toe',fourth:'fourth toe',fifth:'little toe'},PH={proximal:'Base bone',middle:'Middle bone',distal:'Tip bone'};
+/* Telugu and Hindi names (23 Nov 2026): with the viewer set to తెలుగు or हिन्दी, a part's card adds the everyday word in
+   that language and the English word it stands for. The head word of the name decides: the last match before a comma or
+   " of " ("aortic valve" is a valve, "head of femur" falls back to the femur). Side is left to the English title, so no
+   Hindi gender agreement can go wrong. Written by Urban Health; in Admin → Anatomy review for a language and medical check.
+   [English word(s), Telugu, Hindi]; an empty cell means we would rather show nothing than a doubtful word. */
+const LN=[['small intestine','చిన్న ప్రేగు','छोटी आंत'],['large intestine','పెద్ద ప్రేగు','बड़ी आंत'],['colon','పెద్ద ప్రేగు','बड़ी आंत'],['intestine','ప్రేగు','आंत'],
+ ['heart','గుండె','हृदय'],['lung','ఊపిరితిత్తి','फेफड़ा'],['liver','కాలేయం','यकृत'],['kidney','మూత్రపిండం','गुर्दा'],['brain','మెదడు','मस्तिष्क'],['cerebellum','అనుమస్తిష్కం','अनुमस्तिष्क'],
+ ['brainstem','మెదడు కాండం','मस्तिष्क स्तंभ'],['spinal cord','వెన్నుపాము','मेरुरज्जु'],['stomach','జీర్ణాశయం','आमाशय'],['duodenum','ఆంత్రమూలం','ग्रहणी'],['rectum','పురీషనాళం','मलाशय'],
+ ['appendix','అపెండిక్స్','अपेंडिक्स'],['spleen','ప్లీహం','तिल्ली'],['pancreas','క్లోమం','अग्न्याशय'],['gallbladder','పిత్తాశయం','पित्ताशय'],['bladder','మూత్రాశయం','मूत्राशय'],
+ ['ureter','మూత్రనాళం','मूत्रवाहिनी'],['urethra','మూత్రమార్గం','मूत्रमार्ग'],['oesophagus','అన్నవాహిక','ग्रासनली'],['esophagus','అన్నవాహిక','ग्रासनली'],['trachea','శ్వాసనాళం','श्वासनली'],
+ ['windpipe','శ్వాసనాళం','श्वासनली'],['bronchus','శ్వాసనాళిక','श्वसनी'],['larynx','స్వరపేటిక','स्वरयंत्र'],['voice box','స్వరపేటిక','स्वरयंत्र'],['vocal cord','స్వర తంత్రి','स्वर रज्जु'],
+ ['pharynx','గొంతు','गला'],['throat','గొంతు','गला'],['thyroid gland','థైరాయిడ్ గ్రంథి','थायरॉयड ग्रंथि'],['adrenal gland','అధివృక్క గ్రంథి','अधिवृक्क ग्रंथि'],['pituitary','పీయూష గ్రంథి','पीयूष ग्रंथि'],
+ ['thymus','థైమస్ గ్రంథి','थाइमस ग्रंथि'],['lymph node','శోషరస గ్రంథి','लसीका ग्रंथि'],['sweat gland','చెమట గ్రంథి','पसीने की ग्रंथि'],['oil gland','తైల గ్రంథి','तेल ग्रंथि'],['sebaceous gland','తైల గ్రంథి','तेल ग्रंथि'],
+ ['gland','గ్రంథి','ग्रंथि'],['aorta','బృహద్ధమని','महाधमनी'],['artery','ధమని','धमनी'],['arteriole','చిన్న ధమని','धमनिका'],['vein','సిర','शिरा'],['capillary','రక్తకేశనాళిక','केशिका'],['nerve','నాడి','तंत्रिका'],
+ ['muscle','కండరం','मांसपेशी'],['tendon','స్నాయువు','कंडरा'],['ligament','స్నాయుబంధనం','स्नायुबंधन'],['cartilage','మృదులాస్థి','उपास्थि'],['bone','ఎముక','हड्डी'],['skull','పుర్రె','खोपड़ी'],
+ ['vertebra','వెన్నుపూస','कशेरुका'],['vertebral column','వెన్నెముక','रीढ़ की हड्डी'],['backbone','వెన్నెముక','रीढ़ की हड्डी'],['rib','పక్కటెముక','पसली'],['sternum','ఉరోస్థి','उरोस्थि'],['breastbone','ఉరోస్థి','उरोस्थि'],
+ ['clavicle','','हंसली'],['collarbone','','हंसली'],['scapula','భుజం ఎముక','कंधे की हड्डी'],['shoulder blade','భుజం ఎముక','कंधे की हड्डी'],['humerus','పై చేయి ఎముక','ऊपरी बांह की हड्डी'],
+ ['radius','ముంజేయి ఎముక','अग्रबाहु की हड्डी'],['ulna','ముంజేయి ఎముక','अग्रबाहु की हड्डी'],['femur','తొడ ఎముక','जांघ की हड्डी'],['thigh bone','తొడ ఎముక','जांघ की हड्डी'],['tibia','కాలి ఎముక','पिंडली की हड्डी'],
+ ['fibula','కాలి ఎముక','पिंडली की हड्डी'],['patella','మోకాలి చిప్ప','घुटने की टोपी'],['kneecap','మోకాలి చిప్ప','घुटने की टोपी'],['hip bone','తుంటి ఎముక','कूल्हे की हड्डी'],['pelvis','కటి','श्रोणि'],
+ ['mandible','దవడ ఎముక','जबड़े की हड्डी'],['jaw','దవడ','जबड़ा',1],['tooth','పన్ను','दाँत'],['teeth','పళ్ళు','दाँत'],['molar','దవడ పన్ను','दाढ़'],['gum','చిగురు','मसूड़ा'],['tongue','నాలుక','जीभ'],
+ ['eye','కన్ను','आँख'],['eyeball','కనుగుడ్డు','नेत्रगोलक'],['lens','కటకం','लेंस'],['retina','రెటీనా','रेटिना'],['pupil','కనుపాప','पुतली'],['ear','చెవి','कान'],['eardrum','కర్ణభేరి','कान का पर्दा'],
+ ['cochlea','కర్ణావర్తం','कर्णावर्त'],['nose','ముక్కు','नाक'],['sinus','సైనస్','साइनस'],['skin','చర్మం','त्वचा'],['epidermis','బాహ్యచర్మం','बाह्यत्वचा'],['dermis','అంతశ్చర్మం','डर्मिस'],
+ ['fat','కొవ్వు','वसा'],['hair follicle','రోమకూపం','रोमकूप'],['diaphragm','ఉదరవితానం','डायाफ्राम'],['uterus','గర్భాశయం','गर्भाशय'],['ovary','అండాశయం','अंडाशय'],['prostate','ప్రోస్టేట్ గ్రంథి','प्रोस्टेट ग्रंथि'],
+ ['breast','రొమ్ము','स्तन'],['atrium','కర్ణిక','अलिंद'],['ventricle','జఠరిక','निलय'],['valve','కవాటం','वाल्व'],['alveolus','వాయుకోశం','वायुकोष'],['air sac','వాయుకోశం','वायुकोष'],
+ ['pleura','ఊపిరితిత్తుల పొర','फुफ्फुसावरण'],['dura mater','మెదడు పొర','मस्तिष्कावरण'],['arachnoid','మెదడు పొర','मस्तिष्कावरण'],['pia mater','మెదడు పొర','मस्तिष्कावरण'],['meninges','మెదడు పొరలు','मस्तिष्कावरण'],
+ ['nephron','నెఫ్రాన్','नेफ्रॉन'],['glomerulus','గ్లోమెరులస్','ग्लोमेरुलस'],['joint','కీలు','जोड़'],['knee','మోకాలు','घुटना',1],['elbow','మోచేయి','कोहनी',1],['wrist','మణికట్టు','कलाई',1],['ankle','చీలమండ','टखना',1],
+ ['shoulder','భుజం','कंधा',1],['neck','మెడ','गर्दन',1],['hand','చేయి','हाथ',1],['foot','పాదం','पैर',1],['finger','వేలు','उंगली',1],['toe','కాలి వేలు','पैर की उंगली',1],['blood','రక్తం','रक्त']]
+ /* body regions (the last column is 1) count only as the whole name: "neck of femur" is not the neck */
+ .map(([k,te,hi,w])=>({k,te,hi,w,re:new RegExp((w?'^\\s*(left|right)?\\s*':'\\b')+k.replace(/ /g,'\\s')+(w?'s?\\s*$':'(s|es)?\\b'),'i')}));
+function lnFind(t,L,seg){let best=null;for(const e of LN){if(!e[L]||(seg&&e.w))continue;const m=e.re.exec(t);if(m){const end=m.index+m[0].length;if(!best||end>best.end||(end===best.end&&e.k.length>best.e.k.length))best={e,end}}}return best&&best.e}
+function locName(...names){const L=U.lang;if(L!=='te'&&L!=='hi')return'';for(const n of names){const t=String(n||'').toLowerCase().replace(/\(.*?\)/g,' ');if(!t.trim())continue;
+  const f=lnFind(t,L),e=f&&f.w?f:lnFind(t.split(/,|\bof\b/)[0],L,1)||f;if(e)return`<div class="lnm" lang="${L}">${esc(e[L])}<span> · ${esc(e.k)}</span></div>`}return''}
 function exPlain(nm){const side=(nm.match(/^(left|right) /i)||[])[1],base=nm.replace(/^(left|right) /i,'').trim(),b=base.toLowerCase();let m=b.match(/^(proximal|middle|distal) phalanx of (first|second|third|fourth|fifth) finger of (hand|foot)$/);
  let p=m?`${PH[m[1]]} of your ${(m[3]==='hand'?FING:TOE)[m[2]]}`:null;if(!p){m=b.match(/^(first|second|third|fourth|fifth) metacarpal bone$/);if(m)p=`Palm bone of your ${FING[m[1]]}`}if(!p){m=b.match(/^(first|second|third|fourth|fifth) metatarsal bone$/);if(m)p=`Foot bone of your ${TOE[m[1]]}`}
  if(!p){m=b.match(/^(\w+) rib$/);if(m)p=`${m[1][0].toUpperCase()+m[1].slice(1)} rib`}if(!p){const e=EXPLAIN.find(([r])=>r.test(b));if(e)p=e[1]}
@@ -944,7 +984,7 @@ function exSheet(){const s=EXS.find(x=>x[0]===EXP.sys)||EXS[0],showReg=!['organs
  sheet(`<div class="row" style="justify-content:space-between;align-items:baseline"><b style="font-size:18px">${esc(s[1])}</b>${EXP.sw?'<small style="color:#8E8E93">shared full model</small>':''}</div><p class="cd" style="margin:4px 0 0">${esc(s[2])}</p>
  <label class="exq"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="exq" placeholder="Search: thigh bone, biceps, eardrum…" autocomplete="off" aria-label="Search the body"></label><div id="exres"></div>
  ${showReg&&!wide?`<div class="exgrid">${EXR.map(([k,t])=>`<button class="${EXP.reg===k?'on':''}" onclick="exRegion('${k}')">${esc(t)}</button>`).join('')}</div>`:''}
- ${EXP.sys==='organs'?`<div class="exgrid">${O2EX.filter(([o])=>o!=='nerves'&&o!=='bones').map(([o,t])=>`<button onclick="vgo({k:'${o==='heart'?'heart':'organ'}',o:'${o}'},'Explore')">${esc(t)}</button>`).join('')}</div>`:''}`);
+ ${EXP.sys==='organs'?`<div class="exgrid">${O2EX.filter(([o])=>o!=='nerves'&&o!=='bones'&&o!=='cut'&&o!=='measure'&&o!=='ar').map(([o,t])=>`<button onclick="vgo({k:'${o==='heart'?'heart':'organ'}',o:'${o}'},'Explore')">${esc(t)}</button>`).join('')}</div>`:''}`);
  const q=$('#exq');if(q)q.oninput=()=>exSearch(q.value)}
 function exSearch(v){const s=v.trim().toLowerCase(),r=$('#exres');if(!r)return;if(s.length<2){r.innerHTML='';return}onto();const hits=[],seen=new Set(),priv=!!(DATA.person||{}).priv;
  SET.names.forEach((n,k)=>{if(hits.length>=7)return;if(!priv&&(EXREPRO_M.test(n)||EXREPRO_F.test(n)))return;const pl=exPlain(n),key=pl.plain.toLowerCase();if(seen.has(key))return;const oo=ontoOf(n);if(n.toLowerCase().includes(s)||key.includes(s)||(oo&&oo[1]&&oo[1].some(y=>y.toLowerCase().includes(s)))){seen.add(key);hits.push(k)}});
@@ -975,7 +1015,7 @@ async function xpGo(sys){if(sys==='repro'&&!(DATA.person||{}).priv)sys='organs';
  if(sys==='senses'||sys==='repro'){const re=sys==='senses'?EXSENSE:(STATE.base==='female'?EXREPRO_F:EXREPRO_M);PARTS.__ex={main:re,rel:sys==='senses'?/frontal bone|zygomatic|nasal bone|maxilla|mandible|temporal bone|parietal|sphenoid/i:/hip bone|sacrum|pubi|urinary bladder|^bladder/i,k:sys==='senses'?1.3:1.2,wide:1,labels:sys==='senses'?[['Eyes',/^right (cornea|lens|retina)$/i],['Ears',/^right auricle/i],['Nose',/nasal bone|nasal concha/i],['Teeth',/incisor/i]]:[]};if(!partView('__ex'))setLayer('organs');else{exBars();exSheet();const ks=[];SET.names.forEach((n,k)=>{if(re.test(n))ks.push(k)});exFitParts(ks,sys==='senses'?1.05:1.15);camZ=goalZ;camY=goalY}}
  else setLayer(sys==='organs'?'organs':sys);if(sys!=='senses'&&sys!=='repro')CAM(HOME0.z*(innerWidth<980?1.22:1),HOME0.y+(innerWidth<980?.28:0));exBars();exSheet()}
 function exPick(h){EXP.sel=h;highlight(h);const nm=SET.names[h.k],p=SET.meta.parts[h.k],[sys,desc]=infoP(p,nm),pl=exPlain(nm),o=ontoOf(nm),reg=exRegionOf(nm),def=o&&o[0]?o2Short(o[0]):'',org=Object.keys(ORGRE).find(x=>ORGRE[x].test(nm)&&ORGI[x]),fs=org?latest().filter(f=>f.org===org&&!f.screen):[],bad=fs.filter(f=>fRank(f)>=2);
- sheet(`<button class="lk" style="padding:0;margin:0 0 6px" onclick="exBack()">‹ ${esc((EXS.find(x=>x[0]===EXP.sys)||EXS[0])[1])}</button><div class="eb" style="margin:0;color:#0071E3">${esc([sys,reg].filter(Boolean).join(' · ').toUpperCase())}</div><div class="cn" style="margin-top:2px">${esc(pl.plain)}</div>${pl.med?`<div style="font-size:13px;color:#8E8E93;margin-top:1px">${esc(pl.med)}</div>`:''}
+ sheet(`<button class="lk" style="padding:0;margin:0 0 6px" onclick="exBack()">‹ ${esc((EXS.find(x=>x[0]===EXP.sys)||EXS[0])[1])}</button><div class="eb" style="margin:0;color:#0071E3">${esc([sys,reg].filter(Boolean).join(' · ').toUpperCase())}</div><div class="cn" style="margin-top:2px">${esc(pl.plain)}</div>${pl.med?`<div style="font-size:13px;color:#8E8E93;margin-top:1px">${esc(pl.med)}</div>`:''}${locName(pl.plain,nm)}
  <p class="cd" style="color:#1D1D1F">${esc(def||cap(String(desc).replace(/^[^:]+:\s*/,'')))}</p>
  ${fs.length?`<div class="exr"><div class="exh">FROM YOUR RESULTS</div><div style="font-size:14.5px;margin-top:4px">${bad.length?esc(bad.map(f=>f.test.replace(/\s*\(.*\)/,'')+' '+f.value+' '+(f.unit||'')).join(' · ')):'All '+fs.length+' in range'}</div></div>`:''}
  <div class="btn2"><button class="btn sec" onclick="exSolo()">${EXP.solo?'Show everything':'Show only this'}</button>${org?`<button class="btn pri" onclick="vgo({k:'${org==='heart'?'heart':'organ'}',o:'${org}'},'Explore')">Open ${esc(ORGN(org).toLowerCase())}</button>`:`<button class="btn sec exask" onclick="send('ask',{q:'What does the ${esc(pl.plain.toLowerCase()).replace(/'/g,'')} do?'})">Ask about this</button>`}</div>`)}
@@ -1053,10 +1093,10 @@ function orgMore(o){const info=ORGI[o]||[o,o,''],hm=helpers(o);let m=$('#orgmenu
 async function vOrgan(o){shape();vLoading(true);const info=ORGI[o]||[o,o,''],fs=latest().filter(f=>f.org===o).sort((a,b)=>fRank(b)-fRank(a)),worst=fs[0];
  head(who()+' · '+info[0].toUpperCase(),info[1],'');document.body.classList.add('orgv');orgBar(info[0],o);document.body.classList.toggle('nolabs',!!fs.length);
  const bad=fs.filter(f=>fRank(f)>=2),ok=fs.filter(f=>fRank(f)<2),nb=bad.length,W=['One','Two','Three','Four','Five'];
- const title=!fs.length?'No results yet':nb?(nb<6?W[nb-1]:nb)+(nb>1?' values':' value')+' to watch':'All in range';
+ const nl=!fs.length&&typeof o2NoLab==='function'?o2NoLab(o):null;const title=!fs.length?(nl?esc(nl[0]):'No results yet'):nb?(nb<6?W[nb-1]:nb)+(nb>1?' values':' value')+' to watch':'All in range';
  const pr=(DATA.prices||{}),rc=bad.map(f=>f.code).filter(Boolean),price=rc.length&&rc.every(c=>pr[c]!=null)?rc.reduce((t,c)=>t+(+pr[c]||0),0):0,rid=(bad[0]||fs[0]||{}).rid;
  sheet(`<div class="ovx"><div class="ove" style="color:${worst?FCOL(worst):'#8E8E93'}">${esc(info[0].toUpperCase())}</div><div class="ovt">${title}</div>
- ${!fs.length?`<p class="cd" style="color:#1D1D1F;margin-top:4px">${esc(info[2])}</p>`:''}
+ ${!fs.length?`<p class="cd" style="color:#1D1D1F;margin-top:4px">${esc(nl?nl[1]:info[2])}</p>`:''}
  ${o==='eye'?eyeTable(fs):''}${o==='teeth'?dentalChart(fs):''}${o==='bones'?dexaGauge(fs):''}
  ${bad.map(ovBad).join('')}${ok.filter(f=>!(o==='bones'&&/t.?score/i.test(f.test))).map(ovOk).join('')}
  ${fs.length?`<p class="ovdo">${esc(info[2])}</p>`:''}
@@ -1079,7 +1119,7 @@ async function vOrgan(o){shape();vLoading(true);const info=ORGI[o]||[o,o,''],fs=
  el.innerHTML=OG.labels.map((l,i)=>`<button class="h3t" data-i="${i}" onclick="ogPick(OG.labels[${i}].n)"><i></i>${esc(l.lab)}</button>`).join('')}
 function ogPart(o){while(o&&!(o.userData&&o.userData.display_name))o=o.parent;return o}
 function ogPick(n){if(!OG||!n)return;OG.sel=n;OG.root.traverse(m=>{if(m.isMesh&&m.material.emissive){let on=false,q=m;while(q){if(q===n){on=true;break}q=q.parent}m.material.emissive.set(on?0x5E5CE6:0);m.material.emissiveIntensity=on?.35:0}});
- const u=n.userData,nm=ogName(u);sheet(`<div class="row" style="justify-content:space-between"><button class="lk" onclick="ogClear()">‹ ${esc(ORGI[OG.o][1])}</button><button class="x" onclick="ogClear()" aria-label="Close">✕</button></div><div class="cn" style="font-size:22px;margin-top:4px">${esc(nm.n.replace(/\s*\((reconstructed surface|parenchyma)\)/i,''))}</div><p class="cd" style="color:#1D1D1F">${esc(nm.d.replace(/^[^:]{0,60}:\s*/,'').replace(/^./,c=>c.toUpperCase()))}</p><button class="btn pri" style="width:100%;margin-top:12px" onclick="send('ask',{q:'What does the ${esc(nm.n.toLowerCase().replace(/'/g,''))} do?'})">${T('ask')}</button>`)}
+ const u=n.userData,nm=ogName(u);sheet(`<div class="row" style="justify-content:space-between"><button class="lk" onclick="ogClear()">‹ ${esc(ORGI[OG.o][1])}</button><button class="x" onclick="ogClear()" aria-label="Close">✕</button></div><div class="cn" style="font-size:22px;margin-top:4px">${esc(nm.n.replace(/\s*\((reconstructed surface|parenchyma)\)/i,''))}</div>${locName(nm.n,u.display_name)}<p class="cd" style="color:#1D1D1F">${esc(nm.d.replace(/^[^:]{0,60}:\s*/,'').replace(/^./,c=>c.toUpperCase()))}</p><button class="btn pri" style="width:100%;margin-top:12px" onclick="send('ask',{q:'What does the ${esc(nm.n.toLowerCase().replace(/'/g,''))} do?'})">${T('ask')}</button>`)}
 function ogClear(){if(!OG)return;OG.sel=null;OG.root.traverse(m=>{if(m.isMesh&&m.material.emissive){m.material.emissive.set(0);m.material.emissiveIntensity=0}});vshow(VIEW,true)}
 function ogTap(x,y){if(!OG)return false;const r=$('#gl').getBoundingClientRect(),v=new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(v,cam);const h=ray.intersectObject(OG.root,true)[0];if(h){ogPick(ogPart(h.object));return true}return false}
 function ogPlace(){const el=$('#h3tags');if(!el||!OG)return;{let pn=$('#ogpin');if(document.body.classList.contains('orgv')){if(!pn){pn=document.createElement('i');pn.id='ogpin';document.body.appendChild(pn)}_b3.setFromObject(OG.root);_b3.getCenter(_v3);_v3.project(cam);const r0=$('#gl').getBoundingClientRect();pn.style.borderColor=($('.ove')||{}).style?$('.ove').style.color:'#FF9F0A';pn.style.transform=`translate(${Math.round(r0.left+(_v3.x+1)/2*r0.width-10)}px,${Math.round(r0.top+(1-_v3.y)/2*r0.height-10)}px)`;pn.style.display=_v3.z<1?'block':'none'}else if(pn)pn.remove()}const r=$('#gl').getBoundingClientRect(),cardTop=$('#card').classList.contains('on')?$('#card').getBoundingClientRect().top:r.bottom,top=($('#sub').getBoundingClientRect().bottom||120)+14;const L=[];
@@ -1155,25 +1195,109 @@ function quizTap(x,y){if(!QZ||QZ.done)return;const h=pick(x,y);if(!h)return;cons
  const last=QZ.i===QZ.order.length-1;sheet(`<div class="row" style="justify-content:space-between"><div class="cn" style="font-size:18px">${right?'Right!':'Not quite'}</div><span class="pill ok">Score ${QZ.score}</span></div><p class="cd">${right?'':`That's the <b>${esc(clean(nm))}</b>. `}${esc(cap(q[0]))} is the <b>${esc(TX.en[q[1]])}</b>, shown in green.</p>
  <button class="btn pri" style="width:100%;margin-top:12px" onclick="${last?'QZ.done=1;mode(\'quiz\')':'QZ.i++;quizAsk()'}">${last?`Done · ${QZ.score} of ${QZ.order.length}. Play again`:'Next question'}</button>`)}
 let CUTP=null;
-function mCut(){shape();CAM(HOME0.z*.85,HOME0.y,-.6);head(who()+' · '+T('cut').toUpperCase(),'Cross-section','Slide to cut through the body.');R.localClippingEnabled=true;CUTP=new THREE.Plane(new THREE.Vector3(0,0,-1),.3);
+function mCut(){shape();CAM(HOME0.z*.85,HOME0.y,-.6);head(who()+' · '+T('cut').toUpperCase(),'Cross-section','Slide to cut through the body.');R.localClippingEnabled=true;CUTP=new THREE.Plane(new THREE.Vector3(0,0,-1),.3);CUTL=CUTP.clone();CUT={ax:'z'};
  for(const l in LAY){LAY[l].material.clippingPlanes=[CUTP];LAY[l].material.side=THREE.DoubleSide;LAY[l].visible=[0,1,2,3,4].includes(+l)}LAY[0].material.opacity=.5;
- sheet(`<div class="q" style="margin-top:0">Depth</div><input type="range" min="-60" max="60" value="30" style="width:100%" oninput="CUTP.constant=this.value/100" aria-label="Cut depth"><div class="chips2" style="margin-top:10px"><span class="on" onclick="cutAxis(this,0,0,-1)">Front to back</span><span onclick="cutAxis(this,-1,0,0)">Side to side</span><span onclick="cutAxis(this,0,-1,0)">Top to bottom</span></div>`)}
-function cutAxis(el,x,y,z){CUTP.normal.set(x,y,z);CUTP.constant=y?2:.3;el.parentNode.querySelectorAll('span').forEach(s=>s.classList.toggle('on',s===el))}
+ sheet(`<div class="h3seg o2seg" role="group" aria-label="Cut direction" style="margin:0 auto;width:max-content;max-width:100%"><button class="on" onclick="cutAxis(this,0,0,-1)">Front to back</button><button onclick="cutAxis(this,-1,0,0)">Side to side</button><button onclick="cutAxis(this,0,-1,0)">Top to bottom</button></div>
+ <div class="q">Depth</div><input id="cutr" type="range" min="-60" max="60" value="30" style="width:100%" oninput="cutAt(this.value/100)" aria-label="Cut depth"><div id="vhs"></div>`)}
+/* measure (23 Nov 2026): tap two points for the straight-line distance between them. The model stands for a 172 cm man or
+   a 160 cm woman (as in build3) and is scaled to the person's own height when we know it, so the numbers are that size.
+   Up to six measurements, each its own colour and with a note; Save picture adds a 10 cm scale bar, the list and the credits.
+   Nothing is drawn over the model except the points and lines themselves. */
+let MS=null;
+const MSK=[['skin','Skin'],['muscle','Muscles'],['skeleton','Bones'],['organs','Organs']],MSC=[0x0A84FF,0xFF9F0A,0x30D158,0xFF375F,0x64D2FF,0xBF5AF2];
+const msRef=()=>STATE.sex==='female'?[160,6.10]:[172,6.173];
+function msCm(a,b){const [ref,hu]=msRef();return a.distanceTo(b)*ref/hu*body.scale.x}
+function msFmt(cm){return cm<5?Math.round(cm*10)+' mm':cm.toFixed(1)+' cm'}
+function msScale(){const P=DATA.person||{},h=+P.height||0;return h?`Scaled to ${P.self?'your':esc(P.call||'their')+'’s'} height, ${Math.round(h)} cm`:`On a ${msRef()[0]} cm adult body`}
+function mMeasure(){/* head to thighs, where most measuring happens; pinch for the rest */CAM(9.6,.7,-.35);head(who()+' · MEASURE','Measure','Tap two points on the body.');
+ if(!MSK.some(k=>k[0]===STATE.layer))setLayer('skeleton');MS={pts:[],list:[],grp:new THREE.Group()};MS.grp.renderOrder=20;body.add(MS.grp);msSheet()}
+function msOff(){if(!MS)return;body.remove(MS.grp);MS.grp.traverse(o=>{if(o.geometry)o.geometry.dispose()});MS=null}
+const msMat=(c,o)=>new THREE.MeshBasicMaterial({color:new THREE.Color(c).convertSRGBToLinear(),depthTest:false,transparent:true,opacity:o||1,toneMapped:false});
+function msDot(p,c){const m=new THREE.Mesh(new THREE.SphereGeometry(.028,16,12),msMat(c));m.position.copy(p);m.renderOrder=21;return m}
+function msBar(a,b,c){const d=b.clone().sub(a),len=d.length(),m=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,len,10),msMat(c,.95));
+ m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());m.renderOrder=20;return m}
+function msTap(x,y){if(!MS)return;const h=pick(x,y);if(!h)return;const nm=SET.names[h.k];if(!(DATA.person||{}).priv&&(EXREPRO_M.test(nm)||EXREPRO_F.test(nm)))return;
+ const p=body.worldToLocal(h.point.clone()),i=MS.list.length%MSC.length,c=MSC[MS.list.length>=6?MS.list[0].ci:i];
+ if(!MS.pts.length){MS.pts=[{p,nm,dot:msDot(p,c)}];MS.grp.add(MS.pts[0].dot);msSheet();return}
+ const A=MS.pts[0],dot=msDot(p,c),bar=msBar(A.p,p,c);MS.grp.add(dot,bar);
+ if(MS.list.length>=6){const o=MS.list.shift();o.objs.forEach(q=>{MS.grp.remove(q);q.geometry.dispose()})}
+ MS.list.push({a:A.p,b:p,an:A.nm,bn:nm,cm:msCm(A.p,p),ci:MSC.indexOf(c),note:'',objs:[A.dot,dot,bar]});MS.sel=MS.list.length-1;MS.pts=[];msSheet()}
+function msDel(i){const o=MS.list.splice(i,1)[0];if(o)o.objs.forEach(q=>{MS.grp.remove(q);q.geometry.dispose()});MS.sel=Math.min(MS.sel||0,MS.list.length-1);msSheet()}
+function msPick(i){MS.sel=i;msSheet()}
+const msEnds=o=>o.an===o.bn?'Along the '+clean(o.an).toLowerCase():clean(o.an)+' to '+clean(o.bn);
+function msClear(){MS.list.forEach(o=>o.objs.forEach(q=>{MS.grp.remove(q);q.geometry.dispose()}));if(MS.pts[0]){MS.grp.remove(MS.pts[0].dot)}MS.list=[];MS.pts=[];msSheet()}
+function msLayer(k){const z=goalZ,y=goalY,h=HOME;setLayer(k);goalZ=z;goalY=y;HOME=h;msSheet()}
+const msHex=c=>'#'+c.toString(16).padStart(6,'0');
+function msSheet(){const st=MS.pts.length?`From <b>${esc(clean(MS.pts[0].nm))}</b> · now tap the second point`:MS.list.length?'Tap two more points to add another':'Tap the first point';
+ sheet(`<div class="h3seg o2seg" role="group" aria-label="Measure on" style="margin:0 auto;width:max-content;max-width:100%">${MSK.map(([k,t])=>`<button class="${STATE.layer===k?'on':''}" onclick="msLayer('${k}')">${t}</button>`).join('')}</div>
+ <p class="mss">${st}</p>${MS.list.length?`<ol class="msl">${MS.list.map((o,i)=>`<li class="${i===MS.sel?'on':''}"><button class="msr" onclick="msPick(${i})" aria-pressed="${i===MS.sel}"><i style="background:${msHex(MSC[o.ci])}"></i><b>${msFmt(o.cm)}</b><span>${esc(msEnds(o))}${o.note?' · '+esc(o.note):''}</span></button><button class="msx" onclick="msDel(${i})" aria-label="Remove measurement ${i+1}">✕</button></li>`).join('')}</ol><input class="msn" value="${esc((MS.list[MS.sel]||{}).note||'')}" placeholder="Add a note to ${esc(msFmt((MS.list[MS.sel]||{cm:0}).cm))}" maxlength="140" oninput="const m=MS.list[MS.sel];if(m){m.note=this.value;const sp=document.querySelectorAll('.msl li')[MS.sel].querySelector('span');sp.textContent=msEnds(m)+(m.note?' · '+m.note:'')}" aria-label="Note for the selected measurement">`:''}
+ <p class="msf">${msScale()} · straight line through the body · approximate, every body differs</p>
+ ${MS.list.length?`<div class="row" style="gap:8px;margin-top:10px"><button class="btn pri" style="flex:1" onclick="msSave()">Save picture</button><button class="btn sec" style="flex:1" onclick="msClear()">Clear</button></div>`:''}`)}
+/* the picture: the model as on screen, and under it (never over it) the list, a 10 cm bar at the depth of the first
+   measurement, the scale and the credits */
+function msWrap(g,t,w){const out=[];let line='';for(const wd of t.split(' ')){const tt=line?line+' '+wd:wd;if(g.measureText(tt).width>w&&line){out.push(line);line=wd}else line=tt}if(line)out.push(line);return out}
+async function msSave(){if(!MS)return;R.render(scene,cam);const src=R.domElement,W=src.width,H=src.height,k=W/innerWidth,dk=document.body.classList.contains('dk');
+ const fg=dk?'#F5F5F7':'#1D1D1F',sub=dk?'#AEAEB2':'#6E6E73',bg=dk?'#000':'#F5F5F7',pad=16*k,tw=W-2*pad,FT=`${11*k}px Inter,system-ui,sans-serif`,FB=`600 ${14*k}px Inter,system-ui,sans-serif`;
+ const m0=document.createElement('canvas').getContext('2d'),rows=MS.list.map(m=>{m0.font=FB;return msWrap(m0,msFmt(m.cm)+'  '+msEnds(m)+(m.note?' · '+m.note:''),tw-18*k)});
+ m0.font=FT;const cred=msWrap(m0,msScale()+' · straight line · approximate. 3D body: Z-Anatomy / BodyParts3D (CC BY-SA 4.0), Urban Health. Not a medical device.',tw);
+ const [ref,hu]=msRef(),o=MS.list[0],wm=body.localToWorld((o?o.a.clone().add(o.b).multiplyScalar(.5):new THREE.Vector3())),right=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0),
+  /* world length of 10 cm: cm = local distance × ref/hu × scale, and world = local × scale */p0=wm.clone().project(cam),p1=wm.clone().addScaledVector(right,10*hu/ref).project(cam),px=Math.abs(p1.x-p0.x)/2*W,bar=px>8&&px<tw;
+ const FH=pad+(bar?34*k:0)+rows.reduce((n,r)=>n+r.length*19*k+6*k,0)+8*k+cred.length*15*k+pad,cv=document.createElement('canvas');cv.width=W;cv.height=H+FH;const g=cv.getContext('2d');
+ g.fillStyle=bg;g.fillRect(0,0,W,H+FH);g.drawImage(src,0,0);g.fillStyle=dk?'rgba(255,255,255,.12)':'rgba(0,0,0,.1)';g.fillRect(0,H,W,1*k);let y=H+pad;
+ if(bar){g.strokeStyle=fg;g.lineWidth=2*k;g.beginPath();g.moveTo(pad,y+20*k);g.lineTo(pad,y+26*k);g.lineTo(pad+px,y+26*k);g.lineTo(pad+px,y+20*k);g.stroke();g.fillStyle=fg;g.font=`600 ${12*k}px Inter,system-ui,sans-serif`;g.textBaseline='top';g.fillText('10 cm at the depth of the first measurement',pad+px+10*k,y+16*k);y+=34*k}
+ g.textBaseline='top';MS.list.forEach((m,i)=>{g.fillStyle=msHex(MSC[m.ci]);g.beginPath();g.arc(pad+5*k,y+8*k,5*k,0,7);g.fill();g.fillStyle=fg;g.font=FB;rows[i].forEach((t,j)=>g.fillText(t,pad+18*k,y+j*19*k));y+=rows[i].length*19*k+6*k});
+ y+=8*k;g.fillStyle=sub;g.font=FT;cred.forEach((t,j)=>g.fillText(t,pad,y+j*15*k));
+ const blob=await new Promise(r=>cv.toBlob(r,'image/png'));if(!blob)return;const f=new File([blob],'urban-health-measure.png',{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Measurements'});return}catch(x){if(x&&x.name==='AbortError')return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+/* AR (23 Nov 2026): where the browser supports WebXR augmented reality (Chrome on most Android phones), Explore offers
+   "See it life size": the body as it is shown now (layers, cut-away) stands on the floor at the person's own height
+   (172 cm man or 160 cm woman when we don't know it). The camera picture stays on the phone; nothing is uploaded.
+   Not offered where AR is not supported (iPhone browsers today). */
+let XRS=null;
+const xrOk=(()=>{let p=null;return()=>p||(p=navigator.xr&&navigator.xr.isSessionSupported?navigator.xr.isSessionSupported('immersive-ar').catch(()=>false):Promise.resolve(false))})();
+async function arStart(){if(XRS||!navigator.xr)return;const ov=document.createElement('div');ov.id='arov';
+ ov.innerHTML='<p id="arh">Point the phone at the floor, then tap to stand the body there</p><button class="btn sec" onclick="arStop()">Done</button>';document.body.appendChild(ov);
+ let ses;try{ses=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:ov}})}catch(e){ov.remove();arMsg('AR could not start on this phone');return}
+ const [ref,hu]=msRef(),c=body.clone(true);c.position.set(0,0,0);c.rotation.set(0,0,0);LAY[0].geometry.computeBoundingBox();
+ const k=ref/hu/100*body.scale.x;c.scale.setScalar(k);c.position.y=-LAY[0].geometry.boundingBox.min.y*k;
+ const g=new THREE.Group();g.add(c);g.visible=false;scene.add(g);
+ const ret=new THREE.Mesh(new THREE.RingGeometry(.11,.14,40).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.9,toneMapped:false}));ret.matrixAutoUpdate=false;ret.visible=false;scene.add(ret);
+ XRS={ses,g,ret,ov,bg:scene.background,hs:null};scene.background=null;body.visible=false;
+ R.xr.enabled=true;R.xr.setReferenceSpaceType('local');await R.xr.setSession(ses);
+ try{const vs=await ses.requestReferenceSpace('viewer');XRS.hs=await ses.requestHitTestSource({space:vs})}catch(e){}
+ ses.addEventListener('select',()=>{if(!XRS||!ret.visible)return;g.position.setFromMatrixPosition(ret.matrix);const cp=new THREE.Vector3().setFromMatrixPosition(R.xr.getCamera(cam).matrixWorld);
+  g.rotation.y=Math.atan2(cp.x-g.position.x,cp.z-g.position.z);g.visible=true;const h=$('#arh');if(h)h.textContent='Walk around it. Tap the floor again to move it.'});
+ ses.addEventListener('end',arEnd);
+ R.setAnimationLoop((t,fr)=>{if(!XRS)return;if(fr&&XRS.hs){const hr=fr.getHitTestResults(XRS.hs),rs=R.xr.getReferenceSpace();const pose=hr.length&&hr[0].getPose(rs);ret.visible=!!pose;if(pose)ret.matrix.fromArray(pose.transform.matrix)}R.render(scene,cam)})}
+function arStop(){if(XRS)XRS.ses.end().catch(arEnd)}
+function arEnd(){if(!XRS)return;const X=XRS;XRS=null;R.setAnimationLoop(null);R.xr.enabled=false;scene.remove(X.g,X.ret);X.ret.geometry.dispose();scene.background=X.bg;body.visible=true;X.ov.remove();fit();clock.getDelta();requestAnimationFrame(frame)}
+function arMsg(t){const e=document.createElement('div');e.className='armsg';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3500)}
+/* real body sections (Visible Human Project, US National Library of Medicine): when the cut goes top to bottom, the photograph
+   of a real body cut at the same level sits under the slider, one every 8 mm */
+/* the cut is set on the body (CUTL, in its own units) and turned into the world each frame, so it stays level with the
+   body when the body is tipped or turned */
+let CUT=null,VHM=null,CUTL=null;
+function cutOff(){R.localClippingEnabled=false;for(const l in LAY){LAY[l].material.clippingPlanes=[];LAY[l].material.side=THREE.FrontSide}CUTP=null;CUT=null;CUTL=null}
+function vhMan(){return VHM||(VHM=fetch('/a/vh-sections.93f03e9f.json').then(r=>r.json()).catch(()=>null))}
+const CUTR={z:[-60,60,30],x:[-100,100,0],y:[-300,300,200]};
+function cutAxis(el,x,y,z){CUTL.normal.set(x,y,z);const ax=y?'y':x?'x':'z';CUT.ax=ax;const r=CUTR[ax],sl=$('#cutr');if(sl){sl.min=r[0];sl.max=r[1];sl.value=r[2]}
+ el.parentNode.querySelectorAll('button').forEach(s=>s.classList.toggle('on',s===el));
+ /* top to bottom: look down onto the cut face */if(ax==='y')CAM(13,HOME0.y+.2,0,.95);else CAM(HOME0.z*.85,HOME0.y,-.6,0);cutAt(r[2]/100)}
+function cutAt(v){CUTL.constant=v;if(CUT&&CUT.ax==='y'){/* keep the cut face a third of the way down the screen, above the sheet: the body is tipped .95 rad toward the camera (fov 24°) */const a=goal.x,sc=body.scale.y,yw=v*Math.cos(a)*sc+body.position.y,zw=v*Math.sin(a)*sc;goalY=yw-.34*Math.tan(Math.PI/15)*(goalZ-zw)}vhShow(v)}
+async function vhShow(v){const box=$('#vhs');if(!box)return;if(!CUT||CUT.ax!=='y'){box.innerHTML='<p class="eb" style="margin-top:8px">Choose Top to bottom to compare with a real body cut at the same level.</p>';return}
+ const M=await vhMan();if(!M||!$('#vhs'))return;const top=3.065,bot=-3.069,n0=M.first,n1=M.last;
+ /* the model's height mapped onto the Visible Human slices, top of the head to the soles */
+ let n=Math.round(n0+(top-v)/(top-bot)*(n1-n0));const ks=Object.keys(M.slices).map(Number);let best=ks[0];for(const k of ks)if(Math.abs(k-n)<Math.abs(best-n))best=k;
+ if(v>top||v<bot){box.innerHTML='';return}
+ const mm=Math.round((best-n0)*M.mm_per_slice/10);
+ box.innerHTML=`<figure style="margin:12px 0 0"><div style="border-radius:16px;background:#0B0B0C;overflow:hidden;display:flex;justify-content:center"><img src="${M.slices[best]}" alt="Real body section ${mm} cm below the top of the head" style="width:100%;max-width:640px;display:block"></div>
+ <figcaption class="eb" style="margin-top:6px">A real body cut at this level · ${mm} cm from the top of the head · seen from below, front at the top, as on a CT scan · Visible Human Project, US National Library of Medicine</figcaption></figure>`}
 let HOLO=null;
 function mHolo(){shape();CAM(HOME0.z,HOME0.y,-.2);head(who()+' · '+T('holo').toUpperCase(),T('holo'),'');document.body.classList.add('holo');HOLO={};
  for(const l in LAY){const m=LAY[l];HOLO[l]={mat:m.material,vis:m.visible};m.visible=[0,2,3,4].includes(+l);m.material=new THREE.MeshBasicMaterial({color:+l===4?0xff4d6d:+l===2?0x9fe7ff:0x5ad1ff,wireframe:+l===0,transparent:true,opacity:+l===0?.12:.35,blending:THREE.AdditiveBlending,depthWrite:false})}}
 function unholo(){for(const l in HOLO){if(!LAY[l])continue;LAY[l].material.dispose();LAY[l].material=HOLO[l].mat;LAY[l].visible=HOLO[l].vis}HOLO=null}
 
-/* realistic: every layer solid at once, true colours, dark stage, optional half cut (like the Z-Anatomy atlas) */
-let REAL=null;
-async function mReal(){if(KID)return;if(STATE.sex!=='male'){REAL={back:STATE.base};await swap('male')}shape();document.body.classList.add('real');
- for(const l in LAY){const m=LAY[l],mt=m.material;m.visible=+l!==0;mt.transparent=false;mt.opacity=1;mt.depthWrite=true;mt.side=THREE.DoubleSide;mt.clearcoat=.25;mt.roughness=.55}
- LAY[0].visible=false;
- R.localClippingEnabled=true;CUTP=new THREE.Plane(new THREE.Vector3(-1,0,0),0);for(const l in LAY)LAY[l].material.clippingPlanes=[CUTP];
- CAM(HOME0.z*.62,HOME0.y+1.6*body.scale.y,-1.35);goal.x=0;
- head(who()+' · REALISTIC','Inside the body','Skin, muscle, bone, organs, vessels and nerves together. Slide to cut.');
- sheet(`<div class="q" style="margin-top:0">Cut</div><input type="range" min="-60" max="60" value="0" style="width:100%" oninput="CUTP.constant=this.value/100" aria-label="Cut position">
- <div class="chips2" style="margin-top:10px"><span class="on" onclick="cutAxis(this,-1,0,0)">Side view</span><span onclick="cutAxis(this,0,0,-1)">Front view</span><span onclick="CUTP.constant=99;this.parentNode.querySelectorAll('span').forEach(s=>s.classList.toggle('on',s===this))">Whole body</span></div>`)}
 
 /* calm: a natural body; only what matters right now comes forward, in true colour */
 function calm(focus){shape();document.body.classList.remove('real');setLayer('organs');for(const l in LAY){const m=LAY[l];m.visible=+l===0||+l===3}
@@ -1283,9 +1407,14 @@ function exGo(k){EX.clear();clearGlows();tags([]);closeCard();LAYK=k;$('#sub').i
  EX.show();const t=(EXTRA.find(e=>e[0]===k)||[])[1];head(who()+' · BODY SYSTEMS',t+(/^hair$/.test(k)?' · draft':''),'');$('#ln').textContent=line}
 function mCredits(){shape();head(who()+' · BODY','About the 3D model','');$('#sub').innerHTML='<button class="chip vbk" onclick="vshow({k:\'body\'})">‹ Body</button>';sheet(`<div class="cd" style="margin-top:0;line-height:1.5">3D heart: BodyParts3D, © The Database Center for Life Science, licensed under CC Attribution 4.0 International. Mesh decoding: meshoptimizer (MIT).<br>Part descriptions and other names: Uberon anatomy ontology (CC BY 3.0).<br>Organ, joint, eye, teeth and journey models: BodyParts3D-derived set (CC BY 4.0). Nervous system: Z-Anatomy (CC BY-SA 4.0). Studio lighting: Poly Haven HDRI (CC0). Soft shadows: three.js SSAO (MIT).<br>
  <p><b>Body, bones, muscles, vessels, nerves, organs and lymph nodes</b>: Z-Anatomy, based on BodyParts3D © The Database Center for Life Science (DBCLS), licensed CC BY-SA. Changed by Urban Health: shaped to your height and weight, recoloured, simplified for phones.</p>
- <p><b>Female body</b>: HuBMAP Human Reference Atlas 3D reference objects, CC BY 4.0.</p>
+ <p><b>Female body</b>: skin and organs from the HuBMAP Human Reference Atlas 3D reference objects, CC BY 4.0. Muscles, bones, vessels and nerves: the Z-Anatomy male layers fitted to the female body by Urban Health (CC BY-SA 4.0).</p>
  <p><b>Organ close-ups</b>: BodyParts3D, © The Database Center for Life Science, CC BY 4.0. Women's organs: Human Reference Atlas 3D Reference Organs (female, v1.5), HuBMAP, CC BY 4.0. Changed by Urban Health: textured, labelled and simplified for phones.</p>
  <p><b>Lymph vessels, thoracic duct, fat, fascia, chest detail, skin layers</b>: built by Urban Health on the models above, shared under the same CC BY-SA licence.</p>
+ <p><b>Joint close-ups</b> (elbow, wrist, ankle, neck, skull) and <b>ear, nose and throat</b>: cut from Z-Anatomy / BodyParts3D, CC BY-SA 4.0; linings added by Urban Health.</p>
+ <p><b>Air sacs, kidney filter, skin block, brain and lung linings</b>: built by Urban Health after the HuBMAP Human Reference Atlas tissue illustrations and 3D organs, CC BY 4.0. Brain regions: Allen Human Brain Atlas, via the Human Reference Atlas, CC BY 4.0.</p>
+ <p><b>Cells and markers</b>: HuBMAP Human Reference Atlas ASCT+B tables (v2.0), CC BY 4.0; each table's authors and DOI are shown with it.</p>
+ <p><b>Real body sections</b>: the Visible Human Project, courtesy of the US National Library of Medicine. Blue gel removed and turned to the CT view by Urban Health.</p>
+ <p><b>Telugu and Hindi names</b>: written by Urban Health. Parts we built ourselves, and these names, are checked by our research team.</p>
  <p style="margin-bottom:0">Not a medical device. For learning and for understanding your reports with your doctor.</p></div>`)}
 /* ---- boot ---- */
 let HOME0={z:16,y:0};
@@ -1306,7 +1435,7 @@ addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.ty
 /* ?e=1: embedded in another screen (the doctor's consult): the body and its organ tags only, no page chrome */
 if(/[?&]e=1\b/.test(location.search)){document.body.classList.add('emb');const st=document.createElement('style');st.textContent='body.emb .top,body.emb #zbar,body.emb #card,body.emb #extra{display:none!important}';document.head.appendChild(st)}
 /* preview without the app: /body?demo */
-fit();frame();</script><script src="/organs2.js?v=9"></script><script>
+fit();frame();</script><script src="/organs2.js?v=10"></script><script>
 if(/[?&]demo\b/.test(location.search))boot({person:{name:'You',age:35,sex:'male'},findings:[],meds:[],vitals:null,canWrite:false});
 send('ready');
 

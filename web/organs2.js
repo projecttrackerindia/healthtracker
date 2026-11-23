@@ -279,7 +279,7 @@ const _h3Sub=h3Sub;h3Sub=function(){_h3Sub();const s=$('#sub .h3seg');if(s&&!s.q
 /* explore everything from the body view */
 const O2EX=[['heart','Heart'],['lung','Lungs'],['kidney','Kidneys'],['liver','Liver'],['brain','Brain'],['stomach','Stomach'],['gut','Intestines'],['pancreas','Pancreas'],['spleen','Spleen'],['bladder','Bladder'],['eye','Eyes'],['teeth','Teeth and mouth'],['bones','Bones and joints'],['nerves','Nervous system']];
 function o2Explore(){const P=DATA.person||{},list=O2EX.slice();if(P.priv&&STATE.base!=='female')list.push(['prostate','Prostate']);if(P.priv&&STATE.base==='female')list.push(['uterus','Uterus and ovaries']);
- sheet(`<div class="row" style="justify-content:space-between"><b style="font-size:20px">Explore your body</b><button class="x" onclick="vshow({k:'body'})" aria-label="Close">✕</button></div><div class="o2grid">${list.map(([o,t])=>`<button onclick="vgo({k:'${o==='heart'?'heart':'organ'}',o:'${o}'})">${esc(t)}</button>`).join('')}</div>`)}
+ sheet(`<div class="row" style="justify-content:space-between"><b style="font-size:20px">Explore your body</b><button class="x" onclick="vshow({k:'body'})" aria-label="Close">✕</button></div><div class="o2grid">${list.map(([o,t])=>`<button onclick="${o==='ar'?'arStart()':o==='cut'||o==='measure'?`vgo({k:'${o}'})`:`vgo({k:'${o==='heart'?'heart':'organ'}',o:'${o}'})`}">${esc(t)}</button>`).join('')}</div>`)}
 const _vBody=vBody;vBody=function(){_vBody();if(KID)return;const c=$('#card');if(c&&c.classList.contains('on')&&!c.querySelector('.o2ex')){const a=c.querySelector('button.lk[onclick*="credits"]');const h=`<button class="btn sec o2ex" style="width:100%;margin-top:10px" onclick="vgo({k:'explore'},'Body')">Explore your body</button>`;a?a.insertAdjacentHTML('beforebegin',h):c.insertAdjacentHTML('beforeend',h)}};
 
 (function(){const st=document.createElement('style');st.textContent=`
@@ -564,6 +564,51 @@ Object.assign(O2D,{
  'Ascending limb':'The thick ascending limb pumps out salt; many water tablets act here.','Distal tubule':'Tubulus contortus distalis. Fine-tunes salt and acid balance.','Collecting duct':'Tubulus renalis colligens. Hormones set how much water it keeps.'});
 const _ogfX=ogf;ogf=function(o){if(O2SET[o])return O2XF[o2SubOf(o)];return _ogfX(o)};
 const _vOrganX=vOrgan;vOrgan=async function(o){if(O2SET[o])OGL[o]=O2XL[o2SubOf(o)];return _vOrganX(o)};
+/* these close-ups have no test results of their own: the sheet names the part shown and says how big it really is */
+const O2SUBT={alveoli:['Air sacs','About 480 million air sacs pass oxygen into the blood across a wall thinner than 1 micrometre. One cluster is shown, many hundred times larger than life.'],
+ nephron:['Kidney filter (nephron)','Each kidney has about a million of these filters. One is shown, much larger than life: the filter knot, then the tubes that turn the filtered fluid into urine.'],
+ ear:['Ear','Outer, middle and inner ear. Sound moves the eardrum and three tiny bones, and the cochlea turns it into nerve signals.'],
+ nose:['Nose and sinuses','The nasal cavity and the four pairs of sinuses, the air spaces in the bones of the face.'],
+ throat:['Throat','The voice box from inside: the vocal cords, the epiglottis and the start of the windpipe.'],
+ meninges:['Linings of the brain','Three layers wrap the brain: the tough dura, the web-like arachnoid and the thin pia that follows every fold.'],
+ pleura:['Linings of the lungs','Two thin layers wrap each lung and line the chest wall, with a film of fluid between them so the lungs can glide.'],
+ skin:['Skin layers','A block of skin 4 mm wide, with its layers at true thickness.']};
+function o2NoLab(o){return O2SET[o]?O2SUBT[o2SubOf(o)]||null:null}
 function o2Sub(k){const o=OG&&OG.o;if(!o||!O2SET[o])return;O2.sub[o]=k;vshow(VIEW,true)}
 const _o2BarX=o2Bar;o2Bar=function(o){if(!O2SET[o]||O2SET[o].length<2)return _o2BarX(o);let b=$('#o2bar');if(!b){b=document.createElement('div');b.id='o2bar';document.body.appendChild(b)}b.innerHTML=o2Seg(O2SET[o],o2SubOf(o),'o2Sub');b.hidden=false};
-O2EX.splice(O2EX.findIndex(x=>x[0]==='bones')+1,0,['ent','Ear, nose and throat'],['skinl','Skin layers'],['lining','Linings']);O2EX.push(['deeper','Go deeper']);
+O2EX.splice(O2EX.findIndex(x=>x[0]==='bones')+1,0,['ent','Ear, nose and throat'],['skinl','Skin layers'],['lining','Linings']);O2EX.push(['deeper','Go deeper'],['cut','Cross-section'],['measure','Measure']);
+/* life size in the room, only where the browser supports AR (arStart in body.html) */
+if(typeof xrOk==='function')xrOk().then(ok=>{if(ok&&!O2EX.some(x=>x[0]==='ar'))O2EX.push(['ar','See it life size'])});
+
+/* ===================== Science panel (23 Nov 2026): cells and markers from the HuBMAP Human Reference Atlas ASCT+B tables
+   (v2.0, CC BY 4.0), with authors, version and DOI; per structure on tap. tools/make_asctb.py ===================== */
+let O2CT=null;const o2Cells=()=>O2CT||(O2CT=fetch('/a/asctb.f43c2901.json').then(r=>r.json()).catch(()=>null));
+const O2CTK={kidney:'kidney',liver:'liver',lung:'lung',pancreas:'pancreas',brain:'brain',lnode:'lnode',prostate:'prostate',skinl:'skinl'};
+function o2CtKey(o){if(o==='deeper')return o2SubOf('deeper')==='nephron'?'kidney':'lung';if(o==='lining')return o2SubOf('lining')==='pleura'?'lung':'brain';if(o==='bones')return O2.bone==='knee'?'knee':null;return O2CTK[o]||null}
+const o2W=s=>String(s||'').toLowerCase().replace(/\(.*?\)/g,' ').replace(/\b(left|right|the|of|and|reconstructed|surface)\b/g,' ').replace(/[^a-z ]/g,' ').split(/\s+/).filter(w=>w.length>2);
+function o2Match(T,name){const w=o2W(name);if(!w.length)return null;let best=null,bs=0;for(const s of T.structures){const a=o2W(s.as);const hit=w.filter(x=>a.some(y=>y.startsWith(x.slice(0,5))||x.startsWith(y.slice(0,5)))).length/w.length;if(hit>bs){bs=hit;best=s}}return bs>=.67?best:null}
+function o2CellList(cells,n=6){return`<ul class="o2cl">${cells.slice(0,n).map(c=>`<li><b>${esc(c.ct.replace(/^./,x=>x.toUpperCase()))}</b><span class="o2id">${esc(c.id||'')}</span>${c.mk.length?`<span class="o2mk">${c.mk.map(m=>`<i>${esc(m)}</i>`).join('')}</span>`:''}</li>`).join('')}</ul>`}
+function o2Cite(T){return`<p class="o2src">${esc(T.title||'HuBMAP ASCT+B table')}${T.version?' · '+esc(T.version):''}${T.date?' · '+esc(T.date):''}. ${esc((T.authors||'').split(';').slice(0,3).join(',')+((T.authors||'').split(';').length>3?' et al.':''))}${T.doi?` · <a href="${esc(T.doi)}" target="_blank" rel="noopener">${esc(T.doi.replace(/^https?:\/\//,''))}</a>`:''}. HuBMAP Human Reference Atlas, CC BY 4.0.</p>`}
+async function o2CellsPanel(o){const k=o2CtKey(o),D=await o2Cells();if(!D||!k||!D.organs[k])return;const T=D.organs[k];document.body.classList.add('o2cellson');
+ sheet(`<div class="row" style="justify-content:space-between"><button class="lk" onclick="vshow(VIEW,true)">‹ ${esc((ORGI[o]||[o,o])[1])}</button><button class="x" onclick="vshow(VIEW,true)" aria-label="Close">✕</button></div>
+ <div class="cn" style="font-size:22px;margin-top:4px">Cells and markers</div><p class="cd">${T.structures.length} structures and the cell types found in each, with the genes or proteins that identify them.</p>
+ <div class="o2cs">${T.structures.map(s=>`<details><summary><b>${esc(s.as.replace(/^./,x=>x.toUpperCase()))}</b><span>${s.cells.length} cell type${s.cells.length>1?'s':''} · ${esc(s.id)}</span></summary>${o2CellList(s.cells,40)}</details>`).join('')}</div>${o2Cite(T)}`)}
+const _o2SheetC=o2Sheet;o2Sheet=function(o){_o2SheetC(o);const k=o2CtKey(o);if(!k)return;o2Cells().then(D=>{if(!D||!D.organs[k]||!OG||OG.o!==o)return;const card=$('#card');if(!card||card.querySelector('.o2cbtn'))return;const T=D.organs[k],n=T.structures.reduce((a,s)=>a+s.cells.length,0);
+ card.insertAdjacentHTML('beforeend',`<button class="btn sec o2cbtn" style="width:100%;margin-top:10px" onclick="o2CellsPanel('${o}')">Cells and markers · ${n} entries</button>`)})};
+const _ogPickC=ogPick;ogPick=function(n){_ogPickC(n);if(!OG||!n)return;const k=o2CtKey(OG.o);if(!k)return;o2Cells().then(D=>{if(!D||!D.organs[k]||!OG||OG.sel!==n)return;const u=n.userData||{},lab=(OG.labels.find(l=>l.n===n)||{}).lab;const s=o2Match(D.organs[k],lab||u.display_name)||o2Match(D.organs[k],u.display_name);if(!s)return;
+ const card=$('#card');if(!card||card.querySelector('.o2cbox'))return;card.insertAdjacentHTML('beforeend',`<div class="o2box o2cbox"><div class="ove" style="color:#8E8E93">CELLS HERE · ${esc(s.as.toUpperCase())}</div>${o2CellList(s.cells,5)}${o2Cite(D.organs[k])}</div>`)})};
+(()=>{const st=document.createElement('style');st.textContent=`.o2cl{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}.o2cl li{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}.o2cl b{font-size:14px;font-weight:600}.o2id{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#8E8E93}.o2mk{display:flex;flex-wrap:wrap;gap:4px;width:100%}.o2mk i{font:500 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-style:normal;padding:2px 8px;border-radius:10px;background:rgba(94,92,230,.14);color:#BFBDFF}.o2src{font-size:12px;line-height:16px;color:#8E8E93;margin:10px 0 0}.o2src a{color:#64D2FF}.o2cs{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:52vh;overflow-y:auto}.o2cs details{border-radius:14px;background:rgba(255,255,255,.06);padding:10px 12px}.o2cs summary{display:flex;flex-direction:column;gap:2px;cursor:pointer;list-style:none}.o2cs summary span{font-size:12px;color:#8E8E93}`;document.head.appendChild(st)})();
+
+/* ===================== Research-team review (23 Nov 2026): close-ups with parts we built ourselves say whether the
+   research team has checked them (Admin → Library → Anatomy review, api/anatomy_review.py). The line is placed at
+   once and only its words change when the answer arrives, so the sheet never jumps. ===================== */
+let O2RV=null;const o2Rev=()=>O2RV||(O2RV=fetch('/api/v1/anatomy/review').then(r=>r.ok?r.json():null).catch(()=>null));
+function o2RvId(o){if(O2SET[o])return'x-'+o2SubOf(o);if(o==='bones'&&O2JOINT[O2.bone])return'joints';return null}
+const _o2SheetR=o2Sheet;o2Sheet=function(o){_o2SheetR(o);const id=o2RvId(o),card=$('#card');if(!id||!card)return;
+ card.insertAdjacentHTML('beforeend','<p class="o2rv"><i></i><span>Being checked by our research team</span></p>');const p=card.lastElementChild;
+ o2Rev().then(D=>{const s=D&&D.items&&D.items[id];if(!p.isConnected||!s||s.state!=='approved')return;p.classList.add('ok');
+  p.lastElementChild.textContent='Checked by our research team'+(s.at?' · '+new Date(s.at*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'')})};
+(()=>{const st=document.createElement('style');st.textContent=`.o2rv{display:flex;align-items:center;gap:7px;font-size:12px;line-height:16px;color:#8E8E93;margin:10px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.o2rv i{flex:none;width:7px;height:7px;border-radius:50%;background:#FF9F0A}.o2rv.ok i{background:#30D158}.o2rv span{overflow:hidden;text-overflow:ellipsis}`;document.head.appendChild(st)})();
+/* while the cells panel is open, the numbered labels step aside so nothing sits over the model; any move away brings them back */
+const _vshowC=vshow;vshow=function(...a){document.body.classList.remove('o2cellson');return _vshowC.apply(this,a)};
+(()=>{const st=document.createElement('style');st.textContent='body.o2cellson #h3tags,body.o2cellson #ogpin,body.o2cellson #o2leg{display:none!important}';document.head.appendChild(st)})();
