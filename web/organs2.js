@@ -511,3 +511,56 @@ const _ogGet=ogGet;ogGet=async function(o){const g=await _ogGet(o);if(g&&!g.user
  n.userData.anatomy_kind=/vessel|vascul|efferent|afferent/i.test(nm)?'Vessel':'Organ'}})}return g};
 /* the whole lymphatic system fills the screen above the sheet */
 const _o2Lymph=o2Lymph;o2Lymph=function(){_o2Lymph();const h=O2.nv&&O2.nv[0];if(h)setTimeout(()=>{if(O2.nv&&O2.nv[0]===h)o2FrameMesh(h,1.04)},60)};
+
+/* ===================== Atlas upgrade, stage 2 (23 Nov 2026): ear, nose and throat; the linings of brain and lungs;
+   the skin block; and "go deeper" to air sacs and the kidney filter. Real atlas data where it exists (Z-Anatomy, CC BY-SA 4.0;
+   HuBMAP Human Reference Atlas incl. Allen brain regions, CC BY 4.0); the rest built to published measurements, for
+   research-team review. Models: tools/scene_to_glb.py. ===================== */
+const O2XF={"alveoli":"/a/x-alveoli.a8f39e1b.glb","ear":"/a/x-ear.a8a04bdd.glb","nephron":"/a/x-nephron.8f73f2fa.glb","throat":"/a/x-throat.cac5c5f4.glb","skin":"/a/x-skin.3fa98763.glb","pleura":"/a/x-pleura.4a66f020.glb","meninges":"/a/x-meninges.e527c766.glb","nose":"/a/x-nose.08369933.glb"};
+const O2SET={ent:[['ear','Ear'],['nose','Nose & sinuses'],['throat','Throat']],lining:[['meninges','Brain'],['pleura','Lungs']],skinl:[['skin','Skin layers']],deeper:[['alveoli','Air sacs'],['nephron','Kidney filter']]};
+O2.sub=O2.sub||{};for(const o in O2SET){O2NEW.add(o);O2TINT[o]=[1,1,1]}
+const o2SubOf=o=>O2.sub[o]||O2SET[o][0][0];
+Object.assign(ORGI,{ent:['Ear, nose and throat','Ear, nose and throat','The parts a mirror cannot show: hearing and balance, the sinuses, and the voice box.'],
+ lining:['Linings','Linings','Thin layers that wrap the brain and the lungs. Many conditions are named by the layer they affect.'],
+ skinl:['Skin','Skin layers','A block of skin 4 mm wide, with its layers at true thickness.'],
+ deeper:['Go deeper','Go deeper','Down to the units that do the work: air sacs in the lungs, filters in the kidneys.']});
+const O2XL={ear:[[/^Ear canal$/,'Ear canal'],[/^Eardrum$/,'Eardrum'],[/^Hammer/,'Ossicles'],[/^Cochlea$/,'Cochlea'],[/^Semicircular canals$/,'Balance canals'],[/^Hearing and balance nerve$/,'Hearing nerve'],[/^Eustachian tube$/,'Eustachian tube']],
+ nose:[[/^Frontal sinus$/,'Frontal sinus'],[/^Ethmoid sinus$/,'Ethmoid sinus'],[/^Sphenoid sinus$/,'Sphenoid sinus'],[/^Maxillary sinus$/,'Maxillary sinus'],[/^Turbinates$/,'Turbinates'],[/^Nasal septum/,'Septum']],
+ throat:[[/^Vocal cords$/,'Vocal cords'],[/^False vocal cords$/,'False vocal cords'],[/^Epiglottis$/,'Epiglottis'],[/^Below the vocal cords$/,'Windpipe']],
+ meninges:[[/^Dura mater$/,'Dura mater'],[/^Arachnoid mater$/,'Arachnoid'],[/^Brain surface/,'Pia mater'],[/^Cortical veins$/,'Cortical veins'],[/^Middle meningeal artery$/,'Meningeal artery']],
+ pleura:[[/^Pleura$/,'Pleura'],[/^Right lung, upper lobe$/,'Upper lobe'],[/^Right lung, middle lobe$/,'Middle lobe'],[/^Left lung, lower lobe$/,'Lower lobe'],[/^Windpipe$/,'Windpipe']],
+ skin:[[/^Epidermis$/,'Epidermis'],[/^Dermis$/,'Dermis'],[/^Fat layer$/,'Fat layer'],[/^Hair follicle$/,'Hair follicle'],[/^Oil gland$/,'Oil gland'],[/^Sweat gland$/,'Sweat gland'],[/^Pressure sensor$/,'Pressure sensor'],[/^Touch sensor$/,'Touch sensor']],
+ alveoli:[[/^Respiratory bronchiole$/,'Smallest airway'],[/^Alveolar duct$/,'Alveolar duct'],[/^Air sacs$/,'Air sacs'],[/^Inside an air sac$/,'Capillaries'],[/^Pulmonary arteriole$/,'Arteriole'],[/^Pulmonary venule$/,'Venule']],
+ nephron:[[/^Glomerulus$/,'Glomerulus'],[/^Bowman capsule$/,'Bowman capsule'],[/^Proximal tubule$/,'Proximal tubule'],[/^Loop of Henle$/,'Loop of Henle'],[/^Thick ascending limb$/,'Ascending limb'],[/^Distal tubule$/,'Distal tubule'],[/^Collecting duct$/,'Collecting duct']]};
+Object.assign(O2D,{
+ 'Ear canal':'Meatus acusticus externus. About 25 mm long and S-shaped; wax glands line its outer part.','Eardrum':'Membrana tympanica. About 9 mm across; sound makes it vibrate.',
+ 'Ossicles':'Malleus, incus and stapes: the three smallest bones in the body carry the eardrum\'s vibration to the inner ear. The stirrup is about 3 mm long.',
+ 'Cochlea':'Cochlea. A snail-shaped tube of 2¾ turns where sound becomes nerve signals; high notes are sensed at the base, low notes at the tip.',
+ 'Balance canals':'Canales semicirculares. Three fluid-filled rings at right angles sense turning, nodding and tilting.','Hearing nerve':'N. vestibulocochlearis (VIII). Carries hearing and balance to the brainstem.',
+ 'Eustachian tube':'Tuba auditiva. Links the middle ear to the back of the nose and evens out pressure, which is why ears "pop".',
+ 'Frontal sinus':'Sinus frontalis. An air space in the forehead bone behind the eyebrows.','Ethmoid sinus':'Cellulae ethmoidales. A honeycomb of small air cells between the eyes.',
+ 'Sphenoid sinus':'Sinus sphenoidalis. Deep in the skull, behind the nose, just under the pituitary gland.','Maxillary sinus':'Sinus maxillaris. The largest sinus, in each cheekbone; it drains high up, so it clears slowly.',
+ 'Turbinates':'Conchae nasales. Curled shelves that warm, wet and filter the air you breathe.','Septum':'Septum nasi. The wall of cartilage and bone that divides the nose; a bent septum can block one side.',
+ 'Vocal cords':'Plicae vocales. Two folds that part to breathe and close and vibrate to make your voice.','False vocal cords':'Plicae vestibulares. Folds above the vocal cords that protect the airway when you swallow.',
+ 'Epiglottis':'Epiglottis. A leaf of cartilage that folds back over the voice box when you swallow.',
+ 'Dura mater':'Dura mater. The tough outer layer, fixed to the inside of the skull. A bleed under it is a subdural haematoma.',
+ 'Arachnoid':'Arachnoid mater. A thin, web-like layer. Below it, brain fluid cushions the brain; a bleed there is a subarachnoid haemorrhage.',
+ 'Pia mater':'Pia mater. A delicate layer that follows every fold of the brain and carries its surface vessels.',
+ 'Cortical veins':'Veins on the brain surface drain blood into the large sinuses in the dura.','Meningeal artery':'A. meningea media. Runs on the dura under the temple; a blow there can tear it.',
+ 'Pleura':'Pleura. Two thin layers with a film of fluid between them let the lungs glide as you breathe. Fluid there is a pleural effusion; air there is a collapsed lung.',
+ 'Upper lobe':'The right lung has three lobes and the left has two; each lobe divides into segments with their own airway.','Middle lobe':'Only the right lung has a middle lobe.','Lower lobe':'The largest lobe, resting on the diaphragm.',
+ 'Epidermis':'Epidermis. About 0.1 mm thick; new cells form at its base and take about a month to reach the surface.','Dermis':'Dermis. Collagen and elastic fibres give skin its strength and stretch; it carries the vessels, nerves and glands.',
+ 'Fat layer':'Tela subcutanea. Fat lobules that insulate, cushion and store energy.','Hair follicle':'Folliculus pili. Grows a hair from the bulb at its base.',
+ 'Oil gland':'Glandula sebacea. Keeps hair and skin supple; when it blocks, a spot forms.','Sweat gland':'Glandula sudorifera eccrina. A coiled gland deep in the dermis; its duct spirals up to a pore.',
+ 'Pressure sensor':'Corpusculum lamellosum (Pacinian). Onion-like layers sense pressure and vibration.','Touch sensor':'Corpusculum tactus (Meissner). Sits in the ridges just under the epidermis and senses light touch.',
+ 'Smallest airway':'Bronchiolus respiratorius. The last airway, already with a few air sacs on its wall.','Alveolar duct':'Ductus alveolaris. Leads air into clusters of air sacs.',
+ 'Air sacs':'Alveoli. About 480 million, each about 0.2 mm across. Oxygen crosses a wall under 1 micrometre thick into the blood.',
+ 'Capillaries':'A mesh of capillaries wraps every air sac; red cells pass through in under a second.','Arteriole':'Arteriola pulmonalis. Brings oxygen-poor blood to the air sacs.','Venule':'Venula pulmonalis. Carries oxygen-rich blood back toward the heart.',
+ 'Glomerulus':'Glomerulus. A knot of capillaries that filters about 180 litres of fluid a day from the blood.','Bowman capsule':'Capsula glomeruli. The cup that catches the filtered fluid.',
+ 'Proximal tubule':'Tubulus contortus proximalis. Takes back most of the water, salt, sugar and protein building blocks.','Loop of Henle':'Ansa nephroni. Dips into the medulla and lets the kidney make concentrated urine.',
+ 'Ascending limb':'The thick ascending limb pumps out salt; many water tablets act here.','Distal tubule':'Tubulus contortus distalis. Fine-tunes salt and acid balance.','Collecting duct':'Tubulus renalis colligens. Hormones set how much water it keeps.'});
+const _ogfX=ogf;ogf=function(o){if(O2SET[o])return O2XF[o2SubOf(o)];return _ogfX(o)};
+const _vOrganX=vOrgan;vOrgan=async function(o){if(O2SET[o])OGL[o]=O2XL[o2SubOf(o)];return _vOrganX(o)};
+function o2Sub(k){const o=OG&&OG.o;if(!o||!O2SET[o])return;O2.sub[o]=k;vshow(VIEW,true)}
+const _o2BarX=o2Bar;o2Bar=function(o){if(!O2SET[o]||O2SET[o].length<2)return _o2BarX(o);let b=$('#o2bar');if(!b){b=document.createElement('div');b.id='o2bar';document.body.appendChild(b)}b.innerHTML=o2Seg(O2SET[o],o2SubOf(o),'o2Sub');b.hidden=false};
+O2EX.splice(O2EX.findIndex(x=>x[0]==='bones')+1,0,['ent','Ear, nose and throat'],['skinl','Skin layers'],['lining','Linings']);O2EX.push(['deeper','Go deeper']);

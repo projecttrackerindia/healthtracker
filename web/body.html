@@ -1265,30 +1265,10 @@ window.EX={
     const fp=new THREE.Mesh(new THREE.SphereGeometry(w*.27,32,20),mat(0xF2D27A,{transparent:true,opacity:.35,depthWrite:false}));fp.scale.set(1.1,.8,.22);fp.position.copy(nip).add(V((right?1:-1)*w*.06,w*.04,-w*.07));G.add(fp)}});return pm.length},
  show(){body.add(G)},clear(){G.clear();body.remove(G)},G,centerline,partBoxes,boxOf
 };
-/* skin cross-section: a block of real proportions (epidermis : dermis : fat ~ 1 : 2 : 4), with hair, glands, vessels and nerves */
-window.SKINX=function(){const g=new THREE.Group(),W=2,D=1.2,ep=.12,de=.6,fa=1.0,y0=0;
- const slab=(h,y,hex,o={})=>{const m=new THREE.Mesh(new THREE.BoxGeometry(W,h,D,40,4,24),mat(hex,o));m.position.y=y-h/2;g.add(m);return m};
- const epi=slab(ep,y0,0xE9B79C,{clearcoat:.6});const P=epi.geometry.attributes.position;for(let i=0;i<P.count;i++)if(P.getY(i)>0)P.setY(i,P.getY(i)+.012*Math.sin(P.getX(i)*18)*Math.cos(P.getZ(i)*14));epi.geometry.computeVertexNormals();
- slab(.025,y0-ep,0x8C4E3E);slab(de-.025,y0-ep-.025,0xEFC9B4,{transparent:true,opacity:.32,depthWrite:false,side:THREE.DoubleSide});
- const fatG=new THREE.Group();for(let i=0;i<46;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.12+Math.random()*.06,20,14),mat(0xF4D67C,{roughness:.35,clearcoat:.8}));s.position.set((Math.random()-.5)*(W-.16),y0-ep-de-.12-Math.random()*(fa-.24),(Math.random()-.5)*(D-.16));s.scale.y=.8;fatG.add(s)}g.add(fatG);
- slab(.05,y0-ep-de-fa,0xC7B9A9);
- const yD=y0-ep,yF=y0-ep-de;
- [-.55,.15,.7].forEach((x,i)=>{const z=(i-1)*.25,h=new THREE.Mesh(new THREE.CylinderGeometry(.012,.014,1.25,8),mat(0x2B1B12));h.position.set(x,yF+.55,z);h.rotation.z=.32;g.add(h);
-   const fol=new THREE.Mesh(new THREE.CylinderGeometry(.04,.05,.62,16,1,true),mat(0xD49A87,{transparent:true,opacity:.75,side:THREE.DoubleSide}));fol.position.set(x+.1,yF+.18,z);fol.rotation.z=.32;g.add(fol);
-   const bulb=new THREE.Mesh(new THREE.SphereGeometry(.06,16,12),mat(0xB5624F));bulb.position.set(x+.18,yF-.08,z);g.add(bulb);
-   const seb=new THREE.Mesh(new THREE.SphereGeometry(.07,16,12),mat(0xF1E1A2));seb.scale.set(1.2,.8,.8);seb.position.set(x+.2,yD-.22,z+.03);g.add(seb);
-   const ap=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.38,8),mat(0xC0464E));ap.position.set(x+.32,yD-.2,z);ap.rotation.z=-.9;g.add(ap)});
- [-.2,.45].forEach((x,i)=>{const pts=[];for(let t=0;t<40;t++)pts.push(V(x+.06*Math.cos(t*.9),yF-.05-t*.002,.2-i*.4+.06*Math.sin(t*.9)));pts.push(V(x,yD-.1,.2-i*.4),V(x,y0+.01,.2-i*.4));
-   g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),120,.014,8),mat(0x9FD3E8)))});
- const vessel=(hex,dz,dy)=>{const pts=[];for(let i=0;i<=20;i++){const x=-W/2+i*W/20;pts.push(V(x,yF+dy+.05*Math.sin(i*.9),dz))}g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),80,.028,10),mat(hex)));
-   for(let i=2;i<20;i+=4){const x=-W/2+i*W/20,cap=[V(x,yF+dy,dz),V(x+.05,yF+dy+.3,dz+.05),V(x,yD-.04,dz),V(x+.08,yD-.04,dz+.06)];g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cap),30,.008,6),mat(hex)))}};
- vessel(0xC8323B,-.32,-.12);vessel(0x3E5FC1,-.42,-.18);
- const nv=[];for(let i=0;i<=20;i++)nv.push(V(-W/2+i*W/20,yF-.3+.04*Math.cos(i),.4));g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(nv),80,.02,8),mat(0xF2D24C)));
- const pc=new THREE.Mesh(new THREE.SphereGeometry(.09,24,16),mat(0xEDE4D0));pc.scale.set(1,1.5,1);pc.position.set(-.75,yF-.32,.4);g.add(pc);
- return g};
+/* the skin cross-section is a close-up now (organs2.js, 'skinl') */
 })();
 
-const EXTRA=[['lymph','Lymph system','139 node groups, vessels and the thoracic duct'],['fat','Fat and fascia','The fat under the skin and the sheath around muscles'],['chest','Chest and breast','Areola, nipple, and the gland underneath'],['skinx','Skin layers','Draft · cross-section']];
+const EXTRA=[['lymph','Lymph system','139 node groups, vessels and the thoracic duct'],['fat','Fat and fascia','The fat under the skin and the sheath around muscles'],['chest','Chest and breast','Areola, nipple, and the gland underneath']];
 function exGo(k){EX.clear();clearGlows();tags([]);closeCard();LAYK=k;$('#sub').innerHTML='';for(const l in LAY)LAY[l].visible=false;const sk=LAY[0];body.position.x=0;
  const skinSolid=()=>{sk.visible=true;sk.material.color.set(0xD9A285).convertSRGBToLinear();sk.material.opacity=1;sk.material.transparent=false;sk.material.depthWrite=true;sk.material.onBeforeCompile=()=>{};sk.material.needsUpdate=true};
  const skinGlass=(o=.14)=>{sk.visible=true;sk.material.color.set(0xE6ECF4);sk.material.opacity=o;sk.material.transparent=true;sk.material.depthWrite=false;sk.material.onBeforeCompile=FRESNEL;sk.material.needsUpdate=true};
@@ -1296,9 +1276,8 @@ function exGo(k){EX.clear();clearGlows();tags([]);closeCard();LAYK=k;$('#sub').i
  if(k==='lymph'){skinGlass();EX.lymph();CAM(HOME0.z*.95,HOME0.y+.2);line='Lymph nodes filter the fluid that drains from every part of the body, and swell when they are fighting an infection.'}
  if(k==='fat'){LAY[1].visible=true;EX.fascia();EX.fat();CAM(HOME0.z*.95,HOME0.y+.2);line='Yellow: the fat layer under the skin. White sheen: fascia wrapping the muscles.'}
  if(k==='chest'){skinGlass(.3);LAY[1].visible=true;EX.breast(true);const c=EX.boxOf(/pectoralis major/i);if(c)CAM(6.2,c.getCenter(new THREE.Vector3()).y*body.scale.y+.3);line=STATE.sex==='female'?'Breast tissue with its glands and fat.':'Men have a small breast gland under the areola. A lump here is worth showing a doctor.'}
- if(k==='skinx'){const g=SKINX();g.scale.setScalar(2.4);g.rotation.set(.35,-.6,0);EX.G.add(g);const c=new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3());g.position.sub(c);CAM(17,0);line='Draft model. Outer skin, dermis with hair roots, oil and sweat glands, vessels and a nerve; fat underneath.'}
  if(k==='hair'){skinSolid();EX.hair();const c=EX.boxOf(/frontal bone|parietal bone|mandible/i);if(c)CAM(4,c.getCenter(new THREE.Vector3()).y*body.scale.y+body.position.y,.5);line='Draft model.'}
- EX.show();const t=(EXTRA.find(e=>e[0]===k)||[])[1];head(who()+' · BODY SYSTEMS',t+(/^(skinx|hair)$/.test(k)?' · draft':''),'');$('#ln').textContent=line}
+ EX.show();const t=(EXTRA.find(e=>e[0]===k)||[])[1];head(who()+' · BODY SYSTEMS',t+(/^hair$/.test(k)?' · draft':''),'');$('#ln').textContent=line}
 function mCredits(){shape();head(who()+' · BODY','About the 3D model','');$('#sub').innerHTML='<button class="chip vbk" onclick="vshow({k:\'body\'})">‹ Body</button>';sheet(`<div class="cd" style="margin-top:0;line-height:1.5">3D heart: BodyParts3D, © The Database Center for Life Science, licensed under CC Attribution 4.0 International. Mesh decoding: meshoptimizer (MIT).<br>Part descriptions and other names: Uberon anatomy ontology (CC BY 3.0).<br>Organ, joint, eye, teeth and journey models: BodyParts3D-derived set (CC BY 4.0). Nervous system: Z-Anatomy (CC BY-SA 4.0). Studio lighting: Poly Haven HDRI (CC0). Soft shadows: three.js SSAO (MIT).<br>
  <p><b>Body, bones, muscles, vessels, nerves, organs and lymph nodes</b>: Z-Anatomy, based on BodyParts3D © The Database Center for Life Science (DBCLS), licensed CC BY-SA. Changed by Urban Health: shaped to your height and weight, recoloured, simplified for phones.</p>
  <p><b>Female body</b>: HuBMAP Human Reference Atlas 3D reference objects, CC BY 4.0.</p>
@@ -1324,7 +1303,7 @@ addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.ty
 /* ?e=1: embedded in another screen (the doctor's consult): the body and its organ tags only, no page chrome */
 if(/[?&]e=1\b/.test(location.search)){document.body.classList.add('emb');const st=document.createElement('style');st.textContent='body.emb .top,body.emb #zbar,body.emb #card,body.emb #extra{display:none!important}';document.head.appendChild(st)}
 /* preview without the app: /body?demo */
-fit();frame();</script><script src="/organs2.js?v=7"></script><script>
+fit();frame();</script><script src="/organs2.js?v=8"></script><script>
 if(/[?&]demo\b/.test(location.search))boot({person:{name:'You',age:35,sex:'male'},findings:[],meds:[],vitals:null,canWrite:false});
 send('ready');
 
