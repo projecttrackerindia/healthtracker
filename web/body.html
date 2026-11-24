@@ -33,6 +33,12 @@ body.dk .tag .tst.ok{color:#30D158}body.dk .tag .tst.watch{color:#FFB340}body.dk
 
 /* dark: a real dark stage for night use; the model keeps its own lighting */
 body.stg #bg{background:radial-gradient(80% 60% at 50% 38%,#2E2E33 0%,#1C1C1E 62%,#131315 100%)}
+body.glow #bg{background:radial-gradient(70% 55% at 50% 42%,#173A52 0%,#0C1F2E 55%,#07121B 100%)}
+body.glow #bg::after{content:'';position:absolute;inset:0;opacity:.5;background-image:radial-gradient(1.5px 1.5px at 12% 22%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 78% 31%,#8FE3FF 50%,transparent 51%),radial-gradient(1.2px 1.2px at 64% 72%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 28% 66%,#8FE3FF 50%,transparent 51%),radial-gradient(1.4px 1.4px at 88% 84%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 40% 12%,#8FE3FF 50%,transparent 51%);animation:hdrift 18s ease-in-out infinite alternate}
+@keyframes hdrift{to{transform:translateY(-14px)}}
+@media (prefers-reduced-motion:reduce){body.glow #bg::after{animation:none}}
+html body.glow .glass,html body.glow #card{background:rgba(12,30,44,.74);border-color:rgba(143,227,255,.16);box-shadow:0 10px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(143,227,255,.12)}body.glow .tag{background:rgba(12,30,44,.8);border-color:rgba(143,227,255,.2)}
+body.glow header.top{--ink:#F2F2EF;--ink2:#D1D1D6;--ink3:#AEAEB2;color:#F2F2EF}body.glow header.top .eb{color:#8FE3FF}body.glow header.top .x{background:rgba(255,255,255,.14);color:#F2F2EF}
 body.stg header.top{--ink:#F2F2EF;--ink2:#D1D1D6;--ink3:#AEAEB2;color:#F2F2EF}body.stg header.top .eb{color:#AEAEB2}body.stg header.top .x{background:rgba(255,255,255,.14);color:#F2F2EF}
 body.stg #card,body.stg .glass,body.stg #exrail{background:rgba(255,255,255,.97);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 10px 34px rgba(0,0,0,.45)}
 body.mist #bg{background:radial-gradient(80% 60% at 50% 40%,#FFFFFF 0%,#EEF1F4 60%,#E3E8ED 100%)}
@@ -68,7 +74,7 @@ body.dk .grab{background:#48484A}body.dk .h3t{background:rgba(44,44,46,.9);color
 .res{position:fixed;top:246px;left:16px;right:16px;border-radius:20px;padding:6px;z-index:5}.res div{padding:12px 14px;border-radius:14px;font-size:15px}.res div.on{background:rgba(47,91,255,.1);color:#2F5BFF;font-weight:600}
 body.real #bg{background:radial-gradient(70% 60% at 50% 45%,#3A3A3C 0%,#1C1C1E 75%)}body.real .big,body.real .eb,body.real .line{color:#F2F2EF}body.real .chip:not(.on){background:rgba(255,255,255,.12);color:#F2F2EF;border-color:transparent}
 body.focus #modes,body.focus #sub{display:none}body.focus #bg{background:radial-gradient(70% 60% at 50% 42%,#3A3438 0%,#161315 78%)}body.focus .big,body.focus .eb,body.focus .line{color:#F2F2EF}body.focus .chip:not(.on){background:rgba(255,255,255,.12);color:#F2F2EF;border-color:transparent}body.focus .x{background:rgba(255,255,255,.14);color:#fff}
-body.holo #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 70%)}body.holo .big,body.holo .eb,body.holo .line{color:#CFF4FF}
+body.glow #bg{background:radial-gradient(70% 60% at 50% 45%,#0B2A44 0%,#04101C 70%)}body.glow .big,body.glow .eb,body.glow .line{color:#CFF4FF}
 #extra{position:fixed;inset:0;pointer-events:none;z-index:4}body.ov #ln{display:none}.vbk{color:var(--blue)!important}#sub{flex-wrap:wrap;row-gap:8px}#card.og,body.h3 #card,body.ov #card{max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}body.ov #zbar{display:none}#vload{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:5;display:none;align-items:center;gap:10px;background:rgba(255,255,255,.92);padding:10px 16px;border-radius:20px;box-shadow:0 6px 18px rgba(0,0,0,.1);font:600 14px Geist,Inter,sans-serif;color:var(--ink2)}#vload i{width:16px;height:16px;border-radius:50%;border:2px solid #D1D1D6;border-top-color:#2F5BFF;animation:vsp .8s linear infinite}@keyframes vsp{to{transform:rotate(360deg)}}.rng2{position:relative;height:8px;border-radius:4px;background:#FDE2DF;margin:18px 0 6px}.rng2 i{position:absolute;top:0;bottom:0;border-radius:4px;background:#CDEFD6}.rng2 b{position:absolute;top:-6px;width:20px;height:20px;border-radius:10px;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transform:translateX(-50%)}.rl2{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink3)}.res2{background:#F7F7F9;border-radius:20px;padding:14px;margin-top:10px}.sp2{display:flex;align-items:flex-end;gap:12px;margin-top:12px}.sp2 div{flex:1;text-align:center;font-size:11.5px;color:var(--ink3)}.sp2 span{display:block;margin:0 auto 4px;width:100%;border-radius:8px}.acts2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.acts2 .btn{width:100%}.fcar{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;gap:0;margin:0 -4px}.fcar::-webkit-scrollbar{display:none}.fc2{flex:0 0 100%;scroll-snap-align:start;padding:2px 4px;cursor:pointer}.dts{display:flex;gap:5px;justify-content:center;margin:8px 0 2px}.dts i{width:6px;height:6px;border-radius:3px;background:#C7C7CC;transition:all .25s}.dts i.on{width:18px;background:#1D1D1F}body.h3 #ln{display:none}body.h3 .h3bk{display:none}body.h3 #sub{margin-top:6px!important;flex-wrap:wrap;row-gap:8px}body.h3 .h3bk{color:var(--blue)}body.h3 #card{max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch}body.h3 #zbar{display:none}#h3tags{position:fixed;inset:0;pointer-events:none;z-index:3}.h3t{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:6px;height:24px;padding:0 10px 0 5px;border:0;border-radius:12px;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.12);font:600 12.5px Geist,Inter,sans-serif;color:var(--ink);white-space:nowrap;transition:opacity .2s}.h3t i{width:9px;height:9px;border-radius:5px;border:2px solid #FF2D55;background:#fff;flex:none}.h3t.sel{background:#1D1D1F;color:#fff}.h3t.sel i{border-color:#fff;background:#FF2D55}.h3seg{display:inline-flex;background:rgba(255,255,255,.75);border-radius:18px;padding:3px;height:36px;border:1px solid rgba(0,0,0,.06)}.h3seg button{border:0;background:none;border-radius:15px;padding:0 14px;font:600 14px Geist,Inter,sans-serif;color:#3A3A3C}.h3seg .on{background:#1D1D1F;color:#fff}.ecg3{margin-top:12px;padding:10px 14px;border-radius:16px;background:#fff}.ecg3 canvas{width:100%;height:60px;display:block;margin-top:4px}.lk{border:0;background:none;color:var(--blue);font:600 15px Geist,Inter,sans-serif;padding:0;min-height:36px}
 .msheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.25);display:flex;align-items:flex-end;justify-content:center;animation:fd .2s ease both}
 .msheet .ms{width:100%;max-width:520px;background:rgba(250,250,252,.96);backdrop-filter:blur(30px);border-radius:24px 24px 0 0;padding:8px 12px max(16px,env(safe-area-inset-bottom))}
@@ -335,12 +341,33 @@ function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];
  /* light stage (Getting Better theme): a solid frosted body, the same for every age and sex; the faint skeleton behind the organs is left out so nothing shows through the skin */
  const fr=!(DATA&&DATA.look==='dark')&&stageOf()==='light';
  for(const ls in LAY){const l=+ls,m=LAY[ls],mt=m.material;
-  if(l===0){m.visible=true;mt.opacity=key==='skin'?.95:fr?.5:.16;mt.depthWrite=key==='skin';mt.color.set(key==='skin'?SKINT.at(U.skin??2):fr?0x7F96B8:0xE6ECF4);mt.envMapIntensity=fr&&key!=='skin'?.35:.25;
+  if(l===0){m.visible=true;mt.opacity=key==='skin'?.95:fr?.5:.16;mt.depthWrite=key==='skin';mt.color.set(key==='skin'?SKINT.at(U.skin??2):fr?0x7F96B8:0xE6ECF4);mt.envMapIntensity=fr&&key!=='skin'?.35:.25;holoSkin(mt,fr&&key!=='skin'&&GLOW);if(GLOW&&fr&&key!=='skin'){mt.opacity=.035;mt.color.set(0x6FD8FF);mt.envMapIntensity=.15}
    /* frosted look: a depth-only pass first, so only the nearest skin surface is drawn and the inside of the mouth, eyes and far side never show through as patches */
    let pre=m.userData.pre;if(!pre||pre.geometry!==m.geometry){if(pre)m.remove(pre);const pm=mt.clone();pm.colorWrite=false;pm.depthWrite=true;pm.transparent=true;pm.onBeforeCompile=mt.onBeforeCompile;pre=new THREE.Mesh(m.geometry,pm);pre.renderOrder=4;pre.raycast=()=>{};if(m.morphTargetInfluences)pre.morphTargetInfluences=m.morphTargetInfluences;m.add(pre);m.userData.pre=pre}pre.visible=fr&&key!=='skin';FROST=pre.visible}
   else if(l===L){m.visible=true;mt.opacity=1;mt.transparent=false;mt.depthWrite=true}
   else{const ctx=(key==='organs'&&l===2&&!fr)||(key==='muscle'&&l===2)||(key==='vessels'&&l===3)||(key==='nerves'&&l===2)||(key==='skeleton'&&l===3);m.visible=ctx;mt.transparent=true;mt.opacity=.14;mt.depthWrite=false}}
  calmFace(fr&&key==='organs'); if(KID)for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;STATE.layer=key;if(L)setTimeout(()=>hdLayer(L),400);goalZ=key==='organs'?10.5:16;goalY=key==='organs'?1.0:0;HOME={z:goalZ,y:goalY}}
+/* Hologram look (Nov 2026 model round): a calm, futuristic body. The skin becomes glass with a soft aqua edge,
+   fine scan contours run around it and one slow light band drifts from head to toe; the organs keep their real
+   colours. A glowing ring sits under the feet and the stage is a deep, quiet blue. */
+let GLOW=/[?&]glow=1/.test(location.search)||!!window.GLOW_ON;
+window.setHolo=(on,key)=>{GLOW=!!on;holoStage();setLayer(key||'organs')};
+const GLOWU={uT:{value:0}};
+function holoSkin(mt,on){if(!!mt.userData.holo===on)return;mt.userData.holo=on;
+ mt.onBeforeCompile=on?sh=>{sh.uniforms.uT=GLOWU.uT;
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vHW;').replace('#include <worldpos_vertex>','#include <worldpos_vertex>\nvHW=(modelMatrix*vec4(transformed,1.0)).xyz;');
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vHW;uniform float uT;').replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+   float fr=pow(1.0-abs(dot(normalize(vViewPosition),normal)),1.7);
+   float ln=1.0-smoothstep(0.0,0.06,abs(fract(vHW.y*16.0)-0.5)*2.0-0.88);   /* thin contour every few cm */
+   float sy=3.2-mod(uT*0.55,7.2);float band=exp(-pow((vHW.y-sy)/0.22,2.0));
+   vec3 aq=vec3(0.42,0.86,1.0);
+   totalEmissiveRadiance+=aq*(fr*1.6+ln*0.10*(0.35+fr)+band*0.32*(0.4+fr));
+   diffuseColor.rgb=mix(vec3(0.03,0.09,0.13),aq*0.35,fr);diffuseColor.a=max(diffuseColor.a,min(0.9,fr*0.8+ln*0.05+band*0.10));`)}:FRESNEL;
+ mt.customProgramCacheKey=()=>on?'holo':'frs';mt.needsUpdate=true}
+let HRING=null;
+function holoStage(){document.body.classList.toggle('glow',GLOW);if(GLOW)document.body.classList.add('dk');if(!GLOW||HRING)return;
+ const g=new THREE.Group(),mk=(r0,r1,o)=>{const m=new THREE.Mesh(new THREE.RingGeometry(r0,r1,128),new THREE.MeshBasicMaterial({color:0x6FD8FF,transparent:true,opacity:o,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;return m};
+ g.add(mk(1.25,1.29,.55),mk(1.42,1.43,.35),mk(.2,1.25,.05));g.renderOrder=0;scene.add(g);HRING=g}
 /* Calm face (Nov 2026): in the frosted organs view the eyes, glands, mouth and ear parts and the little lymph nodes
    made the head look like a skull and the body look speckled. Their triangles are collapsed (not removed) so the
    face numbering that tapping relies on stays the same; the senses view still shows them through its own parts. */
@@ -390,7 +417,7 @@ function frame(){if(XRS)return;const dt=Math.min(clock.getDelta(),.05);idle+=dt;
  rot.y+=(goal.y-rot.y)*Math.min(1,dt*6);rot.x+=(goal.x-rot.x)*Math.min(1,dt*6);const piv=(OG&&OG.piv)||(H3&&H3.piv);if(piv){body.rotation.set(0,0,0);piv.rotation.set(rot.x,rot.y,0)}else body.rotation.set(rot.x,rot.y,0);if(CUTP&&CUTL){body.updateMatrixWorld();CUTP.copy(CUTL).applyMatrix4(body.matrixWorld)}
  camZ+=(goalZ-camZ)*Math.min(1,dt*3);camY+=(goalY-camY)*Math.min(1,dt*3);PAN.x+=(PANG.x-PAN.x)*Math.min(1,dt*8);PAN.y+=(PANG.y-PAN.y)*Math.min(1,dt*8);cam.position.set(PAN.x,camY+.15+PAN.y,camZ);cam.lookAt(PAN.x,camY+PAN.y,0);
  if(HL)HL.material.emissiveIntensity=.35+.25*Math.sin(clock.elapsedTime*3.5);if(!U.still)pregAnimate(clock.elapsedTime,dt);if(typeof animFeat==='function')animFeat(clock.elapsedTime);
- if(H3)h3Tick(dt);if(BLOOD)BLOOD.tick(dt);if(OG){OG.mix.update(dt)}R.toneMappingExposure=document.body.classList.contains('dk')||document.body.classList.contains('stg')?1.12:1.0;R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
+ if(H3)h3Tick(dt);if(BLOOD)BLOOD.tick(dt);if(OG){OG.mix.update(dt)}GLOWU.uT.value=U.still?0:clock.elapsedTime;if(GLOW&&HRING&&LAY[0]){if(!HRING.userData.y){const b=new THREE.Box3().setFromObject(LAY[0]);if(isFinite(b.min.y))HRING.userData.y=b.min.y-.02}HRING.position.y=HRING.userData.y||-3;HRING.rotation.y+=dt*.05}R.toneMappingExposure=document.body.classList.contains('dk')||document.body.classList.contains('stg')||GLOW?1.12:1.0;R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
 /* tags: report findings pinned to organs + atlas labels */
 /* a pair (both kidneys, both lungs) shares a box whose centre is the spine or the heart: when no part crosses the middle, keep only the parts on one side */
 function centerOf(re){if(!SET||!re)return null;const bx=[];SET.meta.parts.forEach((p,k)=>{if((p.l??1)===3&&re.test(SET.names[k]))bx.push(p.b)});if(!bx.length)return null;
@@ -524,7 +551,7 @@ const SKINT=[0xF1D3BC,0xE0B48F,0xC68E63,0x9A6440,0x6B4329];
 function stageOf(){const P=(DATA&&DATA.person)||{},a=P.age==null?NaN:+P.age;if(U.stage==='light'||U.stage==='graphite')return U.stage;if(document.body.classList.contains('emb'))return'graphite';
  if(P.pregnancy||P.stage==='loss'||P.stage==='after'||(!isNaN(a)&&(a>=60||a<13)))return'light';return'light'}
 function applyStage(){const dk=!!(DATA&&DATA.look==='dark'),tz=Math.max(1,Math.min(1.12,+(DATA&&DATA.tz)||1));/* the 3D needs its room: text grows up to 12% here; the body itself carries the meaning */document.documentElement.style.setProperty('--tz',tz);document.body.classList.toggle('tz',tz>1.04);document.body.classList.toggle('dk',dk);document.body.classList.toggle('stg',!dk&&stageOf()==='graphite');
- if(DATA&&DATA.person&&DATA.person.stage==='loss')document.body.classList.add('mist')}
+ if(DATA&&DATA.person&&DATA.person.stage==='loss')document.body.classList.add('mist');holoStage()}
 /* ---- data from the app ---- */
 let DATA=null,MODE='explore';
 const send=(act,x={})=>parent.postMessage({type:'uh-body-act',act,...x},location.origin);
