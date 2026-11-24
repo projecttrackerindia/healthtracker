@@ -29,7 +29,17 @@ VALUES = {"cbc": 24, "lipid": 8, "lft": 11, "kft": 9, "thy": 3, "urine": 18}
 
 
 def ensure(db: Session) -> None:
-    """First run: copy the built-in lists into the database so they can be edited."""
+    """First run: copy the built-in lists into the database so they can be edited. Two screens asking at the same
+    moment (the Catalogue page loads tests and packages together) must not both seed: the loser just reads."""
+    from sqlalchemy.exc import IntegrityError, OperationalError
+    try:
+        with db.begin_nested():
+            _ensure(db)
+    except (IntegrityError, OperationalError):
+        db.rollback()
+
+
+def _ensure(db: Session) -> None:
     if not db.scalar(select(func.count(CatalogMed.sku))):
         for m in CATALOG:
             strength = re.match(r"([\d.,/ ]+\s*(?:mg|mcg|g|iu|ml|%)[^·]*)", m.get("form", ""), re.I)
@@ -42,7 +52,7 @@ def ensure(db: Session) -> None:
                                sample=SAMPLE.get(code, "Urine" if "urine" in code else "Blood")))
     for code, smp in SAMPLE.items():
         t = db.get(CatalogTest, code)
-        if t and t.sample == "Blood":
+        if t and t.sample == "Blood" and smp != "Blood":
             t.sample = smp
     if not db.scalar(select(func.count(Package.code))):
         have = set(TESTS)
