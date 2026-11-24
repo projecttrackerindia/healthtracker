@@ -33,7 +33,7 @@ input[type=range]{width:100%;margin:16px 0 2px;accent-color:#E5577A;height:28px}
 .mvs button.on{background:#FCE4EC;color:#B0284F}.mvs button i{position:absolute;left:0;bottom:0;height:3px;background:var(--pink);width:0;border-radius:3px}
 .mvt{font-size:14px;line-height:1.45;color:#3A3A3C;margin:10px 0 0;min-height:40px;transition:opacity .3s}
 #err{position:fixed;left:24px;right:24px;top:44%;text-align:center;font-size:14px;color:var(--sub);display:none}
-</style><script>try{var o=JSON.parse(localStorage.getItem('uh-look')||'{}'),m=o.m||'light';if(m==='dark'||(m==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(_){}</script><style>html.dark{background:#000}html.dark body{filter:invert(.92) hue-rotate(180deg)}html.dark canvas,html.dark img,html.dark video,html.dark #gl{filter:invert(1) hue-rotate(180deg)}</style><style>/* Calm glass-hologram look (Nov 2026 model round). Off unless ?glow=1 while it's reviewed. */
+</style><script>try{var o=JSON.parse(localStorage.getItem('uh-look')||'{}'),m=o.m||'light';if(m==='dark'||(m==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(_){}</script><style>html.dark{background:#000}html.dark body{filter:invert(.92) hue-rotate(180deg)}html.dark canvas,html.dark img,html.dark video,html.dark #gl{filter:invert(1) hue-rotate(180deg)}</style><style>/* Calm glass-hologram look (Nov 2026 model round): the standard look; ?glow=0 shows the old one. */
 html.glow body{background:radial-gradient(70% 55% at 50% 46%,#173A52 0%,#0C1F2E 55%,#07121B 100%);color:#F2F2EF;--ink:#F2F2EF;--sub:#AEB8C2;--pink:#FF7FA3}
 html.glow body:before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(38% 30% at 50% 50%,rgba(255,127,163,.13),transparent 70%)}
 html.glow body:after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.5;background-image:radial-gradient(1.5px 1.5px at 12% 22%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 78% 31%,#8FE3FF 50%,transparent 51%),radial-gradient(1.2px 1.2px at 64% 62%,#FFB3C8 50%,transparent 51%),radial-gradient(1px 1px at 28% 56%,#8FE3FF 50%,transparent 51%),radial-gradient(1.4px 1.4px at 86% 44%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 40% 12%,#FFB3C8 50%,transparent 51%);animation:gdr 18s ease-in-out infinite alternate}
@@ -48,7 +48,7 @@ html.glow .mv span,html.glow .bk,html.glow .mvs button{background:rgba(255,255,2
 html.glow .now,html.glow #tag{background:rgba(12,30,44,.86);color:#F2F2EF;box-shadow:0 2px 14px rgba(0,0,0,.4);border:1px solid rgba(143,227,255,.18)}
 html.glow input[type=range]{accent-color:#FF7FA3}html.glow .cr{color:#8D98A3}html.glow .crb{color:#FF9DB8}
 html.glow.dark body,html.glow.dark canvas{filter:none}</style>
-<script>if(/[?&]glow=1/.test(location.search)||window.GLOW_ON)document.documentElement.classList.add('glow')</script></head><body>
+<script>if(!/[?&]glow=0/.test(location.search))document.documentElement.classList.add('glow')</script></head><body>
 <canvas id=c></canvas><div class=fade></div><div id=ld role=status aria-label="Loading"></div><div id=tag></div><div class=now id=now aria-live=polite><i></i><span id=nowt></span></div><div id=err>Could not load the 3D view. Check your connection.</div>
 <button id=x aria-label="Close">✕</button>
 <div class=top><div class=eb id=eb>PREGNANCY</div><h1 id=tt>Week</h1><div class=ln id=ln></div>

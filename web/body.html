@@ -38,6 +38,24 @@ body.glow #bg::after{content:'';position:absolute;inset:0;opacity:.5;background-
 @keyframes hdrift{to{transform:translateY(-14px)}}
 @media (prefers-reduced-motion:reduce){body.glow #bg::after{animation:none}}
 html body.glow .glass,html body.glow #card{background:rgba(12,30,44,.74);border-color:rgba(143,227,255,.16);box-shadow:0 10px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(143,227,255,.12)}body.glow .tag{background:rgba(12,30,44,.8);border-color:rgba(143,227,255,.2)}
+html body.glow .cseg{background:rgba(255,255,255,.08)!important;border:1px solid rgba(143,227,255,.14);box-shadow:none!important}html body.glow .cseg button{color:#C7CED5!important}html body.glow .cseg button.on{background:rgba(143,227,255,.18)!important;color:#fff!important;box-shadow:inset 0 0 0 1px rgba(143,227,255,.35)!important}
+.pmseg{display:inline-flex;margin-top:10px;background:rgba(255,255,255,.08);border:1px solid rgba(143,227,255,.14);border-radius:999px;padding:3px;pointer-events:auto}
+.pmseg button{border:0;background:none;font:600 13.5px Geist,Inter,sans-serif;padding:7px 16px;min-height:36px;border-radius:999px;color:#C7CED5}.pmseg button.on{background:rgba(143,227,255,.18);color:#fff;box-shadow:inset 0 0 0 1px rgba(143,227,255,.35)}
+.pmav{width:42px;height:42px;flex:none;border-radius:21px;background:linear-gradient(135deg,#2F5BFF,#7AA2FF);display:grid;place-items:center;font-weight:700;color:#fff}
+.pmbox{border-radius:18px;background:rgba(127,127,127,.10);border:1px solid rgba(143,227,255,.12);padding:13px 14px;margin-top:12px}.pmok{color:#6FE3A0;font-size:13px;font-weight:600;margin-top:8px}
+.pmbars{display:flex;gap:7px;height:62px;margin-top:10px}.pmbars>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:4px}.pmbars i{display:block;border-radius:6px;background:linear-gradient(180deg,#FF8A5C,#C2553A);max-height:44px}.pmbars span{font-size:10px;color:var(--ink3);text-align:center}
+.pmwarn{margin-top:12px;border-radius:16px;padding:11px 13px;background:rgba(255,92,92,.10);border:1px solid rgba(255,120,120,.22);font-size:12.5px;color:#FFC9C2;line-height:1.45}.pmwarn b{color:#FFB0A6}
+.pmbtn2{flex:1;height:46px;border:0;border-radius:23px;background:rgba(127,127,127,.16);color:var(--ink);font:600 14.5px Geist,Inter,sans-serif}
+.care{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}.carew{border-radius:18px;padding:11px 14px;background:rgba(90,200,250,.10);border:1px solid rgba(90,200,250,.28)}.carew small{display:block;font-size:12px;font-weight:600;color:#8FE3FF;margin-bottom:3px}.carew b{display:block;font-size:14.5px;font-weight:600;line-height:1.35}
+.carep{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:18px;padding:11px 14px;background:rgba(255,138,92,.10);border:1px solid rgba(255,138,92,.3);color:var(--ink);font:inherit;cursor:pointer}.carep b{display:block;font-size:14.5px}.carep small{display:block;font-size:12.5px;color:var(--ink3)}.pmdot2{flex:none;width:12px;height:12px;border-radius:6px;background:#FF8A5C;box-shadow:0 0 0 4px rgba(255,138,92,.22)}
+.pmt{font-size:18px;font-weight:700;letter-spacing:-.01em}.pmm{font-size:13.5px;color:var(--ink3);margin:4px 0 0;line-height:1.4}.pmq{font-size:13px;font-weight:600;color:var(--ink2);margin:14px 0 8px}
+.pmbtn{display:block;width:100%;margin-top:16px;height:50px;border:0;border-radius:25px;background:#2F5BFF;color:#fff;font:600 16px Geist,Inter,sans-serif}.pmbtn:disabled{opacity:.4}
+.pmlink{border:0;background:none;color:#8FE3FF;font:600 13px Geist,Inter,sans-serif;padding:6px 0}
+.pmsc{display:flex;justify-content:space-between;gap:4px}.pmsc button{flex:1 1 0;max-width:32px;min-width:0;aspect-ratio:1;padding:0;border-radius:50%;border:0;font:600 12.5px Geist,Inter,sans-serif;background:rgba(127,127,127,.2)!important;color:var(--ink)!important}.pmsc button.on{background:#FF8A5C!important;color:#1B0E08!important;box-shadow:0 0 0 3px rgba(255,138,92,.3)}
+.pmscl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink3);margin-top:6px}
+.pmch{display:flex;flex-wrap:wrap;gap:7px}.pmc{border:0;font:500 13.5px Geist,Inter,sans-serif;padding:8px 13px;min-height:36px;border-radius:999px;background:rgba(127,127,127,.16);color:var(--ink)}.pmc.on{background:rgba(143,227,255,.2);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(143,227,255,.5)}
+#card.pmtall{max-height:62vh}
+.tag.ptag{border-color:rgba(255,138,92,.45)!important;max-width:176px!important}.tag.ptag small{white-space:normal!important;max-width:150px}.tag.ptag b{white-space:normal!important;max-width:150px!important;line-height:1.2}.tag.wtag{border-color:rgba(90,200,250,.45)!important;max-width:170px!important}.tag.wtag b{text-align:left!important}
 body.glow header.top{--ink:#F2F2EF;--ink2:#D1D1D6;--ink3:#AEAEB2;color:#F2F2EF}body.glow header.top .eb{color:#8FE3FF}body.glow header.top .x{background:rgba(255,255,255,.14);color:#F2F2EF}
 body.stg header.top{--ink:#F2F2EF;--ink2:#D1D1D6;--ink3:#AEAEB2;color:#F2F2EF}body.stg header.top .eb{color:#AEAEB2}body.stg header.top .x{background:rgba(255,255,255,.14);color:#F2F2EF}
 body.stg #card,body.stg .glass,body.stg #exrail{background:rgba(255,255,255,.97);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 10px 34px rgba(0,0,0,.45)}
@@ -350,7 +368,7 @@ function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];
 /* Hologram look (Nov 2026 model round): a calm, futuristic body. The skin becomes glass with a soft aqua edge,
    fine scan contours run around it and one slow light band drifts from head to toe; the organs keep their real
    colours. A glowing ring sits under the feet and the stage is a deep, quiet blue. */
-let GLOW=/[?&]glow=1/.test(location.search)||!!window.GLOW_ON;
+let GLOW=!/[?&]glow=0/.test(location.search);   /* the calm glass look is the standard look (Nov 2026); ?glow=0 shows the old one for comparison */
 window.setHolo=(on,key)=>{GLOW=!!on;holoStage();setLayer(key||'organs')};
 const GLOWU={uT:{value:0}};
 function holoSkin(mt,on){if(!!mt.userData.holo===on)return;mt.userData.holo=on;
@@ -433,11 +451,11 @@ function placeTags(){const r=$('#gl').getBoundingClientRect(),W=r.width,top=docu
   for(let k=L.length-1,lim=bot;k>=0;k--){const p=L[k];if(p.ly+p.h/2>lim)p.ly=lim-p.h/2;lim=p.ly-p.h/2-8}});
  P.forEach(p=>{p.t.style.left=p.lx+'px';p.t.style.top=p.ly+'px';p.t.style.transform=`translate(${p.side>0?'0':'-100%'},-50%)`;
   const cl=p.t.dataset.col||'#8E8E93';svg+=p.mid?`<line x1="${p.x}" y1="${p.y}" x2="${p.lx}" y2="${p.ly}" stroke="${cl}" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="${p.x}" cy="${p.y}" r="7" fill="${cl}" opacity=".22"/><circle cx="${p.x}" cy="${p.y}" r="4.5" fill="${document.body.classList.contains('dk')?'#1C1C1E':'#fff'}" stroke="${cl}" stroke-width="3"/>`:`<line x1="${p.x}" y1="${p.y}" x2="${p.lx}" y2="${p.ly}" stroke="rgba(29,29,31,.3)" stroke-width="1"/><circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${cl}" stroke="#fff" stroke-width="1.5"/>`});
- $('#lines').innerHTML=svg}
+ $('#lines').innerHTML=svg+painGlowSvg(P)}
 function tags(list){$('#tags').innerHTML='';list.forEach(t=>{const el=document.createElement('button');el.className='tag'+(t.big?' big':t.mid?' mid':'')+(t.mid&&isNaN(parseFloat(t.val))?' txt':'');el.dataset.side=t.side;el.dataset.dy=t.dy||0;el.dataset.col=t.col;if(t.big)el.dataset.big=1;
  const emb=document.body.classList.contains('emb'),org0=t.org.split(' · ')[0],tst=(t.raw||t.org.split(' · ')[1]||'').replace(/\s*cholesterol$/i,'').replace(/\s*\(.*$/,'').replace(new RegExp('^'+org0.split(/\s/)[0].replace(/[^A-Za-z]/g,'')+'\\s+','i'),'');
  // embedded on the doctor's screen: the organ, then the test and its value in the flag's colour (board 10)
- el.innerHTML=t.mid&&emb?`<small style="font-weight:700;color:#1D1D1F">${esc(org0.replace(/^.*&\s*/,'').replace(/^./,c=>c.toUpperCase()))}</small><b style="color:${esc(t.col||'#1D1D1F')};font-weight:600;font-size:12px">${esc(tst)} ${esc(String(t.val).slice(0,12))}${t.unit&&!/mg\/dl|u\/l/i.test(t.unit)?' '+esc(t.unit):''}</b>`
+ el.innerHTML=t.mid&&emb?`<small style="font-weight:700;color:var(--ink)">${esc(org0.replace(/^.*&\s*/,'').replace(/^./,c=>c.toUpperCase()))}</small><b style="color:${esc(t.col||'#1D1D1F')};font-weight:600;font-size:12px">${esc(tst)} ${esc(String(t.val).slice(0,12))}${t.unit&&!/mg\/dl|u\/l/i.test(t.unit)?' '+esc(t.unit):''}</b>`
  :t.mid?`<small>${esc(org0.length>10&&tst?(/^ldl|^hdl/i.test(tst)?tst+' cholesterol':tst):org0+(tst&&tst.toLowerCase()!==org0.toLowerCase()?' · '+(tst.length>16?tst.split(' ')[0]:tst):''))}</small><b>${esc(String(t.val).slice(0,30))}${t.unit&&String(t.unit).length<8?'<i style="font-style:normal;font-weight:500;font-size:11px;color:var(--ink2)"> '+esc(t.unit)+'</i>':''}</b>${t.k&&t.k!=='none'?`<em class="tst ${t.k}">${STI2[t.k]}${esc(t.kw||'')}</em>`:t.trend?`<small style="color:${esc(t.col||'#6E6E73')};font-weight:600">${esc(t.trend)}</small>`:''}`:t.big?`<small>${esc(t.org)}${t.test?' · '+esc(t.test):''}</small>${t.val!==''&&t.val!=null?`<b>${esc(t.val)}<i>${esc(t.unit||'')}</i></b>`:''}<span class="pill ${esc(t.cls)}">${/^st-/.test(t.cls||'')?STI2[t.cls.slice(3)]||'':''}${esc(t.flag)}</span>`:`<span class="dot" style="background:${esc(t.col)}"></span>${esc(t.org)}`;el._c=t.pt?t.pt.clone():t.all?centerOfAll(t.re):centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
 
 /* ===== pregnancy: growing uterus, belly shaped around it, a baby that changes shape and moves by week ===== */
@@ -723,7 +741,7 @@ function organCard(o,still){const f=orgFindings()[o];const fs=latest().filter(x=
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 const fmtD=d=>{if(!d)return'';const x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})};
 /* tap on any part, in any mode that allows it */
-function tap(x,y){if(VIEW&&VIEW.k==='measure')return msTap(x,y);if(VIEW&&VIEW.k==='explore')return exTap(x,y);if(MODE==='heartv'&&H3)return h3Tap(x,y);if(VIEW&&VIEW.k==='organ'){if(ogTap(x,y))return;return}if(VIEW&&(VIEW.k==='body'||VIEW.k==='report'||VIEW.k==='med')){const rr=$('#gl').getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((x-rr.left)/rr.width*2-1,-(y-rr.top)/rr.height*2+1),cam);const gh=ray.intersectObjects(GLOWS,true)[0];
+function tap(x,y){if(PM)return painTap(x,y);if(VIEW&&VIEW.k==='measure')return msTap(x,y);if(VIEW&&VIEW.k==='explore')return exTap(x,y);if(MODE==='heartv'&&H3)return h3Tap(x,y);if(VIEW&&VIEW.k==='organ'){if(ogTap(x,y))return;return}if(VIEW&&(VIEW.k==='body'||VIEW.k==='report'||VIEW.k==='med')){const rr=$('#gl').getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((x-rr.left)/rr.width*2-1,-(y-rr.top)/rr.height*2+1),cam);const gh=ray.intersectObjects(GLOWS,true)[0];
  if(gh){let g=gh.object;while(g&&!GLOWS.includes(g))g=g.parent;const o=g&&g.userData.org;if(o){vgo({k:o==='heart'?'heart':'organ',o},VIEW.k==='body'?'Body':VIEW.k==='report'?'Report':'Medicine');return}}
  const h=pick(x,y);if(h){const nm=SET.names[h.k];for(const o in ORGRE)if(ORGRE[o].test(nm)&&ORGI[o]){vgo({k:o==='heart'?'heart':'organ',o},VIEW.k==='body'?'Body':VIEW.k==='report'?'Report':'Medicine');return}}return}if(MODE==='hurt')return hurtTap(x,y);if(MODE==='quiz')return quizTap(x,y);const h=pick(x,y);if(!h){closeCard();return}
  const nm=SET.names[h.k];for(const o in ORGRE)if(LAYK==='organs'&&ORGRE[o].test(nm)&&MODE==='explore'){return FOCUS[o]?focusOrgan(o):organCard(o)}
@@ -983,7 +1001,12 @@ function vBody(){shape();head(who()+' · BODY',bodyTitle(),(()=>{const L=latest(
 function bodyTitle(){const P=DATA.person||{};if(P.self!==false)return'Your body';const n=String(P.call||P.first||P.name||'').trim().split(/\s+/)[0];return n?n+"'s body":'Body'}
 const mon=d=>d?new Date(d+'T00:00').toLocaleDateString('en-IN',{month:'short'}):'';
 function prevDate(L){const ds=L.map(f=>{const t=trend(f);return t&&t.p.date}).filter(Boolean).sort();return ds[ds.length-1]||''}
-function bodyTiles(L){const real=L.filter(f=>!f.screen),out=real.filter(f=>f.flag==='high'||f.flag==='low'),tr=real.map(f=>({f,t:trend(f)})).filter(x=>x.t),bet=tr.filter(x=>x.t.dir==='better').length,wor=tr.filter(x=>x.t.dir==='worse').length,pd=prevDate(real);
+/* above the results: what a doctor asked to be watched, and pain marked before a visit (check in once a day) */
+function careBlock(){if(document.body.classList.contains('emb'))return'';const W=(DATA&&DATA.watch)||[],P=painList();if(!W.length&&!P.length)return'';
+ return`<div class="care">${W.slice(0,1).map(w=>`<div class="carew"><small>${esc(/^dr/i.test(w.doctor||'')?w.doctor:'Dr '+(w.doctor||''))} asked you to watch</small>${(w.items||[]).map(i=>`<b>${esc(i.label)}</b>`).join('')}${w.id?`<button class="pmlink" onclick="send('watch-done',{id:'${esc(w.id)}'})">Done · remove</button>`:''}</div>`).join('')}
+ ${P.map(x=>`<button class="carep" onclick="painOpen('${esc(x.id)}')"><span class="pmdot2"></span><span style="flex:1;min-width:0;text-align:left"><b>${esc(x.name)} · ${esc(x.sev)}/10</b><small>${(x.log||[]).some(l=>l.d===new Date().toISOString().slice(0,10))?'Checked in today':'How is it today? One tap'}</small></span><span style="color:#C7C7CC">›</span></button>`).join('')}</div>`}
+function bodyTiles(L){return careBlock()+bodyTiles0(L)}
+function bodyTiles0(L){const real=L.filter(f=>!f.screen),out=real.filter(f=>f.flag==='high'||f.flag==='low'),tr=real.map(f=>({f,t:trend(f)})).filter(x=>x.t),bet=tr.filter(x=>x.t.dir==='better').length,wor=tr.filter(x=>x.t.dir==='worse').length,pd=prevDate(real);
  if(!out.length&&!tr.length)return'';const top=out.slice().sort((a,b)=>fRank(b)-fRank(a)||(URG(b)?1:0)-(URG(a)?1:0))[0],R=top&&parseRef(top.ref),goal=R?(R[1]!=null&&R[0]==null?'Goal under '+R[1]:R[0]!=null&&R[1]==null?'Goal above '+R[0]:'Normal '+R[0]+'–'+R[1]):'';
  return`<div class="btl">${tr.length?`<div class="bt g"><b>${bet}</b><span>better since ${esc(mon(pd))}</span></div>`:''}${wor?`<div class="bt r"><b>${wor}</b><span>worse since ${esc(mon(pd))}</span></div>`:''}<div class="bt o"><b>${out.length}</b><span>${out.length===1?'outside the range':'outside the range'}</span></div></div>
  ${top?`<button class="btop" onclick="vgo({k:'${top.org==='heart'?'heart':'organ'}',o:'${esc(top.org||'')}'})"${top.org?'':' disabled'}><span class="dot" style="background:${FCOL(top)}"></span><span style="flex:1;min-width:0;text-align:left"><b>Most important: ${esc(top.test.replace(/\s*\(.*\)/,''))}</b><small>${esc(top.value)} ${esc(top.unit||'')}${goal?'. '+esc(goal)+'.':''}</small></span><span style="color:#C7C7CC">›</span></button>`:''}
@@ -1508,8 +1531,97 @@ async function boot(d){DATA=d;applyStage();{const NOORG=/\bhiv\b|hbsag|hepatitis
  modes();const st=d.start||'';VIEW=null;VSTACK=[];
  const [k,arg]=[st.split(':')[0],st.slice(st.indexOf(':')+1)];
  if(k==='organ'||k==='focus')await vshow(arg==='heart'?{k:'heart'}:{k:'organ',o:arg});else if(k==='report')await vshow({k:'report',rid:arg});else if(k==='med')await vshow({k:'med',name:arg});
- else if(st==='heartv')await vshow({k:'heart'});else if(st==='baby'||st==='credits')await mode(st);else await vshow({k:'body'});
+ else if(st==='pain')painStart();else if(st==='heartv')await vshow({k:'heart'});else if(st==='baby'||st==='credits')await mode(st);else await vshow({k:'body'});
  if((navigator.connection||{}).type==='wifi'||U.hd)setTimeout(detail,1500)}
+/* ===== Pain map (Nov 2026): before a visit the family taps where it hurts on the glass body, then four quick choices.
+   The spot is kept in body coordinates so it lands on the same place on the doctor's screen and at home. Pain and the
+   doctor's "watch" notes sit in the same tag column as results, so they never cover the body. ===== */
+const PAIN_SINCE={today:'Today',days:'2–3 days',week:'About a week',longer:'Longer'},PAIN_FEEL={dull:'Dull ache',sharp:'Sharp',burning:'Burning',cramping:'Cramping',comes:'Comes and goes'},PAIN_WORSE={food:'After food',moving:'Moving',night:'At night',unsure:'Not sure'};
+const PCOL='#FF8A5C',WCOL='#5AC8FA';
+let PM=null;   // the pain map while it is open: {step, spot:{pos,name,side}, sev, since, feel[], worse[]}
+function bodyBoxLocal(){const m=LAY[0];if(!m)return null;body.updateMatrixWorld(true);m.geometry.computeBoundingBox();const M=new THREE.Matrix4().copy(body.matrixWorld).invert().multiply(m.matrixWorld);return m.geometry.boundingBox.clone().applyMatrix4(M)}
+function boxDist(b,p){const dx=Math.max(b[0]-p.x,0,p.x-b[3]),dy=Math.max(b[1]-p.y,0,p.y-b[4]),dz=Math.max(b[2]-p.z,0,p.z-b[5]);return Math.hypot(dx,dy,dz)}
+function nearestPart(p,l,re){let best=null,bd=1e9;SET.meta.parts.forEach((q,k)=>{if((q.l??1)!==l||!q.b)return;const n=SET.names[k];if(re&&!re.test(n))return;const d=boxDist(q.b,p);if(d<bd){bd=d;best=n}});return best?{n:best,d:bd}:null}
+/* a plain place name: the nearest bone says which part of the body, the organs behind the belly say which part of the belly */
+function painName(p,back){const B=bodyBoxLocal();if(!B)return{name:'This spot',lat:''};const W=B.max.x-B.min.x,H=B.max.y-B.min.y,cx=(B.min.x+B.max.x)/2,v=(p.y-B.min.y)/H;
+ const lat=Math.abs(p.x-cx)<W*.025?'':(p.x<cx?'right':'left');   // the model faces the viewer: the person's right is the viewer's left
+ const bn=(nearestPart(p,2)||{n:''}).n.toLowerCase(),org=nearestPart(p,3);const on=org?org.n.toLowerCase():'',od=org?org.d:1e9,u=H*.06;
+ let part='';
+ if(/skull|mandible|maxilla|nasal|zygomatic|frontal|parietal|occipital|temporal|sphenoid|ethmoid/.test(bn))part=back?'Back of head':v>.955?'Top of head':'Head & face';
+ else if(/cervical|hyoid/.test(bn))part=back?'Back of neck':'Neck';
+ else if(/clavicle|scapula|acromion/.test(bn))part=back?'Shoulder blade':'Shoulder';
+ else if(/humerus/.test(bn))part='Upper arm';
+ else if(/radius|ulna/.test(bn))part='Forearm';
+ else if(/carpal|metacarpal|phalan.*(hand|finger|thumb)|hand|thumb|finger/.test(bn))part='Hand & wrist';
+ else if(/femur/.test(bn))part=back?'Back of thigh':'Thigh';
+ else if(/patella/.test(bn))part=back?'Back of knee':'Knee';
+ else if(/tibia|fibula/.test(bn))part=back?'Calf':'Shin';
+ else if(/calcane|talus|tarsal|metatarsal|navicular|cuboid|cuneiform|phalan.*(foot|toe)|toe|foot/.test(bn))part=/calcane/.test(bn)?'Heel':'Foot';
+ else if(back){part=/lumbar|sacr|coccy|ilium|hip bone|pelvi/.test(bn)?'Lower back':/thoracic|rib/.test(bn)&&v<.68?'Middle back':'Upper back'}
+ else if(od<u&&/heart|lung|bronch|trachea|thymus|breast|mammary/.test(on))part='Chest';
+ else if(od<u&&/liver|gallbladder|stomach|spleen|pancrea|duoden|oesophag|esophag/.test(on)&&v>.58)part='Upper belly';
+ else if(od<u&&/bladder|uterus|ovary|prostate|rectum|sigmoid|testis|penis|vagina/.test(on))part='Lower belly';
+ else if(od<u&&/intestin|colon|caecum|cecum|appendix|ileum|jejunum|kidney/.test(on))part=v>.6?'Upper belly':'Belly';
+ else if(/rib|sternum|thoracic/.test(bn))part=v>.66?'Chest':'Upper belly';
+ else if(/lumbar/.test(bn))part='Belly';
+ else if(/ilium|hip bone|pubi|ischi|sacr|pelvi/.test(bn))part=v>.5?'Lower belly':'Groin';
+ else part=v>.7?'Chest':v>.55?'Belly':'Lower belly';
+ const mid=/head|neck|chest|belly|back|groin/i.test(part);return{name:part+(lat?' · '+lat:mid?' · middle':''),lat}}
+function painTagEl(t){const el=document.createElement('button');el.className='tag mid ptag'+(t.w?' wtag':'');el.dataset.side=t.side;el.dataset.dy=0;el.dataset.col=t.w?WCOL:PCOL;el.dataset.pain=t.w?'':'1';
+ el.innerHTML=t.html;el._c=t.pt.clone();el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)}
+function painList(){return((DATA&&DATA.pain)||[]).filter(x=>x&&Array.isArray(x.pos))}
+function watchList(){const out=[];((DATA&&DATA.watch)||[]).forEach(w=>(w.items||[]).forEach(i=>out.push({...i,doctor:w.doctor})));return out.slice(0,4)}
+function addPains(){if(!SET||!LAY[0])return;document.querySelectorAll('#tags .tag.ptag').forEach(e=>e.remove());if(VIEW&&!/^(body|report)$/.test(VIEW.k)&&!PM)return;
+ const B=bodyBoxLocal(),cx=B?(B.min.x+B.max.x)/2:0,emb=document.body.classList.contains('emb');
+ if(PM){if(PM.spot)painTagEl({pt:new THREE.Vector3(...PM.spot.pos),side:PM.spot.pos[0]<cx?-1:1,html:`<small>Pain map</small><b style="color:#FFB08F">${esc(PM.spot.name)}</b>`});return}
+ if(DATA&&DATA.painOff)return;
+ painList().forEach(x=>{const v=new THREE.Vector3(...x.pos);painTagEl({pt:v,side:v.x<cx?-1:1,html:`<small>Pain${emb?'':' · '+esc(x.name)}</small><b style="color:#FFB08F">${esc(x.sev)}/10</b><small style="color:#FFB08F;font-weight:600">${esc(PAIN_SINCE[x.since]||'')}</small>`,onTap:()=>emb?null:painOpen(x.id)})});
+ if(emb)watchList().forEach(w=>{const v=w.pos?new THREE.Vector3(...w.pos):(w.org&&ORGRE[w.org]?centerOf(ORGRE[w.org]):null);if(!v)return;painTagEl({w:1,pt:v,side:v.x<cx?-1:1,html:`<small>Dr ${esc(String(w.doctor||'').replace(/^dr\.?\s*/i,''))} · watch</small><b style="color:#8FE3FF;font-size:12.5px;white-space:normal">${esc(w.label)}</b>`})})}
+{const _tags=tags;tags=function(l){_tags(l);addPains()}}
+function painGlowSvg(P){const t=clock.elapsedTime,r=U.still?13:12+3*Math.sin(t*3);return P.filter(p=>p.t.dataset.pain).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${r+9}" fill="${PCOL}" opacity=".14"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${PCOL}" opacity=".28"/><circle cx="${p.x}" cy="${p.y}" r="7" fill="${PCOL}"/><circle cx="${p.x}" cy="${p.y}" r="3" fill="#fff"/>`).join('')}
+/* the pain map itself */
+function painStart(){PM={step:'where',spot:null,sev:0,since:'',feel:[],worse:[],cta:(DATA&&DATA.painCta)||'Save'};MODE='pain';VIEW={k:'pain'};setLayer('organs');tags([]);goal.y=0;goal.x=0;resetView();
+ head('BEFORE YOUR VISIT · PAIN MAP','Where does it hurt?','Tap the spot. Turn the body to show your back.');
+ $('#modes').innerHTML=`<div class="pmseg" role="tablist"><button class="on" id="pmf" onclick="painSide(0)">Front</button><button id="pmb" onclick="painSide(1)">Back</button></div>`;$('#sub').innerHTML='';painSheet()}
+function painSide(b){goal.y=b?Math.PI:0;goal.x=0;$('#pmf').classList.toggle('on',!b);$('#pmb').classList.toggle('on',!!b)}
+function painTap(x,y){const r=$('#gl').getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1),cam);const h=ray.intersectObject(LAY[0],false)[0];if(!h)return;
+ const p=body.worldToLocal(h.point.clone()),back=Math.cos(rot.y)<0,nm=painName(p,back);PM.spot={pos:[+p.x.toFixed(4),+p.y.toFixed(4),+p.z.toFixed(4)],name:nm.name,side:back?'back':'front'};tags([]);painSheet();try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}}
+function painSheet(){const s=PM;if(s.step==='where'){sheet(s.spot?`<div class="pmt">${esc(s.spot.name)}</div><p class="pmm">Pinch to zoom for a smaller spot, or tap again to move it.</p><button class="pmbtn" onclick="painStep('more')">Next</button>`
+  :`<div class="pmt">Tap where it hurts</div><p class="pmm">Drag to turn the body. Use Back for back pain.</p>`);return}
+ const one=(k,o,v)=>Object.entries(o).map(([a,b])=>`<button class="pmc${v===a?' on':''}" onclick="painSet('${k}','${a}')">${b}</button>`).join(''),many=(k,o,v)=>Object.entries(o).map(([a,b])=>`<button class="pmc${v.includes(a)?' on':''}" onclick="painSet('${k}','${a}',1)">${b}</button>`).join('');
+ const ok=s.sev&&s.since;
+ sheet(`<div class="row" style="justify-content:space-between;align-items:center"><div class="pmt" style="font-size:16px">${esc(s.spot.name)}</div><button class="pmlink" onclick="painStep('where')">Change spot</button></div>
+  <p class="pmq">How bad is it?</p><div class="pmsc">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${s.sev===n?'on':''}" onclick="painSet('sev',${n})" aria-label="${n} of 10">${n}</button>`).join('')}</div><div class="pmscl"><span>Mild</span><span>Worst ever</span></div>
+  <p class="pmq">Since when?</p><div class="pmch">${one('since',PAIN_SINCE,s.since)}</div>
+  <p class="pmq">What does it feel like?</p><div class="pmch">${many('feel',PAIN_FEEL,s.feel)}</div>
+  <p class="pmq">Worse when?</p><div class="pmch">${many('worse',PAIN_WORSE,s.worse)}</div>
+  <button class="pmbtn" ${ok?'':'disabled'} onclick="painSave()">${esc(s.cta)}</button>${ok?'':'<p class="pmm" style="text-align:center;margin-top:8px">Choose how bad it is and since when</p>'}`);
+ $('#card').classList.add('pmtall')}
+function painStep(st){PM.step=st;$('#card').classList.remove('pmtall');if(st==='more'){head('PAIN MAP · '+PM.spot.name.toUpperCase(),'Tell us a little more','');$('#modes').innerHTML=''}else painStart2();painSheet();if(st==='more')painFocus(PM.spot.pos,HOME.z*1.4)}
+function painStart2(){const s=PM;painStart();Object.assign(PM,{...s,step:'where'});tags([]);painSheet()}
+function painSet(k,v,multi){if(multi){const a=PM[k],i=a.indexOf(v);if(i>=0)a.splice(i,1);else{if(k==='worse'&&v==='unsure')a.length=0;else if(k==='worse'){const j=a.indexOf('unsure');if(j>=0)a.splice(j,1)}a.push(v)}}else PM[k]=v;const sc=$('#card').scrollTop;painSheet();$('#card').scrollTop=sc}
+/* after saving, and when a pain pin is tapped at home: the visit it goes to, one tap a day, and when not to wait */
+function painOpen(id,fresh){const x=painList().find(q=>q.id===id);if(!x)return;PM=null;MODE='explore';const v=DATA.painVisit,dn=v&&v.doctor?'Dr '+String(v.doctor).replace(/^dr\.?\s*/i,''):'';
+ painFocus(x.pos,HOME.z*1.35);if(fresh){head('PAIN MAP','Added to your visit',v?(v.shared?esc(dn||'The doctor')+' can see it now, on your body.':esc(dn||'The doctor')+' sees it when you share your summary at the visit.'):'Saved on your body. Share it with your doctor at the next visit.');$('#modes').innerHTML=''}
+ const L=x.log||[],days=[...Array(7)].map((_,i)=>{const d=new Date(Date.now()-(6-i)*864e5),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const e=L.find(q=>q.d===k);return{k,lb:i===6?'Today':d.toLocaleDateString('en-IN',{weekday:'short'}),v:e?e.sev:null}}),td=days[6].v;
+ sheet(`${v?`<div class="row" style="gap:12px;align-items:center"><span class="pmav">${esc((dn.replace(/^Dr /,'')||'D')[0])}</span><div style="min-width:0"><div style="font-weight:600;font-size:15.5px">${esc(dn||'Your doctor')}</div><div class="pmm" style="margin:2px 0 0">${esc([v.when,v.store].filter(Boolean).join(' · '))}</div></div></div>`:''}
+  <div class="pmbox"><div style="font-weight:600">${esc(x.name)} · ${x.sev} of 10</div><div class="pmm">${esc([PAIN_SINCE[x.since],...(x.feel||[]).map(k=>(PAIN_FEEL[k]||'').toLowerCase()),...(x.worse||[]).filter(k=>k!=='unsure').map(k=>'worse '+(PAIN_WORSE[k]||'').toLowerCase().replace(/^at /,'at '))].filter(Boolean).join(' · '))}</div>${v&&v.shared?'<div class="pmok">✓ Shared for this visit only</div>':''}</div>
+  <div class="pmbox"><div style="font-weight:600;font-size:14.5px">How is it today?</div><div class="pmm">One tap a day. ${esc(dn||'The doctor')} sees whether it is getting better.</div>
+   <div class="pmbars">${days.map(d=>`<div><i style="height:${d.v==null?4:Math.max(6,d.v*4.4)}px;${d.v==null?'background:rgba(127,127,127,.25)':''}${d.k===days[6].k?';outline:2px solid #8FE3FF;outline-offset:2px':''}"></i><span>${d.lb}</span></div>`).join('')}</div>
+   <div class="pmsc" style="margin-top:10px">${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${td===n?'on':''}" onclick="send('pain-log',{id:'${x.id}',sev:${n}})" aria-label="${n} of 10 today">${n}</button>`).join('')}</div><div class="pmscl"><span>No pain</span><span>Worst</span></div></div>
+  <div class="pmwarn"><b>Don’t wait for the visit</b> if the pain becomes severe or sudden, or comes with fever, vomiting or yellow eyes. <button class="pmlink" style="color:#FFB0A6;padding:0" onclick="send('sos')">Tap SOS</button> or see a doctor today.</div>
+  <div class="row" style="gap:8px;margin-top:12px"><button class="pmbtn2" onclick="painStart()">Add another spot</button><button class="pmbtn2" onclick="send('pain-end',{id:'${x.id}'})">It’s better now</button></div>`);$('#card').classList.add('pmtall')}
+/* the doctor's tabs (All · Results · Pain · Since June) and the items being marked to watch, without reloading the body */
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-filter'||!DATA)return;const n=e.data.data||{};if(!DATA._all)DATA._all=DATA.findings||[];
+ const key=f=>(f.code||f.raw||f.test||'')+'|'+(f.date||''),want=new Set((n.findings||[]).map(f=>(f.code||f.test||'')+'|'+(f.date||'')));DATA.findings=DATA._all.filter(f=>want.has(key(f)));DATA.pain=n.pain||[];DATA.watch=n.watch||[];
+ if(VIEW&&VIEW.k==='body')vshow({k:'body'});else tags([])});
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-pain')return;const m=e.data;DATA.pain=m.pain||[];DATA.painVisit=m.visit||null;
+ if(!m.rec||m.rec.active===false){PM=null;closeCard();vshow({k:'body'});return}
+ if(m.fresh){PM=null;VIEW={k:'body'};setLayer('organs');resetView();goal.y=m.rec.side==='back'?Math.PI:0}tags([]);painOpen(m.rec.id,m.fresh)});
+/* keep the pin in the free space between the title and the sheet */
+function painFocus(pos,z){if(!pos)return;if(z)goalZ=z;setTimeout(()=>{const card=$('#card'),hd=document.querySelector('header.top'),top=(hd?hd.getBoundingClientRect().bottom:150)+20,bot=card&&card.classList.contains('on')?card.getBoundingClientRect().top-30:innerHeight-40;
+ body.updateMatrixWorld(true);const v=new THREE.Vector3(...pos).applyMatrix4(body.matrixWorld).project(cam),y=(-v.y*.5+.5)*innerHeight,tgt=Math.max(top,Math.min(bot,(top+bot)/2));const k=camZ/innerHeight*.42;PANG.y-=(y-tgt)*k},700)}
+function painSave(){const s=PM;if(!s.spot||!s.sev||!s.since)return;send('pain-save',{pain:{name:s.spot.name,side:s.spot.side,pos:s.spot.pos,sev:s.sev,since:s.since,feel:s.feel,worse:s.worse}})}
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-data')return;boot(e.data.data)});
 /* ?e=1: embedded in another screen (the doctor's consult): the body and its organ tags only, no page chrome */
 if(/[?&]e=1\b/.test(location.search)){document.body.classList.add('emb');const st=document.createElement('style');st.textContent='body.emb .top,body.emb #zbar,body.emb #card,body.emb #extra{display:none!important}';document.head.appendChild(st)}

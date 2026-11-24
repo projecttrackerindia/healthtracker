@@ -129,6 +129,54 @@ def visit(tid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(part
             "doctor": {"name": u.name, "regNo": u.reg_no or "", "verified": bool(u.verified)}}
 
 
+# ---- after the visit: what the doctor wants watched, on the family's body map ---------------------------------------
+class WatchItem(BaseModel):
+    label: str
+    org: str = ""
+    code: str = ""
+    pos: list[float] | None = None
+
+
+class WatchIn(BaseModel):
+    items: list[WatchItem]
+
+
+@pr.post("/queue/{tid}/watch")
+def watch(tid: str, body: WatchIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+    """The doctor marks a few things to keep an eye on. They land in the person's record as the doctor's note, and show
+    on the same body the family opens at home. Doctors only; the family cannot write or change them."""
+    from .family import decrypt, encrypt
+    from .models import HealthRecord, Person
+    t = _doc_token(db, u, tid)
+    if u.role != "doctor":
+        raise HTTPException(403, "Only the doctor sends these.")
+    if t.state not in ("called", "in", "done"):
+        raise HTTPException(409, "Call the patient in first.")
+    items = []
+    for it in body.items[:6]:
+        lb = it.label.strip()[:60]
+        if not lb:
+            continue
+        pos = it.pos if it.pos and len(it.pos) == 3 and all(abs(v) < 100 for v in it.pos) else None
+        items.append({"label": lb, "org": re.sub(r"[^a-z]", "", it.org.lower())[:16], "code": re.sub(r"[^a-z0-9_]", "", it.code.lower())[:16], "pos": pos})
+    if not items:
+        raise HTTPException(400, "Choose at least one thing to watch.")
+    p = db.get(Person, t.member_id) if t.member_id else None
+    if not p or p.household_id != t.household_id or p.removed:
+        raise HTTPException(409, "This token is not linked to a family member, so there is no body map to send to.")
+    s = db.get(Store, t.store_id)
+    data = {"items": items, "doctor": u.name, "specialty": u.specialty or "", "store": s.name if s else "", "token": t.id, "t": now()}
+    old = [x for x in db.scalars(select(HealthRecord).where(HealthRecord.person_id == p.id, HealthRecord.kind == "watch"))]
+    for x in old:   # one note per visit: sending again replaces it
+        if (decrypt(x.blob) or {}).get("token") == t.id:
+            db.delete(x)
+    db.add(HealthRecord(person_id=p.id, kind="watch", blob=encrypt(data), day=time.strftime("%Y-%m-%d"), by_user="partner:" + u.id))
+    notify(db, t.household_id, "watch", f"Dr {u.name} marked what to watch",
+           "; ".join(i["label"] for i in items[:3]) + (" …" if len(items) > 3 else "") + ". It is on your body map.",
+           {"token": t.id, "doctor": u.name}, t.member_id or "", "/app")
+    return {"ok": True, "items": items}
+
+
 # ---- speech to a draft --------------------------------------------------------------------------------------------
 NUMW = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
         "twelve": 12, "fifteen": 15, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "ninety": 90,

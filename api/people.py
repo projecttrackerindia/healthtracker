@@ -48,7 +48,9 @@ KIND_LEVEL = {"contact": "medid", "report": "summary", "vital": "summary", "med"
               "feed": "summary",      # a baby's feed, tapped by a parent (board "After birth": Feeds today)
               "nappy": "summary",     # a wet or dirty nappy, tapped by a parent (Nappies today)
               "visitnote": "all",     # what the doctor said after a visit, and the follow-up date
-              "eye": "summary"}       # an eye exam sent by the eye doctor (api/eye.py); never written by the family
+              "eye": "summary",       # an eye exam sent by the eye doctor (api/eye.py); never written by the family
+              "pain": "summary",      # a spot marked on the 3D body before a visit: where, how bad, since when, one tap a day
+              "watch": "summary"}     # what a doctor marked to watch after a visit (api/visit.py); never written by the family
 WOMENS = {"preg", "kick", "cycle", "mood"}
 RELATIONS = ("Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Brother", "Sister", "Grandfather", "Grandmother",
              "Grandson", "Granddaughter", "Father-in-law", "Mother-in-law", "Son-in-law", "Daughter-in-law", "Brother-in-law",
@@ -662,11 +664,50 @@ def rec_json(x: HealthRecord) -> dict:
     return {"id": x.id, "kind": x.kind, "day": x.day, "file": x.file_id, "created": x.created, "updated": x.updated, **decrypt(x.blob)}
 
 
+PAIN_SINCE = ("today", "days", "week", "longer")
+PAIN_FEEL = ("dull", "sharp", "burning", "cramping", "comes")
+PAIN_WORSE = ("food", "moving", "night", "unsure")
+
+
+def _check_pain(d: dict):
+    """A pain spot: plain words the family chose, a 1-10 score and a place on the model; nothing free-form beyond a name."""
+    name = str(d.get("name", "")).strip()
+    if not name or len(name) > 60:
+        raise HTTPException(400, "Choose where it hurts")
+    try:
+        sev = int(d.get("sev"))
+    except (TypeError, ValueError):
+        raise HTTPException(400, "Choose how bad it is, 1 to 10")
+    if not 1 <= sev <= 10:
+        raise HTTPException(400, "Choose how bad it is, 1 to 10")
+    if d.get("side") not in ("front", "back"):
+        raise HTTPException(400, "Front or back?")
+    pos = d.get("pos")
+    if pos is not None and not (isinstance(pos, list) and len(pos) == 3 and all(isinstance(v, (int, float)) and abs(v) < 100 for v in pos)):
+        raise HTTPException(400, "That spot is not on the body")
+    if "active" in d and not isinstance(d["active"], bool):
+        raise HTTPException(400, "active is true or false")
+    if d.get("since") not in PAIN_SINCE:
+        raise HTTPException(400, "Choose since when")
+    for k, ok in (("feel", PAIN_FEEL), ("worse", PAIN_WORSE)):
+        v = d.get(k) or []
+        if not isinstance(v, list) or len(v) > len(ok) or any(x not in ok for x in v):
+            raise HTTPException(400, "Choose from the list")
+    log = d.get("log") or []
+    if not isinstance(log, list) or len(log) > 90 or any(not (isinstance(x, dict) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(x.get("d", "")))
+                                                             and isinstance(x.get("sev"), int) and 0 <= x["sev"] <= 10) for x in log):
+        raise HTTPException(400, "Daily check-ins are a date and a score")
+
+
 def _check_record(kind: str, data: dict, day: str):
     if kind not in KIND_LEVEL:
         raise HTTPException(400, "Unknown kind")
     if kind == "eye":
         raise HTTPException(403, "Eye exams come from your eye doctor.")
+    if kind == "watch":
+        raise HTTPException(403, "These notes come from your doctor.")
+    if kind == "pain":
+        _check_pain(data)
     if day and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
         raise HTTPException(400, "day must be YYYY-MM-DD")
     if len(repr(data)) > 20000:
