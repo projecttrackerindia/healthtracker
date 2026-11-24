@@ -573,8 +573,8 @@ else{a.classList.remove("signed");v.textContent="";p.textContent="Get started";p
 
   <!-- 12 · SOS -->
   <section class="sos" data-cam="gone" id="sos"><div class="wrap">
-    <div class="head"><p class="eyebrow" style="color:var(--red)">Emergency</p><h2>Help, with one press.</h2><p>Hold for 3 seconds. Urban Health calls 108 and tells your family where you are, with your medical ID ready for the paramedics.</p></div>
-    <button class="sosbtn" id="sosb" aria-label="Hold for 3 seconds to start SOS"><svg viewBox="0 0 228 228" aria-hidden="true"><circle cx="114" cy="114" r="108" fill="none" stroke="rgba(255,59,48,.15)" stroke-width="6"/><circle id="sosr" cx="114" cy="114" r="108" fill="none" stroke="#FF3B30" stroke-width="6" stroke-linecap="round" stroke-dasharray="678.6" stroke-dashoffset="678.6"/></svg><span>SOS<small id="soss">Hold 3 seconds</small></span></button>
+    <div class="head"><p class="eyebrow" style="color:var(--red)">Emergency</p><h2>Help, with one press.</h2><p>Hold for one second. Urban Health calls 108 and tells your family where you are, with your medical ID ready for the paramedics.</p></div>
+    <button class="sosbtn" id="sosb" aria-label="Hold for one second to start SOS"><svg viewBox="0 0 228 228" aria-hidden="true"><circle cx="114" cy="114" r="108" fill="none" stroke="rgba(255,59,48,.15)" stroke-width="6"/><circle id="sosr" cx="114" cy="114" r="108" fill="none" stroke="#FF3B30" stroke-width="6" stroke-linecap="round" stroke-dasharray="678.6" stroke-dashoffset="678.6"/></svg><span>SOS<small id="soss">Hold one second</small></span></button>
     <div class="card sossheet" id="sheet">
       <div class="sstep"><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><div><b>Calling 108</b><small>Ambulance, on speaker</small></div></div>
       <div class="sstep"><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><div><b>Location sent to Meera and Amma</b><small>Live for the next hour</small></div></div>
@@ -724,11 +724,11 @@ function bag(){const all=Object.values(BAG).flat(),n=all.filter(x=>bagT[x]).leng
 $('#breset').onclick=()=>{bagT={};store.set('bag',bagT);bagC='Documents';bag()};
 bag();
 
-/* SOS: hold 3 seconds */
+/* SOS: hold one second, the same as the app */
 let sosRaf=0,sosOn=false;const sr=$('#sosr'),sb=$('#sosb');
-function sosReset(){cancelAnimationFrame(sosRaf);sr.style.strokeDashoffset=678.6;if(!sosOn)$('#soss').textContent='Hold 3 seconds'}
+function sosReset(){cancelAnimationFrame(sosRaf);sr.style.strokeDashoffset=678.6;if(!sosOn)$('#soss').textContent='Hold one second'}
 function sosHold(e){e.preventDefault();if(sosOn)return;const t0=performance.now();$('#soss').textContent='Keep holding…';
- const step=now=>{const p=Math.min(1,(now-t0)/3000);sr.style.strokeDashoffset=678.6*(1-p);if(navigator.vibrate&&p>0&&Math.floor(p*3)!==Math.floor((p-.02)*3))try{navigator.vibrate(30)}catch(_){};if(p<1)sosRaf=requestAnimationFrame(step);else sosGo()};sosRaf=requestAnimationFrame(step)}
+ const step=now=>{const p=Math.min(1,(now-t0)/1000);sr.style.strokeDashoffset=678.6*(1-p);if(navigator.vibrate&&p>0&&Math.floor(p*3)!==Math.floor((p-.02)*3))try{navigator.vibrate(30)}catch(_){};if(p<1)sosRaf=requestAnimationFrame(step);else sosGo()};sosRaf=requestAnimationFrame(step)}
 function sosGo(){sosOn=true;$('#soss').textContent='Help is on the way';const sh=$('#sheet');sh.classList.add('on');const st=[...sh.querySelectorAll('.sstep')];st.forEach(s=>s.classList.remove('on'));st.forEach((s,i)=>setTimeout(()=>sosOn&&s.classList.add('on'),400+i*900));sb.animate([{boxShadow:'0 0 0 0 rgba(255,59,48,.5)'},{boxShadow:'0 0 0 40px rgba(255,59,48,0)'}],{duration:1400,iterations:3})}
 sb.addEventListener('pointerdown',sosHold);['pointerup','pointerleave','pointercancel'].forEach(ev=>sb.addEventListener(ev,()=>{if(!sosOn)sosReset()}));
 sb.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat)sosHold(e)});sb.addEventListener('keyup',()=>{if(!sosOn)sosReset()});
