@@ -1,7 +1,8 @@
 """Full-detail female body: the female body's own skin and organs (HuBMAP / Z-Anatomy female model) with the male
 atlas's 2,710-structure muscles, bones, vessels and nerves reshaped into the female body (Z-Anatomy / BodyParts3D,
-CC BY-SA 4.0). The reshaping (scale the trunk, widen the pelvis, carry arms and legs on their joints) was fitted
-against the female skin on the design canvas; see FIT below. Male-only structures are left out.
+CC BY-SA 4.0). The reshaping (scale the trunk, widen the pelvis, carry arms and legs on their joints, turn the hand
+at the wrist) was fitted against the female skin; see P below. The arm and wrist were refitted in Nov 2026 so the
+arm and hand bones sit inside her skin arm and hand (front and side views). Male-only structures are left out.
 
     python3 tools/make_female.py
 writes web/a/female-full.<h>.bin + names-ff.<h>.json (fast body) and web/a/hdf-l1..5.<h>.bin (sharper layers),
@@ -12,7 +13,9 @@ import numpy as np
 
 A = os.path.join(os.path.dirname(__file__), '..', 'web', 'a')
 MALE_ONLY = re.compile(r'cremaster|dartos|scrot|penis|penile|testi|prostat|spermatic|deferens|seminal|epididym|glans|corpus cavernosum|corpus spongiosum|bulb of penis', re.I)
-P = dict(sx=1.1, sz=1.22, zoff=.03, px=1.14, armDeg=17, arm=(.47, 1.96, -.09), tip=(1.19, -.21), armLen=1.07, legDeg=1.4, hip=(.17, .07), hipTo=(.31, -.04), ankleY=-2.62)
+P = dict(sx=1.1, sz=1.22, zoff=.03, px=1.14, armDeg=17.231, arm=(.47, 1.96, -0.0912), tip=(1.23, -0.2106), armLen=1.0083, legDeg=1.4, hip=(.17, .07), hipTo=(.31, -.04), ankleY=-2.62,
+         # wrist (Nov 2026 model round): the hand turns about the wrist to hang inside her skin hand (fitted to the skin, front and side)
+         wrist=(1.5326, 0.2352, 0.0708), fore=(0.4453, -0.8698, 0.2125), handRot=(0.00387, 0.00729, -0.42504), handScale=0.9451)
 
 
 def ss(a, b, x):
@@ -44,6 +47,15 @@ def fit(V, b):
         a = np.radians(p['armDeg']); c, s = np.cos(a), np.sin(a)
         r0 = pv0 + (A0 - pv0) * c - (A1 - pv1) * s; r1 = pv1 + (A0 - pv0) * s + (A1 - pv1) * c
         T0 = T0 + (r0 - T0) * wa; T1 = T1 + (r1 - T1) * wa; T2 = T2 + (A2 - T2) * wa
+        # the hand: beyond the wrist, turn and scale about the wrist (Rodrigues rotation), blended in over 8 cm
+        W = np.array(p['wrist']); F = np.array(p['fore']); rv = np.array(p['handRot']); th = np.linalg.norm(rv)
+        Q = np.stack([T0, T1, T2], 1) - W
+        wh = ss(-.04, .04, Q @ F) * wa
+        if th > 0 and (wh > 0).any():
+            k = rv / th; c, s_ = np.cos(th), np.sin(th)
+            Qr = Q * c + np.cross(k, Q) * s_ + np.outer(Q @ k, k) * (1 - c)
+            Qr = Qr * p['handScale'] + W
+            T0 = T0 + (Qr[:, 0] - T0) * wh; T1 = T1 + (Qr[:, 1] - T1) * wh; T2 = T2 + (Qr[:, 2] - T2) * wh
     wl = np.maximum.reduce([np.full_like(x, wlc), ss(p['hip'][1] + .14, p['hip'][1] - .12, y) * ss(p['hip'][0] - .04, p['hip'][0] + .05, ax),
                             ss(p['hip'][1] - .12, p['hip'][1] - .32, y) * ss(.02, .08, ax) * ss(.72, .62, ax)]) * (1 - wa)
     if (wl > 0).any():
