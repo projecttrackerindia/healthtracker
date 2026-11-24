@@ -15,12 +15,39 @@ A = os.path.join(os.path.dirname(__file__), '..', 'web', 'a')
 MALE_ONLY = re.compile(r'cremaster|dartos|scrot|penis|penile|testi|prostat|spermatic|deferens|seminal|epididym|glans|corpus cavernosum|corpus spongiosum|bulb of penis', re.I)
 P = dict(sx=1.1, sz=1.22, zoff=.03, px=1.14, armDeg=17.231, arm=(.47, 1.96, -0.0912), tip=(1.23, -0.2106), armLen=1.0083, legDeg=1.4, hip=(.17, .07), hipTo=(.31, -.04), ankleY=-2.62,
          # wrist (Nov 2026 model round): the hand turns about the wrist to hang inside her skin hand (fitted to the skin, front and side)
-         wrist=(1.5326, 0.2352, 0.0708), fore=(0.4453, -0.8698, 0.2125), handRot=(0.00387, 0.00729, -0.42504), handScale=0.9451)
+         wrist=(1.5326, 0.2352, 0.0708), fore=(0.4453, -0.8698, 0.2125), handRot=(0.00387, 0.00729, -0.42504), handScale=0.9451,
+         # three-joint refit (24 Nov 2026): shoulder, elbow and wrist turns fitted so the bones sit inside her skin arm in front, side and top views
+         chS=(0.62933, 2.02293, -0.06644), chE=(1.12224, 1.03928, -0.12812), chW=(1.53864, 0.22278, 0.07342), chQ=(-0.0594, 0.00094, -0.13887, 0.10827, 0.02282, 0.12579, 0.16083, 0.03888, 0.52265, 0.95795))
 
 
 def ss(a, b, x):
     t = np.clip((x - a) / (b - a), 0, 1)
     return t * t * (3 - 2 * t)
+
+
+def _rv(v):
+    v = np.asarray(v, float); th = np.linalg.norm(v)
+    if th < 1e-12: return np.eye(3)
+    k = v / th; K = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
+    return np.eye(3) + np.sin(th) * K + (1 - np.cos(th)) * K @ K
+
+
+def chain(T, wa):
+    """Three-joint arm refit on the |x| side: the whole arm turns about the shoulder, the forearm about the elbow
+    (and is scaled), the hand about the wrist. Blended over a few cm at each joint and by the arm weight wa."""
+    p = P; S, E, W = np.array(p['chS']), np.array(p['chE']), np.array(p['chW']); q = p['chQ']
+    R1, R2, R3 = _rv(q[0:3]), _rv(q[3:6]), _rv(q[6:9]); kf = q[9]
+    uu = (E - S) / np.linalg.norm(E - S); uf = (W - E) / np.linalg.norm(W - E)
+    we = ss(-.05, .05, (T - E) @ uu)[:, None]; ww = ss(-.03, .03, (T - W) @ uf)[:, None]
+    up = S + (T - S) @ R1.T
+    E1 = S + R1 @ (E - S); R12 = R1 @ R2
+    fore = E1 + ((T - E) @ R12.T) * kf
+    W1 = E1 + (R12 @ (W - E)) * kf
+    hand = W1 + (T - W) @ (R12 @ R3).T
+    out = (1 - we) * up + we * ((1 - ww) * fore + ww * hand)
+    w = wa[:, None]
+    out = T + (out - T) * w
+    return out[:, 0], out[:, 1], out[:, 2]
 
 
 def fit(V, b):
@@ -56,6 +83,7 @@ def fit(V, b):
             Qr = Q * c + np.cross(k, Q) * s_ + np.outer(Q @ k, k) * (1 - c)
             Qr = Qr * p['handScale'] + W
             T0 = T0 + (Qr[:, 0] - T0) * wh; T1 = T1 + (Qr[:, 1] - T1) * wh; T2 = T2 + (Qr[:, 2] - T2) * wh
+        T0, T1, T2 = chain(np.stack([T0, T1, T2], 1), wa)
     wl = np.maximum.reduce([np.full_like(x, wlc), ss(p['hip'][1] + .14, p['hip'][1] - .12, y) * ss(p['hip'][0] - .04, p['hip'][0] + .05, ax),
                             ss(p['hip'][1] - .12, p['hip'][1] - .32, y) * ss(.02, .08, ax) * ss(.72, .62, ax)]) * (1 - wa)
     if (wl > 0).any():

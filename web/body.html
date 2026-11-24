@@ -233,7 +233,7 @@ const rl=new THREE.DirectionalLight(0xbfd4ff,.75);rl.position.set(-2,4,-7);scene
 const body=new THREE.Group();scene.add(body);
 let SET=null,LAY={},PICK=[],SEL=null,HL=null,KIDB=null;
 async function gunz(u){const r=await fetch(u);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
-async function load(sex){const [buf,names]=await Promise.all([gunz(sex==='female'?'/a/female-full.66f7106b.bin':'/a/body-lite.e9802745.bin'),fetch(sex==='female'?'/a/names-ff.d40e8e18.json':'/a/names.f459bcee.json').then(r=>r.json())]);
+async function load(sex){const [buf,names]=await Promise.all([gunz(sex==='female'?'/a/female-full.b1eab129.bin':'/a/body-lite.e9802745.bin'),fetch(sex==='female'?'/a/names-ff.d40e8e18.json':'/a/names.f459bcee.json').then(r=>r.json())]);
  const jl=new DataView(buf).getUint32(0,true);return{buf,meta:JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base:4+jl,names}}
 function partPos(S,p){const q=new Uint16Array(S.buf,S.base+p.o,p.v*3),b=p.b,o=new Float32Array(p.v*3);for(let j=0;j<p.v;j++){o[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);o[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);o[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}return o}
 function partIdx(S,p){return new Uint16Array(S.buf,S.base+p.o+p.v*6,p.i)}
@@ -291,7 +291,7 @@ function tissueAttrs(g,ranges,names,l){const P=g.attributes.position.array,n=P.l
    Organs (3.6 MB) on any connection that is not data-saver or 2G/3G; the bigger packs on Wi-Fi or a computer. */
 const HDL={"1":"/a/hd-l1.a3e9fd3a.bin","2":"/a/hd-l2.4ed24875.bin","3":"/a/hd-l3.078eda01.bin","4":"/a/hd-l4.a5e3f78d.bin","5":"/a/hd-l5.93b15afd.bin"};
 /* the female body: her own skin and organs, with the atlas muscles, bones, vessels and nerves reshaped to her (tools/make_female.py) */
-const HDLF={"1":"/a/hdf-l1.bdf654c6.bin","2":"/a/hdf-l2.fed60c94.bin","4":"/a/hdf-l4.d7fbc0b9.bin","5":"/a/hdf-l5.6d4252b0.bin"};
+const HDLF={"1":"/a/hdf-l1.3a7d15f0.bin","2":"/a/hdf-l2.37fca09c.bin","4":"/a/hdf-l4.1822689b.bin","5":"/a/hdf-l5.2e9b43d6.bin"};
 const hdMap=()=>STATE.sex==='female'?HDLF:HDL;
 let HDD={};
 function hdOk(l){const c=navigator.connection||{};if(typeof KID!=='undefined'&&KID)return false;if(STATE.hd||!hdMap()[l]||c.saveData)return false;
@@ -303,7 +303,7 @@ async function hdLayer(l){l=+l;if(HDD[l]||!LAY[l]||!hdOk(l))return;HDD[l]=1;cons
   const pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni),ranges=[];let vo=0,io=0;
   list.forEach(p=>{const P=partPos(S2,p),I=partIdx(S2,p),c=colOf(p,l,SET.names[p.k]);pos.set(P,vo*3);for(let j=0;j<p.v;j++){col[(vo+j)*3]=c.r;col[(vo+j)*3+1]=c.g;col[(vo+j)*3+2]=c.b}for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;ranges.push([io/3,(io+I.length)/3,p.k,vo,p.v,io,I.length]);vo+=p.v;io+=I.length});
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();tissueAttrs(g,ranges,SET.names,l);
-  const m=LAY[l],old=m.geometry;m.geometry=g;m.userData.ranges=ranges;delete m.userData.P0;old.dispose();SHAPED=null;shape();STATE.hdl=Object.assign(STATE.hdl||{},{[l]:1})}
+  const m=LAY[l],old=m.geometry;m.geometry=g;m.userData.ranges=ranges;delete m.userData.P0;old.dispose();SHAPED=null;shape();STATE.hdl=Object.assign(STATE.hdl||{},{[l]:1});if(l===3)calmFace(STATE.layer==='organs'&&FROST)}
  catch(e){HDD[l]=0}}
 /* studio light for the body layers, the same studio map the close-ups use */
 function layerEnv(m,l){if(typeof o2Env!=='function')return;o2Env().then(e=>{if(!e||!m||!m.material)return;m.material.envMap=e;m.material.envMapIntensity=l===0?.25:l===2?.18:.3;m.material.needsUpdate=true}).catch(()=>{})}
@@ -340,7 +340,16 @@ function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];
    let pre=m.userData.pre;if(!pre||pre.geometry!==m.geometry){if(pre)m.remove(pre);const pm=mt.clone();pm.colorWrite=false;pm.depthWrite=true;pm.transparent=true;pm.onBeforeCompile=mt.onBeforeCompile;pre=new THREE.Mesh(m.geometry,pm);pre.renderOrder=4;pre.raycast=()=>{};if(m.morphTargetInfluences)pre.morphTargetInfluences=m.morphTargetInfluences;m.add(pre);m.userData.pre=pre}pre.visible=fr&&key!=='skin';FROST=pre.visible}
   else if(l===L){m.visible=true;mt.opacity=1;mt.transparent=false;mt.depthWrite=true}
   else{const ctx=(key==='organs'&&l===2&&!fr)||(key==='muscle'&&l===2)||(key==='vessels'&&l===3)||(key==='nerves'&&l===2)||(key==='skeleton'&&l===3);m.visible=ctx;mt.transparent=true;mt.opacity=.14;mt.depthWrite=false}}
- if(KID)for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;STATE.layer=key;if(L)setTimeout(()=>hdLayer(L),400);goalZ=key==='organs'?10.5:16;goalY=key==='organs'?1.0:0;HOME={z:goalZ,y:goalY}}
+ calmFace(fr&&key==='organs'); if(KID)for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;STATE.layer=key;if(L)setTimeout(()=>hdLayer(L),400);goalZ=key==='organs'?10.5:16;goalY=key==='organs'?1.0:0;HOME={z:goalZ,y:goalY}}
+/* Calm face (Nov 2026): in the frosted organs view the eyes, glands, mouth and ear parts and the little lymph nodes
+   made the head look like a skull and the body look speckled. Their triangles are collapsed (not removed) so the
+   face numbering that tapping relies on stays the same; the senses view still shows them through its own parts. */
+const FACE=/eyeball|cornea|\biris\b|\blens\b|retina|sclera|vitreous|lacrimal|parotid|sublingual|submandibular|tongue|gingiva|palat|uvula|tonsil|pharynx|cochle|vestibul|tympanic|chorda|hypophysis|pineal|epiglott|arytenoid|corniculate|cricoid|thyroid cartilage|nasal|\blip\b|incisor|canine|molar|\bnodes?\b|deferens|spermatic|seminal|ejaculatory|urethra/i;
+function calmFace(on){const m=LAY[3];if(!m||!m.geometry||!m.geometry.index||!SET)return;const g=m.geometry,ix=g.index;
+ if(!g.userData.full)g.userData.full=ix.array.slice();
+ if(on&&!g.userData.calm){const a=g.userData.full.slice();(m.userData.ranges||[]).forEach(r=>{const n=SET.names[r[2]]||'';if(r[2]!==undefined&&FACE.test(n)&&!/thyroid gland/i.test(n)){const v=a[r[5]];a.fill(v,r[5],r[5]+r[6])}});g.userData.calm=a}
+ const want=on?g.userData.calm:g.userData.full;if(ix.array!==want){if(ix.array.length===want.length){ix.array.set(want)}ix.needsUpdate=true}
+ g.userData.isCalm=!!on}
 /* tap a part */
 const ray=new THREE.Raycaster();
 function pick(x,y){const r=$('#gl').getBoundingClientRect(),v=new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(v,cam);
@@ -1214,7 +1223,7 @@ function mSettings(){shape();CAM(HOME0.z,HOME0.y);head(who()+' · '+T('body').to
  <p class="eb" style="margin-top:6px">Automatic: light from age 60, for children, in pregnancy and after a loss; graphite otherwise.</p>
  <div class="q">Skin tone</div><div class="sktn" role="radiogroup" aria-label="Skin tone">${SKINT.map((c,i)=>`<button role="radio" aria-checked="${(U.skin??2)===i}" aria-label="Skin tone ${i+1} of 5" class="${(U.skin??2)===i?'on':''}" style="background:#${c.toString(16).padStart(6,'0')}" onclick="U.skin=${i};saveU();if(STATE.layer==='skin')setLayer('skin');mode('settings')"></button>`).join('')}</div>`)}
 /* lite first; HD in the background on Wi-Fi, or when asked */
-const SRC={male:{lite:['/a/body-lite.e9802745.bin','/a/names.f459bcee.json'],hd:['/a/body-hd.5098f0cf.bin','/a/names.f459bcee.json']},female:{lite:['/a/female-full.66f7106b.bin','/a/names-ff.d40e8e18.json']}};
+const SRC={male:{lite:['/a/body-lite.e9802745.bin','/a/names.f459bcee.json'],hd:['/a/body-hd.5098f0cf.bin','/a/names.f459bcee.json']},female:{lite:['/a/female-full.b1eab129.bin','/a/names-ff.d40e8e18.json']}};
 async function loadSex(sex,hd){const s=SRC[sex][hd&&SRC[sex].hd?'hd':'lite'];const [buf,names]=await Promise.all([gunz(s[0]),fetch(s[1]).then(r=>r.json())]);return parseSet(buf,names)}
 async function swap(sex){$('#load').style.display='block';STATE.sex=sex;SET=await loadSex(sex,STATE.hd&&sex==='male');build(SET);SHAPED=null;shape();$('#load').style.display='none'}
 async function detail(){if(KID)return;const want=U.hd||(!(navigator.connection||{}).saveData&&(navigator.connection||{}).type==='wifi');if(want===!!STATE.hd||!SRC[STATE.sex].hd){if(MODE==='settings')mode('settings');return}
