@@ -378,6 +378,75 @@ h1{font-weight:800!important;letter-spacing:-.035em!important}
  .app>aside .me{margin-left:6px!important;flex:none}
  main{padding-bottom:110px!important}
 }
+
+/* accent: Care Teal for partners (BRAND.md) */
+:root{--gbacc:#0B8A7C}
+/* ===== Getting Better design (approved PDF, pages 14-15), 24 Nov 2026 =====
+   Laptop and tablet: no sidebar. Logo on the left, the places as one pill bar in the middle, you on the right.
+   Big data-led headline with a pill, roomy 26 px cards, plain labels, and an empty pane fills its space. */
+@media (min-width:861px){
+ .app{display:block!important;grid-template-columns:none!important}
+ .app>aside{position:sticky!important;top:0;z-index:60;height:auto!important;min-height:0!important;width:auto!important;display:grid!important;grid-template-columns:minmax(max-content,1fr) auto minmax(0,1fr);align-items:center!important;gap:20px!important;padding:16px 32px!important;background:rgba(242,242,239,.92)!important;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border:0!important;overflow:visible!important}
+ .app>aside .logo,.app>aside .plg{white-space:nowrap;padding:0!important;margin:0!important;font-size:18px!important}
+ .app>aside .logo .lt2,.app>aside .lt2{display:inline!important}
+ .app>aside nav{flex:none;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:2px!important;margin:0 auto!important;padding:5px!important;background:#fff;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(20,24,40,.05);overflow-x:auto;max-width:calc(100vw - 480px);scrollbar-width:none}
+ .app>aside nav::-webkit-scrollbar{display:none}
+ .app>aside nav .navh{display:none!important}
+ .app>aside nav button{flex:none!important;min-height:44px!important;height:44px!important;width:auto!important;padding:0 clamp(12px,1.3vw,20px)!important;margin:0!important;border-radius:999px!important;font-size:15.5px!important;font-weight:500!important;color:#3A3A3C!important;background:none!important;box-shadow:none!important;gap:6px!important;flex-direction:row!important;justify-content:center!important}
+ .app>aside nav button svg{display:none!important}
+ .app>aside nav button .nl,.app>aside nav button span{display:inline!important;font-size:inherit!important}
+ .app>aside nav button .ns{display:none!important}
+ .app>aside nav button em{position:static!important;margin-left:4px}
+ .app>aside nav button:not(.on):hover{background:rgba(0,0,0,.05)!important}
+ .app>aside nav button.on,.app>aside nav button.on:hover{background:var(--gbacc)!important;color:#fff!important;font-weight:600!important}
+ .app>aside .me{justify-self:end;justify-content:flex-end;display:flex!important;align-items:center;gap:10px;margin:0!important;width:auto!important;height:auto!important;padding:6px 8px 6px 14px!important;border-radius:999px!important;background:transparent!important;box-shadow:none!important;min-width:0}
+ .app>aside .me .mt{display:block!important;text-align:right;min-width:0}
+ .app>aside .me .mt b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .app>aside .me .mt small{display:block;font-size:12.5px;color:var(--ink3,#6E6E73);white-space:nowrap}
+ .app>aside .me .av{order:2;width:38px!important;height:38px!important;border-radius:50%;flex:none}
+ .app>aside .mark,.app>aside .memenu[hidden]{display:none!important}
+ .app>aside .memenu{position:fixed!important;top:76px!important;right:24px!important;left:auto!important;bottom:auto!important}
+ .app>main{max-width:1440px;margin:0 auto!important;padding:18px 32px 130px!important}
+}
+body{font-size:15px}
+h1{font-size:44px!important;font-weight:800!important;letter-spacing:-.04em!important;line-height:1.05!important}
+.gbh1{font-size:clamp(40px,4.6vw,64px)!important;line-height:1.02!important;letter-spacing:-.045em!important;font-weight:800!important;margin:6px 0 0!important}
+.gbpill{display:inline-flex;align-items:center;vertical-align:.18em;font-size:.46em;letter-spacing:-.01em;font-weight:700;padding:.32em .7em;border-radius:999px;background:var(--gbacc);color:#fff;margin:0 .12em;line-height:1}
+.card,.tcard,.tk{border:0!important;border-radius:26px!important}
+.ptb{display:inline-flex!important;gap:2px!important;background:#E6E6E1;border-radius:999px;padding:4px;margin:14px 0 24px!important;max-width:100%}
+.ptb button{min-height:40px!important;padding:0 18px!important;font-size:14.5px!important;font-weight:600!important;color:#3A3A3C!important}
+.ptb button[aria-selected=true]{background:var(--gbacc)!important;color:#fff!important}
+.btn{border-radius:999px!important;font-weight:600!important}
+.btn.p{background:var(--gbacc)!important;color:#fff!important;border:0!important}
+th{font-family:inherit!important;text-transform:none!important;letter-spacing:0!important;font-size:13px!important;color:#6E6E73!important}
+.eyb,.peb,.ah .eb{font-size:12.5px!important;letter-spacing:.05em!important}
+.gbk{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin:26px 0 18px}
+.gbk>div{background:#fff;border-radius:26px;padding:20px 24px 18px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.gbk span{display:block;font-size:14.5px;color:#3A3A3C}.gbk b{display:block;font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-top:6px}.gbk i{display:block;font-style:normal;font-size:14px;color:#1A7F37;margin-top:4px}.gbk i.w{color:#9A5B00}.gbk i.m{color:#6E6E73}
+.gbc{background:#fff;border-radius:30px;padding:24px 28px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.gbc h2{font-size:24px;letter-spacing:-.02em;margin:0 0 6px}
+.gbr{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(0,0,0,.07)}.gbr:last-child{border-bottom:0}
+.gbr .gav{width:48px;height:48px;border-radius:50%;background:#F2F2EF;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.gbr .gtx{flex:1;min-width:0}.gbr .gtx b{display:block;font-size:17px;font-weight:600}.gbr .gtx small{display:block;font-size:14px;color:#6E6E73}
+.gbr .gdoc{font-size:14.5px;color:#515154;min-width:130px}
+.gbb{border:0;border-radius:999px;min-height:46px;padding:0 22px;font:600 15px inherit;font-family:inherit;cursor:pointer;background:#F2F2EF;color:#111214;white-space:nowrap}.gbb.p{background:var(--gbacc);color:#fff}
+.gbsw{position:relative;width:62px;height:38px;border-radius:999px;border:0;background:#E5E5EA;cursor:pointer;flex:none;transition:background .2s}.gbsw:after{content:'';position:absolute;top:4px;left:4px;width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s}.gbsw.on{background:#1A7F37}.gbsw.on:after{transform:translateX(24px)}
+.gbdot{width:12px;height:12px;border-radius:50%;flex:none}
+.gbtop{display:grid;grid-template-columns:minmax(300px,470px) minmax(0,1fr);gap:28px;align-items:start;margin-bottom:22px}
+.gbtop .gbk{grid-template-columns:1fr 1fr;margin:24px 0 0}
+.gbtop~.tnum:not(.ph){display:none!important}.gbtop~.tnum.ph>.card:nth-child(-n+2){display:none!important}.gbtop~.tnum.ph{grid-template-columns:1fr 1fr!important}
+.gbtop .gbr .gdoc{padding-left:0;min-width:128px!important;width:128px}
+.gbtop .gbr>b{width:78px}.gbtop .gbr .gbb{min-width:132px}
+@media (min-width:861px) and (max-width:1480px){.app>aside .me .mt{display:none!important}}
+.app>aside .me{background:rgba(11,138,124,.09)!important}
+@media (max-width:980px){.gbtop{grid-template-columns:1fr}}
+/* list + detail pages use the whole height; an empty pane says so in the middle */
+#main>div[id]>.empty:only-child,#main>div[id]>.card>.empty:only-child{min-height:calc(100vh - 320px);display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px;color:#6E6E73}
+@media (max-width:860px){.gbk{grid-template-columns:1fr 1fr!important;gap:12px}.gbk>div{padding:16px 18px}.gbk b{font-size:28px}.gbk i{font-size:13px}
+ .gbc{padding:20px 18px;border-radius:26px}.gbc h2{font-size:21px}
+ .gbr{flex-wrap:wrap;gap:10px 12px}.gbr .gtx{flex:1 1 calc(100% - 70px);min-width:0}.gbr .gdoc,.gtop .gbr .gdoc,.gbtop .gbr .gdoc{min-width:0!important;width:auto!important;flex:1 1 auto;order:3;padding-left:0}
+ .gbr>.gav+.gtx~.gdoc{padding-left:64px;flex-basis:100%!important}.gbr>.gav+.gtx~.gbb:first-of-type{margin-left:64px}.gbr:not(:has(.gav)) .gtx{flex:1 1 0!important}.gbr .gbb{order:4;flex:1 1 0;min-width:0!important;min-height:42px}.gbr>b{order:3;width:auto!important}.gbr .gbsw{order:2}
+ .gbh1{font-size:38px!important}}
 </style>
 <script src="/geopick.js?v=5" defer></script>
 </head>
@@ -493,6 +562,7 @@ async function loadToday(){let r;try{r=await api('/orders?status=all')}catch(e){
   c3.innerHTML=`<section class="card" style="padding:18px 20px"><h2 style="margin:0 0 6px;font-size:20px;letter-spacing:-.02em">${isLab?'Collected and on the way':'Ready for pickup'}</h2>${ready.length?ready.map(o=>`<div class="trow" style="padding:10px 0"><span class="tag blue">${E(st(o))}</span><div style="flex:1;min-width:0"><b>${E(o.member||(o.family&&o.family.name)||'Family')}</b><div class="mute sm"><span class="mono">#${E(o.id)}</span>${o.rider?' · '+E(o.rider):''}</div></div>${o.handover?`<b class="hcode">${E(String(o.handover))}</b>`:''}</div>`).join(''):`<p class="mute sm" style="margin:8px 0 0">${isLab?'Samples collected today show here until the report is out.':'Packed orders waiting for the rider show here, with the handover code.'}</p>`}</section>
   <section class="card" style="padding:18px 20px"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font-size:20px;letter-spacing:-.02em">Messages</h2><a href="#" data-go="msgs" class="sm">Open</a></div><p class="mute sm" style="margin:8px 0 0">${ME.counts.unreadMessages?ME.counts.unreadMessages+' unread from Urban Health':'No unread messages.'}</p></section>`;
   g.append(c1,c2,c3);if(nums)nums.after(g);else T.prepend(g)}
+ $('#tdy').insertAdjacentHTML('afterbegin',gbTop(all,ME.store.kind==='lab'));{const h=document.querySelector('#main .phd h1');if(h)h.remove()}
  $('#tdy').querySelectorAll('[data-acc]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api(`/orders/${b.dataset.acc}/status`,{method:'POST',body:{status:isLab?'confirmed':'checking',note:'',code:'',sample:''}});toast('Accepted · the family has been told');loadToday();load()}catch(e){toast(e.message);b.disabled=false}});
  $('#tdy').querySelectorAll('[data-pass]').forEach(b=>b.onclick=()=>passOrder(b.dataset.pass));
  $('#tdy').querySelectorAll('[data-go]').forEach(b=>b.onclick=e=>{e.preventDefault();view=b.dataset.go;render();load()});
@@ -500,6 +570,20 @@ async function loadToday(){let r;try{r=await api('/orders?status=all')}catch(e){
  clearTimeout(loadToday.t);loadToday.t=setTimeout(()=>{if(view==='today'&&$('#tdy'))loadToday()},fresh.length?5000:30000)}
 /* Board 8 · pharmacy Today: four numbers that matter, the new order leading with its countdown, the packing
    checklist with Scan to check, what is ready for the rider, medicines running low, and the day's tail. */
+/* Approved design (PDF p.14): the day as a headline with a pill, four numbers, and every open order in one list
+   with the one thing to do next. The fuller board (countdown, to pack, ready, messages) follows underneath. */
+function gbTop(all,isLab){const t0=new Date();t0.setHours(0,0,0,0);const T0=t0/1000,noun=isLab?'bookings':'orders';
+ const fresh=all.filter(o=>o.status==='placed'),work=all.filter(o=>/checking|packing|confirmed|assigned|en_route|arrived|collected|processing/.test(o.status)&&!(o.status==='packing'&&o.pack)),
+  gone=all.filter(o=>/packed|out|ready/.test(o.status)||(o.status==='packing'&&o.pack)),todays=all.filter(o=>(o.created||0)>=T0),done=todays.filter(o=>/delivered|completed|ready/.test(o.status)&&(isLab?o.status!=='ready'||true:true)),earn=done.reduce((a,o)=>a+(o.total||0),0);
+ const n=fresh.length,hl=n?`Today <span class="gbpill">${n} new</span><br>${noun}<br>waiting`:`Today <span class="gbpill">all clear</span><br>no new ${noun}`;
+ const lab=o=>({placed:'New',checking:isLab?'Checking':'Packing',packing:'Packing',packed:'Ready for pickup',out:'Out for delivery',confirmed:'Confirmed',assigned:'Technician assigned',en_route:'Technician on the way',arrived:'At the door',collected:'Sample collected',processing:'Testing',ready:'Report out'})[o.status]||String(o.status).replace(/_/g,' ');
+ const dot=o=>o.status==='placed'?'#E3A008':gone.includes(o)?'#1A7F37':'#0B8A7C',who=o=>o.member||(o.family&&o.family.name)||'Family';
+ const act=o=>o.status==='placed'?`<button class="gbb p" data-acc="${E(o.id)}">${isLab?'Confirm':'Accept'}</button>`:gone.includes(o)?`<button class="gbb" data-go="orders">Track</button>`:`<button class="gbb" data-go="orders">${isLab?'Open':o.needsVerify?'Check Rx':'Mark packed'}</button>`;
+ const rows=[...fresh,...work.sort((a,b)=>(a.created||0)-(b.created||0)),...gone].slice(0,6);
+ return`<div class="gbtop"><div><h1 class="gbh1">${hl}</h1><div class="gbk"><div><span>New</span><b>${n}</b><i class="${n?'w':'m'}">${n?'accept within 3 min':'nothing to accept'}</i></div><div><span>${isLab?'In progress':'Packing'}</span><b>${work.length}</b><i class="m">in progress</i></div><div><span>${isLab?'Done':'Delivered'}</span><b>${done.length}</b><i class="m">today</i></div><div><span>Earnings</span><b>${money(earn)}</b><i class="m">today, cash + online</i></div></div></div>
+ <section class="gbc"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h2>${isLab?'Bookings':'Orders'}</h2><span class="mute" style="font-size:14.5px">Oldest first</span></div>
+ ${rows.length?rows.map(o=>`<div class="gbr"><span class="gbdot" style="background:${dot(o)}"></span><div class="gtx"><b>#${E(String(o.id).slice(-6).toUpperCase())} · ${E(who(o))}</b><small>${E((o.items||[]).slice(0,3).map(i=>i.name+(i.qty>1?' × '+i.qty:'')).join(', '))}${(o.items||[]).length>3?' …':''}</small></div><span class="gdoc" style="min-width:110px">${E(lab(o))}</span><b style="font-size:17px;min-width:64px;text-align:right">${money(o.total||0)}</b>${act(o)}</div>`).join('')
+  :`<div class="empty" style="min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px">Nothing open. New ${noun} ring here and wait 3 minutes for you before going to the next ${isLab?'lab':'pharmacy'}.</div>`}</section></div>`}
 async function phToday(r){const all=r.orders||[],t0=new Date();t0.setHours(0,0,0,0);const T0=t0/1000,W0=T0-7*86400,now=Date.now()/1000;
  const todays=all.filter(o=>o.created>=T0),lastWk=all.filter(o=>o.created>=W0&&o.created<W0+Math.max(60,now-T0)).length,done=todays.filter(o=>/delivered/.test(o.status)),ret=todays.filter(o=>/return/.test(o.status));
  const fresh=all.filter(o=>o.status==='placed'),pack=all.filter(o=>o.status==='checking'||(o.status==='packing'&&!o.pack)).sort((a,b)=>a.created-b.created),ready=all.filter(o=>o.status==='packed'||(o.status==='packing'&&o.pack)).slice(0,3);
@@ -511,7 +595,7 @@ async function phToday(r){const all=r.orders||[],t0=new Date();t0.setHours(0,0,0
  const sold={};all.filter(o=>o.created>now-14*86400&&!/cancel|refund|return/.test(o.status)).forEach(o=>(o.items||[]).forEach(i=>{if(i.sku)sold[i.sku]=(sold[i.sku]||0)+(+i.qty||1)}));
  const low=(pr&&pr.items||[]).filter(i=>i.price!=null).map(i=>({...i,perDay:(sold[i.sku]||0)/14})).map(i=>({...i,days:i.perDay?Math.floor(i.stock/i.perDay):null})).filter(i=>i.stock<=10||(i.days!=null&&i.days<=4)).sort((a,b)=>(a.days??99)-(b.days??99)||a.stock-b.stock).slice(0,4);
  const o=fresh[0],nm=x=>x.member||(x.family&&x.family.name)||'Family';
- $('#tdy').innerHTML=`<div class="tnum"><div class="card"><span>Orders today</span><b>${todays.length}</b><small style="color:${todays.length>=lastWk?'#1A7F37':'#9A5B00'}">${todays.length-lastWk>=0?'+':''}${todays.length-lastWk} on last ${E(wd)}</small></div><div class="card"><span>Earnings today</span><b>${money(earn)}</b><small>${done.length} delivered · paid weekly</small></div><div class="card"><span>Average pack time</span><b>${avg!=null?avg+' min':'—'}</b><small style="color:${avg!=null&&avg>10?'#9A5B00':'#1A7F37'}">Goal under 10</small></div><div class="card"><span>Rating</span><b>${s.ratingN?(+s.rating).toFixed(1)+' ★':'—'}</b><small>${s.ratingN?'From '+s.ratingN+' famil'+(s.ratingN===1?'y':'ies'):'No ratings yet'}</small></div></div>
+ $('#tdy').innerHTML=`<div class="tnum ph"><div class="card"><span>Orders today</span><b>${todays.length}</b><small style="color:${todays.length>=lastWk?'#1A7F37':'#9A5B00'}">${todays.length-lastWk>=0?'+':''}${todays.length-lastWk} on last ${E(wd)}</small></div><div class="card"><span>Earnings today</span><b>${money(earn)}</b><small>${done.length} delivered · paid weekly</small></div><div class="card"><span>Average pack time</span><b>${avg!=null?avg+' min':'—'}</b><small style="color:${avg!=null&&avg>10?'#9A5B00':'#1A7F37'}">Goal under 10</small></div><div class="card"><span>Rating</span><b>${s.ratingN?(+s.rating).toFixed(1)+' ★':'—'}</b><small>${s.ratingN?'From '+s.ratingN+' famil'+(s.ratingN===1?'y':'ies'):'No ratings yet'}</small></div></div>
  <div class="tgrid"><div class="tcol">${o?`<section class="card newo phn"><span class="lbt g">New order · #${E(o.id.slice(-4))}</span><div class="row" style="gap:16px;margin:12px 0 4px;flex-wrap:nowrap"><div class="tring" data-end="${Date.now()+left(o)*1000}" style="background:conic-gradient(#0B8A7C 0 ${Math.round(left(o)/180*100)}%,#E8E8ED ${Math.round(left(o)/180*100)}% 100%)"><span>${mmss(left(o))}</span></div><div><b style="font-size:19px" class="phacc">${left(o)?'Accept in '+(left(o)>=60?mmss(left(o)):Math.round(left(o))+' s'):'Time is up'}</b><div class="vmut phsub">${left(o)?'Otherwise it goes to the next pharmacy':'It moves to the next pharmacy shortly; you can still accept'}</div></div></div>
    ${(o.items||[]).slice(0,5).map(i=>`<div class="phl"><div><b>${E(i.name)}</b><small>${i.qty>1?i.qty+' × ':''}${i.rx?'prescription':'no prescription needed'}</small></div><b>${i.price?money(i.price*(+i.qty||1)):''}</b></div>`).join('')}
    <div class="phl" style="border:0"><span class="vmut">${o.rxShared?(o.needsVerify?'Prescription to check':'Prescription checked by Urban Health'):o.items.some(i=>i.rx)?'Prescription needed':'Over the counter'}</span><b>${money(o.total)}</b></div>
@@ -529,6 +613,7 @@ async function phToday(r){const all=r.orders||[],t0=new Date();t0.setHours(0,0,0
  {const b=$('#ordall');if(b)b.onclick=()=>orderAll(low)}
  {const b=$('#rfrem');if(b)b.onclick=async()=>{if(!await uhConfirm(`Send a gentle refill reminder to ${rf.toRemind} famil${rf.toRemind===1?'y':'ies'}?\nThey see your shop's name and can reorder in one tap. Each family gets at most one a week.`))return;b.disabled=true;try{const r=await api('/refills/remind',{method:'POST'});toast(`Reminder sent to ${r.sent} famil${r.sent===1?'y':'ies'}`);loadToday()}catch(e){toast(e.message);b.disabled=false}}}
  $('#tdy').querySelectorAll('[data-hand]').forEach(b=>b.onclick=()=>handOver(all.find(x=>x.id===b.dataset.hand)));
+ $('#tdy').insertAdjacentHTML('afterbegin',gbTop(all,ME.store.kind==='lab'));{const h=document.querySelector('#main .phd h1');if(h)h.remove()}
  $('#tdy').querySelectorAll('[data-acc]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api(`/orders/${b.dataset.acc}/status`,{method:'POST',body:{status:'checking',note:'',code:'',sample:''}});toast('Accepted · the family has been told');loadToday();load()}catch(e){toast(e.message);b.disabled=false}});
  $('#tdy').querySelectorAll('[data-pass]').forEach(b=>b.onclick=()=>passOrder(b.dataset.pass));
  $('#tdy').querySelectorAll('[data-pack]').forEach(b=>b.onclick=()=>packOrder(all.find(x=>x.id===b.dataset.pack)));
@@ -728,6 +813,7 @@ async function bankDonors(g,u){let r;try{r=await api('/bank/donors?group='+encod
 VIEWS.bbtoday=async()=>{const m=$('#main'),s=ME.store;
  m.innerHTML=`<div class="row phd" style="justify-content:space-between;align-items:flex-end"><div><div class="peb">${E(eyeb())}</div><h1>Today</h1></div>${s.active?'<span class="lbt g" style="font-size:12.5px;padding:5px 12px">Taking requests</span>':'<span class="lbt a" style="font-size:12.5px;padding:5px 12px">Paused</span>'}</div><div id="tdy"><div class="tsk"></div><div class="tsk" style="height:240px"></div></div>`;
  let t;try{t=await api('/bank/today')}catch(e){if($('#tdy'))$('#tdy').innerHTML=`<div class="empty">${E(e.message)}</div>`;return}if(view!=='bbtoday'||!$('#tdy'))return;
+ {const c=t.counts,n=c.waiting||0,h=document.querySelector('#main .phd h1');if(h){h.className='gbh1';h.innerHTML=n?`Today <span class="gbpill">${n} hospital${n>1?'s':''}</span><br>waiting for blood`:`Today <span class="gbpill">all clear</span><br>no one waiting`}}
  const c=t.counts,ago=x=>{const n=Math.round((Date.now()/1000-x)/60);return n<1?'just now':n<60?n+' min ago':Math.round(n/60)+' h ago'};
  const fd=d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
  $('#tdy').innerHTML=`<div class="tnum"><div class="card"><span>Waiting for you</span><b>${c.waiting}</b><small>${c.waiting?'Answer the urgent ones first':'Nothing to answer'}</small></div>

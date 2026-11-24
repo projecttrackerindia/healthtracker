@@ -187,7 +187,32 @@ def today(days: int = 7, a: Admin = Depends(admin_me), db: Session = Depends(get
     lanes = board(a=a, db=db)["counts"]
     live = {k: sum(1 for s in stores if s.kind == k and s.verified and s.active) for k in ("lab", "pharmacy", "hospital")}
     audit = db.scalars(select(Audit).order_by(Audit.t.desc()).limit(5)).all()
+    # The overview row from the approved design: totals with what changed this week, in plain words.
+    from .models import User, SosAlert
+    from .compliance import _services, SERVICES
+    wk = t - 7 * 86400
+    fam_all = db.scalar(select(func.count(Household.id))) or 0
+    fam_new = db.scalar(select(func.count(Household.id)).where(Household.created > wk)) or 0
+    usr_all = db.scalar(select(func.count(User.id))) or 0
+    usr_new = db.scalar(select(func.count(User.id)).where(User.created > wk)) or 0
+    ver = sum(1 for s in stores if s.verified and s.active)
+    it = _ist(t)
+    t0 = t - (it.tm_hour * 3600 + it.tm_min * 60 + it.tm_sec)     # midnight in India
+    today_o = db.scalars(select(Order).where(Order.created > t0)).all()
+    today_done = [x for x in today_o if x.status in DONE]
+    ontime = round(100 * sum(1 for x in today_done if not late_by(x, x.done_at or t)) / len(today_done)) if today_done else None
+    sos = db.scalars(select(SosAlert).where(SosAlert.created > wk)).all()
+    sos_open = sum(1 for x in sos if x.active)
+    svc = _services(db)
+    svc_live = {"medicine": ("pharmacy", "pharmacy", "pharmacies"), "lab": ("lab", "lab", "labs"), "visits": ("hospital", "hospital", "hospitals")}
+    lv = lambda k: live.get(svc_live[k][0], 0)  # noqa: E731
+    services_ = [{"key": k, "name": SERVICES[k], "on": v["on"],
+                  "sub": (f"{lv(k)} {svc_live[k][1] if lv(k) == 1 else svc_live[k][2]} live" if k in svc_live else ("Live" if v["on"] else "Waiting for broker tie-up"))
+                  + (" · " + ", ".join(v["cities"][:3]) if v["cities"] else "")} for k, v in svc.items()]
+    overview = {"families": fam_all, "familiesNew": fam_new, "users": usr_all, "usersNew": usr_new, "verified": ver, "waiting": apps + sum(1 for s in stores if s.active and not s.verified),
+                "ordersToday": len(today_o), "ontime": ontime, "sos": len(sos), "sosOpen": sos_open, "approvals": apps, "services": services_}
     return {
+        "overview": overview,
         "greeting": ("Good morning" if _ist(t).tm_hour < 12 else "Good afternoon" if _ist(t).tm_hour < 17 else "Good evening"),
         "needs": needs,
         "kpi": [{"label": "Families active", "value": fam, "delta": None},
