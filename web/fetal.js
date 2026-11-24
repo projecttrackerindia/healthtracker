@@ -95,7 +95,11 @@ function create(THREE,gltf,rig,opt){
   ig.setAttribute('color',new THREE.BufferAttribute(col,3));
   const inner=new THREE.Mesh(ig,new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.48,clearcoat:.45,clearcoatRoughness:.35,side:THREE.BackSide,clippingPlanes:clip}));inner.frustumCulled=false;inner.userData.nopick=1;world.add(inner);
   const og=new THREE.SphereGeometry(1,112,84);og.scale(W.r[0]*1.11,W.r[1]*1.11,W.r[2]*1.11);og.translate(W.c[0],W.c[1],W.c[2]);
-  const outer=new THREE.Mesh(og,new THREE.MeshPhysicalMaterial({color:lin(0xD98D99),roughness:.6,clearcoat:.25,side:THREE.DoubleSide,clippingPlanes:clip}));outer.frustumCulled=false;outer.userData.nopick=1;world.add(outer)}
+  const outer=new THREE.Mesh(og,new THREE.MeshPhysicalMaterial({color:lin(0xD98D99),roughness:.6,clearcoat:.25,side:THREE.DoubleSide,clippingPlanes:clip}));outer.frustumCulled=false;outer.userData.nopick=1;world.add(outer);
+  /* glow look: the womb becomes a soft rose glass bubble with a glowing edge, so the baby floats in light */
+  if(opt.glow){const rim=(m,c,a0,k)=>{m.transparent=true;m.depthWrite=false;m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n float frz=pow(1.0-abs(dot(normalize(vViewPosition),normal)),1.6);\n totalEmissiveRadiance+=vec3('+c+')*frz*'+k+';\n diffuseColor.a='+a0+'+frz*0.75;')};m.customProgramCacheKey=()=>'wglow'+k;m.needsUpdate=true};
+   rim(outer.material,'1.0,0.55,0.68','0.03','1.4');outer.material.color=lin(0x5A2A3A);outer.renderOrder=5;
+   rim(inner.material,'1.0,0.45,0.6','0.30','0.6');inner.renderOrder=1}}
  if(rig&&rig.placenta&&!opt.bare){const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(b64(rig.placenta.p,Float32Array),3));pg.setIndex(new THREE.BufferAttribute(b64(rig.placenta.i,Uint16Array),1));pg.computeVertexNormals();
   const pm=new THREE.Mesh(pg,new THREE.MeshPhysicalMaterial({color:lin(0x7A2633),roughness:.36,clearcoat:.65,clearcoatRoughness:.3,side:THREE.DoubleSide,clippingPlanes:clip}));pm.frustumCulled=false;pm.name='Placenta';
   pm.userData={display_name:'Placenta',description:'The placenta grows on the wall of the womb. Through it, and the cord, the baby gets oxygen and food and gets rid of waste.'};world.add(pm)}
