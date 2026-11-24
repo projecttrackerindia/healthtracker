@@ -318,7 +318,7 @@ h1{font-weight:800!important;letter-spacing:-.035em!important}
    Big data-led headline with a pill, roomy 26 px cards, plain labels, and an empty pane fills its space. */
 @media (min-width:861px){
  .app{display:block!important;grid-template-columns:none!important}
- .app>aside{position:sticky!important;top:0;z-index:60;height:auto!important;min-height:0!important;width:auto!important;display:grid!important;grid-template-columns:minmax(max-content,1fr) auto minmax(0,1fr);align-items:center!important;gap:20px!important;padding:16px 32px!important;background:rgba(242,242,239,.92)!important;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border:0!important;overflow:visible!important}
+ .app>aside{position:sticky!important;top:0;z-index:45;height:auto!important;min-height:0!important;width:auto!important;display:grid!important;grid-template-columns:minmax(max-content,1fr) auto minmax(0,1fr);align-items:center!important;gap:20px!important;padding:16px 32px!important;background:rgba(242,242,239,.92)!important;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border:0!important;overflow:visible!important}
  .app>aside .logo,.app>aside .plg{white-space:nowrap;padding:0!important;margin:0!important;font-size:18px!important}
  .app>aside .logo .lt2,.app>aside .lt2{display:inline!important}
  .app>aside nav{flex:none;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:2px!important;margin:0 auto!important;padding:5px!important;background:#fff;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(20,24,40,.05);overflow-x:auto;max-width:calc(100vw - 480px);scrollbar-width:none}
@@ -371,6 +371,22 @@ th{font-family:inherit!important;text-transform:none!important;letter-spacing:0!
 /* list + detail pages use the whole height; an empty pane says so in the middle, not in a thin strip */
 #main>div:last-child>.tcard,#main>div:last-child>div[id]>.tcard,#main>.rxg>div>.tcard{min-height:calc(100vh - 290px);box-sizing:border-box}
 #main>div:last-child>.tcard>p.mute:only-child,#main>div:last-child>div[id]>.tcard>p.mute:only-child,#main>div:last-child>.tcard.mute:not(:has(*)){min-height:calc(100vh - 340px);display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px!important;margin:0;color:#6E6E73}
+
+/* every number card on every screen reads like the design's: label, big number, a short coloured note */
+.ob-k>div,.kpi,.tk,.tnum>.card{background:#fff!important;border:0!important;border-radius:26px!important;padding:20px 24px 18px!important;box-shadow:0 1px 2px rgba(0,0,0,.03)!important}
+.ob-k>div>b,.kpi>b,.tk>b,.tnum>.card>b{display:block!important;font-size:34px!important;font-weight:800!important;letter-spacing:-.03em!important;line-height:1.15!important;margin:4px 0 2px!important}
+.ob-k>div>span,.kpi>small,.tk>span,.tnum>.card>span{display:block;font:500 14.5px/1.35 inherit!important;font-family:inherit!important;letter-spacing:0!important;text-transform:none!important;color:#3A3A3C!important}
+.ob-k>div>b{order:2}.ob-k>div{display:flex!important;flex-direction:column}.ob-k>div>span{order:1}
+.kpi>span,.tk>i,.tnum>.card>small{display:block;font-size:14px!important;font-style:normal;margin-top:2px}
+.ob-k{gap:16px!important;margin:6px 0 20px!important}
+/* lists inside cards: roomy rows like the design's order and approval lists */
+.tcard table td,.card table td{padding:15px 12px!important;font-size:15px}
+.tcard table tr:hover td,.card table tr:hover td{background:#F7F7F4}
+.tcard h3,.card>h3{font-size:19px!important;font-weight:700!important;color:#111214!important;letter-spacing:-.01em}
+.pill{border-radius:999px!important}
+/* the headline on every screen: big, with a pill for the number that matters there */
+h1.gbsoft{font-size:clamp(36px,3.6vw,52px)!important;line-height:1.04!important;letter-spacing:-.045em!important;font-weight:800!important}
+h1.gbsoft .gbpill{font-size:.5em}
 @media (max-width:860px){.gbk{grid-template-columns:1fr 1fr!important;gap:12px}.gbk>div{padding:16px 18px}.gbk b{font-size:28px}.gbk i{font-size:13px}
  .gbc{padding:20px 18px;border-radius:26px}.gbc h2{font-size:21px}
  .gbr{flex-wrap:wrap;gap:10px 12px}.gbr .gtx{flex:1 1 calc(100% - 70px);min-width:0}.gbr .gdoc,.gtop .gbr .gdoc,.gbtop .gbr .gdoc{min-width:0!important;width:auto!important;flex:1 1 auto;order:3;padding-left:0}
@@ -715,7 +731,7 @@ VIEWS.quality=async()=>{const d=await api('/quality');
 let CV='lab';
 VIEWS.coverage=async()=>{const d=await api('/coverage?kind='+CV);const col={good:'#34C759',thin:'#FF9F0A',gap:'#FF3B30',none:'#E5E5EA'};
  main(head('Coverage','Where families live and order, compared with where we have live partners. Each square is one PIN code.',`<div class="seg" id="cvk">${[['lab','Lab tests'],['pharmacy','Medicines'],['hospital','Doctors']].map(([k,t])=>`<button class="${CV===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div>`)+
- `<div class="tg" style="grid-template-columns:1fr 380px"><div class="tcard"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px">${d.rows.map(x=>`<div title="${x.pin} · ${x.partners} partner(s) · ${x.orders} orders" style="border-radius:8px;padding:8px 6px;background:${col[x.state]}${x.state==='none'?'':'33'};border:1.5px solid ${col[x.state]};text-align:center"><b style="font-size:12.5px">${x.pin}</b><div class="mute" style="font-size:10.5px">${x.partners}p · ${x.orders}o</div></div>`).join('')||'<p class="mute">No PIN codes yet. They appear as partners list their home-visit areas and families order.</p>'}</div>
+ `<div class="tg" style="grid-template-columns:1fr 380px"><div class="tcard"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px">${d.rows.map(x=>`<div title="${x.pin} · ${x.partners} partner(s) · ${x.orders} orders" style="border-radius:8px;padding:8px 6px;background:${col[x.state]}${x.state==='none'?'':'33'};border:1.5px solid ${col[x.state]};text-align:center"><b style="font-size:12.5px">${x.pin}</b><div class="mute" style="font-size:10.5px">${x.partners}p · ${x.orders}o</div></div>`).join('')||'<p class="mute" style="grid-column:1/-1;font-size:15px;text-align:center;padding:60px 20px">No PIN codes yet. They appear as partners list their home-visit areas and families order.</p>'}</div>
  <div class="mute sm" style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap"><span><b style="color:#34C759">■</b> 2+ partners</span><span><b style="color:#FF9F0A">■</b> 1 partner</span><span><b style="color:#FF3B30">■</b> Orders, no partner</span><span>p = partners · o = orders in 30 days</span></div></div>
  <div style="display:flex;flex-direction:column;gap:14px"><div class="tcard"><h3>Recruit next</h3>${d.gaps.map(g=>`<div class="nr"><span class="pill r">${g.pin}</span><div style="flex:1"><b>${E(g.area||'PIN '+g.pin)}</b><small>${g.orders} orders · no partner</small></div></div>`).join('')||'<p class="mute sm">No gaps right now.</p>'}</div><div class="tcard"><h3>Summary</h3>${kv('PIN codes with a partner',d.summary.covered+' of '+d.summary.total)}${kv('Orders where we have no partner',String(d.summary.gapOrders))}</div></div></div>`);
  document.querySelectorAll('#cvk button').forEach(b=>b.onclick=()=>{CV=b.dataset.k;VIEWS.coverage()})};
@@ -1191,6 +1207,27 @@ VIEWS.team=async()=>{main(head('Team & audit','Who runs Urban Health. Owner: eve
 // ---------------------------------------------------------------- boot
 (async()=>{try{ME=await api('/me',{quiet:true});idleArm()}catch(e){ME=null}render()})();
 addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(v&&VIEWS[v]&&v!==VIEW){VIEW=v;render()}});
+
+/* Every screen's headline carries the one number that matters there, in the design's pill. Counted from what the
+   screen itself shows, so it is never a guess; when a screen has no single number, the title stays alone. */
+const GBN={board:m=>{const n=[...m.querySelectorAll('.lane h4,.alane h4')].reduce((a,h)=>a+(parseInt((h.textContent.match(/(\d+)\s*$/)||[])[1])||0),0);return[n,n===1?'on the board':'on the board']},
+ rx:m=>{const x=(m.textContent.match(/(\d+) waiting/)||[])[1];return x!=null&&[+x,'waiting']},
+ dispatch:m=>{const x=(m.textContent.match(/Unclaimed · (\d+)/)||[])[1];return x!=null&&[+x,'unclaimed']},
+ orders:m=>{const x=(m.textContent.match(/(\d+) orders?\b/)||[])[1];return x!=null&&[+x,+x===1?'order':'orders']},
+ pharmacies:m=>{const b=m.querySelector('.ob-k>div>b');return b&&[+b.textContent||0,'live']},labs:m=>GBN.pharmacies(m),hospitals:m=>GBN.pharmacies(m),
+ applications:m=>APF.status==='new'&&[m.querySelectorAll('tr[data-sel]').length,'new'],
+ partners:m=>{const n=m.querySelectorAll('table tr').length-1;return n>=0&&[n,'partners']},
+ meds:m=>{const i=m.querySelector('input[placeholder*="medicines"]'),x=i&&(i.placeholder.match(/(\d+) medicines/)||[])[1];return x!=null&&[+x,'medicines']},
+ packages:m=>{const n=m.querySelectorAll('table tr').length-1;return n>0&&[n,'tests']},
+ families:m=>{const x=(m.textContent.match(/SUPPORT QUEUE · (\d+)/i)||[])[1];return x!=null&&[+x,'in support']},
+ settlements:m=>{const x=(m.textContent.match(/(\d+) payouts? to make/)||[])[1];return x!=null&&[+x,'to pay']},
+ complaints:m=>{const n=m.querySelectorAll('[data-cm],[data-cid],.cmrow').length;return[n,'open']},
+ team:m=>{const t=m.querySelector('table');const n=t?t.querySelectorAll('tr').length-1:0;return n>0&&[n,n===1?'admin':'admins']},
+ approvals:m=>{const x=(m.textContent.match(/Waiting · (\d+)/)||[])[1];return x!=null&&[+x,'waiting']}};
+function gbHead(){const m=$('#main');if(!m)return;const h=m.querySelector('h1');if(!h||h.classList.contains('gbh1'))return;h.classList.add('gbsoft');
+ const f=GBN[VIEW];let r=null;try{r=f&&f(m)}catch(_){}let p=h.querySelector('.gbpill');if(!r){if(p)p.remove();return}
+ const t=`${Number(r[0]).toLocaleString('en-IN')} ${r[1]}`;if(!p){h.insertAdjacentHTML('beforeend',' <span class="gbpill"></span>');p=h.querySelector('.gbpill')}if(p.textContent!==t)p.textContent=t}
+new MutationObserver(()=>{clearTimeout(gbHead.k);gbHead.k=setTimeout(gbHead,120)}).observe(document.documentElement,{childList:true,subtree:true});
 </script>
 </body>
 </html>

@@ -386,10 +386,10 @@ h1{font-weight:800!important;letter-spacing:-.035em!important}
    Big data-led headline with a pill, roomy 26 px cards, plain labels, and an empty pane fills its space. */
 @media (min-width:861px){
  .app{display:block!important;grid-template-columns:none!important}
- .app>aside{position:sticky!important;top:0;z-index:60;height:auto!important;min-height:0!important;width:auto!important;display:grid!important;grid-template-columns:minmax(max-content,1fr) auto minmax(0,1fr);align-items:center!important;gap:20px!important;padding:16px 32px!important;background:rgba(242,242,239,.92)!important;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border:0!important;overflow:visible!important}
+ .app>aside{position:sticky!important;top:0;z-index:45;height:auto!important;min-height:0!important;width:auto!important;display:grid!important;grid-template-columns:minmax(max-content,1fr) auto minmax(0,1fr);align-items:center!important;gap:20px!important;padding:16px 32px!important;background:rgba(242,242,239,.92)!important;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border:0!important;overflow:visible!important}
  .app>aside .logo,.app>aside .plg{white-space:nowrap;padding:0!important;margin:0!important;font-size:18px!important}
  .app>aside .logo .lt2,.app>aside .lt2{display:inline!important}
- .app>aside nav{flex:none;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:2px!important;margin:0 auto!important;padding:5px!important;background:#fff;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(20,24,40,.05);overflow-x:auto;max-width:calc(100vw - 480px);scrollbar-width:none}
+ .app>aside nav{flex:none;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:2px!important;margin:0 auto!important;padding:5px!important;background:#fff;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(20,24,40,.05);overflow-x:auto;max-width:calc(100vw - 340px);scrollbar-width:none}
  .app>aside nav::-webkit-scrollbar{display:none}
  .app>aside nav .navh{display:none!important}
  .app>aside nav button{flex:none!important;min-height:44px!important;height:44px!important;width:auto!important;padding:0 clamp(12px,1.3vw,20px)!important;margin:0!important;border-radius:999px!important;font-size:15.5px!important;font-weight:500!important;color:#3A3A3C!important;background:none!important;box-shadow:none!important;gap:6px!important;flex-direction:row!important;justify-content:center!important}
@@ -437,11 +437,27 @@ th{font-family:inherit!important;text-transform:none!important;letter-spacing:0!
 .gbtop~.tnum:not(.ph){display:none!important}.gbtop~.tnum.ph>.card:nth-child(-n+2){display:none!important}.gbtop~.tnum.ph{grid-template-columns:1fr 1fr!important}
 .gbtop .gbr .gdoc{padding-left:0;min-width:128px!important;width:128px}
 .gbtop .gbr>b{width:78px}.gbtop .gbr .gbb{min-width:132px}
-@media (min-width:861px) and (max-width:1480px){.app>aside .me .mt{display:none!important}}
+@media (min-width:861px) and (max-width:1480px){.app>aside .me .mt{display:none!important}.app>aside nav button{font-size:14.5px!important;padding:0 12px!important}.app>aside .plg{font-size:16px!important}}
 .app>aside .me{background:rgba(11,138,124,.09)!important}
 @media (max-width:980px){.gbtop{grid-template-columns:1fr}}
 /* list + detail pages use the whole height; an empty pane says so in the middle */
 #main>div[id]>.empty:only-child,#main>div[id]>.card>.empty:only-child{min-height:calc(100vh - 320px);display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px;color:#6E6E73}
+
+/* every number card on every screen reads like the design's: label, big number, a short coloured note */
+.ob-k>div,.kpi,.tk,.tnum>.card{background:#fff!important;border:0!important;border-radius:26px!important;padding:20px 24px 18px!important;box-shadow:0 1px 2px rgba(0,0,0,.03)!important}
+.ob-k>div>b,.kpi>b,.tk>b,.tnum>.card>b{display:block!important;font-size:34px!important;font-weight:800!important;letter-spacing:-.03em!important;line-height:1.15!important;margin:4px 0 2px!important}
+.ob-k>div>span,.kpi>small,.tk>span,.tnum>.card>span{display:block;font:500 14.5px/1.35 inherit!important;font-family:inherit!important;letter-spacing:0!important;text-transform:none!important;color:#3A3A3C!important}
+.ob-k>div>b{order:2}.ob-k>div{display:flex!important;flex-direction:column}.ob-k>div>span{order:1}
+.kpi>span,.tk>i,.tnum>.card>small{display:block;font-size:14px!important;font-style:normal;margin-top:2px}
+.ob-k{gap:16px!important;margin:6px 0 20px!important}
+/* lists inside cards: roomy rows like the design's order and approval lists */
+.tcard table td,.card table td{padding:15px 12px!important;font-size:15px}
+.tcard table tr:hover td,.card table tr:hover td{background:#F7F7F4}
+.tcard h3,.card>h3{font-size:19px!important;font-weight:700!important;color:#111214!important;letter-spacing:-.01em}
+.pill{border-radius:999px!important}
+/* the headline on every screen: big, with a pill for the number that matters there */
+h1.gbsoft{font-size:clamp(36px,3.6vw,52px)!important;line-height:1.04!important;letter-spacing:-.045em!important;font-weight:800!important}
+h1.gbsoft .gbpill{font-size:.5em}
 @media (max-width:860px){.gbk{grid-template-columns:1fr 1fr!important;gap:12px}.gbk>div{padding:16px 18px}.gbk b{font-size:28px}.gbk i{font-size:13px}
  .gbc{padding:20px 18px;border-radius:26px}.gbc h2{font-size:21px}
  .gbr{flex-wrap:wrap;gap:10px 12px}.gbr .gtx{flex:1 1 calc(100% - 70px);min-width:0}.gbr .gdoc,.gtop .gbr .gdoc,.gbtop .gbr .gdoc{min-width:0!important;width:auto!important;flex:1 1 auto;order:3;padding-left:0}
@@ -583,7 +599,7 @@ function gbTop(all,isLab){const t0=new Date();t0.setHours(0,0,0,0);const T0=t0/1
  return`<div class="gbtop"><div><h1 class="gbh1">${hl}</h1><div class="gbk"><div><span>New</span><b>${n}</b><i class="${n?'w':'m'}">${n?'accept within 3 min':'nothing to accept'}</i></div><div><span>${isLab?'In progress':'Packing'}</span><b>${work.length}</b><i class="m">in progress</i></div><div><span>${isLab?'Done':'Delivered'}</span><b>${done.length}</b><i class="m">today</i></div><div><span>Earnings</span><b>${money(earn)}</b><i class="m">today, cash + online</i></div></div></div>
  <section class="gbc"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h2>${isLab?'Bookings':'Orders'}</h2><span class="mute" style="font-size:14.5px">Oldest first</span></div>
  ${rows.length?rows.map(o=>`<div class="gbr"><span class="gbdot" style="background:${dot(o)}"></span><div class="gtx"><b>#${E(String(o.id).slice(-6).toUpperCase())} · ${E(who(o))}</b><small>${E((o.items||[]).slice(0,3).map(i=>i.name+(i.qty>1?' × '+i.qty:'')).join(', '))}${(o.items||[]).length>3?' …':''}</small></div><span class="gdoc" style="min-width:110px">${E(lab(o))}</span><b style="font-size:17px;min-width:64px;text-align:right">${money(o.total||0)}</b>${act(o)}</div>`).join('')
-  :`<div class="empty" style="min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px">Nothing open. New ${noun} ring here and wait 3 minutes for you before going to the next ${isLab?'lab':'pharmacy'}.</div>`}</section></div>`}
+  :`<div class="empty" style="min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px">Nothing open. New ${noun} ring here and wait 3 minutes for you before going to the next ${isLab?'lab':ME.store.kind==='hospital'?'hospital':'pharmacy'}.</div>`}</section></div>`}
 async function phToday(r){const all=r.orders||[],t0=new Date();t0.setHours(0,0,0,0);const T0=t0/1000,W0=T0-7*86400,now=Date.now()/1000;
  const todays=all.filter(o=>o.created>=T0),lastWk=all.filter(o=>o.created>=W0&&o.created<W0+Math.max(60,now-T0)).length,done=todays.filter(o=>/delivered/.test(o.status)),ret=todays.filter(o=>/return/.test(o.status));
  const fresh=all.filter(o=>o.status==='placed'),pack=all.filter(o=>o.status==='checking'||(o.status==='packing'&&!o.pack)).sort((a,b)=>a.created-b.created),ready=all.filter(o=>o.status==='packed'||(o.status==='packing'&&o.pack)).slice(0,3);
@@ -1674,6 +1690,19 @@ function packOrder(o){if(!o)return;const d=document.createElement('div');d.id='p
 try{RINGON=localStorage.getItem('uh-ring')==='1'}catch(_){}
 document.addEventListener('pointerdown',()=>{try{ACTX=ACTX||new (window.AudioContext||window.webkitAudioContext)();ACTX.resume()}catch(_){}},{once:true});
 setInterval(()=>{if(ME&&!document.getElementById('incm'))pollIncoming()},15000);setTimeout(()=>{if(ME)pollIncoming()},2500);
+
+/* Every screen's headline carries the one number that matters there, in the design's pill (counted from the screen). */
+const GBN={appts:m=>{const n=(m.textContent.match(/Asked for/g)||[]).length;return[n,n===1?'request':'requests']},
+ queue:m=>{const x=(m.textContent.match(/Waiting\s*(\d+)/)||[])[1];return x!=null&&[+x,'waiting']},
+ consults:m=>{const n=m.querySelectorAll('[data-join],[data-call]').length;return[n,'today']},
+ orders:m=>{const n=m.querySelectorAll('[data-oid],[data-o],tr[data-id]').length;return n&&[n,'open']},
+ stock:m=>{const x=(m.textContent.match(/(\d+) running low/i)||[])[1];return x!=null&&[+x,'running low']},
+ reports:m=>{const t=m.querySelector('table');const n=t?[...t.querySelectorAll('tr')].filter(r=>r.querySelectorAll('td').length>1).length:0;return[n,'to upload']},
+ blood:m=>{const n=m.querySelectorAll('[data-req],.breq').length;return[n,'open']}};
+function gbHead(){const m=$('#main');if(!m)return;const h=m.querySelector('h1');if(!h||h.classList.contains('gbh1'))return;h.classList.add('gbsoft');
+ const f=GBN[view];let r=null;try{r=f&&f(m)}catch(_){}let p=h.querySelector('.gbpill');if(!r){if(p)p.remove();return}
+ const t=`${Number(r[0]).toLocaleString('en-IN')} ${r[1]}`;if(!p){h.insertAdjacentHTML('beforeend',' <span class="gbpill"></span>');p=h.querySelector('.gbpill')}if(p.textContent!==t)p.textContent=t}
+new MutationObserver(()=>{clearTimeout(gbHead.k);gbHead.k=setTimeout(gbHead,120)}).observe(document.documentElement,{childList:true,subtree:true});
 </script>
 </body>
 </html>
