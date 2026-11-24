@@ -31,18 +31,18 @@
 
   /* ---------------------------------------------------------------- styles (injected once) */
   const css = `
-.ubody{position:relative;overflow:hidden;color:#1D1D1F;background:radial-gradient(120% 70% at 50% 0%,#E8EEFF,#F5F5F7 72%);font-family:inherit}
-.ubody .ufx-logo{color:#1D1D1F}.ubody .ufx-logo svg{color:#2F5BFF}
+.ubody{position:relative;overflow:hidden;color:#F2F2EF;background:radial-gradient(70% 55% at 50% 40%,#173A52 0%,#0C1F2E 55%,#07121B 100%);font-family:inherit}.ubody:after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:radial-gradient(1.5px 1.5px at 12% 22%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 78% 31%,#8FE3FF 50%,transparent 51%),radial-gradient(1.2px 1.2px at 64% 72%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 28% 66%,#8FE3FF 50%,transparent 51%),radial-gradient(1.4px 1.4px at 88% 84%,#8FE3FF 50%,transparent 51%)}
+.ubody .ufx-logo{color:#F2F2EF;z-index:2}.ubody .ufx-logo svg{color:#8FE3FF}
 .ub-fig{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;justify-content:center;pointer-events:none}
-.ub-fig img{height:112%;width:auto;margin-top:max(64px,9%);opacity:.97}
-.ub-c{position:absolute;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.06);font-size:13px;line-height:1.3}
-.ub-c b{display:block;font-weight:600}.ub-c i{font-style:normal;color:#1A7F37}
-.ub-c.l{left:9%;top:40%}.ub-c.r{right:9%;top:52%}
-.ubody .ufx-copy{background:linear-gradient(180deg,transparent,rgba(245,245,247,.92) 34%,#F5F5F7);color:#1D1D1F}
-.ubody .ufx-copy p{color:#6E6E73;opacity:1}
-.ubody .ufx-copy h2{color:#1D1D1F}
-.ubody .ufx-apps a,.ubody .ufx-dl{background:#1D1D1F!important;color:#fff!important}
-.ubody .ufx-ios{color:#6E6E73!important}
+.ub-fig img{height:112%;width:auto;margin-top:max(64px,9%)}
+.ub-c{position:absolute;padding:8px 12px;border-radius:14px;background:rgba(12,30,44,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 0 1px rgba(143,227,255,.2);font-size:13px;line-height:1.3;color:#F2F2EF}
+.ub-c b{display:block;font-weight:600}.ub-c i{font-style:normal;color:#7BE3A6}
+.ub-c.l{left:5%;top:40%}.ub-c.r{right:5%;top:52%}
+.ubody .ufx-copy{background:linear-gradient(180deg,transparent,rgba(7,18,27,.9) 34%,#07121B);color:#F2F2EF;z-index:2}
+.ubody .ufx-copy p{color:#AEB8C2;opacity:1}
+.ubody .ufx-copy h2{color:#fff}
+.ubody .ufx-apps a,.ubody .ufx-dl{background:#fff!important;color:#111214!important}
+.ubody .ufx-ios{color:#AEB8C2!important}
 .ufx{position:relative;overflow:hidden;color:#F5F5F7;background:#000;isolation:isolate;font-family:inherit}
 .ufx::before{content:"";position:absolute;inset:-20%;z-index:-1;background:radial-gradient(42% 38% at 50% 44%,var(--ufx-a) 0%,transparent 70%),radial-gradient(40% 40% at 70% 70%,var(--ufx-b) 0%,transparent 72%);opacity:.55;animation:ufxBreath 9s ease-in-out infinite}
 .ufx.user{--ufx-a:rgba(47,91,255,.55);--ufx-b:rgba(19,181,163,.28)}
@@ -222,7 +222,7 @@
     host.classList.remove('ufx', 'user', 'partner');
     host.classList.add('ubody');
     host.innerHTML = `<a class="ufx-logo" href="/">${MARK}Urban Health</a>` +
-      `<div class="ub-fig"><img src="/brand/auth-body3.webp" alt="" width="632" height="1027" decoding="async">` +
+      `<div class="ub-fig"><img src="/brand/auth-body4.webp" alt="" width="565" height="1027" decoding="async">` +
       `<span class="ub-c l"><b>Heart</b><i>LDL 98 · good</i></span><span class="ub-c r"><b>Liver</b><i>ALT 28 · good</i></span></div>` +
       `<div class="ufx-copy"><h2>Your family's health,<br>on one body.</h2><p>Reports, medicines and doctors for everyone you look after.</p>${apps('user')}</div>`;
   }
