@@ -472,7 +472,13 @@ def test_app_downloads_and_fitbit_off_by_default():
 def test_shop_package_order_upi_and_cod(monkeypatch):
     _upi_on(monkeypatch)
     f, a = family(), admin()
-    # the hospital bag is sold on /hospital-bag now: the old in-app package is off sale until the team lists it again
+    # the hospital bag is sold on /hospital-bag now: the old in-app package is off sale until the team lists it again.
+    # The test database is shared, and test_razorpay lists the package to pay for it, so put it back off sale first.
+    from api.models import ShopProduct
+    from api.shop import ensure_shop
+    with DB.session() as db:
+        ensure_shop(db)
+        db.get(ShopProduct, "bag-complete").active = False
     assert all(x["sku"] != "bag-complete" for x in f.get("/api/v1/shop/products").json()["products"])
     assert a.put("/api/admin/products/bag-complete", json={"sku": "bag-complete", "name": "Hospital Bag · Complete", "price": 2999, "mrp": 3999, "stock": 20,
                                                           "sizes": ["S", "M", "L"], "includes": [{"group": "Mother", "name": "Nighties", "qty": 3}]}).status_code == 200
