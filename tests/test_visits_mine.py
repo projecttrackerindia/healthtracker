@@ -29,7 +29,7 @@ def test_until_hospitals_are_live_nothing_leads_to_a_dead_end():
     assert "const vzOff=()=>!!(SVC&&SVC.visits===false);" in UH
     assert "vzOff()?`noteVisit(" in _fn("vzReasons") and "vzOff()?`noteVisit(" in _fn("vzDueCards")
     s = _fn("vzSoon")
-    assert "Note a visit" in s and "You still get reminders." in s and "Tell me when live" not in s  # no promise the server cannot keep
+    assert "Note a visit" in s and "You still get reminders." in s and "vzNotify()" in s  # "Tell me when live" is backed by the server waiting list (r152)
     assert "writer(p)&&!hist&&!vzOff()" in _fn("visitsBlock")
 
 

@@ -377,7 +377,7 @@ def area_wait(body: WaitIn, request: Request, db: Session = Depends(get_db, scop
     u = _user(request, db)
     if not re.fullmatch(r"[1-9]\d{5}", body.pin or ""):
         raise HTTPException(400, "PIN code is 6 digits.")
-    kind = body.kind if body.kind in ("lab", "pharmacy") else "lab"
+    kind = body.kind if body.kind in ("lab", "pharmacy", "hospital") else "lab"
     if not db.scalar(select(AreaWait).where(AreaWait.pin == body.pin, AreaWait.kind == kind, AreaWait.household_id == u.household_id, AreaWait.notified == 0)):
         db.add(AreaWait(pin=body.pin, kind=kind, household_id=u.household_id))
     return {"ok": True}
@@ -390,7 +390,7 @@ def notify_area(db: Session, s: Store) -> int:
     n = 0
     for w in db.scalars(select(AreaWait).where(AreaWait.pin.in_(pins), AreaWait.kind == s.kind, AreaWait.notified == 0)).all():
         notify(db, w.household_id, "area", f"{s.name} now comes to {w.pin}",
-               "Home sample collection is now available in your area." if s.kind == "lab" else "Medicine delivery is now available in your area.", {"store": s.id})
+               {"lab": "Home sample collection is now available in your area.", "hospital": "Hospital visits with live tokens are now available in your area."}.get(s.kind, "Medicine delivery is now available in your area."), {"store": s.id})
         w.notified = now()
         n += 1
     return n
