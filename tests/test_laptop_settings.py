@@ -112,3 +112,20 @@ def test_first_run_and_ask_panel_on_laptop():
     body = H[i:H.index("async function finishOnboarding(", i)]
     assert "Start with" in body and "Coming soon" in body and "Skip for now" in body
     assert "modal glass${W?' aiw':''}" in H and "Tap and speak, in any of these languages" in H
+
+
+def test_body_viewer_laptop_panel_follows_the_board():
+    B = (Path(__file__).resolve().parent.parent / "web" / "body.html").read_text()
+    assert "if(innerWidth>=980&&!KID)return sheet(bodyWide(L));" in B
+    i = B.index("function bodyWide(")
+    body = B[i:B.index("/* Body map summary", i)]
+    for t in ("in range", "to watch", "Needs a look", "In range", "Book a recheck", "Not a diagnosis"):
+        assert t in body, t
+    assert "exFitBox(b,.62)" in B
+    O = (Path(__file__).resolve().parent.parent / "web" / "organs2.js").read_text()
+    assert "!c.querySelector('.bwt')" in O
+
+
+def test_laptop_sign_in_has_steps_and_languages():
+    assert "New accounts take about two minutes" in H and "class=\"alang\"" in H
+    assert "#layer .page.auth .pin.aflow{background:transparent!important}" in H
