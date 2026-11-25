@@ -137,7 +137,8 @@ async def walk(p, base: str, engine: str, device: str, dev: str) -> None:
     # Settings through the avatar menu, the way people open it
     await tap(pg, "document.querySelector('#who').click()")
     await pg.wait_for_timeout(700)
-    await tap(pg, "[...document.querySelectorAll('.dd .ddr')].find(b=>b.textContent.includes('Profile')).click()")
+    await check(pg, dev, "01b-family")   # the avatar opens the Family page (design "Family and profile", 25 Nov)
+    await tap(pg, "[...document.querySelectorAll('#layer .page .fmr')].find(b=>b.textContent.includes('Profile')).click()")
     await check(pg, dev, "02-settings")
     for name, step in (("Medical ID", "03-medical-id"), ("Emergency contacts", "05-contacts"), ("Language", "07-language")):
         await tap(pg, ROW % name)
