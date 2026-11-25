@@ -1240,6 +1240,8 @@ body.gbhome #gl,body.gbhome #labels,body.gbhome #lines,body.gbhome #herobg,body.
 .gbsc .s{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7BE39A}.gbsc .s::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}.gbsc.w .s{color:#FFC457}
 .gbsp{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.28);pointer-events:none}.gbsp.w{background:#FFC457;box-shadow:0 0 0 5px rgba(255,196,87,.35)}
 .gbsr{position:absolute;right:12px;top:12px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .500px rgba(255,255,255,.24)}
+/* On a phone the booking bar sat under the tab bar, so "Choose a time" could not be seen until the page was scrolled */
+@media (max-width:979px){#embed .lbar,#embed .mkbar,#embed .ckbar{bottom:calc(100px + env(safe-area-inset-bottom))!important}#embed{padding-bottom:110px}#top.gbh .ttl .eyebrow{max-width:calc(100vw - 196px)}}
 /* Lab · My reports (design "Lab") */
 .lbrd{padding:14px 16px!important;border-radius:26px;margin-bottom:10px;display:block}.lbrd small{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.06em;color:#4A48C8}.lbrd>b{display:block;font-size:14.5px;line-height:1.4;font-weight:600;margin-top:4px}.lbrd>span{display:block;font-size:12px;line-height:1.4;color:#5C5E66;margin-top:2px}
 .lbrd>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 -8px}.lbrd>div:has(.pri){margin:8px 0 0}.lbrd button{min-height:44px;font-size:13px;font-weight:700;color:#1E46E0;padding:0}.lbrd button.pri{padding:0 18px;border-radius:999px;background:var(--blue,#2F5BFF);color:#fff;font-size:14px}
@@ -1778,6 +1780,7 @@ function gbHead(p){try{if(!p||!can(p,'summary')||preg(p)||firstRun(p)||isKid(p))
 /* the same headline on the other tabs, each from that tab's own data */
 function gbTab(p){const t=S.tab,pill=k=>`<span class="gbp" aria-hidden="true">${GBI[k]}</span>`,num=x=>`<span class="gbp tx">${x}</span>`,H=(a,b)=>`<h2 class="gbt">${a} <br>${b}</h2>`;
  try{if(!p||firstRun(p))return'';const own=p.self?'Your':esc(firstName(p)||nameOf(p))+'’s';
+  if(t==='records'&&S.sub==='bk'&&writer(p)){const n=(typeof LAB!=='undefined'&&LAB.codes?LAB.codes.size:0);return n?H(num(n)+' test'+(n>1?'s':'')+' chosen,','collected at your door'):H('Choose your tests '+pill('add'),'collected at your door')}
   if(t==='records'){if(!can(p,'summary'))return'';const fs=findings(p.id),bad=fs.filter(f=>f.flag&&f.flag!=='normal');
    return!fs.length?(writer(p)?H('Add a report '+pill('add'),'to get started'):''):bad.length?H(bad.length+' result'+(bad.length>1?'s':'')+' '+pill('re'),'to recheck'):(n=>H(own+' '+num(n)+' report'+(n===1?'':'s'),n===1?'is in range':'are all in range'))((REC[p.id]||[]).filter(r=>r.kind==='report').length||1)}
   if(t==='meds'){if(!can(p,'all'))return'';const plan=dosePlan(p.id),N=plan.length,n=plan.filter(x=>x.done&&!x.done.skipped).length;
@@ -1874,7 +1877,7 @@ function eyebrowOf(p){const t=S.tab,plan=can(p,'all')?dosePlan(p.id):[];
  if(t==='summary'&&p.self&&!isKid(p)){const h=new Date().getHours();if(firstRun(p))return'WELCOME, '+esc((firstName(p)||'').toUpperCase());return(h<12?'GOOD MORNING':h<17?'GOOD AFTERNOON':'GOOD EVENING')+', '+esc((firstName(p)||'').toUpperCase())}
  if(t==='summary')return isKid(p)?ageWords(p).toUpperCase():new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
  if(t==='meds')return'MEDICINE';
- return({records:'LAB',cover:'INSURANCE',visits:'VISITS',family:'FAMILY'})[t]||''}
+ return({records:S.sub==='bk'?'LAB · HOME COLLECTION':'LAB',cover:'INSURANCE',visits:'VISITS',family:'FAMILY'})[t]||''}
 function whoDot(p){if(!can(p,'all'))return'#C7C7CC';const hm=(d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'))(new Date());const late=ME.people.some(q=>q.access==='guardian'&&REC[q.id]&&dosePlan(q.id).some(x=>!x.done&&x.t<hm));return late?'#FF9500':'#30D158'}
 /* SOS step 1 (approved design): a 5-second countdown to cancel a mistaken press. Nothing is sent until it ends,
    then family alerts go out by themselves; 108 is one slide away on the next screen (a web app cannot dial on its own). */
@@ -3671,7 +3674,7 @@ function labPage(sug){const p=P(),q=(($('#lsq')||{}).value||'').toLowerCase(),f=
  const fs=findings(p.id),why=c=>{const x=fs.find(y=>y.flag&&y.flag!=='normal'&&PKG[y.code]===c);return x?`${plainTest(x.test)} was ${x.flag==='low'?'low':'high'}`:''};
  const ORGC={heart:['#FFF0F2','#FF375F'],liver:['#FFF6E5','#FF9F0A'],pancreas:['#EAF7EE','#34C759'],kidney:['#EEF0FF','#5E5CE6'],thyroid:['#EEF2FF','#2F5BFF'],blood:['#FDECEA','#FF3B30']};
  const tIc=t=>{const o=(fs.find(y=>PKG[y.code]===t.code)||{}).org||nameOrg(t.name)||'',c=ORGC[o]||['#F2F2EF','#8E8E93'];return`<span class="ti" style="background:${c[0]}">${ic(o==='heart'?I.heart:o==='pancreas'?'<path d="M4 18l5-6 4 3 7-9"/>':o==='liver'?'<path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/>':'<path d="M9.5 3h5M10.5 3v6L5 19.5A1 1 0 0 0 6 21h12a1 1 0 0 0 .9-1.5L13.5 9V3"/>',c[1],19)}</span>`};
- const row=(t,ico)=>`<button class="li ltr" onclick="labToggle('${t.code}')">${ico?tIc(t):''}<div style="flex:1;min-width:0;text-align:left"><div style="font-weight:600">${esc(t.name)}</div><div class="sub">${[why(t.code),t.fasting?'fasting 10–12 h':'no fasting',t.tat+' h'].filter(Boolean).join(' · ')}</div></div><div class="lpr"><b>${money(t.typical)}</b><span class="radio tick ${LAB.codes.has(t.code)?'on':''}"></span></div></button>`;
+ const row=(t,ico)=>`<button class="li ltr" onclick="labToggle('${t.code}')">${ico?tIc(t):''}<div style="flex:1;min-width:0;text-align:left"><div style="font-weight:600">${esc(t.name)}</div><div class="sub">${[why(t.code),t.fasting?'Fasting 10–12 h':'No fasting','report in '+t.tat+' h'].filter(Boolean).join(' · ')}</div></div><div class="lpr"><b>${money(t.typical)}</b><span class="radio tick ${LAB.codes.has(t.code)?'on':''}"></span></div></button>`;
  const due=sug.map(pick).filter(Boolean),base=LAB.all.filter(t=>(!q||t.name.toLowerCase().includes(q))&&(f!=='fast'||t.fasting)&&(f!=='pkg'||/profile|package|panel|check/i.test(t.name))&&!(f==='due'&&!sug.includes(t.code)));
  const rest=base.filter(t=>!sug.includes(t.code)||q).slice(0,q?40:f==='all'?400:16),sel=LAB.all.filter(t=>LAB.codes.has(t.code)),tot=sel.reduce((n,t)=>n+(+t.typical||0),0);
  const ch=(k,l)=>`<button class="chip ${f===k?'on':''}" onclick="LAB.f='${k}';labPage(${JSON.stringify(sug).replace(/"/g,"'")})">${l}</button>`;
@@ -3682,7 +3685,7 @@ function labPage(sug){const p=P(),q=(($('#lsq')||{}).value||'').toLowerCase(),f=
  <div id="lnear"></div>
  ${f!=='due'&&(q||f||!due.length)?`<div class="sect">${q?'RESULTS':f==='pkg'?'PACKAGES':f==='fast'?'FASTING TESTS':f==='all'?'ALL TESTS':'TESTS'}</div><div class="list">${rest.map(t=>row(t,0)).join('')||'<div class="li"><div class="sub">No test matches. Try another word.</div></div>'}</div>`:`<button class="lnkb" style="margin:14px auto 0" onclick="LAB.f='all';labPage(${JSON.stringify(sug).replace(/"/g,"'")})">Browse all ${LAB.all.length} tests</button>`}
  <div style="height:96px"></div>
- <div class="lbar glass"><div style="flex:1;min-width:0"><b id="lbt">${sel.length?sel.length+' test'+(sel.length>1?'s':'')+' · '+money(tot):'Choose tests'}</b><small id="lbs">Home collection</small></div><button class="btn pri" id="lbgo" onclick="labGo()" ${LAB.codes.size?'':'disabled'}>Choose a time</button></div>`,'LAB');labNear()}
+ <div class="lbar glass"><div style="flex:1;min-width:0"><b id="lbt">${sel.length?sel.length+' test'+(sel.length>1?'s':'')+' · '+money(tot):'Choose tests'}</b><small id="lbs">Home collection${sel.some(t=>t.fasting)?' · fasting needed':''}</small></div><button class="btn pri" id="lbgo" onclick="labGo()" ${LAB.codes.size?'':'disabled'}>Choose a time</button></div>`,'LAB');labNear()}
 /* labs near you for the chosen tests, on the same page (board 1); the cheapest good one is pre-chosen */
 async function labNear(){const el=$('#lnear');if(!el||!LAB.codes.size){LAB.near=null;return}const key=[...LAB.codes].sort().join(',');
  if(!LAB.nq||LAB.nq.key!==key){try{const q=await API('/api/v1/labs/quotes',{key:true,json:{tests:[...LAB.codes],home:true,...(LAB.loc||{})}});LAB.nq={key,q}}catch(_){LAB.nq={key,q:{labs:[]}}}}
@@ -3692,7 +3695,7 @@ async function labNear(){const el=$('#lnear');if(!el||!LAB.codes.size){LAB.near=
  el2.innerHTML=`<div class="sect">LABS NEAR YOU · SAME TESTS</div><div class="list">${labs.map(l=>`<button class="li ltr" onclick="LAB.lab=LAB.nq.q.labs.find(x=>x.id==='${l.id}');labNear()"><div style="flex:1;min-width:0;text-align:left"><div style="font-weight:600">${esc(l.name)}</div><div class="sub">${[l.rating?l.rating+' ★':'',(l.tags||[]).includes('NABL')?'NABL':'',l.slots&&l.slots[0]?esc(l.slots[0]):'report in ~'+l.tatHours+' h'].filter(Boolean).join(' · ')}</div></div><div class="lpr"><b>${money(l.total)}</b><span class="radio ${LAB.lab&&LAB.lab.id===l.id?'on':''}"></span></div></button>`).join('')}</div>`;
  const t=$('#lbt'),sm=$('#lbs');if(t)t.textContent=LAB.codes.size+' test'+(LAB.codes.size>1?'s':'')+' · '+money(LAB.lab.total).replace(/<[^>]*>/g,'');if(sm)sm.textContent=LAB.lab.fee?'Home visit '+money(LAB.lab.fee).replace(/<[^>]*>/g,''):'Home collection free'}
 function labGo(){if(LAB.lab&&LAB.quote&&LAB.quote.labs.some(l=>l.id===LAB.lab.id))labPick(LAB.lab.id);else labQuotes()}
-function labToggle(c){LAB.codes.has(c)?LAB.codes.delete(c):LAB.codes.add(c);const sug=[...new Set(findings(P().id).filter(f=>f.flag&&f.flag!=='normal').map(f=>PKG[f.code]).filter(Boolean))];const y=$('.page')?$('.page').scrollTop:0;labPage(sug);if($('.page'))$('.page').scrollTop=y}
+function labToggle(c){LAB.codes.has(c)?LAB.codes.delete(c):LAB.codes.add(c);const sug=[...new Set(findings(P().id).filter(f=>f.flag&&f.flag!=='normal').map(f=>PKG[f.code]).filter(Boolean))];const y=$('.page')?$('.page').scrollTop:0;labPage(sug);if($('.page'))$('.page').scrollTop=y;try{if(S.tab==='records'&&S.sub==='bk')renderTop()}catch(_){}}
 async function labQuotes(){if(!LAB.loc)LAB.loc=await new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),()=>res(null),{timeout:6000,maximumAge:600000})});
  try{LAB.quote=await API('/api/v1/labs/quotes',{key:true,json:{tests:[...LAB.codes],home:true,...(LAB.loc||{})}})}catch(e){return toast(e.message)}
  const labs=(LAB.quote.labs||[]).filter(l=>l.lines.length);
@@ -4848,7 +4851,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r142';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r143';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};

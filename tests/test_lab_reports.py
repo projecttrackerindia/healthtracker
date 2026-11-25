@@ -41,3 +41,16 @@ def test_laptop_rail_carries_the_cards_once():
     assert "rail?'':labRead(p)+labOnBody(p)" in body
     rail = _fn("railHTML")
     assert "${labRead(p)}${labOnBody(p)}" in rail and "Book a blood test" in rail
+
+
+def test_book_a_test_headline_counts_chosen_tests():
+    tab = _fn("gbTab")
+    assert "S.sub==='bk'&&writer(p)" in tab and "chosen,','collected at your door'" in tab
+    assert "records:S.sub==='bk'?'LAB · HOME COLLECTION':'LAB'" in UH
+    assert "if(S.tab==='records'&&S.sub==='bk')renderTop()" in _fn("labToggle")
+    page = _fn("labPage")
+    assert "'report in '+t.tat+' h'" in page and "' · fasting needed'" in page
+
+
+def test_booking_bar_clears_the_tab_bar_on_a_phone():
+    assert "@media (max-width:979px){#embed .lbar,#embed .mkbar,#embed .ckbar{bottom:calc(100px + env(safe-area-inset-bottom))!important}" in UH
