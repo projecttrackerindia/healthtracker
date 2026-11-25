@@ -6,7 +6,7 @@ H = (Path(__file__).resolve().parent.parent / "web" / "uh.html").read_text()
 
 
 def test_settings_and_privacy_open_in_the_frame():
-    assert "const PFRAME=['Settings','Privacy and your rights']" in H
+    assert "const PFRAME=['Settings','Privacy and your rights'," in H
     assert "PFRAME.includes(title)?' pfr'" in H
     assert ".page.pfr>.pbar{display:none!important}" in H
 
@@ -31,3 +31,27 @@ def test_privacy_board_columns():
               "Your rights", "Questions or complaints", "Digital Personal Data Protection Act"):
         assert t in body, t
     assert "permToggle('${k}',${!ok})" in body
+
+
+def test_notifications_needs_you_panel():
+    i = H.index("function needsList(")
+    body = H[i:H.index("function medIdWide(", i)]
+    for t in ("Overdue", "Window closes week", "Running low", "Routine", "Later", "Done",
+              "How this list is ordered", "You only see what each person shares with you"):
+        assert t in body, t
+    assert "${wide?`</div><div>${needsPanel()}</div></div>`:''}" in H
+
+
+def test_medical_id_on_laptop_is_the_dark_card():
+    assert "if(innerWidth>=980)return page('Medical ID',medIdWide(me));" in H
+    i = H.index("function medIdWide(")
+    body = H[i:H.index("function openData()", i)]
+    for t in ("/qr.svg", "Add to my lock screen", "Print the card", "Called first", "Edit details"):
+        assert t in body, t
+    assert "@media print{" in H
+
+
+def test_emergency_setup_has_the_medical_id_column():
+    assert "Your Medical ID and contacts" in H and "${esRows(me)}" in H
+    assert "'Notifications','Emergency setup'" in H
+    assert ".page.pfr .pin{max-width:1400px!important;padding:0 24px!important;columns:auto!important}" in H
