@@ -73,3 +73,19 @@ def test_visits_book_and_history_rails():
 
 def test_order_tracking_sits_in_the_frame_on_laptop():
     assert "#layer:has(.trk)>.scrim" in H and "body:has(#layer .trk) .srail{visibility:hidden}" in H
+
+
+def test_sos_on_laptop_click_opens_hold_screen_and_keeps_the_cancel_window():
+    assert "if(innerWidth>=980)sosHoldScreen();else{b.classList.add('tipon')" in H
+    i = H.index("function sosHoldScreen(")
+    body = H[i:H.index("function lockCard(", i)]
+    assert "Hold for 2 seconds" in body and "5 seconds to cancel" in body and "sosConfirm()" in body
+    assert "where one is live" in body and "dial it from your phone" in body
+    assert "if(innerWidth>=980)sosWide();sosPaint();" in H
+
+
+def test_prescription_and_pharmacy_open_as_panels_on_laptop():
+    assert "PGSIDE=innerWidth>=980?'Choose a pharmacy':0;" in H
+    assert "PGSIDE=innerWidth>=980?'Your order':0;" in H
+    assert "Check what we read before it reminds you" in H and "Nothing reminds you until you confirm" in H
+    assert "if(!(innerWidth>=980&&PGSIDE)&&EMB&&EMB.live" in H
