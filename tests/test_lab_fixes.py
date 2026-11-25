@@ -19,4 +19,4 @@ def test_report_card_counts_only_the_persons_own_results():
 
 def test_lab_headline_counts_reports_and_eyebrow_is_short():
     assert "' report'+(n===1?'':'s'),n===1?'is in range':'are all in range'" in UH
-    assert "'LAB · HOME COLLECTION':'LAB'" in UH and "records:'YOUR REPORTS'" not in UH
+    assert "'LAB · HOME COLLECTION':S.sub==='ord'?'LAB · BOOKINGS':'LAB'" in UH and "records:'YOUR REPORTS'" not in UH

@@ -29,4 +29,4 @@ def test_a_typed_medicine_stays_in_the_list():
 
 
 def test_order_headline():
-    assert "'Order from '+(p.self?'your':'the')" in UH and "'MEDICINE · ORDER':S.sub===1?'MEDICINE · MINE':'MEDICINE'" in UH
+    assert "'Order from '+(p.self?'your':'the')" in UH and "'MEDICINE · ORDER':S.sub===1?'MEDICINE · MINE':S.sub==='ord'?'MEDICINE · ORDERS':'MEDICINE'" in UH

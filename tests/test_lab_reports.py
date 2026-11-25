@@ -46,7 +46,7 @@ def test_laptop_rail_carries_the_cards_once():
 def test_book_a_test_headline_counts_chosen_tests():
     tab = _fn("gbTab")
     assert "S.sub==='bk'&&writer(p)" in tab and "chosen,','collected at your door'" in tab
-    assert "records:S.sub==='bk'?'LAB · HOME COLLECTION':'LAB'" in UH
+    assert "records:S.sub==='bk'?'LAB · HOME COLLECTION':S.sub==='ord'?'LAB · BOOKINGS':'LAB'" in UH
     assert "if(S.tab==='records'&&S.sub==='bk')renderTop()" in _fn("labToggle")
     page = _fn("labPage")
     assert "'report in '+t.tat+' h'" in page and "' · fasting needed'" in page
