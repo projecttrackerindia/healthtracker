@@ -1226,6 +1226,24 @@ body.mini #top .gbl{display:none}
 body.gbhome #gl,body.gbhome #labels,body.gbhome #lines,body.gbhome #herobg,body.gbhome #h3d,body.gbhome .fch{display:none!important}
 .gbb{display:flex;align-items:center;gap:7px;font-size:15px;letter-spacing:-.01em;white-space:nowrap}.gbb img{border-radius:8px;flex:none}.gbb b{font-weight:800}.gbb span{font-weight:500}
 .gbg{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--ink3)}
+/* Home stage (25 Nov 2026): the whole body on a dark stage, results beside it */
+.gbst{position:relative;height:306px;border-radius:30px;overflow:hidden;background:radial-gradient(ellipse at 62% 40%,#12283C 0,#0A1420 62%);color:#fff}
+.gbsi{position:absolute;right:-18px;top:0;height:345px;width:auto;max-width:none;pointer-events:none;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 24%);mask-image:linear-gradient(to right,transparent 0,#000 24%)}
+.gbsl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.gbsn{position:absolute;left:12px;top:12px;height:30px;padding:0 12px;border-radius:999px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .500px rgba(255,255,255,.24)}
+.gbsn i{width:7px;height:7px;border-radius:50%;background:#7BE39A}.gbsn u{text-decoration:none;opacity:.5}.gbsn b{color:#FFC457;font-weight:700}
+.gbsk{position:absolute;left:12px;top:52px;width:116px;display:flex;flex-direction:column;gap:8px}
+.gbsc{display:block;text-align:left;color:#fff;border-radius:16px;padding:8px 10px;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .500px rgba(255,255,255,.24);min-width:0}
+.gbsc.w{background:rgba(255,196,87,.2);box-shadow:inset 0 0 0 1px rgba(255,196,87,.6)}
+.gbsc .k{display:block;font-size:11px;font-weight:600;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gbsc .k i{display:none;font-style:normal}
+.gbsc b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.2}.gbsc em{font-style:normal;font-size:11px;font-weight:600;opacity:.75;letter-spacing:0}
+.gbsc .s{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7BE39A}.gbsc .s::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}.gbsc.w .s{color:#FFC457}
+.gbsp{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.28);pointer-events:none}.gbsp.w{background:#FFC457;box-shadow:0 0 0 5px rgba(255,196,87,.35)}
+.gbsr{position:absolute;right:12px;top:12px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .500px rgba(255,255,255,.24)}
+.gbnx{background:#fff;border-radius:26px;padding:14px 16px;box-shadow:var(--card-sh);display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;align-items:start}
+.gbni{width:40px;height:40px;border-radius:50%;background:#FFF1D6;display:flex;align-items:center;justify-content:center}
+.gbnt2 small{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;color:#8A5200}.gbnt2 b{display:block;font-size:15.500px;font-weight:700;line-height:1.25;margin-top:1px}.gbnt2 span{display:block;font-size:13px;line-height:1.4;color:var(--ink3)}
+.gbna{grid-column:1/3;display:flex;gap:8px}.gbna button{height:46px;padding:0 18px;border-radius:999px;font-size:14.500px;font-weight:700;background:#EFEFEC;color:#111214;white-space:nowrap}.gbna button.pri{flex:1;background:var(--blue);color:#fff}
 #gbx{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
 .gbhero{position:relative;height:214px}
 .gbo{position:absolute;right:-8px;top:-104px;width:54%;height:300px;object-fit:contain;object-position:center;filter:drop-shadow(0 24px 28px rgba(60,20,20,.18));pointer-events:none}
@@ -1352,6 +1370,15 @@ body.gbalt .fch{display:none!important}
  body.gbhome #gbx .gbv{left:6%;bottom:8px;width:190px}
  body.gbhome #gbx .gb2{grid-column:1;grid-row:1}
  body.gbhome #gbx .gbcp{grid-column:1;grid-row:2;align-self:start}
+ body.gbhome #gbx:has(.gbst){grid-template-rows:auto auto 1fr}
+ body.gbhome #gbx .gbst{grid-column:2;grid-row:1/4;height:auto;min-height:420px}
+ body.gbhome #gbx .gbsi{height:90%;top:5%;right:-34px}
+ body.gbhome #gbx .gbsn{left:22px;top:22px}body.gbhome #gbx .gbsr{right:22px;top:22px}
+ body.gbhome #gbx .gbsk{left:22px;top:76px;width:176px;gap:12px}
+ body.gbhome #gbx .gbsc{border-radius:20px;padding:12px 14px}body.gbhome #gbx .gbsc .k i{display:inline}
+ body.gbhome #gbx .gbsc .k,body.gbhome #gbx .gbsc .s,body.gbhome #gbx .gbsc em{font-size:12.500px}body.gbhome #gbx .gbsc b{font-size:24px}
+ body.gbhome #gbx .gbnx{grid-column:1;grid-row:1}
+ body.gbhome #gbx:has(.gbnx) .gb2{grid-row:2}body.gbhome #gbx:has(.gbnx) .gbcp{grid-row:3}
  body.gbhome #top .gbt{max-width:44%}
  body #b5 .t5.on{background:var(--blue);border-radius:22px}
  body #b5 .t5.on span,body #b5 .t5.on{color:#fff!important}
@@ -1729,7 +1756,7 @@ function gbMini(p,foc){const vit=(REC[p.id]||[]).filter(r=>r.kind==='vital').sor
  if(vit&&vit.hr)out.push(`<button class="gbm" onclick="openBody('vitals')"><span class="gbmk">Heartbeat</span><b>${esc(vit.hr)} <em>bpm</em></b><svg viewBox="0 0 150 46" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30H18l4-4 4 4h6l4-24 5 36 4-12h17l4-4 4 4h6l4-26 5 40 4-14h17l4-4 4 4h6l4-22 5 34 4-12h17" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linejoin="round"/></svg></button>`);
  if(vit&&vit.bp){const m=String(vit.bp).match(/(\d+)\s*\/\s*(\d+)/),q=m?Math.max(0,Math.min(1,(+m[1]-80)/100)):.4,ang=Math.PI*(1-q),x=75+34*Math.cos(ang),y=58-34*Math.sin(ang);
   out.push(`<button class="gbm" onclick="openBody('vitals')"><span class="gbmk">Pressure</span><b>${m?m[1]+'<em>/'+m[2]+'</em>':esc(vit.bp)}</b><svg viewBox="0 0 150 66" aria-hidden="true"><path d="M35 58A40 40 0 01115 58" fill="none" stroke="#E4E5E9" stroke-width="10" stroke-linecap="round"/><path d="M35 58A40 40 0 0188 20" fill="none" stroke="var(--blue)" stroke-width="10" stroke-linecap="round"/><line x1="75" y1="58" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#111214" stroke-width="3" stroke-linecap="round"/><circle cx="75" cy="58" r="7" fill="#111214"/><circle cx="75" cy="58" r="2.6" fill="#fff"/></svg></button>`)}
- if(out.length<2)findings(p.id).filter(f=>!foc||f.test!==foc.test).sort((a,b)=>(a.flag==='normal')-(b.flag==='normal')).slice(0,2-out.length).forEach(f=>{const st=gbStat(p,f);
+ if(out.length<2)findings(p.id).filter(f=>(!foc||f.test!==foc.test)&&!f.baby&&!GBSHOWN.has(f.test)).sort((a,b)=>(a.flag==='normal')-(b.flag==='normal')).slice(0,2-out.length).forEach(f=>{const st=gbStat(p,f);
   out.push(`<button class="gbm" onclick="S.tab='records';S.sub=0;history.replaceState(null,'','/app/records');renderAll()"><span class="gbmk">${esc(f.test)}</span><b>${esc(f.value)} <em>${esc(f.unit||'')}</em></b><span class="gbms" style="color:${st[1]}">${esc(st[0])}</span></button>`)});
  return out.length?`<div class="gb2">${out.join('')}</div>`:''}
 function gbPlan(p){if(!can(p,'all'))return'';const plan=dosePlan(p.id),h12=t=>new Date('2000-01-01T'+t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),d=new Date(),td=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -1744,7 +1771,36 @@ function gbHero(p,f){const g=f&&GBIMG[f.org];let hero='';
   hero=`<div class="gbhero${g?'':' bd'}"><img class="gbo" id="gbo" alt="" src="${src}" data-px="${g?g[3]:.5}" data-py="${g?g[4]:.3}"><svg class="gbln" id="gbln" aria-hidden="true"><path fill="none" stroke="var(--blue)" stroke-width="2"/></svg><i class="gbpin" id="gbpin"></i>
   <button class="gbv" id="gbv" onclick="${tr?`openTrend('${p.id}','${String(f.test).replace(/'/g,"\\'")}')`:"openBody()"}"><span class="gbvk">${esc(f.test)}<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#111214" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span><b>${esc(f.value)} <em>${esc(f.unit||'')}</em></b><span class="gbvs" style="color:${st[1]}">${esc(st[0])}</span></button></div>`}
  return hero}
-function gbHome(p){const f=gbFocus(p);return gbHero(p,f)+gbMini(p,f)+gbPlan(p)}
+/* Home, 25 Nov 2026 design: one dark stage with the whole body. Up to four of the person's own results sit beside it, each joined by a line
+   to the organ it belongs to, so no card ever covers the body. What needs a look comes first and is shown in amber.
+   Where each organ sits on the two body pictures, as a share of the picture's width and height. */
+const GBANCH={m:{thyroid:[.502,.3],heart:[.522,.507],lung:[.41,.47],liver:[.47,.62],pancreas:[.575,.645],kidney:[.615,.665],gut:[.49,.8],prostate:[.487,.945]},
+ f:{thyroid:[.5,.285],heart:[.55,.476],lung:[.413,.42],liver:[.47,.566],pancreas:[.567,.62],kidney:[.624,.585],gut:[.494,.75]}};
+let GBSHOWN=new Set();const GBORGN={thyroid:'Thyroid',heart:'Heart',lung:'Lungs',liver:'Liver',pancreas:'Sugar',kidney:'Kidneys',gut:'Gut',prostate:'Prostate'};
+function gbStage(p){const fs=findings(p.id).filter(f=>!f.baby);if(!fs.length)return'';const fem=p.profile&&p.profile.sex==='female',A=GBANCH[fem?'f':'m'],
+  bad=fs.filter(f=>f.flag&&f.flag!=='normal'),seen={},pick=[],max=innerWidth>=980?4:3;
+ /* what needs a look is chosen first, so it is never the card left out on a small screen */
+ [...bad,...fs].forEach(f=>{if(pick.length<max&&f.org&&A[f.org]&&!seen[f.org]){seen[f.org]=1;pick.push(f)}});
+ /* top to bottom in the order the organs sit in the body, so no two lines cross; the small tiles below then show only what is not already here */
+ pick.sort((a,b)=>A[a.org][1]-A[b.org][1]);GBSHOWN=new Set(pick.map(f=>f.test));
+ const chip=f=>{const w=f.flag&&f.flag!=='normal',st=gbStat(p,f)[0],tr=(()=>{try{return trendPts(p.id,f.test).length>1}catch(_){return false}})(),a=A[f.org];
+  return`<button class="gbsc${w?' w':''}" data-fx="${a[0]}" data-fy="${a[1]}" onclick="${tr?`openTrend('${p.id}','${String(f.test).replace(/'/g,"\\'")}')`:`openBody('organ:${f.org}')`}"><span class="k"><i>${GBORGN[f.org]} · </i>${esc(String(f.test).replace(/\s*\(.*\)/,''))}</span><b>${esc(f.value)} <em>${esc(f.unit||'')}</em></b><span class="s">${esc(st)}</span></button>`};
+ return`<div class="gbst" id="gbst"><img class="gbsi" id="gbsi" alt="" src="${fem?'/a/gb-body-f.ec2efda4.webp':'/a/gb-body-m.009bc972.webp'}"><svg class="gbsl" id="gbsl" aria-hidden="true"></svg>
+  <span class="gbsn"><i></i>${fs.length-bad.length} in range${bad.length?` <u>·</u> <b>${bad.length} to watch</b>`:''}</span><div class="gbsk">${pick.map(chip).join('')}</div>
+  <button class="gbsr" aria-label="Open ${p.self?'your':'the'} body in 3D" onclick="openBody()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.600L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.700 5.600L4 16M4 20v-4h4"/></svg></button></div>`}
+/* every line runs from the side of its card to the organ, measured from where the picture really is on this screen */
+function gbStageLines(){const st=$('#gbst'),im=$('#gbsi'),sv=$('#gbsl');if(!st||!im||!sv||!im.naturalWidth)return;const h=st.getBoundingClientRect(),b=im.getBoundingClientRect();
+ st.querySelectorAll('.gbsp').forEach(e=>e.remove());let d='';
+ st.querySelectorAll('.gbsc').forEach(c=>{if(!c.offsetParent)return;const r=c.getBoundingClientRect(),x=b.left-h.left+b.width*+c.dataset.fx,y=b.top-h.top+b.height*+c.dataset.fy,sx=r.right-h.left,sy=r.top-h.top+r.height/2,w=c.classList.contains('w');
+  d+=`<path d="M${sx.toFixed(1)} ${sy.toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="${w?'#FFC457':'rgba(255,255,255,.7)'}" stroke-width="1.200"/>`;
+  const pn=document.createElement('i');pn.className='gbsp'+(w?' w':'');pn.style.left=x+'px';pn.style.top=y+'px';st.appendChild(pn)});
+ sv.setAttribute('viewBox',`0 0 ${h.width} ${h.height}`);sv.innerHTML=d}
+/* one next step, taken from what the results say: the value that needs a look, with the way to recheck it */
+function gbNext(p){if(!can(p,'summary'))return'';const f=findings(p.id).filter(f=>!f.baby).find(f=>f.flag&&f.flag!=='normal');if(!f)return'';
+ const tr=(()=>{try{return trendPts(p.id,f.test).length>1}catch(_){return false}})(),nm=esc(String(f.test).replace(/\s*\(.*\)/,''));
+ return`<div class="gbnx"><span class="gbni" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8A5200" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.500 6 11a6 6 0 0 1-12 0c0-4.500 6-11 6-11z"/></svg></span><div class="gbnt2"><small>NEXT STEP</small><b>Recheck ${nm.charAt(0).toLowerCase()+nm.slice(1)}</b><span>${esc(f.value)} ${esc(f.unit||'')} ${f.date?'on '+esc(dShort(f.date))+' ':''}· a test at home shows where it is now</span></div>
+  <div class="gbna"><button class="pri" onclick="S.tab='records';S.sub=1;history.replaceState(null,'','/app/records');renderAll()">Book a home test</button>${tr?`<button onclick="openTrend('${p.id}','${String(f.test).replace(/'/g,"\\'")}')">See trend</button>`:`<button onclick="openReport('${f.rid}')">See report</button>`}</div></div>`}
+function gbHome(p){GBSHOWN=new Set();const f=gbFocus(p),st=gbStage(p);return(st||gbHero(p,f))+gbNext(p)+gbMini(p,f)+gbPlan(p)}
 function gbLine(){const im=$('#gbo'),pin=$('#gbpin'),v=$('#gbv'),sv=$('#gbln');if(!im||!pin||!v||!sv||!im.naturalWidth)return;const h=sv.parentNode.getBoundingClientRect(),b=im.getBoundingClientRect(),c=v.getBoundingClientRect();
  const k=Math.min(b.width/im.naturalWidth,b.height/im.naturalHeight),w=im.naturalWidth*k,ht=im.naturalHeight*k,x=b.left+(b.width-w)/2+w*+im.dataset.px-h.left,y=b.top+(b.height-ht)/2+ht*+im.dataset.py-h.top;
  pin.style.left=x+'px';pin.style.top=y+'px';pin.style.opacity=1;const ex=c.right-h.left-18,ey=c.top-h.top;sv.setAttribute('viewBox',`0 0 ${h.width} ${h.height}`);
@@ -1754,8 +1810,9 @@ function gbMount(){const o=$('#gbx');if(o)o.remove();const p=P(),on=S.tab==='sum
   try{if(S.tab==='records'&&!(S.sub>0)&&p&&can(p,'summary')&&!firstRun(p)){const f=gbFocus(p),sh=$('#sheet');if(f&&GBIMG[f.org]&&sh){const el=document.createElement('section');el.id='gbx';el.className='gblab';el.innerHTML=gbHero(p,f);const sp=sh.querySelector('.spills');if(sp&&sp.parentNode)sp.parentNode.insertBefore(el,sp.nextSibling);else sh.insertBefore(el,sh.firstChild);const im=$('#gbo');if(im){im.complete?gbLine():im.onload=gbLine;setTimeout(gbLine,400)}}}}catch(_){}
   return}
  const el=document.createElement('section');el.id='gbx';el.innerHTML=gbHome(p);if(innerWidth>=980)document.body.appendChild(el);else{const sh=$('#sheet');sh.insertBefore(el,sh.firstChild)}
- const im=$('#gbo');if(im){im.complete?gbLine():im.onload=gbLine;setTimeout(gbLine,400)}}
-addEventListener('resize',()=>{try{if(document.body.classList.contains('gbhome')){const d=innerWidth>=980,x=$('#gbx');if(x&&(x.parentNode===document.body)!==d)gbMount();else gbLine()}else if($('#gbx'))gbLine()}catch(_){}});
+ const im=$('#gbo');if(im){im.complete?gbLine():im.onload=gbLine;setTimeout(gbLine,400)}
+ const si=$('#gbsi');if(si){si.complete?gbStageLines():si.onload=gbStageLines;setTimeout(gbStageLines,400)}}
+addEventListener('resize',()=>{try{if(document.body.classList.contains('gbhome')){const d=innerWidth>=980,x=$('#gbx');if(x&&(x.parentNode===document.body)!==d)gbMount();else{gbLine();gbStageLines()}}else if($('#gbx'))gbLine()}catch(_){}});
 function gbDock(){const v=document.querySelector('#b5 [data-t=visits] span');if(v&&v.textContent==='Appointments')v.textContent='Visits'}
 function gbAlt(p){try{if(!p||!can(p,'summary')||firstRun(p))return'';const pg=preg(p),nm=esc(p.self?'':firstName(p)||nameOf(p));
   if(pg){const wk=S.week||pg.week,w=wkInfo(wk);return`<h2 class="gbt">Week <span class="gbp tx">${wk}</span> <br>${wk<40?(40-wk)+' week'+(40-wk>1?'s':'')+' to go':'due any day now'}</h2>`}
@@ -4705,7 +4762,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r138';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r139';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
