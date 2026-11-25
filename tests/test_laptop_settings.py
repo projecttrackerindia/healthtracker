@@ -55,3 +55,21 @@ def test_emergency_setup_has_the_medical_id_column():
     assert "Your Medical ID and contacts" in H and "${esRows(me)}" in H
     assert "'Notifications','Emergency setup'" in H
     assert ".page.pfr .pin{max-width:1400px!important;padding:0 24px!important;columns:auto!important}" in H
+
+
+def test_report_opens_as_a_panel_beside_the_lab_list():
+    assert "if(innerWidth>=980){if(S.tab!=='records'){S.tab='records';S.sub=0;renderAll()}PGSIDE=1;return page(recTitle(r),repSide(p,r))}" in H
+    i = H.index("function repSide(")
+    body = H[i:H.index("function openReport(", i)]
+    for t in ("in range", "READ FOR YOU", "See these values on your body", "Share with a doctor", "Show "):
+        assert t in body, t
+    assert "function repBar(" in H and "normal ${lo} to ${hi}" in H
+
+
+def test_visits_book_and_history_rails():
+    assert "<div class=\"rhd2\">Past visits</div>" in H and "<div class=\"rhd2\">Before your next visit</div>" in H
+    assert "<div class=\"rhd2\">Due and upcoming</div>" in H and "${vzReasons(p)}${vzSoon(p)}${AC('')}" in H
+
+
+def test_order_tracking_sits_in_the_frame_on_laptop():
+    assert "#layer:has(.trk)>.scrim" in H and "body:has(#layer .trk) .srail{visibility:hidden}" in H
