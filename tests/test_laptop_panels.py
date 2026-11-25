@@ -19,7 +19,9 @@ def test_visits_rail_has_the_month_and_how_a_visit_works():
 
 def test_medicine_rail_offers_the_prescription_to_order():
     rail = _fn("railHTML")
-    assert "On this prescription" in rail and "inTab('bk',openPharmacy)" in rail and "svcOkQuiet('medicine')" in rail
+    assert "railOrder(p,1)" in rail and "inTab('bk',openPharmacy)" in rail and "svcOkQuiet('medicine')" in rail
+    ro = _fn("railOrder")
+    assert "On this prescription" in ro and "strip" in ro and "See price" in ro and "RXO.keep=RAILO.items" in ro
 
 
 def test_next_vaccine_sets_show_beside_the_due_card_on_wider_screens():
