@@ -64,6 +64,11 @@ GEOMETRY = """(()=>{const w=innerWidth,de=document.documentElement,p=document.qu
    scale:window.visualViewport?visualViewport.scale:1}})()"""
 
 
+# Cut-off text (25 Nov: a button that read "Note the vaccinatio"): a label wider than its button, a control past the
+# screen edge, or one sliced by its container. Text that ends in an ellipsis on purpose is not counted.
+CLIPPED = r"""(()=>{const out=[],vw=innerWidth;document.querySelectorAll('#layer .page button,#layer .page .pill,#sheet button,#sheet a,#sheet .pill,#sheet .tpill,#sheet .rc,#sheet i,#top h2,#top .eyebrow,#kdhud button,#pghud button,#gbx button,#gbx .gbsc,.sheetx button,.lbar button').forEach(e=>{const r=e.getBoundingClientRect();if(!r.width||!r.height||r.bottom<0||r.top>innerHeight)return;const cs=getComputedStyle(e);if(cs.visibility==='hidden'||+cs.opacity===0)return;const t=(e.innerText||'').trim().replace(/\s+/g,' ').slice(0,40);if(!t)return;const rg=document.createRange();rg.selectNodeContents(e);const q=rg.getBoundingClientRect();let why='';if(q.width>r.width+1.5||q.left<r.left-1.5||q.right>r.right+1.5||e.scrollWidth>e.clientWidth+1)why='text wider than its box';else if(r.right>vw+1||r.left<-1)why='off the screen edge';else{let p=e.parentElement;while(p&&p.id!=='sheet'&&p!==document.body){const pc=getComputedStyle(p);if(/hidden|clip/.test(pc.overflowX)){const pr=p.getBoundingClientRect();if(r.right>pr.right+1.5||r.left<pr.left-1.5){why='cut by its container';break}}p=p.parentElement}}if(why&&!(cs.textOverflow==='ellipsis'))out.push(why+': '+(e.className||e.tagName)+' "'+t+'"')});return[...new Set(out)]})()"""
+
+
 async def check(pg, dev: str, step: str, want_page: bool = True) -> None:
     await pg.wait_for_timeout(700)   # let the slide finish
     # Headless WebKit runs animations slower than a phone; finish them so we measure where things end up.
@@ -83,6 +88,7 @@ async def check(pg, dev: str, step: str, want_page: bool = True) -> None:
             bad.append(f"page '{g['title']}' is at x={g['page'][0]}, {g['page'][1]}px wide on a {g['w']}px screen ({g['cls']}, corner {g['radius']})")
     elif g["page"]:
         bad.append(f"a page is still open: {g['title']}")
+    bad.extend("cut-off text, " + c for c in await pg.evaluate(CLIPPED))
     print(f"  {'✗' if bad else '✓'} {dev} · {step}" + (": " + "; ".join(bad) if bad else ""))
     FAIL.extend(f"{dev} · {step}: {b}" for b in bad)
 
