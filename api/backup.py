@@ -89,7 +89,7 @@ def _status(db: Session, h: Household) -> dict:
 
 
 @r.get("/status")
-def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def status(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household_by_key(db, x_dokko_key, create=False)
     if not h:
         raise HTTPException(400, "missing household key")
@@ -97,7 +97,7 @@ def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)
 
 
 @r.post("/send", dependencies=[Depends(csrf)])
-def send_now(request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def send_now(request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     limit(request, f"backup:{h.id}", 2, 86400)
     res = send_backup(db, h, why="asked")

@@ -91,7 +91,7 @@ class ShareIn(BaseModel):
 
 
 @r.post("/people/{pid}/doctor-share")
-def make(pid: str, body: ShareIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def make(pid: str, body: ShareIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .people import person_or_404
     limit(request, "dshare", 20, 3600)
     p, a = person_or_404(db, u, pid)
@@ -105,7 +105,7 @@ def make(pid: str, body: ShareIn, request: Request, u: User = Depends(need_user)
 
 
 @r.get("/people/{pid}/doctor-shares")
-def mine(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def mine(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .people import person_or_404
     p, a = person_or_404(db, u, pid)
     if not a.writer:
@@ -114,7 +114,7 @@ def mine(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
 
 
 @r.delete("/doctor-shares/{ref}")
-def revoke(ref: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def revoke(ref: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .people import person_or_404
     s = db.scalar(select(DoctorShare).where(DoctorShare.token.like(re.sub(r"[^\w-]", "", ref)[:8] + "%"))) if len(ref) >= 6 else None
     if not s:
@@ -128,7 +128,7 @@ def revoke(ref: str, u: User = Depends(need_user), db: Session = Depends(get_db)
 
 
 @r.get("/people/{pid}/summary", response_class=HTMLResponse)
-def summary(pid: str, months: int = 6, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def summary(pid: str, months: int = 6, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .people import person_or_404
     p, a = person_or_404(db, u, pid)
     if not a.can("summary"):
@@ -151,7 +151,7 @@ def public(token: str, db: Session) -> Response:
 
 
 @r.get("/doctor-shares/{ref}/qr.svg")
-def share_qr(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def share_qr(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """The QR for a share link, drawn here so the link never goes to an outside service."""
     import io
 

@@ -57,7 +57,7 @@ def app_json(a: PartnerApplication) -> dict:
 
 
 @r.post("/partner/apply")
-def apply(body: ApplyIn, request: Request, db: Session = Depends(get_db)):
+def apply(body: ApplyIn, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "partner-apply", 5, 3600)
     if body.kind not in KINDS:
         raise HTTPException(400, "kind must be pharmacy, lab or hospital")
@@ -90,7 +90,7 @@ def apply(body: ApplyIn, request: Request, db: Session = Depends(get_db)):
 
 
 @r.get("/partner/apply/{aid}")
-def apply_status(aid: str, db: Session = Depends(get_db)):
+def apply_status(aid: str, db: Session = Depends(get_db, scope="function")):
     a = db.get(PartnerApplication, aid)
     if not a:
         raise HTTPException(404)
@@ -99,7 +99,7 @@ def apply_status(aid: str, db: Session = Depends(get_db)):
 
 # ---- admin review -----------------------------------------------------------------------------------------------------------
 @ar.get("/applications")
-def applications(status: str = "new", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def applications(status: str = "new", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     q = select(PartnerApplication).order_by(PartnerApplication.created.desc())
     if status != "all":
         q = q.where(PartnerApplication.status == status)
@@ -112,7 +112,7 @@ class DecideIn(BaseModel):
 
 
 @ar.post("/applications/{aid}/approve")
-def approve(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def approve(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ap = db.get(PartnerApplication, aid)
     if not ap or ap.status != "new":
         raise HTTPException(404)
@@ -139,7 +139,7 @@ def approve(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session 
 
 
 @ar.post("/applications/{aid}/decline")
-def decline(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def decline(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ap = db.get(PartnerApplication, aid)
     if not ap or ap.status != "new":
         raise HTTPException(404)
@@ -155,7 +155,7 @@ class LocIn(BaseModel):
 
 
 @ar.post("/applications/{aid}/location")
-def set_location(aid: str, body: LocIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def set_location(aid: str, body: LocIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ap = db.get(PartnerApplication, aid)
     if not ap:
         raise HTTPException(404)
@@ -236,7 +236,7 @@ def payout_json(p: Payout) -> dict:
 
 
 @ar.get("/settlements")
-def settlements(month: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def settlements(month: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     month = month or datetime.now(IST).strftime("%Y-%m")
     if len(month) != 7:
         raise HTTPException(400, "month as YYYY-MM")
@@ -265,7 +265,7 @@ class PayIn(BaseModel):
 
 
 @ar.post("/settlements/{month}/{store_id}")
-def settle(month: str, store_id: str, body: PayIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def settle(month: str, store_id: str, body: PayIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Record that this month's account with this partner has been settled.
 
     The figures are taken from the live computation at the moment of settling and frozen into the row, so a
@@ -301,7 +301,7 @@ def settle(month: str, store_id: str, body: PayIn, a: Admin = Depends(admin_me),
 
 
 @ar.delete("/settlements/{month}/{store_id}")
-def unsettle(month: str, store_id: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def unsettle(month: str, store_id: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Undo a settlement recorded in error. Logged, because unmarking a payout is how one gets made twice."""
     p = db.scalar(select(Payout).where(Payout.store_id == store_id, Payout.month == month))
     if not p:
@@ -316,7 +316,7 @@ class RateIn(BaseModel):
 
 
 @ar.post("/stores/{sid}/commission")
-def set_commission(sid: str, body: RateIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def set_commission(sid: str, body: RateIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """This partner's rate, or null to put them back on the platform default."""
     s = db.get(Store, sid)
     if not s:
@@ -329,7 +329,7 @@ def set_commission(sid: str, body: RateIn, a: Admin = Depends(admin_me), db: Ses
 
 
 @ar.get("/settlements.csv")
-def settlements_csv(month: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def settlements_csv(month: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from fastapi.responses import Response
     month = month or datetime.now(IST).strftime("%Y-%m")
     rows = settlement_rows(db, month)

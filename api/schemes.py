@@ -224,7 +224,7 @@ def _card(c: SchemeCard, full: bool = False) -> dict:
 
 
 @r.get("/cards")
-def cards(request: Request, db: Session = Depends(get_db)):
+def cards(request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     rows = db.scalars(select(SchemeCard).where(SchemeCard.household_id == u.household_id).order_by(SchemeCard.created.desc())).all()
     return {"rows": [_card(c) for c in rows]}
@@ -259,7 +259,7 @@ def _fill(c: SchemeCard, b: CardIn) -> None:
 
 
 @r.post("/cards")
-def add_card(b: CardIn, request: Request, db: Session = Depends(get_db)):
+def add_card(b: CardIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     if len(db.scalars(select(SchemeCard.id).where(SchemeCard.household_id == u.household_id)).all()) >= 20:
         raise HTTPException(400, "Up to 20 cards.")
@@ -308,7 +308,7 @@ def _mine(request: Request, db: Session, cid: str) -> SchemeCard:
 
 
 @r.post("/cards/{cid}/read-policy")
-def read_policy(cid: str, request: Request, db: Session = Depends(get_db)):
+def read_policy(cid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     """Read the policy PDF saved with the card and keep the terms that matter at a hospital desk, in plain words."""
     from . import ai, storage
     from .auth import limit
@@ -345,7 +345,7 @@ class TermsIn(BaseModel):
 
 
 @r.put("/cards/{cid}/terms")
-def set_terms(cid: str, b: TermsIn, request: Request, db: Session = Depends(get_db)):
+def set_terms(cid: str, b: TermsIn, request: Request, db: Session = Depends(get_db, scope="function")):
     c = _mine(request, db, cid)
     if b.valid_from and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", b.valid_from):
         raise HTTPException(400, "Policy start must be a date.")
@@ -381,7 +381,7 @@ def _claim(b: ClaimIn, old: dict | None = None) -> dict:
 
 
 @r.post("/cards/{cid}/claims")
-def add_claim(cid: str, b: ClaimIn, request: Request, db: Session = Depends(get_db)):
+def add_claim(cid: str, b: ClaimIn, request: Request, db: Session = Depends(get_db, scope="function")):
     c = _mine(request, db, cid)
     if len(c.claims or []) >= 50:
         raise HTTPException(400, "Up to 50 claims per card.")
@@ -393,7 +393,7 @@ def add_claim(cid: str, b: ClaimIn, request: Request, db: Session = Depends(get_
 
 
 @r.put("/cards/{cid}/claims/{clid}")
-def edit_claim(cid: str, clid: str, b: ClaimIn, request: Request, db: Session = Depends(get_db)):
+def edit_claim(cid: str, clid: str, b: ClaimIn, request: Request, db: Session = Depends(get_db, scope="function")):
     c = _mine(request, db, cid)
     rows = list(c.claims or [])
     i = next((n for n, x in enumerate(rows) if x.get("id") == clid), None)
@@ -405,14 +405,14 @@ def edit_claim(cid: str, clid: str, b: ClaimIn, request: Request, db: Session = 
 
 
 @r.delete("/cards/{cid}/claims/{clid}")
-def del_claim(cid: str, clid: str, request: Request, db: Session = Depends(get_db)):
+def del_claim(cid: str, clid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     c = _mine(request, db, cid)
     c.claims = [x for x in (c.claims or []) if x.get("id") != clid]
     return _card(c)
 
 
 @r.put("/cards/{cid}")
-def edit_card(cid: str, b: CardIn, request: Request, db: Session = Depends(get_db)):
+def edit_card(cid: str, b: CardIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     c = db.get(SchemeCard, cid)
     if not c or c.household_id != u.household_id:
@@ -425,7 +425,7 @@ SLOTS = {"front": "Card front", "back": "Card back", "doc": "Policy document"}
 
 
 @r.post("/cards/{cid}/file/{slot}")
-async def card_file(cid: str, slot: str, request: Request, db: Session = Depends(get_db)):
+async def card_file(cid: str, slot: str, request: Request, db: Session = Depends(get_db, scope="function")):
     """A photo of the card or the policy PDF, stored encrypted like reports."""
     from . import storage
     u = _user(request, db)
@@ -454,7 +454,7 @@ async def card_file(cid: str, slot: str, request: Request, db: Session = Depends
 
 
 @r.get("/cards/{cid}/file/{slot}")
-def card_file_get(cid: str, slot: str, request: Request, db: Session = Depends(get_db)):
+def card_file_get(cid: str, slot: str, request: Request, db: Session = Depends(get_db, scope="function")):
     from fastapi.responses import Response
     from . import storage
     u = _user(request, db)
@@ -470,7 +470,7 @@ def card_file_get(cid: str, slot: str, request: Request, db: Session = Depends(g
 
 
 @r.get("/cards/{cid}")
-def show_card(cid: str, request: Request, db: Session = Depends(get_db)):
+def show_card(cid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     c = db.get(SchemeCard, cid)
     if not c or c.household_id != u.household_id:
@@ -479,7 +479,7 @@ def show_card(cid: str, request: Request, db: Session = Depends(get_db)):
 
 
 @r.delete("/cards/{cid}")
-def del_card(cid: str, request: Request, db: Session = Depends(get_db)):
+def del_card(cid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     c = db.get(SchemeCard, cid)
     if not c or c.household_id != u.household_id:
@@ -489,7 +489,7 @@ def del_card(cid: str, request: Request, db: Session = Depends(get_db)):
 
 
 @r.get("/doctors")
-def doctors_near(specialty: str = "", lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db)):
+def doctors_near(specialty: str = "", lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db, scope="function")):
     """Verified doctors at live partner hospitals, nearest first. Only registrations an admin checked are listed."""
     from .booking import km
     from .models import PartnerUser, Store
@@ -515,7 +515,7 @@ class QuoteIn(BaseModel):
 
 
 @r.post("/quote-interest")
-def quote_interest(b: QuoteIn, request: Request, db: Session = Depends(get_db)):
+def quote_interest(b: QuoteIn, request: Request, db: Session = Depends(get_db, scope="function")):
     """Until a licensed broker is signed, "Notify me" records the interest — nothing is shared with anyone."""
     from .models import Setting
     u = _user(request, db)

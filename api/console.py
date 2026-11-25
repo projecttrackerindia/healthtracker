@@ -76,7 +76,7 @@ def card(o: Order, t: int) -> dict:
 
 
 @r.get("/board")
-def board(kind: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def board(kind: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     t = now()
     act = db.scalars(select(Order).where(Order.status.in_(ACTIVE_LAB + ACTIVE_MED)).order_by(Order.created.desc()).limit(500)).all()
     done = db.scalars(select(Order).where(Order.status.in_(DONE), Order.created > t - 86400).order_by(Order.created.desc()).limit(60)).all()
@@ -103,7 +103,7 @@ def _week_bars(db: Session, t: int) -> list[dict]:
 
 
 @r.get("/today")
-def today(days: int = 7, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def today(days: int = 7, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .onboard import checks, _plus_days
     t = now()
     days = 1 if days <= 1 else 30 if days >= 30 else 7
@@ -234,7 +234,7 @@ def today(days: int = 7, a: Admin = Depends(admin_me), db: Session = Depends(get
 
 
 @r.get("/search")
-def search(q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def search(q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     q = (q or "").strip()
     if len(q) < 2:
         return {"groups": []}
@@ -274,7 +274,7 @@ def _env(*k: str) -> bool:
 
 
 @r.get("/setup")
-def setup(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def setup(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from . import messaging
     from .models import Setting
     live_labs = db.scalar(select(func.count(Store.id)).where(Store.kind == "lab", Store.active == True, Store.verified == True)) or 0  # noqa: E712
@@ -313,7 +313,7 @@ def setup(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
 
 
 @r.get("/funnel")
-def funnel(days: int = 30, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def funnel(days: int = 30, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Where families drop out of a booking. Screen opens come from the anonymous usage counter (no person attached)."""
     import datetime as _dt
     from .models import UsageDay
@@ -342,7 +342,7 @@ GO = {"board": "Live board", "rx": "Prescription check", "dispatch": "Medicine d
 
 
 @r.post("/ask")
-def ask(body: AskIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def ask(body: AskIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     d = today(days=7, a=a, db=db)
     snap = {k: d[k] for k in ("needs", "kpi", "now", "network", "week")}
     views = list(dict.fromkeys(n["go"] for n in d["needs"] if n.get("go") in GO))[:3]

@@ -83,7 +83,7 @@ class InviteIn(BaseModel):
 
 
 @ar.get("/stores/{sid}/signins")
-def signins(sid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def signins(sid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     s = db.get(Store, sid)
     if not s:
         raise HTTPException(404)
@@ -93,7 +93,7 @@ def signins(sid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db
 
 
 @ar.post("/stores/{sid}/invite")
-def invite(sid: str, body: InviteIn, request: Request, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def invite(sid: str, body: InviteIn, request: Request, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .auth import norm_id
     s = db.get(Store, sid)
     if not s:
@@ -140,7 +140,7 @@ class SigninAct(BaseModel):
 
 
 @ar.post("/partner-users/{uid}")
-def signin_action(uid: str, body: SigninAct, request: Request, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def signin_action(uid: str, body: SigninAct, request: Request, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     u = db.get(PartnerUser, uid)
     if not u:
         raise HTTPException(404)
@@ -195,7 +195,7 @@ def _by_token(db: Session, tok: str) -> PartnerUser:
 
 
 @pr.get("/join/{tok}")
-def join_info(tok: str, request: Request, db: Session = Depends(get_db)):
+def join_info(tok: str, request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import limit
     limit(request, "partner-join", 20, 600)
     u = _by_token(db, tok)
@@ -210,7 +210,7 @@ class JoinIn(BaseModel):
 
 
 @pr.post("/join")
-def join(body: JoinIn, request: Request, db: Session = Depends(get_db)):
+def join(body: JoinIn, request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import limit
     from .passwords import check
     limit(request, "partner-join", 20, 600)
@@ -226,7 +226,7 @@ def join(body: JoinIn, request: Request, db: Session = Depends(get_db)):
 
 # ---- scorecard -------------------------------------------------------------------------------------------------------
 @ar.get("/stores/{sid}/scorecard")
-def scorecard(sid: str, days: int = 30, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def scorecard(sid: str, days: int = 30, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .console import late_by, _ist
     s = db.get(Store, sid)
     if not s:
@@ -311,7 +311,7 @@ KIND_TITLE = {"copied": "Same report for different people", "not_medical": "Does
 
 
 @ar.get("/quality")
-def quality(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def quality(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     t = now()
     wk = t - 7 * 86400
     rec = db.scalar(select(func.count(QualityFlag.id)).where(QualityFlag.kind == "received", QualityFlag.created > wk)) or 0
@@ -330,7 +330,7 @@ def quality(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
 
 
 @ar.post("/quality/{fid}/resolve")
-def quality_resolve(fid: int, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def quality_resolve(fid: int, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     f = db.get(QualityFlag, fid)
     if not f:
         raise HTTPException(404)
@@ -341,7 +341,7 @@ def quality_resolve(fid: int, a: Admin = Depends(admin_me), db: Session = Depend
 
 # ---- coverage --------------------------------------------------------------------------------------------------------
 @ar.get("/coverage")
-def coverage(kind: str = "lab", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def coverage(kind: str = "lab", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     t = now()
     pins: dict[str, dict] = {}
 

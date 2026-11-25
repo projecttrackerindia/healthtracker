@@ -94,7 +94,7 @@ def _row(i, v: dict) -> dict:
 
 
 @r.get("/review")
-def public_review(db: Session = Depends(get_db)):
+def public_review(db: Session = Depends(get_db, scope="function")):
     """What a close-up shows under its source line. State and date only."""
     s = db.get(Setting, KEY)
     v = (s.value if s else None) or {}
@@ -103,7 +103,7 @@ def public_review(db: Session = Depends(get_db)):
 
 
 @xr.get("")
-def queue(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def queue(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     s = db.get(Setting, KEY)
     v = (s.value if s else None) or {}
     items = [_row(i, v.get(i[0]) or {}) for i in ITEMS]
@@ -118,7 +118,7 @@ class ReviewIn(BaseModel):
 
 
 @xr.post("/{iid}")
-def review(iid: str, body: ReviewIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def review(iid: str, body: ReviewIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     i = BY_ID.get(iid)
     if not i:
         raise HTTPException(404, "No such model")

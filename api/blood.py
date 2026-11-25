@@ -80,7 +80,7 @@ def donor_json(d: Donor) -> dict:
 
 
 @r.put("/donor")
-def donor_put(body: DonorIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def donor_put(body: DonorIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
@@ -101,7 +101,7 @@ def donor_put(body: DonorIn, request: Request, db: Session = Depends(get_db), x_
 
 
 @r.get("/donor")
-def donor_list(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def donor_list(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"donors": []}
@@ -109,7 +109,7 @@ def donor_list(db: Session = Depends(get_db), x_dokko_key: str | None = Header(N
 
 
 @r.delete("/donor/{member}")
-def donor_off(member: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def donor_off(member: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     d = h and db.scalar(select(Donor).where(Donor.household_id == h.id, Donor.member_id == member[:32]))
     if not d:
@@ -136,7 +136,7 @@ def req_json(db: Session, q: BloodRequest, me_lat=None, me_lng=None, mine: Donor
 
 
 @r.get("/blood/requests")
-def requests_near(lat: float | None = None, lng: float | None = None, group: str = "", radius: int = 50, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def requests_near(lat: float | None = None, lng: float | None = None, group: str = "", radius: int = 50, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Open requests near the person; donors can respond. Visible to everyone, actionable by donors."""
     h = household(db, x_dokko_key, create=False)
     t = now()
@@ -154,7 +154,7 @@ def requests_near(lat: float | None = None, lng: float | None = None, group: str
 
 
 @r.get("/blood/{rid}")
-def request_one(rid: str, lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def request_one(rid: str, lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     q = db.get(BloodRequest, rid)
     if not q:
@@ -170,7 +170,7 @@ class RespondIn(BaseModel):
 
 
 @r.post("/blood/{rid}/respond")
-def respond(rid: str, body: RespondIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def respond(rid: str, body: RespondIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
@@ -211,7 +211,7 @@ class LocIn(BaseModel):
 
 
 @r.post("/blood/{rid}/location")
-def location(rid: str, body: LocIn, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def location(rid: str, body: LocIn, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     q = db.get(BloodRequest, rid)
     cur = h and db.scalar(select(DonorResponse).where(DonorResponse.request_id == rid, DonorResponse.household_id == h.id))
@@ -228,7 +228,7 @@ def location(rid: str, body: LocIn, db: Session = Depends(get_db), x_dokko_key: 
 
 
 @r.post("/blood/{rid}/withdraw")
-def withdraw(rid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def withdraw(rid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     cur = h and db.scalar(select(DonorResponse).where(DonorResponse.request_id == rid, DonorResponse.household_id == h.id))
     if not cur:
@@ -298,7 +298,7 @@ def preq_json(db: Session, q: BloodRequest) -> dict:
 
 
 @pr.post("")
-def create(body: ReqIn, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def create(body: ReqIn, request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = _requester(db, u)
     limit(request, f"breq:{s.id}", 20, 3600)
     if body.group not in GROUPS:
@@ -316,7 +316,7 @@ def create(body: ReqIn, request: Request, db: Session = Depends(get_db), u: Part
 
 
 @pr.get("")
-def mine(status: str = "open", db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def mine(status: str = "open", db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = my_store(db, u)
     qq = select(BloodRequest).where(BloodRequest.store_id == s.id).order_by(BloodRequest.created.desc())
     if status != "all":
@@ -342,7 +342,7 @@ class StockIn(BaseModel):
 
 
 @pr.get("/stock")
-def stock(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def stock(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """Units on the shelf, one row per group (whole blood unless a component is counted separately)."""
     s = my_store(db, u)
     rows = db.scalars(select(BloodStock).where(BloodStock.store_id == s.id)).all()
@@ -361,7 +361,7 @@ def stock(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
 
 
 @pr.put("/stock")
-def set_stock(body: StockIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def set_stock(body: StockIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = my_store(db, u)
     if s.kind != "bloodbank":
         raise HTTPException(403, "Only blood banks keep stock here.")
@@ -387,7 +387,7 @@ def set_stock(body: StockIn, db: Session = Depends(get_db), u: PartnerUser = Dep
 
 
 @pr.get("/{rid}")
-def one(rid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def one(rid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     q = db.get(BloodRequest, rid)
     if not q or q.store_id != u.store_id:
         raise HTTPException(404)
@@ -399,7 +399,7 @@ class StatusIn(BaseModel):
 
 
 @pr.post("/{rid}/status")
-def set_status(rid: str, body: StatusIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def set_status(rid: str, body: StatusIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     q = db.get(BloodRequest, rid)
     if not q or q.store_id != u.store_id:
         raise HTTPException(404)
@@ -419,7 +419,7 @@ class RespAct(BaseModel):
 
 
 @pr.post("/{rid}/responses/{xid}")
-def act(rid: str, xid: str, body: RespAct, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def act(rid: str, xid: str, body: RespAct, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     q = db.get(BloodRequest, rid)
     x = db.get(DonorResponse, xid)
     if not q or q.store_id != u.store_id or not x or x.request_id != rid:

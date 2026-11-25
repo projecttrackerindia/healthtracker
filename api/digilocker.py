@@ -59,7 +59,7 @@ def status():
 
 
 @r.post("/start")
-def start(request: Request, member: str = "", db: Session = Depends(get_db), u: User = Depends(need_user)):
+def start(request: Request, member: str = "", db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     """Returns the DigiLocker sign-in URL. The state is signed and carries the sealed PKCE verifier, so no server memory is needed."""
     if not enabled():
         raise HTTPException(503, "DigiLocker verification is not switched on yet.")
@@ -87,7 +87,7 @@ def _parse_ekyc(xml: bytes) -> dict:
 
 
 @r.get("/callback")
-def callback(request: Request, code: str = "", state: str = "", error: str = "", db: Session = Depends(get_db)):
+def callback(request: Request, code: str = "", state: str = "", error: str = "", db: Session = Depends(get_db, scope="function")):
     import httpx
 
     app_url = f"{_origin(request)}/app"
@@ -130,7 +130,7 @@ def callback(request: Request, code: str = "", state: str = "", error: str = "",
 
 
 @r.get("/me")
-def me(member: str = "", db: Session = Depends(get_db), u: User = Depends(need_user)):
+def me(member: str = "", db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     """The verified Aadhaar details for a profile (from our sealed store), for the app to show as the Aadhaar card."""
     got = storage.get(db, u.household_id, FILE_ID.format(member=(member or u.member_id or "me")[:32])) if u.household_id else None
     if not got:

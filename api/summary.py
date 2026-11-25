@@ -49,7 +49,7 @@ def _clean(src: str) -> str:
 
 
 @r.post("/api/v1/summary/share", dependencies=[Depends(csrf)])
-def share(body: ShareIn, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def share(body: ShareIn, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     hlimit(request, "sumshare", h.id, 30, 3600)
     if not body.html or len(body.html) > MAX_HTML:
@@ -62,14 +62,14 @@ def share(body: ShareIn, request: Request, db: Session = Depends(get_db), u: Use
 
 
 @r.get("/api/v1/summary/share")
-def mine(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def mine(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     rows = db.scalars(select(SharedSummary).where(SharedSummary.household_id == h.id, SharedSummary.revoked == False, SharedSummary.expires > now())).all()  # noqa: E712
     return [{"token": s.token, "member": s.member_id, "name": s.name, "label": s.label, "expires": s.expires, "views": s.views, "created": s.created} for s in rows]
 
 
 @r.delete("/api/v1/summary/share/{token}", dependencies=[Depends(csrf)])
-def revoke(token: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def revoke(token: str, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     s = db.get(SharedSummary, token[:36])
     if s and s.household_id == h.id:
@@ -81,7 +81,7 @@ GONE = "<!doctype html><meta charset=utf-8><meta name=robots content=noindex><ti
 
 
 @r.get("/ds/{token}", include_in_schema=False)
-def view(token: str, db: Session = Depends(get_db)):
+def view(token: str, db: Session = Depends(get_db, scope="function")):
     s = db.get(SharedSummary, token[:36])
     if not s or s.revoked or s.expires < now():
         return HTMLResponse(GONE, status_code=404, headers={"Cache-Control": "no-store"})

@@ -29,7 +29,7 @@ def hlimit(request: Request, key: str, hid: str, n: int, per: int):
 
 # ---- documents ------------------------------------------------------------------------------------------------------
 @r.get("/files")
-def files_list(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def files_list(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     # columns only: StoredFile.blob is a LargeBinary and selecting the whole row pulled every document's bytes
     # into a 1 GiB container just to list their names.
@@ -40,7 +40,7 @@ def files_list(db: Session = Depends(get_db), u: User = Depends(need_user)):
 
 
 @r.put("/files/{file_id}", dependencies=[Depends(csrf)])
-async def file_put(file_id: str, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+async def file_put(file_id: str, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     hlimit(request, "fileput", h.id, 120, 3600)
     if not (1 <= len(file_id) <= 48) or not file_id.replace(":", "").replace("_", "").replace("-", "").isalnum():
@@ -73,7 +73,7 @@ async def file_put(file_id: str, request: Request, db: Session = Depends(get_db)
 
 
 @r.get("/files/{file_id}")
-def file_get(file_id: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def file_get(file_id: str, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     try:
         got = storage.get(db, h.id, file_id)
@@ -91,7 +91,7 @@ def file_get(file_id: str, db: Session = Depends(get_db), u: User = Depends(need
 
 
 @r.delete("/files/{file_id}", dependencies=[Depends(csrf)])
-def file_delete(file_id: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def file_delete(file_id: str, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     for s in db.scalars(select(ShareLink).where(ShareLink.household_id == h.id, ShareLink.file_id == file_id)).all():
         db.delete(s)
@@ -106,7 +106,7 @@ class ShareIn(BaseModel):
 
 
 @r.post("/share", dependencies=[Depends(csrf)])
-def share_make(body: ShareIn, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def share_make(body: ShareIn, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     hlimit(request, "share", h.id, 60, 3600)
     if not db.get(StoredFile, (h.id, body.file_id)):
@@ -119,14 +119,14 @@ def share_make(body: ShareIn, request: Request, db: Session = Depends(get_db), u
 
 
 @r.get("/share")
-def share_list(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def share_list(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     rows = db.scalars(select(ShareLink).where(ShareLink.household_id == h.id, ShareLink.revoked == False, ShareLink.expires > now())).all()  # noqa: E712
     return [{"token": s.token, "fileId": s.file_id, "label": s.label, "expires": s.expires, "views": s.views} for s in rows]
 
 
 @r.delete("/share/{token}", dependencies=[Depends(csrf)])
-def share_revoke(token: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def share_revoke(token: str, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     s = db.get(ShareLink, token)
     if s and s.household_id == h.id:
@@ -158,7 +158,7 @@ class SubIn(BaseModel):
 
 
 @r.post("/push/subscribe", dependencies=[Depends(csrf)])
-def push_subscribe(body: SubIn, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def push_subscribe(body: SubIn, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     if not PUSH.ready():
         raise HTTPException(503, "Push is not set up on this server yet.")
     h = my_household(db, u)
@@ -176,14 +176,14 @@ def push_subscribe(body: SubIn, request: Request, db: Session = Depends(get_db),
 
 
 @r.post("/push/unsubscribe", dependencies=[Depends(csrf)])
-def push_unsubscribe(body: SubIn, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def push_unsubscribe(body: SubIn, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     ep = (body.subscription or {}).get("endpoint", "")
     n = db.query(PushSub).filter(PushSub.endpoint == ep, PushSub.user_id == u.id).delete()
     return {"removed": n}
 
 
 @r.post("/push/test", dependencies=[Depends(csrf)])
-def push_test(request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def push_test(request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     limit(request, "pushtest", 6, 600)
     subs = db.scalars(select(PushSub).where(PushSub.user_id == u.id)).all()
     sent = 0
@@ -205,7 +205,7 @@ class ErrIn(BaseModel):
 
 
 @r.post("/client-error")
-def client_error(body: ErrIn, request: Request, db: Session = Depends(get_db)):
+def client_error(body: ErrIn, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "cerr", 30, 600)
     msg = body.message.strip()[:400]
     if not msg:
@@ -220,6 +220,6 @@ def client_error(body: ErrIn, request: Request, db: Session = Depends(get_db)):
 
 # ---- public settings (clinical reviewer, environment) --------------------------------------------------------------------
 @r.get("/settings")
-def public_settings(db: Session = Depends(get_db)):
+def public_settings(db: Session = Depends(get_db, scope="function")):
     rv = db.get(Setting, "reviewer")
     return {"env": os.getenv("APP_ENV", "production"), "reviewer": (rv.value if rv else None), "push": PUSH.ready(), "files": storage.backend()}

@@ -122,7 +122,7 @@ def household(db: Session, key: str | None) -> Household:
 
 
 @r.post("/queue")
-def join(body: JoinIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def join(body: JoinIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Take a number. One live token per person per doctor per day, so a family tapping twice in a waiting
     room does not end up behind themselves."""
     from .auth import limit
@@ -160,7 +160,7 @@ def join(body: JoinIn, request: Request, db: Session = Depends(get_db), x_dokko_
 
 
 @r.get("/queue/{tid}")
-def my_token(tid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def my_token(tid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     t = db.get(Token, tid)
     if not t or t.household_id != h.id:
@@ -169,7 +169,7 @@ def my_token(tid: str, db: Session = Depends(get_db), x_dokko_key: str | None = 
 
 
 @r.get("/queue")
-def my_tokens(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def my_tokens(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     rows = db.scalars(select(Token).where(Token.household_id == h.id, Token.day == today(),
                                           Token.state.in_(OPEN_STATES)).order_by(Token.created)).all()
@@ -177,7 +177,7 @@ def my_tokens(db: Session = Depends(get_db), x_dokko_key: str | None = Header(No
 
 
 @r.post("/queue/{tid}/leave")
-def leave(tid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def leave(tid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """They gave up, or came another day. Freeing the place keeps everybody else's estimate honest."""
     h = household(db, x_dokko_key)
     t = db.get(Token, tid)
@@ -201,7 +201,7 @@ def _counter(u: PartnerUser = Depends(partner_me)) -> PartnerUser:
 
 
 @pr.get("/doctors")
-def doctors(db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def doctors(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     """Who is seeing patients here, with how many are waiting for each."""
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == u.store_id,
                                                 PartnerUser.role == "doctor").order_by(PartnerUser.name)).all()
@@ -220,7 +220,7 @@ def doctors(db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
 
 
 @pr.get("/queue")
-def counter_queue(doctor: str = "", db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def counter_queue(doctor: str = "", db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     """Today's list for one doctor. A doctor signing in sees their own without having to pick."""
     did = doctor or (u.id if u.role == "doctor" else "")
     if not did:
@@ -244,7 +244,7 @@ class LateIn(BaseModel):
 
 
 @pr.post("/queue/late")
-def set_late(body: LateIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def set_late(body: LateIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     """The doctor is running late: every family still waiting is told the new time, once. 0 clears it."""
     d = doctor_of(db, u.store_id, body.doctor)
     day, m = today(), max(0, min(240, int(body.minutes)))
@@ -312,7 +312,7 @@ class MoveIn(BaseModel):
 
 
 @pr.post("/queue/{tid}/move")
-def move(tid: str, body: MoveIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def move(tid: str, body: MoveIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     """Call, start, finish or pass over. Only forwards, except skip, which is available at any open state."""
     t = _token(db, u, tid)
     to = body.to
@@ -327,7 +327,7 @@ def move(tid: str, body: MoveIn, db: Session = Depends(get_db), u: PartnerUser =
 
 
 @pr.post("/queue/next")
-def call_next(doctor: str = "", db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def call_next(doctor: str = "", db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     """Finish whoever is in the room and call the next number, in one tap — which is the whole job at an OP
     counter and should not be two."""
     did = doctor or (u.id if u.role == "doctor" else "")
@@ -351,7 +351,7 @@ def call_next(doctor: str = "", db: Session = Depends(get_db), u: PartnerUser = 
 
 
 @pr.post("/queue/add")
-def counter_add(body: JoinIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def counter_add(body: JoinIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     """Somebody who walked in and is not on the app. Most of a morning's queue, in most clinics.
 
     No household is attached, so nothing is sent to a phone — the number is written on a slip and called in
@@ -375,7 +375,7 @@ def counter_add(body: JoinIn, db: Session = Depends(get_db), u: PartnerUser = De
 # names: a waiting room is a public place, the token is shareable by its nature, and a name on a wall beside
 # a specialty says more about somebody than they agreed to.
 @pr.post("/board-token")
-def board_token(db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def board_token(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     """Make, or replace, the link the waiting-room screen opens. Replacing it blanks the old screen, which is
     the point: it is how a clinic takes back a link that walked out of the building."""
     import secrets
@@ -390,14 +390,14 @@ def board_token(db: Session = Depends(get_db), u: PartnerUser = Depends(_counter
 
 
 @pr.get("/board-token")
-def get_board_token(db: Session = Depends(get_db), u: PartnerUser = Depends(_counter)):
+def get_board_token(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_counter)):
     s = db.get(Store, u.store_id)
     tok = s.board_token if s else ""
     return {"token": tok, "url": f"/counter?t={tok}" if tok else ""}
 
 
 @r.get("/board/{token}")
-def board(token: str, db: Session = Depends(get_db)):
+def board(token: str, db: Session = Depends(get_db, scope="function")):
     """What the screen draws. Public by token, read-only, and deliberately thin."""
     if len(token or "") < 16:
         raise HTTPException(404)

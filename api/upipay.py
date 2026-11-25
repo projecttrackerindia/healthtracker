@@ -70,7 +70,7 @@ def pay_json(p: Payment, base: str = "") -> dict:
 
 
 @r.get("/accounts")
-def list_accounts(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def list_accounts(request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     # the receiving accounts are shown to someone about to pay, not to anyone on the internet
     if not current_user(request, db) and not household(db, x_dokko_key, create=False):
         raise HTTPException(401, "Sign in to pay.")
@@ -86,7 +86,7 @@ class StartIn(BaseModel):
 
 
 @r.post("/start")
-def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def start(body: StartIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     if not enabled():
         raise HTTPException(503, "UPI payment is not switched on.")
     h = household(db, x_dokko_key)
@@ -129,7 +129,7 @@ def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokk
 
 
 @r.get("/{pid}/qr.svg")
-def qr(pid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def qr(pid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     import qrcode
     import qrcode.image.svg
 
@@ -152,7 +152,7 @@ class ClaimIn(BaseModel):
 
 
 @r.post("/{pid}/claim")
-def claim(pid: str, body: ClaimIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def claim(pid: str, body: ClaimIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """'I have paid': the UTR / transaction id from the UPI app, so the admin can match it."""
     h = household(db, x_dokko_key, create=False)
     p = db.get(Payment, pid)
@@ -174,7 +174,7 @@ def claim(pid: str, body: ClaimIn, request: Request, db: Session = Depends(get_d
 
 
 @r.get("")
-def mine(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def mine(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"payments": []}
@@ -186,7 +186,7 @@ def mine(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
 
 
 @r.get("/{pid}")
-def one(pid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def one(pid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     p = db.get(Payment, pid)
     if not h or not p or p.household_id != h.id:
@@ -198,7 +198,7 @@ def one(pid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Heade
 
 # ---- admin: match against the bank statement ---------------------------------------------------------------------------------
 @ar.get("/payments")
-def admin_payments(status: str = "claimed", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_payments(status: str = "claimed", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     q = select(Payment).order_by(Payment.created.desc())
     if status != "all":
         q = q.where(Payment.status == status)
@@ -226,7 +226,7 @@ def activate_plan(db: Session, h: Household, code: str, period: str, amount: int
 
 
 @ar.post("/payments/{pid}/confirm")
-def confirm(pid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def confirm(pid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     p = db.get(Payment, pid)
     if not p or p.status not in ("claimed", "pending"):
         raise HTTPException(404)
@@ -250,7 +250,7 @@ def confirm(pid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session 
 
 
 @ar.post("/payments/{pid}/reject")
-def reject(pid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def reject(pid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     p = db.get(Payment, pid)
     if not p or p.status not in ("claimed", "pending"):
         raise HTTPException(404)

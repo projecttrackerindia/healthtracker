@@ -72,7 +72,7 @@ def rx_reading(db: Session, o: Order) -> dict:
 
 
 @ar.get("/rx")
-def rx_queue(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def rx_queue(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     t = now()
     rows = []
     for o in _rx_orders(db):
@@ -86,7 +86,7 @@ def rx_queue(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
 
 
 @ar.get("/rx/{oid}/file/{fid}")
-def rx_file(oid: str, fid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def rx_file(oid: str, fid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     o = db.get(Order, oid)
     if not o or not o.rx_shared or fid not in (o.rx_files or []):
         raise HTTPException(404, "Not shared")
@@ -109,7 +109,7 @@ class RxDecision(BaseModel):
 
 
 @ar.post("/rx/{oid}")
-def rx_decide(oid: str, body: RxDecision, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def rx_decide(oid: str, body: RxDecision, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     o = db.get(Order, oid)
     if not o or o.kind != "medicine":
         raise HTTPException(404, "No such order")
@@ -168,7 +168,7 @@ def _title(kind: str, ref: str, amount: int, payload: dict | None) -> str:
 
 
 @ar.post("/approvals")
-def ask(body: AskIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def ask(body: AskIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     if body.kind not in ("refund", "export", "role"):
         raise HTTPException(400, "Unknown kind")
     if len(body.reason.strip()) < 5:
@@ -196,7 +196,7 @@ def _json(x: Approval) -> dict:
 
 
 @ar.get("/approvals")
-def approvals(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def approvals(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     t = now()
     for x in db.scalars(select(Approval).where(Approval.status == "waiting", Approval.expires < t)).all():
         x.status = "expired"
@@ -211,7 +211,7 @@ class DecideIn(BaseModel):
 
 
 @ar.post("/approvals/{aid}")
-def decide(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def decide(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     x = db.get(Approval, aid)
     if not x or x.status != "waiting":
         raise HTTPException(404, "Not waiting")
@@ -243,7 +243,7 @@ def decide(aid: str, body: DecideIn, a: Admin = Depends(admin_me), db: Session =
 
 
 @ar.get("/approvals/{aid}/download")
-def export_download(aid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def export_download(aid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """An approved export downloads once, by the person who asked, with masked contact details."""
     x = db.get(Approval, aid)
     if not x or x.kind != "export" or x.status != "approved" or (x.payload or {}).get("used"):
@@ -288,7 +288,7 @@ def _refund_done(db: Session, o: Order, amount: int, by: str, method: str = "", 
 
 
 @ar.post("/orders/{oid}/refund")
-def refund(oid: str, body: RefundIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def refund(oid: str, body: RefundIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Small refunds go straight through; above the limit they become an approval request for a second admin."""
     o = db.get(Order, oid)
     if not o:
@@ -355,7 +355,7 @@ class ComplaintIn(BaseModel):
 
 
 @fr.post("/complaints")
-def raise_complaint(body: ComplaintIn, request: Request, db: Session = Depends(get_db)):
+def raise_complaint(body: ComplaintIn, request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import current_user, limit
     from .models import Household
     limit(request, "complaint", 8, 3600)
@@ -380,7 +380,7 @@ def raise_complaint(body: ComplaintIn, request: Request, db: Session = Depends(g
 
 
 @fr.get("/complaints")
-def my_complaints(request: Request, db: Session = Depends(get_db)):
+def my_complaints(request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import current_user
     u = current_user(request, db)
     if not u:
@@ -389,7 +389,7 @@ def my_complaints(request: Request, db: Session = Depends(get_db)):
 
 
 @ar.get("/complaints")
-def complaints(status: str = "open", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def complaints(status: str = "open", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .console import mask
     from .models import Household
     q = select(Complaint).order_by(Complaint.due)
@@ -416,7 +416,7 @@ class ReplyIn(BaseModel):
 
 
 @ar.post("/complaints/{cid}")
-def reply(cid: str, body: ReplyIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def reply(cid: str, body: ReplyIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .inbox import notify
     c = db.get(Complaint, cid)
     if not c:

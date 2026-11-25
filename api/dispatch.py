@@ -124,7 +124,7 @@ def _row(db: Session, o: Order) -> dict:
 
 
 @r.get("")
-def desk(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def desk(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     un = [o for o in db.scalars(select(Order).where(Order.kind == "medicine", Order.status == "placed").order_by(Order.created)).all()
           if any(t.get("s") == "unclaimed" for t in (o.timeline or []))]
     norider = db.scalars(select(Order).where(Order.kind == "medicine", Order.status == "packing", Order.courier == "uh")).all()
@@ -138,7 +138,7 @@ class AssignIn(BaseModel):
 
 
 @r.post("/{oid}/assign")
-def assign(oid: str, b: AssignIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def assign(oid: str, b: AssignIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """The desk phoned a pharmacy and it said yes: give them the order, already accepted."""
     from .inbox import notify
     o = db.get(Order, oid)
@@ -157,7 +157,7 @@ def assign(oid: str, b: AssignIn, a: Admin = Depends(admin_me), db: Session = De
 
 
 @r.post("/{oid}/pickup-done")
-def picked(oid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def picked(oid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Urban Health collected the sealed, billed bag from the pharmacy and is on the way."""
     from .inbox import notify
     o = db.get(Order, oid)

@@ -57,7 +57,7 @@ def doctor_json(u: PartnerUser) -> dict:
 
 
 @r.get("/doctors")
-def doctors(store: str, db: Session = Depends(get_db)):
+def doctors(store: str, db: Session = Depends(get_db, scope="function")):
     """Verified doctors who consult at a partner hospital — what the family sees when booking a video visit."""
     s = db.get(Store, store)
     if not s or not s.active:
@@ -111,7 +111,7 @@ def day_slots(db: Session, store: str, doctor: str, day: str, now_hm: str = "", 
 
 
 @r.get("/doctors/{did}/slots")
-def doctor_slots(did: str, store: str, days: int = 7, db: Session = Depends(get_db)):
+def doctor_slots(did: str, store: str, days: int = 7, db: Session = Depends(get_db, scope="function")):
     from datetime import datetime, timedelta
     from .queue import IST
     d = db.get(PartnerUser, did)
@@ -155,7 +155,7 @@ def ice_servers() -> list[dict]:
 
 
 @r.get("/consults/ice")
-def ice(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def ice(request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     # relay (TURN) credentials cost money and can be abused as an open relay: only for people in a consultation
     from .auth import current_user
     if not (current_user(request, db) or household(db, x_dokko_key, create=False) or request.cookies.get(PARTNER_COOKIE)):
@@ -181,7 +181,7 @@ def _family_appt(db: Session, aid: str, key: str | None) -> Appointment:
 
 
 @r.get("/consults/{aid}")
-def consult(aid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def consult(aid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     return consult_json(db, _family_appt(db, aid, x_dokko_key))
 
 
@@ -221,7 +221,7 @@ def _summarise(a: Appointment, db: Session) -> str:
 
 
 @r.post("/consults/{aid}/end")
-def family_end(aid: str, body: EndIn, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def family_end(aid: str, body: EndIn, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """The family's side hangs up: keep (or discard) the captions, then write the summary."""
     a = _family_appt(db, aid, x_dokko_key)
     if not a.call_started:
@@ -248,7 +248,7 @@ def _count(db: Session, a: Appointment, ok: bool) -> None:
 
 
 @r.post("/consults/{aid}/summary")
-def family_summary(aid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def family_summary(aid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     a = _family_appt(db, aid, x_dokko_key)
     if not a.call_ended:
         raise HTTPException(400, "The summary is written after the call ends.")
@@ -276,7 +276,7 @@ def _store_appt(db: Session, u: PartnerUser, aid: str) -> Appointment:
 
 
 @pr.get("/consults")
-def partner_consults(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def partner_consults(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """Video visits for this hospital: confirmed and due, live, and the recently finished ones."""
     rows = db.scalars(select(Appointment).where(Appointment.store_id == u.store_id, Appointment.kind == "video",
                                                 Appointment.status.in_(("confirmed", "rescheduled", "done"))).order_by(Appointment.updated.desc()).limit(100)).all()
@@ -286,7 +286,7 @@ def partner_consults(db: Session = Depends(get_db), u: PartnerUser = Depends(par
 
 
 @pr.post("/consults/{aid}/start")
-def partner_start(aid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def partner_start(aid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     _doctor(db, u)
     a = _store_appt(db, u, aid)
     if a.kind != "video" or a.status not in ("confirmed", "rescheduled"):
@@ -304,7 +304,7 @@ class DocEndIn(BaseModel):
 
 
 @pr.post("/consults/{aid}/end")
-def partner_end(aid: str, body: DocEndIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def partner_end(aid: str, body: DocEndIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     _doctor(db, u)
     a = _store_appt(db, u, aid)
     if not a.call_started:
@@ -423,7 +423,7 @@ def rx_pdf(a: Appointment, s: Store, u: PartnerUser, rx: dict, visit: str = "Vid
 
 
 @pr.put("/consults/{aid}/rx")
-def partner_rx(aid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def partner_rx(aid: str, body: RxIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """The doctor's e-prescription: saved on the visit, written as a signed PDF into the family's documents, and the family is told."""
     _doctor(db, u)
     a = _store_appt(db, u, aid)
@@ -477,7 +477,7 @@ FREQ_WORDS = {"od": ["once a day", "once daily", "one time", "od", "mane"],
 
 
 @pr.post("/consults/{aid}/rx-draft")
-def partner_rx_draft(aid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def partner_rx_draft(aid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """Fill the prescription form from the consult's own transcript. Saves nothing.
 
     The doctor reviews every line and signs it with PUT /consults/{aid}/rx, exactly as before. Nothing
@@ -579,7 +579,7 @@ def _parse_draft(raw: str) -> dict:
 
 
 @pr.get("/consults/{aid}/rx.pdf")
-def partner_rx_pdf(aid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def partner_rx_pdf(aid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     a = _store_appt(db, u, aid)
     if not a.rx:
         raise HTTPException(404)

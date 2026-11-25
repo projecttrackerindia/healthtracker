@@ -72,7 +72,7 @@ def link_json(l: DeviceLink) -> dict:
 
 
 @r.get("/status")
-def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def status(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     links = db.scalars(select(DeviceLink).where(DeviceLink.household_id == h.id, DeviceLink.provider == "fitbit")).all() if h else []
     return {"enabled": enabled(), "links": [link_json(l) for l in links],
@@ -81,7 +81,7 @@ def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)
 
 
 @r.post("/start")
-def start(request: Request, member: str = "", db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def start(request: Request, member: str = "", db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     if not enabled():
         raise HTTPException(503, "Fitbit linking is not switched on yet.")
     h = household(db, x_dokko_key)
@@ -100,7 +100,7 @@ def _basic() -> str:
 
 
 @r.get("/callback")
-def callback(request: Request, code: str = "", state: str = "", error: str = "", db: Session = Depends(get_db)):
+def callback(request: Request, code: str = "", state: str = "", error: str = "", db: Session = Depends(get_db, scope="function")):
     import httpx
     app_url = f"{_origin(request)}/app"
     p = verify(state)
@@ -166,7 +166,7 @@ class SyncIn(BaseModel):
 
 
 @r.post("/sync")
-def sync(body: SyncIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def sync(body: SyncIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     import httpx
     h = household(db, x_dokko_key, create=False)
     l = h and db.scalar(select(DeviceLink).where(DeviceLink.household_id == h.id, DeviceLink.member_id == body.member[:32], DeviceLink.provider == "fitbit"))
@@ -193,7 +193,7 @@ def sync(body: SyncIn, request: Request, db: Session = Depends(get_db), x_dokko_
 
 
 @r.delete("/{member}")
-def unlink(member: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def unlink(member: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     l = h and db.scalar(select(DeviceLink).where(DeviceLink.household_id == h.id, DeviceLink.member_id == member[:32], DeviceLink.provider == "fitbit"))
     if not l:

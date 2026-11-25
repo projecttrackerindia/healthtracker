@@ -185,7 +185,7 @@ def sos_channels():
 
 
 @r.post("/api/v1/sos/start")
-def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def start(body: StartIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
@@ -218,7 +218,7 @@ def _mine(db: Session, h, sid: str) -> SosAlert:
 
 
 @r.post("/api/v1/sos/{sid}/loc")
-def update_loc(sid: str, body: LocIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def update_loc(sid: str, body: LocIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     a = _mine(db, h, sid)
     if not a.active:
@@ -234,13 +234,13 @@ def update_loc(sid: str, body: LocIn, request: Request, db: Session = Depends(ge
 
 
 @r.get("/api/v1/sos/{sid}")
-def status(sid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def status(sid: str, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     return alert_json(_mine(db, h, sid), _origin(request))
 
 
 @r.post("/api/v1/sos/{sid}/end")
-def end(sid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def end(sid: str, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     a = _mine(db, h, sid)
     if a.active:
@@ -253,7 +253,7 @@ def end(sid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: 
 
 
 @r.get("/api/v1/sos/t/{token}")
-def public_json(token: str, request: Request, db: Session = Depends(get_db)):
+def public_json(token: str, request: Request, db: Session = Depends(get_db, scope="function")):
     a = db.scalar(select(SosAlert).where(SosAlert.token == token[:48]))
     if not a or (not a.active and a.ended and now() - a.ended > 86400):
         raise HTTPException(404, "This alert is no longer available.")
@@ -306,7 +306,7 @@ tick();setInterval(tick,10000);
 
 
 @r.get("/sos/{token}", include_in_schema=False)
-def public_page(token: str, db: Session = Depends(get_db)):
+def public_page(token: str, db: Session = Depends(get_db, scope="function")):
     a = db.scalar(select(SosAlert).where(SosAlert.token == token[:48]))
     if not a or (not a.active and a.ended and now() - a.ended > 86400):
         return HTMLResponse("<!doctype html><meta charset=utf-8><title>Alert ended</title><body style='font-family:system-ui;padding:40px;text-align:center'><h1>This SOS alert is no longer available.</h1><p>If someone needs help now, call 112.</p>", status_code=404)
@@ -330,7 +330,7 @@ def _desk_json(a: SosAlert) -> dict:
 
 
 @r.get("/api/partner/sos")
-def desk(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def desk(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     st = my_store(db, u)
     if st.kind != "hospital":
         return {"alerts": []}
@@ -340,7 +340,7 @@ def desk(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
 
 
 @r.post("/api/partner/sos/{sid}/ack")
-def desk_ack(sid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def desk_ack(sid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     st = my_store(db, u)
     a = db.get(SosAlert, sid)
     h = ((a.data or {}).get("hospital") or {}) if a else {}

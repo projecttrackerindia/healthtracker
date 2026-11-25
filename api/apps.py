@@ -87,7 +87,7 @@ def admin_status(a: Admin = Depends(admin_me)):
 
 
 @r.put("/api/admin/app/android")
-async def upload_android(version: str = Form("1.0"), version_code: int = Form(1), notes: str = Form(""), file: UploadFile = File(...), a: Admin = Depends(admin_me), db=Depends(get_db)):
+async def upload_android(version: str = Form("1.0"), version_code: int = Form(1), notes: str = Form(""), file: UploadFile = File(...), a: Admin = Depends(admin_me), db=Depends(get_db, scope="function")):
     """Manual publish: an APK built elsewhere (or the CI artifact) goes live for the site's download button."""
     s3 = storage._s3()
     if not s3:

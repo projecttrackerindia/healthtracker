@@ -62,7 +62,7 @@ def _bank(db: Session, u: PartnerUser) -> Store:
 
 
 @pr.get("/banks")
-def banks(group: str = "", db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def banks(group: str = "", db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """Verified blood banks for a hospital to ask, nearest first, with whether they have the group on the shelf."""
     me_ = my_store(db, u)
     out = []
@@ -86,7 +86,7 @@ class AskIn(BaseModel):
 
 
 @pr.post("/requests")
-def ask(body: AskIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def ask(body: AskIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = my_store(db, u)
     if s.kind != "hospital":
         raise HTTPException(403, "Hospitals ask a blood bank for units.")
@@ -109,7 +109,7 @@ def ask(body: AskIn, db: Session = Depends(get_db), u: PartnerUser = Depends(par
 
 
 @pr.get("/requests")
-def requests(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def requests(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = my_store(db, u)
     side = "bank" if s.kind == "bloodbank" else "hospital"
     col = UnitRequest.to_store if side == "bank" else UnitRequest.from_store
@@ -124,7 +124,7 @@ class AnswerIn(BaseModel):
 
 
 @pr.post("/requests/{rid}/answer")
-def answer(rid: str, body: AnswerIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def answer(rid: str, body: AnswerIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """The bank gives what it can: all of it, part of it, or none. The shelf count drops by what is given."""
     s = _bank(db, u)
     q = db.get(UnitRequest, rid)
@@ -147,7 +147,7 @@ class MoveIn(BaseModel):
 
 
 @pr.post("/requests/{rid}/status")
-def move(rid: str, body: MoveIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def move(rid: str, body: MoveIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = my_store(db, u)
     q = db.get(UnitRequest, rid)
     if not q or s.id not in (q.to_store, q.from_store):
@@ -163,7 +163,7 @@ def move(rid: str, body: MoveIn, db: Session = Depends(get_db), u: PartnerUser =
 
 
 @pr.get("/donors")
-def donors(group: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def donors(group: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """Opted-in donors near the bank who can give for this group today. First name and initial only."""
     s = _bank(db, u)
     if group not in GROUPS:
@@ -212,7 +212,7 @@ class CampIn(BaseModel):
 
 
 @pr.get("/camps")
-def bank_camps(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def bank_camps(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = _bank(db, u)
     today = time.strftime("%Y-%m-%d")
     rows = db.scalars(select(BloodCamp).where(BloodCamp.store_id == s.id, BloodCamp.day >= today).order_by(BloodCamp.day)).all()
@@ -220,7 +220,7 @@ def bank_camps(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_m
 
 
 @pr.post("/camps")
-def bank_camp_new(body: CampIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def bank_camp_new(body: CampIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     import re as _re
     s = _bank(db, u)
     if not _re.fullmatch(r"\d{4}-\d{2}-\d{2}", body.day) or body.day < time.strftime("%Y-%m-%d"):
@@ -248,7 +248,7 @@ def bank_camp_new(body: CampIn, db: Session = Depends(get_db), u: PartnerUser = 
 
 
 @pr.post("/camps/{cid}/cancel")
-def bank_camp_cancel(cid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def bank_camp_cancel(cid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = _bank(db, u)
     c = db.get(BloodCamp, cid)
     if not c or c.store_id != s.id:
@@ -266,7 +266,7 @@ def _my_donors(db: Session, u: User) -> list:
 
 
 @fr.get("")
-def family_camps(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_camps(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     ds = _my_donors(db, u)
     if not ds:
         return {"camps": [], "donor": False}
@@ -283,7 +283,7 @@ def family_camps(db: Session = Depends(get_db), u: User = Depends(need_user)):
 
 
 @fr.post("/{cid}/book")
-def family_book(cid: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_book(cid: str, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     c = db.get(BloodCamp, cid)
     ds = _my_donors(db, u)
     if not c or c.cancelled or not ds:
@@ -298,7 +298,7 @@ def family_book(cid: str, db: Session = Depends(get_db), u: User = Depends(need_
 
 
 @fr.post("/{cid}/unbook")
-def family_unbook(cid: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_unbook(cid: str, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     c = db.get(BloodCamp, cid)
     if not c:
         raise HTTPException(404)
@@ -318,13 +318,13 @@ class FeesIn(BaseModel):
 
 
 @pr.get("/fees")
-def bank_fees(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def bank_fees(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = _bank(db, u)
     return {"fees": (s.profile or {}).get("bloodFees", {}), "components": COMPONENTS}
 
 
 @pr.put("/fees")
-def bank_fees_set(body: FeesIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def bank_fees_set(body: FeesIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = _bank(db, u)
     if u.role not in ("owner", "manager"):
         raise HTTPException(403, "Only the owner or a manager can change charges.")
@@ -334,7 +334,7 @@ def bank_fees_set(body: FeesIn, db: Session = Depends(get_db), u: PartnerUser = 
 
 
 @pr.get("/earnings")
-def bank_earnings(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def bank_earnings(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """Units issued, month by month, and the processing charges they carry at the bank's own rates.
     Hospitals pay the bank directly; this is the bank's record, not a payout from Urban Health."""
     s = _bank(db, u)
@@ -364,7 +364,7 @@ def bank_earnings(db: Session = Depends(get_db), u: PartnerUser = Depends(partne
 
 
 @pr.get("/today")
-def bank_today(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def bank_today(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     s = _bank(db, u)
     t0 = int(time.mktime(time.strptime(time.strftime("%Y-%m-%d"), "%Y-%m-%d")))
     reqs = db.scalars(select(UnitRequest).where(UnitRequest.to_store == s.id, UnitRequest.created > now() - 7 * 86400)).all()

@@ -58,13 +58,13 @@ def _clean(b: DocIn) -> dict:
 
 
 @r.get("")
-def list_(request: Request, db: Session = Depends(get_db)):
+def list_(request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     return {"rows": [_j(d) for d in db.scalars(select(MyDoctor).where(MyDoctor.household_id == u.household_id).order_by(MyDoctor.name)).all()], "specialties": SPECIALTIES}
 
 
 @r.post("")
-def add(b: DocIn, request: Request, db: Session = Depends(get_db)):
+def add(b: DocIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     if len(db.scalars(select(MyDoctor.id).where(MyDoctor.household_id == u.household_id)).all()) >= 40:
         raise HTTPException(400, "Up to 40 doctors.")
@@ -75,7 +75,7 @@ def add(b: DocIn, request: Request, db: Session = Depends(get_db)):
 
 
 @r.put("/{did}")
-def edit(did: str, b: DocIn, request: Request, db: Session = Depends(get_db)):
+def edit(did: str, b: DocIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     d = db.get(MyDoctor, did)
     if not d or d.household_id != u.household_id:
@@ -86,7 +86,7 @@ def edit(did: str, b: DocIn, request: Request, db: Session = Depends(get_db)):
 
 
 @r.delete("/{did}")
-def remove(did: str, request: Request, db: Session = Depends(get_db)):
+def remove(did: str, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     d = db.get(MyDoctor, did)
     if not d or d.household_id != u.household_id:

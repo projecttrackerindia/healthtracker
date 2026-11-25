@@ -81,7 +81,7 @@ def _amount(db: Session, h: Household, body: StartIn) -> tuple[int, str]:
 
 
 @r.post("/start", dependencies=[Depends(csrf)])
-def start(body: StartIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def start(body: StartIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     if not enabled():
         raise HTTPException(503, "Online payment is not switched on yet. Pay at the door instead.")
     h = household(db, x_dokko_key)
@@ -146,7 +146,7 @@ class VerifyIn(BaseModel):
 
 
 @r.post("/verify", dependencies=[Depends(csrf)])
-def verify(body: VerifyIn, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def verify(body: VerifyIn, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     p = db.get(Payment, body.payment)
     if not h or not p or p.household_id != h.id or p.account != ACCOUNT:
@@ -158,7 +158,7 @@ def verify(body: VerifyIn, db: Session = Depends(get_db), x_dokko_key: str | Non
 
 
 @r.post("/webhook")
-async def webhook(request: Request, db: Session = Depends(get_db)):
+async def webhook(request: Request, db: Session = Depends(get_db, scope="function")):
     raw = await request.body()
     if not RZ.verify_webhook(raw, request.headers.get("x-razorpay-signature", "")):
         raise HTTPException(400, "bad signature")

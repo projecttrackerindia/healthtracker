@@ -57,7 +57,7 @@ def alert_store(db: Session, store_id: str, subject: str, text: str) -> int:
     return n
 
 
-def me(request: Request, db: Session = Depends(get_db)) -> PartnerUser:
+def me(request: Request, db: Session = Depends(get_db, scope="function")) -> PartnerUser:
     p = verify(request.cookies.get(COOKIE))
     if not p or p.get("k") != "partner":
         raise HTTPException(401, "login required")
@@ -137,7 +137,7 @@ def _partner_totp(db: Session, u: PartnerUser, body: "Login") -> None:
 
 
 @r.post("/login")
-def login(body: Login, request: Request, response: Response, db: Session = Depends(get_db)):
+def login(body: Login, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     from .auth import clear as rl_clear, fail as rl_fail, guard as rl_guard
 
     rl_guard(request, "partner-login", 8, 900)
@@ -193,7 +193,7 @@ def _unit_new(db: Session, s: Store) -> int:
 
 
 @r.get("/me")
-def who(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def who(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     return me_json(db, u)
 
 
@@ -203,7 +203,7 @@ class PwIn(BaseModel):
 
 
 @r.post("/password")
-def password(body: PwIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def password(body: PwIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     if not check_pw(body.current, u.pw_hash):
         raise HTTPException(400, "Current password is wrong.")
     if len(body.new) < 10:
@@ -217,7 +217,7 @@ class RegIn(BaseModel):
 
 
 @r.post("/my-registration")
-def my_registration(body: RegIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def my_registration(body: RegIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """A pharmacy owner who is themselves the registered pharmacist records their own number here. It is set
     once by the person it belongs to and is shown beside every prescription they sign off."""
     if u.role not in ("owner", "pharmacist"):
@@ -239,7 +239,7 @@ LANGS = ("English", "Tamil", "Telugu", "Hindi", "Kannada", "Malayalam", "Marathi
 
 
 @r.post("/my-languages")
-def my_languages(body: LangIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def my_languages(body: LangIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """The languages a doctor consults in, shown to families when they choose a doctor."""
     if u.role != "doctor":
         raise HTTPException(403, "Only a doctor sets consulting languages.")
@@ -253,7 +253,7 @@ class FeeIn(BaseModel):
 
 
 @r.post("/my-fee")
-def my_fee(body: FeeIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def my_fee(body: FeeIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """The OP and video consultation fee, shown to families before they book."""
     if u.role != "doctor":
         raise HTTPException(403, "Only a doctor sets a consultation fee.")
@@ -267,7 +267,7 @@ class AgreeIn(BaseModel):
 
 
 @r.get("/agreement")
-def agreement(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def agreement(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     from .onboard import AGREEMENT_VERSION
     st = db.get(Store, u.store_id)
     got = (st.profile or {}).get("agreement") or {}
@@ -282,7 +282,7 @@ def agreement(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
 
 
 @r.post("/agreement")
-def agreement_sign(body: AgreeIn, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def agreement_sign(body: AgreeIn, request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """The owner accepts the current agreement by typing their full name: who, when, from where and which version
     are kept with the partner, and the acceptance shows in the admin panel's onboarding checklist."""
     from .auth import client_ip
@@ -302,7 +302,7 @@ def agreement_sign(body: AgreeIn, request: Request, db: Session = Depends(get_db
 
 
 @r.post("/my-certificate")
-async def my_certificate(request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+async def my_certificate(request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Doctors and pharmacists upload their council registration certificate (PDF or photo) and its valid-until
     date. Any change sends it back for two-admin approval."""
     import re as _r
@@ -406,7 +406,7 @@ def porder(db: Session, o: Order) -> dict:
 
 
 @r.get("/orders")
-def orders(status: str = "open", db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def orders(status: str = "open", db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     q = select(Order).where(Order.store_id == u.store_id)
     closed = ("delivered", "ready", "cancelled", "refunded", "returned")
     if status == "open":
@@ -425,7 +425,7 @@ class StatusIn(BaseModel):
 
 
 @r.post("/orders/{oid}/status")
-def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def set_status(oid: str, body: StatusIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     o = _order(db, u, oid)
     cur = order_json(o)["status"]
     allowed = (NEXT_LAB if o.kind == "lab" else NEXT_MED).get(cur, [])
@@ -523,7 +523,7 @@ def _role_spec(role: str) -> dict:
 
 
 @r.get("/techs")
-def techs(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def techs(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """The collection team, for the assign picker and the roster screen."""
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == u.store_id,
                                                 PartnerUser.role == "tech").order_by(PartnerUser.name)).all()
@@ -535,7 +535,7 @@ class PayIn(BaseModel):
 
 
 @r.post("/techs/{uid}/pay")
-def tech_pay(uid: str, body: PayIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+def tech_pay(uid: str, body: PayIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_owner)):
     """What the lab pays this technician per home visit, so their app can show what they earned today. The lab
     pays them; Urban Health only shows the sum."""
     t = db.get(PartnerUser, uid)
@@ -548,7 +548,7 @@ def tech_pay(uid: str, body: PayIn, db: Session = Depends(get_db), u: PartnerUse
 
 
 @r.get("/pharmacists")
-def pharmacists(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def pharmacists(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Who at this pharmacy may sign off a prescription."""
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == u.store_id,
                                                 PartnerUser.role == "pharmacist").order_by(PartnerUser.name)).all()
@@ -570,7 +570,7 @@ class TechIn(BaseModel):
 
 
 @r.post("/techs")
-def tech_add(body: TechIn, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+def tech_add(body: TechIn, request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_owner)):
     """Add somebody to the collection team and hand them a one-time password.
 
     Name and phone are both required and neither is decoration: the family is told who to expect and is given
@@ -626,7 +626,7 @@ def tech_add(body: TechIn, request: Request, db: Session = Depends(get_db), u: P
 
 
 @r.post("/techs/{uid}/reset")
-def tech_reset(uid: str, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+def tech_reset(uid: str, request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_owner)):
     """A forgotten password on a doorstep is a job that does not happen. The owner can fix it in a tap."""
     import secrets
 
@@ -647,7 +647,7 @@ class TechOff(BaseModel):
 
 
 @r.post("/techs/{uid}/active")
-def tech_active(uid: str, body: TechOff, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+def tech_active(uid: str, body: TechOff, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_owner)):
     """Someone leaves, or is off sick. Turning them off stops them signing in; it does not touch work already
     in their hands, because a half-collected job still needs finishing."""
     t = db.get(PartnerUser, uid)
@@ -662,7 +662,7 @@ def tech_active(uid: str, body: TechOff, db: Session = Depends(get_db), u: Partn
 
 
 @r.post("/orders/{oid}/assign")
-def assign(oid: str, body: AssignIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def assign(oid: str, body: AssignIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Name the person who is going. The family is told who to expect, which is most of what a home visit
     needs — a stranger at the door with no name is the complaint every home-collection service gets."""
     o = _order(db, u, oid)
@@ -723,7 +723,7 @@ class VerifyIn(BaseModel):
 
 
 @r.post("/orders/{oid}/verify")
-def verify_rx(oid: str, body: VerifyIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_pharmacist)):
+def verify_rx(oid: str, body: VerifyIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_pharmacist)):
     """A named, registered pharmacist signs this prescription off.
 
     What is recorded is who checked it, when, and the three things about the prescription that make it
@@ -773,7 +773,7 @@ class RefuseIn(BaseModel):
 
 
 @r.post("/orders/{oid}/refuse")
-def refuse_rx(oid: str, body: RefuseIn, db: Session = Depends(get_db), u: PartnerUser = Depends(_pharmacist)):
+def refuse_rx(oid: str, body: RefuseIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_pharmacist)):
     """The pharmacist will not dispense this. The family is told plainly why, because "cancelled" with no
     reason sends them to another pharmacy to try the same prescription again."""
     o = _order(db, u, oid)
@@ -801,7 +801,7 @@ PICKABLE = ("checking",)
 
 
 @r.get("/picklist")
-def picklist(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def picklist(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Everything waiting to be packed, gathered by medicine rather than by order.
 
     A pharmacist with fifteen orders open does not walk the shelves fifteen times. They want to know that
@@ -842,7 +842,7 @@ class BatchIn(BaseModel):
 
 
 @r.post("/batch/pack")
-def batch_pack(body: BatchIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def batch_pack(body: BatchIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Mark a picked batch packed, in one action.
 
     Each order is still put through the same single-order rules, and one that fails them does not stop the
@@ -878,7 +878,7 @@ def batch_pack(body: BatchIn, db: Session = Depends(get_db), u: PartnerUser = De
 
 # ---- what the partner earned -----------------------------------------------------------------------------------------
 @r.get("/earnings")
-def earnings(months: int = 6, db: Session = Depends(get_db), u: PartnerUser = Depends(_owner)):
+def earnings(months: int = 6, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_owner)):
     """The store's own statement, month by month.
 
     A partner who cannot see what they earned will telephone to ask, every week, and will be right to. The
@@ -914,7 +914,7 @@ def earnings(months: int = 6, db: Session = Depends(get_db), u: PartnerUser = De
 
 
 @r.get("/orders/{oid}/rx/{file_id}")
-def read_rx(oid: str, file_id: str, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def read_rx(oid: str, file_id: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """The prescription the family chose to share with this order; nothing else in their vault is reachable."""
     o = _order(db, u, oid)
     if not o.rx_shared or file_id not in (o.rx_files or []):
@@ -927,7 +927,7 @@ def read_rx(oid: str, file_id: str, db: Session = Depends(get_db), u: PartnerUse
 
 
 @r.put("/orders/{oid}/report")
-async def upload_report(oid: str, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+async def upload_report(oid: str, request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """The lab's PDF goes straight into the family's encrypted document store under this booking."""
     o = _order(db, u, oid)
     if o.kind != "lab":
@@ -1027,7 +1027,7 @@ def _jumps(values: list[dict], hist: dict) -> list[dict]:
 
 
 @r.post("/orders/{oid}/report/read")
-async def read_report(oid: str, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+async def read_report(oid: str, request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Read a report before sending it: the values with their ranges, and anything that moved a lot since this
     person's last test here. Nothing is stored and nothing reaches the family until Sign and send."""
     o = _order(db, u, oid)
@@ -1055,7 +1055,7 @@ class RerunIn(BaseModel):
 
 
 @r.post("/orders/{oid}/rerun")
-def rerun(oid: str, body: RerunIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def rerun(oid: str, body: RerunIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """The sample is run again before anything is sent. The family's booking stays 'in the lab'."""
     o = _order(db, u, oid)
     if o.kind != "lab" or o.status not in ("collected", "processing"):
@@ -1100,7 +1100,7 @@ def _to_person_records(db: Session, o: Order, s: Store, data: bytes, mime: str, 
 
 # ---- appointments (hospitals / clinics) -----------------------------------------------------------------------------------
 @r.get("/appointments")
-def appts(status: str = "open", db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def appts(status: str = "open", db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     q = select(Appointment).where(Appointment.store_id == u.store_id)
     if status == "open":
         q = q.where(Appointment.status.in_(("requested", "confirmed", "rescheduled")))
@@ -1117,7 +1117,7 @@ class ApptAct(BaseModel):
 
 
 @r.post("/appointments/{aid}")
-def appt_set(aid: str, body: ApptAct, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def appt_set(aid: str, body: ApptAct, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     a = db.get(Appointment, aid)
     if not a or a.store_id != u.store_id:
         raise HTTPException(404)
@@ -1140,7 +1140,7 @@ def appt_set(aid: str, body: ApptAct, db: Session = Depends(get_db), u: PartnerU
 
 # ---- price list and profile --------------------------------------------------------------------------------------------------
 @r.get("/prices")
-def prices(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def prices(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     s = my_store(db, u)
     if s.kind == "lab":
         have = {t.code: t for t in db.scalars(select(LabTest).where(LabTest.store_id == s.id)).all()}
@@ -1156,7 +1156,7 @@ class PricesIn(BaseModel):
 
 
 @r.put("/prices")
-def set_prices(body: PricesIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def set_prices(body: PricesIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     s = my_store(db, u)
     n = 0
     if s.kind == "lab":
@@ -1215,7 +1215,7 @@ class ProfileIn(BaseModel):
 
 
 @r.post("/prices/import")
-async def import_prices(request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+async def import_prices(request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """CSV from the shop's own software: labs `code,price,tat_hours`; pharmacies `sku,price,mrp,stock`. Unknown codes/skus are reported, not guessed."""
     import csv
     import io
@@ -1264,7 +1264,7 @@ async def import_prices(request: Request, db: Session = Depends(get_db), u: Part
 
 
 @r.put("/profile")
-def set_profile(body: ProfileIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def set_profile(body: ProfileIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     s = my_store(db, u)
     if body.phone:
         s.phone = body.phone[:24]
@@ -1290,7 +1290,7 @@ def set_profile(body: ProfileIn, db: Session = Depends(get_db), u: PartnerUser =
 
 # ---- messages with families -------------------------------------------------------------------------------------------------
 @r.get("/threads")
-def threads(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def threads(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     rows = db.scalars(select(Message).where(Message.store_id == u.store_id).order_by(Message.t.desc()).limit(600)).all()
     seen, out = {}, []
     for m in rows:
@@ -1305,7 +1305,7 @@ def threads(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
 
 
 @r.get("/threads/{hid}")
-def thread(hid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def thread(hid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     rows = db.scalars(select(Message).where(Message.store_id == u.store_id, Message.household_id == hid).order_by(Message.t.asc()).limit(300)).all()
     if not rows:
         raise HTTPException(404)
@@ -1320,7 +1320,7 @@ class PMsg(BaseModel):
 
 
 @r.post("/threads/{hid}")
-def reply(hid: str, body: PMsg, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def reply(hid: str, body: PMsg, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     s = my_store(db, u)
     ok = db.scalar(select(Message.id).where(Message.store_id == s.id, Message.household_id == hid)) or db.scalar(select(Order.id).where(Order.store_id == s.id, Order.household_id == hid)) \
         or db.scalar(select(Appointment.id).where(Appointment.store_id == s.id, Appointment.household_id == hid))
@@ -1337,7 +1337,7 @@ def reply(hid: str, body: PMsg, db: Session = Depends(get_db), u: PartnerUser = 
 
 
 @r.get("/thread-file/{hid}/{file_id}")
-def thread_file(hid: str, file_id: str, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def thread_file(hid: str, file_id: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """A document the family attached in a message to this store."""
     m = db.scalar(select(Message).where(Message.store_id == u.store_id, Message.household_id == hid, Message.file_id == file_id, Message.sender == "family"))
     if not m:
@@ -1355,7 +1355,7 @@ class PassIn(BaseModel):
 
 
 @r.post("/orders/{oid}/pass")
-def pass_order(oid: str, body: PassIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def pass_order(oid: str, body: PassIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Can't take it: it goes to the next nearest pharmacy at once instead of waiting out the three minutes."""
     o = _order(db, u, oid)
     if o.kind != "medicine" or o.status != "placed":
@@ -1373,7 +1373,7 @@ class PackIn(BaseModel):
 
 
 @r.post("/orders/{oid}/pack")
-async def pack_order(oid: str, request: Request, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+async def pack_order(oid: str, request: Request, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """Packed, with proof: every line ticked, the bill amount, and photos of the bill and the sealed bag."""
     form = await request.form()
     o = _order(db, u, oid)
@@ -1427,7 +1427,7 @@ async def pack_order(oid: str, request: Request, db: Session = Depends(get_db), 
 
 
 @r.post("/orders/{oid}/need-rider")
-def need_rider(oid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def need_rider(oid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     """No delivery boy free: Urban Health collects the sealed, billed bag from the counter."""
     o = _order(db, u, oid)
     if o.kind != "medicine" or o.status != "packing":
@@ -1477,14 +1477,14 @@ def refills_due(db: Session, store_id: str, days_ahead: int = 7) -> list[dict]:
 
 
 @r.get("/refills")
-def refills(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def refills(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     s = my_store(db, u)
     rows = refills_due(db, s.id) if s.kind == "pharmacy" else []
     return {"due": len(rows), "toRemind": sum(1 for x in rows if now() - x["reminded"] > 6 * 86400), "families": rows}
 
 
 @r.post("/refills/remind")
-def refills_remind(db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def refills_remind(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     s = my_store(db, u)
     n = 0
     for x in refills_due(db, s.id) if s.kind == "pharmacy" else []:
@@ -1533,7 +1533,7 @@ def _snapshot(db: Session, s: Store) -> dict:
 
 
 @r.post("/ask")
-def partner_ask(body: PAskIn, db: Session = Depends(get_db), u: PartnerUser = Depends(me)):
+def partner_ask(body: PAskIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(me)):
     q = (body.q or "").strip()[:300]
     if len(q) < 2:
         raise HTTPException(400, "Type a question.")

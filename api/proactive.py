@@ -330,7 +330,7 @@ def narrate(report: dict, lang: str = "en") -> str:
 
 
 @r.get("/report/weekly")
-def weekly_report(lang: str = "en", db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def weekly_report(lang: str = "en", db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """The family's weekly report, computed from the encrypted record on request (cached for the day)."""
     h = household(db, x_dokko_key, create=False)
     if not h:

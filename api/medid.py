@@ -83,7 +83,7 @@ class MedIdIn(BaseModel):
 
 
 @r.get("/api/v1/medical-id")
-def list_ids(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def list_ids(request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"ids": []}
@@ -92,7 +92,7 @@ def list_ids(request: Request, db: Session = Depends(get_db), x_dokko_key: str |
 
 
 @r.put("/api/v1/medical-id/{member}")
-def put_id(member: str, body: MedIdIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def put_id(member: str, body: MedIdIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Create, update or rotate one person's Medical ID. The payload is exactly what will be shown."""
     h = household(db, x_dokko_key)
     if not h:
@@ -116,7 +116,7 @@ def put_id(member: str, body: MedIdIn, request: Request, db: Session = Depends(g
 
 
 @r.post("/api/v1/medical-id/{member}/off")
-def off_id(member: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def off_id(member: str, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     cur = h and db.scalar(select(MedicalId).where(MedicalId.household_id == h.id, MedicalId.member_id == member[:32]))
     if not cur:
@@ -126,7 +126,7 @@ def off_id(member: str, request: Request, db: Session = Depends(get_db), x_dokko
 
 
 @r.get("/api/v1/medical-id/{member}/qr.svg")
-def qr(member: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def qr(member: str, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     import qrcode
     import qrcode.image.svg
 
@@ -152,7 +152,7 @@ def _load(db: Session, token: str) -> tuple[MedicalId, dict] | None:
 
 
 @r.get("/api/v1/m/{token}")
-def public_json(token: str, request: Request, db: Session = Depends(get_db)):
+def public_json(token: str, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "medid-view", 120, 3600)
     got = _load(db, token)
     if not got:
@@ -200,7 +200,7 @@ h1{{font-size:24px;margin:0 0 4px}}.card{{background:#fff;border:1px solid #e5e7
 
 
 @r.get("/m/{token}", response_class=HTMLResponse, include_in_schema=False)
-def public_page(token: str, request: Request, db: Session = Depends(get_db)):
+def public_page(token: str, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "medid-view", 120, 3600)
     got = _load(db, token)
     if not got:

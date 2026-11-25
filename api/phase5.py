@@ -39,7 +39,7 @@ def _mask_contact(v: str) -> str:
 
 # ---- families --------------------------------------------------------------------------------------------------------
 @ar.get("/families")
-def families(q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def families(q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Find one family by a full mobile number or email. No browsing, no partial matches."""
     from .auth import norm_id
     from .console import mask
@@ -59,7 +59,7 @@ def families(q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(ge
 
 
 @ar.get("/families/{hid}")
-def family(hid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def family(hid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .console import mask
     h = db.get(Household, hid)
     if not h:
@@ -98,7 +98,7 @@ class AskAccess(BaseModel):
 
 
 @ar.post("/families/{hid}/ask-access")
-def ask_access(hid: str, body: AskAccess, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def ask_access(hid: str, body: AskAccess, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .inbox import notify
     h = db.get(Household, hid)
     if not h:
@@ -119,7 +119,7 @@ class GrantIn(BaseModel):
 
 
 @fr.post("/access/{gid}")
-def answer_access(gid: str, body: GrantIn, request: Request, db: Session = Depends(get_db)):
+def answer_access(gid: str, body: GrantIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     g = db.get(AccessGrant, gid)
     if not g or g.household_id != u.household_id or g.status != "asked":
@@ -134,7 +134,7 @@ class FamilyAct(BaseModel):
 
 
 @ar.post("/families/{hid}/state")
-def family_state(hid: str, body: FamilyAct, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def family_state(hid: str, body: FamilyAct, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     h = db.get(Household, hid)
     if not h:
         raise HTTPException(404)
@@ -155,7 +155,7 @@ class DataReqIn(BaseModel):
 
 
 @fr.post("/data-requests")
-def data_request(body: DataReqIn, request: Request, db: Session = Depends(get_db)):
+def data_request(body: DataReqIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     if body.kind not in ("delete", "copy", "correct"):
         raise HTTPException(400, "Choose delete, copy or correct")
@@ -167,7 +167,7 @@ def data_request(body: DataReqIn, request: Request, db: Session = Depends(get_db
 
 
 @ar.get("/data-requests")
-def data_requests(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def data_requests(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .console import mask
     rows = db.scalars(select(DataRequest).order_by(DataRequest.status.desc(), DataRequest.due)).all()
     out = []
@@ -184,7 +184,7 @@ class DataReqDone(BaseModel):
 
 
 @ar.post("/data-requests/{rid}")
-def data_request_done(rid: str, body: DataReqDone, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def data_request_done(rid: str, body: DataReqDone, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .auth import erase_user
     from .inbox import notify
     d = db.get(DataRequest, rid)
@@ -220,7 +220,7 @@ class CompanyIn(BaseModel):
 
 
 @ar.get("/companies")
-def companies(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def companies(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     out = []
     for c in db.scalars(select(Company).order_by(Company.created.desc())).all():
         mem = db.scalars(select(CompanyMember).where(CompanyMember.company_id == c.id)).all()
@@ -256,7 +256,7 @@ def company_stats(db: Session, c: Company, mem: list) -> dict | None:
 
 
 @ar.post("/companies")
-def add_company(body: CompanyIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def add_company(body: CompanyIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     name = re.sub(r"[<>\x00-\x1f]", "", body.name).strip()[:120]
     if len(name) < 2:
         raise HTTPException(400, "Enter the company name")
@@ -272,7 +272,7 @@ class JoinCo(BaseModel):
 
 
 @fr.post("/company/join")
-def join_company(body: JoinCo, request: Request, db: Session = Depends(get_db)):
+def join_company(body: JoinCo, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     c = db.scalar(select(Company).where(Company.code == body.code.strip().upper(), Company.active == True))  # noqa: E712
     if not c:
@@ -296,7 +296,7 @@ def paused_kinds(db: Session) -> set[str]:
 
 
 @ar.get("/messages")
-def messages(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def messages(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     t = now()
     sent = dict(db.execute(select(Notice.kind, func.count(Notice.id)).where(Notice.t > t - 86400).group_by(Notice.kind)).all())
     paused = paused_kinds(db)
@@ -310,7 +310,7 @@ class MsgToggle(BaseModel):
 
 
 @ar.post("/messages")
-def toggle_message(body: MsgToggle, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def toggle_message(body: MsgToggle, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     if body.kind not in {k for k, *_ in MESSAGES}:
         raise HTTPException(400)
     if body.kind == "otp" and not body.on:
@@ -338,7 +338,7 @@ class OfferIn(BaseModel):
 
 
 @ar.get("/offers")
-def offers(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def offers(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     t = now()
     return {"rows": [{"code": o.code, "title": o.title, "applies": o.applies, "pct": o.pct, "flat": o.flat, "maxOff": o.max_off, "budget": o.budget, "spent": o.spent,
                       "uses": o.uses, "once": o.once, "ends": o.ends, "state": "Ended" if o.ends < t else "Budget used" if o.spent >= o.budget else "Live" if o.active else "Paused"}
@@ -346,7 +346,7 @@ def offers(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
 
 
 @ar.post("/offers")
-def add_offer(body: OfferIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def add_offer(body: OfferIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     code = body.code.strip().upper()
     if not re.fullmatch(r"[A-Z0-9]{4,20}", code):
         raise HTTPException(400, "Code: 4–20 letters or digits")
@@ -370,7 +370,7 @@ def add_offer(body: OfferIn, a: Admin = Depends(admin_me), db: Session = Depends
 
 
 @ar.post("/offers/{code}/toggle")
-def toggle_offer(code: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def toggle_offer(code: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     o = db.get(Offer, code)
     if not o:
         raise HTTPException(404)
@@ -396,7 +396,7 @@ def apply_offer(db: Session, code: str, household_id: str, kind: str, items: lis
 
 
 @fr.post("/offers/check")
-def check_offer(body: dict, request: Request, db: Session = Depends(get_db)):
+def check_offer(body: dict, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     off = apply_offer(db, str(body.get("code", "")), u.household_id or "", str(body.get("kind", "lab")), body.get("items") or [], int(body.get("subtotal") or 0))
     return {"off": off}
@@ -441,13 +441,13 @@ def send_morning_summary(db: Session) -> int:
 
 
 @ar.get("/summary")
-def summary_preview(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def summary_preview(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from . import messaging
     return {"text": summary_text(db), "on": a.summary, "emailReady": messaging.email_ready()}
 
 
 @ar.post("/summary")
-def summary_toggle(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def summary_toggle(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     a.summary = not a.summary
     return {"on": a.summary}
 
@@ -461,7 +461,7 @@ def practice_store(db: Session) -> Store | None:
 
 
 @ar.post("/practice/{what}")
-def practice(what: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def practice(what: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Fake orders on a fake partner and a fake family, never shown to real families or in the public pages.
     'clear' removes all of it."""
     s = practice_store(db)

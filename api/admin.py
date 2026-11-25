@@ -54,7 +54,7 @@ def allowed(role: str, method: str, path: str) -> bool:
     return False
 
 
-def me(request: Request, db: Session = Depends(get_db)) -> Admin:
+def me(request: Request, db: Session = Depends(get_db, scope="function")) -> Admin:
     p = verify(request.cookies.get(COOKIE))
     if not p:
         raise HTTPException(401, "login required")
@@ -178,7 +178,7 @@ def _remember_device(db: Session, a: Admin, request: Request, response: Response
 
 
 @r.get("/devices")
-def devices(request: Request, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def devices(request: Request, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     import hashlib
     from .models import AdminDevice
     raw = request.cookies.get(DEV_COOKIE) or ""
@@ -188,7 +188,7 @@ def devices(request: Request, a: Admin = Depends(me), db: Session = Depends(get_
 
 
 @r.post("/devices/{did}/forget")
-def forget_device(did: int, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def forget_device(did: int, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .models import AdminDevice
     d = db.get(AdminDevice, did)
     if not d or d.admin_id != a.id:
@@ -200,7 +200,7 @@ def forget_device(did: int, a: Admin = Depends(me), db: Session = Depends(get_db
 
 
 @r.post("/signout-everywhere")
-def signout_everywhere(response: Response, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def signout_everywhere(response: Response, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     a.session_epoch = (a.session_epoch or 0) + 1
     log(db, a.email, "admin.signout_everywhere")
     response.delete_cookie(COOKIE, path="/")
@@ -217,7 +217,7 @@ def _alert_owner(a: Admin) -> None:
 
 
 @r.post("/login")
-def login(body: Login, request: Request, response: Response, db: Session = Depends(get_db)):
+def login(body: Login, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     from .auth import clear as rl_clear, fail as rl_fail, guard as rl_guard
 
     try:
@@ -290,7 +290,7 @@ class PhoneIn(BaseModel):
 
 
 @r.put("/me/phone")
-def my_phone(body: PhoneIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def my_phone(body: PhoneIn, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Sign in with a mobile number too. Asks for the password again: whoever holds the number can sign in with it."""
     if not check_pw(body.password, a.pw_hash):
         raise HTTPException(403, "That password is not right.")
@@ -313,7 +313,7 @@ class EmailIn(BaseModel):
 
 
 @r.put("/me/email")
-def my_email(body: EmailIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def my_email(body: EmailIn, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Move a sign-in email (e.g. off the previous domain). Asks for the password again."""
     import re as _re
     if not check_pw(body.password, a.pw_hash):
@@ -338,14 +338,14 @@ class ReviewerIn(BaseModel):
 
 
 @r.get("/settings")
-def settings_get(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def settings_get(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .models import Setting
     rv = db.get(Setting, "reviewer")
     return {"reviewer": rv.value if rv else {}}
 
 
 @r.post("/settings/reviewer")
-def settings_reviewer(body: ReviewerIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def settings_reviewer(body: ReviewerIn, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .models import Setting
     val = {k: v.strip()[:120] for k, v in body.model_dump().items()}
     if not val["name"]:
@@ -360,14 +360,14 @@ def settings_reviewer(body: ReviewerIn, a: Admin = Depends(me), db: Session = De
 
 
 @r.get("/client-errors")
-def client_errors(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def client_errors(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .models import ClientError
     rows = db.scalars(select(ClientError).order_by(ClientError.t.desc()).limit(100)).all()
     return [{"id": e.id, "t": e.t, "message": e.message, "stack": e.stack[:600], "page": e.page, "ua": e.ua, "version": e.version, "count": e.count} for e in rows]
 
 
 @r.delete("/client-errors")
-def client_errors_clear(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def client_errors_clear(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .models import ClientError
     n = db.query(ClientError).delete()
     return {"cleared": n}
@@ -375,7 +375,7 @@ def client_errors_clear(a: Admin = Depends(me), db: Session = Depends(get_db)):
 
 # ---- dashboard ------------------------------------------------------------------------------------------------------
 @r.post("/storage/test")
-def storage_test(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def storage_test(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Can documents actually be stored? Writes, reads back and deletes one tiny object with the live credentials."""
     import time as _t
     from . import storage
@@ -400,7 +400,7 @@ def ai_test(a: Admin = Depends(me)):
 
 
 @r.get("/stats")
-def stats(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def stats(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     t = now()
     day, week, month = t - 86400, t - 7 * 86400, t - 30 * 86400
     cnt = lambda q: db.scalar(select(func.count()).select_from(q.subquery())) or 0  # noqa: E731
@@ -498,7 +498,7 @@ def sj(s: Store):
 
 
 @r.get("/stores")
-def admin_stores(kind: str = "", q: str = "", pending: int = 0, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def admin_stores(kind: str = "", q: str = "", pending: int = 0, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     st = select(Store).where(Store.kind != "shop").order_by(Store.created.desc())   # our own shop is not a partner
     if kind:
         st = st.where(Store.kind == kind)
@@ -513,7 +513,7 @@ def admin_stores(kind: str = "", q: str = "", pending: int = 0, a: Admin = Depen
 
 
 @r.post("/stores")
-def add_store(body: StoreIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def add_store(body: StoreIn, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     # going live is the checked onboarding step (photos, licence, bank, agreement), never a box ticked at creation
     s = Store(**{**body.model_dump(), "verified": False})
     db.add(s)
@@ -529,7 +529,7 @@ def add_store(body: StoreIn, a: Admin = Depends(me), db: Session = Depends(get_d
 
 
 @r.put("/stores/{sid}")
-def edit_store(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def edit_store(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     s = db.get(Store, sid)
     if not s:
         raise HTTPException(404)
@@ -542,7 +542,7 @@ def edit_store(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depen
 
 
 @r.delete("/stores/{sid}")
-def del_store(sid: str, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+def del_store(sid: str, a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     s = db.get(Store, sid)
     if not s:
         raise HTTPException(404)
@@ -552,7 +552,7 @@ def del_store(sid: str, a: Admin = Depends(owner), db: Session = Depends(get_db)
 
 
 @r.post("/stores/{sid}/purge")
-def purge_store(sid: str, body: dict, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+def purge_store(sid: str, body: dict, a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     """Remove a partner for good: test partners, duplicates, shops that never started. Only a paused partner, only when
     the owner types its exact name, and never once real money moved through it (a confirmed family payment or a paid
     payout): those stay paused so the books still add up."""
@@ -606,13 +606,13 @@ def pu_json(u: PartnerUser, db: Session | None = None) -> dict:
 
 
 @r.get("/stores/{sid}/users")
-def partner_users(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def partner_users(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     rows = db.scalars(select(PartnerUser).where(PartnerUser.store_id == sid).order_by(PartnerUser.created)).all()
     return {"users": [pu_json(u, db) for u in rows]}
 
 
 @r.post("/stores/{sid}/users")
-def partner_user_add(sid: str, body: PartnerUserIn, request: Request, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def partner_user_add(sid: str, body: PartnerUserIn, request: Request, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Adds a sign-in by sending a one-time set-up link (SMS or email). No password is ever made up, shown or emailed:
     the person chooses their own and sets up their authenticator app when they open the link."""
     from .partners2 import InviteIn, invite
@@ -642,7 +642,7 @@ def _cred_ok(u: PartnerUser) -> str:
 
 
 @r.post("/stores/{sid}/users/{uid}/verify")
-def partner_user_verify(sid: str, uid: str, body: DoctorVerifyIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def partner_user_verify(sid: str, uid: str, body: DoctorVerifyIn, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Doctors and pharmacists are approved by two different admins (maker-checker) after checking the certificate
     against the NMC / State Medical or Pharmacy Council register. Either admin can withdraw approval alone."""
     u = db.get(PartnerUser, uid)
@@ -671,7 +671,7 @@ class CredIn(BaseModel):
 
 
 @r.put("/stores/{sid}/users/{uid}/credential")
-def partner_user_cred(sid: str, uid: str, body: CredIn, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def partner_user_cred(sid: str, uid: str, body: CredIn, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     import re as _r
     u = db.get(PartnerUser, uid)
     if not u or u.store_id != sid:
@@ -684,7 +684,7 @@ def partner_user_cred(sid: str, uid: str, body: CredIn, a: Admin = Depends(me), 
 
 
 @r.get("/stores/{sid}/users/{uid}/certificate")
-def partner_user_cert(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def partner_user_cert(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from fastapi.responses import Response as Raw
     from . import storage
     u = db.get(PartnerUser, uid)
@@ -702,7 +702,7 @@ def partner_user_cert(sid: str, uid: str, a: Admin = Depends(me), db: Session = 
 
 
 @r.post("/stores/{sid}/users/{uid}/reset")
-def partner_user_reset(sid: str, uid: str, request: Request, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def partner_user_reset(sid: str, uid: str, request: Request, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Sends a fresh set-up link and signs them out everywhere; no temporary password."""
     from .partners2 import SigninAct, signin_action
     u = db.get(PartnerUser, uid)
@@ -712,7 +712,7 @@ def partner_user_reset(sid: str, uid: str, request: Request, a: Admin = Depends(
 
 
 @r.delete("/stores/{sid}/users/{uid}")
-def partner_user_off(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def partner_user_off(sid: str, uid: str, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     u = db.get(PartnerUser, uid)
     if not u or u.store_id != sid:
         raise HTTPException(404)
@@ -722,7 +722,7 @@ def partner_user_off(sid: str, uid: str, a: Admin = Depends(me), db: Session = D
 
 
 @r.get("/stores/{sid}/prices")
-def prices(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def prices(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     s = db.get(Store, sid)
     if not s:
         raise HTTPException(404)
@@ -732,7 +732,7 @@ def prices(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
 
 
 @r.put("/stores/{sid}/prices")
-def set_prices(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def set_prices(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """body.rows: [{id, price, stock|tat_hours}] ; body.add: [{sku|code, name, price, ...}] ; body.remove: [ids]"""
     s = db.get(Store, sid)
     if not s:
@@ -767,7 +767,7 @@ def set_prices(sid: str, body: dict, a: Admin = Depends(me), db: Session = Depen
 
 
 @r.post("/stores/import")
-async def import_stores(file: UploadFile = File(...), a: Admin = Depends(owner), db: Session = Depends(get_db)):
+async def import_stores(file: UploadFile = File(...), a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     """CSV columns: kind,name,brand,address,area,city,pin,lat,lng,phone,hours,licence,discount_pct,delivery_fee,free_above,eta_min,home_collection,collection_fee,owner_email"""
     txt = (await file.read()).decode("utf-8", "ignore")
     n = 0
@@ -784,7 +784,7 @@ async def import_stores(file: UploadFile = File(...), a: Admin = Depends(owner),
 
 # ---- orders ---------------------------------------------------------------------------------------------------------
 @r.get("/orders")
-def admin_orders(status: str = "", store: str = "", limit: int = 200, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def admin_orders(status: str = "", store: str = "", limit: int = 200, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .routes import order_json
     st = select(Order).order_by(Order.created.desc()).limit(limit)
     if status:
@@ -800,7 +800,7 @@ class Advance(BaseModel):
 
 
 @r.post("/orders/{oid}/status")
-def set_status(oid: str, body: Advance, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def set_status(oid: str, body: Advance, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .routes import STEPS_LAB, STEPS_MED, order_json
     o = db.get(Order, oid)
     if not o:
@@ -819,7 +819,7 @@ def set_status(oid: str, body: Advance, a: Admin = Depends(me), db: Session = De
 
 # ---- households -----------------------------------------------------------------------------------------------------
 @r.get("/households")
-def households(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def households(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from sqlalchemy import or_
     size, page = max(10, min(int(size or 50), 200)), max(1, int(page or 1))
     qry = select(Household)
@@ -838,7 +838,7 @@ def households(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me
 
 
 @r.get("/households/{hid}/history")
-def household_history(hid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def household_history(hid: str, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Previous versions of the family's record (contents stay encrypted; only sizes, times and who saved are shown)."""
     cur = db.get(HouseholdState, hid)
     rows = db.scalars(select(HouseholdStateHistory).where(HouseholdStateHistory.household_id == hid).order_by(HouseholdStateHistory.version.desc()).limit(60)).all()
@@ -847,7 +847,7 @@ def household_history(hid: str, a: Admin = Depends(me), db: Session = Depends(ge
 
 
 @r.post("/households/{hid}/restore/{hist_id}")
-def household_restore(hid: str, hist_id: int, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def household_restore(hid: str, hist_id: int, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Put an earlier version back as the live record. The replaced one is itself kept in history, so a restore can be undone."""
     x = db.get(HouseholdStateHistory, hist_id)
     cur = db.get(HouseholdState, hid)
@@ -860,7 +860,7 @@ def household_restore(hid: str, hist_id: int, a: Admin = Depends(me), db: Sessio
 
 
 @r.put("/households/{hid}")
-def edit_household(hid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def edit_household(hid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     h = db.get(Household, hid)
     if not h:
         raise HTTPException(404)
@@ -875,7 +875,7 @@ def edit_household(hid: str, body: dict, a: Admin = Depends(me), db: Session = D
 
 # ---- plans & billing ------------------------------------------------------------------------------------------------
 @r.get("/plans")
-def admin_plans(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def admin_plans(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     rows = db.scalars(select(Plan).order_by(Plan.sort)).all()
     subs = db.scalars(select(Subscription).order_by(Subscription.started.desc()).limit(300)).all()
     names = {h.id: (h.name or h.key[:8] + "…") for h in db.scalars(select(Household).where(Household.id.in_({s.household_id for s in subs}))).all()} if subs else {}
@@ -886,7 +886,7 @@ def admin_plans(a: Admin = Depends(me), db: Session = Depends(get_db)):
 
 
 @r.put("/plans/{code}")
-def edit_plan(code: str, body: dict, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+def edit_plan(code: str, body: dict, a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     p = db.get(Plan, code)
     if not p:
         p = Plan(code=code[:24], name=body.get("name", code))
@@ -900,12 +900,12 @@ def edit_plan(code: str, body: dict, a: Admin = Depends(owner), db: Session = De
 
 # ---- content: seasonal + videos -------------------------------------------------------------------------------------
 @r.get("/seasonal")
-def admin_seasonal(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def admin_seasonal(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     return {"items": [{c.name: getattr(x, c.name) for c in Seasonal.__table__.columns} for x in db.scalars(select(Seasonal).order_by(Seasonal.disease)).all()]}
 
 
 @r.post("/seasonal")
-def save_seasonal(body: dict, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def save_seasonal(body: dict, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     x = db.get(Seasonal, body.get("id")) if body.get("id") else None
     if x is None:
         x = Seasonal(disease=body.get("disease", "New advisory"))
@@ -920,7 +920,7 @@ def save_seasonal(body: dict, a: Admin = Depends(me), db: Session = Depends(get_
 
 
 @r.delete("/seasonal/{sid}")
-def del_seasonal(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def del_seasonal(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     x = db.get(Seasonal, sid)
     if x:
         db.delete(x)
@@ -929,12 +929,12 @@ def del_seasonal(sid: str, a: Admin = Depends(me), db: Session = Depends(get_db)
 
 
 @r.get("/videos")
-def admin_videos(a: Admin = Depends(me), db: Session = Depends(get_db)):
+def admin_videos(a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     return {"videos": [{c.name: getattr(v, c.name) for c in Video.__table__.columns} for v in db.scalars(select(Video).order_by(Video.sort)).all()]}
 
 
 @r.post("/videos")
-def save_video(body: dict, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def save_video(body: dict, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     v = db.get(Video, body.get("id")) if body.get("id") else None
     yt = str(body.get("yt", "")).strip()
     if "youtube.com" in yt or "youtu.be" in yt:
@@ -955,7 +955,7 @@ def save_video(body: dict, a: Admin = Depends(me), db: Session = Depends(get_db)
 
 
 @r.delete("/videos/{vid}")
-def del_video(vid: str, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def del_video(vid: str, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     v = db.get(Video, vid)
     if v:
         db.delete(v)
@@ -978,13 +978,13 @@ class AdminIn(BaseModel):
 
 
 @r.get("/admins")
-def admins(a: Admin = Depends(owner), db: Session = Depends(get_db)):
+def admins(a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     return {"admins": [{"id": x.id, "email": x.email, "role": x.role, "phone": x.phone or "", "created": x.created, "lastLogin": x.last_login,
                         "totp": bool(x.totp_secret)} for x in db.scalars(select(Admin)).all()]}
 
 
 @r.post("/admins/{aid}/reset-totp")
-def reset_admin_totp(aid: int, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+def reset_admin_totp(aid: int, a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     """A lost phone: clear their authenticator and sign them out; they set it up again at their next sign-in."""
     x = db.get(Admin, aid)
     if not x:
@@ -995,7 +995,7 @@ def reset_admin_totp(aid: int, a: Admin = Depends(owner), db: Session = Depends(
 
 
 @r.post("/admins")
-def add_admin(body: AdminIn, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+def add_admin(body: AdminIn, a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     e = body.email.strip().lower()
     x = db.scalar(select(Admin).where(Admin.email == e))
     if x is None:
@@ -1023,7 +1023,7 @@ def add_admin(body: AdminIn, a: Admin = Depends(owner), db: Session = Depends(ge
 
 
 @r.delete("/admins/{aid}")
-def del_admin(aid: int, a: Admin = Depends(owner), db: Session = Depends(get_db)):
+def del_admin(aid: int, a: Admin = Depends(owner), db: Session = Depends(get_db, scope="function")):
     if aid == a.id:
         raise HTTPException(400, "cannot delete yourself")
     x = db.get(Admin, aid)
@@ -1034,13 +1034,13 @@ def del_admin(aid: int, a: Admin = Depends(owner), db: Session = Depends(get_db)
 
 
 @r.get("/audit")
-def audit(limit: int = 200, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def audit(limit: int = 200, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     return {"rows": [{"t": x.t, "who": x.who, "what": x.what, "detail": x.detail} for x in db.scalars(select(Audit).order_by(Audit.t.desc()).limit(limit)).all()]}
 
 
 # ---- accounts (sign-in identities) -----------------------------------------------------------------------------------
 @r.get("/users")
-def users(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def users(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     """Searched and paged in the database, so it stays fast and complete at any number of accounts.
     Viewing people's contact details is itself recorded in the audit log."""
     from sqlalchemy import or_
@@ -1065,7 +1065,7 @@ def users(q: str = "", page: int = 1, size: int = 50, a: Admin = Depends(me), db
 
 
 @r.post("/users/{uid}")
-def user_action(uid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db)):
+def user_action(uid: str, body: dict, a: Admin = Depends(me), db: Session = Depends(get_db, scope="function")):
     from .models import AuthSession, User
     u = db.get(User, uid)
     if not u:

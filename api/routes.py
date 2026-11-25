@@ -108,7 +108,7 @@ def _service_center(db: Session) -> dict | None:
 
 
 @r.get("/config")
-def config(db: Session = Depends(get_db)):
+def config(db: Session = Depends(get_db, scope="function")):
     return {"center": _service_center(db), "version": os.getenv("RAILWAY_GIT_COMMIT_SHA", "dev")[:8], "region": os.getenv("DOKKO_REGION", "IN"),
             "emergency": {"national": "112", "ambulance": "108"}, "languages": ["en", "hi", "te"],
             # public: only whether smart reading is available. The provider and model stay server-side (named in the privacy policy).
@@ -129,7 +129,7 @@ class Hello(BaseModel):
 
 
 @r.post("/hello")
-def hello(body: Hello, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def hello(body: Hello, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     from .auth import current_user
     h = household(db, x_dokko_key)
     if not h:
@@ -169,7 +169,7 @@ NEAR_KM, DELIVER_KM = 50, 15   # how far a listed partner may be; how far a phar
 
 @r.get("/stores")
 def stores(kind: str = "pharmacy", lat: float | None = None, lng: float | None = None, city: str | None = None, q: str = "", limit: int = 12,
-           db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+           db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, Loc(lat=lat, lng=lng, city=city), h)
     rows = db.scalars(select(Store).where(Store.kind == kind, Store.active == True, Store.verified == True)).all()  # noqa: E712
@@ -197,7 +197,7 @@ class QuoteReq(Loc):
 
 
 @r.post("/quotes")
-def quotes(body: QuoteReq, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def quotes(body: QuoteReq, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Compare nearby pharmacies for a basket: price per store, discount, delivery fee, ETA, rating, 'ordered before'."""
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, body, h)
@@ -387,7 +387,7 @@ NOT_ONLINE = re.compile(r"(?i)\b(morphine|fentanyl|buprenorphine|pentazocine|pet
 
 
 @r.post("/orders")
-def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
@@ -465,7 +465,7 @@ def create_order(body: OrderReq, request: Request, db: Session = Depends(get_db)
 
 
 @r.get("/orders/{oid}/track")
-def order_track(oid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def order_track(oid: str, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Where the technician is, for this family's own booking and only while someone is actually travelling."""
     from api.tech import track_for_family
 
@@ -486,7 +486,7 @@ def order_track(oid: str, request: Request, db: Session = Depends(get_db), x_dok
 
 
 @r.get("/orders")
-def list_orders(request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def list_orders(request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"orders": []}
@@ -517,7 +517,7 @@ class FastReq(BaseModel):
 
 
 @r.post("/orders/{oid}/fasting")
-def fasting(oid: str, body: FastReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def fasting(oid: str, body: FastReq, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """'I have been fasting since 9:30 PM': said once in the app, so the technician does not have to ask at the door."""
     h = household(db, x_dokko_key, create=False)
     o = db.get(Order, oid)
@@ -535,7 +535,7 @@ def fasting(oid: str, body: FastReq, request: Request, db: Session = Depends(get
 
 
 @r.post("/orders/{oid}/rate")
-def rate(oid: str, body: RateReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def rate(oid: str, body: RateReq, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     o = db.get(Order, oid)
     from .auth import current_user as _cu
@@ -572,7 +572,7 @@ class VisitRateReq(BaseModel):
 
 
 @r.post("/orders/{oid}/visit-rating")
-def rate_visit(oid: str, body: VisitRateReq, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def rate_visit(oid: str, body: VisitRateReq, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """How the home collection itself went. Separate from the store rating, which is about the report.
 
     A family has a clear and immediate opinion about the person who stood at their door with a needle, and it
@@ -605,7 +605,7 @@ def rate_visit(oid: str, body: VisitRateReq, request: Request, db: Session = Dep
 
 
 @r.post("/orders/{oid}/cancel")
-def cancel(oid: str, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def cancel(oid: str, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     o = db.get(Order, oid)
     from .auth import current_user as _cu
@@ -629,7 +629,7 @@ class LabReq(Loc):
 
 
 @r.post("/labs/quotes")
-def lab_quotes(body: LabReq, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def lab_quotes(body: LabReq, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Estimate for a set of tests at nearby labs: per-test prices, total, fasting needs, turnaround and home collection."""
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, body, h)
@@ -691,7 +691,7 @@ def lab_tests():
 # ---- AI -------------------------------------------------------------------------------------------------------------
 @r.post("/ai/analyze")
 async def analyze(request: Request, kind: str = Form("report"), text: str = Form(""), context: str = Form("{}"), consent: str = Form("0"),
-                  file: UploadFile | None = File(None), db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+                  file: UploadFile | None = File(None), db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     if consent not in ("1", "true", "yes"):
         raise HTTPException(400, "consent required: the document leaves the device for analysis")
     from .auth import current_user as _cu
@@ -785,7 +785,7 @@ class Beacon(BaseModel):
 
 
 @r.post("/beacon", status_code=204)
-def beacon(body: Beacon, request: Request, db: Session = Depends(get_db)):
+def beacon(body: Beacon, request: Request, db: Session = Depends(get_db, scope="function")):
     """Anonymous page-speed sample from the app. No key, no identity, no content — only timings, capped and clamped."""
     from .auth import limit
     from .models import PerfSample
@@ -843,7 +843,7 @@ def _ai_quota(db, h, kind: str, caps: dict) -> tuple[int, int]:
 
 
 @r.post("/ai/ask")
-def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """A question about the family's own records. The app sends structured context, never documents."""
     from . import agent
     h = household(db, x_dokko_key)
@@ -892,7 +892,7 @@ def ai_ask(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko
 
 
 @r.post("/ai/insight")
-def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def ai_insight(body: AskIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Daily insight for one person; cached by day and by the records it was made from."""
     from . import agent
     h = household(db, x_dokko_key)
@@ -931,7 +931,7 @@ class MedCheckIn(BaseModel):
 
 
 @r.post("/ai/medcheck")
-def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Medicine-safety check for one person: interactions, duplicates, allergy clashes, timing. Cached per medicine list per day."""
     from . import agent
     h = household(db, x_dokko_key)
@@ -993,7 +993,7 @@ def ai_medcheck(body: MedCheckIn, request: Request, db: Session = Depends(get_db
 
 # ---- seasonal, videos, plans ----------------------------------------------------------------------------------------
 @r.get("/seasonal")
-def seasonal(month: int | None = None, region: str = "IN", db: Session = Depends(get_db)):
+def seasonal(month: int | None = None, region: str = "IN", db: Session = Depends(get_db, scope="function")):
     m = month or datetime.now().month
     rows = db.scalars(select(Seasonal).where(Seasonal.active == True)).all()  # noqa: E712
     out = [x for x in rows if m in (x.months or []) and x.region in (region, "IN")]
@@ -1003,7 +1003,7 @@ def seasonal(month: int | None = None, region: str = "IN", db: Session = Depends
 
 
 @r.get("/videos")
-def videos(db: Session = Depends(get_db)):
+def videos(db: Session = Depends(get_db, scope="function")):
     rows = db.scalars(select(Video).where(Video.active == True).order_by(Video.sort)).all()  # noqa: E712
     return {"videos": [{"id": v.id, "topic": v.topic, "title": v.title, "channel": v.channel, "yt": v.yt, "lang": v.lang, "minutes": v.minutes, "source": v.source} for v in rows]}
 
@@ -1014,7 +1014,7 @@ def _upi_on() -> bool:
 
 
 @r.get("/plans")
-def plans(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def plans(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     rows = db.scalars(select(Plan).where(Plan.active == True).order_by(Plan.sort)).all()  # noqa: E712
     subs = db.scalars(select(Subscription).where(Subscription.household_id == h.id).order_by(Subscription.started.desc()).limit(12)).all() if h else []
@@ -1035,7 +1035,7 @@ class SubReq(BaseModel):
 
 
 @r.post("/subscribe")
-def subscribe(body: SubReq, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def subscribe(body: SubReq, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """Demo mode: activates at once and issues an invoice number. With Razorpay keys: creates/validates a payment first."""
     h = household(db, x_dokko_key)
     if not h:
@@ -1070,7 +1070,7 @@ def subscribe(body: SubReq, db: Session = Depends(get_db), x_dokko_key: str | No
 
 
 @r.get("/hospitals")
-def hospitals(lat: float | None = None, lng: float | None = None, city: str | None = None, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def hospitals(lat: float | None = None, lng: float | None = None, city: str | None = None, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     la, lo, cty, approx = resolve_loc(db, Loc(lat=lat, lng=lng, city=city), h)
     rows = db.scalars(select(Store).where(Store.kind == "hospital", Store.active == True, Store.verified == True)).all()  # noqa: E712

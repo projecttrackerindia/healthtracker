@@ -166,7 +166,7 @@ def _store(db: Session, sid: str) -> Store:
 
 # ---- admin -----------------------------------------------------------------------------------------------------------
 @ar.get("")
-def board(kind: str = "lab", tab: str = "review", q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def board(kind: str = "lab", tab: str = "review", q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     rows = db.scalars(select(Store).where(Store.kind == kind).order_by(Store.created.desc())).all()
     cards = [card(db, s) for s in rows]
     counts = {t: sum(1 for c in cards if c["tab"] == t) for t in ("review", "live", "paused")}
@@ -185,7 +185,7 @@ def board(kind: str = "lab", tab: str = "review", q: str = "", a: Admin = Depend
 
 
 @ar.get("/{sid}")
-def one(sid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def one(sid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     return card(db, _store(db, sid), True)
 
 
@@ -212,7 +212,7 @@ def _clean(v, n=160):
 
 
 @ar.put("/{sid}")
-def edit(sid: str, body: EditIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def edit(sid: str, body: EditIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     s = _store(db, sid)
     m = {"name": ("name", 120), "address": ("address", 240), "area": ("area", 80), "city": ("city", 80), "pin": ("pin", 12),
          "phone": ("phone", 24), "ownerEmail": ("owner_email", 120), "landmark": ("landmark", 160), "hours": ("hours", 80),
@@ -257,7 +257,7 @@ class StateIn(BaseModel):
 
 
 @ar.post("/{sid}/state")
-def state(sid: str, body: StateIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def state(sid: str, body: StateIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     s = _store(db, sid)
     if body.action == "live":
         left = [c for c in checks(db, s) if not c["done"]]
@@ -311,7 +311,7 @@ def _save_photo(db: Session, s: Store, slot: str, data: bytes, lat: float | None
 
 
 @ar.post("/{sid}/photos")
-async def admin_photo(sid: str, slot: str = Form(...), file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+async def admin_photo(sid: str, slot: str = Form(...), file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     s = _store(db, sid)
     rec = _save_photo(db, s, slot, await file.read(), None, None, None, "admin:" + a.email)
     log(db, a.email, f"onboard.photo {s.id} {slot}")
@@ -319,7 +319,7 @@ async def admin_photo(sid: str, slot: str = Form(...), file: UploadFile = File(.
 
 
 @ar.delete("/{sid}/photos/{pid}")
-def admin_photo_del(sid: str, pid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_photo_del(sid: str, pid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     s = _store(db, sid)
     s.photos = [x for x in (s.photos or []) if x.get("id") != pid]
     from .models import StoredFile
@@ -340,13 +340,13 @@ def _photo_bytes(db: Session, s: Store, pid: str) -> RawResponse:
 
 
 @ar.get("/{sid}/photos/{pid}")
-def admin_photo_get(sid: str, pid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_photo_get(sid: str, pid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     return _photo_bytes(db, _store(db, sid), pid)
 
 
 # ---- partner (at the shop) -------------------------------------------------------------------------------------------
 @pr.get("")
-def mine(u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db)):
+def mine(u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db, scope="function")):
     s = my_store(db, u)
     c = card(db, s, True)
     c.pop("commission", None)
@@ -361,7 +361,7 @@ class PinIn(BaseModel):
 
 
 @pr.post("/location")
-def drop_pin(body: PinIn, u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db)):
+def drop_pin(body: PinIn, u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db, scope="function")):
     if u.role != "owner":
         raise HTTPException(403, "Only the owner can set the shop's location")
     if not (6 <= body.lat <= 37.5 and 68 <= body.lng <= 97.5):
@@ -382,19 +382,19 @@ def drop_pin(body: PinIn, u: PartnerUser = Depends(partner_me), db: Session = De
 
 @pr.post("/photos")
 async def partner_photo(slot: str = Form(...), lat: float | None = Form(None), lng: float | None = Form(None), acc: int | None = Form(None),
-                        file: UploadFile = File(...), u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db)):
+                        file: UploadFile = File(...), u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db, scope="function")):
     s = my_store(db, u)
     return _save_photo(db, s, slot, await file.read(), lat, lng, acc, (u.name or u.email)[:80])
 
 
 @pr.get("/photos/{pid}")
-def partner_photo_get(pid: str, u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db)):
+def partner_photo_get(pid: str, u: PartnerUser = Depends(partner_me), db: Session = Depends(get_db, scope="function")):
     return _photo_bytes(db, my_store(db, u), pid)
 
 
 # ---- families see the photos of live partners ------------------------------------------------------------------------
 @pub.get("/{sid}/photos/{pid}")
-def public_photo(sid: str, pid: str, db: Session = Depends(get_db)):
+def public_photo(sid: str, pid: str, db: Session = Depends(get_db, scope="function")):
     s = db.get(Store, sid)
     if not s or not s.verified or not s.active:
         raise HTTPException(404, "No such photo")

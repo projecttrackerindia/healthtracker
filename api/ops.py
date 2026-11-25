@@ -59,7 +59,7 @@ class ClientError(BaseModel):
 
 
 @r.post("/client-error", status_code=204)
-def client_error(body: ClientError, request: Request, db: Session = Depends(get_db)):
+def client_error(body: ClientError, request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import limit
     limit(request, "clienterr", 20, 600)
     record_error(db, "web", body.where, body.message)
@@ -71,7 +71,7 @@ class Seen(BaseModel):
 
 
 @r.post("/usage", status_code=204)
-def usage(body: Seen, request: Request, db: Session = Depends(get_db)):
+def usage(body: Seen, request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import limit
     limit(request, "usage", 120, 600)
     if not SCREENS.match(body.screen or ""):
@@ -86,7 +86,7 @@ def usage(body: Seen, request: Request, db: Session = Depends(get_db)):
 
 
 @r.get("/ops/summary")
-def summary(request: Request, db: Session = Depends(get_db)):
+def summary(request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import need_user
     u = need_user(request, db)
     if (u.role or "") != "admin" and (u.email or "").lower() != os.getenv("ADMIN_EMAIL", "admin@urbanhealth.in").lower():

@@ -95,7 +95,7 @@ def photo_urls(s: Store) -> list[str]:
     return [f"/api/v2/stores/{s.id}/photos/{p['id']}" for p in sorted(s.photos or [], key=lambda p: order.get(p.get("slot"), 9)) if p.get("slot") != "licence"]
 
 
-def partner_page(seg: str, city: str, area: str, name: str, request: Request, db: Session = Depends(get_db)):
+def partner_page(seg: str, city: str, area: str, name: str, request: Request, db: Session = Depends(get_db, scope="function")):
     if seg not in KINDS:
         raise HTTPException(404)
     kind, plural, single, schema = KINDS[seg]
@@ -174,22 +174,22 @@ def _list_page(request: Request, db: Session, seg: str, city: str, area: str | N
                 f"Compare {plural.lower()} in {where} by rating, price and timings. Verified by Urban Health. Book in the app.", body, ld, canon)
 
 
-def area_page(seg: str, city: str, area: str, request: Request, db: Session = Depends(get_db)):
+def area_page(seg: str, city: str, area: str, request: Request, db: Session = Depends(get_db, scope="function")):
     return _list_page(request, db, seg, city, area)
 
 
-def city_page(seg: str, city: str, request: Request, db: Session = Depends(get_db)):
+def city_page(seg: str, city: str, request: Request, db: Session = Depends(get_db, scope="function")):
     return _list_page(request, db, seg, city, None)
 
 
 def _bind(seg: str):
-    def p4(city: str, area: str, name: str, request: Request, db: Session = Depends(get_db)):
+    def p4(city: str, area: str, name: str, request: Request, db: Session = Depends(get_db, scope="function")):
         return partner_page(seg, city, area, name, request, db)
 
-    def p3(city: str, area: str, request: Request, db: Session = Depends(get_db)):
+    def p3(city: str, area: str, request: Request, db: Session = Depends(get_db, scope="function")):
         return area_page(seg, city, area, request, db)
 
-    def p2(city: str, request: Request, db: Session = Depends(get_db)):
+    def p2(city: str, request: Request, db: Session = Depends(get_db, scope="function")):
         return city_page(seg, city, request, db)
     r.add_api_route(f"/{seg}/{{city}}/{{area}}/{{name}}", p4, methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
     r.add_api_route(f"/{seg}/{{city}}/{{area}}", p3, methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)

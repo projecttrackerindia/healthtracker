@@ -127,7 +127,7 @@ def _mine(u: PartnerUser, a: Appointment) -> bool:
 
 
 @pr.get("/eye/visits")
-def visits(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def visits(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """Visits a doctor can examine: confirmed, rescheduled and recently finished ones at this hospital, newest first."""
     rows = db.scalars(select(Appointment).where(Appointment.store_id == u.store_id, Appointment.status.in_(OPEN))
                       .order_by(Appointment.updated.desc()).limit(150)).all()
@@ -135,7 +135,7 @@ def visits(db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
 
 
 @pr.get("/eye/visits/{aid}")
-def visit(aid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def visit(aid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """One visit, its exam if written, and this patient's earlier exams at this hospital (for the trend)."""
     a = _store_appt(db, u, aid)
     hist = []
@@ -149,7 +149,7 @@ def visit(aid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(part
 
 
 @pr.put("/eye/visits/{aid}")
-def save(aid: str, body: ExamIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def save(aid: str, body: ExamIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     _doctor(db, u)
     a = _store_appt(db, u, aid)
     if a.status not in OPEN:
@@ -229,7 +229,7 @@ def glasses_json(a: Appointment, store_name: str = "") -> dict:
 
 
 @fr.get("")
-def family_glasses(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_glasses(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     if not u.household_id:
         return {"glasses": []}
     from .models import Store
@@ -247,7 +247,7 @@ class GOrder(BaseModel):
 
 
 @fr.post("/{aid}/order")
-def family_order(aid: str, body: GOrder, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_order(aid: str, body: GOrder, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     a = db.get(Appointment, aid)
     if not a or not u.household_id or a.household_id != u.household_id or not (a.eye or {}).get("glasses"):
         raise HTTPException(404)
@@ -264,7 +264,7 @@ class GStep(BaseModel):
 
 
 @pr.post("/eye/{aid}/glasses")
-def partner_glasses_step(aid: str, body: GStep, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def partner_glasses_step(aid: str, body: GStep, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """The optical counter moves the order on: ready (for pickup or on its way), then delivered."""
     s = my_store(db, u)
     a = db.get(Appointment, aid)

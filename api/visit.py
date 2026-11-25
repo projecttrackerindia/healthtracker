@@ -48,7 +48,7 @@ def _family_token(db: Session, tid: str, key: str | None) -> Token:
 
 
 @r.post("/queue/{tid}/share")
-def share(tid: str, body: ShareIn, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def share(tid: str, body: ShareIn, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     t = _family_token(db, tid, x_dokko_key)
     if t.state in ("done", "skipped", "left"):
         raise HTTPException(409, "This visit is over.")
@@ -62,7 +62,7 @@ def share(tid: str, body: ShareIn, db: Session = Depends(get_db), x_dokko_key: s
 
 
 @r.delete("/queue/{tid}/share")
-def unshare(tid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def unshare(tid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     _family_token(db, tid, x_dokko_key)
     row = db.get(VisitShare, tid)
     if row:
@@ -110,7 +110,7 @@ def _usual_pharmacy(db: Session, household_id: str) -> str:
 
 
 @pr.get("/queue/{tid}/visit")
-def visit(tid: str, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def visit(tid: str, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     t = _doc_token(db, u, tid)
     past = db.scalars(select(Token).where(Token.store_id == t.store_id, Token.household_id == t.household_id,
                                           Token.member == t.member, Token.state == "done", Token.id != t.id)
@@ -142,7 +142,7 @@ class WatchIn(BaseModel):
 
 
 @pr.post("/queue/{tid}/watch")
-def watch(tid: str, body: WatchIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def watch(tid: str, body: WatchIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """The doctor marks a few things to keep an eye on. They land in the person's record as the doctor's note, and show
     on the same body the family opens at home. Doctors only; the family cannot write or change them."""
     from .family import decrypt, encrypt
@@ -292,7 +292,7 @@ class DraftIn(BaseModel):
 
 
 @pr.post("/queue/{tid}/rx-draft")
-def rx_draft(tid: str, body: DraftIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def rx_draft(tid: str, body: DraftIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     """What the doctor said, as a draft prescription marked against what the patient takes now. Saves nothing."""
     t = _doc_token(db, u, tid)
     text = re.sub(r"\s+", " ", body.text or "").strip()[:4000]
@@ -335,7 +335,7 @@ class RxIn(BaseModel):
 
 
 @pr.put("/queue/{tid}/rx")
-def rx_sign(tid: str, body: RxIn, db: Session = Depends(get_db), u: PartnerUser = Depends(partner_me)):
+def rx_sign(tid: str, body: RxIn, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(partner_me)):
     from .consult import FREQS, rx_pdf
     t = _doc_token(db, u, tid)
     if u.role != "doctor" or not u.reg_no:
@@ -396,7 +396,7 @@ def family_rx(db: Session, kind: str, rid: str, key: str | None):
 
 
 @r.get("/rx/{kind}/{rid}")
-def rx_read(kind: str, rid: str, lang: str = "", db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def rx_read(kind: str, rid: str, lang: str = "", db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """The signed prescription as the family sees it; with ?lang=ta (etc.) also a reading in that language.
     The English stays the record; the reading is kept on it so it says the same thing every time it is opened."""
     from sqlalchemy.orm.attributes import flag_modified

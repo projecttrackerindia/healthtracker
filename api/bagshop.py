@@ -198,7 +198,7 @@ def restock(db: Session, o: Order) -> None:
 
 # ---- what the page reads -----------------------------------------------------------------------------------------------
 @r.get("")
-def bag_info(db: Session = Depends(get_db)):
+def bag_info(db: Session = Depends(get_db, scope="function")):
     rows = ensure_bag(db)
     c = price_bag({b[0]: b[4] for b in BAG if b[5]}, prices={k: v.price for k, v in rows.items()})
     return {"store": SHOP_ID, "online": online_ready(), "cod": True, "minDays": MIN_DAYS, "items": live_json(rows), "policy": POLICY, "policyUrl": POLICY_URL,
@@ -213,7 +213,7 @@ class QuoteIn(BaseModel):
 
 
 @r.post("/quote")
-def quote(body: QuoteIn, db: Session = Depends(get_db)):
+def quote(body: QuoteIn, db: Session = Depends(get_db, scope="function")):
     return price_bag(body.items, body.twins, body.opts, {k: v.price for k, v in ensure_bag(db).items()})
 
 
@@ -334,7 +334,7 @@ def _take_stock(db: Session, lines: list[dict]) -> None:
 
 
 @r.post("/order", dependencies=[Depends(csrf)])
-def place(body: OrderIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def place(body: OrderIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     u = current_user(request, db)
     if not u:
         raise HTTPException(401, "Sign in to place your order.")
@@ -393,7 +393,7 @@ def place(body: OrderIn, request: Request, db: Session = Depends(get_db), x_dokk
 
 
 @r.post("/orders/{oid}/cod", dependencies=[Depends(csrf)])
-def pay_on_delivery(oid: str, request: Request, db: Session = Depends(get_db)):
+def pay_on_delivery(oid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     """The family closed the Razorpay window and would rather pay when the bag arrives."""
     u = current_user(request, db)
     if not u:
@@ -429,7 +429,7 @@ def _checklist_json(db: Session, h: Household, c: BagChecklist | None) -> dict:
 
 
 @r.get("/checklist")
-def checklist(request: Request, db: Session = Depends(get_db)):
+def checklist(request: Request, db: Session = Depends(get_db, scope="function")):
     u = current_user(request, db)
     if not u:
         raise HTTPException(401, "Sign in first.")
@@ -438,7 +438,7 @@ def checklist(request: Request, db: Session = Depends(get_db)):
 
 
 @r.put("/checklist", dependencies=[Depends(csrf)])
-def save_checklist(body: ChecklistIn, request: Request, db: Session = Depends(get_db)):
+def save_checklist(body: ChecklistIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = current_user(request, db)
     if not u:
         raise HTTPException(401, "Sign in first.")
@@ -495,7 +495,7 @@ def send_reminders(db: Session, today: date) -> int:
 
 # ---- the team: prices, stock and availability (Admin → Shop) -----------------------------------------------------------
 @ar.get("/items")
-def admin_items(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_items(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     rows = ensure_bag(db)
     out = live_json(rows)
     for x in out:
@@ -517,7 +517,7 @@ class ItemsIn(BaseModel):
 
 
 @ar.put("/items")
-def admin_save_items(body: ItemsIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_save_items(body: ItemsIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     rows = ensure_bag(db)
     changed = []
     for it in body.items[:60]:
@@ -654,7 +654,7 @@ def slip_pdf(o: Order) -> bytes:
 
 
 @sr.get("/{oid}/slip.pdf")
-def packing_slip(oid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def packing_slip(oid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from fastapi.responses import Response
     o = db.get(Order, oid)
     if not o:

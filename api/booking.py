@@ -92,7 +92,7 @@ class PhoneIn(BaseModel):
 
 
 @r.post("/addresses/phone-code")
-def addr_phone_code(body: PhoneIn, request: Request, db: Session = Depends(get_db)):
+def addr_phone_code(body: PhoneIn, request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import norm_id, send_code
     _user(request, db)
     kind, ph = norm_id(body.phone)
@@ -136,14 +136,14 @@ def _validate(body: AddrIn) -> dict:
 
 
 @r.get("/addresses")
-def addresses(request: Request, db: Session = Depends(get_db)):
+def addresses(request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     rows = db.scalars(select(SavedAddress).where(SavedAddress.household_id == u.household_id).order_by(SavedAddress.updated.desc())).all()
     return {"rows": [{**addr_json(a), "serve": serviceable(db, a.pin, a.lat, a.lng)} for a in rows]}
 
 
 @r.post("/addresses")
-def add_address(body: AddrIn, request: Request, db: Session = Depends(get_db)):
+def add_address(body: AddrIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     if db.scalar(select(func.count(SavedAddress.id)).where(SavedAddress.household_id == u.household_id)) >= 12:
         raise HTTPException(400, "Up to 12 saved addresses. Remove one first.")
@@ -159,7 +159,7 @@ def add_address(body: AddrIn, request: Request, db: Session = Depends(get_db)):
 
 
 @r.put("/addresses/{aid}")
-def edit_address(aid: str, body: AddrIn, request: Request, db: Session = Depends(get_db)):
+def edit_address(aid: str, body: AddrIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     a = db.get(SavedAddress, aid)
     if not a or a.household_id != u.household_id:
@@ -175,7 +175,7 @@ def edit_address(aid: str, body: AddrIn, request: Request, db: Session = Depends
 
 
 @r.delete("/addresses/{aid}")
-def del_address(aid: str, request: Request, db: Session = Depends(get_db)):
+def del_address(aid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     a = db.get(SavedAddress, aid)
     if not a or a.household_id != u.household_id:
@@ -216,7 +216,7 @@ def _parts(a: dict) -> dict:
 
 
 @r.get("/geo/reverse")
-def reverse(lat: float, lng: float, request: Request, db: Session = Depends(get_db)):
+def reverse(lat: float, lng: float, request: Request, db: Session = Depends(get_db, scope="function")):
     from .auth import limit
     limit(request, "geo", 60, 600)
     if not (6 <= lat <= 37.5 and 68 <= lng <= 97.5):
@@ -363,7 +363,7 @@ def serviceable(db: Session, pin: str, lat: float | None, lng: float | None) -> 
 
 
 @r.get("/serviceable")
-def serviceable_api(pin: str = "", lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db)):
+def serviceable_api(pin: str = "", lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db, scope="function")):
     return serviceable(db, pin.strip()[:6], lat, lng)
 
 
@@ -373,7 +373,7 @@ class WaitIn(BaseModel):
 
 
 @r.post("/area-wait")
-def area_wait(body: WaitIn, request: Request, db: Session = Depends(get_db)):
+def area_wait(body: WaitIn, request: Request, db: Session = Depends(get_db, scope="function")):
     u = _user(request, db)
     if not re.fullmatch(r"[1-9]\d{5}", body.pin or ""):
         raise HTTPException(400, "PIN code is 6 digits.")
@@ -431,7 +431,7 @@ def booked(db: Session, s: Store, slot: str, exclude: str = "") -> int:
 
 
 @r.get("/stores/{sid}/slots")
-def slots(sid: str, db: Session = Depends(get_db)):
+def slots(sid: str, db: Session = Depends(get_db, scope="function")):
     from .routes import _slots
     s = db.get(Store, sid)
     if not s or not s.active:
@@ -519,14 +519,14 @@ def cancel_terms(o: Order) -> dict:
 
 
 @r.get("/orders/{oid}/terms")
-def terms(oid: str, request: Request, db: Session = Depends(get_db)):
+def terms(oid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     o = _mine(request, db, oid)
     t = cancel_terms(o)
     return {**t, "canMove": t["can"] and t["free"] and o.kind == "lab" and bool(o.slot)}
 
 
 @r.post("/orders/{oid}/cancel")
-def cancel(oid: str, request: Request, db: Session = Depends(get_db)):
+def cancel(oid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     from .inbox import notify
     o = _mine(request, db, oid)
     t = cancel_terms(o)
@@ -558,7 +558,7 @@ class MoveIn(BaseModel):
 
 
 @r.post("/orders/{oid}/reschedule")
-def reschedule(oid: str, body: MoveIn, request: Request, db: Session = Depends(get_db)):
+def reschedule(oid: str, body: MoveIn, request: Request, db: Session = Depends(get_db, scope="function")):
     o = _mine(request, db, oid)
     t = cancel_terms(o)
     if o.kind != "lab" or not o.slot or not (t["can"] and t["free"]):
@@ -576,7 +576,7 @@ def reschedule(oid: str, body: MoveIn, request: Request, db: Session = Depends(g
 
 # ---- invoice ---------------------------------------------------------------------------------------------------------
 @r.get("/orders/{oid}/invoice", response_class=HTMLResponse)
-def invoice(oid: str, request: Request, db: Session = Depends(get_db)):
+def invoice(oid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     o = _mine(request, db, oid)
     if o.status not in ("ready", "delivered", "completed", "collected", "processing"):
         raise HTTPException(409, "The invoice is ready once the visit or delivery is done.")

@@ -86,7 +86,7 @@ def load(db: Session | None = None, force: bool = False) -> tuple[bytes, str]:
 
 
 @r.get("/i18n")
-def i18n(db: Session = Depends(get_db)):
+def i18n(db: Session = Depends(get_db, scope="function")):
     body, src = load(db)
     return Response(body, media_type="application/json", headers={"Cache-Control": "no-cache", "X-I18n-Source": src, "ETag": '"' + str(_CACHE["v"]) + '"'})
 
@@ -111,7 +111,7 @@ def usable(t: str) -> str:
 
 
 @r.post("/i18n/missing")
-def missing(body: MissingIn, request: Request, db: Session = Depends(get_db)):
+def missing(body: MissingIn, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "i18n-missing", 60, 3600)
     table = json.loads(load(db)[0].decode("utf-8"))
     added = 0

@@ -102,7 +102,7 @@ class LinkIn(BaseModel):
 
 
 @r.post("/people/{pid}/upload-links")
-def make_link(pid: str, body: LinkIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def make_link(pid: str, body: LinkIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .people import person_or_404
     limit(request, "uplink-make", 20, 3600)
     p, a = person_or_404(db, u, pid)
@@ -120,7 +120,7 @@ def make_link(pid: str, body: LinkIn, request: Request, u: User = Depends(need_u
 
 
 @r.get("/people/{pid}/upload-links")
-def list_links(pid: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def list_links(pid: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .people import person_or_404
     p, a = person_or_404(db, u, pid)
     if not a.writer:
@@ -141,7 +141,7 @@ def _own_link(db: Session, u: User, lid: str) -> UploadLink:
 
 
 @r.delete("/upload-links/{lid}")
-def cancel_link(lid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def cancel_link(lid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     x = _own_link(db, u, lid)
     x.revoked = now()
     db.commit()
@@ -149,7 +149,7 @@ def cancel_link(lid: str, u: User = Depends(need_user), db: Session = Depends(ge
 
 
 @r.get("/upload-links/{lid}/qr.svg")
-def link_qr(lid: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def link_qr(lid: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     import io
 
     import qrcode
@@ -172,7 +172,7 @@ def _upload_row(db: Session, u: User, rid: str):
 
 
 @r.get("/people/{pid}/uploads")
-def pending(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def pending(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .people import person_or_404, rec_json
     p, a = person_or_404(db, u, pid)
     if not a.writer:
@@ -182,7 +182,7 @@ def pending(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db
 
 
 @r.post("/uploads/{rid}/accept")
-def accept(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def accept(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """'It's mine, add it': the upload becomes an ordinary report, compared with earlier results and searchable."""
     import datetime as _dt
 
@@ -200,7 +200,7 @@ def accept(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)
 
 
 @r.post("/uploads/{rid}/ask")
-def ask_lab(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def ask_lab(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """'Ask the lab to check': kept apart, flagged for the Urban Health team, who contact the lab from the admin console."""
     x, p = _upload_row(db, u, rid)
     rec = decrypt(x.blob) or {}
@@ -211,7 +211,7 @@ def ask_lab(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db
 
 
 @r.delete("/uploads/{rid}")
-def reject(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def reject(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """'Not mine, remove it': the record and its file are erased now."""
     from . import storage
     x, p = _upload_row(db, u, rid)
@@ -247,7 +247,7 @@ def _live(db: Session, token: str) -> tuple[UploadLink, Person]:
 
 @pub.post("/u/{token}/upload", dependencies=[Depends(csrf)], include_in_schema=False)
 async def lab_upload(token: str, request: Request, file: UploadFile = File(...), lab: str = Form(...), ref: str = Form(""),
-                     phone: str = Form(""), code: str = Form(""), confirm: str = Form(""), db: Session = Depends(get_db)):
+                     phone: str = Form(""), code: str = Form(""), confirm: str = Form(""), db: Session = Depends(get_db, scope="function")):
     limit(request, "uplink-up", 20, 3600)
     x, p = _live(db, token)
     if x.code:
@@ -336,7 +336,7 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
 
 
 @pub.get("/u/{token}", response_class=HTMLResponse, include_in_schema=False)
-def lab_page(token: str, request: Request, db: Session = Depends(get_db)):
+def lab_page(token: str, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "uplink-view", 120, 3600)
     e = html.escape
     try:
@@ -422,7 +422,7 @@ def _nominee_key(u: User) -> str:
 
 
 @r.get("/privacy/nominee")
-def nominee_get(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def nominee_get(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .models import Setting
     s = db.get(Setting, _nominee_key(u))
     import base64
@@ -431,7 +431,7 @@ def nominee_get(u: User = Depends(need_user), db: Session = Depends(get_db)):
 
 
 @r.put("/privacy/nominee")
-def nominee_put(body: NomineeIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def nominee_put(body: NomineeIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, "nominee", 10, 3600)
     contact = body.contact.strip()
     if not (re.fullmatch(r"\+?\d[\d\s-]{8,15}", contact) or re.fullmatch(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", contact, re.I)):
@@ -451,7 +451,7 @@ def nominee_put(body: NomineeIn, request: Request, u: User = Depends(need_user),
 
 
 @r.delete("/privacy/nominee")
-def nominee_delete(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def nominee_delete(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .models import ConsentLog, Setting
     s = db.get(Setting, _nominee_key(u))
     if s:

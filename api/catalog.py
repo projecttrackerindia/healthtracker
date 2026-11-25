@@ -87,7 +87,7 @@ def med_json(m: CatalogMed, prices: dict) -> dict:
 
 
 @ar.get("/meds")
-def meds(tab: str = "all", q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def meds(tab: str = "all", q: str = "", a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ensure(db)
     prices: dict[str, list[int]] = {}
     for sku, price in db.execute(select(StoreItem.sku, StoreItem.price).join(Store, Store.id == StoreItem.store_id).where(Store.verified == True)).all():  # noqa: E712
@@ -134,7 +134,7 @@ def _clean(v, n):
 
 
 @ar.put("/meds/{sku}")
-def save_med(sku: str, body: MedIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def save_med(sku: str, body: MedIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ensure(db)
     m = db.get(CatalogMed, sku)
     if not m:
@@ -165,7 +165,7 @@ MED_COLS = ("sku", "name", "salt", "form", "cat", "maker", "mrp", "rx", "schedul
 
 
 @ar.post("/meds/import")
-async def import_meds(file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+async def import_meds(file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Add or update medicines from a CSV with a header row. Known columns: sku, name, salt, form, cat, maker, mrp, rx (yes/no),
     schedule (blank, H, H1 or X), storage, about, organ, test, refill_days, cold (yes/no). Rows with a problem are
     skipped and listed back by line, so one bad line never blocks the rest."""
@@ -244,7 +244,7 @@ def _photo(data: bytes) -> bytes:
 
 
 @ar.post("/meds/{sku}/photo")
-async def med_photo(sku: str, side: str = Form("front"), file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+async def med_photo(sku: str, side: str = Form("front"), file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     m = db.get(CatalogMed, sku)
     if not m:
         raise HTTPException(404)
@@ -260,7 +260,7 @@ async def med_photo(sku: str, side: str = Form("front"), file: UploadFile = File
 
 
 @pub.get("/meds/{sku}/photo/{pid}")
-def med_photo_get(sku: str, pid: str, db: Session = Depends(get_db)):
+def med_photo_get(sku: str, pid: str, db: Session = Depends(get_db, scope="function")):
     m = db.get(CatalogMed, sku)
     if not m or m.hidden or not any(p.get("id") == pid for p in (m.photos or [])):
         raise HTTPException(404)
@@ -279,7 +279,7 @@ def _lab_prices(db: Session) -> dict[str, dict[str, int]]:
 
 
 @ar.get("/tests")
-def tests(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def tests(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ensure(db)
     lp = _lab_prices(db)
     rows = db.scalars(select(CatalogTest).order_by(CatalogTest.name)).all()
@@ -306,7 +306,7 @@ def pkg_json(db: Session, p: Package, lp: dict) -> dict:
 
 
 @ar.get("/packages")
-def packages(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def packages(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ensure(db)
     lp = _lab_prices(db)
     return {"rows": [pkg_json(db, p, lp) for p in db.scalars(select(Package).order_by(Package.name)).all()],
@@ -324,7 +324,7 @@ class PkgIn(BaseModel):
 
 
 @ar.put("/packages/{code}")
-def save_pkg(code: str, body: PkgIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def save_pkg(code: str, body: PkgIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ensure(db)
     if not re.fullmatch(r"[a-z0-9_-]{2,40}", code):
         raise HTTPException(400, "Code: 2–40 lowercase letters, digits or dashes")
@@ -354,14 +354,14 @@ def save_pkg(code: str, body: PkgIn, a: Admin = Depends(admin_me), db: Session =
 
 
 @pub.get("/packages")
-def public_packages(db: Session = Depends(get_db)):
+def public_packages(db: Session = Depends(get_db, scope="function")):
     ensure(db)
     lp = _lab_prices(db)
     return {"rows": [pkg_json(db, p, lp) for p in db.scalars(select(Package).where(Package.active == True, Package.price > 0)).all()]}  # noqa: E712
 
 
 @pub.get("/suggest")
-def suggest(q: str, request: Request, db: Session = Depends(get_db)):
+def suggest(q: str, request: Request, db: Session = Depends(get_db, scope="function")):
     """Typing help for "Add medicine": what this family ordered or already takes first, then the shared list."""
     import re as _re
     from .medlist import NAMES

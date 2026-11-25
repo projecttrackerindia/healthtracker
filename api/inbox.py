@@ -109,7 +109,7 @@ def notice_json(n: Notice) -> dict:
 
 
 @r.get("/inbox")
-def inbox(request: Request, since: int = 0, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def inbox(request: Request, since: int = 0, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"notices": [], "appointments": [], "unreadMessages": 0, "t": now()}
@@ -127,7 +127,7 @@ class ReadIn(BaseModel):
 
 
 @r.post("/inbox/read")
-def inbox_read(body: ReadIn, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def inbox_read(body: ReadIn, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"ok": True}
@@ -157,7 +157,7 @@ class ApptIn(BaseModel):
 
 
 @r.post("/appointments")
-def appt_request(body: ApptIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def appt_request(body: ApptIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")
@@ -181,7 +181,7 @@ def appt_request(body: ApptIn, request: Request, db: Session = Depends(get_db), 
 
 
 @r.get("/appointments")
-def appt_list(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def appt_list(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"appointments": []}
@@ -190,7 +190,7 @@ def appt_list(db: Session = Depends(get_db), x_dokko_key: str | None = Header(No
 
 
 @r.post("/appointments/{aid}/cancel")
-def appt_cancel(aid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def appt_cancel(aid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     a = db.get(Appointment, aid)
     if not h or not a or a.household_id != h.id:
@@ -207,7 +207,7 @@ def msg_json(m: Message) -> dict:
 
 
 @r.get("/messages/threads")
-def threads(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def threads(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"threads": []}
@@ -225,7 +225,7 @@ def threads(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None
 
 
 @r.get("/messages")
-def messages(store: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def messages(store: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     if not h:
         return {"messages": []}
@@ -245,7 +245,7 @@ class MsgIn(BaseModel):
 
 
 @r.post("/messages")
-def send_message(body: MsgIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def send_message(body: MsgIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key)
     if not h:
         raise HTTPException(400, "missing household key")

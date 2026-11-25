@@ -193,7 +193,7 @@ def _mine(request: Request, db: Session, oid: str):
 
 
 @r.get("/orders/{oid}/return")
-def return_options(oid: str, request: Request, db: Session = Depends(get_db)):
+def return_options(oid: str, request: Request, db: Session = Depends(get_db, scope="function")):
     _, _, o = _mine(request, db, oid)
     return options(db, o)
 
@@ -232,7 +232,7 @@ def _photo(data_url: str) -> tuple[bytes, str]:
 
 
 @r.post("/orders/{oid}/return", dependencies=[Depends(csrf)])
-def ask_return(oid: str, body: ReturnIn, request: Request, db: Session = Depends(get_db)):
+def ask_return(oid: str, body: ReturnIn, request: Request, db: Session = Depends(get_db, scope="function")):
     from .routes import order_json
     u, h, o = _mine(request, db, oid)
     limit(request, f"bagreturn:{u.id}", 10, 3600)
@@ -351,7 +351,7 @@ def _card(o: Order) -> dict:
 
 
 @xr.get("/returns")
-def admin_returns(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_returns(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """Open return requests, and bags cancelled after an online payment that still need their refund."""
     rows = db.scalars(select(Order).where(Order.store_id == SHOP_ID, Order.status.in_(OPEN)).order_by(Order.created.desc()).limit(200)).all()
     cx = db.scalars(select(Order).where(Order.store_id == SHOP_ID, Order.status == "cancelled").order_by(Order.created.desc()).limit(300)).all()
@@ -370,7 +370,7 @@ def _open(db: Session, oid: str) -> tuple[Order, dict]:
 
 
 @xr.get("/{oid}/return/photo/{i}")
-def admin_photo(oid: str, i: int, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_photo(oid: str, i: int, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from fastapi.responses import Response
 
     from .storage import get
@@ -396,7 +396,7 @@ def _tell(db: Session, o: Order, title: str, text: str) -> None:
 
 
 @xr.post("/{oid}/return/received")
-def admin_received(oid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_received(oid: str, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .routes import order_json
     o, req = _open(db, oid)
     if o.status != "return_requested":
@@ -415,7 +415,7 @@ class ExchangeIn(BaseModel):
 
 
 @xr.post("/{oid}/return/exchange")
-def admin_exchange(oid: str, body: ExchangeIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_exchange(oid: str, body: ExchangeIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     """The new size (or the replacement) is on its way: count it out of stock and close the request."""
     from .routes import order_json
     o, req = _open(db, oid)
@@ -440,7 +440,7 @@ class DeclineIn(BaseModel):
 
 
 @xr.post("/{oid}/return/decline")
-def admin_decline(oid: str, body: DeclineIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_decline(oid: str, body: DeclineIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .routes import order_json
     o, req = _open(db, oid)
     why = re.sub(r"[<>\x00-\x1f]", " ", body.why or "").strip()[:300]

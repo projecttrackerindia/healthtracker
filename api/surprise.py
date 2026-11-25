@@ -82,7 +82,7 @@ class ShareIn(BaseModel):
 
 
 @r.post("/news/share")
-def share(body: ShareIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def share(body: ShareIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, f"news:{u.id}", 30, 3600)
     me = my_person(db, u)
     if not me:
@@ -144,7 +144,7 @@ def _view(db: Session, s: Surprise, me: User) -> dict:
 
 
 @r.get("/surprises")
-def surprises(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def surprises(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     got = db.scalars(select(Surprise).where(Surprise.to_user == u.id, Surprise.status == "active", Surprise.delivered.is_not(None))
                      .order_by(Surprise.created.desc()).limit(20)).all()
     sent = db.scalars(select(Surprise).where(Surprise.from_user == u.id).order_by(Surprise.created.desc()).limit(40)).all()
@@ -159,7 +159,7 @@ def _mine(db: Session, u: User, sid: str) -> Surprise:
 
 
 @r.post("/surprises/{sid}/open")
-def open_it(sid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def open_it(sid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     s = _mine(db, u, sid)
     if s.from_user == u.id and s.way != "inperson":
         raise HTTPException(403, "This one is for them to open")
@@ -180,7 +180,7 @@ class ReplyIn(BaseModel):
 
 
 @r.post("/surprises/{sid}/reply")
-def reply(sid: str, body: ReplyIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def reply(sid: str, body: ReplyIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     s = _mine(db, u, sid)
     if s.to_user != u.id:
         raise HTTPException(403, "Only they can reply")
@@ -192,7 +192,7 @@ def reply(sid: str, body: ReplyIn, u: User = Depends(need_user), db: Session = D
 
 
 @r.get("/pregnancy/following")
-def following(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def following(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """The pregnancies this person was told about and opened: week, due date, stage. Nothing else of hers."""
     out, seen = [], set()
     for s in db.scalars(select(Surprise).where(Surprise.to_user == u.id, Surprise.kind == "pregnancy", Surprise.status == "active", Surprise.opened.is_not(None))).all():
@@ -213,7 +213,7 @@ class EndIn(BaseModel):
 
 
 @r.post("/pregnancy/end")
-def end(body: EndIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def end(body: EndIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """She turned pregnancy mode off. Unopened surprises never arrive; after a loss or a mistake, nobody keeps following."""
     me = my_person(db, u)
     if not me:

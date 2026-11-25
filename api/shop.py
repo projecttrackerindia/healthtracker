@@ -92,14 +92,14 @@ def product_json(db: Session, p: ShopProduct) -> dict:
 
 
 @r.get("/products")
-def products(db: Session = Depends(get_db)):
+def products(db: Session = Depends(get_db, scope="function")):
     ensure_shop(db)
     rows = db.scalars(select(ShopProduct).where(ShopProduct.active == True).order_by(ShopProduct.sort)).all()  # noqa: E712
     return {"store": SHOP_ID, "products": [product_json(db, p) for p in rows], "cod": True, "upi": True}
 
 
 @r.get("/products/{sku}")
-def product(sku: str, db: Session = Depends(get_db)):
+def product(sku: str, db: Session = Depends(get_db, scope="function")):
     p = db.get(ShopProduct, sku)
     if not p or not p.active:
         raise HTTPException(404)
@@ -107,7 +107,7 @@ def product(sku: str, db: Session = Depends(get_db)):
 
 
 @r.get("/image/{sku}")
-def image(sku: str, db: Session = Depends(get_db)):
+def image(sku: str, db: Session = Depends(get_db, scope="function")):
     p = db.get(ShopProduct, sku)
     s3 = storage._s3()
     if not p or not p.image_key or not s3:
@@ -138,14 +138,14 @@ class ProductIn(BaseModel):
 
 
 @ar.get("/products")
-def admin_products(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_products(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ensure_shop(db)
     rows = db.scalars(select(ShopProduct).order_by(ShopProduct.sort)).all()
     return {"store": SHOP_ID, "products": [product_json(db, p) for p in rows]}
 
 
 @ar.put("/products/{sku}")
-def admin_put(sku: str, body: ProductIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def admin_put(sku: str, body: ProductIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     ensure_shop(db)
     sku = sku.strip().lower()[:40]
     if not sku.replace("-", "").isalnum() or len(body.name.strip()) < 3 or body.price < 0:
@@ -167,7 +167,7 @@ def admin_put(sku: str, body: ProductIn, a: Admin = Depends(admin_me), db: Sessi
 
 
 @ar.put("/products/{sku}/image")
-async def admin_image(sku: str, file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+async def admin_image(sku: str, file: UploadFile = File(...), a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     p = db.get(ShopProduct, sku)
     s3 = storage._s3()
     if not p:

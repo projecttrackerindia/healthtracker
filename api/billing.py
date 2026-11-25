@@ -146,7 +146,7 @@ def receipt_pdf(o: Order) -> bytes:
 
 
 @r.get("/orders/{oid}/receipt.pdf")
-def receipt(oid: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def receipt(oid: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     o = _order(db, oid, x_dokko_key)
     pdf = receipt_pdf(o)
     return Response(pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="UH-{o.id}.pdf"', "Cache-Control": "private, no-store"})
@@ -159,7 +159,7 @@ class ReturnIn(BaseModel):
 
 
 @r.post("/orders/{oid}/return")
-def request_return(oid: str, body: ReturnIn, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def request_return(oid: str, body: ReturnIn, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     """A return (medicines) or a re-test / refund request (labs). The seller answers from the partner side; the timeline shows it."""
     o = _order(db, oid, x_dokko_key)
     if body.reason not in RETURN_REASONS:

@@ -107,7 +107,7 @@ def job_json(db: Session, o: Order) -> dict:
 
 
 @r.get("/jobs")
-def jobs(db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
+def jobs(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_tech)):
     """Today's work. Open jobs first, because that is what the person is looking for."""
     q = select(Order).where(Order.store_id == u.store_id, Order.kind == "lab",
                             Order.status.in_(("assigned", "en_route", "arrived")))
@@ -175,7 +175,7 @@ def _advance(db: Session, o: Order, to: str, u: PartnerUser, family: str) -> dic
 
 
 @r.post("/jobs/{oid}/start")
-def start(oid: str, body: Move, db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
+def start(oid: str, body: Move, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_tech)):
     """Setting off. This is what turns the family's live map on, so it is also the moment the technician's
     position starts being shared — and they are told so on this screen, not in terms nobody reads."""
     o = _job(db, u, oid)
@@ -183,13 +183,13 @@ def start(oid: str, body: Move, db: Session = Depends(get_db), u: PartnerUser = 
 
 
 @r.post("/jobs/{oid}/arrived")
-def arrived(oid: str, body: Move, db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
+def arrived(oid: str, body: Move, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_tech)):
     o = _job(db, u, oid)
     return _advance(db, o, "arrived", u, "Your technician has arrived.")
 
 
 @r.post("/jobs/{oid}/collected")
-def collected(oid: str, body: Move, db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
+def collected(oid: str, body: Move, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_tech)):
     """Sample taken. The trail stops here and the report clock starts."""
     o = _job(db, u, oid)
     from api.booking import check_door
@@ -210,7 +210,7 @@ class Ping(BaseModel):
 
 
 @r.post("/jobs/{oid}/ping")
-def ping(oid: str, body: Ping, db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
+def ping(oid: str, body: Ping, db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_tech)):
     """Where the technician is. Accepted only while they are actually travelling — a job that has not started
     or is already collected writes nothing, so a phone left running cannot keep broadcasting someone."""
     o = _job(db, u, oid)
@@ -242,7 +242,7 @@ def track_for_family(db: Session, o: Order) -> dict:
 
 # ---- the bell (board "Technician app · today") ---------------------------------------------------------------------------
 @r.get("/alerts")
-def alerts(db: Session = Depends(get_db), u: PartnerUser = Depends(_tech)):
+def alerts(db: Session = Depends(get_db, scope="function"), u: PartnerUser = Depends(_tech)):
     """What changed on this person's visits in the last two days: newly given to them, taken away or cancelled,
     the family confirming fasting, a new time. Read from the orders themselves, so nothing can be missed or invented."""
     t0 = int(time.time()) - 2 * 86400

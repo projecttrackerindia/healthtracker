@@ -118,7 +118,7 @@ def state_json(st: HouseholdState | None) -> dict:
 
 # ---- sync ------------------------------------------------------------------------------------------------------------
 @r.get("/sync")
-def sync_get(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def sync_get(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     st = db.get(HouseholdState, h.id)
     out = state_json(st)
@@ -154,7 +154,7 @@ def _same(a, b) -> bool:
 
 
 @r.put("/sync", dependencies=[Depends(csrf)])
-def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     limit(request, f"sync:{h.id}", 240, 600)
     st = db.get(HouseholdState, h.id)
@@ -189,7 +189,7 @@ def sync_put(body: SyncIn, request: Request, db: Session = Depends(get_db), u: U
 
 
 @r.delete("/sync", dependencies=[Depends(csrf)])
-def sync_delete(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def sync_delete(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     if role_of(db, u) != "admin":
         raise HTTPException(403, "Only the family admin can delete the family's data.")
     """Right to erasure: remove the family's stored data from the server (the person also deletes it on each device)."""
@@ -222,7 +222,7 @@ def _origin(request: Request) -> str:
 
 
 @r.post("/family/invite", dependencies=[Depends(csrf)])
-def family_invite(body: InviteIn, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_invite(body: InviteIn, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     limit(request, "invite", 20, 3600)
     h = my_household(db, u)
     if u.member_id and body.member_id == u.member_id:
@@ -253,7 +253,7 @@ def family_invite(body: InviteIn, request: Request, db: Session = Depends(get_db
 
 
 @r.get("/family/invites")
-def family_invites(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_invites(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     h = my_household(db, u)
     rows = db.scalars(select(Invite).where(Invite.household_id == h.id)).all()
     members = db.scalars(select(User).where(User.household_id == h.id)).all()
@@ -268,7 +268,7 @@ class RoleIn(BaseModel):
 
 
 @r.post("/family/accounts/{uid}/role", dependencies=[Depends(csrf)])
-def set_role(uid: str, body: RoleIn, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def set_role(uid: str, body: RoleIn, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     """The family admin decides what each sign-in may change. There is always at least one admin."""
     h = my_household(db, u)
     if role_of(db, u) != "admin":
@@ -287,7 +287,7 @@ def set_role(uid: str, body: RoleIn, db: Session = Depends(get_db), u: User = De
 
 
 @r.delete("/family/accounts/{uid}", dependencies=[Depends(csrf)])
-def remove_account(uid: str, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def remove_account(uid: str, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     """Detach a sign-in from the family (a caregiver whose work is done, a lost phone). Their own account survives, empty."""
     h = my_household(db, u)
     if role_of(db, u) != "admin":
@@ -304,7 +304,7 @@ def remove_account(uid: str, db: Session = Depends(get_db), u: User = Depends(ne
 
 
 @r.get("/family/invite/{token}")
-def invite_peek(token: str, db: Session = Depends(get_db)):
+def invite_peek(token: str, db: Session = Depends(get_db, scope="function")):
     """What the invited person sees before signing up: who invited them and for which profile. No health data."""
     inv = db.get(Invite, token)
     if not inv or inv.used or inv.expires < now():
@@ -318,7 +318,7 @@ class JoinIn(BaseModel):
 
 
 @r.post("/family/join", dependencies=[Depends(csrf)])
-def family_join(body: JoinIn, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_join(body: JoinIn, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     inv = db.get(Invite, body.token)
     if not inv or inv.used or inv.expires < now():
         raise HTTPException(404, "This invitation is no longer valid. Ask your family member to send a new one.")
@@ -337,7 +337,7 @@ class ClaimIn(BaseModel):
 
 
 @r.post("/family/me", dependencies=[Depends(csrf)])
-def family_me(body: ClaimIn, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def family_me(body: ClaimIn, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     """The account owner says which profile is theirs (normally the 'You' profile)."""
     u.member_id = body.member_id[:32]
     return {"memberId": u.member_id}

@@ -61,6 +61,7 @@ if IS_SQLITE:
     def _pragmas(dbapi_conn, _):
         cur = dbapi_conn.cursor()
         cur.execute("PRAGMA journal_mode=WAL")
+        cur.execute("PRAGMA busy_timeout=8000")   # wait for a lock instead of failing; the phone check and screenshots sign up while the app polls
         cur.execute("PRAGMA foreign_keys=ON")
         cur.close()
 
@@ -85,6 +86,8 @@ def session():
         s.close()
 
 
+# Use as Depends(get_db, scope="function"): the save then happens before the reply is sent, so a save that fails
+# answers with an error instead of a 200 that says it worked (found 25 Nov: a sign-up that answered 200 but was never saved).
 def get_db():
     s = SessionLocal()
     try:

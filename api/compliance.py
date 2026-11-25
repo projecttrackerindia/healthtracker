@@ -51,7 +51,7 @@ def _mask(n: str) -> str:
 
 # ---- privacy & DPDP ---------------------------------------------------------------------------------------------------
 @ar.get("/privacy")
-def privacy(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def privacy(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     er = []
     for s in db.scalars(select(Setting).where(Setting.key.like("erase:%"))).all():
         u = db.get(User, s.key[6:])
@@ -76,7 +76,7 @@ class BreachIn(BaseModel):
 
 
 @ar.post("/breaches")
-def add_breach(b: BreachIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def add_breach(b: BreachIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     if len(b.title.strip()) < 4:
         raise HTTPException(400, "Describe what happened in a few words.")
     d = _get(db, "breaches", {"rows": []})
@@ -88,7 +88,7 @@ def add_breach(b: BreachIn, a: Admin = Depends(admin_me), db: Session = Depends(
 
 
 @ar.put("/breaches/{bid}")
-def edit_breach(bid: str, b: BreachIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def edit_breach(bid: str, b: BreachIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     d = _get(db, "breaches", {"rows": []})
     rows = d.get("rows", [])
     x = next((r for r in rows if r["id"] == bid), None)
@@ -109,7 +109,7 @@ def edit_breach(bid: str, b: BreachIn, a: Admin = Depends(admin_me), db: Session
 
 # ---- reports inbox ----------------------------------------------------------------------------------------------------
 @ar.get("/uploads-inbox")
-def uploads_inbox(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def uploads_inbox(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .family import decrypt
     out = []
     for x in db.scalars(select(HealthRecord).where(HealthRecord.kind == "upload").order_by(HealthRecord.created.desc()).limit(300)).all():
@@ -132,7 +132,7 @@ class TeamNote(BaseModel):
 
 
 @ar.post("/uploads-inbox/{rid}")
-def uploads_note(rid: str, b: TeamNote, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def uploads_note(rid: str, b: TeamNote, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from .family import decrypt, encrypt
     from .people import _note
     x = db.get(HealthRecord, rid)
@@ -157,7 +157,7 @@ def _services(db: Session) -> dict:
 
 
 @ar.get("/services")
-def services(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def services(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     return {"services": _services(db), "names": SERVICES}
 
 
@@ -167,7 +167,7 @@ class ServiceIn(BaseModel):
 
 
 @ar.put("/services/{key}")
-def set_service(key: str, b: ServiceIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def set_service(key: str, b: ServiceIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     if key not in SERVICES:
         raise HTTPException(404)
     s = _get(db, "services", None)
@@ -179,7 +179,7 @@ def set_service(key: str, b: ServiceIn, a: Admin = Depends(admin_me), db: Sessio
 
 
 @pub.get("/services")
-def services_public(city: str = "", db: Session = Depends(get_db)):
+def services_public(city: str = "", db: Session = Depends(get_db, scope="function")):
     """What a family can use where they are. A service with no cities listed is on everywhere once switched on.
     Until the admin has set anything at all, everything stays as it was (on), so existing families see no change."""
     raw = _get(db, "services", None)
@@ -191,7 +191,7 @@ def services_public(city: str = "", db: Session = Depends(get_db)):
 
 # ---- messaging & DLT --------------------------------------------------------------------------------------------------
 @ar.get("/messaging")
-def messaging_status(a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def messaging_status(a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     from . import messaging
     mode = messaging.sms_mode()
     wa = bool(os.getenv("WA_TOKEN") and os.getenv("WA_PHONE_ID"))
@@ -208,7 +208,7 @@ class DltIn(BaseModel):
 
 
 @ar.put("/messaging/dlt")
-def set_dlt(b: DltIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db)):
+def set_dlt(b: DltIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     if b.entity and not re.fullmatch(r"\d{10,25}", b.entity.strip()):
         raise HTTPException(400, "The Entity ID is the long number the DLT portal gave you (digits only).")
     if b.header and not re.fullmatch(r"[A-Za-z]{6}", b.header.strip()):

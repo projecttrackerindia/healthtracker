@@ -208,7 +208,7 @@ def _store_json(s: Store, d: float) -> dict:
 
 
 @r.get("/places")
-def places(kind: str = "hospital", lat: float | None = None, lng: float | None = None, radius: int = 5000, db: Session = Depends(get_db)):
+def places(kind: str = "hospital", lat: float | None = None, lng: float | None = None, radius: int = 5000, db: Session = Depends(get_db, scope="function")):
     _check(lat, lng)
     if kind not in KINDS:
         raise HTTPException(400, "kind must be one of " + ", ".join(KINDS))

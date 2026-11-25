@@ -306,7 +306,7 @@ def current_user(request: Request, db: Session) -> User | None:
     return u
 
 
-def need_user(request: Request, db: Session = Depends(get_db)) -> User:
+def need_user(request: Request, db: Session = Depends(get_db, scope="function")) -> User:
     u = current_user(request, db)
     if not u:
         raise HTTPException(401, "Please sign in")
@@ -474,7 +474,7 @@ def config(request: Request):
 
 
 @r.get("/me")
-def me(request: Request, db: Session = Depends(get_db)):
+def me(request: Request, db: Session = Depends(get_db, scope="function")):
     u = current_user(request, db)
     return me_json(u) if u else {"user": None}
 
@@ -508,7 +508,7 @@ class Signup(BaseModel):
 
 
 @r.post("/signup/start", dependencies=[Depends(csrf)])
-def signup_start(body: Signup, request: Request, db: Session = Depends(get_db)):
+def signup_start(body: Signup, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "signup", 8, 600)
     name = re.sub(r"\s+", " ", body.name).strip()[:80]
     if len(name) < 2:
@@ -551,7 +551,7 @@ class FlowCode(BaseModel):
 
 
 @r.post("/signup/verify", dependencies=[Depends(csrf)])
-def signup_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db)):
+def signup_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "signup")
     d = f.data
@@ -590,7 +590,7 @@ class PwLogin(BaseModel):
 
 
 @r.post("/password/login", dependencies=[Depends(csrf)])
-def password_login(body: PwLogin, request: Request, response: Response, db: Session = Depends(get_db)):
+def password_login(body: PwLogin, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     limit(request, "pwlogin", 20, 600)
     u = find_user(db, body.id)
     bad = HTTPException(400, "Wrong email/mobile or password.")
@@ -639,7 +639,7 @@ def password_login(body: PwLogin, request: Request, response: Response, db: Sess
 
 
 @r.post("/step/verify", dependencies=[Depends(csrf)])
-def step_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db)):
+def step_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "step")
     u = db.get(User, f.user_id)
@@ -665,7 +665,7 @@ class OtpStart(BaseModel):
 
 
 @r.post("/otp/start", dependencies=[Depends(csrf)])
-def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
+def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "otp", 10, 600)
     kind, target = norm_id(body.id)
     purpose = "reset" if body.purpose == "reset" else "signin"
@@ -692,7 +692,7 @@ def otp_start(body: OtpStart, request: Request, db: Session = Depends(get_db)):
 
 
 @r.post("/otp/verify", dependencies=[Depends(csrf)])
-def otp_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db)):
+def otp_verify(body: FlowCode, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "otp")
     if not f.user_id and (f.data or {}).get("new"):
@@ -729,7 +729,7 @@ class NewAcct(BaseModel):
 
 
 @r.post("/otp/create", dependencies=[Depends(csrf)])
-def otp_create(body: NewAcct, request: Request, response: Response, db: Session = Depends(get_db)):
+def otp_create(body: NewAcct, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     limit(request, "signup", 8, 600)
     f = get_flow(db, body.flow, "newacct")
     name = re.sub(r"\s+", " ", body.name).strip()[:80]
@@ -764,7 +764,7 @@ class Reset(BaseModel):
 
 
 @r.post("/password/reset", dependencies=[Depends(csrf)])
-def password_reset(body: Reset, request: Request, response: Response, db: Session = Depends(get_db)):
+def password_reset(body: Reset, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     limit(request, "reset", 10, 600)
     f = get_flow(db, body.flow, "reset")
     u = db.get(User, f.user_id)
@@ -782,7 +782,7 @@ def password_reset(body: Reset, request: Request, response: Response, db: Sessio
 
 # ---- passkeys --------------------------------------------------------------------------------------------------------
 @r.post("/passkey/register/options", dependencies=[Depends(csrf)])
-def pk_reg_options(request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def pk_reg_options(request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     host, _ = rp(request)
     opts = generate_registration_options(
         rp_id=host, rp_name=RP_NAME, user_id=u.webauthn_id.encode(), user_name=u.email or u.phone or u.id, user_display_name=u.name or (u.email or u.phone),
@@ -807,7 +807,7 @@ def device_name(request: Request) -> str:
 
 
 @r.post("/passkey/register/verify", dependencies=[Depends(csrf)])
-def pk_reg_verify(body: PkVerify, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def pk_reg_verify(body: PkVerify, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     host, origin = rp(request)
     f = get_flow(db, body.flow, "reg")
     if f.user_id != u.id:
@@ -833,7 +833,7 @@ class PkStart(BaseModel):
 
 
 @r.post("/passkey/login/options", dependencies=[Depends(csrf)])
-def pk_login_options(body: PkStart, request: Request, db: Session = Depends(get_db)):
+def pk_login_options(body: PkStart, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "pklogin", 30, 600)
     host, _ = rp(request)
     allow = []
@@ -853,7 +853,7 @@ def pk_login_options(body: PkStart, request: Request, db: Session = Depends(get_
 
 
 @r.post("/passkey/login/verify", dependencies=[Depends(csrf)])
-def pk_login_verify(body: PkVerify, request: Request, response: Response, db: Session = Depends(get_db)):
+def pk_login_verify(body: PkVerify, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     limit(request, "pklogin", 30, 600)
     host, origin = rp(request)
     f = get_flow(db, body.flow, "auth")
@@ -884,7 +884,7 @@ class Rename(BaseModel):
 
 
 @r.post("/passkeys/{pid}", dependencies=[Depends(csrf)])
-def pk_rename(pid: str, body: Rename, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def pk_rename(pid: str, body: Rename, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p = db.get(Passkey, pid)
     if not p or p.user_id != u.id:
         raise HTTPException(404)
@@ -893,7 +893,7 @@ def pk_rename(pid: str, body: Rename, u: User = Depends(need_user), db: Session 
 
 
 @r.delete("/passkeys/{pid}", dependencies=[Depends(csrf)])
-def pk_delete(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def pk_delete(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p = db.get(Passkey, pid)
     if not p or p.user_id != u.id:
         raise HTTPException(404)
@@ -910,7 +910,7 @@ class PwChange(BaseModel):
 
 
 @r.post("/password/change", dependencies=[Depends(csrf)])
-def password_change(body: PwChange, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def password_change(body: PwChange, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, "pwchange", 10, 600)
     if u.pw_hash and not passwords.verify_pw(body.current, u.pw_hash):
         raise HTTPException(400, "Your current password is not right.")
@@ -940,7 +940,7 @@ def two_step(body: Toggle, u: User = Depends(need_user)):
 
 # ---- authenticator app (TOTP) -----------------------------------------------------------------------------------------
 @r.post("/totp/setup", dependencies=[Depends(csrf)])
-def totp_setup(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def totp_setup(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """A new secret for the authenticator app, held in a 10-minute flow until the first code proves it was added."""
     from . import totp
     if not u.pw_hash:
@@ -957,7 +957,7 @@ class TotpIn(BaseModel):
 
 
 @r.post("/totp/enable", dependencies=[Depends(csrf)])
-def totp_enable(body: TotpIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def totp_enable(body: TotpIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from . import totp
     limit(request, "totp", 8, 600, subject=u.id)
     f = get_flow(db, body.flow, "totp")
@@ -974,7 +974,7 @@ def totp_enable(body: TotpIn, request: Request, u: User = Depends(need_user), db
 
 
 @r.post("/totp/disable", dependencies=[Depends(csrf)])
-def totp_disable(body: TotpIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def totp_disable(body: TotpIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from . import totp
     limit(request, "totp", 8, 600, subject=u.id)
     if u.totp_secret and not totp.verify(totp.unseal(u.totp_secret), body.code, u.totp_step or 0):
@@ -986,14 +986,14 @@ def totp_disable(body: TotpIn, request: Request, u: User = Depends(need_user), d
 
 
 @r.get("/sessions")
-def sessions(request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def sessions(request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     cur = tok_hash(request.cookies.get(COOKIE, ""))
     rows = db.scalars(select(AuthSession).where(AuthSession.user_id == u.id, AuthSession.expires > now()).order_by(AuthSession.last_seen.desc())).all()
     return {"sessions": [{"id": s.id[:12], "current": s.id == cur, "method": s.method, "ua": s.ua, "created": s.created, "lastSeen": s.last_seen} for s in rows]}
 
 
 @r.post("/logout", dependencies=[Depends(csrf)])
-def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+def logout(request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     t = request.cookies.get(COOKIE)
     if t:
         db.query(AuthSession).filter(AuthSession.id == tok_hash(t)).delete()
@@ -1002,7 +1002,7 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
 
 
 @r.post("/logout-all", dependencies=[Depends(csrf)])
-def logout_all(response: Response, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def logout_all(response: Response, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     db.query(AuthSession).filter(AuthSession.user_id == u.id).delete()
     response.delete_cookie(COOKIE, path="/")
     return {"ok": True}
@@ -1046,7 +1046,7 @@ class ContactStart(BaseModel):
 
 
 @r.post("/contact/backup", dependencies=[Depends(csrf)])
-def backup_start(body: ContactStart, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def backup_start(body: ContactStart, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     """A second mobile for getting back in (board: account recovery). Proved by a code like any other number."""
     limit(request, "contact", 8, 600)
     kind, target = norm_id(body.value)
@@ -1067,7 +1067,7 @@ def backup_remove(u: User = Depends(need_user)):
 
 
 @r.post("/contact/start", dependencies=[Depends(csrf)])
-def contact_start(body: ContactStart, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def contact_start(body: ContactStart, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     limit(request, "contact", 8, 600)
     kind, target = norm_id(body.value)
     if (kind == "email" and u.email == target and u.email_verified) or (kind == "phone" and u.phone == target and u.phone_verified):
@@ -1081,7 +1081,7 @@ def contact_start(body: ContactStart, request: Request, db: Session = Depends(ge
 
 
 @r.post("/contact/verify", dependencies=[Depends(csrf)])
-def contact_verify(body: FlowCode, request: Request, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def contact_verify(body: FlowCode, request: Request, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     limit(request, "verify", 20, 600)
     f = get_flow(db, body.flow, "contact")
     if f.user_id != u.id:
@@ -1175,14 +1175,14 @@ ERASE_NOTICE = 48 * 3600
 
 
 @r.get("/account/delete")
-def account_delete_status(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def account_delete_status(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     from .models import Setting
     s = db.get(Setting, "erase:" + u.id)
     return {"at": (s.value or {}).get("at") if s else None}
 
 
 @r.post("/account/delete/cancel", dependencies=[Depends(csrf)])
-def account_delete_cancel(db: Session = Depends(get_db), u: User = Depends(need_user)):
+def account_delete_cancel(db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     from .models import Setting
     s = db.get(Setting, "erase:" + u.id)
     if s:
@@ -1192,7 +1192,7 @@ def account_delete_cancel(db: Session = Depends(get_db), u: User = Depends(need_
 
 
 @r.post("/account/delete", dependencies=[Depends(csrf)])
-def account_delete(body: DeleteAccount, request: Request, response: Response, db: Session = Depends(get_db), u: User = Depends(need_user)):
+def account_delete(body: DeleteAccount, request: Request, response: Response, db: Session = Depends(get_db, scope="function"), u: User = Depends(need_user)):
     limit(request, "delete", 5, 3600)
     if body.confirm.strip().upper() != "DELETE":
         raise HTTPException(400, 'Type DELETE to confirm.')
@@ -1267,7 +1267,7 @@ def google_claims(credential: str) -> dict:
 
 
 @r.post("/google", dependencies=[Depends(csrf)])
-def google_signin(body: GoogleIn, request: Request, response: Response, db: Session = Depends(get_db)):
+def google_signin(body: GoogleIn, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
     """One tap: an existing account with this Gmail signs in; a new one is created (terms required). Google has already
     verified the address, so it counts as a verified email. A mobile number is asked for during setup."""
     limit(request, "google", 20, 600)
@@ -1335,7 +1335,7 @@ class RsmsStart(BaseModel):
 
 
 @r.post("/rsms/start", dependencies=[Depends(csrf)])
-def rsms_start(body: RsmsStart, request: Request, db: Session = Depends(get_db)):
+def rsms_start(body: RsmsStart, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "rsms", 12, 600)
     if body.kind not in _PARENT:
         raise HTTPException(400, "This step has expired. Please start again.")
@@ -1363,7 +1363,7 @@ def rsms_start(body: RsmsStart, request: Request, db: Session = Depends(get_db))
 
 
 @r.get("/rsms/status")
-def rsms_status(id: str, request: Request, db: Session = Depends(get_db)):
+def rsms_status(id: str, request: Request, db: Session = Depends(get_db, scope="function")):
     limit(request, "rsmsstat", 400, 600)
     f = db.get(AuthFlow, id or "")
     if not f or f.kind != "rsms":
@@ -1375,7 +1375,7 @@ def rsms_status(id: str, request: Request, db: Session = Depends(get_db)):
 
 
 @r.get("/rsms/qr.svg")
-def rsms_qr(id: str, db: Session = Depends(get_db)):
+def rsms_qr(id: str, db: Session = Depends(get_db, scope="function")):
     """For a computer: a QR the phone scans to open the same ready-made text."""
     import io
     import qrcode
@@ -1409,7 +1409,7 @@ async def _inbound_fields(request: Request) -> tuple[str, str, str]:
 
 
 @r.post("/rsms/inbound")
-async def rsms_inbound(request: Request, db: Session = Depends(get_db)):
+async def rsms_inbound(request: Request, db: Session = Depends(get_db, scope="function")):
     """Called by the SMS provider (or a forwarding phone) for every text that reaches REVERSE_SMS_NUMBER."""
     limit(request, "rsmsin", 600, 600)
     key, sender, text = await _inbound_fields(request)
@@ -1441,7 +1441,7 @@ class CodeSend(BaseModel):
 
 
 @r.post("/code/send", dependencies=[Depends(csrf)])
-def code_send(body: CodeSend, request: Request, db: Session = Depends(get_db)):
+def code_send(body: CodeSend, request: Request, db: Session = Depends(get_db, scope="function")):
     """Send (or resend) the 6-digit code for a step already started: "Resend code" and "Get a code instead"."""
     limit(request, "otp", 10, 600)
     if body.kind not in _PARENT:

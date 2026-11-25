@@ -133,7 +133,7 @@ def _need(db: Session, request: Request, key: str | None):
 
 
 @r.post("/aadhaar/otp")
-def aadhaar_otp(body: AadhaarIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def aadhaar_otp(body: AadhaarIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     _need(db, request, x_dokko_key)
     a = "".join(ch for ch in body.aadhaar if ch.isdigit())
     if len(a) != 12:
@@ -143,7 +143,7 @@ def aadhaar_otp(body: AadhaarIn, request: Request, db: Session = Depends(get_db)
 
 
 @r.post("/aadhaar/verify")
-def aadhaar_verify(body: OtpIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def aadhaar_verify(body: OtpIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     _need(db, request, x_dokko_key)
     if not body.txnId or len(body.otp.strip()) < 4:
         raise HTTPException(400, "Enter the OTP.")
@@ -155,7 +155,7 @@ def aadhaar_verify(body: OtpIn, request: Request, db: Session = Depends(get_db),
 
 
 @r.post("/login/otp")
-def login_otp(body: AbhaIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def login_otp(body: AbhaIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     _need(db, request, x_dokko_key)
     v = body.abha.strip()
     hint = "abha-number" if v.replace("-", "").isdigit() else "abha-address"
@@ -164,7 +164,7 @@ def login_otp(body: AbhaIn, request: Request, db: Session = Depends(get_db), x_d
 
 
 @r.post("/login/verify")
-def login_verify(body: OtpIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def login_verify(body: OtpIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     _need(db, request, x_dokko_key)
     out = _post(f"{BASES[env()]['abha']}/profile/login/verify", {"scope": ["abha-login", "aadhaar-verify"], "authData": {"authMethods": ["otp"], "otp": {"txnId": body.txnId, "otpValue": encrypt(body.otp.strip())}}}, _auth_hdr())
     tok = out.get("token", "")

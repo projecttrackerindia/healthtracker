@@ -81,7 +81,7 @@ def _link(db: Session, h, member: str, p: str) -> DeviceLink | None:
 
 # ---------------------------------------------------------------- OAuth
 @r.get("/status")
-def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def status(db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     h = household(db, x_dokko_key, create=False)
     links = db.scalars(select(DeviceLink).where(DeviceLink.household_id == h.id, DeviceLink.provider.in_(list(PROVIDERS)))).all() if h else []
     return {"providers": [{"id": p, "label": c["label"], "about": c["about"], "enabled": enabled(p)} for p, c in PROVIDERS.items()],
@@ -89,7 +89,7 @@ def status(db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)
 
 
 @r.post("/{p}/start")
-def start(p: str, request: Request, member: str = "", db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def start(p: str, request: Request, member: str = "", db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     c = _cfg(p)
     if not enabled(p):
         raise HTTPException(503, f"{c['label']} linking is not switched on yet.")
@@ -121,7 +121,7 @@ def _exchange(p: str, data: dict) -> dict:
 
 
 @r.get("/{p}/callback")
-def callback(p: str, request: Request, code: str = "", state: str = "", error: str = "", db: Session = Depends(get_db)):
+def callback(p: str, request: Request, code: str = "", state: str = "", error: str = "", db: Session = Depends(get_db, scope="function")):
     _cfg(p)
     app_url = f"{_origin(request)}/app"
     s = verify(state)
@@ -284,7 +284,7 @@ def _oura(at: str, days: int) -> dict:
 
 
 @r.post("/{p}/sync")
-def sync(p: str, body: SyncIn, request: Request, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def sync(p: str, body: SyncIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     c = _cfg(p)
     h = household(db, x_dokko_key, create=False)
     l = _link(db, h, body.member, p)
@@ -299,7 +299,7 @@ def sync(p: str, body: SyncIn, request: Request, db: Session = Depends(get_db), 
 
 
 @r.delete("/{p}/{member}")
-def unlink(p: str, member: str, db: Session = Depends(get_db), x_dokko_key: str | None = Header(None)):
+def unlink(p: str, member: str, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
     _cfg(p)
     h = household(db, x_dokko_key, create=False)
     l = _link(db, h, member, p)

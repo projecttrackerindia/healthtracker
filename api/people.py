@@ -342,7 +342,7 @@ def set_abha(db: Session, p: Person, v: str):
 
 # ---- me ---------------------------------------------------------------------------------------------------------------
 @r.get("/me")
-def me(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def me(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     people = []
     if u.household_id:
         for p in db.scalars(select(Person).where(Person.household_id == u.household_id, Person.removed.is_(None)).order_by(Person.created)):
@@ -372,7 +372,7 @@ class LangIn(BaseModel):
 
 
 @r.put("/me/lang")
-def set_lang(body: LangIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def set_lang(body: LangIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """The account's language. The app shows itself in it, and medicine reminders sent to this account use it."""
     if body.lang not in LANGS:
         raise HTTPException(422, "Choose English, Tamil or Telugu.")
@@ -390,7 +390,7 @@ class PersonIn(BaseModel):
 
 
 @r.post("/people")
-def create_person(body: PersonIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def create_person(body: PersonIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, "v2people", 30, 600)
     h = ensure_household(db, u)
     n = len(db.scalars(select(Person.id).where(Person.household_id == h.id)).all())
@@ -451,7 +451,7 @@ def create_person(body: PersonIn, request: Request, u: User = Depends(need_user)
 
 
 @r.get("/people/{pid}")
-def get_person(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def get_person(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     log(db, p, u, a, "profile" if a.can("summary") else "Medical ID")
     db.commit()
@@ -476,7 +476,7 @@ def _id_target(u: User) -> tuple[str, str]:
 
 
 @r.post("/people/{pid}/idcode")
-def id_code(pid: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def id_code(pid: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from .auth import send_code
     p, a = person_or_404(db, u, pid)
     if p.owner_user != u.id:
@@ -499,7 +499,7 @@ def _when(t: int) -> str:
 
 
 @r.put("/people/{pid}")
-def edit_person(pid: str, body: PersonEdit, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def edit_person(pid: str, body: PersonEdit, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     if not a.writer:
         raise HTTPException(403, "Only they can change their profile")
@@ -551,7 +551,7 @@ class GrantIn(BaseModel):
 
 
 @r.get("/people/{pid}/sharing")
-def get_sharing(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def get_sharing(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     if not a.writer:
         raise HTTPException(403, "Only they can see this")
@@ -566,7 +566,7 @@ def get_sharing(pid: str, u: User = Depends(need_user), db: Session = Depends(ge
 
 
 @r.put("/people/{pid}/sharing")
-def set_sharing(pid: str, body: GrantIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def set_sharing(pid: str, body: GrantIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     if not a.writer:
         raise HTTPException(403, "Only they can change who sees their health")
@@ -592,7 +592,7 @@ class AskShareIn(BaseModel):
 
 
 @r.post("/people/{pid}/ask-share")
-def ask_share(pid: str, body: AskShareIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def ask_share(pid: str, body: AskShareIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """Ask the person (or, for a child, their guardians) to share more. They decide in Settings; nothing changes here.
     At most one ask per person per day, so it can never become nagging."""
     p, a = person_or_404(db, u, pid)
@@ -625,7 +625,7 @@ class SnoozeIn(BaseModel):
 
 
 @r.post("/people/{pid}/snooze")
-def snooze_dose(pid: str, body: SnoozeIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def snooze_dose(pid: str, body: SnoozeIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """'Remind me in 10 minutes' from a dose notification: one more reminder for that dose time, once."""
     p, a = person_or_404(db, u, pid)
     if not (p.owner_user == u.id or a.level == "guardian"):
@@ -644,7 +644,7 @@ def snooze_dose(pid: str, body: SnoozeIn, u: User = Depends(need_user), db: Sess
 
 
 @r.get("/people/{pid}/access-log")
-def access_log(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def access_log(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     if not a.writer:
         raise HTTPException(403, "Only they can see this")
@@ -753,7 +753,7 @@ def _check_record(kind: str, data: dict, day: str):
 
 
 @r.get("/people/{pid}/records")
-def list_records(pid: str, kind: str = "", since: str = "", u: User = Depends(need_user), db: Session = Depends(get_db)):
+def list_records(pid: str, kind: str = "", since: str = "", u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     kinds = [k for k in (kind.split(",") if kind else KIND_LEVEL.keys()) if a.can_kind(k)]
     if kind and not kinds:
@@ -769,7 +769,7 @@ def list_records(pid: str, kind: str = "", since: str = "", u: User = Depends(ne
 
 
 @r.post("/people/{pid}/records")
-def add_record(pid: str, body: RecordIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def add_record(pid: str, body: RecordIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, "v2rec", 300, 600)
     p, a = person_or_404(db, u, pid)
     _check_record(body.kind, body.data, body.day)
@@ -841,7 +841,7 @@ def _ensure_index(db: Session, pid: str):
 
 
 @r.get("/search")
-def search(q: str = "", page: int = 0, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def search(q: str = "", page: int = 0, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     from sqlalchemy import func
     words = [w[:12] for w in _words(q)][:6]
     if not words or not u.household_id:
@@ -865,7 +865,7 @@ def search(q: str = "", page: int = 0, u: User = Depends(need_user), db: Session
 
 
 @r.put("/records/{rid}")
-def edit_record(rid: str, body: RecordIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def edit_record(rid: str, body: RecordIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     x = db.get(HealthRecord, rid)
     if not x:
         raise HTTPException(404, "Not found")
@@ -884,7 +884,7 @@ class RecJoinIn(BaseModel):
 
 
 @r.post("/records/{rid}/join")
-def join_record(rid: str, body: RecJoinIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def join_record(rid: str, body: RecJoinIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """Page 2 of a report uploaded on another day: put it with page 1, so both sit under one visit (same day and lab).
     Only the date and the lab move; what was read from the page stays as it is."""
     x, y = db.get(HealthRecord, rid), db.get(HealthRecord, body.to)
@@ -906,7 +906,7 @@ def join_record(rid: str, body: RecJoinIn, u: User = Depends(need_user), db: Ses
 
 
 @r.delete("/records/{rid}")
-def delete_record(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def delete_record(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     x = db.get(HealthRecord, rid)
     if not x:
         raise HTTPException(404, "Not found")
@@ -1092,7 +1092,7 @@ class MoveIn(BaseModel):
 
 
 @r.post("/records/{rid}/move")
-def move_record(rid: str, body: MoveIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def move_record(rid: str, body: MoveIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     x = db.get(HealthRecord, rid)
     if not x or x.kind != "report":
         raise HTTPException(404, "Not found")
@@ -1110,7 +1110,7 @@ def move_record(rid: str, body: MoveIn, u: User = Depends(need_user), db: Sessio
 
 
 @r.post("/records/{rid}/seen")
-def seen_suggest(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def seen_suggest(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     x = db.get(HealthRecord, rid)
     if not x:
         raise HTTPException(404, "Not found")
@@ -1163,7 +1163,7 @@ def _pages_pdf(imgs: list[bytes]) -> bytes:
 
 @r.post("/people/{pid}/reports")
 async def upload_report(pid: str, request: Request, file: UploadFile = File(...), read: str = Form("1"), doc: str = Form("report"), force: str = Form(""),
-                        pages: list[UploadFile] = File(default=[]), u: User = Depends(need_user), db: Session = Depends(get_db)):
+                        pages: list[UploadFile] = File(default=[]), u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, "v2upload", 30, 600)
     p, a = person_or_404(db, u, pid)
     if not a.writer:
@@ -1365,7 +1365,7 @@ class FindingFix(BaseModel):
 
 
 @r.post("/records/{rid}/finding")
-def fix_finding(rid: str, body: FindingFix, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def fix_finding(rid: str, body: FindingFix, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     x = db.get(HealthRecord, rid)
     if not x or x.kind != "report":
         raise HTTPException(404, "Not found")
@@ -1401,7 +1401,7 @@ def fix_finding(rid: str, body: FindingFix, u: User = Depends(need_user), db: Se
 
 
 @r.get("/records/{rid}/file")
-def report_file(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def report_file(rid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     x = db.get(HealthRecord, rid)
     if not x or not x.file_id:
         raise HTTPException(404, "Not found")
@@ -1466,7 +1466,7 @@ def _my_invite(db: Session, u: User, ref: str) -> HouseholdInvite:
 
 
 @r.post("/household/invite")
-def invite(body: InviteIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def invite(body: InviteIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, "v2invite", 20, 3600)
     h = ensure_household(db, u)
     kind, c = norm_contact(body.contact)
@@ -1494,7 +1494,7 @@ def invite(body: InviteIn, request: Request, u: User = Depends(need_user), db: S
 
 
 @r.post("/household/invites/{ref}/resend")
-def invite_resend(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def invite_resend(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     limit(request, "v2resend", 20, 3600)
     i = _my_invite(db, u, ref)
     wait = INVITE_GAP - (now() - (i.sent_at or i.created))
@@ -1513,7 +1513,7 @@ class InviteEdit(BaseModel):
 
 
 @r.put("/household/invites/{ref}")
-def invite_edit(ref: str, body: InviteEdit, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def invite_edit(ref: str, body: InviteEdit, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     i = _my_invite(db, u, ref)
     i.name, i.relation = norm_name(body.name) or i.name, norm_relation(body.relation) or i.relation
     db.commit()
@@ -1521,7 +1521,7 @@ def invite_edit(ref: str, body: InviteEdit, u: User = Depends(need_user), db: Se
 
 
 @r.delete("/household/invites/{ref}")
-def invite_cancel(ref: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def invite_cancel(ref: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     i = _my_invite(db, u, ref)
     db.delete(i)                              # the link stops working at once
     db.commit()
@@ -1529,7 +1529,7 @@ def invite_cancel(ref: str, u: User = Depends(need_user), db: Session = Depends(
 
 
 @r.get("/household/invite/{token}")
-def invite_open(token: str, db: Session = Depends(get_db)):
+def invite_open(token: str, db: Session = Depends(get_db, scope="function")):
     """The invited person opened the link: mark it, and say who invited them. No health data."""
     i = db.get(HouseholdInvite, token)
     if not i or i.used_by or i.expires < now():
@@ -1563,7 +1563,7 @@ class JoinIn(BaseModel):
 
 
 @r.post("/household/join")
-def join(body: JoinIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def join(body: JoinIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     i = db.get(HouseholdInvite, body.token)
     if not i or i.used_by or i.expires < now():
         raise HTTPException(400, "This invite has expired. Ask for a new one.")
@@ -1614,7 +1614,7 @@ class RelIn(BaseModel):
 
 
 @r.post("/household/relation")
-def confirm_relation(body: RelIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def confirm_relation(body: RelIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """The person who joined says how they are related. A wrong relation is corrected and the inviter told."""
     i = db.scalar(select(HouseholdInvite).where(HouseholdInvite.used_by == u.id, HouseholdInvite.household_id == (u.household_id or "-")))
     if not i:
@@ -1634,7 +1634,7 @@ class HandIn(BaseModel):
 
 
 @r.post("/people/{pid}/handover")
-def handover(pid: str, body: HandIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def handover(pid: str, body: HandIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """A dependent of 13 or more gets their own login. One invite, their records move with them, nothing is copied.
     Under 18 the guardians stay guardians (a teen app, a parent who still looks after it); at 18 that ends by itself."""
     limit(request, "v2invite", 20, 3600)
@@ -1654,7 +1654,7 @@ def handover(pid: str, body: HandIn, request: Request, u: User = Depends(need_us
 
 
 @r.get("/household/invites/{ref}/qr.svg")
-def invite_qr(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def invite_qr(ref: str, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     import io
     import qrcode
     import qrcode.image.svg
@@ -1666,7 +1666,7 @@ def invite_qr(ref: str, request: Request, u: User = Depends(need_user), db: Sess
 
 
 @r.get("/changes")
-def my_changes(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def my_changes(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     rows = db.scalars(select(ProfileChange).where(ProfileChange.user_id == u.id).order_by(ProfileChange.t.desc()).limit(100))
     return [{"fields": x.fields.split(","), "device": x.device, "t": x.t} for x in rows]
 
@@ -1686,7 +1686,7 @@ def med_name(n: str) -> str:
 
 
 @r.get("/household/duplicates")
-def duplicates(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def duplicates(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     import difflib
     out = []
     if not u.household_id:
@@ -1735,7 +1735,7 @@ class MergeIn(BaseModel):
 
 
 @r.post("/household/merge")
-def merge(body: MergeIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def merge(body: MergeIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     if body.kind == "invite":
         _my_invite(db, u, body.keep)
         db.delete(_my_invite(db, u, body.drop))
@@ -1782,7 +1782,7 @@ def _move_out(db: Session, u: User):
 
 
 @r.post("/household/leave")
-def leave(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def leave(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     if not u.household_id:
         return {"ok": True}
     orphan = _orphans_if_gone(db, u)
@@ -1824,7 +1824,7 @@ class UserRef(BaseModel):
 
 
 @r.post("/household/remove")
-def remove_member(body: UserRef, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def remove_member(body: UserRef, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     if u.role != "admin":
         raise HTTPException(403, "Only the family owner can remove someone")
     m = db.get(User, body.user_id)
@@ -1849,7 +1849,7 @@ def remove_member(body: UserRef, u: User = Depends(need_user), db: Session = Dep
 
 
 @r.post("/people/{pid}/guardians")
-def add_guardian(pid: str, body: UserRef, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def add_guardian(pid: str, body: UserRef, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     if p.owner_user is not None or a.level != "guardian":
         raise HTTPException(403, "Only a guardian can do this")
@@ -1863,7 +1863,7 @@ def add_guardian(pid: str, body: UserRef, u: User = Depends(need_user), db: Sess
 
 
 @r.delete("/people/{pid}/guardians/{uid}")
-def drop_guardian(pid: str, uid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def drop_guardian(pid: str, uid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     if a.level != "guardian":
         raise HTTPException(403, "Only a guardian can do this")
@@ -1877,7 +1877,7 @@ def drop_guardian(pid: str, uid: str, u: User = Depends(need_user), db: Session 
 
 
 @r.delete("/people/{pid}")
-def remove_dependent(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def remove_dependent(pid: str, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     p, a = person_or_404(db, u, pid)
     if p.owner_user is not None or a.level != "guardian":
         raise HTTPException(403, "Only a guardian can remove a dependent")
@@ -1932,7 +1932,7 @@ def _note(db: Session, household_id: str, kind: str, title: str, body: str = "",
 
 
 @r.get("/inbox")
-def inbox(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def inbox(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     if not u.household_id:
         return {"items": [], "unread": 0}
     people = {p.id: access(db, u, p) for p in db.scalars(select(Person).where(Person.household_id == u.household_id))}
@@ -1974,17 +1974,17 @@ def _mark(db: Session, u: User, body: MarkIn, field: str):
 
 
 @r.post("/inbox/read")
-def inbox_read(body: MarkIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def inbox_read(body: MarkIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     return _mark(db, u, body, "read")
 
 
 @r.post("/inbox/clear")
-def inbox_clear(body: MarkIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def inbox_clear(body: MarkIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     return _mark(db, u, body, "cleared")
 
 
 @r.get("/notify-prefs")
-def get_prefs(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def get_prefs(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     pr = db.get(NoticePref, u.id)
     p = (pr.prefs if pr else {}) or {}
     return [{"key": k, "title": t, "sub": d, "on": True if k == "safety" else p.get(k, True) is not False, "locked": k == "safety"} for k, t, d in CATEGORIES]
@@ -1996,7 +1996,7 @@ class PrefIn(BaseModel):
 
 
 @r.put("/notify-prefs")
-def set_prefs(body: PrefIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def set_prefs(body: PrefIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     if body.key not in {k for k, _, _ in CATEGORIES} or body.key == "safety":
         raise HTTPException(400, "This one cannot be changed")
     pr = db.get(NoticePref, u.id) or NoticePref(user_id=u.id, prefs={})
@@ -2012,7 +2012,7 @@ class QuietIn(BaseModel):
 
 
 @r.put("/notify-prefs/quiet")
-def set_quiet(body: QuietIn, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def set_quiet(body: QuietIn, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """Quiet hours, and the 8 a.m. good-morning summary on the phone."""
     pr = db.get(NoticePref, u.id) or NoticePref(user_id=u.id, prefs={})
     new = {**(pr.prefs or {}), "quiet": body.quiet}
@@ -2025,7 +2025,7 @@ def set_quiet(body: QuietIn, u: User = Depends(need_user), db: Session = Depends
 
 
 @r.get("/notify-prefs/quiet")
-def get_quiet(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def get_quiet(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     pr = db.get(NoticePref, u.id)
     p = (pr.prefs if pr else {}) or {}
     return {"quiet": p.get("quiet", ""), "morning": p.get("morning", False) is True}
@@ -2241,12 +2241,12 @@ class PermsIn(BaseModel):
 
 
 @r.get("/permissions")
-def get_perms(u: User = Depends(need_user), db: Session = Depends(get_db)):
+def get_perms(u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     return _perm_state(db, u.id)
 
 
 @r.put("/permissions")
-def put_perms(body: PermsIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db)):
+def put_perms(body: PermsIn, request: Request, u: User = Depends(need_user), db: Session = Depends(get_db, scope="function")):
     """Only changes are recorded; rows are never edited, a withdrawal is a new row."""
     from .auth import client_ip
     from .models import ConsentLog
