@@ -30,7 +30,7 @@ def test_until_hospitals_are_live_nothing_leads_to_a_dead_end():
     assert "vzOff()?`noteVisit(" in _fn("vzReasons") and "vzOff()?`noteVisit(" in _fn("vzDueCards")
     s = _fn("vzSoon")
     assert "Note a visit" in s and "You still get reminders." in s and "Tell me when live" not in s  # no promise the server cannot keep
-    assert "writer(p)&&!(vzOff()&&!hist)" in _fn("visitsBlock")
+    assert "writer(p)&&!hist&&!vzOff()" in _fn("visitsBlock")
 
 
 def test_noted_visit_is_shown_once():
