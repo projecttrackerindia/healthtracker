@@ -89,3 +89,12 @@ def test_prescription_and_pharmacy_open_as_panels_on_laptop():
     assert "PGSIDE=innerWidth>=980?'Your order':0;" in H
     assert "Check what we read before it reminds you" in H and "Nothing reminds you until you confirm" in H
     assert "if(!(innerWidth>=980&&PGSIDE)&&EMB&&EMB.live" in H
+
+
+def test_family_today_panel_and_lab_side_steps():
+    assert "'Emergency setup','Family'];" in H and "${WF?`</div><div>${famTodayPanel()}</div></div>`:''}" in H
+    i = H.index("function famTodayPanel(")
+    body = H[i:H.index("function ddFamily(", i)]
+    for t in ("Everyone, in", "medicines taken", "Nothing due today", "What I share with family", "Add a parent to look after"):
+        assert t in body, t
+    assert "PGSIDE=innerWidth>=980?'Choose a lab':0;" in H and "PGSIDE=innerWidth>=980?'Review and pay':0;" in H
