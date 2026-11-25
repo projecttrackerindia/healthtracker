@@ -11,7 +11,8 @@ def _fn(name):
 
 def test_visits_rail_has_the_month_and_how_a_visit_works():
     rail = _fn("railHTML")
-    assert "S.tab==='visits'&&!S.sub&&can(p,'all')" in rail and "${vzCal(p)}" in rail and "How a visit works" in rail
+    assert "S.tab==='visits'&&!S.sub&&can(p,'all')" in rail and "${vzCal(p)}" in rail
+    assert "How a visit works" in _fn("visitsBlock")  # r155: on the left, as on the board
     cal = _fn("vzCal")
     assert "vNotes(q.id)" in cal and "vaxOf(q)" in cal and "can(q,'all')" in cal  # only people this account may see
 

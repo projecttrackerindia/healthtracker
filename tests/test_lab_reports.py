@@ -40,7 +40,7 @@ def test_laptop_rail_carries_the_cards_once():
     body = _fn("recordsBody")
     assert "rail?'':labRead(p)+labOnBody(p)" in body
     rail = _fn("railHTML")
-    assert "${labRead(p)}${labOnBody(p)}" in rail and "Book a blood test" in rail
+    assert "${labRead(p)}${labOnBodyBig(p)}" in rail and "Book a blood test" in _fn("recordsBody")  # r155: next test under the reports, as on the board
 
 
 def test_book_a_test_headline_counts_chosen_tests():
