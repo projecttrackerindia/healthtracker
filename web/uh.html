@@ -1769,7 +1769,7 @@ function gbHead(p){try{if(!p||!can(p,'summary')||preg(p)||firstRun(p)||isKid(p))
 function gbTab(p){const t=S.tab,pill=k=>`<span class="gbp" aria-hidden="true">${GBI[k]}</span>`,num=x=>`<span class="gbp tx">${x}</span>`,H=(a,b)=>`<h2 class="gbt">${a} <br>${b}</h2>`;
  try{if(!p||firstRun(p))return'';const own=p.self?'Your':esc(firstName(p)||nameOf(p))+'’s';
   if(t==='records'){if(!can(p,'summary'))return'';const fs=findings(p.id),bad=fs.filter(f=>f.flag&&f.flag!=='normal');
-   return!fs.length?(writer(p)?H('Add a report '+pill('add'),'to get started'):''):bad.length?H(bad.length+' result'+(bad.length>1?'s':'')+' '+pill('re'),'to recheck'):H(own+' reports '+pill('ok'),'are all in range')}
+   return!fs.length?(writer(p)?H('Add a report '+pill('add'),'to get started'):''):bad.length?H(bad.length+' result'+(bad.length>1?'s':'')+' '+pill('re'),'to recheck'):(n=>H(own+' '+num(n)+' report'+(n===1?'':'s'),n===1?'is in range':'are all in range'))((REC[p.id]||[]).filter(r=>r.kind==='report').length||1)}
   if(t==='meds'){if(!can(p,'all'))return'';const plan=dosePlan(p.id),N=plan.length,n=plan.filter(x=>x.done&&!x.done.skipped).length;
    return!N?H('No medicines '+pill('add'),'added yet'):H('Today’s doses '+num(n+' of '+N),n>=N?'all taken':(N-n)+' to take')}
   if(t==='cover'){if(typeof COVC==='undefined'||!COVC)return'';return COVC.length?H('Your family is '+pill('ok'),'covered'):H('Add your cover '+pill('add'),'in a minute')}
@@ -1830,7 +1830,9 @@ function gbStageLines(){const st=$('#gbst'),im=$('#gbsi'),sv=$('#gbsl');if(!st||
 function gbNext(p){if(!can(p,'summary'))return'';const f=findings(p.id).filter(f=>!f.baby).find(f=>f.flag&&f.flag!=='normal');if(!f)return'';
  const tr=(()=>{try{return trendPts(p.id,f.test).length>1}catch(_){return false}})(),nm=esc(String(f.test).replace(/\s*\(.*\)/,''));
  return`<div class="gbnx"><span class="gbni" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8A5200" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.500 6 11a6 6 0 0 1-12 0c0-4.500 6-11 6-11z"/></svg></span><div class="gbnt2"><small>NEXT STEP</small><b>Recheck ${nm.charAt(0).toLowerCase()+nm.slice(1)}</b><span>${esc(f.value)} ${esc(f.unit||'')} ${f.date?'on '+esc(dShort(f.date))+' ':''}· a test at home shows where it is now</span></div>
-  <div class="gbna"><button class="pri" onclick="S.tab='records';S.sub=1;history.replaceState(null,'','/app/records');renderAll()">Book a home test</button>${tr?`<button onclick="openTrend('${p.id}','${String(f.test).replace(/'/g,"\\'")}')">See trend</button>`:`<button onclick="openReport('${f.rid}')">See report</button>`}</div></div>`}
+  <div class="gbna"><button class="pri" onclick="gbBookTest()">Book a home test</button>${tr?`<button onclick="openTrend('${p.id}','${String(f.test).replace(/'/g,"\\'")}')">See trend</button>`:`<button onclick="openReport('${f.rid}')">See report</button>`}</div></div>`}
+/* Lab's "Book a test" tab is the embedded lab list ('bk'); sub 1 is a Medicine tab, not a Lab one */
+function gbBookTest(){S.tab='records';S.sub=0;try{history.replaceState(null,'','/app/records')}catch(_){}renderAll();inTab('bk',openLabs)}
 function gbHome(p){GBSHOWN=new Set();const f=gbFocus(p),st=gbStage(p);return(st||gbHero(p,f))+gbNext(p)+gbMini(p,f)+gbPlan(p)}
 function gbLine(){const im=$('#gbo'),pin=$('#gbpin'),v=$('#gbv'),sv=$('#gbln');if(!im||!pin||!v||!sv||!im.naturalWidth)return;const h=sv.parentNode.getBoundingClientRect(),b=im.getBoundingClientRect(),c=v.getBoundingClientRect();
  const k=Math.min(b.width/im.naturalWidth,b.height/im.naturalHeight),w=im.naturalWidth*k,ht=im.naturalHeight*k,x=b.left+(b.width-w)/2+w*+im.dataset.px-h.left,y=b.top+(b.height-ht)/2+ht*+im.dataset.py-h.top;
@@ -1862,7 +1864,7 @@ function eyebrowOf(p){const t=S.tab,plan=can(p,'all')?dosePlan(p.id):[];
  if(t==='summary'&&p.self&&!isKid(p)){const h=new Date().getHours();if(firstRun(p))return'WELCOME, '+esc((firstName(p)||'').toUpperCase());return(h<12?'GOOD MORNING':h<17?'GOOD AFTERNOON':'GOOD EVENING')+', '+esc((firstName(p)||'').toUpperCase())}
  if(t==='summary')return isKid(p)?ageWords(p).toUpperCase():new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
  if(t==='meds')return'MEDICINE';
- return({records:'YOUR REPORTS',cover:'INSURANCE',visits:'VISITS',family:'FAMILY'})[t]||''}
+ return({records:'LAB',cover:'INSURANCE',visits:'VISITS',family:'FAMILY'})[t]||''}
 function whoDot(p){if(!can(p,'all'))return'#C7C7CC';const hm=(d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'))(new Date());const late=ME.people.some(q=>q.access==='guardian'&&REC[q.id]&&dosePlan(q.id).some(x=>!x.done&&x.t<hm));return late?'#FF9500':'#30D158'}
 /* SOS step 1 (approved design): a 5-second countdown to cancel a mistaken press. Nothing is sent until it ends,
    then family alerts go out by themselves; 108 is one slide away on the next screen (a web app cannot dial on its own). */
@@ -2061,7 +2063,7 @@ function recTitle(r){const t=String(r.title||'');const tests=(r.findings||[]).ma
 function recSource(r){if(r.lab)return r.lab;const src=((r.summary||'')+' '+(r.doctor||'')).match(/([A-Z][\w&.]*(?: [A-Z][\w&.]*){0,3} (?:Diagnostics|Laboratories|Labs?|Hospitals?|Clinic|Healthcare|Pathology|Imaging))/);
  return src?src[1]:(r.doc==='prescription'?(r.hospital||''):(r.doctor||'').split(/[,;(]/)[0].trim())}
 function recKind(r){return r.doc==='prescription'?'rx':/scan|x-?ray|mri|ct|ultra|usg/i.test((r.title||'')+(r.doc||''))?'scans':'labs'}
-function recCard(r,same){const k=recKind(r),fs0=r.findings||[],fs=fs0.filter(f=>!isIdTest(f)&&!rawTwin(f,fs0)).map(f=>({...f,flag:qualFlag(f)})),bad=fs.filter(f=>f.flag!=='normal'),ok=fs.length-bad.length;
+function recCard(r,same){const k=recKind(r),fs0=r.findings||[],fs=fs0.filter(f=>!isIdTest(f)&&!isFactRow(f)&&!BABY_RX.test(f.test||'')&&!rawTwin(f,fs0)).map(f=>({...f,flag:qualFlag(f)})),bad=fs.filter(f=>f.flag!=='normal'),ok=fs.length-bad.length;
  const col={labs:'#5E5CE6',rx:'#30A14E',scans:'#FF9F0A'}[k],lab={labs:'LAB REPORT',rx:'PRESCRIPTION',scans:'SCAN'}[k];
  const chips=k==='rx'?(r.medicines||[]).slice(0,3).map(m=>`<span class="rc b">${esc(m.name)}</span>`).join(''):[...bad.slice().sort((a,b)=>['urgent','doc','watch','none','ok'].indexOf(statusOf(a).k)-['urgent','doc','watch','none','ok'].indexOf(statusOf(b).k)).slice(0,2).map(f=>{const st=statusOf(f);return`<span class="rc ${st.k}">${STI[st.k]}${esc(f.test.split(/[(,]/)[0].trim())}: ${esc((st.s||'').toLowerCase())}</span>`}),ok?`<span class="rc ok">${STI.ok}${ok} in range</span>`:''].join('');
  const d=new Date((r.day||'')+'T00:00');return`<div class="ti${same?' same':''}"><div class="tw" style="color:${bad.length?'#FF9F0A':col}">${isNaN(d)?'':d.getDate()}<small>${isNaN(d)?'':d.toLocaleString('en',{month:'short'}).toUpperCase()}</small></div><svg class="tc" width="20" height="24" aria-hidden="true"><path d="M0 0 C0 14 6 20 18 20" fill="none" stroke="currentColor" stroke-width="2"/></svg>
@@ -4817,7 +4819,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r140';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r141';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
