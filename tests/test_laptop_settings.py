@@ -98,3 +98,17 @@ def test_family_today_panel_and_lab_side_steps():
     for t in ("Everyone, in", "medicines taken", "Nothing due today", "What I share with family", "Add a parent to look after"):
         assert t in body, t
     assert "PGSIDE=innerWidth>=980?'Choose a lab':0;" in H and "PGSIDE=innerWidth>=980?'Review and pay':0;" in H
+
+
+def test_signup_steps_follow_the_boards_order_and_frame():
+    assert "step=step??(!me?0:PERMS&&!PERMS.asked?2:!(me.medicalId.contacts||[]).length?3:4);" in H
+    assert "Who should we call <span class=\"hpl\">first</span>?" in H and "You decide each one, <span class=\"hpl\">separately</span>" in H
+    assert "$('#on3').onclick=async()=>{await permsSave('signup');onboard(3)}}" in H
+    assert "${step+1} of 5" in H and "Create your account</b><span>1 of 5" in H
+
+
+def test_first_run_and_ask_panel_on_laptop():
+    i = H.index("function firstRunScreen(")
+    body = H[i:H.index("async function finishOnboarding(", i)]
+    assert "Start with" in body and "Coming soon" in body and "Skip for now" in body
+    assert "modal glass${W?' aiw':''}" in H and "Tap and speak, in any of these languages" in H
