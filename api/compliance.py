@@ -149,6 +149,20 @@ def uploads_note(rid: str, b: TeamNote, a: Admin = Depends(admin_me), db: Sessio
 
 
 # ---- services by city -------------------------------------------------------------------------------------------------
+NEEDS_PARTNER = {"medicine": "pharmacy", "lab": "lab", "visits": "hospital"}
+
+
+def _live(db: Session, key: str) -> int:
+    """How many verified, active partners can serve this service. Medicine, tests and visits stay closed to families
+    until at least one licensed partner is live, whatever the switch says."""
+    from .models import Store
+    from sqlalchemy import func
+    kind = NEEDS_PARTNER.get(key)
+    if not kind:
+        return 1
+    return db.scalar(select(func.count(Store.id)).where(Store.kind == kind, Store.active == True, Store.verified == True)) or 0  # noqa: E712
+
+
 def _services(db: Session) -> dict:
     s = _get(db, "services", None)
     if s is None:                                   # never set: everything stays on, as before
@@ -170,6 +184,8 @@ class ServiceIn(BaseModel):
 def set_service(key: str, b: ServiceIn, a: Admin = Depends(admin_me), db: Session = Depends(get_db, scope="function")):
     if key not in SERVICES:
         raise HTTPException(404)
+    if b.on and not _live(db, key):
+        raise HTTPException(409, f"{SERVICES[key]} can be switched on once one licensed {NEEDS_PARTNER[key]} is live. Until then families see it as coming soon.")
     s = _get(db, "services", None)
     s = {k: {"on": True, "cities": []} for k in SERVICES} if s is None else s
     s = {**s, key: {"on": b.on, "cities": sorted({re.sub(r"\s+", " ", c).strip().title()[:40] for c in b.cities if c.strip()})[:50]}}
@@ -181,12 +197,12 @@ def set_service(key: str, b: ServiceIn, a: Admin = Depends(admin_me), db: Sessio
 @pub.get("/services")
 def services_public(city: str = "", db: Session = Depends(get_db, scope="function")):
     """What a family can use where they are. A service with no cities listed is on everywhere once switched on.
-    Until the admin has set anything at all, everything stays as it was (on), so existing families see no change."""
+    Medicine, home tests and visits are never on for families until a licensed partner is live."""
     raw = _get(db, "services", None)
     if raw is None:
-        return {k: True for k in SERVICES}
+        return {k: bool(_live(db, k)) for k in SERVICES}
     c = city.strip().lower()
-    return {k: v["on"] and (not v["cities"] or not c or c in [x.lower() for x in v["cities"]]) for k, v in _services(db).items()}
+    return {k: v["on"] and bool(_live(db, k)) and (not v["cities"] or not c or c in [x.lower() for x in v["cities"]]) for k, v in _services(db).items()}
 
 
 # ---- messaging & DLT --------------------------------------------------------------------------------------------------

@@ -128,7 +128,17 @@ def test_admin_privacy_services_messaging_and_inbox(monkeypatch):
     if r.status_code == 428:                                   # a known admin on a new device confirms with a code
         r = a.post("/api/admin/login", json={"email": em, "password": "Passw0rd-long-1", "code": r.json()["detail"]["demo"]}, headers=H)
     assert r.status_code == 200, r.text
-    assert a.get("/api/v2/services").json()["medicine"] is True                                  # never set: on
+    from api.models import Store
+    with SessionLocal() as db:                                  # medicine needs a live, verified pharmacy first
+        for x in db.query(Store).filter(Store.kind == "pharmacy").all():
+            x.verified = False
+        db.commit()
+    assert a.get("/api/v2/services").json()["medicine"] is False                                 # never set, no pharmacy: closed
+    assert a.put("/api/admin/services/medicine", json={"on": True}, headers=H).status_code == 409   # cannot switch on without one
+    with SessionLocal() as db:
+        db.add(Store(name="Live Pharmacy", kind="pharmacy", city="Chennai", lat=13.08, lng=80.27, active=True, verified=True))
+        db.commit()
+    assert a.get("/api/v2/services").json()["medicine"] is True                                  # never set, a pharmacy is live: on
     assert a.put("/api/admin/services/medicine", json={"on": True, "cities": ["chennai"]}, headers=H).json()["medicine"]["cities"] == ["Chennai"]
     assert a.get("/api/v2/services?city=Chennai").json()["medicine"] and not a.get("/api/v2/services?city=Pune").json()["medicine"]
     assert a.put("/api/admin/services/insurance", json={"on": False}, headers=H).status_code == 200

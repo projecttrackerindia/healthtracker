@@ -206,7 +206,8 @@ def today(days: int = 7, a: Admin = Depends(admin_me), db: Session = Depends(get
     svc = _services(db)
     svc_live = {"medicine": ("pharmacy", "pharmacy", "pharmacies"), "lab": ("lab", "lab", "labs"), "visits": ("hospital", "hospital", "hospitals")}
     lv = lambda k: live.get(svc_live[k][0], 0)  # noqa: E731
-    services_ = [{"key": k, "name": SERVICES[k], "on": v["on"],
+    services_ = [{"key": k, "name": SERVICES[k], "on": v["on"] and (k not in svc_live or lv(k) > 0), "live": lv(k) if k in svc_live else None,
+                  "need": svc_live[k][1] if k in svc_live else None,
                   "sub": (f"{lv(k)} {svc_live[k][1] if lv(k) == 1 else svc_live[k][2]} live" if k in svc_live else ("Live" if v["on"] else "Waiting for broker tie-up"))
                   + (" · " + ", ".join(v["cities"][:3]) if v["cities"] else "")} for k, v in svc.items()]
     overview = {"families": fam_all, "familiesNew": fam_new, "users": usr_all, "usersNew": usr_new, "verified": ver, "waiting": apps + sum(1 for s in stores if s.active and not s.verified),
