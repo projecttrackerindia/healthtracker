@@ -19,3 +19,11 @@ def test_server_refuses_a_service_without_a_live_partner():
     assert 'if b.on and not _live(db, key):' in C and "raise HTTPException(409" in C
     assert 'return {k: bool(_live(db, k)) for k in SERVICES}' in C
     assert 'v["on"] and bool(_live(db, k))' in C
+
+
+def test_quiet_admin_pages_follow_their_boards():
+    for t in ("No applications are waiting", "How an application is reviewed", "No company is added yet", "How a company plan works",
+              "No requests are waiting", "Readiness checklist", "No reports are waiting", "How a report reaches a family",
+              "People act on these in an emergency", "How a payout works", "completes before Go live"):
+        assert t in A, t
+    assert "for(const k in B){const o=VIEWS[k];" in A
