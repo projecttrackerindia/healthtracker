@@ -24,10 +24,10 @@ def test_every_anchored_organ_has_a_name():
         assert f"{organ}:'" in names, organ
 
 
-def test_what_needs_a_look_is_picked_first_and_cards_follow_the_body():
-    assert "[...bad,...fs].forEach" in STAGE
-    assert "pick.sort((a,b)=>A[a.org][1]-A[b.org][1])" in STAGE
-    assert "max=innerWidth>=980?4:3" in STAGE
+def test_what_needs_a_look_leads_the_dial():
+    # v2 (Nov 2026): one dial entry per organ; organs with a result to watch come first, led by the next-step result
+    assert "bi(a)-bi(b)||A[a.o][1]-A[b.o][1]" in STAGE
+    assert ".slice(0,innerWidth>=980?7:5)" in STAGE
 
 
 def test_the_babys_measurements_never_reach_the_mothers_stage():
@@ -39,7 +39,9 @@ def test_home_uses_the_stage_and_one_next_step():
     assert "gbStage(p)" in home and "gbNext(p)" in home
 
 
-def test_cards_are_drawn_beside_the_body_not_over_it():
-    css = UH[UH.index(".gbsk{"):UH.index(".gbsc{")]
-    assert "left:12px" in css and "width:116px" in css     # the body picture starts further right than this column ends
-    assert "linear-gradient(to right,transparent 0,#000 24%)" in UH
+def test_nothing_is_drawn_over_the_body():
+    # v2: no value cards or lines on the stage; the organ glows and its result shows in one row under the dial
+    assert "gbsc" not in STAGE and "gbsk" not in STAGE
+    assert 'class="gbdl"' in STAGE and 'id="gbse"' in STAGE and 'id="gbgl"' in STAGE
+    css = UH[UH.index(".gbst.v2{"):UH.index(".gbsr{")]
+    assert "pointer-events:none" in css      # the glow never takes a tap meant for the body button

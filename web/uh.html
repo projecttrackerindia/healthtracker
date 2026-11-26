@@ -1259,6 +1259,37 @@ body.gbhome #gl,body.gbhome #labels,body.gbhome #lines,body.gbhome #herobg,body.
 .gbsc b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.2}.gbsc em{font-style:normal;font-size:11px;font-weight:600;opacity:.75;letter-spacing:0}
 .gbsc .s{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7BE39A}.gbsc .s::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}.gbsc.w .s{color:#FFC457}
 .gbsp{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.28);pointer-events:none}.gbsp.w{background:#FFC457;box-shadow:0 0 0 5px rgba(255,196,87,.35)}
+/* v2 Home stage (Nov 2026): glow on the organ, dial under the body, one result row */
+.gbst.v2{height:456px}
+.gbst.v2 .gbsi{left:50%;right:auto;transform:translateX(-50%);top:2px;height:330px;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 6%,#000 72%,transparent 98%);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 6%,#000 72%,transparent 98%);mask-composite:intersect}
+@media (min-width:700px) and (max-width:979px){.gbst.v2{height:min(64vh,700px)}.gbst.v2 .gbsi{height:calc(100% - 140px)}.gbst.v2 .gbdl{top:auto;bottom:74px;gap:20px}}
+.gbgl{position:absolute;left:-200px;top:0;width:80px;height:80px;border-radius:50%;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(circle,rgba(123,227,154,.6) 0,rgba(123,227,154,.2) 38%,transparent 70%);animation:gbpulse 2.4s ease-in-out infinite}
+.gbgl.w{background:radial-gradient(circle,rgba(255,196,87,.85) 0,rgba(255,196,87,.28) 38%,transparent 70%)}
+.gbgl.all{background:radial-gradient(ellipse,rgba(255,99,99,.42) 0,rgba(255,99,99,.14) 45%,transparent 70%)}
+.gbgl.all.w{background:radial-gradient(ellipse,rgba(255,196,87,.38) 0,rgba(255,196,87,.1) 45%,transparent 70%)}
+@keyframes gbpulse{0%,100%{transform:scale(.9);opacity:.8}50%{transform:scale(1.06);opacity:1}}
+@media (prefers-reduced-motion:reduce){.gbgl{animation:none}}
+.gbdl{position:absolute;left:0;right:0;top:318px;display:flex;justify-content:center;gap:10px;padding:0 8px}
+.gbdi{display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(255,255,255,.78);min-width:52px;background:none;border:0;padding:0;font:inherit;cursor:pointer}
+.gbdi .r{position:relative;width:50px;height:50px;display:grid;place-items:center;border-radius:50%;transition:box-shadow .25s}
+.gbdi .r svg{position:absolute;inset:0}
+.gbdi .g{position:relative;display:grid;color:#7BE39A}
+.gbdi .g svg{position:static}
+.gbdi.w .g{color:#FFC457}
+.gbdi .t{font-size:11.5px;font-weight:600;white-space:nowrap}
+.gbdi.on .t{color:#fff;font-weight:700}
+.gbdi.on .r{box-shadow:0 0 0 3px rgba(123,227,154,.28),0 0 22px rgba(123,227,154,.35)}
+.gbdi.on.w .r{box-shadow:0 0 0 3px rgba(255,196,87,.32),0 0 22px rgba(255,196,87,.45)}
+.gbse{position:absolute;left:10px;right:10px;bottom:10px;min-height:50px;border-radius:18px;display:flex;align-items:center;gap:8px;padding:6px 14px;color:#fff;background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22);font:inherit;text-align:left;cursor:pointer}
+.gbse>i{width:8px;height:8px;border-radius:50%;background:#7BE39A;flex:none}.gbse>i.w{background:#FFC457}
+.gbse .k{flex:1;min-width:0;font-size:13px;line-height:1.25;color:rgba(255,255,255,.82)}.gbse .k b{color:#fff}
+.gbse .v{font-size:16px;font-weight:800;white-space:nowrap}.gbse .v em{font-style:normal;font-size:11px;font-weight:600;opacity:.75}
+.gbse .s{font-size:11.5px;font-weight:700;color:#7BE39A;white-space:nowrap}.gbse .s.w{color:#FFC457}
+.gbse u{text-decoration:none;opacity:.6;font-size:18px}
+@media (min-width:980px){body.gbhome #gbx .gbst.v2 .gbsi{top:18px;height:calc(100% - 176px);left:50%;right:auto;transform:translateX(-50%);-webkit-mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 6%,#000 76%,transparent 99%);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 6%,#000 76%,transparent 99%);mask-composite:intersect}
+ body.gbhome #gbx .gbst.v2 .gbdl{top:auto;bottom:86px;gap:18px}
+ body.gbhome #gbx .gbst.v2 .gbse{left:22px;right:22px;bottom:20px;min-height:56px;padding:8px 18px}
+ body.gbhome #gbx .gbst.v2 .gbse .k{font-size:14px}body.gbhome #gbx .gbst.v2 .gbse .v{font-size:19px}}
 .gbsr{position:absolute;right:12px;top:12px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .500px rgba(255,255,255,.24)}
 #rxl .orm{display:none}.orml{width:100%;font-size:13.5px;font-weight:700;color:#1E46E0;justify-content:space-between}
 .cvpg{display:flex!important;align-items:center;gap:12px;padding:12px 12px 12px 16px!important;border-radius:22px;margin:10px 0;background:#FBEFF3!important;color:#8C2D52;font-size:13.5px;font-weight:600;line-height:1.35}.cvpg span{flex:1;min-width:0}.cvpg button{height:44px;padding:0 18px;border-radius:999px;background:#A33A63;color:#fff;font-weight:700;font-size:14px;flex:none}
@@ -2046,28 +2077,40 @@ function gbHero(p,f){const g=f&&GBIMG[f.org];let hero='';
 /* Home, 25 Nov 2026 design: one dark stage with the whole body. Up to four of the person's own results sit beside it, each joined by a line
    to the organ it belongs to, so no card ever covers the body. What needs a look comes first and is shown in amber.
    Where each organ sits on the two body pictures, as a share of the picture's width and height. */
-const GBANCH={m:{thyroid:[.502,.3],heart:[.522,.507],lung:[.41,.47],liver:[.47,.62],pancreas:[.575,.645],kidney:[.615,.665],gut:[.49,.8],prostate:[.487,.945]},
- f:{thyroid:[.5,.285],heart:[.55,.476],lung:[.413,.42],liver:[.47,.566],pancreas:[.567,.62],kidney:[.624,.585],gut:[.494,.75]}};
-let GBSHOWN=new Set();const GBORGN={stomach:'Stomach',bladder:'Bladder',gall:'Gallbladder',adrenal:'Adrenals',pituitary:'Pituitary',parathyroid:'Parathyroid',testis:'Testes',ovary:'Ovaries',thyroid:'Thyroid',heart:'Heart',lung:'Lungs',liver:'Liver',pancreas:'Sugar',kidney:'Kidneys',gut:'Gut',prostate:'Prostate'};
+const GBANCH={m:{thyroid:[.502,.3],heart:[.522,.507],lung:[.41,.47],liver:[.47,.62],pancreas:[.575,.645],kidney:[.615,.665],gut:[.49,.8],prostate:[.487,.945],
+  stomach:[.575,.625],spleen:[.63,.625],gall:[.44,.672],bladder:[.49,.94],adrenal:[.6,.64],pituitary:[.5,.155],parathyroid:[.49,.3],brain:[.5,.09],oesophagus:[.5,.4],appendix:[.39,.83],blood:[.5,.52,1],bones:[.5,.55,1],skin:[.5,.5,1],eye:[.465,.165],ear:[.405,.17],teeth:[.5,.225]},
+ f:{thyroid:[.5,.285],heart:[.55,.476],lung:[.413,.42],liver:[.47,.566],pancreas:[.567,.62],kidney:[.624,.585],gut:[.494,.75],
+  stomach:[.6,.6],spleen:[.64,.58],gall:[.47,.63],bladder:[.5,.87],uterus:[.49,.85],ovary:[.43,.83],adrenal:[.61,.565],pituitary:[.5,.15],parathyroid:[.5,.29],brain:[.5,.09],oesophagus:[.5,.38],appendix:[.38,.76],blood:[.5,.5,1],bones:[.5,.55,1],skin:[.5,.5,1],eye:[.465,.16],ear:[.4,.165],teeth:[.5,.215],breast:[.4,.46]}};
+/* v2 Home (Nov 2026): no cards on the body. The organ that needs a look glows; a dial of the person's organs sits under the body, and the chosen one's result shows in one row. */
+const GBG={heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',pancreas:'<path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/>',liver:'<path d="M4 9c0-2 2-3.5 5-3.5h9c1.6 0 2.5 1.3 2 2.8C18.6 13 13 17 8 17c-2.6 0-4-2.5-4-8z"/>',
+ thyroid:'<path d="M12 7v10M12 9c-2-3-7-2-7 2.5S9 17 12 14M12 9c2-3 7-2 7 2.5S15 17 12 14"/>',kidney:'<path d="M9 4c-3 0-5 3.5-5 8s2 8 5 8 3.5-3 2-5-1-4.5 0-6 1-5-2-5zM15 4c3 0 5 3.5 5 8s-2 8-5 8-3.5-3-2-5 1-4.5 0-6-1-5 2-5z"/>',
+ blood:'<path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/><path d="M9 14h6M12 11v6"/>',lung:'<path d="M12 4v7M12 11c-1 0-2 1-3 1M12 11c1 0 2 1 3 1M8.5 7C5 8 4 13 4 17c0 2 2 3 4 2l1.5-1V9M15.5 7C19 8 20 13 20 17c0 2-2 3-4 2l-1.5-1V9"/>',
+ bones:'<path d="M8 4a2 2 0 1 0-3 2.5L14.5 17a2 2 0 1 0 2.5 3 2 2 0 1 0 2-3 2 2 0 0 0-2.5-.5L7 6.5A2 2 0 0 0 8 4z"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',stomach:'<path d="M9 3v4c0 2-3 3-3 7a6 6 0 0 0 12 0c0-3-2-4-4-4s-3-1-3-3V3"/>',brain:'<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a3 3 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>'};
+const gbGl=o=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${GBG[o]||'<circle cx="12" cy="12" r="5"/>'}</svg>`;
+let GBD={};
+let GBSHOWN=new Set();const GBORGN={bones:'Bones',blood:'Blood',eye:'Eyes',ear:'Ears',teeth:'Teeth',skin:'Skin',brain:'Brain',breast:'Breast',uterus:'Uterus',spleen:'Spleen',oesophagus:'Food pipe',appendix:'Appendix',stomach:'Stomach',bladder:'Bladder',gall:'Gallbladder',adrenal:'Adrenals',pituitary:'Pituitary',parathyroid:'Parathyroid',testis:'Testes',ovary:'Ovaries',thyroid:'Thyroid',heart:'Heart',lung:'Lungs',liver:'Liver',pancreas:'Sugar',kidney:'Kidneys',gut:'Gut',prostate:'Prostate'};
 const gbShort=t=>{t=String(t||'');const m=t.match(/\(([A-Za-z0-9]{2,6})\)/);if(m)return m[1].toUpperCase();if(/glucose|sugar/i.test(t)&&/fasting/i.test(t))return'fasting';if(/glucose|sugar/i.test(t)&&/(pp|post)/i.test(t))return'after meal';const r=t.replace(/\b(cholesterol|serum|total|level|glucose)\b/ig,'').replace(/\s+/g,' ').trim();return r||t};
 function gbStage(p){const fs=findings(p.id).filter(f=>!f.baby);if(!fs.length)return'';const fem=p.profile&&p.profile.sex==='female',A=GBANCH[fem?'f':'m'],
-  bad=fs.filter(f=>f.flag&&f.flag!=='normal'),seen={},pick=[],max=innerWidth>=980?4:3;
- /* what needs a look is chosen first, so it is never the card left out on a small screen */
- [...bad,...fs].forEach(f=>{if(pick.length<max&&f.org&&A[f.org]&&!seen[f.org]){seen[f.org]=1;pick.push(f)}});
- /* top to bottom in the order the organs sit in the body, so no two lines cross; the small tiles below then show only what is not already here */
- pick.sort((a,b)=>A[a.org][1]-A[b.org][1]);GBSHOWN=new Set(pick.map(f=>f.test));
- const chip=f=>{const w=f.flag&&f.flag!=='normal',st=gbStat(p,f)[0],tr=(()=>{try{return trendPts(p.id,f.test).length>1}catch(_){return false}})(),a=A[f.org];
-  return`<button class="gbsc${w?' w':''}" data-fx="${a[0]}" data-fy="${a[1]}" onclick="${tr?`openTrend('${p.id}','${String(f.test).replace(/'/g,"\\'")}')`:`openBody('organ:${f.org}')`}"><span class="k">${GBORGN[f.org]} · ${esc(gbShort(f.test))}</span><b>${esc(f.value)} <em>${esc(f.unit||'')}</em></b><span class="s">${esc(st)}</span></button>`};
- return`<div class="gbst" id="gbst"><img class="gbsi" id="gbsi" alt="" src="${fem?'/a/gb-body-f.ec2efda4.webp':'/a/gb-body-m.009bc972.webp'}"><svg class="gbsl" id="gbsl" aria-hidden="true"></svg>
-  <span class="gbsn"><i></i>${fs.length-bad.length} in range${bad.length?` <u>·</u> <b>${bad.length} to watch</b>`:''}</span><div class="gbsk">${pick.map(chip).join('')}</div>
-  <button class="gbsr" aria-label="Open ${p.self?'your':'the'} body in 3D" onclick="openBody()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.600L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.700 5.600L4 16M4 20v-4h4"/></svg></button></div>`}
+  bad=fs.filter(f=>f.flag&&f.flag!=='normal');GBSHOWN=new Set();
+ /* one entry per organ that has results: the worst result leads it; organs that need a look come first, then top to bottom */
+ const by={};fs.forEach(f=>{const o=f.org;if(!o||!A[o])return;const w=f.flag&&f.flag!=='normal';(by[o]=by[o]||{o,all:[],bad:[]}).all.push(f);if(w)by[o].bad.push(f)});
+ const bi=e=>e.bad.length?fs.indexOf(e.bad[0]):1e9,list=Object.values(by).sort((a,b)=>bi(a)-bi(b)||A[a.o][1]-A[b.o][1])/* the next-step result leads, as in the card below */.slice(0,innerWidth>=980?7:5);if(!list.length)return'';
+ GBD={i:0,p:p.id,A,list:list.map(e=>{const f=e.bad[0]||e.all[0];return{o:e.o,f,w:!!e.bad.length,n:e.all.length,ok:e.all.length-e.bad.length}})};
+ const sel=GBD.list[0];GBSHOWN=new Set([sel.f.test]);
+ const ring=(e,on)=>{const sz=50,r=sz/2-3,c=2*Math.PI*r,fr=e.n?e.ok/e.n:1,col=e.w?'#FFC457':'#7BE39A';return`<svg width="${sz}" height="${sz}" aria-hidden="true"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="${on?'#18324A':'#0F2234'}" stroke="rgba(255,255,255,.14)" stroke-width="3.500"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.500" stroke-linecap="round" stroke-dasharray="${(c*(e.w?Math.max(.25,fr):1)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${sz/2} ${sz/2})"/></svg>`};
+ const nm=o=>GBORGN[o]||ORG_NAME[o]||o;
+ return`<div class="gbst v2" id="gbst"><img class="gbsi" id="gbsi" alt="${p.self?'Your':esc(firstName(p))+'\'s'} body, see-through, with the organs" src="${fem?'/a/gb-body-f.ec2efda4.webp':'/a/gb-body-m.009bc972.webp'}"><i class="gbgl${sel.w?' w':''}${A[sel.o][2]?' all':''}" id="gbgl" aria-hidden="true"></i>
+  <span class="gbsn"><i></i>${fs.length-bad.length} in range${bad.length?` <u>·</u> <b>${bad.length} to watch</b>`:''}</span>
+  <button class="gbsr" aria-label="Open ${p.self?'your':'the'} body in 3D" onclick="openBody()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.600L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.700 5.600L4 16M4 20v-4h4"/></svg></button>
+  <div class="gbdl" role="tablist" aria-label="Organs">${GBD.list.map((e,i)=>`<button role="tab" aria-selected="${i===0}" class="gbdi${e.w?' w':''}${i===0?' on':''}" data-i="${i}" onclick="gbPick(${i})"><span class="r">${ring(e,i===0)}<span class="g">${gbGl(e.o)}</span></span><span class="t">${esc(nm(e.o))}</span></button>`).join('')}</div>
+  <button class="gbse" id="gbse" onclick="gbOpen()">${gbSel(sel)}</button></div>`}
+function gbSel(e){const f=e.f,st=statusOf(f),nm=GBORGN[e.o]||ORG_NAME[e.o]||e.o;return`<i class="${e.w?'w':''}"></i><span class="k"><b>${esc(nm)}</b> · ${esc(gbShort(f.test))}</span><span class="v">${esc(f.value)} <em>${esc(f.unit||'')}</em></span><span class="s${e.w?' w':''}">${esc(e.w?(st.s||st.w||'Needs a look'):e.n>1?e.n+' in range':'In range')}</span><u aria-hidden="true">›</u>`}
+function gbPick(i){const e=GBD.list&&GBD.list[i];if(!e)return;GBD.i=i;document.querySelectorAll('#gbst .gbdi').forEach((b,k)=>{b.classList.toggle('on',k===i);b.setAttribute('aria-selected',k===i)});
+ const se=$('#gbse');if(se)se.innerHTML=gbSel(e);const g=$('#gbgl');if(g){g.className='gbgl'+(e.w?' w':'')+(GBD.A[e.o][2]?' all':'')}GBSHOWN=new Set([e.f.test]);gbStageLines()}
+function gbOpen(){const e=GBD.list&&GBD.list[GBD.i||0];if(!e)return openBody();let tr=false;try{tr=trendPts(GBD.p,e.f.test).length>1}catch(_){}openBody(e.o==='blood'?undefined:'organ:'+e.o)}
 /* every line runs from the side of its card to the organ, measured from where the picture really is on this screen */
-function gbStageLines(){const st=$('#gbst'),im=$('#gbsi'),sv=$('#gbsl');if(!st||!im||!sv||!im.naturalWidth)return;const h=st.getBoundingClientRect(),b=im.getBoundingClientRect();
- st.querySelectorAll('.gbsp').forEach(e=>e.remove());let d='';
- st.querySelectorAll('.gbsc').forEach(c=>{if(!c.offsetParent)return;const r=c.getBoundingClientRect(),x=b.left-h.left+b.width*+c.dataset.fx,y=b.top-h.top+b.height*+c.dataset.fy,sx=r.right-h.left,sy=r.top-h.top+r.height/2,w=c.classList.contains('w');
-  d+=`<path d="M${sx.toFixed(1)} ${sy.toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="${w?'#FFC457':'rgba(255,255,255,.7)'}" stroke-width="1.200"/>`;
-  const pn=document.createElement('i');pn.className='gbsp'+(w?' w':'');pn.style.left=x+'px';pn.style.top=y+'px';st.appendChild(pn)});
- sv.setAttribute('viewBox',`0 0 ${h.width} ${h.height}`);sv.innerHTML=d}
+function gbStageLines(){const st=$('#gbst'),im=$('#gbsi'),g=$('#gbgl');if(!st||!im||!g||!im.naturalWidth||!GBD.list)return;const e=GBD.list[GBD.i||0];if(!e)return;const h=st.getBoundingClientRect(),b=im.getBoundingClientRect(),a=GBD.A[e.o];
+ const d=a[2]?b.width*.62:Math.max(64,b.width*.2);g.style.width=g.style.height=d+'px';g.style.left=(b.left-h.left+b.width*a[0]-d/2)+'px';g.style.top=(b.top-h.top+b.height*a[1]-d/2)+'px'}
 /* one next step, taken from what the results say: the value that needs a look, with the way to recheck it */
 function gbNext(p){if(!can(p,'summary'))return'';const f=findings(p.id).filter(f=>!f.baby).find(f=>f.flag&&f.flag!=='normal');if(!f)return'';
  const tr=(()=>{try{return trendPts(p.id,f.test).length>1}catch(_){return false}})(),nm=esc(String(f.test).replace(/\s*\(.*\)/,''));
