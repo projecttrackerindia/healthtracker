@@ -129,3 +129,7 @@ def test_body_viewer_laptop_panel_follows_the_board():
 def test_laptop_sign_in_has_steps_and_languages():
     assert "New accounts take about two minutes" in H and "class=\"alang\"" in H
     assert "#layer .page.auth .pin.aflow{background:transparent!important}" in H
+
+
+def test_page_behind_a_framed_page_is_hidden():
+    assert "body:has(#layer .page.pfr) .gbl{opacity:0!important;visibility:hidden!important}" in H
