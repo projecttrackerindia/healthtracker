@@ -222,7 +222,7 @@
     host.classList.remove('ufx', 'user', 'partner');
     host.classList.add('ubody');
     host.innerHTML = `<a class="ufx-logo" href="/">${MARK}Urban Health</a>` +
-      `<div class="ub-fig"><img src="/brand/auth-body4.webp" alt="" width="565" height="1027" decoding="async">` +
+      `<div class="ub-fig"><img src="/brand/auth-body5.webp" alt="" width="565" height="1027" decoding="async">` +
       `<span class="ub-c l"><b>Heart</b><i>LDL 98 · good</i></span><span class="ub-c r"><b>Liver</b><i>ALT 28 · good</i></span></div>` +
       `<div class="ufx-copy"><h2>Your family's health,<br>on one body.</h2><p>Reports, medicines and doctors for everyone you look after.</p>${apps('user')}</div>`;
   }
