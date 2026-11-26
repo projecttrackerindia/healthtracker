@@ -623,6 +623,7 @@ function shape(){if(KID){for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false
  const zc=(()=>{const c=centerOf(ORGRE.liver);return c?c.z:0})();
  for(const l in LAY){const A=LAY[l].geometry.attributes.position,a=A.array;if(!LAY[l].userData.P0)LAY[l].userData.P0=a.slice();const o=LAY[l].userData.P0;const soft=+l===0||+l===1;
   for(let i=0;i<a.length;i+=3){let x=o[i],y=o[i+1],z=o[i+2];
+
    if(soft&&S.g!==1&&y<neck-.15){const belly=y>hip-.3&&y<chest?Math.sin(Math.PI*(y-(hip-.3))/(chest-hip+.3)):0;const gx=1+(S.g-1)*(.9+.3*belly),gz=1+(S.g-1)*(z>zc?1+1.2*belly:.8);
     x*=gx;z=zc+(z-zc)*gz}
    if(S.headK!==1){const k=y>neck?S.headK:1+(S.headK-1)*Math.max(0,1-(neck-y)/.6)*.4;x*=k;z*=k;if(y>neck)y=neck+(y-neck)*k}
@@ -992,9 +993,9 @@ const STI2={ok:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8
 const FCOL=f=>{const k=STK(f);return document.body.classList.contains('dk')?{ok:'#30D158',watch:'#FFB340',doc:'#FF9A5C',none:'#AEAEB2'}[k]:{ok:'#1A7F37',watch:'#9A5B00',doc:'#B54708',none:'#515154'}[k]};
 function fLine(f){const tr=trend(f),nm=f.test.replace(/\s*\(.*\)/,'');if(tr&&tr.dir!=='same'&&f.flag!=='normal')return`${esc(nm)} ${parseFloat(f.value)>parseFloat(tr.p.value)?'rose':'fell'} since ${esc(new Date(tr.p.date+'T00:00').toLocaleDateString('en-IN',{month:'long'}))}`;return`${esc(nm)} ${f.flag==='high'?'is high':f.flag==='low'?'is low':f.flag==='normal'?'in range':'to check'}`}
 function vBody(){shape();head(who()+' · BODY',bodyTitle(),(()=>{const L=latest().filter(f=>!f.screen),pd=prevDate(L);return L.length&&L[0].date?`${fmtD(L[0].date).replace(/ \d{4}$/,'')} report${pd?', compared with '+mon(pd):''}. Tap an organ.`:lineFor()})());const L=latest(),by=orgsWith(L),orgs=Object.keys(by);xbody(orgs);CAM(HOME0.z*1.22,HOME0.y+.28);/* wide screens: the organs fill the space left of the card, the same view the phone gets, not a small far-away body */
- if(innerWidth>=980&&LAY[3]&&!KID){body.position.x=0;requestAnimationFrame(()=>{if(!VIEW||VIEW.k!=='body')return;body.rotation.set(0,0,0);body.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(LAY[3]);exFitBox(b,.62)})}else body.position.x=0;
+ if(LAY[3]){body.position.x=0;requestAnimationFrame(()=>{if(!VIEW||VIEW.k!=='body')return;homeFit(innerWidth>=980?.62:.78)})}else body.position.x=0;
  const SENSI=/\bhiv\b|hbsag|hepatitis|\bhcv\b|anti.?hcv|vdrl|\brpr\b|syphilis|tpha|chlamydia|gonorr|herpes|\bhsv\b|\bhpv\b|\bsti\b/i,byP=orgsWith(L.filter(f=>!SENSI.test(f.test||'')));/* infection screens stay off the headline pins */
- const pins=Object.entries(byP).filter(([o])=>onBody(o)).sort((a,b)=>fRank(b[1])-fRank(a[1])).slice(0,innerWidth<700?(document.body.classList.contains('tz')?2:4):6);/* larger text on a phone: the two that matter most, so the tags stay off the body */let side=1;
+ const pins=Object.entries(byP).filter(([o])=>onBody(o)&&o!=='testis')/* testes: listed, never pinned (below the frame, private) */.sort((a,b)=>fRank(b[1])-fRank(a[1])).slice(0,innerWidth<700?(document.body.classList.contains('tz')?2:4):6);/* larger text on a phone: the two that matter most, so the tags stay off the body */let side=1;
  tags(pins.map(([o,f])=>{const tr=trend(f);const lip=/ldl|hdl|chol|trigly/i.test(f.test||''),t={org:(lip?'Heart & arteries':ORGN(o))+' · '+f.test.split(/[(,]/)[0].trim(),val:f.value,unit:f.unit||'',trend:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:'',flag:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o]||pinFor(o),all:!ORGRE[o],side,dy:0,col:FCOL(f),k:STK(f),kw:STW(f),mid:1,onTap:()=>vgo({k:o==='heart'?'heart':'organ',o})};side=-side;return t}));
  const flagged=Object.entries(by).filter(([,f])=>fRank(f)>=2).sort((a,b)=>fRank(b[1])-fRank(a[1])),ok=L.filter(f=>f.flag==='normal').length;
  if(!L.length)return sheet(`<p class="cd" style="margin-top:0">${T('noresults')}</p><button class="btn pri" style="width:100%;margin-top:12px" onclick="send('addReport')">Add a report</button>`);
@@ -1111,6 +1112,13 @@ function exFind(k){const lk=exLayerOf(k),sys=lk==='muscle'?'muscle':lk==='skelet
 /* frame a box of parts: turn the body to the front, move it so the box's centre is on the camera line, and leave room for the sheet (phone: below; laptop: right panel) */
 function exView(){const W=innerWidth,H=innerHeight,wide=W>=980,c=$('#card'),bar=$('#exbar'),rail=$('#exrail'),bb=bar&&!wide?bar.getBoundingClientRect().bottom:0;let t=wide?96:(bb||170)+8,b=H-12,l=wide&&rail?rail.getBoundingClientRect().right+12:8,r=W-8;
  if(c&&c.classList.contains('on')){if(wide)r=W-16-c.offsetWidth-12;else b=H-8-c.offsetHeight-8}if(!wide&&$('#tags')&&$('#tags').children.length&&(EXP.sys==='senses'||EXP.sys==='repro'))b-=52;if(b-t<H*.25)b=t+H*.25;return{t,b,l,r,W,H}}
+/* Home framing (Nov 2026): head to lower belly, never below the bladder, so the groin is never in view on any profile */
+function homeFit(k){body.rotation.set(0,0,0);body.position.x=0;body.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(LAY[3]);
+ const ks=[];if(SET)SET.meta.parts.forEach((p,i)=>{if((p.l??1)===3&&ORGRE.bladder.test(SET.names[i]))ks.push(p.k??i)});const bl=ks.length?exWorldBox(ks):null;
+ if(bl&&!bl.isEmpty())b.min.y=Math.max(b.min.y,(bl.min.y+bl.max.y)/2);else b.min.y+=(b.max.y-b.min.y)*.3;
+ if(LAY[0]){const sk=new THREE.Box3().setFromObject(LAY[0]);if(!sk.isEmpty())b.max.y=Math.max(b.max.y,sk.max.y)}
+ HOMEB=b.min.y;exFitBox(b,k)}
+let HOMEB=null;
 function exFitBox(box,k,mn){if(box.isEmpty())return;goal.y=0;goal.x=0;rot.y=0;rot.x=0;PANG.x=0;PANG.y=0;
  const V=exView(),c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3()),tn=Math.tan(cam.fov*Math.PI/360),as=V.W/V.H,fh=(V.b-V.t)/V.H,fw=(V.r-V.l)/V.W,
  dist=Math.max(s.y/(2*tn*fh),s.x/(2*tn*as*fw),mn??.5)*(k||1)*1.18+s.z/2,Hw=2*tn*dist;
