@@ -4,21 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Urban Health Admin</title>
-<script>/* Big screens: on a large desktop window everything is drawn a little larger, so a page fills the screen instead of sitting small at the top. The app keeps working as if the window were a laptop-sized one: sizes, positions and pointer coordinates are all reported in that scaled space. Only browsers with the standard zoom behaviour get it; others keep the normal size. */
+<script>/* Big screens: on a large desktop window everything is drawn a little larger, so a page fills the screen instead of sitting small at the top. The app keeps working as if the window were a laptop-sized one: sizes, positions and pointer coordinates are all reported in that scaled space, in both newer and older browsers. */
 (function(){try{
  const D=document.documentElement,w0=Object.getOwnPropertyDescriptor(window,'innerWidth'),h0=Object.getOwnPropertyDescriptor(window,'innerHeight'),r0=Object.getOwnPropertyDescriptor(window,'devicePixelRatio');
  if(!w0||!h0||!w0.get||!w0.configurable||!('zoom' in D.style))return;
  const W=()=>w0.get.call(window),H=()=>h0.get.call(window),PR=()=>r0&&r0.get?r0.get.call(window):1;
  let Z=1;const want=()=>{const w=W(),h=H();if(w<1500||!matchMedia('(pointer:fine)').matches)return 1;return Math.max(1,Math.min(1.35,w/1440,h/680))};
- /* is the zoom standard here (rects come back zoomed)? */
- const ok=(()=>{const t=document.createElement('div');t.style.cssText='position:fixed;left:100px;top:0;width:1px;height:1px;zoom:2;visibility:hidden';D.appendChild(t);const l=t.getBoundingClientRect().left;t.remove();return Math.abs(l-200)<1})();
- if(!ok)return;
+ /* standard zoom (newer browsers) reports element positions on screen; the older kind (e.g. Chrome before 128) reports them unzoomed. Pointer positions are on screen in both, so they are scaled to match either way. */
+ const mode=(()=>{const t=document.createElement('div');t.style.cssText='position:fixed;left:100px;top:0;width:1px;height:1px;zoom:2;visibility:hidden';D.appendChild(t);const l=t.getBoundingClientRect().left;t.remove();return Math.abs(l-200)<1?'std':Math.abs(l-100)<1?'old':''})();
+ if(!mode)return;
  const set=()=>{const z=Math.round(want()*1000)/1000;if(z===Z)return;Z=z;window.UZ=z;D.style.zoom=z===1?'':String(z);D.style.setProperty('--uz',String(z));D.classList.toggle('uzoom',z!==1);D.classList.toggle('ushort',z!==1&&H()/z<860);D.classList.toggle('ushort2',z!==1&&H()/z<=740)};
  Object.defineProperty(window,'innerWidth',{configurable:true,get:()=>W()/Z});
  Object.defineProperty(window,'innerHeight',{configurable:true,get:()=>H()/Z});
  if(r0&&r0.configurable)Object.defineProperty(window,'devicePixelRatio',{configurable:true,get:()=>PR()*Z});
- const R=Element.prototype.getBoundingClientRect;Element.prototype.getBoundingClientRect=function(){const r=R.call(this);return Z===1?r:new DOMRect(r.x/Z,r.y/Z,r.width/Z,r.height/Z)};
- const RR=Range.prototype.getBoundingClientRect;Range.prototype.getBoundingClientRect=function(){const r=RR.call(this);return Z===1?r:new DOMRect(r.x/Z,r.y/Z,r.width/Z,r.height/Z)};
+ if(mode==='std'){const R=Element.prototype.getBoundingClientRect;Element.prototype.getBoundingClientRect=function(){const r=R.call(this);return Z===1?r:new DOMRect(r.x/Z,r.y/Z,r.width/Z,r.height/Z)};
+ const RR=Range.prototype.getBoundingClientRect;Range.prototype.getBoundingClientRect=function(){const r=RR.call(this);return Z===1?r:new DOMRect(r.x/Z,r.y/Z,r.width/Z,r.height/Z)};}
  const fix=(P,ks)=>ks.forEach(k=>{const d=Object.getOwnPropertyDescriptor(P,k);if(d&&d.get&&d.configurable)Object.defineProperty(P,k,{configurable:true,enumerable:d.enumerable,get(){return d.get.call(this)/Z}})});
  fix(MouseEvent.prototype,['clientX','clientY','pageX','pageY','x','y']);if(window.Touch)fix(Touch.prototype,['clientX','clientY','pageX','pageY']);
  const EP=Document.prototype.elementFromPoint,EPS=Document.prototype.elementsFromPoint;Document.prototype.elementFromPoint=function(x,y){return EP.call(this,x*Z,y*Z)};if(EPS)Document.prototype.elementsFromPoint=function(x,y){return EPS.call(this,x*Z,y*Z)};
