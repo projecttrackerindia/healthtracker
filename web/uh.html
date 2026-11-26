@@ -1359,7 +1359,7 @@ body.kidst .sheet .gbnx,body.kidst .sheet .kds{margin-bottom:10px}
 .gbm svg{display:block;width:100%;height:46px;margin-top:4px}
 .gbcp{background:#fff;border-radius:28px;padding:16px 0 14px;box-shadow:var(--card-sh)}
 .gbch{display:flex;justify-content:space-between;align-items:center;padding:0 16px}.gbch b{font-size:18px;font-weight:800;letter-spacing:-.02em}.gbch button{font-size:12px;font-weight:700;color:var(--blue);min-height:44px;padding:0 4px}
-.gbtl{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:4px 16px 0}.gbtl::-webkit-scrollbar{display:none}
+.gbtl:has(>.card:only-child){grid-template-columns:1fr!important}.gbtl{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:4px 16px 0}.gbtl::-webkit-scrollbar{display:none}
 .gbtr{display:flex;gap:18px;align-items:flex-start;width:max-content;min-width:100%;padding-bottom:22px;background:repeating-linear-gradient(90deg,#C9CCD3 0 1px,transparent 1px 10px) left bottom/100% 8px no-repeat}
 .gbn{display:flex;gap:8px;align-items:flex-start;text-align:left;min-height:86px}
 .gbnc{flex:none;width:38px;height:38px;border-radius:50%;border:1.5px solid #111214;background:#fff;display:grid;place-items:center;position:relative}.gbnc::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:44px;background:#111214}
@@ -1470,7 +1470,7 @@ body.gbalt .fch{display:none!important}
  body.gbhome #gbx .gbcp{grid-column:1;grid-row:2;align-self:start}
  body.gbhome #gbx:has(.gbst){grid-template-rows:auto auto 1fr}
  body.gbhome #gbx .gbst{grid-column:2;grid-row:1/4;height:auto;min-height:420px}
- body.gbhome #gbx .gbsi{height:90%;top:5%;right:-34px}
+ body.gbhome #gbx .gbsi{height:90%;top:5%;right:-34px}@media (min-width:980px){body.gbhome #gbx .gbst:not(:has(.gbsk>*)) .gbsi{right:auto;left:50%;transform:translateX(-50%);-webkit-mask-image:linear-gradient(to right,transparent 0,#000 22%,#000 78%,transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 22%,#000 78%,transparent 100%)}}/* laptop: no result labels beside the body, so the body sits in the middle of its card */
  body.gbhome #gbx .gbsn{left:22px;top:22px}body.gbhome #gbx .gbsr{right:22px;top:22px}
  body.gbhome #gbx .gbsk{left:22px;top:76px;width:176px;gap:12px}
  body.gbhome #gbx .gbsc{border-radius:20px;padding:12px 14px}body.gbhome #gbx .gbsc .k i{display:inline}
@@ -2068,7 +2068,12 @@ function gbNext(p){if(!can(p,'summary'))return'';const f=findings(p.id).filter(f
 function gbBookTest(){S.tab='records';S.sub=0;try{history.replaceState(null,'','/app/records')}catch(_){}renderAll();inTab('bk',openLabs)}
 function gbHome(p){GBSHOWN=new Set();const f=gbFocus(p),st=gbStage(p);if(!LAB.all){API('/api/v1/labs/tests').then(x=>{LAB.all=x.tests;const n=$('#gbx .gbnx');if(n)n.outerHTML=gbNext(p)}).catch(()=>{})}
  return`<div class="gbhh">${(()=>{try{return'<p class="gbg">'+esc(gbLine0(p,''))+'</p>'+gbHead(p)}catch(_){return''}})()}</div>`+(st||gbHero(p,f))+gbNext(p)+gbTiles(p)+gbFam(p)+gbMid(p)}
-function gbTiles(p){const fs=findings(p.id).filter(f=>!f.baby&&f.org).slice(0,4);if(fs.length<2)return'';return`<div class="gbtl">${fs.map(f=>{const st=statusOf(f);return`<button class="card" onclick="openBody('organ:${f.org}')"><small>${GBORGN[f.org]||esc(ORGNM&&ORGNM[f.org]||'')} · ${esc(gbShort(f.test))}</small><b>${esc(f.value)} <i>${esc(f.unit||'')}</i></b>${stPill(st,1)}</button>`}).join('')}</div>`}
+function gbTiles(p){const fs=findings(p.id).filter(f=>!f.baby&&f.org).slice(0,4);if(fs.length<2)return gbTilesList(p);return`<div class="gbtl">${fs.map(f=>{const st=statusOf(f);return`<button class="card" onclick="openBody('organ:${f.org}')"><small>${GBORGN[f.org]||esc(ORGNM&&ORGNM[f.org]||'')} · ${esc(gbShort(f.test))}</small><b>${esc(f.value)} <i>${esc(f.unit||'')}</i></b>${stPill(st,1)}</button>`}).join('')}</div>`}
+/* results that have no organ to sit on (yes/no screening tests, blood group, ESR and the like) still show on Home as tiles; sensitive screening tests (HIV, hepatitis, VDRL…) are grouped under one neutral tile and never named on Home */
+function gbTilesList(p){const all=findings(p.id).filter(f=>!f.baby);if(!all.length)return'';const sens=all.filter(f=>SENSI.test(f.test||'')),rest=all.filter(f=>!SENSI.test(f.test||''));
+ const T=[];rest.slice(0,sens.length?3:4).forEach(f=>{const st=statusOf(f),num=!isNaN(parseFloat(f.value));T.push(`<button class="card" onclick="openReport('${f.rid}')"><small>${f.org&&GBORGN[f.org]?GBORGN[f.org]+' · ':''}${esc(gbShort(f.test))}</small><b>${esc(num?f.value:plainValue(f,all)||f.value)} ${num&&f.unit?`<i>${esc(f.unit)}</i>`:''}</b>${stPill(st,1)}</button>`)});
+ if(sens.length){const bad=sens.filter(f=>f.flag&&f.flag!=='normal'),r0=sens[0];T.push(`<button class="card" onclick="openReport('${r0.rid}')"><small>Screening · ${sens.length} test${sens.length>1?'s':''}</small><b>${bad.length?'See report':'All clear'}</b>${stPill(bad.length?statusOf(bad[0]):statusOf(r0),1)}</button>`)}
+ if(!T.length)return'';return`<div class="gbtl">${T.join('')}</div>`}
 function gbFam(p){if(!p.self)return'';const ppl=(ME.people||[]).filter(q=>!q.self);if(!ppl.length)return'';
  const row=q=>{let sub='',pl='';if(isKid(q)&&can(q,'all')){const v=vaxOf(q),x=v.soon;if(!v.recorded&&ageOf(q)>=1)sub='Add the vaccines already given';else if(x&&x.st==='late'){sub=x.n+' vaccine'+(x.n>1?'s':'')+' to catch up on';pl='<i class="bd">Overdue</i>'}else if(x&&x.due<=today()){sub=x.n+' vaccine'+(x.n>1?'s':'')+' due now';pl='<i class="wn">Due</i>'}else sub='Vaccines up to date'}
   else if(can(q,'summary')){const n=findings(q.id).filter(f=>f.flag&&f.flag!=='normal'&&!f.baby).length;sub=(q.dependent?'Looked after by you':'Shared with you')+(n?' · '+n+' thing'+(n>1?'s':'')+' due':'');if(n)pl='<i class="wn">Due</i>'}
@@ -5335,7 +5340,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r169';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r170';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
