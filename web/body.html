@@ -1015,7 +1015,7 @@ async function h3Show(kind){if(!H3)return;vLoading(true);const g=await h3Get(kin
 function h3Rate(){if(!H3||!H3.mix)return;H3.mix.timeScale=U.still?0:H3.slow?.25:(H3.bpm/72)}
 function mHeart(){shape();for(const l in LAY)if(+l!==3)LAY[l].visible=false;LAY[3].material.transparent=true;LAY[3].material.opacity=.06;LAY[3].material.depthWrite=false;
  const hb=h3Box(/^(left|right) (atrium|ventricle)$/i)||h3Box(/ventric|atri/i),hc=hb?hb.getCenter(new THREE.Vector3()):new THREE.Vector3(0,1.6,.1);
- rot.y=0;rot.x=0;goal.x=0;body.position.x=-hc.x*body.scale.x;const hs=hb?hb.getSize(new THREE.Vector3()).y*body.scale.y:.4;CAM(hs*7,hc.y*body.scale.y+body.position.y-hs*.3,-.18);document.body.classList.add('h3');
+ rot.y=0;rot.x=0;goal.x=0;body.position.x=-hc.x*body.scale.x;const hs=hb?hb.getSize(new THREE.Vector3()).y*body.scale.y:.4;{const ph=innerWidth<700;CAM(hs*(ph?13:7),hc.y*body.scale.y+body.position.y-hs*(ph?.5:.3),-.18)}/* phones: the heart sits whole, below the buttons */document.body.classList.add('h3');
  H3={bpm:+(DATA.vitals&&DATA.vitals.hr)||72,slow:false,snd:false,sel:null,phase:0};
  head(who()+' · '+T('heartv').toUpperCase(),T('heartv'),DATA.vitals&&DATA.vitals.hr?'Your heart, beating at your own rate. Tap any part.':'A heart at a typical resting rate. Tap any part.');
  h3Sheet();h3Show('out')}
