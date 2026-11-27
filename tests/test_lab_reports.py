@@ -18,7 +18,7 @@ def test_read_for_you_says_it_is_not_a_diagnosis_and_offers_one_step():
 
 def test_on_your_body_shows_the_persons_own_latest_result():
     ob = _fn("labOnBody")
-    assert "filter(f=>!f.baby)" in ob and "openBody()" in ob and "can(p,'summary')" in ob
+    assert "filter(f=>!f.baby)" in ob and "openBody(${f.org?" in ob and "'self'" in ob and "can(p,'summary')" in ob  # opens her own body at the organ, never the baby view
 
 
 def test_reports_list_has_year_header_add_button_and_show_more():
