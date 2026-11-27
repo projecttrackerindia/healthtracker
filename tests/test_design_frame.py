@@ -30,7 +30,7 @@ def test_pink_stays_on_the_pregnancy_home_only():
 def test_home_is_stage_next_step_results_family_and_medical_id():
     h = _fn("gbHome")
     assert "gbNext(p)+gbTiles(p)+gbFam(p)+gbMid(p)" in h and "gbMini(" not in h and "gbPlan(" not in h
-    assert "Doing well. " in _fn("gbHead") and "to recheck this week" in _fn("gbHead")
+    assert "Doing well. " not in _fn("gbHead") and "the lab marked</h2>" in _fn("gbHead")  # option A: the lab's words, no verdict of ours
     assert "body.gbhome #sheet>*:not(#gbx){display:none!important}" in UH
 
 
