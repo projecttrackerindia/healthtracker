@@ -262,6 +262,26 @@ async function load(sex){const [buf,names]=await Promise.all([gunz(sex==='female
  const jl=new DataView(buf).getUint32(0,true);return{buf,meta:JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl))),base:4+jl,names}}
 function partPos(S,p){const q=new Uint16Array(S.buf,S.base+p.o,p.v*3),b=p.b,o=new Float32Array(p.v*3);for(let j=0;j<p.v;j++){o[j*3]=b[0]+q[j*3]/65535*(b[3]-b[0]);o[j*3+1]=b[1]+q[j*3+1]/65535*(b[4]-b[1]);o[j*3+2]=b[2]+q[j*3+2]/65535*(b[5]-b[2])}return o}
 function partIdx(S,p){return new Uint16Array(S.buf,S.base+p.o+p.v*6,p.i)}
+/* Nov 2026: the adult male skin shell is smoothed at the groin once, when the body is built: the vertices inside a soft region
+   around the crotch are relaxed towards their neighbours many times (the way a sculptor smooths clay), so the genital shape
+   melts into a plain mannequin front with no cracks. The edge of the region stays fixed, so the rest of the body is untouched. */
+function groinSmooth(){const M=LAY[0];if(!M||KID||STATE.base==='female'||!SET||M.userData.gsm)return;M.userData.gsm=1;
+ let lo=1e9,hi=-1e9,cx=0,zmax=-1e9,n=0;SET.meta.parts.forEach((p,k)=>{if((p.l??1)===3&&/urinary bladder/i.test(SET.names[k])){lo=Math.min(lo,p.b[1]);hi=Math.max(hi,p.b[4]);cx+=(p.b[0]+p.b[3])/2;zmax=Math.max(zmax,p.b[5]);n++}});if(!n)return;
+ const H=hi-lo,c=(hi+lo)/2,C=[cx/n,c-1.45*H,zmax+.8*H],R=[.7*H,1.25*H,1.4*H];
+ const A=M.geometry.attributes.position;if(!M.userData.P0)M.userData.P0=A.array.slice();const P=M.userData.P0,I=M.geometry.index&&M.geometry.index.array;if(!I)return;
+ const nv=P.length/3,w=new Float32Array(nv);let cnt=0;for(let v=0;v<nv;v++){const dx=(P[v*3]-C[0])/R[0],dy=(P[v*3+1]-C[1])/R[1],dz=(P[v*3+2]-C[2])/R[2],d=Math.sqrt(dx*dx+dy*dy+dz*dz);if(d<1){const t=Math.min(1,(1-d)/.35);w[v]=t*t*(3-2*t);cnt++}}
+ if(!cnt)return;const nb=new Map();const add=(a,b)=>{if(!w[a])return;let l=nb.get(a);if(!l)nb.set(a,l=new Set());l.add(b)};
+ for(let t=0;t<I.length;t+=3){const a=I[t],b=I[t+1],c2=I[t+2];add(a,b);add(a,c2);add(b,a);add(b,c2);add(c2,a);add(c2,b)}
+ /* vertices that share a position (seams) are moved together */
+ const key=v=>Math.round(P[v*3]*1e5)+','+Math.round(P[v*3+1]*1e5)+','+Math.round(P[v*3+2]*1e5),grp=new Map();nb.forEach((_,v)=>{const k=key(v);let g=grp.get(k);if(!g)grp.set(k,g=[]);g.push(v)});
+ const vs=[...grp.values()],Q=new Float32Array(vs.length*3);
+ for(let it=0;it<160;it++){vs.forEach((g,gi)=>{let sx=0,sy=0,sz=0,m=0;g.forEach(v=>nb.get(v).forEach(u=>{sx+=P[u*3];sy+=P[u*3+1];sz+=P[u*3+2];m++}));const v0=g[0],k=w[v0]*.6;Q[gi*3]=P[v0*3]+(sx/m-P[v0*3])*k;Q[gi*3+1]=P[v0*3+1]+(sy/m-P[v0*3+1])*k;Q[gi*3+2]=P[v0*3+2]+(sz/m-P[v0*3+2])*k});
+  vs.forEach((g,gi)=>g.forEach(v=>{P[v*3]=Q[gi*3];P[v*3+1]=Q[gi*3+1];P[v*3+2]=Q[gi*3+2]}))}
+ /* pieces that shrank to almost nothing are dropped, so no crease is left where they were */
+ const ix=M.geometry.index,II=ix.array,th=H*H*.0012;let dropped=0;for(let t=0;t<II.length;t+=3){const a=II[t],b=II[t+1],c2=II[t+2];if(w[a]<.3||w[b]<.3||w[c2]<.3)continue;
+  const ux=P[b*3]-P[a*3],uy=P[b*3+1]-P[a*3+1],uz=P[b*3+2]-P[a*3+2],vx=P[c2*3]-P[a*3],vy=P[c2*3+1]-P[a*3+1],vz=P[c2*3+2]-P[a*3+2],cxx=uy*vz-uz*vy,cyy=uz*vx-ux*vz,czz=ux*vy-uy*vx;
+  if(Math.sqrt(cxx*cxx+cyy*cyy+czz*czz)/2<th){II[t+1]=a;II[t+2]=a;dropped++}}if(dropped)ix.needsUpdate=true;
+ A.array.set(P);A.needsUpdate=true;M.geometry.computeVertexNormals()}
 const FRESNEL=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nfloat frs=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.2);totalEmissiveRadiance+=vec3(0.72,0.84,1.0)*frs*.55;diffuseColor.a=max(diffuseColor.a,frs*.55);')};
 /* Tissue look. Each vertex carries its tissue kind (tk) and, for muscle and nerve, the direction its fibres run (fd);
    kind 0 falls back to the layer's own kind. Kinds: 1 muscle, 2 bone, 3 organ, 4 vessel, 10 lung, 11 liver, 12 brain,
@@ -618,7 +638,7 @@ function build3(){const P=DATA.person,a=P.age,band=ageBand(a),sex=STATE.sex;cons
  let headK=1;if(band==='child')headK=1.32-.03*a;else if(band==='baby')headK=1.55;
  let g=1;if(h&&w){const bmi=w/((h/100)**2);g=Math.max(.82,Math.min(1.45,Math.sqrt(bmi/22)))}
  return{sc,headK,g,key:[band,sex,sc.toFixed(3),headK,g.toFixed(3),STATE.hd].join('|')}}
-function shape(){if(KID){for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;return}const S=build3();if(SHAPED===S.key)return;SHAPED=S.key;body.scale.setScalar(S.sc);body.position.y=(S.sc-1)*2.4;
+function shape(){try{groinSmooth()}catch(e){console.warn('groin',e)}if(KID){for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;return}const S=build3();if(SHAPED===S.key)return;SHAPED=S.key;body.scale.setScalar(S.sc);body.position.y=(S.sc-1)*2.4;
  const neck=(()=>{const c=centerOf(/thyroid gland|larynx/i);return c?c.y:2.6})(),hip=(()=>{const c=centerOf(/urinary bladder|uter/i);return c?c.y:-.6})(),chest=(()=>{const c=centerOf(ORGRE.heart);return c?c.y:1.6})();
  const zc=(()=>{const c=centerOf(ORGRE.liver);return c?c.z:0})();
  for(const l in LAY){const A=LAY[l].geometry.attributes.position,a=A.array;if(!LAY[l].userData.P0)LAY[l].userData.P0=a.slice();const o=LAY[l].userData.P0;const soft=+l===0||+l===1;
