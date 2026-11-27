@@ -4731,6 +4731,7 @@ addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||e.d
  if(a.act==='ask'){openAI();const L=$('#layer');if(L)L.classList.add('over3d');ask(String(a.q||'').slice(0,400));return}
  closeBody();
  if(a.act==='share')shareDoctor();
+ else if(a.act==='doctor'){const b=$('#b5 .t5[data-t="visits"]');if(b)b.click();toast('Book a '+String(a.spec||'doctor').slice(0,40)+' here, or show them this report')}
  else if(a.act==='book')openLabs([...new Set((a.codes||[]).map(c=>PKG[c]).filter(Boolean))]);
  else if(a.act==='addReport')pickReport('report');
  else if(a.act==='report'&&a.id)openReport(a.id);
