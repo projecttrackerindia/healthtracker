@@ -455,7 +455,7 @@ const clock=new THREE.Clock(),v3=new THREE.Vector3();
 function frame(){if(XRS)return;const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle>3&&!SEL&&!BABYON&&!U.still&&MODE==='explore'&&!MS&&!(DATA&&DATA.person&&+DATA.person.age>=60)&&!(VIEW&&VIEW.k==='explore'&&body.position.x))goal.y+=dt*.1;
  rot.y+=(goal.y-rot.y)*Math.min(1,dt*6);rot.x+=(goal.x-rot.x)*Math.min(1,dt*6);const piv=(OG&&OG.piv)||(H3&&H3.piv);if(piv){body.rotation.set(0,0,0);piv.rotation.set(rot.x,rot.y,0)}else body.rotation.set(rot.x,rot.y,0);if(CUTP&&CUTL){body.updateMatrixWorld();CUTP.copy(CUTL).applyMatrix4(body.matrixWorld)}
  camZ+=(goalZ-camZ)*Math.min(1,dt*3);camY+=(goalY-camY)*Math.min(1,dt*3);PAN.x+=(PANG.x-PAN.x)*Math.min(1,dt*8);PAN.y+=(PANG.y-PAN.y)*Math.min(1,dt*8);cam.position.set(PAN.x,camY+.15+PAN.y,camZ);cam.lookAt(PAN.x,camY+PAN.y,0);
- if(HL)HL.material.emissiveIntensity=.35+.25*Math.sin(clock.elapsedTime*3.5);if(!U.still)pregAnimate(clock.elapsedTime,dt);if(typeof animFeat==='function')animFeat(clock.elapsedTime);
+ if(HL)HL.material.emissiveIntensity=.35+.25*Math.sin(clock.elapsedTime*3.5);if(VIEW&&VIEW.k==='body'&&LAY[3]&&DATA&&DATA.person&&DATA.person.pregnancy&&(!PG||!PG.root.parent)&&!(PRW>clock.elapsedTime)){PRW=clock.elapsedTime+1;pregResults()}if(!U.still)pregAnimate(clock.elapsedTime,dt);if(typeof animFeat==='function')animFeat(clock.elapsedTime);
  if(H3)h3Tick(dt);if(BLOOD)BLOOD.tick(dt);if(OG){OG.mix.update(dt)}GLOWU.uT.value=U.still?0:clock.elapsedTime;if(GLOW&&HRING&&LAY[0]){if(!HRING.userData.y){const b=new THREE.Box3().setFromObject(LAY[0]);if(isFinite(b.min.y))HRING.userData.y=b.min.y-.02}HRING.position.y=HRING.userData.y||-3;HRING.rotation.y+=dt*.05}R.toneMappingExposure=document.body.classList.contains('dk')||document.body.classList.contains('stg')||GLOW?1.12:1.0;R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
 /* tags: report findings pinned to organs + atlas labels */
 /* a pair (both kidneys, both lungs) shares a box whose centre is the spine or the heart: when no part crosses the middle, keep only the parts on one side */
@@ -519,7 +519,7 @@ function pregSet(w){const P=PG||pregBuild();P.w=w;const u=P.uc,L=.30+1.15*sst(8,
  if(LAY[3]){LAY[3].material.transparent=true;LAY[3].material.opacity=.07;LAY[3].material.depthWrite=false}for(const l of [1,2,4,5])if(LAY[l])LAY[l].visible=false;LAY[0].visible=true;LAY[0].material.opacity=.42;LAY[0].material.color.set(0xF2C9D3);LAY[0].material.depthWrite=false
  if(!window.BABY_MODEL){P.baby.g.visible=false;P.cord.visible=false;P.fluid.material.opacity=.32;P.wall.material.opacity=.5}
  STATE.motion=w<8?'Heartbeat only':w<12?'Tiny twitches':w<16?'Stretching and turning':w<24?'Kicks and somersaults':w<32?'Strong kicks and hiccups':w<37?'Rolls and stretches · less room':'Head down · strong, slow pushes'}
-function pregAnimate(t,dt){if(!PG||!BABYON)return;const P=PG,w=P.w,b=P.baby,amp=w<8?0:w<12?.12:w<16?.25:w<24?.55:w<32?.65:.35;
+function pregAnimate(t,dt){if(!PG||!BABYON)return;if(!PG.root.parent){body.add(PG.root);pregSet(P0W(PG))}const P=PG,w=P.w,b=P.baby,amp=w<8?0:w<12?.12:w<16?.25:w<24?.55:w<32?.65:.35;
  b.heart.material.color.setHSL(.97,1,.45+.15*Math.sin(t*Math.PI*2*2.4));b.heart.scale.setScalar(1+.25*Math.max(0,Math.sin(t*Math.PI*2*2.4)));
  P.next-=dt;if(P.next<=0&&amp>.2){P.kick=1;P.side=Math.random()<.5;P.next=1.6+Math.random()*(w<20?3:2.2)}P.kick=Math.max(0,P.kick-dt*2.6);
  if(w>=24&&w<36&&Math.random()<dt*.06)P.hic=3.2;P.hic=Math.max(0,P.hic-dt);
@@ -533,7 +533,13 @@ function pregAnimate(t,dt){if(!PG||!BABYON)return;const P=PG,w=P.w,b=P.baby,amp=
  // cord from belly to placenta
  const from=new THREE.Vector3(0,-.05,.3).applyMatrix4(b.g.matrixWorld),to=P.plac.position.clone();body.worldToLocal(from);const mid=from.clone().lerp(to,.5).add(new THREE.Vector3(.12*Math.sin(t),.1,.08));
  P.cord.geometry.dispose();P.cord.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3([from,from.clone().lerp(mid,.5).add(new THREE.Vector3(.05,-.05,.05)),mid,mid.clone().lerp(to,.5).add(new THREE.Vector3(-.06,.04,0)),to]),40,.028*Math.max(.6,P.r[0]),8);P.cord.visible=w>=10&&!!window.BABY_MODEL}
-var BABYON=false;
+var BABYON=false,PRW=0;const P0W=P=>P.w||20;
+/* Nov 2026: a pregnant woman's own results body carries her baby: the belly and womb for her week, organs kept in their own colours */
+function pregResults(){const pg=DATA&&DATA.person&&DATA.person.pregnancy,w=pg&&+pg.week;if(!w||KID||w<6||!LAY[0])return;try{pregSet(Math.min(40,w));BABYON=true;
+ const fr=!(DATA&&DATA.look==='dark')&&stageOf()==='light',m=LAY[0].material;m.opacity=fr?.5:.2;m.color.set(fr?0x7F96B8:0xE6ECF4);
+ if(LAY[3]){const o=LAY[3].material;o.transparent=true;o.opacity=.6;o.depthWrite=false;o.needsUpdate=true;LAY[3].visible=true}/* organs half see-through so the womb in front of them shows */
+ if(!PG.wall.userData.rm){PG.wall.userData.rm=1;PG.wall.material=new THREE.MeshStandardMaterial({color:0xB8435E,emissive:0x2A0812,roughness:.62,metalness:0,envMapIntensity:.25});/* solid: at this stage the womb fills the lower belly in front of the gut */
+  PG.fluid.visible=false;PG.plac.visible=false}PG.wall.renderOrder=7;PG.fluid.renderOrder=6;PG.root.traverse(o=>o.frustumCulled=false)}catch(e){console.warn('preg body',e)}}
 function pregView2(w){document.body.classList.add('preg');document.body.classList.remove('dk','stg');setLayer('organs');tags([]);BABYON=true;pregSet(w);
  const u=PG.c;goalZ=5.2+2.6*sst(8,40,w);goalY=u.y+.15;HOME={z:goalZ,y:goalY};goal.y=-.95;goal.x=.08;
  const d=WK[w]||WK[Object.keys(WK).map(Number).reduce((a,b)=>Math.abs(b-w)<Math.abs(a-w)?b:a)];
@@ -648,7 +654,8 @@ function shape(){try{groinSmooth()}catch(e){console.warn('groin',e)}if(KID){for(
     x*=gx;z=zc+(z-zc)*gz}
    if(S.headK!==1){const k=y>neck?S.headK:1+(S.headK-1)*Math.max(0,1-(neck-y)/.6)*.4;x*=k;z*=k;if(y>neck)y=neck+(y-neck)*k}
    a[i]=x;a[i+1]=y;a[i+2]=z}
-  A.needsUpdate=true;LAY[l].geometry.computeVertexNormals();LAY[l].geometry.computeBoundingSphere()}}
+  A.needsUpdate=true;LAY[l].geometry.computeVertexNormals();LAY[l].geometry.computeBoundingSphere()}
+ if(PG&&BABYON&&VIEW&&VIEW.k==='body')pregResults()/* the belly is put back after any reshaping */}
 function bodyLine(){const P=DATA.person;if(!P.height||!P.weight)return'Add height and weight in Medical ID to shape the body to match.';const bmi=P.weight/((P.height/100)**2);
  return `${P.height} cm · ${P.weight} kg · BMI ${bmi.toFixed(1)} (${bmi<18.5?'underweight':bmi<23?'healthy for Indians':bmi<25?'overweight':'obese'})`}
 /* ---- explore: layers, tap, findings pinned to organs ---- */
@@ -1022,7 +1029,7 @@ const STI2={ok:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8
 const FCOL=f=>{const k=STK(f);return document.body.classList.contains('dk')?{ok:'#30D158',watch:'#FFB340',doc:'#FF9A5C',none:'#AEAEB2'}[k]:{ok:'#1A7F37',watch:'#9A5B00',doc:'#B54708',none:'#515154'}[k]};
 function fLine(f){const tr=trend(f),nm=f.test.replace(/\s*\(.*\)/,'');if(tr&&tr.dir!=='same'&&f.flag!=='normal')return`${esc(nm)} ${parseFloat(f.value)>parseFloat(tr.p.value)?'rose':'fell'} since ${esc(new Date(tr.p.date+'T00:00').toLocaleDateString('en-IN',{month:'long'}))}`;return`${esc(nm)} ${f.flag==='high'?'is high':f.flag==='low'?'is low':f.flag==='normal'?'in range':'to check'}`}
 function vBody(){shape();head(who()+' · BODY',bodyTitle(),(()=>{const L=latest().filter(f=>!f.screen),pd=prevDate(L);return L.length&&L[0].date?`${fmtD(L[0].date).replace(/ \d{4}$/,'')} report${pd?', compared with '+mon(pd):''}. Tap an organ.`:lineFor()})());const L=latest(),by=orgsWith(L),orgs=Object.keys(by);xbody(orgs);CAM(HOME0.z*1.22,HOME0.y+.28);/* wide screens: the organs fill the space left of the card, the same view the phone gets, not a small far-away body */
- if(LAY[3]){body.position.x=0;requestAnimationFrame(()=>{if(!VIEW||VIEW.k!=='body')return;homeFit(innerWidth>=980?.62:.78)})}else body.position.x=0;
+ if(LAY[3]){body.position.x=0;requestAnimationFrame(()=>{if(!VIEW||VIEW.k!=='body')return;pregResults();homeFit(innerWidth>=980?.84:.9)})}else body.position.x=0;
  const SENSI=/\bhiv\b|hbsag|hepatitis|\bhcv\b|anti.?hcv|vdrl|\brpr\b|syphilis|tpha|chlamydia|gonorr|herpes|\bhsv\b|\bhpv\b|\bsti\b/i,byP=orgsWith(L.filter(f=>!SENSI.test(f.test||'')));/* infection screens stay off the headline pins */
  const pins=Object.entries(byP).filter(([o])=>onBody(o)&&o!=='testis')/* testes: listed, never pinned (below the frame, private) */.sort((a,b)=>fRank(b[1])-fRank(a[1])).slice(0,innerWidth<700?(document.body.classList.contains('tz')||KID?2:4):6);/* a child's body is narrow: the two that matter most, so the tags stay off it *//* larger text on a phone: the two that matter most, so the tags stay off the body */let side=1;
  tags(pins.map(([o,f])=>{const tr=trend(f);const lip=/ldl|hdl|chol|trigly/i.test(f.test||''),t={org:(lip?'Heart & arteries':ORGN(o))+' · '+f.test.split(/[(,]/)[0].trim(),val:f.value,unit:f.unit||'',trend:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:'',flag:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o]||pinFor(o),all:!ORGRE[o],pt:partCenter(o),side,dy:0,col:FCOL(f),k:STK(f),kw:STW(f),mid:1,onTap:()=>vgo({k:o==='heart'?'heart':'organ',o})};side=-side;return t}));

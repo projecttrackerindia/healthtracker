@@ -121,7 +121,7 @@ def test_body_viewer_laptop_panel_follows_the_board():
     body = B[i:B.index("/* Body map summary", i)]
     for t in ("in range", "to watch", "Needs a look", "In range", "Book a recheck", "Not a diagnosis"):
         assert t in body, t
-    assert "homeFit(innerWidth>=980?.62:.78)" in B and "exFitBox(b,k)" in B  # head to lower belly, never the groin
+    assert "homeFit(innerWidth>=980?.84:.9)" in B and "exFitBox(b,k)" in B  # head to lower belly, never the groin
     O = (Path(__file__).resolve().parent.parent / "web" / "organs2.js").read_text()
     assert "!c.querySelector('.bwt')" in O
 
