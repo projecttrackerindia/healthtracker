@@ -42,6 +42,7 @@
 .ubody .ufx-copy p{color:#AEB8C2;opacity:1}
 .ubody .ufx-copy h2{color:#fff}
 .ubody .ufx-apps a,.ubody .ufx-dl{background:#fff!important;color:#111214!important}
+.ufx-apps a small,.ubody .ufx-dl small{color:#6E6E73!important}
 .ubody .ufx-ios{color:#AEB8C2!important}
 .ufx{position:relative;overflow:hidden;color:#F5F5F7;background:#000;isolation:isolate;font-family:inherit}
 .ufx::before{content:"";position:absolute;inset:-20%;z-index:-1;background:radial-gradient(42% 38% at 50% 44%,var(--ufx-a) 0%,transparent 70%),radial-gradient(40% 40% at 70% 70%,var(--ufx-b) 0%,transparent 72%);opacity:.55;animation:ufxBreath 9s ease-in-out infinite}
