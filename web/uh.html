@@ -1268,7 +1268,7 @@ body.gbhome #gl,body.gbhome #labels,body.gbhome #lines,body.gbhome #herobg,body.
 .gbgl.all{background:radial-gradient(ellipse,rgba(255,99,99,.42) 0,rgba(255,99,99,.14) 45%,transparent 70%)}
 .gbgl.all.w{background:radial-gradient(ellipse,rgba(255,196,87,.38) 0,rgba(255,196,87,.1) 45%,transparent 70%)}
 @keyframes gbpulse{0%,100%{transform:scale(.9);opacity:.8}50%{transform:scale(1.06);opacity:1}}
-@media (prefers-reduced-motion:reduce){.gbgl{animation:none}}
+@media (prefers-reduced-motion:reduce){.gbgl{animation:none}}body:has(#bodyf) .gbgl,body:has(#layer .page) .gbgl{animation:none;visibility:hidden}/* hidden while the 3D or a page is open: nothing animates under them */
 .gbdl{position:absolute;left:0;right:0;top:318px;display:flex;justify-content:center;gap:10px;padding:0 8px}
 .gbdi{display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(255,255,255,.78);min-width:52px;background:none;border:0;padding:0;font:inherit;cursor:pointer}
 .gbdi .r{position:relative;width:50px;height:50px;display:grid;place-items:center;border-radius:50%;transition:box-shadow .25s}
@@ -5414,7 +5414,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r170';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r171';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
