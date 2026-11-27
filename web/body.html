@@ -164,7 +164,15 @@ h1.big,#ttl{font-weight:800!important;letter-spacing:-.035em!important}
 .cseg button{border-radius:20px!important;font-weight:700!important;background:transparent!important;color:#111214!important;box-shadow:none!important}
 .cseg button.on{background:#111214!important;color:#fff!important}
 
-@media (min-width:980px){#card:has(.bwt){top:76px!important;bottom:24px!important;max-height:none!important;display:flex;flex-direction:column}#card:has(.bwt)>.grab{display:none}.bwt{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 4px}.bwt>div{border-radius:20px;padding:14px}.bwt b{display:block;font-size:30px;font-weight:800;line-height:1}.bwt span{font-size:14px;color:rgba(255,255,255,.85)}.bwt .g{background:rgba(52,199,89,.16)}.bwt .g b{color:#5EE08A}.bwt .o{background:rgba(255,184,0,.16)}.bwt .o b{color:#FFC23D}.bwh{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:16px 4px 6px}.bwl{display:flex;flex-direction:column}.bwl.w .bwr{background:rgba(255,184,0,.12);border-radius:16px}.bwr{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:#fff;font:inherit;text-align:left;padding:10px 12px;cursor:pointer}.bwr:disabled{cursor:default}.bwr i{width:9px;height:9px;border-radius:50%;flex:none}.bwr .g{flex:1;min-width:0}.bwr b{display:block;font-size:15px;font-weight:600}.bwr small{display:block;font-size:12.5px;color:rgba(255,255,255,.65)}.bwr em{font-style:normal;font-weight:700;font-size:15px}.bwr u{text-decoration:none;color:rgba(255,255,255,.5)}.bwf{margin-top:auto;padding-top:16px}.bwf .btn{width:100%}.bwf p{text-align:center;font-size:12.5px;color:rgba(255,255,255,.6);margin:10px 0 0}.bwf p .lk{font-size:12.5px;color:rgba(255,255,255,.75)}}</style></head><body>
+@media (min-width:980px){#card:has(.bwt){top:76px!important;bottom:24px!important;max-height:none!important;display:flex;flex-direction:column}#card:has(.bwt)>.grab{display:none}.bwt{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 4px}.bwt>div{border-radius:20px;padding:14px}.bwt b{display:block;font-size:30px;font-weight:800;line-height:1}.bwt span{font-size:14px;color:rgba(255,255,255,.85)}.bwt .g{background:rgba(52,199,89,.16)}.bwt .g b{color:#5EE08A}.bwt .o{background:rgba(255,184,0,.16)}.bwt .o b{color:#FFC23D}.bwh{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:16px 4px 6px}.bwl{display:flex;flex-direction:column}.bwl.w .bwr{background:rgba(255,184,0,.12);border-radius:16px}.bwr{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:#fff;font:inherit;text-align:left;padding:10px 12px;cursor:pointer}.bwr:disabled{cursor:default}.bwr i{width:9px;height:9px;border-radius:50%;flex:none}.bwr .g{flex:1;min-width:0}.bwr b{display:block;font-size:15px;font-weight:600}.bwr small{display:block;font-size:12.5px;color:rgba(255,255,255,.65)}.bwr em{font-style:normal;font-weight:700;font-size:15px}.bwr u{text-decoration:none;color:rgba(255,255,255,.5)}.bwf{margin-top:auto;padding-top:16px}.bwf .btn{width:100%}.bwf p{text-align:center;font-size:12.5px;color:rgba(255,255,255,.6);margin:10px 0 0}.bwf p .lk{font-size:12.5px;color:rgba(255,255,255,.75)}}
+/* Look v4: on laptops the result labels are thin numbers on a hairline, like an atlas film, not boxes */
+@media (min-width:980px){html.l3 .tag.mid:not(.ptag){background:linear-gradient(90deg,rgba(6,18,28,.55),rgba(6,18,28,0))!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:4px 12px 6px 10px;max-width:220px;border-left:1.5px solid rgba(143,227,255,.55)!important;border-radius:0!important}
+ html.l3 .tag.mid:not(.ptag) b{font-size:28px;font-weight:300;letter-spacing:-.02em;max-width:200px;overflow:visible;line-height:1.05;color:#fff}
+ html.l3 .tag.mid:not(.ptag) b i{font-size:12px!important;font-weight:500!important;color:rgba(255,255,255,.7)!important}
+ html.l3 .tag.mid:not(.ptag) small{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.72);max-width:200px;overflow:visible}}
+
+#orgbar button.tourb{width:auto;min-width:76px;margin-left:auto;margin-right:8px;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:16px;border:0;background:rgba(10,132,255,.92);color:#fff;font:600 13px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}#orgbar button.tourb.on{background:#fff;color:#0A84FF}
+</style></head><body>
 <div id="bg"></div><canvas id="gl"></canvas><svg id="lines"></svg><div id="tags"></div><div id="load">Loading anatomy…</div>
 <header class="top"><div class="row" style="justify-content:space-between"><p class="eb" id="eb"></p><button class="x" onclick="send('close')" aria-label="Close" style="pointer-events:auto">✕</button></div><h1 class="big" id="ttl">Body</h1><p class="line" id="ln"></p><div class="chips" id="modes"></div><div class="chips" id="sub" style="margin-top:0"></div><div id="chips" hidden></div></header>
 
@@ -255,6 +263,10 @@ scene.add(new THREE.HemisphereLight(0xfff8f2,0x6f665f,.4));
 const kl=new THREE.DirectionalLight(0xfff4ea,1.35);kl.position.set(3,6,7);scene.add(kl);
 const fl=new THREE.DirectionalLight(0xdfe9ff,.32);fl.position.set(-6,1,4);scene.add(fl);
 const rl=new THREE.DirectionalLight(0xbfd4ff,.75);rl.position.set(-2,4,-7);scene.add(rl);
+/* Look v4 (Nov 2026): studio light like an atlas film. A warm main light, a cool light from behind that outlines every edge, a soft shadow under the feet.
+   Laptops and newer phones get the fuller version (HIQ); older phones keep it light so they stay smooth. */
+const HIQ=(()=>{try{const c=navigator.connection||{};return !c.saveData&&(innerWidth>=980||(navigator.hardwareConcurrency||4)>=8||(navigator.deviceMemory||4)>=6)}catch(_){return false}})();
+(()=>{let on=true;try{on=localStorage.getItem('uh-look3')!=='0'&&!/nolook3/.test(location.search)}catch(_){}if(!on)return;kl.color.set(0xFFE9D2);kl.intensity=1.5;rl.color.set(0x9FC4FF);rl.intensity=HIQ?1.25:1.0;fl.intensity=.26})();
 const body=new THREE.Group();scene.add(body);
 let SET=null,LAY={},PICK=[],SEL=null,HL=null,KIDB=null;
 async function gunz(u){const r=await fetch(u);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
@@ -304,14 +316,14 @@ else if(k==16){float fb=fib(vOP,vec3(.6,1.,.3),70.);diffuseColor.rgb*=0.86+0.16*
 else if(k==4){float mo=n3(vOP*40.);diffuseColor.rgb*=.94+.08*mo;RK=.55;CK=1.6;}
 else if(k==17){float fb=fib(vOP,vFD,240.);diffuseColor.rgb*=0.82+0.22*fb;RK=.7;CK=1.2;}
 else{float mo=n3(vOP*22.);diffuseColor.rgb*=0.9+0.14*mo;RK=.85;CK=1.2;}`;
-const TISSUE=(kind)=>{const f=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;attribute float tk;attribute vec3 fd;varying float vTK;varying vec3 vFD;').replace('#include <begin_vertex>','#include <begin_vertex>\nvOP=position;vTK=tk;vFD=fd;');
+const TISSUE=(kind)=>{const f=sh=>{sh.uniforms.uT=GLOWU.uT;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;attribute float tk;attribute vec3 fd;varying float vTK;varying vec3 vFD;uniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\nvOP=position;vTK=tk;vFD=fd;'+(LOOK3&&kind===3?'{int uk=int(tk+.5);if(uk==16){float uB=pow(max(0.,sin(uT*7.4)),10.)+.45*pow(max(0.,sin(uT*7.4-.9)),10.);transformed+=objectNormal*uB*.016;}else if(uk==10){float uBr=.5-.5*cos(uT*1.35);transformed+=objectNormal*uBr*.022+vec3(0.,-uBr*.008,0.);}}':''));
  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;varying float vTK;varying vec3 vFD;\n'+TISSUE_GLSL)
  .replace('#include <color_fragment>','#include <color_fragment>\n{'+TISSUE_BODY.replace('KIND',String(kind|0))+'}')
  .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor*RK,.04,1.);')
  .replace('#include <lights_physical_fragment>','#include <lights_physical_fragment>\nmaterial.clearcoat=clamp(material.clearcoat*CK,0.,1.);')
  .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n'+(LOOK3&&kind!==2?'{float rim=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.6);totalEmissiveRadiance+=diffuseColor.rgb*vec3(1.0,0.55,0.5)*rim*0.55;}':''))};
  /* three.js caches shader programs by this text: give each kind its own, or every tissue shares the first one compiled */
- f.toString=()=>'uh-tissue-v2-'+kind+(LOOK3?'-l3':'');return f};
+ f.toString=()=>'uh-tissue-v2-'+kind+(LOOK3?'-l4':'');return f};
 /* which tissue a part is */
 function tkOf(l,n){if(l===1)return /tendon|aponeuros|fascia|retinacul|linea|tract/i.test(n)?15:1;
  if(l===2)return /cartilage|disc|menisc|labrum/i.test(n)?14:/ligament|capsule|membrane|retinac/i.test(n)?15:2;
@@ -324,6 +336,29 @@ function axisOf(P,o,n){let mx=0,my=0,mz=0;for(let i=o;i<o+n*3;i+=3){mx+=P[i];my+
  for(let it=0;it<12;it++){const a=xx*v[0]+xy*v[1]+xz*v[2],b=xy*v[0]+yy*v[1]+yz*v[2],c=xz*v[0]+yz*v[1]+zz*v[2],L=Math.hypot(a,b,c)||1;v=[a/L,b/L,c/L]}return v}
 /* ===== Look v3 (Nov 2026 design): atlas colours, shadow where organs touch, wet highlights, light through thin edges, ghost ribs and pelvis, thick-to-thin vessels ===== */
 let LOOK3=true;try{LOOK3=localStorage.getItem('uh-look3')!=='0'&&!/nolook3/.test(location.search)}catch(_){}
+if(LOOK3)document.documentElement.classList.add('l3');
+/* per-frame pieces of the look: the layer peel, the soft floor shadow and the glass rings around a close-up organ */
+let PEEL=null,SHD=null,FRING=null;
+function v4Tick(dt){
+ if(PEEL){PEEL.t=Math.min(1,(performance.now()-PEEL.t0)/950);const e=PEEL.t<.5?2*PEEL.t*PEEL.t:1-Math.pow(-2*PEEL.t+2,2)/2,y=PEEL.top+(PEEL.bot-PEEL.top)*e;PEEL.pin.constant=-y;PEEL.pout.constant=y;
+  if(PEEL.t>=1)peelEnd()}
+ const full=VIEW&&VIEW.k==='explore'&&!OG&&!H3&&LAY[0];
+ if(full&&!SHD){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),g=x.createRadialGradient(64,64,4,64,64,64);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.55,'rgba(0,0,0,.22)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);
+  SHD=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));SHD.rotation.x=-Math.PI/2;SHD.renderOrder=-1;body.add(SHD)}
+ if(SHD){SHD.visible=!!full;if(full){if(!SHD.userData.y){const b=new THREE.Box3().setFromObject(LAY[0]);if(isFinite(b.min.y)){SHD.userData.y=b.min.y+.01;const w=(b.max.x-b.min.x)*.42;SHD.scale.set(w,w*.5,1)}}SHD.position.y=SHD.userData.y||0}}
+ if(OG&&OG.piv&&HIQ){if(!FRING||FRING.userData.o!==OG.piv){if(FRING)scene.remove(FRING);const bb=new THREE.Box3().setFromObject(OG.piv),r=bb.getSize(new THREE.Vector3()).length()*.5;if(isFinite(r)&&r>0){
+   FRING=new THREE.Group();FRING.userData.o=OG.piv;[[1.08,1.095,.32],[1.22,1.228,.18],[1.4,1.404,.1]].forEach(([a,b2,o])=>{const m=new THREE.Mesh(new THREE.RingGeometry(r*a,r*b2,160),new THREE.MeshBasicMaterial({color:0x8FE3FF,transparent:true,opacity:o,depthWrite:false,side:THREE.DoubleSide}));FRING.add(m)});
+   const dot=new THREE.Mesh(new THREE.CircleGeometry(r*.018,16),new THREE.MeshBasicMaterial({color:0x8FE3FF,transparent:true,opacity:.7,depthWrite:false}));dot.position.x=r*1.22;FRING.children[1].add(dot);FRING.userData.c=bb.getCenter(new THREE.Vector3());scene.add(FRING)}}
+  if(FRING){const c=OG.piv.getWorldPosition(new THREE.Vector3());FRING.position.copy(c);FRING.quaternion.copy(cam.quaternion);FRING.children[1].rotation.z+=dt*.18;FRING.children[2].rotation.z-=dt*.06;FRING.visible=true}}
+ else if(FRING){scene.remove(FRING);FRING=null}
+ /* guided tour on an organ close-up: the organ turns to each part in turn, which lights up with its name and what it does */
+ const ob=$('#orgbar');if(OG&&OG.labels&&OG.labels.length>=3&&ob&&!ob.querySelector('.tourb')){const b=document.createElement('button');b.className='tourb';b.setAttribute('aria-label','Guided tour of the parts');b.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>Tour';b.onclick=e=>{e.stopPropagation();TOUR?tourStop():tourStart()};ob.insertBefore(b,ob.lastElementChild)}
+ if(TOUR){if(!OG||OG.o!==TOUR.o){TOUR=null;return}TOUR.t=(performance.now()-TOUR.t0)/1000;if(TOUR.touch){tourStop();return}if(TOUR.t>=TOUR.next){TOUR.next=TOUR.t+3.6;if(TOUR.i>=OG.labels.length){tourStop();ogClear();return}const L=OG.labels[TOUR.i++];
+  try{ogPick(L.n);const c=new THREE.Box3().setFromObject(L.n).getCenter(new THREE.Vector3()),pc=OG.piv.getWorldPosition(new THREE.Vector3()),d=c.sub(pc);if(d.lengthSq()>1e-8){goal.y=rot.y-Math.atan2(d.x,d.z)*.85}}catch(_){}}}}
+let TOUR=null;
+function tourStart(){if(!OG)return;TOUR={o:OG.o,i:0,t:0,t0:performance.now(),next:.2};idle=1;const b=$('#orgbar .tourb');if(b){b.classList.add('on');b.lastChild.textContent='Stop'}}
+function tourStop(){TOUR=null;const b=$('#orgbar .tourb');if(b){b.classList.remove('on');b.lastChild.textContent='Tour'}}
+
 const L3COL=[[/sigmoid|rectum|caecum|cecum|colon|appendix/i,'#9C6F63'],[/jejun|ileum|duoden|small intestine|intestin/i,'#B5545E'],[/liver|hepat/i,'#7A2A22'],[/gallbladder/i,'#4E7A3A'],
  [/lung/i,'#D98C8C'],[/myocard|ventric|atri(um|al)|heart|auricle/i,'#8E2A2A'],[/stomach/i,'#C98278'],[/spleen/i,'#6E2236'],[/kidney|renal/i,'#8A3A30'],[/pancrea/i,'#D9A86C'],
  [/bladder/i,'#D8B79A'],[/thyroid/i,'#A8443E'],[/brain|cerebr|cerebell/i,'#D9A8A0'],[/oesophag|esophag|trachea|bronch/i,'#C99A8E'],[/uter|ovar/i,'#C46F7C'],[/prostat|testi/i,'#B8806E'],[/adrenal|suprarenal/i,'#D99A40']];
@@ -416,7 +451,12 @@ function build(S){LAY={};PICK=[];body.clear();
   else{m=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:+l===2?.7:+l===1?.5:.38,metalness:0,clearcoat:+l===3?.55:+l===1?.35:.1,clearcoatRoughness:.35,sheen:0,transparent:true,opacity:1});if(LOOK3&&(+l===3||+l===4||+l===1)){m.roughness=+l===1?.42:.3;m.clearcoat=+l===1?.5:1;m.clearcoatRoughness=.07}m.onBeforeCompile=TISSUE(+l)}
   const mesh=new THREE.Mesh(g,m);mesh.renderOrder=+l===0?5:1;mesh.userData={l:+l,ranges};body.add(mesh);LAY[l]=mesh;PICK.push(mesh);layerEnv(mesh,+l)}HDD={}}
 var FROST=false;
-function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];try{l3Ribs(key==='organs')}catch(_){}
+function peelEnd(){if(!PEEL)return;PEEL.out.forEach(l=>{if(LAY[l]){LAY[l].visible=false;LAY[l].material.clippingPlanes=[]}});PEEL.in.forEach(l=>{if(LAY[l])LAY[l].material.clippingPlanes=[]});R.localClippingEnabled=PEEL.lc;PEEL=null}
+function setLayer(key){peelEnd();const pv=LOOK3&&VIEW&&VIEW.k==='explore'&&!CUTP&&STATE.layer&&STATE.layer!==key?Object.keys(LAY).filter(l=>+l!==0&&LAY[l].visible):null;setLayer0(key);if(pv&&!U.still)try{peelStart(pv)}catch(e){}}
+function peelStart(pv){if(PEEL)return;const nv=Object.keys(LAY).filter(l=>+l!==0&&LAY[l].visible),ins=nv.filter(l=>!pv.includes(l)),outs=pv.filter(l=>!nv.includes(l));if(!ins.length&&!outs.length)return;
+ const b=new THREE.Box3().setFromObject(LAY[0]);if(!isFinite(b.min.y))return;const pin=new THREE.Plane(new THREE.Vector3(0,1,0),-b.max.y),pout=new THREE.Plane(new THREE.Vector3(0,-1,0),b.max.y);
+ ins.forEach(l=>LAY[l].material.clippingPlanes=[pin]);outs.forEach(l=>{LAY[l].visible=true;LAY[l].material.clippingPlanes=[pout]});PEEL={t:0,t0:performance.now(),top:b.max.y+.05,bot:b.min.y-.05,pin,pout,in:ins,out:outs,lc:R.localClippingEnabled};R.localClippingEnabled=true}
+function setLayer0(key){const L=LAYERS.find(x=>x[0]===key)[2];try{l3Ribs(key==='organs')}catch(_){}
  /* light stage (Getting Better theme): a solid frosted body, the same for every age and sex; the faint skeleton behind the organs is left out so nothing shows through the skin */
  const fr=!(DATA&&DATA.look==='dark')&&stageOf()==='light';
  for(const ls in LAY){const l=+ls,m=LAY[ls],mt=m.material;
@@ -474,7 +514,7 @@ const PAN={x:0,y:0},PANG={x:0,y:0},PTR=new Map();let pinch=null,lastTap=0;
 const ZMAX=34,zmin=()=>FOC?.6:3.2,zoomBy=f=>{goalZ=Math.max(zmin(),Math.min(ZMAX,goalZ*f));idle=0};
 function resetView(){goalZ=HOME.z;goalY=HOME.y;PANG.x=0;PANG.y=0;goal.x=0;goal.y=FOC?goal.y:0}
 const GL=$('#gl');GL.addEventListener('contextmenu',e=>e.preventDefault());
-GL.addEventListener('pointerdown',e=>{GL.setPointerCapture(e.pointerId);PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});idle=0;
+GL.addEventListener('pointerdown',e=>{if(TOUR)TOUR.touch=1;GL.setPointerCapture(e.pointerId);PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});idle=0;
  if(PTR.size===2){const [a,b]=[...PTR.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:goalZ,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,px:PANG.x,py:PANG.y};drag=null;return}
  drag={x:e.clientX,y:e.clientY,gy:goal.y,gx:goal.x,px:PANG.x,py:PANG.y,pan:e.button===2||e.shiftKey,moved:0}});
 GL.addEventListener('pointermove',e=>{if(!PTR.has(e.pointerId))return;PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});idle=0;
@@ -492,11 +532,12 @@ GL.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(e.deltaY*(e.c
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='+'||e.key==='=')zoomBy(.85);if(e.key==='-')zoomBy(1.18);if(e.key==='0')resetView();
  if(e.key==='ArrowLeft')goal.y-=.25;if(e.key==='ArrowRight')goal.y+=.25;if(e.key==='ArrowUp')goal.x=Math.max(-1.35,goal.x-.2);if(e.key==='ArrowDown')goal.x=Math.min(1.35,goal.x+.2)});
 const clock=new THREE.Clock(),v3=new THREE.Vector3();
-function frame(){if(XRS)return;const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle>3&&!SEL&&!BABYON&&!U.still&&MODE==='explore'&&!MS&&!(DATA&&DATA.person&&+DATA.person.age>=60)&&!(VIEW&&VIEW.k==='explore'&&body.position.x))goal.y+=dt*.1;
+function frame(){if(XRS)return;const dt=Math.min(clock.getDelta(),.05);idle+=dt;if(!drag&&idle>3&&!SEL&&!BABYON&&!U.still&&!TOUR&&MODE==='explore'&&!MS&&!(DATA&&DATA.person&&+DATA.person.age>=60)&&!(VIEW&&VIEW.k==='explore'&&body.position.x))goal.y+=dt*.1;
+ if(LOOK3&&!drag&&idle>6&&!SEL&&!BABYON&&!U.still&&VIEW&&VIEW.k==='body')goal.y=Math.sin((idle-6)*.3)*.15*Math.min(1,(idle-6)/3);/* a gentle sway on the results body when nobody is touching it */
  rot.y+=(goal.y-rot.y)*Math.min(1,dt*6);rot.x+=(goal.x-rot.x)*Math.min(1,dt*6);const piv=(OG&&OG.piv)||(H3&&H3.piv);if(piv){body.rotation.set(0,0,0);piv.rotation.set(rot.x,rot.y,0)}else body.rotation.set(rot.x,rot.y,0);if(CUTP&&CUTL){body.updateMatrixWorld();CUTP.copy(CUTL).applyMatrix4(body.matrixWorld)}
  camZ+=(goalZ-camZ)*Math.min(1,dt*3);camY+=(goalY-camY)*Math.min(1,dt*3);PAN.x+=(PANG.x-PAN.x)*Math.min(1,dt*8);PAN.y+=(PANG.y-PAN.y)*Math.min(1,dt*8);cam.position.set(PAN.x,camY+.15+PAN.y,camZ);cam.lookAt(PAN.x,camY+PAN.y,0);
  if(HL)HL.material.emissiveIntensity=.35+.25*Math.sin(clock.elapsedTime*3.5);if(VIEW&&VIEW.k==='body'&&LAY[3]&&DATA&&DATA.person&&DATA.person.pregnancy&&(!PG||!PG.root.parent)&&!(PRW>clock.elapsedTime)){PRW=clock.elapsedTime+1;pregResults()}if(PG&&PG.res&&VIEW&&VIEW.k!=='body'){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null;BABYON=false;PRW=clock.elapsedTime+1e9}/* her results womb belongs to the results screen only */if(VIEW&&VIEW.k==='body'&&PRW>clock.elapsedTime+1e8)PRW=0;if(!U.still)pregAnimate(clock.elapsedTime,dt);if(typeof animFeat==='function')animFeat(clock.elapsedTime);
- if(H3)h3Tick(dt);if(BLOOD)BLOOD.tick(dt);if(OG){OG.mix.update(dt)}GLOWU.uT.value=U.still?0:clock.elapsedTime;if(GLOW&&HRING&&LAY[0]){if(!HRING.userData.y){const b=new THREE.Box3().setFromObject(LAY[0]);if(isFinite(b.min.y))HRING.userData.y=b.min.y-.02}HRING.position.y=HRING.userData.y||-3;HRING.rotation.y+=dt*.05}R.toneMappingExposure=document.body.classList.contains('dk')||document.body.classList.contains('stg')||GLOW?1.12:1.0;R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
+ if(H3)h3Tick(dt);if(BLOOD)BLOOD.tick(dt);if(OG){OG.mix.update(dt)}GLOWU.uT.value=U.still?0:clock.elapsedTime;if(LOOK3){try{v4Tick(dt)}catch(e){}}if(GLOW&&HRING&&LAY[0]){if(!HRING.userData.y){const b=new THREE.Box3().setFromObject(LAY[0]);if(isFinite(b.min.y))HRING.userData.y=b.min.y-.02}HRING.position.y=HRING.userData.y||-3;HRING.rotation.y+=dt*.05}R.toneMappingExposure=document.body.classList.contains('dk')||document.body.classList.contains('stg')||GLOW?1.12:1.0;R.render(scene,cam);placeTags();if(H3)h3Place();if(OG)ogPlace();requestAnimationFrame(frame)}
 /* tags: report findings pinned to organs + atlas labels */
 /* a pair (both kidneys, both lungs) shares a box whose centre is the spine or the heart: when no part crosses the middle, keep only the parts on one side */
 function centerOf(re){if(!SET||!re)return null;const bx=[];SET.meta.parts.forEach((p,k)=>{if((p.l??1)===3&&re.test(SET.names[k]))bx.push(p.b)});if(!bx.length)return null;
@@ -670,7 +711,7 @@ function sheet(html){$('#card').innerHTML='<div class="grab"></div>'+html;$('#ca
 const CAM=(z,y,ry=0,rx=0)=>{goalZ=z;goalY=y;HOME={z,y};goal.y=ry;goal.x=rx};
 function modes(){const pg=DATA&&DATA.person.pregnancy;const MAIN=[['explore','Results'],['meds',T('meds')],['heartv','Heart']];const MORE=[];
  $('#modes').innerHTML=pg?`<button class="chip ${MODE==='baby'?'on':''}" onclick="mode('baby')">${T('baby')}</button>`:''}
-function reset(){h3Off();ogOff();$('#card').classList.remove('og');document.body.classList.remove('ov');if(window.EX)EX.clear();if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');applyStage();if(LAY[0])LAY[0].material.color.set(SKINC());BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
+function reset(){try{peelEnd()}catch(_){}h3Off();ogOff();$('#card').classList.remove('og');document.body.classList.remove('ov');if(window.EX)EX.clear();if(FOC){FOC.forEach(m=>body.remove(m));FOC=null}document.body.classList.remove('focus');closeCard();clearGlows();tags([]);if(LAY[3])untint();document.body.classList.remove('preg','holo','real');applyStage();if(LAY[0])LAY[0].material.color.set(SKINC());BABYON=false;if(PG){body.remove(PG.root);const A=LAY[0]&&LAY[0].geometry.attributes.position;if(A&&PG.P0){A.array.set(PG.P0);A.needsUpdate=true;LAY[0].geometry.computeVertexNormals()}PG=null}
  if(HOLO)unholo();R.localClippingEnabled=false;for(const l in LAY){LAY[l].material.clippingPlanes=[];LAY[l].material.side=THREE.FrontSide}$('#sub').innerHTML='';$('#extra').innerHTML='';body.position.x=0;setLayer('organs');QZ=null;HURT=null}
 /* Only three screens remain (approved revamp): the body, an organ/heart, a report or medicine — plus pregnancy and credits.
    Every older view name now lands on the body. */
