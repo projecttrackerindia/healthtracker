@@ -1680,6 +1680,7 @@ function painOpen(id,fresh){const x=painList().find(q=>q.id===id);if(!x)return;P
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-filter'||!DATA)return;const n=e.data.data||{};if(!DATA._all)DATA._all=DATA.findings||[];
  const key=f=>(f.code||f.raw||f.test||'')+'|'+(f.date||''),want=new Set((n.findings||[]).map(f=>(f.code||f.test||'')+'|'+(f.date||'')));DATA.findings=DATA._all.filter(f=>want.has(key(f)));DATA.pain=n.pain||[];DATA.watch=n.watch||[];
  if(VIEW&&VIEW.k==='body')vshow({k:'body'});else tags([])});
+addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-go'||!DATA)return;const o=String(e.data.o||'');if(!/^[a-z]+$/.test(o))return;if(VIEW&&VIEW.k==='organ'&&VIEW.o===o)return;vgo({k:o==='heart'?'heart':'organ',o})});
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='uh-body-pain')return;const m=e.data;DATA.pain=m.pain||[];DATA.painVisit=m.visit||null;
  if(!m.rec||m.rec.active===false){PM=null;closeCard();vshow({k:'body'});return}
  if(m.fresh){PM=null;VIEW={k:'body'};setLayer('organs');resetView();goal.y=m.rec.side==='back'?Math.PI:0}tags([]);painOpen(m.rec.id,m.fresh)});

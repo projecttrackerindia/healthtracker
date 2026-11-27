@@ -958,8 +958,9 @@ async def upload_report(oid: str, request: Request, db: Session = Depends(get_db
         o.status = "ready"
         o.timeline = o.timeline + [{"s": "ready", "t": now(), "by": u.email}]
     tests = ", ".join(i.get("name", "") for i in (o.items or [])[:3])
-    notify(db, o.household_id, "lab_result", f"Report ready · {s.name}", f"{tests}. Open Lab results and tap Analyse to read it in plain words.",
-           {"order": o.id, "fileId": f"labrep_{o.id}", "store": s.name, "name": name, "mime": mime, "size": len(data), "tests": [i.get("name", "") for i in (o.items or [])]}, o.member_id or "", "/app")
+    # v2 (Nov 2026): the notice opens the 3D body, where the new results light up on their organs
+    notify(db, o.household_id, "lab_result", f"Your report is ready · {s.name}", f"{tests}. Tap to see it on your body.",
+           {"order": o.id, "fileId": f"labrep_{o.id}", "store": s.name, "name": name, "mime": mime, "size": len(data), "tests": [i.get("name", "") for i in (o.items or [])]}, o.member_id or "", "/app/summary#body")
     return porder(db, o)
 
 
