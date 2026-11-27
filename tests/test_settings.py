@@ -10,14 +10,15 @@ def _fn(name):
 
 
 def test_settings_leads_with_notifications_and_the_medical_id():
-    s = _fn("openSettings")
+    """27 Nov: Settings became the You menu; it still leads with the notifications banner and the Medical ID."""
+    assert "function openSettings(){openYou()}" in UH
+    s = UH[UH.index("function openYou("):UH.index("function famSub(")]
     assert "Notifications are off." in s and "enablePush()" in s and "ps.notif?''" in s
-    assert "class=\"card smid\"" in s and "medIdCard(me)" in s
-    assert "@media (min-width:1100px){.setlp .smid{display:none}}" in UH  # the laptop already shows it on the right
+    assert "${yuMid(me)}" in s and "function yuMid(" in UH
 
 
 def test_rows_say_where_each_stands():
-    s = _fn("openSettings")
-    assert "two is safer" in s and "Privacy and your rights" in s and "openPrivacy()" in s and "id=\"shsum\"" in s
-    for kept in ("Sign-in and security", "Permissions", "Simple mode for elders", "My doctors"):
+    s = UH[UH.index("function yuLists("):UH.index("function yuTodo(")]
+    assert "Add one more" in s and "My data and rights" in s and "openPrivacy()" in s and 'id="shsum"' in s
+    for kept in ("Sign-in and security", "Notifications and permissions", "Simple mode for elders", "My doctors", "Emergency contacts", "First aid", "Language"):
         assert kept in s  # nothing that existed is lost

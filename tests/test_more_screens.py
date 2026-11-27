@@ -17,9 +17,11 @@ def test_full_pages_have_title_and_done_on_one_row():
 
 
 def test_avatar_opens_the_family_page():
-    f = _fn("ddFamily")
-    assert "page('Family'" in f and "Add family member" in f and "Each person’s records stay private to them" in f
-    assert "dd('#who'" not in f
+    """27 Nov: the avatar opens the You menu; Family is its first section (Manage on phone, a pane on laptop)."""
+    assert "function ddFamily(){openYou()}" in UH
+    f = _fn("famListHTML")
+    assert "Add family member" in f and "Each person’s records stay private to them" in f
+    assert "page('Family',famListHTML())" in UH and "dd('#who'" not in UH
 
 
 def test_insurance_tabs_have_their_own_headlines():

@@ -1691,9 +1691,9 @@ body.preg #bg{background:#F2F2EF!important}body.preg.gbalt #top .gbt .gbp{backgr
 .yucard{background:#fff;border-radius:24px;padding:14px 16px;margin:0}
 .yuhd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.yuhd b{font-size:16px}
 .yulk{border:0;background:none;color:#2F5BFF;font-weight:600;font-size:14px;font-family:inherit;padding:8px 0;cursor:pointer;min-height:36px}
-.yufam{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:10px 4px;padding:4px 0}.yufam::-webkit-scrollbar{display:none}
+.yufam{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:10px 2px;padding:4px 0}.yufam::-webkit-scrollbar{display:none}
 .yufam button{border:0;background:none;padding:0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font:inherit}
-.yufam .av{width:52px;height:52px;border-radius:26px;font-size:20px}.yufam .av.on{box-shadow:0 0 0 3px #fff,0 0 0 5px #2F5BFF}.yufam .av.add{background:#EEF2FF}
+.yufam .av{width:48px;height:48px;border-radius:24px;font-size:19px}@media (min-width:380px){.yufam .av{width:52px;height:52px;border-radius:26px;font-size:20px}.yufam{grid-template-columns:repeat(auto-fill,minmax(60px,1fr))}}.yufam .av.on{box-shadow:0 0 0 3px #fff,0 0 0 5px #2F5BFF}.yufam .av.add{background:#EEF2FF}
 .yufam small{font-size:12px;font-weight:500;color:#111214;max-width:100%;overflow-wrap:anywhere;text-align:center;line-height:1.2}
 .yumid{border:0;width:100%;text-align:left;background:#111214;color:#fff;border-radius:24px;padding:16px 18px;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:10px}
 .yumid .t{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.yumid .t b{font-size:12px;color:#FF6B6E;letter-spacing:.06em}.yumid .t small{font-size:12px;color:#9EA1A8}
@@ -5535,7 +5535,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleCheck(
 setInterval(idleCheck,5000);
 /* A home-screen app can stay open for days. When it comes back to the front and a newer version is live, reload
    quietly if nothing is open; otherwise offer it. APPV matches the service-worker version. */
-const APPV='dk-r172';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
+const APPV='dk-r173';let UPDN=0;async function checkUpdate(){if(Date.now()-UPDN<60000)return;UPDN=Date.now();try{const t=await (await fetch('/sw.js',{cache:'no-store'})).text(),m=t.match(/const V='([^']+)'/);if(!m||m[1]===APPV)return;
  if(!$('#layer .page')&&!document.querySelector('.sheetx,.idlew')&&!document.body.classList.contains('sosopen')&&!BODYF)location.reload();else toast('A new version is ready. It will load next time you open the app.')}catch(_){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});setInterval(()=>{if(document.visibilityState==='visible')checkUpdate()},10*60000);
 const hap=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(_){}};
