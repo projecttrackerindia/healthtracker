@@ -765,7 +765,14 @@ def list_records(pid: str, kind: str = "", since: str = "", u: User = Depends(ne
     if kinds and rows:
         log(db, p, u, a, "records: " + ",".join(sorted({x.kind for x in rows})))
         db.commit()
-    return [rec_json(x) for x in rows]
+    from .ranges import rejudge
+    sex, out = profile(p).get("sex", ""), []
+    for x in rows:
+        j = rec_json(x)
+        if x.kind == "report" and j.get("findings"):
+            rejudge(j["findings"], sex)
+        out.append(j)
+    return out
 
 
 @r.post("/people/{pid}/records")
@@ -1249,6 +1256,8 @@ async def upload_report(pid: str, request: Request, file: UploadFile = File(...)
                            f"{'doctor' if doc == 'prescription' else 'lab'} before acting on them."] + list(rec["warnings"] or [])
     rec.update({"patient": reading.get("patient") or {}, "lab": reading.get("lab", ""), "recheck": reading.get("recheck", []),
                 "doctorPhone": reading.get("doctor_phone", "")})
+    from .ranges import rejudge
+    rejudge(rec["findings"], profile(p).get("sex", ""))     # the lab's own printed range decides, not the first reading
     rec["patient"].update({k: v for k, v in _patient_from_text(reading).items() if not rec["patient"].get(k)})
     for f in rec["findings"]:
         f["sure"] = f.get("sure") is not False
@@ -1388,7 +1397,11 @@ def fix_finding(rid: str, body: FindingFix, u: User = Depends(need_user), db: Se
             f["value"] = num
         except ValueError:
             f["value"] = raw
-        f["flag"] = flag_from_ref(f["value"], f.get("ref", ""), f.get("flag", ""))
+        from .ranges import judge
+        j = judge(f["value"], f.get("ref", ""), profile(p).get("sex", ""), f.get("test", ""))
+        f["flag"] = j[0] if j else flag_from_ref(f["value"], f.get("ref", ""), f.get("flag", ""))
+        if j:
+            f["lo"], f["hi"], f["by"] = j[1][0], j[1][1], "lab range"
         f["edited"] = True
     f["sure"] = True
     rec["checked"] = all(z.get("sure", True) for z in fs)

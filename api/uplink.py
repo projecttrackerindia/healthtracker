@@ -297,9 +297,10 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
         if not owner_ok:   # the person has not allowed AI reading: keep the report, read nothing
             raise PermissionError("ai consent")
         from . import ai
-        from .people import age, profile
+        from .people import active_pregnancy, age, profile
         pr = profile(p)
-        reading = ai.analyze("report", data, mime, "", {"age": age(pr.get("dob", "")), "sex": pr.get("sex", ""), "allergies": pr.get("allergies", ""), "pregnant": False})
+        preg = active_pregnancy(db, p.id)
+        reading = ai.analyze("report", data, mime, "", {"age": age(pr.get("dob", "")), "sex": pr.get("sex", ""), "allergies": pr.get("allergies", ""), "pregnant": bool(preg and preg.get("stage") == "pregnant")})
     except Exception as e:
         reading = {"engine": "none", "warnings": ["Saved, but it could not be read automatically."], "error": type(e).__name__}
     pt = reading.get("patient") or {}
@@ -316,6 +317,9 @@ async def lab_upload(token: str, request: Request, file: UploadFile = File(...),
                    "ip": hashlib.sha256((request.client.host if request.client else "").encode()).hexdigest()[:16]}}
     for f in rec["findings"]:
         f["sure"] = f.get("sure") is not False
+    from .people import profile as _profile
+    from .ranges import rejudge
+    rejudge(rec["findings"], _profile(p).get("sex", ""))
     from .people import _sig
     rec["sha"], rec["sig"] = sha, _sig(rec["findings"])
     if rec["date"] and rec["sig"]:
