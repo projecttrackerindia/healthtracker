@@ -308,9 +308,10 @@ const TISSUE=(kind)=>{const f=sh=>{sh.vertexShader=sh.vertexShader.replace('#inc
  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vOP;varying float vTK;varying vec3 vFD;\n'+TISSUE_GLSL)
  .replace('#include <color_fragment>','#include <color_fragment>\n{'+TISSUE_BODY.replace('KIND',String(kind|0))+'}')
  .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor*RK,.04,1.);')
- .replace('#include <lights_physical_fragment>','#include <lights_physical_fragment>\nmaterial.clearcoat=clamp(material.clearcoat*CK,0.,1.);')};
+ .replace('#include <lights_physical_fragment>','#include <lights_physical_fragment>\nmaterial.clearcoat=clamp(material.clearcoat*CK,0.,1.);')
+ .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n'+(LOOK3&&kind!==2?'{float rim=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.6);totalEmissiveRadiance+=diffuseColor.rgb*vec3(1.0,0.55,0.5)*rim*0.55;}':''))};
  /* three.js caches shader programs by this text: give each kind its own, or every tissue shares the first one compiled */
- f.toString=()=>'uh-tissue-v2-'+kind;return f};
+ f.toString=()=>'uh-tissue-v2-'+kind+(LOOK3?'-l3':'');return f};
 /* which tissue a part is */
 function tkOf(l,n){if(l===1)return /tendon|aponeuros|fascia|retinacul|linea|tract/i.test(n)?15:1;
  if(l===2)return /cartilage|disc|menisc|labrum/i.test(n)?14:/ligament|capsule|membrane|retinac/i.test(n)?15:2;
@@ -321,6 +322,43 @@ function tkOf(l,n){if(l===1)return /tendon|aponeuros|fascia|retinacul|linea|trac
 function axisOf(P,o,n){let mx=0,my=0,mz=0;for(let i=o;i<o+n*3;i+=3){mx+=P[i];my+=P[i+1];mz+=P[i+2]}mx/=n;my/=n;mz/=n;let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0;
  for(let i=o;i<o+n*3;i+=3){const x=P[i]-mx,y=P[i+1]-my,z=P[i+2]-mz;xx+=x*x;xy+=x*y;xz+=x*z;yy+=y*y;yz+=y*z;zz+=z*z}let v=[.1,1,.1];
  for(let it=0;it<12;it++){const a=xx*v[0]+xy*v[1]+xz*v[2],b=xy*v[0]+yy*v[1]+yz*v[2],c=xz*v[0]+yz*v[1]+zz*v[2],L=Math.hypot(a,b,c)||1;v=[a/L,b/L,c/L]}return v}
+/* ===== Look v3 (Nov 2026 design): atlas colours, shadow where organs touch, wet highlights, light through thin edges, ghost ribs and pelvis, thick-to-thin vessels ===== */
+let LOOK3=false;try{LOOK3=localStorage.getItem('uh-look3')==='1'||/look3/.test(location.search)}catch(_){}
+const L3COL=[[/sigmoid|rectum|caecum|cecum|colon|appendix/i,'#9C6F63'],[/jejun|ileum|duoden|small intestine|intestin/i,'#B5545E'],[/liver|hepat/i,'#7A2A22'],[/gallbladder/i,'#4E7A3A'],
+ [/lung/i,'#D98C8C'],[/myocard|ventric|atri(um|al)|heart|auricle/i,'#8E2A2A'],[/stomach/i,'#C98278'],[/spleen/i,'#6E2236'],[/kidney|renal/i,'#8A3A30'],[/pancrea/i,'#D9A86C'],
+ [/bladder/i,'#D8B79A'],[/thyroid/i,'#A8443E'],[/brain|cerebr|cerebell/i,'#D9A8A0'],[/oesophag|esophag|trachea|bronch/i,'#C99A8E'],[/uter|ovar/i,'#C46F7C'],[/prostat|testi/i,'#B8806E'],[/adrenal|suprarenal/i,'#D99A40']];
+function l3Recolour(g,ranges,names,l){if(l!==3&&l!==4)return;const C=g.attributes.color.array,c=new THREE.Color();
+ for(const r of ranges){const nm=names[r[2]]||'',vo=r[3],v=r[4];let tgt=null,sc=1;
+  if(l===3){const m=L3COL.find(([re])=>re.test(nm));if(!m)continue;c.setStyle(m[1]);c.convertSRGBToLinear();tgt=[c.r,c.g,c.b]}
+  else{let lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];const P=g.attributes.position.array;for(let j=vo;j<vo+v;j++)for(let a=0;a<3;a++){lo[a]=Math.min(lo[a],P[j*3+a]);hi[a]=Math.max(hi[a],P[j*3+a])}
+   const sz=Math.hypot(hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2]),vein=/vein|venous|sinus|vena/i.test(nm);c.setStyle(vein?'#2F4C9A':'#A3161E');c.convertSRGBToLinear();
+   sc=Math.max(.42,Math.min(1,sz/.35));tgt=[c.r*sc+(1-sc)*.32,c.g*sc+(1-sc)*.2,c.b*sc+(1-sc)*.22]}/* big trunks bold, small branches recede */
+  let base=0;for(let j=vo;j<vo+v;j++)base=Math.max(base,C[j*3]+C[j*3+1]+C[j*3+2]);if(!base)continue;
+  for(let j=vo;j<vo+v;j++){const f=(C[j*3]+C[j*3+1]+C[j*3+2])/base;const n=.9+.2*((Math.sin(j*12.9898)*43758.5453)%1+1)%1*0;C[j*3]=tgt[0]*f;C[j*3+1]=tgt[1]*f;C[j*3+2]=tgt[2]*f}}
+ g.attributes.color.needsUpdate=true}
+/* shadow where one organ lies against another: a coarse grid of where surfaces are, then each vertex looks out over its own surface and darkens by how much it meets */
+function l3Occlusion(g,l){if(l!==3&&l!==4&&l!==1)return;const P=g.attributes.position.array,N=g.attributes.normal.array,C=g.attributes.color.array,n=P.length/3,R=l===3?110:96;
+ let lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];for(let i=0;i<n;i++)for(let a=0;a<3;a++){lo[a]=Math.min(lo[a],P[i*3+a]);hi[a]=Math.max(hi[a],P[i*3+a])}
+ const sz=Math.max(hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2])/R,nx=Math.ceil((hi[0]-lo[0])/sz)+2,ny=Math.ceil((hi[1]-lo[1])/sz)+2,nz=Math.ceil((hi[2]-lo[2])/sz)+2,G=new Uint8Array(nx*ny*nz);
+ const id=(x,y,z)=>x+nx*(y+ny*z);for(let i=0;i<n;i++){const x=((P[i*3]-lo[0])/sz|0)+1,y=((P[i*3+1]-lo[1])/sz|0)+1,z=((P[i*3+2]-lo[2])/sz|0)+1;G[id(x,y,z)]=1}
+ const D=[];for(let k=0;k<14;k++){const t=Math.acos(1-(k+.5)/14),ph=k*2.39996;D.push([Math.sin(t)*Math.cos(ph),Math.sin(t)*Math.sin(ph),Math.cos(t)])}
+ const st=l===3?.62:.45;
+ for(let i=0;i<n;i++){const nn=[N[i*3],N[i*3+1],N[i*3+2]];let hit=0,cnt=0;
+  for(const d0 of D){let d=d0;const dt=d[0]*nn[0]+d[1]*nn[1]+d[2]*nn[2];if(dt<0)d=[-d[0],-d[1],-d[2]];cnt++;
+   for(let s2=2;s2<=7;s2++){const x=((P[i*3]+d[0]*s2*sz-lo[0])/sz|0)+1,y=((P[i*3+1]+d[1]*s2*sz-lo[1])/sz|0)+1,z=((P[i*3+2]+d[2]*s2*sz-lo[2])/sz|0)+1;
+    if(x<0||y<0||z<0||x>=nx||y>=ny||z>=nz)break;if(G[id(x,y,z)]){hit+=1-(s2-2)/7;break}}}
+  const f=1-st*Math.min(1,hit/cnt*1.6);C[i*3]*=f;C[i*3+1]*=f;C[i*3+2]*=f}
+ g.attributes.color.needsUpdate=true}
+/* faint ribs, breastbone, spine and pelvis over the organs, the way an atlas frames them */
+let L3RIB=null;
+function l3Ribs(on){if(!LOOK3||KID||!LAY[2]||!LAY[3]){if(L3RIB)L3RIB.visible=false;return}
+ if(!L3RIB){const g0=LAY[2].geometry,rg=LAY[2].userData.ranges||[],I0=g0.index.array,keep=[];
+  for(const r of rg){const nm=(SET.names[r[2]]||'');if(/\brib\b|costal cartilage|sternum|manubrium|xiphoid|hip bone|ilium|sacrum|coccyx|clavicle|lumbar vertebra|thoracic vertebra/i.test(nm))keep.push(r)}
+  if(!keep.length)return;let len=0;keep.forEach(r=>len+=r[6]);const I=new Uint32Array(len);let o=0;keep.forEach(r=>{I.set(I0.subarray(r[5],r[5]+r[6]),o);o+=r[6]});
+  const g=new THREE.BufferGeometry();for(const k in g0.attributes)g.setAttribute(k,g0.attributes[k]);g.setIndex(new THREE.BufferAttribute(I,1));
+  const m=new THREE.MeshPhysicalMaterial({color:0xF4EBDD,roughness:.4,clearcoat:.6,transparent:true,opacity:.3,depthWrite:false});m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\n{float e=pow(1.0-abs(dot(normalize(vViewPosition),normal)),1.6);gl_FragColor.a=clamp(gl_FragColor.a*(0.55+1.4*e),0.,.85);}')};m.customProgramCacheKey=()=>'l3rib';
+  L3RIB=new THREE.Mesh(g,m);L3RIB.renderOrder=3;L3RIB.frustumCulled=false;LAY[2].parent.add(L3RIB);L3RIB.position.copy(LAY[2].position);L3RIB.scale.copy(LAY[2].scale);L3RIB.quaternion.copy(LAY[2].quaternion)}
+ L3RIB.visible=!!on}
 /* per-vertex tissue kind and fibre direction, and soft shadow in creases (each vertex is darkened by how far it sits below its neighbours) */
 function tissueAttrs(g,ranges,names,l){const P=g.attributes.position.array,n=P.length/3,TK=new Float32Array(n),FD=new Float32Array(n*3),C=g.attributes.color.array;
  for(const r of ranges){const k=r[2],vo=r[3],v=r[4],t=tkOf(l,names[k]);const d=(t===1||t===15||t===17)?axisOf(P,vo*3,v):[0,1,0];for(let j=vo;j<vo+v;j++){TK[j]=t;FD[j*3]=d[0];FD[j*3+1]=d[1];FD[j*3+2]=d[2]}}
@@ -347,7 +385,7 @@ async function hdLayer(l){l=+l;if(HDD[l]||!LAY[l]||!hdOk(l))return;HDD[l]=1;cons
   const list=S2.meta.parts.filter(p=>!(l===3&&HIDE_ORG.test(SET.names[p.k])));let nv=0,ni=0;list.forEach(p=>{nv+=p.v;ni+=p.i});
   const pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni),ranges=[];let vo=0,io=0;
   list.forEach(p=>{const P=partPos(S2,p),I=partIdx(S2,p),c=colOf(p,l,SET.names[p.k]);pos.set(P,vo*3);for(let j=0;j<p.v;j++){col[(vo+j)*3]=c.r;col[(vo+j)*3+1]=c.g;col[(vo+j)*3+2]=c.b}for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;ranges.push([io/3,(io+I.length)/3,p.k,vo,p.v,io,I.length]);vo+=p.v;io+=I.length});
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();tissueAttrs(g,ranges,SET.names,l);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();tissueAttrs(g,ranges,SET.names,l);if(LOOK3&&!KID){try{l3Recolour(g,ranges,SET.names,l);l3Occlusion(g,l)}catch(e){console.warn('look3',e)}}if(l===2&&L3RIB){if(L3RIB.parent)L3RIB.parent.remove(L3RIB);L3RIB=null;l3Ribs(STATE.layer==='organs')}
   const m=LAY[l],old=m.geometry;m.geometry=g;m.userData.ranges=ranges;delete m.userData.P0;old.dispose();SHAPED=null;shape();STATE.hdl=Object.assign(STATE.hdl||{},{[l]:1});if(l===3)calmFace(STATE.layer==='organs'&&FROST)}
  catch(e){HDD[l]=0}}
 /* studio light for the body layers, the same studio map the close-ups use */
@@ -371,12 +409,12 @@ function build(S){LAY={};PICK=[];body.clear();
  for(const l in per){const ks=per[l].filter(k=>!(+l===0&&/hair|eyebrow|eyelash/i.test(S.names[k]))&&!(+l===3&&HIDE_ORG.test(S.names[k]))&&!(+l===3&&KIDB&&KIDB!=='teen'&&KIDORG.test(S.names[k])));let nv=0,ni=0;ks.forEach(k=>{nv+=S.meta.parts[k].v;ni+=S.meta.parts[k].i});
   const pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni),ranges=[];let vo=0,io=0;
   ks.forEach(k=>{const p=S.meta.parts[k],P=partPos(S,p),I=partIdx(S,p),c=colOf(p,+l,S.names[k]);pos.set(P,vo*3);for(let j=0;j<p.v;j++){col[(vo+j)*3]=c.r;col[(vo+j)*3+1]=c.g;col[(vo+j)*3+2]=c.b}for(let j=0;j<I.length;j++)idx[io+j]=I[j]+vo;ranges.push([io/3,(io+I.length)/3,k,vo,p.v,io,I.length]);vo+=p.v;io+=I.length});
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();if(+l>0)tissueAttrs(g,ranges,S.names,+l);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();g.computeBoundingSphere();if(+l===2&&L3RIB){if(L3RIB.parent)L3RIB.parent.remove(L3RIB);L3RIB=null}if(+l>0)tissueAttrs(g,ranges,S.names,+l);if(LOOK3&&+l>0&&!KID){try{l3Recolour(g,ranges,S.names,+l);l3Occlusion(g,+l)}catch(e){console.warn('look3',e)}}
   let m;if(+l===0){m=new THREE.MeshPhysicalMaterial({color:SKINC(),roughness:.35,transparent:true,opacity:.22,depthWrite:false,clearcoat:.6});m.onBeforeCompile=FRESNEL}
-  else{m=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:+l===2?.7:+l===1?.5:.38,metalness:0,clearcoat:+l===3?.55:+l===1?.35:.1,clearcoatRoughness:.35,sheen:0,transparent:true,opacity:1});m.onBeforeCompile=TISSUE(+l)}
+  else{m=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:+l===2?.7:+l===1?.5:.38,metalness:0,clearcoat:+l===3?.55:+l===1?.35:.1,clearcoatRoughness:.35,sheen:0,transparent:true,opacity:1});if(LOOK3&&(+l===3||+l===4||+l===1)){m.roughness=+l===1?.42:.3;m.clearcoat=+l===1?.5:1;m.clearcoatRoughness=.07}m.onBeforeCompile=TISSUE(+l)}
   const mesh=new THREE.Mesh(g,m);mesh.renderOrder=+l===0?5:1;mesh.userData={l:+l,ranges};body.add(mesh);LAY[l]=mesh;PICK.push(mesh);layerEnv(mesh,+l)}HDD={}}
 var FROST=false;
-function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];
+function setLayer(key){const L=LAYERS.find(x=>x[0]===key)[2];try{l3Ribs(key==='organs')}catch(_){}
  /* light stage (Getting Better theme): a solid frosted body, the same for every age and sex; the faint skeleton behind the organs is left out so nothing shows through the skin */
  const fr=!(DATA&&DATA.look==='dark')&&stageOf()==='light';
  for(const ls in LAY){const l=+ls,m=LAY[ls],mt=m.material;
