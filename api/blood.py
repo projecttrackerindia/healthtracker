@@ -76,7 +76,33 @@ class DonorIn(BaseModel):
 
 
 def donor_json(d: Donor) -> dict:
-    return {"id": d.id, "member": d.member_id, "group": d.group, "city": d.city, "lastDonation": d.last_donation, "active": d.active, "donations": d.donations, "since": d.consent_t, "located": d.lat is not None}
+    today = time.strftime("%Y-%m-%d")
+    paused = d.paused_until if (d.paused_until or "") > today else ""
+    return {"id": d.id, "member": d.member_id, "group": d.group, "city": d.city, "lastDonation": d.last_donation, "active": d.active, "donations": d.donations or 0,
+            "since": d.consent_t, "located": d.lat is not None, "pausedUntil": paused, "radiusKm": d.radius_km or 15, "history": list(d.history or [])[-40:],
+            "eligibleFrom": next_date(d)}
+
+
+def next_date(d: Donor) -> str:
+    """The first day this donor may give again (empty when they can give today)."""
+    if not d.last_donation:
+        return ""
+    try:
+        last = time.mktime(time.strptime(d.last_donation, "%Y-%m-%d"))
+    except ValueError:
+        return ""
+    t = last + ELIG_DAYS.get(d.sex, 90) * 86400
+    return time.strftime("%Y-%m-%d", time.localtime(t)) if t > time.time() else ""
+
+
+def add_history(d: Donor, day: str, place: str, kind: str, by: str, req: str = "") -> None:
+    h = list(d.history or [])
+    h.append({"d": day[:10], "place": place[:120], "kind": kind[:20] or "whole", "by": by, "req": req[:32]})
+    h.sort(key=lambda x: x.get("d", ""))
+    d.history = h[-60:]
+    d.donations = max((d.donations or 0) + 1, len(d.history))
+    if day > (d.last_donation or ""):
+        d.last_donation = day[:10]
 
 
 @r.put("/donor")
@@ -93,7 +119,7 @@ def donor_put(body: DonorIn, request: Request, db: Session = Depends(get_db, sco
     if not d:
         d = Donor(household_id=h.id, member_id=body.member[:32], group=body.group)
         db.add(d)
-    d.group, d.name, d.phone, d.city, d.last_donation, d.sex, d.active, d.updated = body.group, body.name.split(" ")[0][:80], body.phone[:20], body.city[:80], body.lastDonation[:10], body.sex[:8], True, now()
+    d.group, d.name, d.phone, d.city, d.last_donation, d.sex, d.active, d.updated = body.group, body.name.split(" ")[0][:80], body.phone[:20], body.city[:80], max(body.lastDonation[:10], d.last_donation or ""), body.sex[:8], True, now()
     if body.lat is not None and body.lng is not None:
         d.lat, d.lng = round(body.lat, 4), round(body.lng, 4)  # ~10 m is plenty; we never need the exact door
     db.flush()
@@ -116,6 +142,124 @@ def donor_off(member: str, db: Session = Depends(get_db, scope="function"), x_do
         raise HTTPException(404)
     db.delete(d)
     return {"ok": True}
+
+
+class LogIn(BaseModel):
+    date: str
+    place: str = ""
+    kind: str = "whole"
+
+
+@r.post("/donor/{member}/log")
+def donor_log(member: str, body: LogIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
+    """The person adds a donation they made (a camp, a blood bank). Shown as "added by you"; no certificate."""
+    h = household(db, x_dokko_key, create=False)
+    d = h and db.scalar(select(Donor).where(Donor.household_id == h.id, Donor.member_id == member[:32]))
+    if not d:
+        raise HTTPException(404, "Switch on blood donor first.")
+    limit(request, f"dlog:{h.id}", 20, 3600)
+    try:
+        t = time.mktime(time.strptime(body.date[:10], "%Y-%m-%d"))
+    except ValueError:
+        raise HTTPException(400, "Pick the day you gave.")
+    if t > time.time() + 86400 or t < time.time() - 20 * 365 * 86400:
+        raise HTTPException(400, "Pick a day in the past.")
+    if any(x.get("d") == body.date[:10] for x in (d.history or [])):
+        raise HTTPException(400, "That day is already in your list.")
+    add_history(d, body.date[:10], body.place.strip(), body.kind if body.kind in ("whole", "platelets", "plasma") else "whole", "you")
+    d.updated = now()
+    return donor_json(d)
+
+
+class DonorSet(BaseModel):
+    pauseDays: int | None = None   # 0 resumes
+    radiusKm: int | None = None
+
+
+@r.post("/donor/{member}/settings")
+def donor_settings(member: str, body: DonorSet, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
+    h = household(db, x_dokko_key, create=False)
+    d = h and db.scalar(select(Donor).where(Donor.household_id == h.id, Donor.member_id == member[:32]))
+    if not d:
+        raise HTTPException(404, "Switch on blood donor first.")
+    if body.pauseDays is not None:
+        n = max(0, min(int(body.pauseDays), 180))
+        d.paused_until = time.strftime("%Y-%m-%d", time.localtime(time.time() + n * 86400)) if n else ""
+    if body.radiusKm is not None:
+        if body.radiusKm not in (5, 15, 30):
+            raise HTTPException(400, "Choose 5, 15 or 30 km.")
+        d.radius_km = body.radiusKm
+    d.updated = now()
+    return donor_json(d)
+
+
+# ---- SOS "Need blood?": a family asks a hospital, the hospital raises the request ----------------------------------------
+def _near_donors(db: Session, group: str, lat: float, lng: float, km_max: float = 5.0) -> int:
+    today = time.strftime("%Y-%m-%d")
+    seen = set()
+    for d in db.scalars(select(Donor).where(Donor.active == True)).all():  # noqa: E712
+        if d.lat is None or d.household_id in seen or not compatible(d.group, group, "whole") or not eligible(d, today) or (d.paused_until or "") > today:
+            continue
+        if km(d.lat, d.lng, lat, lng) <= km_max:
+            seen.add(d.household_id)
+    return len(seen)
+
+
+@r.get("/blood/help")
+def blood_help(group: str, lat: float | None = None, lng: float | None = None, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
+    """For the SOS sheet: groups that can give, verified hospitals and blood banks nearby, and how many donors are close."""
+    if group not in GROUPS:
+        raise HTTPException(400, "Choose the blood group.")
+    givers = [g for g in GROUPS if group in CAN_GIVE_TO[g]]
+    places = []
+    for st in db.scalars(select(Store).where(Store.kind.in_(REQUESTER_KINDS), Store.verified == True, Store.active == True)).all():  # noqa: E712
+        dist = km(lat, lng, st.lat, st.lng) if lat is not None and lng is not None and st.lat is not None else None
+        if dist is not None and dist > 40:
+            continue
+        units = 0
+        if st.kind == "bloodbank":
+            for b in db.scalars(select(BloodStock).where(BloodStock.store_id == st.id)).all():
+                if b.group in givers and (b.component or "whole") == "whole":
+                    units += b.units or 0
+        places.append({"id": st.id, "name": st.name, "kind": st.kind, "address": st.address, "phone": st.phone, "km": round(dist, 1) if dist is not None else None, "units": units})
+    places.sort(key=lambda x: (x["km"] if x["km"] is not None else 999))
+    return {"group": group, "givers": givers, "places": places[:8], "donors": _near_donors(db, group, lat, lng) if lat is not None and lng is not None else None}
+
+
+class AskIn(BaseModel):
+    store: str
+    group: str
+    patient: str = ""
+    member: str = ""
+    units: int = 1
+    note: str = ""
+    lat: float | None = None
+    lng: float | None = None
+
+
+@r.post("/blood/ask")
+def blood_ask(body: AskIn, request: Request, db: Session = Depends(get_db, scope="function"), x_dokko_key: str | None = Header(None)):
+    """A family cannot broadcast to donors (NBTC: only hospitals and blood banks request). We pass the ask to the hospital
+    or blood bank they chose; the hospital checks it and raises the request, and donors are told from there."""
+    h = household(db, x_dokko_key)
+    if not h:
+        raise HTTPException(400, "missing household key")
+    limit(request, f"bask:{h.id}", 6, 3600)
+    if body.group not in GROUPS:
+        raise HTTPException(400, "Choose the blood group.")
+    st = db.get(Store, body.store)
+    if not st or st.kind not in REQUESTER_KINDS or not st.verified:
+        raise HTTPException(400, "Choose a hospital or blood bank from the list.")
+    units = max(1, min(int(body.units or 1), 6))
+    who = (body.patient or "a patient").strip()[:80]
+    from .partner import alert_store
+    alert_store(db, st.id, f"Blood needed · {body.group} · {units} unit{'s' if units > 1 else ''} for {who}",
+                f"A family on Urban Health asked for {units} unit{'s' if units > 1 else ''} of {body.group} blood for {who} at {st.name}."
+                + (f" Note: {body.note.strip()[:300]}" if body.note.strip() else "")
+                + " If you confirm the need, raise a blood request in the partner portal → Blood requests; registered donors nearby are told and you accept each one.")
+    notify(db, h.id, "blood", f"Your blood request went to {st.name}", "They confirm the need and then ask registered donors nearby. Please call them too: " + (st.phone or "the hospital desk") + ".",
+           {"store": st.id, "group": body.group}, body.member[:32], "/app#page=mid")
+    return {"ok": True, "store": st.name, "phone": st.phone, "donors": _near_donors(db, body.group, body.lat, body.lng) if body.lat is not None and body.lng is not None else None}
 
 
 # ---- requests: the family side ---------------------------------------------------------------------------------------------
@@ -271,8 +415,10 @@ def notify_donors(db: Session, q: BloodRequest, only: set[str] | None = None) ->
             continue
         if d.lat is None or d.household_id in seen_h or not compatible(d.group, q.group, q.component) or not eligible(d, today):
             continue
+        if (d.paused_until or "") > today:
+            continue
         dist = km(d.lat, d.lng, q.lat, q.lng)
-        if dist > q.radius_km:
+        if dist > min(q.radius_km, d.radius_km or q.radius_km):
             continue
         seen_h.add(d.household_id)
         urg = {"now": "needed now", "24h": "needed within 24 hours", "72h": "needed this week"}.get(q.urgency, "")
@@ -435,8 +581,7 @@ def act(rid: str, xid: str, body: RespAct, db: Session = Depends(get_db, scope="
     elif body.action == "donated":
         x.status = "donated"
         if d:
-            d.donations = (d.donations or 0) + 1
-            d.last_donation = time.strftime("%Y-%m-%d")
+            add_history(d, time.strftime("%Y-%m-%d"), q.hospital, q.component or "whole", "hospital", q.id)
         notify(db, x.household_id, "blood", "Thank you for donating 🩸", f"{q.hospital} recorded your donation today. Your next eligible date is updated on the Medical ID.", {"request": q.id, "donated": True}, d.member_id if d else "", "/app#page=mid")
     else:
         raise HTTPException(400)

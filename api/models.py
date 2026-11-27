@@ -934,6 +934,9 @@ class Donor(Base):
     consent_t: Mapped[int] = mapped_column(Integer, default=now)
     updated: Mapped[int] = mapped_column(Integer, default=now)
     donations: Mapped[int] = mapped_column(Integer, default=0)
+    paused_until: Mapped[str] = mapped_column(String(10), default="")   # YYYY-MM-DD: no asks before this day
+    radius_km: Mapped[int] = mapped_column(Integer, default=15)           # how far a hospital may be to ask
+    history: Mapped[list | None] = mapped_column(JSON, nullable=True)     # [{d, place, kind, by: you|hospital, req}]
 
 
 class VisitShare(Base):

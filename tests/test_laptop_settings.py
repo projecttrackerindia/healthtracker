@@ -6,7 +6,7 @@ H = (Path(__file__).resolve().parent.parent / "web" / "uh.html").read_text()
 
 
 def test_settings_and_privacy_open_in_the_frame():
-    assert "const PFRAME=['Settings','Privacy and your rights'," in H
+    assert "const PFRAME=['You','Privacy and your rights'," in H
     assert "PFRAME.includes(title)?' pfr'" in H
     assert ".page.pfr>.pbar{display:none!important}" in H
 
@@ -15,13 +15,32 @@ def test_tab_bar_closes_a_framed_page():
     assert "if($('#layer .page.pfr')){closeL();if(k===t)return renderAll()}" in H
 
 
-def test_settings_board_groups():
-    i = H.index("function settingsWide(")
-    body = H[i:H.index("\n/* Laptop Settings (approved mockup", i)]
-    for t in ("Sharing", "This app", "Emergency", "Permissions on this device", "Privacy and your rights",
-              "My doctors", "Sign out", "Blood donor", "On my lock screen", "to finish"):
+def test_you_menu_replaces_settings_and_family():
+    """27 Nov design: the avatar opens one You menu (phone list; laptop side menu + panes). Old Settings/Family pages are gone."""
+    assert "function settingsWide(" not in H and "function setRight(" not in H
+    assert "function ddFamily(){openYou()}" in H and "function openSettings(){openYou()}" in H
+    i = H.index("function openYou(")
+    body = H[i:H.index("function famSub(", i)]
+    for t in ("yuSide(me,sec)", "sec==='donor'", "sec==='family'", "sec==='safety'", "to finish", "Edit health profile"):
         assert t in body, t
-    assert "if(innerWidth>=980)return page('Settings',settingsWide(" in H
+    side = H[H.index("function yuSide("):H.index("function yuGo(")]
+    for t in ("'Family'", "'Medical ID'", "'Blood donor'", "'Safety'", "'Privacy'", "'Notifications'", "'Language'", "'My doctors'", "'Sign-in and security'", "'Simple mode'", "Sign out"):
+        assert t in side, t
+    lists = H[H.index("function yuLists("):H.index("function yuTodo(")]
+    for t in ("Emergency contacts", "Medical ID on lock screen", "First aid", "Who can see my health", "My data and rights", "Women's health",
+              "Notifications and permissions", "My doctors", "Sign-in and security", "Simple mode for elders"):
+        assert t in lists, t
+
+
+def test_blood_donor_page_and_sos_blood():
+    b = H[H.index("function donorBody("):H.index("function donorWire(")]
+    for t in ("LAST GIVEN", "CAN GIVE", "Log a donation", "Pause 30 days", "Your donations", "Who can find me", "Stop being a donor", "Certificate"):
+        assert t in b, t
+    assert "/api/v1/donor/${encodeURIComponent(me.id)}/log" in H and "/settings`" in H
+    sos = H[H.index("async function sosBlood("):H.index("/* slide to call")]
+    for t in ("/api/v1/blood/help?", "/api/v1/blood/ask", "GROUPS THAT CAN GIVE", "Send the request", "The hospital confirms each donor"):
+        assert t in sos, t
+    assert 'onclick="sosBlood()">Need blood?</button>' in H and "'.fa3r','.ft3'" in H
 
 
 def test_privacy_board_columns():
@@ -92,9 +111,10 @@ def test_prescription_and_pharmacy_open_as_panels_on_laptop():
 
 
 def test_family_today_panel_and_lab_side_steps():
-    assert "'Emergency setup','Family'];" in H and "${WF?`</div><div>${famTodayPanel()}</div></div>`:''}" in H
+    assert "'Emergency setup','Family'];" in H and "<div>${famTodayPanel()}</div></div>" in H
     i = H.index("function famTodayPanel(")
-    body = H[i:H.index("function ddFamily(", i)]
+    import re
+    body = H[i:i + re.search(r"\n(?=\S)", H[i:]).start()]
     for t in ("Everyone, in", "medicines taken", "Nothing due today", "What I share with family", "Add a parent to look after"):
         assert t in body, t
     assert "PGSIDE=innerWidth>=980?'Choose a lab':0;" in H and "PGSIDE=innerWidth>=980?'Review and pay':0;" in H

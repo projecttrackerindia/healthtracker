@@ -112,6 +112,7 @@ def ensure_columns() -> None:
               "notices": [("to_user", "VARCHAR(32) DEFAULT ''")],
               "household_invites": [("name", "VARCHAR(80) DEFAULT ''"), ("sent_at", "INTEGER DEFAULT 0"), ("sends", "INTEGER DEFAULT 1"), ("opened", "INTEGER DEFAULT 0"), ("person_id", "VARCHAR(32) DEFAULT ''"), ("rel_ok", "INTEGER DEFAULT 0")],
               "people": [("abha_hash", "VARCHAR(64) DEFAULT ''")],
+              "donors": [("paused_until", "VARCHAR(10) DEFAULT ''"), ("radius_km", "INTEGER DEFAULT 15"), ("history", "JSON")],
               "catalog_meds": [("about", "VARCHAR(300) DEFAULT ''"), ("organ", "VARCHAR(40) DEFAULT ''"), ("test", "VARCHAR(40) DEFAULT ''"),
                                ("refill_days", "INTEGER DEFAULT 0"), ("cold", "BOOLEAN DEFAULT FALSE")]}
     # "admins" was listed twice in the literal above, so the first list (phone, fails, locks, epoch, summary) was being
