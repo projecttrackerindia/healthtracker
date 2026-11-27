@@ -54,4 +54,4 @@ def test_app_names_and_places():
     from pathlib import Path
     H = (Path(__file__).resolve().parents[1] / "web" / "uh.html").read_text()
     assert "glyc(o?syl)?ated" in H and "'pituitary'],[/\\brdw\\b" in H
-    assert "f.test=f.test+' · reading '+c[k]" in H and "if(f.by==='lab range'&&(f.lo!=null||f.hi!=null))" in H
+    assert "f.test=f.test+' – reading '+c[k]" in H and "if(f.by==='lab range'&&(f.lo!=null||f.hi!=null))" in H
