@@ -434,8 +434,21 @@ const ORGPAL=[[/myocard|ventric|atri(um|al)|heart|papillary|interventricular|val
  [/bladder|urethr|ureter/i,0xE2BE73],[/uter|ovar|fallop|vagin|cervi/i,0xE3718D],[/prostat|testis|seminal|penis|scrot/i,0xCC7E8E],[/brain|cerebr|cerebell|pons|medulla|thalam|hippocamp/i,0xE9C6C2],[/thyroid|parathyroid/i,0xC24C5A],
  [/adrenal|suprarenal|pituitar|pineal/i,0xD7A13A],[/lymph|thym|tonsil/i,0x97C77C],[/eye|retina|lens|cornea|sclera/i,0xF2F2F2],[/tongue/i,0xD8707A],[/diaphragm/i,0xA8443A]];
 function hsh(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return(h>>>0)%1000/1000}
+/* Nov 2026: children's bodies use the soft clay colours of the kids' organs on urbanhealth.in (right heart blue, left heart red, great
+   vessels purple, pink lungs, aqua windpipe, orange tummy, pink gut), carried across every organ so the whole body matches.
+   Same parts and places as before: pins and results still land on the real organ. */
+/* stored as linear light (the vertex colours are), so they render as saturated as the website's clay */
+const KIDPAL=[[/right (cardiac )?(atri|ventric)|heart right|right atrioventricular|tricuspid|pulmonary valve|semilunar leaflet of pulmonary|septal papillary|papillary muscle of right/i,0x142DD6],
+ [/left (atrium|ventricle|atrioventricular)|mitral|aortic valve|coronary leaflet|papillary muscle of left|interventricular|myocard|heart/i,0xDE201D],
+ [/aorta|pulmonary trunk|pulmonary arter|vena cava|brachiocephalic|great vessel/i,0x741ABE],
+ [/^(?!.*bronchus).*(lung|bronchopulmonary|pulmonary segment|lobe of (left|right))/i,0xE76586],[/trachea|bronch|larynx|epiglott|cricoid|thyroid cartilage/i,0x45AFB7],
+ [/oesophagus|esophagus/i,0xE7B83B],[/stomach/i,0xED7411],[/duoden|jejun|ileum|small intestine/i,0xDA2950],[/colon|caecum|cecum|rectum|appendix|taenia/i,0xE5566F],
+ [/gallbladder|bile|cystic|hepatic duct/i,0x369A26],[/liver/i,0xC6321D],[/pancrea/i,0xEFA826],[/spleen/i,0x5A25BE],[/kidney|renal|ureter/i,0x4626D4],[/bladder|urethra/i,0xEBAB11],
+ [/brain|cerebr|cerebell|pons|medulla|midbrain|thalam/i,0xEB617A],[/tongue/i,0xDE415A],[/uter|ovar|testis|prostate/i,0xE25A93]];
+const KIDNAT={heart:0xDE201D,kidney:0x4626D4,liver:0xC6321D,lung:0xE76586,pancreas:0xEFA826,thyroid:0xD03241,stomach:0xED7411,gut:0xDA2950,brain:0xEB617A,bladder:0xEBAB11,spleen:0x5A25BE,gall:0x369A26,oesophagus:0xE7B83B,appendix:0xE5566F,testis:0xE25A93,ovary:0xE25A93,uterus:0xE25A93};
 function colOf(p,l,nm){const n=nm||'';let c;
- if(l===3){c=0xD9A69A;for(const [re,v] of ORGPAL)if(re.test(n)){c=v;break}}
+ if(l===3&&KID){c=0xF2B8A8;for(const [re,v] of KIDPAL)if(re.test(n)){c=v;break}}
+ else if(l===3){c=0xD9A69A;for(const [re,v] of ORGPAL)if(re.test(n)){c=v;break}}
  else if(l===1)c=/tendon|aponeuros|fascia|retinacul|linea/i.test(n)?0xE6D8C2:0xA9372F;
  else if(l===2)c=/cartilage|disc|menisc|ligament|labrum|capsule/i.test(n)?0xCFE0E4:0xEFE5CF;
  else if(l===4)c=/vein|venous|sinus|vena/i.test(n)?0x3E5C8A:/lymph|thoracic duct/i.test(n)?0x7CB96B:0xB0413E;/* muted vessels (design system): atlas hues, less alarm */
@@ -692,6 +705,15 @@ const ageBand=a=>a==null?'adult':a<2?'baby':a<13?'child':a>=60?'elder':'adult';
 /* babies, children and teens get a body of their own (MakeHuman, CC0) with the organs moved into its torso;
    adult muscles and bones are not shown on a child's body, so those layers stay hidden for them */
 const KBM={"baby-male":"kb-baby-male.3cb687fa.json","child-male":"kb-child-male.57757ff0.json","teen-male":"kb-teen-male.0b0f3245.json","ref-male":{"hip":0.5307,"sh":0.7976,"w":0.2148,"d":0.1308,"cz":0.0442},"baby-female":"kb-baby-female.3b1fe183.json","child-female":"kb-child-female.5e0b8960.json","teen-female":"kb-teen-female.60379708.json","ref-female":{"hip":0.5126,"sh":0.7937,"w":0.1938,"d":0.1241,"cz":0.0454}};let KID=null;
+/* children's bodies have no thyroid gland either: the same sculpted gland, in the clay colours, set on the top of the windpipe */
+let KTHY=null;
+async function kidThyroid(){try{if(KTHY){KTHY.parent&&KTHY.parent.remove(KTHY);KTHY=null}const M=LAY[3];if(!M)return;const P=M.geometry.attributes.position,b=new THREE.Box3(),v=new THREE.Vector3();
+ partsOf(/^trachea$/i,3).forEach(r=>{for(let i=r[3];i<r[3]+r[4];i++){v.fromBufferAttribute(P,i);b.expandByPoint(v)}});if(b.isEmpty())return;
+ const top=b.max.y,sl=new THREE.Box3();partsOf(/^trachea$/i,3).forEach(r=>{for(let i=r[3];i<r[3]+r[4];i++){v.fromBufferAttribute(P,i);if(v.y>top-(b.max.y-b.min.y)*.1)sl.expandByPoint(v)}});
+ const c=sl.getCenter(new THREE.Vector3()),rad=(sl.max.x-sl.min.x)/2;
+ for(let i=0;i<40&&!THREE.GLTFLoader;i++)await new Promise(r=>setTimeout(r,100));const L=new THREE.GLTFLoader();const g=await new Promise((res,rej)=>L.load('/a/sb-thyroid.46be1877.glb',res,undefined,rej));
+ if(!KID)return;g.scene.traverse(m=>{if(!m.isMesh)return;if(!m.geometry.attributes.normal)m.geometry.computeVertexNormals();m.material=new THREE.MeshStandardMaterial({color:KIDNAT.thyroid,roughness:.66,metalness:0});m.raycast=()=>{}});
+ const G=new THREE.Group();G.add(g.scene);G.scale.setScalar(rad);G.position.set(c.x,top,c.z);G.position.applyMatrix4(M.matrix);G.userData.A={x:G.position.x,y:G.position.y,z:G.position.z,r:rad};M.parent.add(G);KTHY=G}catch(e){console.warn('kid thyroid',e)}}
 function kidBand(){const P=DATA&&DATA.person||{},a=P.age;if(a==null)return /^baby\b/i.test(P.name||'')?'baby':null;return a<3?'baby':a<13?'child':a<18?'teen':null}
 async function kidApply(band){const sex=STATE.sex,K=await (await fetch('/a/'+KBM[band+'-'+sex])).json(),ref=KBM['ref-'+sex],lm=K.lm;
  const dec=(x,T)=>{const r=atob(x),u=new Uint8Array(r.length);for(let i=0;i<r.length;i++)u[i]=r.charCodeAt(i);return new T(u.buffer)};const q=dec(K.q,Uint16Array),ix=dec(K.i,Uint16Array),b=K.b,n=q.length/3;
@@ -701,7 +723,10 @@ async function kidApply(band){const sex=STATE.sex,K=await (await fetch('/a/'+KBM
  LAY[0].geometry.dispose();LAY[0].geometry=g;LAY[0].userData.ranges=[];
  if(LAY[3]){const A=LAY[3].geometry.attributes.position,a=A.array;for(let j=0;j<a.length;j+=3){const u=(a[j+1]-ab.min.y)/Ha,t=(u-ref.hip)/(ref.sh-ref.hip);a[j]=cx+(a[j]-cx)*(lm.w/ref.w);a[j+1]=ab.min.y+(lm.hip+t*(lm.sh-lm.hip))*Ha;a[j+2]=cz+(a[j+2]-cz)*(lm.d/ref.d)+(lm.cz-ref.cz)*Ha}
   A.needsUpdate=true;LAY[3].geometry.computeVertexNormals();LAY[3].geometry.computeBoundingSphere();LAY[3].geometry.computeBoundingBox()}
- for(const l of [1,2,4,5])if(LAY[l])Object.defineProperty(LAY[l],'visible',{get:()=>false,set:()=>{},configurable:true});KID=band;SHAPED='kid|'+band}
+ for(const l of [1,2,4,5])if(LAY[l])Object.defineProperty(LAY[l],'visible',{get:()=>false,set:()=>{},configurable:true});KID=band;SHAPED='kid|'+band;
+ /* the kids' clay look: recolour every organ from the kids' palette and make them matte like modelling clay */
+ kidThyroid();
+ if(LAY[3]){untint();const m=LAY[3].material;m.roughness=.66;m.metalness=0;if('clearcoat' in m)m.clearcoat=0;if('sheen' in m&&typeof m.sheen==='number')m.sheen=0;m.envMapIntensity=.55;m.needsUpdate=true}}
 function hist(f){const k=(f.code||f.test||'').toLowerCase();return(DATA.findings||[]).filter(x=>(x.code||x.test||'').toLowerCase()===k&&x.date).sort((a,b)=>a.date.localeCompare(b.date))}
 function prevOf(f){const h=hist(f).filter(x=>x.date<f.date);return h[h.length-1]||null}
 function trend(f){const p=prevOf(f);if(!p)return null;const a=parseFloat(p.value),b=parseFloat(f.value);if(isNaN(a)||isNaN(b)||a===b)return{p,dir:'same'};
@@ -778,7 +803,7 @@ function boxOf(re){if(!SET||!re)return null;const b=new THREE.Box3();let n=0;SET
 /* Nov 2026: blood points at the great vessels leaving the heart (shown on the vessel layer); on the children's bodies, which carry organs only,
    eyes, ears and teeth are placed from the brain */
 const KIDF={eye:[.22,-.42,.55],ear:[.56,-.32,0],teeth:[0,-.98,.42]};
-function partCenter(o){if(o==='blood'){const v=!KID&&centerOfAll(/arch of aorta|ascending aorta/i);if(v)return v;const h=centerOf(ORGRE.heart);if(h){h.y+=boxH(ORGRE.heart)*.45;return h}return null}
+function partCenter(o){if(KID&&KTHY&&o==='thyroid'){const A=KTHY.userData.A;return new THREE.Vector3(A.x,A.y-.75*A.r,A.z+.9*A.r)}if(SBON&&SB){const A=SB.userData.thyroid;if(o==='thyroid'&&A)return new THREE.Vector3(A.x,A.y-.75*A.r,A.z+.9*A.r);if(o==='brain'&&SB.userData.brain)return SB.userData.brain.getCenter(new THREE.Vector3())}if(o==='blood'){const v=!KID&&centerOfAll(/arch of aorta|ascending aorta/i);if(v)return v;const h=centerOf(ORGRE.heart);if(h){h.y+=boxH(ORGRE.heart)*.45;return h}return null}
  if(o==='bones'&&!KID){const v=centerOfAll(/^body of sternum$|^sternum$|manubrium/i);if(v)return v}
  const c=(ORGRE[o]&&centerOf(ORGRE[o]))||(!KID&&PARTS[o]&&centerOfAll(pinFor(o)));if(c)return c;const f=FALLC[o];if(f){const v=centerOf(ORGRE[f[0]]);if(v){v.y+=boxH(ORGRE[f[0]])*f[1];return v}}
  if(KID){const k=KIDF[o],br=boxOf(ORGRE.brain);if(k&&br){const c2=br.getCenter(new THREE.Vector3()),z=br.getSize(new THREE.Vector3());return new THREE.Vector3(c2.x+z.x*k[0],c2.y+z.y*k[1],c2.z+z.z*k[2])}
@@ -1094,12 +1119,101 @@ function fRank(f){/* the step that matters most wins an organ's pin: past where 
 function orgsWith(fs){const by={};fs.forEach(f=>{if(!f.org)return;const b=by[f.org];if(!b||fRank(f)>fRank(b))by[f.org]=f});return by}
 function onBody(o){return !!partCenter(o)}
 /* the body: see-through, organs with something to show in their true colour */
+/* Nov 2026: the website's textured body (the same skin and organs as urbanhealth.in) is the picture in the body and results
+   views for adults. The atlas parts stay where they are on a hidden render layer, so taps, pins and results still find the right
+   organ; only what you see changes. Children and pregnancy keep their own bodies. */
+const SBF={male:['/a/sb-male_skin.c32c70db.glb','/a/sb-male_organs.bdc8be41.glb'],female:['/a/sb-female_skin.db50763e.glb','/a/sb-female_organs.d62345af.glb']};
+let SB=null,SBP=null,SBON=false,SBSEX=null;
+ray.layers.enable(1);
+const sbOk=()=>!!(DATA&&DATA.person)&&!KID&&!DATA.person.pregnancy&&!!LAY[0]&&!!LAY[3];
+function sbLoad(){const sex=STATE.base==='female'?'female':'male';if(SBP&&SBSEX===sex)return SBP;SBSEX=sex;
+ SBP=(async()=>{for(let i=0;i<40&&!THREE.GLTFLoader;i++)await new Promise(r=>setTimeout(r,100));const L=new THREE.GLTFLoader();if(window.MeshoptDecoder){await MeshoptDecoder.ready;L.setMeshoptDecoder(MeshoptDecoder)}
+  const ld=u=>new Promise((res,rej)=>L.load(u,res,undefined,rej));const [s,o]=await Promise.all(SBF[sex].map(ld));if(SBSEX!==sex)return null;
+  const W=new THREE.Group();W.add(o.scene,s.scene);W.userData.skin=[];W.userData.org=[];
+  const env=typeof o2Env==='function'?await o2Env().catch(()=>null):null;
+  s.scene.traverse(m=>{if(!m.isMesh)return;let n=m,hide=false;while(n){if(/^F_Integumentary_(?!Skin)/.test(n.name||'')){hide=true;break}n=n.parent}if(hide){m.visible=false;return}
+   m.material=new THREE.MeshPhysicalMaterial({color:0xF4F6FA,roughness:.18,metalness:0,clearcoat:1,clearcoatRoughness:.12,transparent:true,opacity:0,depthWrite:false,envMap:env,envMapIntensity:1.2});m.material.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\n{float e=pow(1.0-abs(dot(normalize(vViewPosition),normal)),2.0);gl_FragColor.rgb+=vec3(0.55,0.76,1.0)*e*0.6;gl_FragColor.a=clamp(gl_FragColor.a*(0.6+1.6*e),0.0,0.9);}')};m.material.customProgramCacheKey=()=>'sbskin';m.renderOrder=5;m.raycast=()=>{};W.userData.skin.push(m)});
+  o.scene.traverse(m=>{if(!m.isMesh)return;m.material=m.material.clone();m.material.transparent=true;m.material.opacity=0;if(env){m.material.envMap=env;m.material.envMapIntensity=1}m.raycast=()=>{};W.userData.org.push(m)});
+  /* fit the website body onto the atlas skin, in the body's own space, so the organs sit where the atlas organs are */
+  body.updateMatrixWorld(true);const inv=body.matrixWorld.clone().invert(),sb=new THREE.Box3().setFromObject(LAY[0]).applyMatrix4(inv);
+  W.updateMatrixWorld(true);let wb=new THREE.Box3().setFromObject(s.scene);W.scale.setScalar((sb.max.y-sb.min.y)/(wb.max.y-wb.min.y));W.updateMatrixWorld(true);wb=new THREE.Box3().setFromObject(s.scene);
+  W.position.set((sb.min.x+sb.max.x-wb.min.x-wb.max.x)/2,sb.min.y-wb.min.y,(sb.min.z+sb.max.z-wb.min.z-wb.max.z)/2);
+  const R=new THREE.Group();R.add(W);R.userData=W.userData;W.updateMatrixWorld(true);
+  try{await sbFill(R,W,s.scene,o.scene,sex,L,env)}catch(e){console.warn('site body fill',e)}
+  if(SB)body.remove(SB);SB=R;R.visible=false;body.add(R);return R})().catch(e=>{console.warn('site body',e);SBP=null;return null});return SBP}
+/* Nov 2026: neither website model is complete. Nothing is hidden; what a body lacks is added in the same place:
+   the thyroid gland (neither has one) and, on the female body, the aorta come from the app's own atlas parts, which already sit in
+   the right spot; her brain is our own textured brain, set inside her head where the male model keeps his; her pituitary and
+   adrenal glands are the male model's, placed against her brain and kidneys the way they sit against his. */
+const SBINFO={head:[[-0.083,1.5051,-0.1302],[0.0813,1.7297,0.1051]],brain:[[-0.0715,1.5368,-0.1105],[0.0697,1.7086,0.0696]],kidL:[[0.027,1.0247,-0.0403],[0.0904,1.1685,0.0149]],kidR:[[-0.0876,1.0245,-0.0353],[-0.0252,1.1493,0.0118]],brainB:[[-0.0715,1.5368,-0.1105],[0.0697,1.7086,0.0696]]};
+const bx=a=>new THREE.Box3(new THREE.Vector3(...a[0]),new THREE.Vector3(...a[1]));
+function boxIn(root,test,inv,keep){const b=new THREE.Box3(),v=new THREE.Vector3();root.updateMatrixWorld(true);root.traverse(m=>{if(!m.isMesh||!test(m))return;const P=m.geometry.attributes.position;for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(m.matrixWorld).applyMatrix4(inv);if(!keep||keep(v))b.expandByPoint(v)}});return b}
+const nmOf=m=>{let n=m,s='';while(n&&(!s||/^mesh_[\d_]+$/.test(s))){s=n.name||'';n=n.parent}return s};
+/* move a part that sits in box A (one body) so it sits the same way in box B (the other body) */
+function mapInto(obj,A,B){const sa=A.getSize(new THREE.Vector3()),sb=B.getSize(new THREE.Vector3()),k=new THREE.Vector3(sb.x/sa.x,sb.y/sa.y,sb.z/sa.z);obj.scale.copy(k);obj.position.set(B.min.x-A.min.x*k.x,B.min.y-A.min.y*k.y,B.min.z-A.min.z*k.z)}
+async function sbFill(R,W,skin,org,sex,L,env){/* R is not in the scene yet, so world space here is already the body's own space */const inv=new THREE.Matrix4(),ld=u=>new Promise((res,rej)=>L.load(u,res,undefined,rej));
+ const add=(m,isOrg=true)=>{m.raycast=()=>{};m.traverse(x=>{if(!x.isMesh)return;x.material=x.material.clone();x.material.transparent=true;x.material.opacity=0;if(env&&!x.material.envMap){x.material.envMap=env;x.material.envMapIntensity=1}x.raycast=()=>{};if(isOrg)R.userData.org.push(x)});R.add(m)};
+ /* atlas parts: share the atlas geometry, draw only that part, in its natural colour */
+ const atlas=(re)=>{const M=LAY[3];if(!M)return;partsOf(re,3).forEach(r=>{const g=new THREE.BufferGeometry();for(const k in M.geometry.attributes)g.setAttribute(k,M.geometry.attributes[k]);g.setIndex(M.geometry.index);g.setDrawRange(r[5],r[6]);/* r = [first tri, end tri, part, first vertex, vertex count, first index, index count] */
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:0,envMap:env,envMapIntensity:.8}));m.position.copy(M.position);m.quaternion.copy(M.quaternion);m.scale.copy(M.scale);m.frustumCulled=false;add(m)})};
+ /* thyroid gland: no free atlas has one, so this is our own sculpt (two pear-shaped lobes and the isthmus, wrapped round the
+    windpipe), set where the windpipe leaves the cricoid cartilage and sized to that body's windpipe */
+ const v3a=new THREE.Vector3();let A=null;
+ const cri=boxIn(org,m=>/CricoidCartilage/.test(nmOf(m)),inv);
+ if(!cri.isEmpty()){cri.getCenter(v3a);A={x:v3a.x,y:cri.min.y,z:v3a.z,r:(cri.max.x-cri.min.x)/2/1.15}}
+ else{const tt=m=>/Trachea/.test(nmOf(m)),tr=boxIn(org,tt,inv);if(!tr.isEmpty()){const sl=boxIn(org,tt,inv,v=>v.y>tr.max.y-(tr.max.y-tr.min.y)*.1);sl.getCenter(v3a);A={x:v3a.x,y:tr.max.y,z:v3a.z,r:(sl.max.x-sl.min.x)/2}}}
+ if(A){const g=await ld('/a/sb-thyroid.46be1877.glb');g.scene.traverse(m=>{if(m.isMesh&&!m.geometry.attributes.normal)m.geometry.computeVertexNormals();if(m.isMesh)m.material=new THREE.MeshPhysicalMaterial({color:0x7A2A22,roughness:.5,metalness:0,clearcoat:.25,clearcoatRoughness:.4,envMap:env,envMapIntensity:.2})});
+  const P=new THREE.Group();P.add(g.scene);P.scale.setScalar(A.r);P.position.set(A.x,A.y,A.z);P.name='Thyroid gland';add(P);R.userData.thyroid=A}
+ /* eyes: neither model has them. A plain, true-size eyeball (white, brown iris, pupil, clear cornea) at the front end of each
+    optic nerve; on the female body, placed in her head the way they sit in his */
+ const tipM=[[0.0308,1.5995,0.0516],[-0.0322,1.5999,0.0518]],mHeadB=bx(SBINFO.head);let headF=null;
+ if(sex==='female'){const H2=boxIn(skin,()=>true,inv),h2=H2.max.y-H2.min.y,nk=H2.max.y-.13*h2;headF=boxIn(skin,()=>true,inv,v=>v.y>=nk&&Math.abs(v.x-(H2.min.x+H2.max.x)/2)<.25*h2)}
+ W.updateMatrix();
+ tipM.forEach(t=>{const p=new THREE.Vector3(t[0],t[1]+.004,t[2]+.013);let r=.0115;
+  if(headF){const sa=mHeadB.getSize(new THREE.Vector3()),sb=headF.getSize(new THREE.Vector3());p.set(headF.min.x+(p.x-mHeadB.min.x)*sb.x/sa.x,headF.min.y+(p.y-mHeadB.min.y)*sb.y/sa.y,headF.min.z+(p.z-mHeadB.min.z)*sb.z/sa.z);r*=sb.x/sa.x}
+  else{p.applyMatrix4(W.matrix);r*=W.scale.x}
+  const E=new THREE.Group(),cap=(rr,th,mat)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(rr,40,20,0,Math.PI*2,0,th),mat);m.rotation.x=Math.PI/2;return m};
+  E.add(new THREE.Mesh(new THREE.SphereGeometry(r,40,28),new THREE.MeshStandardMaterial({color:0xB9B0A4,roughness:.55,envMap:env,envMapIntensity:.08})));
+  E.add(cap(r*1.003,.5,new THREE.MeshStandardMaterial({color:0x4A2C18,roughness:.6,envMap:env,envMapIntensity:.1})));
+  E.add(cap(r*1.006,.2,new THREE.MeshBasicMaterial({color:0x050505})));
+  E.add(cap(r*1.06,.62,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.06,depthWrite:false})));
+  E.position.copy(p);E.name='Eye';add(E)});
+ R.userData.eyes=1;
+ if(sex!=='female'){
+  /* testes: BodyParts3D (CC BY 4.0), placed from the prostate the way they sit in that atlas */
+  const pr=boxIn(org,m=>/Prostate/.test(nmOf(m)),inv);
+  if(!pr.isEmpty()){const sz=pr.getSize(new THREE.Vector3()),k=(sz.x/34.7+sz.y/22.7+sz.z/31.7)/3,g=await ld('/a/sb-testes.a69925ef.glb');
+   g.scene.traverse(m=>{if(m.isMesh&&!m.geometry.attributes.normal)m.geometry.computeVertexNormals();if(m.isMesh)m.material=new THREE.MeshPhysicalMaterial({color:0xB98478,roughness:.5,metalness:0,clearcoat:.25,envMap:env,envMapIntensity:.35})});
+   const P=new THREE.Group();P.add(g.scene);P.scale.setScalar(k);pr.getCenter(P.position);add(P)}
+  return}
+ atlas(/aorta/i);
+ const H=boxIn(skin,()=>true,inv),hh=H.max.y-H.min.y,neck=H.max.y-.13*hh,head=boxIn(skin,()=>true,inv,v=>v.y>=neck&&Math.abs(v.x-(H.min.x+H.max.x)/2)<.25*hh);
+ const mHead=bx(SBINFO.head);/* where the male brain sits in his head, carried over to her head */
+ const brainT=new THREE.Box3();
+ const kx=(head.max.x-head.min.x)/(mHead.max.x-mHead.min.x),ky=(head.max.y-head.min.y)/(mHead.max.y-mHead.min.y),kz=(head.max.z-head.min.z)/(mHead.max.z-mHead.min.z),mb=bx(SBINFO.brain);
+ brainT.min.set(head.min.x+(mb.min.x-mHead.min.x)*kx,head.min.y+(mb.min.y-mHead.min.y)*ky,head.min.z+(mb.min.z-mHead.min.z)*kz);brainT.max.set(head.min.x+(mb.max.x-mHead.min.x)*kx,head.min.y+(mb.max.y-mHead.min.y)*ky,head.min.z+(mb.max.z-mHead.min.z)*kz);
+ const fb=[...document.scripts].map(x=>x.textContent).join('').match(/organf-brain\.[0-9a-f]+\.glb/);
+ if(fb){const g=await ld('/a/'+fb[0]);const b=new THREE.Box3().setFromObject(g.scene),bs=b.getSize(new THREE.Vector3()),ts=brainT.getSize(new THREE.Vector3()),k=Math.min(ts.x/bs.x,ts.y/bs.y,ts.z/bs.z)*.96,c=b.getCenter(new THREE.Vector3()),tc=brainT.getCenter(new THREE.Vector3());
+  const P=new THREE.Group();P.add(g.scene);g.scene.position.sub(c);P.scale.setScalar(k);P.position.copy(tc);add(P);R.userData.brain=brainT}
+ const ff=[...document.scripts].map(x=>x.textContent).join('').match(/sb-fill\.[0-9a-f]+\.glb/)||['sb-fill.519d327e.glb'];
+ const fill=await ld('/a/'+ff[0]);fill.scene.updateMatrixWorld(true);
+ const kid=side=>boxIn(org,m=>new RegExp('Urinary.*(Kidney|Renal).*_'+side).test(nmOf(m)),inv);
+ const KL=kid('Left'),KR=kid('Right');
+ fill.scene.traverse(m=>{if(!m.isMesh)return;const n=nmOf(m),g=m.geometry.clone().applyMatrix4(m.matrixWorld),mesh=new THREE.Mesh(g,m.material),P=new THREE.Group();P.add(mesh);
+  if(/Pituitary/.test(n))mapInto(P,bx(SBINFO.brain),brainT);else if(/Adrenal.*Left/.test(n)&&!KL.isEmpty())mapInto(P,bx(SBINFO.kidL),KL);else if(/Adrenal.*Right/.test(n)&&!KR.isEmpty())mapInto(P,bx(SBINFO.kidR),KR);else return;add(P)});
+}
+function sbHide(on){const L=[LAY[0],LAY[2],LAY[3],LAY[0]&&LAY[0].userData.pre,typeof L3RIB!=='undefined'?L3RIB:null,...GLOWS.flatMap(g=>{const a=[];g.traverse(x=>x.isMesh&&a.push(x));return a})];L.forEach(m=>{if(m)m.layers.set(on?1:0)})}
+function sbLook(on){on=!!on&&sbOk();SBON=on;if(!on){sbHide(false);if(SB)SB.visible=false;return}
+ sbLoad().then(W=>{if(!W||!SBON||!sbOk())return;const fr=!(DATA&&DATA.look==='dark')&&stageOf()==='light',so=fr?.26:.16;
+  W.userData.skin.forEach(m=>{m.material.color.set(fr?0xEEF2F8:0xA9C2E2)});W.visible=true;
+  const t0=performance.now(),first=!W.userData.shown;W.userData.shown=1;
+  const step=()=>{if(!SBON)return;const k=first&&!U.still?Math.min(1,(performance.now()-t0)/450):1;W.userData.skin.forEach(m=>m.material.opacity=so*k);W.userData.org.forEach(m=>m.material.opacity=k);if(k>=1){sbHide(true);W.userData.org.forEach(m=>{m.material.transparent=false;m.material.needsUpdate=true})}else requestAnimationFrame(step)};step()})}
 function xbody(orgs){setLayer('organs');for(const l in LAY){const m=LAY[l];if(+l===3){m.visible=true;m.material.transparent=false;m.material.opacity=1;m.material.depthWrite=true;m.material.needsUpdate=true}else if(+l===2){m.visible=!(!(DATA&&DATA.look==='dark')&&stageOf()==='light');m.material.transparent=true;m.material.opacity=.18;m.material.depthWrite=false}else if(+l===0){m.visible=true}else m.visible=false}
- clearGlows();orgs.forEach(o=>{if(!ORGRE[o]||!onBody(o))return;const g=glow(ORGRE[o],NATC[o]||0xC05050,3,1);if(g){g.userData.org=o;const mm=g.children[0].material;mm.emissiveIntensity=.08}})}
+ clearGlows();orgs.forEach(o=>{if(!ORGRE[o]||!onBody(o))return;const g=glow(ORGRE[o],(KID&&KIDNAT[o])||NATC[o]||0xC05050,3,1);if(g){g.userData.org=o;const mm=g.children[0].material;mm.emissiveIntensity=.08;if(KID){mm.roughness=.66;if('clearcoat' in mm)mm.clearcoat=0}}})}
 function vback(){const m=$('#modes');if(m)m.style.display=VSTACK.length?'none':'';/* the back chip takes the row; the Baby chip returns on the results screen */$('#sub').innerHTML=VSTACK.length?`<button class="chip vbk" onclick="vpop()">‹ ${esc(VSTACK[VSTACK.length-1].label)}</button>`:''}
 function vgo(v,label){if(VIEW)VSTACK.push({v:VIEW,label:label||'Body'});vshow(v)}
 function vpop(){const p=VSTACK.pop();if(p)vshow(p.v,true);else send('close')}
-async function vshow(v,back){if(CUTP&&v.k!=='cut')cutOff();if(MS&&v.k!=='measure')msOff();if(v.k!=='explore')exOff();else{['exbar','exrail'].forEach(id=>{const e=$('#'+id);if(e)e.remove()})}VIEW=v;document.body.classList.remove('nolabs');document.body.classList.toggle('ov',v.k!=='body');ogOff();partOff();h3Off();closeCard();clearGlows();tags([]);body.position.x=0;
+async function vshow(v,back){if(CUTP&&v.k!=='cut')cutOff();if(MS&&v.k!=='measure')msOff();if(v.k!=='explore')exOff();else{['exbar','exrail'].forEach(id=>{const e=$('#'+id);if(e)e.remove()})}sbLook(false);VIEW=v;document.body.classList.remove('nolabs');document.body.classList.toggle('ov',v.k!=='body');ogOff();partOff();h3Off();closeCard();clearGlows();tags([]);body.position.x=0;
  if(v.k==='heart'){MODE='heartv';mHeart();document.body.classList.add('ov');vback();return}
  MODE=v.k==='body'?'explore':v.k;
  if(v.k==='cut'){shape();mCut();vback();return}
@@ -1113,7 +1227,7 @@ const STW=f=>{const k=STK(f);return k==='ok'?'In range':k==='review'?'Doctor to 
 const STI2={review:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="5.6" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.4 14c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',ok:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 8.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',watch:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg>',doc:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.5v3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".9" fill="currentColor"/></svg>',none:''};
 const FCOL=f=>{const k=STK(f);return document.body.classList.contains('dk')?{ok:'#30D158',watch:'#FFB340',doc:'#FF6961',none:'#AEAEB2',review:'#7D9BFF'}[k]:{ok:'#1A7F37',watch:'#9A5B00',doc:'#C4291C',none:'#515154',review:'#2F5BFF'}[k]};
 function fLine(f){const tr=trend(f),nm=f.test.replace(/\s*\(.*\)/,'');if(tr&&tr.dir!=='same'&&f.flag!=='normal')return`${esc(nm)} ${parseFloat(f.value)>parseFloat(tr.p.value)?'rose':'fell'} since ${esc(new Date(tr.p.date+'T00:00').toLocaleDateString('en-IN',{month:'long'}))}`;return`${esc(nm)} ${f.flag==='high'?'is high':f.flag==='low'?'is low':f.flag==='normal'?'in range':'to check'}`}
-function vBody(){shape();head(who()+' · BODY',bodyTitle(),(()=>{const L=latest().filter(f=>!f.screen),pd=prevDate(L);return L.length&&L[0].date?`${fmtD(L[0].date).replace(/ \d{4}$/,'')} report${pd?', compared with '+mon(pd):''}. Tap an organ.`:lineFor()})());const L=latest(),by=orgsWith(L),orgs=Object.keys(by);xbody(orgs);CAM(HOME0.z*1.22,HOME0.y+.28);/* wide screens: the organs fill the space left of the card, the same view the phone gets, not a small far-away body */
+function vBody(){shape();head(who()+' · BODY',bodyTitle(),(()=>{const L=latest().filter(f=>!f.screen),pd=prevDate(L);return L.length&&L[0].date?`${fmtD(L[0].date).replace(/ \d{4}$/,'')} report${pd?', compared with '+mon(pd):''}. Tap an organ.`:lineFor()})());const L=latest(),by=orgsWith(L),orgs=Object.keys(by);xbody(orgs);sbLook(true);CAM(HOME0.z*1.22,HOME0.y+.28);/* wide screens: the organs fill the space left of the card, the same view the phone gets, not a small far-away body */
  if(LAY[3]){body.position.x=0;requestAnimationFrame(()=>{if(!VIEW||VIEW.k!=='body')return;pregResults();homeFit(innerWidth>=980?.84:.9)})}else body.position.x=0;
  const SENSI=/\bhiv\b|hbsag|hepatitis|\bhcv\b|anti.?hcv|vdrl|\brpr\b|syphilis|tpha|chlamydia|gonorr|herpes|\bhsv\b|\bhpv\b|\bsti\b/i,byP=orgsWith(L.filter(f=>!SENSI.test(f.test||'')));/* infection screens stay off the headline pins */
  const pins=Object.entries(byP).filter(([o])=>onBody(o)&&o!=='testis')/* testes: listed, never pinned (below the frame, private) */.sort((a,b)=>fRank(b[1])-fRank(a[1])).slice(0,innerWidth<700?(document.body.classList.contains('tz')||KID?2:4):6);/* a child's body is narrow: the two that matter most, so the tags stay off it *//* larger text on a phone: the two that matter most, so the tags stay off the body */let side=1;
@@ -1701,7 +1815,7 @@ async function boot(d){DATA=d;applyStage();{const NOORG=/\bhiv\b|hbsag|hepatitis
   /* a screening test (HIV, hepatitis) says nothing about how an organ works, and blood group is who you are, not a result: neither tints an organ. A lab's raw "OD value" row sits behind its plain result. */
   const F0=d.findings||[];d.findings=F0.filter(f=>!ID.test(f.test||'')&&!(od(f)&&F0.some(g=>g!==f&&g.rid===f.rid&&!od(g)&&k2(g)===k2(f))));d.findings.forEach(f=>{if(NOORG.test(f.test||'')){f.org=null;f.screen=1}})}
  (d.findings||[]).forEach(f=>{if(f.test&&!f.raw){f.raw=f.test;const pl=plainTest(f.test);f.test=pl+(/od value|index|s\/co ratio/i.test(f.raw)&&pl!==f.raw?' (level)':'');f.value=String(f.value||'').replace(/^non ?reactive$/i,'Not detected').replace(/^reactive$/i,'Detected')}});document.documentElement.lang=U.lang;const sex=d.person.sex==='female'?'female':'male';STATE.base=sex;STATE.sex=sex;STATE.hd=false;
- KIDB=kidBand();KID=null;SET=await loadSex(sex,false);build(SET);if(KIDB){try{await kidApply(KIDB)}catch(e){KID=null}}shape();HOME0={z:HOME.z,y:HOME.y};$('#load').style.display='none';
+ KIDB=kidBand();KID=null;SET=await loadSex(sex,false);build(SET);if(KIDB){try{await kidApply(KIDB)}catch(e){KID=null}}shape();/* start fetching the website body now, so it is ready by the time the body view opens */setTimeout(()=>{try{if(sbOk())sbLoad()}catch(_){}},0);HOME0={z:HOME.z,y:HOME.y};$('#load').style.display='none';
  modes();const st=d.start||'';VIEW=null;VSTACK=[];
  const [k,arg]=[st.split(':')[0],st.slice(st.indexOf(':')+1)];
  if(k==='organ'||k==='focus')await vshow(arg==='heart'?{k:'heart'}:{k:'organ',o:arg});else if(k==='report')await vshow({k:'report',rid:arg});else if(k==='med')await vshow({k:'med',name:arg});
