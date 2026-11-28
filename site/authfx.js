@@ -37,7 +37,10 @@
 .ub-fig img{height:112%;width:auto;margin-top:max(64px,9%)}
 .ub-c{position:absolute;padding:8px 12px;border-radius:14px;background:rgba(12,30,44,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 0 1px rgba(143,227,255,.2);font-size:13px;line-height:1.3;color:#F2F2EF}
 .ub-c b{display:block;font-weight:600}.ub-c i{font-style:normal;color:#7BE3A6}
-.ub-c.l{left:5%;top:40%}.ub-c.r{right:5%;top:52%}
+/* chips sit in the open space beside the head, never on the body; the phone banner is too narrow for them */
+.ub-c{max-width:calc(50% - 60px);white-space:normal}
+.ub-c.l{left:max(16px,5%);top:21%}.ub-c.r{right:max(16px,5%);top:30%}
+@media (max-width:979px){.ub-c{display:none}}
 .ubody .ufx-copy{background:linear-gradient(180deg,transparent,rgba(7,18,27,.9) 34%,#07121B);color:#F2F2EF;z-index:2}
 .ubody .ufx-copy p{color:#AEB8C2;opacity:1}
 .ubody .ufx-copy h2{color:#fff}
@@ -223,8 +226,8 @@
     host.classList.remove('ufx', 'user', 'partner');
     host.classList.add('ubody');
     host.innerHTML = `<a class="ufx-logo" href="/">${MARK}Urban Health</a>` +
-      `<div class="ub-fig"><img src="/brand/auth-body5.webp" alt="" width="565" height="1027" decoding="async">` +
-      `<span class="ub-c l"><b>Heart</b><i>LDL 98 · good</i></span><span class="ub-c r"><b>Liver</b><i>ALT 28 · good</i></span></div>` +
+      `<div class="ub-fig"><img src="/brand/auth-body6.webp" alt="" width="565" height="1027" decoding="async">` +
+      `<span class="ub-c l"><b>Heart · LDL</b><i>98 mg/dL · in lab range</i></span><span class="ub-c r"><b>Liver · ALT</b><i>28 U/L · in lab range</i></span></div>` +
       `<div class="ufx-copy"><h2>Your family's health,<br>on one body.</h2><p>Reports, medicines and doctors for everyone you look after.</p>${apps('user')}</div>`;
   }
   function banner(kind) {
