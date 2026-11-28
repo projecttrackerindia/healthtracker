@@ -31,6 +31,42 @@
 
   /* ---------------------------------------------------------------- styles (injected once) */
   const css = `
+/* Brand blue sign-in card */
+.ub2host{background:#FBFBFA!important;padding:20px!important;box-sizing:border-box}
+.ub2host:after{display:none!important}
+.ub2{position:relative;height:100%;border-radius:36px;overflow:hidden;color:#fff;font-family:inherit;
+ background:radial-gradient(70% 55% at 50% 36%,#2C54EC 0%,#2C54EC 45%,rgba(44,84,236,0) 75%),linear-gradient(165deg,#3B66FF 0%,#2C54EC 50%,#1C32B0 100%)}
+.ub2-logo{position:absolute;left:36px;top:32px;z-index:4;display:flex;align-items:center;gap:10px;color:#fff!important;font:600 18px/1 inherit;font-size:18px;font-weight:600;text-decoration:none!important}
+.ub2-logo svg{width:32px;height:32px;color:#fff}.ub2-logo svg path,.ub2-logo svg circle{fill:#2F5BFF}.ub2-logo svg path[stroke]{fill:none;stroke:#2F5BFF}
+.ub2-img{position:absolute;left:50%;transform:translateX(-50%);top:76px;height:58%;aspect-ratio:900/1140;
+ -webkit-mask-image:radial-gradient(ellipse 58% 62% at 50% 38%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 58% 62% at 50% 38%,#000 62%,transparent 100%)}
+.ub2-img img{width:100%;height:100%;display:block}
+.ub2-glow,.ub2-shadow{display:none}
+.ub2-chip{position:absolute;z-index:3;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.93);color:#1D1D1F;min-width:132px;
+ box-shadow:0 16px 40px -12px rgba(10,20,80,.45)}
+.ub2-chip small{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;color:#8E8E93;text-transform:uppercase}
+.ub2-chip div{display:flex;align-items:baseline;gap:5px;margin-top:4px}.ub2-chip b{font-size:24px;font-weight:700;letter-spacing:-.03em}.ub2-chip span{font-size:13px;color:#6E6E73}
+.ub2-chip em{display:block;font-style:normal;font-size:12.5px;color:#6E6E73}
+.ub2-chip i{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:3px 9px 3px 7px;border-radius:999px;background:#E8F5EC;color:#1A7F37;font-style:normal;font-size:12px;font-weight:600}
+.ub2-chip i:before{content:'';width:6px;height:6px;border-radius:3px;background:#1A7F37}
+.ub2-ln{position:absolute;height:1px;z-index:2;pointer-events:none}
+.ub2-dot{position:absolute;width:12px;height:12px;border-radius:6px;background:#fff;box-shadow:0 0 0 9px rgba(255,255,255,.22);z-index:2;pointer-events:none}
+.ub2-copy{position:absolute;left:44px;right:44px;bottom:40px;z-index:4}
+.ub2-eb{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#BFD0FF}
+.ub2-copy h2{margin:10px 0 0;font-size:clamp(32px,3vw,42px);line-height:1.06;letter-spacing:-.04em;font-weight:700;color:#fff}
+.ub2-copy p{margin:12px 0 0;font-size:16.5px;line-height:1.5;color:#D6E0FF;max-width:440px;opacity:1}
+.ub2-foot{display:flex;align-items:center;gap:16px;margin-top:22px;flex-wrap:wrap}
+.ub2-foot .ufx-apps{display:flex;align-items:center;gap:16px;margin:0}
+.ub2-foot .ufx-dl{background:#fff!important;color:#14161F!important;border-radius:23px!important;box-shadow:none!important}
+.ub2-foot .ufx-dl small{color:#6E6E73!important}
+.ub2-foot .ufx-ios{display:none}
+.ub2-trust{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#D6E0FF}
+@media (max-width:979px){
+ .ub2host{padding:12px 12px 0!important}
+ .ub2{border-radius:30px}
+ .ub2-logo,.ub2-copy,.ub2-chip{display:none!important}
+ .ub2-img{top:8px;height:calc(100% + 30px)}
+}
 .ubody{position:relative;overflow:hidden;color:#F2F2EF;background:radial-gradient(70% 55% at 50% 40%,#173A52 0%,#0C1F2E 55%,#07121B 100%);font-family:inherit}.ubody:after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:radial-gradient(1.5px 1.5px at 12% 22%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 78% 31%,#8FE3FF 50%,transparent 51%),radial-gradient(1.2px 1.2px at 64% 72%,#8FE3FF 50%,transparent 51%),radial-gradient(1px 1px at 28% 66%,#8FE3FF 50%,transparent 51%),radial-gradient(1.4px 1.4px at 88% 84%,#8FE3FF 50%,transparent 51%)}
 .ubody .ufx-logo{color:#F2F2EF;z-index:2}.ubody .ufx-logo svg{color:#8FE3FF}
 .ub-fig{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;justify-content:center;pointer-events:none}
@@ -219,16 +255,59 @@
     size(); start();
   }
 
-  /* Light stage for the family app (approved board 12): the real 3D body with two results, no animation, no canvas. */
+  /* Family app sign-in and create account (approved Nov 2026, "Brand blue"): a rounded blue card with the real 3D body,
+     rendered by the app's own viewer on the blue so its lighting survives. On sign-in two results point at their organs
+     with the lab's own wording; each create-account step has its own line. Phones show the card as a banner, body only. */
+  const ART = {
+    signin: { eb: 'For every family in India', h: "Your family's health,<br>on one body.", p: 'Every report, medicine and doctor visit for everyone you look after, in one secure place.', chips: 1 },
+    s1: { eb: 'Step 1 · Your number', h: 'One number for<br>the whole family.', p: 'Your mobile number is your account. We check it with a one-time code.' },
+    s2: { eb: 'Step 2 · Your health card', h: 'Your body is<br>taking shape.', p: 'It fills in as you add your details and your first report.' },
+    s3: { eb: 'Step 3 · Your choices', h: 'You decide<br>who sees what.', p: 'Nothing is shared unless you switch it on. Your data stays in India.' },
+    s4: { eb: 'Step 4 · SOS', h: 'Help reaches the<br>right people.', p: 'One hold on SOS calls them and shares where you are.' },
+    s5: { eb: 'Almost done', h: 'Bring your<br>family in.', p: 'Add the people you look after. Each one gets their own body and records.' }
+  };
+  const PIN = { heart: [.54, .237], liver: [.44, .395] };
+  const LOCK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  function chip(k, o, v, u, t) {
+    return `<div class="ub2-chip" data-k="${k}"><small>${o}</small><div><b>${v}</b><span>${u}</span></div><em>${t}</em><i>In lab range</i></div>`;
+  }
+  function placeChips(host) {
+    const card = host.querySelector('.ub2'), img = host.querySelector('.ub2-img');
+    if (!card || !img) return;
+    card.querySelectorAll('.ub2-ln,.ub2-dot').forEach(e => e.remove());
+    const wide = card.clientWidth >= 420 && innerWidth >= 980, C = card.getBoundingClientRect(), I = img.getBoundingClientRect();
+    card.querySelectorAll('.ub2-chip').forEach(ch => {
+      if (!wide || !I.width) { ch.style.display = 'none'; return; }
+      ch.style.display = '';
+      const k = ch.dataset.k, p = PIN[k], px = I.left - C.left + p[0] * I.width, py = I.top - C.top + p[1] * I.height, right = k === 'heart';
+      const cw = ch.offsetWidth, chh = ch.offsetHeight;
+      const x = right ? Math.min(C.width - cw - 24, I.right - C.left - 8) : Math.max(24, I.left - C.left - cw + 8);
+      ch.style.left = x + 'px'; ch.style.top = (py - chh * .32) + 'px';
+      const ax = right ? x : x + cw, ay = py, dx = px - ax, dy = 0, len = Math.abs(dx);
+      const ln = document.createElement('div'); ln.className = 'ub2-ln';
+      ln.style.cssText = `left:${Math.min(ax, px)}px;top:${ay}px;width:${len}px;background:linear-gradient(${right ? 270 : 90}deg,rgba(255,255,255,.25),rgba(255,255,255,.9))`;
+      const dot = document.createElement('div'); dot.className = 'ub2-dot'; dot.style.left = (px - 6) + 'px'; dot.style.top = (py - 6) + 'px';
+      card.appendChild(ln); card.appendChild(dot);
+    });
+  }
+  let UB2RO = null;
   function body(host) {
     styleOnce();
     if (FX.cv && FX.cv.parentNode && host.contains(FX.cv)) { FX.ro.disconnect(); }
     host.classList.remove('ufx', 'user', 'partner');
-    host.classList.add('ubody');
-    host.innerHTML = `<a class="ufx-logo" href="/">${MARK}Urban Health</a>` +
-      `<div class="ub-fig"><img src="/brand/auth-body6.webp" alt="" width="565" height="1027" decoding="async">` +
-      `<span class="ub-c l"><b>Heart · LDL</b><i>98 mg/dL · in lab range</i></span><span class="ub-c r"><b>Liver · ALT</b><i>28 U/L · in lab range</i></span></div>` +
-      `<div class="ufx-copy"><h2>Your family's health,<br>on one body.</h2><p>Reports, medicines and doctors for everyone you look after.</p>${apps('user')}</div>`;
+    host.classList.add('ubody', 'ub2host');
+    const step = (document.body.dataset.uhstep || 'signin'), a = ART[step] || ART.signin;
+    host.innerHTML = `<div class="ub2">` +
+      `<a class="ub2-logo" href="/">${MARK}Urban Health</a>` +
+      `<div class="ub2-glow"></div><div class="ub2-shadow"></div>` +
+      `<div class="ub2-img"><img src="/brand/auth-blue.webp" alt="" width="900" height="1140" decoding="async"></div>` +
+      (a.chips ? chip('heart', 'Heart', '98', 'mg/dL', 'LDL cholesterol') + chip('liver', 'Liver', '28', 'U/L', 'ALT (SGPT)') : '') +
+      `<div class="ub2-copy"><div class="ub2-eb">${a.eb}</div><h2>${a.h}</h2><p>${a.p}</p>` +
+      `<div class="ub2-foot">${apps('user')}<span class="ub2-trust">${LOCK}Encrypted · your data stays in India</span></div></div></div>`;
+    const im = host.querySelector('.ub2-img img'), go = () => placeChips(host);
+    if (im.complete) requestAnimationFrame(go); else im.addEventListener('load', go, { once: true });
+    if (UB2RO) UB2RO.disconnect();
+    if (window.ResizeObserver) { UB2RO = new ResizeObserver(go); UB2RO.observe(host); }
   }
   function banner(kind) {
     kind = kind === 'partner' ? 'partner' : 'user';

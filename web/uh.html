@@ -33,7 +33,7 @@
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/brand/png/user-icon-180.png">
 <title>Urban Health</title>
-<script src="/s/authfx.js?v=11" defer></script>
+<script src="/s/authfx.js?v=12" defer></script>
 <style>
 @font-face{font-family:Manrope,Geist;src:url(/a/geist.19f9c925.woff2) format('woff2');font-weight:100 900;font-display:swap}
 :root{--ink:#1D1D1F;--ink2:#515154;--ink3:#6E6E73;--bg:#F2F2EF;--blue:#2F5BFF;--ai:#5E5CE6;--ai-ink:#4B49C8;--red:#B3261E;--green:#1A7F37;--amber:#9A5B00;--rose:#A8436A;
@@ -5336,16 +5336,19 @@ function authDress(){const L=$('#layer');if(!L)return;
  const go=()=>{const h=L.querySelector('.authart');if(h&&window.UHFX){if(UHFX.body)UHFX.body(h);else UHFX.stage(h,'user');const a=L.querySelector('.aapps');if(a)a.innerHTML=UHFX.apps('user')}};
  const pw=L.querySelector('[data-pwrules]');const gp=()=>pw&&pw.dispatchEvent(new Event('input',{bubbles:true}));
  if(window.UHFX){go();gp()}else addEventListener('load',()=>{go();gp()},{once:true})}
+/* create account (approved Nov 2026): the same step header on every step, phone and laptop; four numbered steps, then family */
+function stepHead(n){const done=n>4;return`<div class="sth"><span>${done?'Almost done':'Step '+n+' of 4'}</span>${n===1?`<a href="#" onclick="authPage('signin');return false">Sign in instead</a>`:''}</div><div class="stp">${[1,2,3,4].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`}
+function stepImg(){return'<img class="stimg" src="/brand/auth-blue.webp" alt="" width="52" height="66">'}
 async function authPage(mode){mode=mode||'signin';try{localStorage.removeItem('uh-act')}catch(_){}const cfg=await authCfg();
- const su=mode==='signup';mode='signin';{const pkOK=!!window.PublicKeyCredential&&!su,keep=su||!!sessionStorage.getItem('uh-id')||!pkOK;
- authShell(`${su&&innerWidth>=980?`<div class="obh"><b>Create your account</b><span>1 of 5</span></div><div class="obs"><i class="on"></i><i></i><i></i><i></i><i></i></div>`:''}<img src="/brand/svg/user-logo.svg" alt="Urban Health" height="32" style="margin:10px 0 24px"><div class="alogo"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg>Urban Health</div>${su?`<h1 class="big">Create your account</h1><p class="line">Just your mobile number. We verify it, then ask your name.</p>`:`<h1 class="big"><span class="amb">Your family's health, on one body.</span><span class="adk">Sign in</span></h1><p class="line"><span class="amb">Reports, medicines and doctors for everyone you look after.</span><span class="adk">Use a passkey, or your mobile number or email.</span></p>`}
+ const su=mode==='signup';document.body.dataset.uhstep=su?'s1':'signin';mode='signin';{const pkOK=!!window.PublicKeyCredential&&!su,keep=su||!!sessionStorage.getItem('uh-id')||!pkOK;
+ authShell(`${su?stepHead(1):''}<img src="/brand/svg/user-logo.svg" alt="Urban Health" height="32" style="margin:10px 0 24px"><div class="alogo"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2F5BFF"/><path d="M21.5 15a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V37.5H13a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4h8.5z" fill="#fff"/><path d="M32 32h5l3.2-8 4.6 16 3.2-8h.4" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55.2" cy="32" r="3.3" fill="#fff"/></svg>Urban Health</div>${su?`<h1 class="big">${stepImg()}Verify your mobile number</h1><p class="line">So only you can open your family’s records. We send a 6-digit code.</p>`:`<h1 class="big"><span class="amb">Your family's health, on one body.</span><span class="adk">Sign in</span></h1><p class="line"><span class="amb">Reports, medicines and doctors for everyone you look after.</span><span class="adk">Use a passkey, or your mobile number or email.</span></p>`}
  ${pkOK?`<button class="btn pri" style="width:100%;margin-top:18px" id="pkb" onclick="passkeyLogin()">${ic(I.lock,'#fff',20)}Sign in with passkey</button>`:''}
  <button class="btn sec" id="mob" style="width:100%;margin-top:10px;background:#fff;box-shadow:inset 0 0 0 1px #D2D2D7;${keep?'display:none':''}" onclick="this.style.display='none';const w=$('#mwrap');w.style.display='';w.querySelector('input').focus()">${ic(I.phone,'#1D1D1F',19)}Use mobile number</button>
  <div id="mwrap" style="${keep?'':'display:none'}"><form id="af"><div class="sect">${su?'MOBILE NUMBER':'MOBILE OR EMAIL'}</div><input class="inp2" name="id" required autocomplete="${su?'tel':'username'}" inputmode="${su?'tel':'email'}" placeholder="${su?'98765 43210':'98765 43210 or name@gmail.com'}" value="${esc(su?'':sessionStorage.getItem('uh-id')||'')}">
  <button class="btn ${pkOK?'sec':'pri'}" style="width:100%;margin-top:16px" id="ab">Continue</button><p class="cap" id="ahint" style="text-align:center;margin-top:10px">${cfg.rsms?"For a mobile number, you'll send us one text. No code to type.":"We'll send you a 6-digit code."}</p></form>
  ${su?'':`<button class="btn ghost" style="width:100%;color:var(--blue)" onclick="pwPage($('#af [name=id]').value)">Use password instead</button>`}
  <div id="gwrap" style="display:none;margin-top:10px"><div class="row" style="gap:10px;color:var(--ink3);font-size:13px"><span style="flex:1;height:1px;background:#D1D1D6"></span>or<span style="flex:1;height:1px;background:#D1D1D6"></span></div><div id="gbtn" style="display:flex;justify-content:center;margin-top:14px;min-height:44px"></div></div></div>
- <p class="cap anew" style="text-align:center;margin-top:22px">${su?`Already have an account? <a href="#" onclick="authPage('signin');return false">Sign in</a>`:`New here? <a href="#" onclick="authPage('signup');return false">The same mobile number creates your account.</a>`}</p>${!su&&innerWidth>=980?`<div class="card asteps"><small>New accounts take about two minutes</small>${['Verify your mobile number','Create your health card','Choose what you share','Add emergency contacts'].map((t,i)=>`<div><i>${i+1}</i>${t}</div>`).join('')}</div>${window.UHL?`<div class="alang">${['en','ta','te','hi'].map(l=>`<button class="${UHL.get()===l?'on':''}" lang="${l}" onclick="UHL.set('${l}');authPage('signin')">${UHL.names[l]}</button>`).join('')}</div>`:''}`:''}`)}
+ <p class="cap anew" style="text-align:center;margin-top:22px">${su?`Already have an account? <a href="#" onclick="authPage('signin');return false">Sign in</a>`:`New here? <a href="#" onclick="authPage('signup');return false">The same mobile number creates your account.</a>`}</p>${!su?`<div class="card asteps"><small>New accounts take about two minutes</small>${['Verify your mobile number','Create your health card','Choose what you share','Add emergency contacts'].map((t,i)=>`<div><i>${i+1}</i>${t}</div>`).join('')}</div>${window.UHL?`<div class="alang">${['en','ta','te','hi'].map(l=>`<button class="${UHL.get()===l?'on':''}" lang="${l}" onclick="UHL.set('${l}');authPage('signin')">${UHL.names[l]}</button>`).join('')}</div>`:''}`:''}`)}
  googleInit();
  $('#af').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),b=$('#ab');
   b.disabled=true;try{
@@ -5468,16 +5471,15 @@ function onbPhoto(){const me=ME.me&&P(ME.me);let kind='prescription';
  $('#ob0cam').onclick=()=>pick(true);$('#ob0pdf').onclick=()=>pick(false);$('#ob0skip').onclick=()=>onboard(1)}
 function onbNext(){if(!ONBP)return false;ONBP=false;onboard(1);return true}
 function onbContinue(){if(!ONBP)return;setTimeout(()=>{const pg=document.querySelector('#layer .page:last-child .pin')||document.querySelector('#layer .page .pin');if(!pg||pg.querySelector('#onbgo'))return;const b=document.createElement('button');b.id='onbgo';b.className='btn pri';b.style.cssText='width:100%;height:56px;font-size:17px;margin-top:18px';b.textContent='Continue setup';b.onclick=onbNext;pg.appendChild(b)},300)}
-function onboard(step){const me=ME.me&&P(ME.me);step=step??(!me?0:PERMS&&!PERMS.asked?2:!(me.medicalId.contacts||[]).length?3:4);if(step===0)return onbPhoto();
- const bar=`<div class="row" style="gap:6px;margin-bottom:18px">${[1,2,3,4].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=step?'#2F5BFF':'#D1D1D6'}"></div>`).join('')}</div><p class="eyebrow">STEP ${step} OF 4</p>`;
- const OBT=['','About you','Your choices','In an emergency','Your family'][step]||'';const wrap=b=>innerWidth>=980?authShell(`<div class="obh"><b>${OBT}</b><span>${step+1} of 5</span></div><div class="obs">${[0,1,2,3,4].map(i=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>${b}`):layer(`<div class="page" style="left:0"><div class="pin" style="padding-top:max(30px,env(safe-area-inset-top))">${bar}${b}</div></div>`);
- if(step===1){wrap(`<h1 class="big">Let’s make your <span class="hpl">health card</span></h1><p class="line">This builds your Medical ID and 3D body.</p><form id="of">${profileForm(me&&me.profile,{nameVal:(me&&me.name)||ME.user.name})}${ME.user.phone?'':`<div class="sect">YOUR MOBILE NUMBER</div><input class="inp2" name="phone" required inputmode="tel" autocomplete="tel" placeholder="98765 43210" value="${esc((me&&me.profile&&me.profile.phone)||'')}"><p class="cap">Sent with SOS so your contacts and 108 can call you back.</p>`}<button class="btn pri" style="width:100%;margin-top:20px">Continue</button></form>`);
+function onboard(step){const me=ME.me&&P(ME.me);step=step??(!me?0:PERMS&&!PERMS.asked?2:!(me.medicalId.contacts||[]).length?3:4);if(step===0)return onbPhoto();document.body.dataset.uhstep='s'+(step+1);
+ const head=stepHead(step+1);const wrap=b=>innerWidth>=980?authShell(head+b):layer(`<div class="page obp" style="left:0"><div class="pin" style="padding-top:max(30px,env(safe-area-inset-top))">${head}${b}</div></div>`);
+ if(step===1){wrap(`<h1 class="big">${stepImg()}Create your health card</h1><p class="line">Doctors and first responders read this in an emergency. It also builds your 3D body.</p><form id="of">${profileForm(me&&me.profile,{nameVal:(me&&me.name)||ME.user.name})}${ME.user.phone?'':`<div class="sect">YOUR MOBILE NUMBER</div><input class="inp2" name="phone" required inputmode="tel" autocomplete="tel" placeholder="98765 43210" value="${esc((me&&me.profile&&me.profile.phone)||'')}"><p class="cap">Sent with SOS so your contacts and 108 can call you back.</p>`}<button class="btn pri" style="width:100%;margin-top:20px">Continue</button></form>`);
   $('#of').noValidate=true;$('#of').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const miss=!String(f.get('name')||'').trim()?'Enter your full name':!f.get('dob')?'Add your date of birth':!f.get('sex')?'Choose your sex':'';if(miss){toast(miss);return}try{if(me)await API('/api/v2/people/'+me.id,{method:'PUT',json:{name:f.get('name').trim(),profile:formProfile(f)}});else await API('/api/v2/people',{json:{name:f.get('name').trim(),profile:formProfile(f)}});await refreshMe();onboard(2)}catch(err){toast(err.message)}}}
- if(step===3){wrap(`<h1 class="big">Who should we call <span class="hpl">first</span>?</h1><p class="line">SOS calls these people first and sends them your location and Medical ID. At least one is required.</p>${contactsBody(me)}<button class="btn pri" style="width:100%;margin-top:18px" id="on2" ${(me.medicalId.contacts||[]).length?'':'disabled style="opacity:.4;width:100%;margin-top:18px"'}>Continue</button>`);
+ if(step===3){wrap(`<h1 class="big">${stepImg()}Add emergency contacts</h1><p class="line">Who we call first when you hold SOS. They get your location and Medical ID. Add at least one.</p>${contactsBody(me)}<button class="btn pri" style="width:100%;margin-top:18px" id="on2" ${(me.medicalId.contacts||[]).length?'':'disabled style="opacity:.4;width:100%;margin-top:18px"'}>Continue</button>`);
   bindContacts(()=>onboard(3));$('#on2').onclick=()=>{if((P(ME.me).medicalId.contacts||[]).length)onboard(4)}}
- if(step===2){PSEL=PSEL||{};wrap(`<h1 class="big">You decide each one, <span class="hpl">separately</span></h1><p class="line">Choose what Urban Health may use. You can change any of these later in Settings.</p><div id="permpg">${permsBody()}</div><button class="btn pri" style="width:100%;margin-top:18px" id="on3">Continue</button>`);
+ if(step===2){PSEL=PSEL||{};wrap(`<h1 class="big">${stepImg()}Choose what you share</h1><p class="line">Switch on only what you want. Nothing is shared until you do, and you can change any of these later in You › Privacy.</p><div id="permpg">${permsBody()}</div><button class="btn pri" style="width:100%;margin-top:18px" id="on3">Continue</button>`);
   const draw=()=>{const pg=$('#permpg');if(pg){pg.innerHTML=permsBody();permsBind(pg,draw)}};permsBind($('#permpg'),draw);$('#on3').onclick=async()=>{await permsSave('signup');onboard(3)}}
- if(step===4){wrap(`<h1 class="big">Add your family</h1><p class="line">Invite adults to join with their own login, or add a child or elder who has no phone.</p><div class="list" style="margin-top:16px">${ME.people.filter(p=>!p.self).map(p=>`<div class="li">${esc(p.name)}<span class="end">${p.dependent?'Dependent':'Joined'}</span></div>`).join('')}${ME.invites.map(i=>`<div class="li">${esc(i.contact)}<span class="end">Invited</span></div>`).join('')}</div>
+ if(step===4){wrap(`<h1 class="big">${stepImg()}Add your family</h1><p class="line">Invite adults to join with their own login, or add a child or elder who has no phone.</p><div class="list" style="margin-top:16px">${ME.people.filter(p=>!p.self).map(p=>`<div class="li">${esc(p.name)}<span class="end">${p.dependent?'Dependent':'Joined'}</span></div>`).join('')}${ME.invites.map(i=>`<div class="li">${esc(i.contact)}<span class="end">Invited</span></div>`).join('')}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn sec" onclick="openAddChild()">Add a child</button><button class="btn sec" onclick="openAddFamily()">Add someone else</button></div><button class="btn pri" style="width:100%;margin-top:22px" onclick="finishOnboarding()">Open Urban Health</button>`)}}
 /* Laptop first run (board LapFirstRun): straight after sign-up, start with one record */
 function firstRunScreen(){const T=(icn,t,go,dim)=>`<button class="frt${dim?' dim':''}" ${dim?'disabled':''} onclick="${go}">${ic(icn,dim?'#8E8E93':'#2F5BFF',22)}<b>${t}</b>${dim?'<small>Coming soon</small>':''}</button>`;
@@ -6474,5 +6476,40 @@ document.addEventListener('input',e=>{const t=e.target;if(!t.matches||!t.matches
   else box.textContent=v.length<12?`${12-v.length} more characters`:'';}
  const sb=f.querySelector('button.btn.pri,button[type=submit]');if(sb&&f.querySelector('#pwr')){sb.disabled=!!fails||pw.value.length<12;sb.style.opacity=sb.disabled?.45:1}},true);
 </script>
+<style id="auth2">
+/* ===== Sign-in and create account, Brand blue (approved Nov 2026). Last in the page so it wins over the older auth rules. */
+#layer .page.auth,body .page.auth{background:#FBFBFA!important}
+#layer .page.auth .pin.aflow{background:#FBFBFA!important}
+#layer .page.obp{background:#FBFBFA}
+#layer .page.auth .authart.ubody{background:#FBFBFA!important;border-radius:0!important}
+#layer .page.auth .authart.ubody~.aflow,#layer .page.auth .authart.ubody+.pin.aflow{box-shadow:none!important}
+#layer .page.auth .aflow .asteps{background:#fff!important;box-shadow:0 0 0 1px rgba(0,0,0,.06)!important}
+#layer .page.auth .aflow .alang button{box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+#layer .page.auth .aflow .alang button.on{box-shadow:none}
+.sth{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;font-size:13.5px;font-weight:600;color:#6E6E73}
+.sth a{color:#2F5BFF!important;text-decoration:none}
+.stp{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 22px}
+.stp i{height:4px;border-radius:2px;background:#E5E5EA}.stp i.on{background:#2F5BFF}
+.stimg{display:none}
+/* the sticky Continue on long steps sits on a soft band of the page colour, so fields scrolling under it never show through */
+#layer .page.obp .btn.pri{box-shadow:0 0 0 16px #FBFBFA,0 -12px 0 16px #FBFBFA,0 30px 0 16px #FBFBFA}
+#layer .page.auth .aflow .sth~.alogo{display:none!important}
+#layer .page.auth .asteps{padding:14px 18px!important;border-radius:22px!important}
+#layer .page.auth .asteps small{display:block;font-size:13px;color:#6E6E73;margin-bottom:6px}
+#layer .page.auth .asteps div{display:flex;align-items:center;gap:12px;padding:7px 0;font-size:15px;color:#1D1D1F}
+#layer .page.auth .asteps i{width:26px;height:26px;border-radius:50%;background:#EEF2FF;color:#2F5BFF;font-style:normal;font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+#layer .page.auth .alang{display:flex;justify-content:center;gap:8px;margin-top:16px;flex-wrap:wrap}
+#layer .page.auth .alang button{border:0;border-radius:999px;background:#fff;padding:9px 16px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;color:#1D1D1F}
+#layer .page.auth .alang button.on{background:#111214;color:#fff}
+@media (max-width:979px){#layer .page.obp h1.big,#layer .page.auth .aflow h1.big{font-size:28px!important;line-height:1.1}}
+.page.auth .stimg{display:none!important}
+#layer .page.auth .aflow>img[src*="user-logo"]{display:none!important}
+@media (max-width:979px){
+ #layer .page.auth .pin.aflow{border-radius:0!important;margin:0!important;box-shadow:none!important;padding-top:22px!important}
+ #layer .page.auth .authart.ubody{height:clamp(240px,calc(36vh/var(--uz,1)),330px)!important}
+ h1.big:has(.stimg){display:flex;align-items:center;gap:12px}
+ .stimg{display:block;width:52px;height:64px;object-fit:cover;object-position:50% 8%;border-radius:14px;flex:none;background:#2C54EC}
+}
+</style>
 </body>
 </html>
