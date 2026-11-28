@@ -575,7 +575,7 @@ function tags(list){$('#tags').innerHTML='';list.forEach(t=>{const el=document.c
  const emb=document.body.classList.contains('emb'),org0=t.org.split(' · ')[0],tst=(t.raw||t.org.split(' · ')[1]||'').replace(/\s*cholesterol$/i,'').replace(/\s*\(.*$/,'').replace(new RegExp('^'+org0.split(/\s/)[0].replace(/[^A-Za-z]/g,'')+'\\s+','i'),'');
  // embedded on the doctor's screen: the organ, then the test and its value in the flag's colour (board 10)
  el.innerHTML=t.mid&&emb?`<small style="font-weight:700;color:var(--ink)">${esc(org0.replace(/^.*&\s*/,'').replace(/^./,c=>c.toUpperCase()))}</small><b style="color:${esc(t.col||'#1D1D1F')};font-weight:600;font-size:12px">${esc(tst)} ${esc(String(t.val).slice(0,12))}${t.unit&&!/mg\/dl|u\/l/i.test(t.unit)?' '+esc(t.unit):''}</b>`
- :t.mid?`<small>${esc(org0.length>10&&tst?(/^ldl|^hdl/i.test(tst)?tst+' cholesterol':tst):org0+(tst&&tst.toLowerCase()!==org0.toLowerCase()?' · '+(tst.length>16?tst.split(' ')[0]:tst):''))}</small><b>${esc(String(t.val).slice(0,30))}${t.unit&&String(t.unit).length<8?'<i style="font-style:normal;font-weight:500;font-size:11px;color:var(--ink2)"> '+esc(t.unit)+'</i>':''}</b>${t.k&&t.k!=='none'?`<em class="tst ${t.k}">${STI2[t.k]}${esc(t.kw||'')}</em>`:t.trend?`<small style="color:${esc(t.col||'#6E6E73')};font-weight:600">${esc(t.trend)}</small>`:''}`:t.big?`<small>${esc(t.org)}${t.test?' · '+esc(t.test):''}</small>${t.val!==''&&t.val!=null?`<b>${esc(t.val)}<i>${esc(t.unit||'')}</i></b>`:''}<span class="pill ${esc(t.cls)}">${/^st-/.test(t.cls||'')?STI2[t.cls.slice(3)]||'':''}${esc(t.flag)}</span>`:`<span class="dot" style="background:${esc(t.col)}"></span>${esc(t.org)}`;el._c=t.pt?t.pt.clone():t.all?centerOfAll(t.re):centerOf(t.re);el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
+ :t.mid?`<small>${esc(org0.length>10&&tst?(/^ldl|^hdl/i.test(tst)?tst+' cholesterol':tst):org0+(tst&&tst.toLowerCase()!==org0.toLowerCase()?' · '+(tst.length>16?tst.split(' ')[0]:tst):''))}</small><b>${esc(String(t.val).slice(0,30))}${t.unit&&String(t.unit).length<8?'<i style="font-style:normal;font-weight:500;font-size:11px;color:var(--ink2)"> '+esc(t.unit)+'</i>':''}</b>${t.k&&t.k!=='none'?`<em class="tst ${t.k}">${STI2[t.k]}${esc(t.kw||'')}</em>`:t.trend?`<small style="color:${esc(t.col||'#6E6E73')};font-weight:600">${esc(t.trend)}</small>`:''}`:t.big?`<small>${esc(t.org)}${t.test?' · '+esc(t.test):''}</small>${t.val!==''&&t.val!=null?`<b>${esc(t.val)}<i>${esc(t.unit||'')}</i></b>`:''}<span class="pill ${esc(t.cls)}">${/^st-/.test(t.cls||'')?STI2[t.cls.slice(3)]||'':''}${esc(t.flag)}</span>`:`<span class="dot" style="background:${esc(t.col)}"></span>${esc(t.org)}`;el._c=t.pt?t.pt.clone():t.all?centerOfAll(t.re):centerOf(t.re);el._po=t.po;el.onclick=()=>t.onTap&&t.onTap();$('#tags').appendChild(el)})}
 
 /* ===== pregnancy: growing uterus, belly shaped around it, a baby that changes shape and moves by week ===== */
 const sst=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
@@ -744,7 +744,7 @@ function reset(){try{peelEnd()}catch(_){}h3Off();ogOff();$('#card').classList.re
  if(HOLO)unholo();R.localClippingEnabled=false;for(const l in LAY){LAY[l].material.clippingPlanes=[];LAY[l].material.side=THREE.FrontSide}$('#sub').innerHTML='';$('#extra').innerHTML='';body.position.x=0;setLayer('organs');QZ=null;HURT=null}
 /* Only three screens remain (approved revamp): the body, an organ/heart, a report or medicine — plus pregnancy and credits.
    Every older view name now lands on the body. */
-async function mode(m){PANG.x=0;PANG.y=0;if(m==='baby'||m==='credits'){MODE=m;modes();reset();return({baby:mBaby,credits:mCredits})[m]()}reset();VSTACK=[];modes();return vshow(m==='heartv'?{k:'heart'}:{k:'body'})}
+async function mode(m){sbLook(false);PANG.x=0;PANG.y=0;if(m==='baby'||m==='credits'){MODE=m;modes();reset();return({baby:mBaby,credits:mCredits})[m]()}reset();VSTACK=[];modes();return vshow(m==='heartv'?{k:'heart'}:{k:'body'})}
 /* ---- bodies that match the person: proportions by age ---- */
 let SHAPED=null;
 /* bodies that match the person: height sets the size, weight (BMI) the build, age the proportions */
@@ -778,7 +778,7 @@ const URGB={hba1c:v=>v>=9,glu_f:v=>v>=200,glu_r:v=>v>=250,k:v=>v>5.5||v<3,na:v=>
 function lineFor(){const L=latest(),n=L.filter(f=>f.flag==='high'||f.flag==='low').length;return!L.length?T('tapline'):!L.some(f=>f.org)?T('screenonly'):T('results')(n)}  /* the sheet below already says there are no reports */
 const NATURAL={heart:0xB8323F,liver:0x8E3B2C,pancreas:0xD9963A,kidney:0x7E2C2C,lung:0xD99AA2,thyroid:0xB8404E,stomach:0xD98F78,gut:0xD69580,uterus:0xD0607A,brain:0xC98F88,bladder:0xD8B060,spleen:0x6E2A40,gall:0x5F8F45,adrenal:0xD89A3A,pituitary:0xB07FC8,parathyroid:0xA05CC0,testis:0xC08070,ovary:0xD0607A,oesophagus:0xD98F78,appendix:0xD69580};
 /* explore = the calm body: a natural person; only organs with a result to discuss come forward, in true colour */
-function mExplore(){shape();LAYK='organs';head(who()+' · '+T('body').toUpperCase(),'Your body',lineFor());$('#sub').innerHTML='';
+function mExplore(){sbLook(false);shape();LAYK='organs';head(who()+' · '+T('body').toUpperCase(),'Your body',lineFor());$('#sub').innerHTML='';
  const rank={high:3,low:2,unknown:1,normal:0};const by=Object.entries(orgFindings()).filter(([o])=>ORGRE[o]&&centerOf(ORGRE[o]));CAM(HOME0.z*.9,HOME0.y+.15);
  by.forEach(([o,f])=>{const g=f.flag==='normal'&&!(o==='heart'&&DATA.vitals&&+DATA.vitals.hr)?null:glow(ORGRE[o],f.flag==='normal'?(f.review?0x2F5BFF:0x009E73):f.critical?0xD55E00:0xE69F00,3,.35);if(g&&o==='heart'&&DATA.vitals&&+DATA.vitals.hr&&!U.still)PULSE={g,bpm:+DATA.vitals.hr}});
  let side=1;tags(by.map(([o,f])=>{const tr=trend(f);const t={raw:String(f.raw||f.test).split(/[(,]/)[0].trim(),org:T(o)+' · '+f.test.split('(')[0].trim(),val:f.value,unit:f.unit||'',flag:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:(STW(f)||T(f.flag)),cls:f.review?'st-review':tr&&tr.dir==='better'?(f.flag==='normal'?'ok':'warn'):FCLS[f.flag]||'info',re:ORGRE[o],side,dy:side>0?-30:30,col:OCOL[o],big:1,onTap:()=>focusOrgan(o)};side=-side;return t}));
@@ -803,7 +803,29 @@ function boxOf(re){if(!SET||!re)return null;const b=new THREE.Box3();let n=0;SET
 /* Nov 2026: blood points at the great vessels leaving the heart (shown on the vessel layer); on the children's bodies, which carry organs only,
    eyes, ears and teeth are placed from the brain */
 const KIDF={eye:[.22,-.42,.55],ear:[.56,-.32,0],teeth:[0,-.98,.42]};
-function partCenter(o){if(KID&&KTHY&&o==='thyroid'){const A=KTHY.userData.A;return new THREE.Vector3(A.x,A.y-.75*A.r,A.z+.9*A.r)}if(SBON&&SB){const A=SB.userData.thyroid;if(o==='thyroid'&&A)return new THREE.Vector3(A.x,A.y-.75*A.r,A.z+.9*A.r);if(o==='brain'&&SB.userData.brain)return SB.userData.brain.getCenter(new THREE.Vector3())}if(o==='blood'){const v=!KID&&centerOfAll(/arch of aorta|ascending aorta/i);if(v)return v;const h=centerOf(ORGRE.heart);if(h){h.y+=boxH(ORGRE.heart)*.45;return h}return null}
+/* Nov 2026: on the website body every pin sits on that body's own organ: the centre of the organ's surface (one side for paired
+   organs, the same side the atlas used), so a result never points at a neighbour */
+const SBPIN={heart:/^Heart_Wall|F_Circulatory_(Ventricle|CardiacAtrium)/,liver:/^Liver_(?!.*Ligament)|F_Digestive_(\w*Segment\w*|CaudateLobe|QuadrateLobe)$/,
+ kidney:/^Kidney_Kidney_|F_Urinary_(OuterCortex|KidneyCapsule|RenalCortex|RenalMedulla|RenalPyramid|HilumOfKidney)/,lung:/^Lung_|F_Respiratory_\w*BronchopulmonarySegm/,
+ pancreas:/^Pancreas_(?!.*Duct)|F_Digestive_(Head|Body|Tail|Neck)OfPancreas|UncinateProcess/,stomach:/^Stomach_Stomach|^Digestive_Stomach/,gut:/Intestine_\w*(Jejunum|Ileum)|F_Digestive_(Jejunum|Ileum)$/,
+ brain:/^Brain_(?!.*(Artery|Nerve|Optic|Tentorium))|^F_Nervous_(?!.*(Artery|Nerve|Optic|Tentorium))|^Brain$/,bladder:/UrinaryBladder|FundusOfUrinaryBladder/,spleen:/Spleen/,gall:/Gallbladder/,adrenal:/Adrenal/,pituitary:/Pituitary/,
+ testis:/^Testis$/,prostate:/Prostate/,ovary:/Ovary_/,uterus:/BodyOfUterus|FundusOfUterus/,oesophagus:/Esophagus/,appendix:/^(?!.*Meso).*(VermiformAppendix|Appendix)/,eye:/^Eye$/,
+ blood:/Aorta_Arch|arch of aorta/i};
+const SBPC={};
+function sbPin(o){const re=SBPIN[o];if(!re||!SB)return null;if(SBPC[o]!==undefined)return SBPC[o]&&SBPC[o].clone();body.updateMatrixWorld(true);const inv=body.matrixWorld.clone().invert(),v=new THREE.Vector3(),parts=[];
+ SB.traverse(m=>{if(!m.isMesh)return;const n=nmOf(m);if(!re.test(n))return;const g=m.geometry,P=g.attributes.position,I=g.index,dr=g.drawRange,b=new THREE.Box3(),pts=[];
+  /* a part drawn from a shared geometry (the atlas) is only its own draw range */
+  const N=I&&isFinite(dr.count)?Math.min(dr.count,I.count-dr.start):P.count,at=i=>I&&isFinite(dr.count)?I.getX(dr.start+i):i,st=Math.max(1,Math.floor(N/1500));
+  for(let i=0;i<N;i+=st){v.fromBufferAttribute(P,at(i)).applyMatrix4(m.matrixWorld).applyMatrix4(inv);b.expandByPoint(v);pts.push(v.clone())}if(!b.isEmpty())parts.push({b,pts})});
+ if(!parts.length){SBPC[o]=null;return null}
+ const mid=(Math.min(...parts.map(p=>p.b.min.x))+Math.max(...parts.map(p=>p.b.max.x)))/2;let use=parts;
+ if(parts.length>1&&!parts.some(p=>p.b.min.x<mid&&p.b.max.x>mid)){const L=parts.filter(p=>p.b.max.x<=mid);if(L.length&&L.length<parts.length)use=L}
+ /* the centre of a curved or hollow organ can sit outside it: the pin goes on the organ's own front surface nearest that centre */
+ const B=new THREE.Box3();use.forEach(p=>B.union(p.b));const c=B.getCenter(new THREE.Vector3()),zc=c.z;let best=null,bd=1e9;
+ use.forEach(p=>p.pts.forEach(q=>{if(q.z<zc)return;const d=(q.x-c.x)**2+(q.y-c.y)**2;if(d<bd){bd=d;best=q}}));
+ if(!best)use.forEach(p=>p.pts.forEach(q=>{const d=q.distanceToSquared(c);if(d<bd){bd=d;best=q}}));
+ SBPC[o]=best.clone();return best.clone()}
+function partCenter(o){if(KID&&KTHY&&o==='thyroid'){const A=KTHY.userData.A;return new THREE.Vector3(A.x,A.y-2.05*A.r,A.z+1.35*A.r)}if(SBON&&SB&&SB.visible){const A=SB.userData.thyroid;if(o==='thyroid'&&A)return new THREE.Vector3(A.x,A.y-2.05*A.r,A.z+1.35*A.r);const c=sbPin(o);if(c)return c}if(o==='blood'){const v=!KID&&centerOfAll(/arch of aorta|ascending aorta/i);if(v)return v;const h=centerOf(ORGRE.heart);if(h){h.y+=boxH(ORGRE.heart)*.45;return h}return null}
  if(o==='bones'&&!KID){const v=centerOfAll(/^body of sternum$|^sternum$|manubrium/i);if(v)return v}
  const c=(ORGRE[o]&&centerOf(ORGRE[o]))||(!KID&&PARTS[o]&&centerOfAll(pinFor(o)));if(c)return c;const f=FALLC[o];if(f){const v=centerOf(ORGRE[f[0]]);if(v){v.y+=boxH(ORGRE[f[0]])*f[1];return v}}
  if(KID){const k=KIDF[o],br=boxOf(ORGRE.brain);if(k&&br){const c2=br.getCenter(new THREE.Vector3()),z=br.getSize(new THREE.Vector3());return new THREE.Vector3(c2.x+z.x*k[0],c2.y+z.y*k[1],c2.z+z.z*k[2])}
@@ -1140,7 +1162,7 @@ function sbLoad(){const sex=STATE.base==='female'?'female':'male';if(SBP&&SBSEX=
   W.position.set((sb.min.x+sb.max.x-wb.min.x-wb.max.x)/2,sb.min.y-wb.min.y,(sb.min.z+sb.max.z-wb.min.z-wb.max.z)/2);
   const R=new THREE.Group();R.add(W);R.userData=W.userData;W.updateMatrixWorld(true);
   try{await sbFill(R,W,s.scene,o.scene,sex,L,env)}catch(e){console.warn('site body fill',e)}
-  if(SB)body.remove(SB);SB=R;R.visible=false;body.add(R);return R})().catch(e=>{console.warn('site body',e);SBP=null;return null});return SBP}
+  if(SB)body.remove(SB);for(const k in SBPC)delete SBPC[k];SB=R;R.visible=false;body.add(R);return R})().catch(e=>{console.warn('site body',e);SBP=null;return null});return SBP}
 /* Nov 2026: neither website model is complete. Nothing is hidden; what a body lacks is added in the same place:
    the thyroid gland (neither has one) and, on the female body, the aorta come from the app's own atlas parts, which already sit in
    the right spot; her brain is our own textured brain, set inside her head where the male model keeps his; her pituitary and
@@ -1148,14 +1170,17 @@ function sbLoad(){const sex=STATE.base==='female'?'female':'male';if(SBP&&SBSEX=
 const SBINFO={head:[[-0.083,1.5051,-0.1302],[0.0813,1.7297,0.1051]],brain:[[-0.0715,1.5368,-0.1105],[0.0697,1.7086,0.0696]],kidL:[[0.027,1.0247,-0.0403],[0.0904,1.1685,0.0149]],kidR:[[-0.0876,1.0245,-0.0353],[-0.0252,1.1493,0.0118]],brainB:[[-0.0715,1.5368,-0.1105],[0.0697,1.7086,0.0696]]};
 const bx=a=>new THREE.Box3(new THREE.Vector3(...a[0]),new THREE.Vector3(...a[1]));
 function boxIn(root,test,inv,keep){const b=new THREE.Box3(),v=new THREE.Vector3();root.updateMatrixWorld(true);root.traverse(m=>{if(!m.isMesh||!test(m))return;const P=m.geometry.attributes.position;for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(m.matrixWorld).applyMatrix4(inv);if(!keep||keep(v))b.expandByPoint(v)}});return b}
-const nmOf=m=>{let n=m,s='';while(n&&(!s||/^mesh_[\d_]+$/.test(s))){s=n.name||'';n=n.parent}return s};
+const nmOf=m=>{let n=m,s='';while(n&&(!s||/^(mesh|geometry|node|object)_?[\d_]*$/i.test(s))){s=n.name||'';n=n.parent}return s};
 /* move a part that sits in box A (one body) so it sits the same way in box B (the other body) */
 function mapInto(obj,A,B){const sa=A.getSize(new THREE.Vector3()),sb=B.getSize(new THREE.Vector3()),k=new THREE.Vector3(sb.x/sa.x,sb.y/sa.y,sb.z/sa.z);obj.scale.copy(k);obj.position.set(B.min.x-A.min.x*k.x,B.min.y-A.min.y*k.y,B.min.z-A.min.z*k.z)}
+/* compressed (quantised) geometry must be copied to plain floats before a transform is baked in, or it collapses */
+function sbFloat(g0){const g=new THREE.BufferGeometry(),v=new THREE.Vector3();for(const k of ['position','normal']){const A=g0.attributes[k];if(!A)continue;const f=new Float32Array(A.count*3);for(let i=0;i<A.count;i++){v.fromBufferAttribute(A,i);f[i*3]=v.x;f[i*3+1]=v.y;f[i*3+2]=v.z}g.setAttribute(k,new THREE.BufferAttribute(f,3))}
+ if(g0.attributes.uv)g.setAttribute('uv',g0.attributes.uv);if(g0.index)g.setIndex(g0.index);if(!g.attributes.normal)g.computeVertexNormals();return g}
 async function sbFill(R,W,skin,org,sex,L,env){/* R is not in the scene yet, so world space here is already the body's own space */const inv=new THREE.Matrix4(),ld=u=>new Promise((res,rej)=>L.load(u,res,undefined,rej));
  const add=(m,isOrg=true)=>{m.raycast=()=>{};m.traverse(x=>{if(!x.isMesh)return;x.material=x.material.clone();x.material.transparent=true;x.material.opacity=0;if(env&&!x.material.envMap){x.material.envMap=env;x.material.envMapIntensity=1}x.raycast=()=>{};if(isOrg)R.userData.org.push(x)});R.add(m)};
  /* atlas parts: share the atlas geometry, draw only that part, in its natural colour */
  const atlas=(re)=>{const M=LAY[3];if(!M)return;partsOf(re,3).forEach(r=>{const g=new THREE.BufferGeometry();for(const k in M.geometry.attributes)g.setAttribute(k,M.geometry.attributes[k]);g.setIndex(M.geometry.index);g.setDrawRange(r[5],r[6]);/* r = [first tri, end tri, part, first vertex, vertex count, first index, index count] */
-  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:0,envMap:env,envMapIntensity:.8}));m.position.copy(M.position);m.quaternion.copy(M.quaternion);m.scale.copy(M.scale);m.frustumCulled=false;add(m)})};
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:0,envMap:env,envMapIntensity:.8}));m.name=SET.names[r[2]];m.position.copy(M.position);m.quaternion.copy(M.quaternion);m.scale.copy(M.scale);m.frustumCulled=false;add(m)})};
  /* thyroid gland: no free atlas has one, so this is our own sculpt (two pear-shaped lobes and the isthmus, wrapped round the
     windpipe), set where the windpipe leaves the cricoid cartilage and sized to that body's windpipe */
  const v3a=new THREE.Vector3();let A=null;
@@ -1164,7 +1189,7 @@ async function sbFill(R,W,skin,org,sex,L,env){/* R is not in the scene yet, so w
  else{const tt=m=>/Trachea/.test(nmOf(m)),tr=boxIn(org,tt,inv);if(!tr.isEmpty()){const sl=boxIn(org,tt,inv,v=>v.y>tr.max.y-(tr.max.y-tr.min.y)*.1);sl.getCenter(v3a);A={x:v3a.x,y:tr.max.y,z:v3a.z,r:(sl.max.x-sl.min.x)/2}}}
  if(A){const g=await ld('/a/sb-thyroid.46be1877.glb');g.scene.traverse(m=>{if(m.isMesh&&!m.geometry.attributes.normal)m.geometry.computeVertexNormals();if(m.isMesh)m.material=new THREE.MeshPhysicalMaterial({color:0x7A2A22,roughness:.5,metalness:0,clearcoat:.25,clearcoatRoughness:.4,envMap:env,envMapIntensity:.2})});
   const P=new THREE.Group();P.add(g.scene);P.scale.setScalar(A.r);P.position.set(A.x,A.y,A.z);P.name='Thyroid gland';add(P);R.userData.thyroid=A}
- /* eyes: neither model has them. A plain, true-size eyeball (white, brown iris, pupil, clear cornea) at the front end of each
+ /* eyes: neither model has them. A soft, see-through, true-size eyeball (no staring pupil: it reads as anatomy, not a face) at the front end of each
     optic nerve; on the female body, placed in her head the way they sit in his */
  const tipM=[[0.0308,1.5995,0.0516],[-0.0322,1.5999,0.0518]],mHeadB=bx(SBINFO.head);let headF=null;
  if(sex==='female'){const H2=boxIn(skin,()=>true,inv),h2=H2.max.y-H2.min.y,nk=H2.max.y-.13*h2;headF=boxIn(skin,()=>true,inv,v=>v.y>=nk&&Math.abs(v.x-(H2.min.x+H2.max.x)/2)<.25*h2)}
@@ -1173,18 +1198,16 @@ async function sbFill(R,W,skin,org,sex,L,env){/* R is not in the scene yet, so w
   if(headF){const sa=mHeadB.getSize(new THREE.Vector3()),sb=headF.getSize(new THREE.Vector3());p.set(headF.min.x+(p.x-mHeadB.min.x)*sb.x/sa.x,headF.min.y+(p.y-mHeadB.min.y)*sb.y/sa.y,headF.min.z+(p.z-mHeadB.min.z)*sb.z/sa.z);r*=sb.x/sa.x}
   else{p.applyMatrix4(W.matrix);r*=W.scale.x}
   const E=new THREE.Group(),cap=(rr,th,mat)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(rr,40,20,0,Math.PI*2,0,th),mat);m.rotation.x=Math.PI/2;return m};
-  E.add(new THREE.Mesh(new THREE.SphereGeometry(r,40,28),new THREE.MeshStandardMaterial({color:0xB9B0A4,roughness:.55,envMap:env,envMapIntensity:.08})));
-  E.add(cap(r*1.003,.5,new THREE.MeshStandardMaterial({color:0x4A2C18,roughness:.6,envMap:env,envMapIntensity:.1})));
-  E.add(cap(r*1.006,.2,new THREE.MeshBasicMaterial({color:0x050505})));
-  E.add(cap(r*1.06,.62,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.06,depthWrite:false})));
-  E.position.copy(p);E.name='Eye';add(E)});
+  E.add(new THREE.Mesh(new THREE.SphereGeometry(r,40,28),new THREE.MeshStandardMaterial({color:0xD8D2CA,roughness:.7,envMap:env,envMapIntensity:.05,transparent:true,opacity:.42,depthWrite:false})));
+  E.add(cap(r*1.003,.5,new THREE.MeshStandardMaterial({color:0xA88C74,roughness:.8,envMap:env,envMapIntensity:.05,transparent:true,opacity:.22,depthWrite:false})));
+    E.position.copy(p);E.name='Eye';add(E)});
  R.userData.eyes=1;
  if(sex!=='female'){
   /* testes: BodyParts3D (CC BY 4.0), placed from the prostate the way they sit in that atlas */
   const pr=boxIn(org,m=>/Prostate/.test(nmOf(m)),inv);
   if(!pr.isEmpty()){const sz=pr.getSize(new THREE.Vector3()),k=(sz.x/34.7+sz.y/22.7+sz.z/31.7)/3,g=await ld('/a/sb-testes.a69925ef.glb');
    g.scene.traverse(m=>{if(m.isMesh&&!m.geometry.attributes.normal)m.geometry.computeVertexNormals();if(m.isMesh)m.material=new THREE.MeshPhysicalMaterial({color:0xB98478,roughness:.5,metalness:0,clearcoat:.25,envMap:env,envMapIntensity:.35})});
-   const P=new THREE.Group();P.add(g.scene);P.scale.setScalar(k);pr.getCenter(P.position);add(P)}
+   const P=new THREE.Group();P.add(g.scene);P.scale.setScalar(k);pr.getCenter(P.position);P.name='Testis';add(P)}
   return}
  atlas(/aorta/i);
  const H=boxIn(skin,()=>true,inv),hh=H.max.y-H.min.y,neck=H.max.y-.13*hh,head=boxIn(skin,()=>true,inv,v=>v.y>=neck&&Math.abs(v.x-(H.min.x+H.max.x)/2)<.25*hh);
@@ -1194,20 +1217,26 @@ async function sbFill(R,W,skin,org,sex,L,env){/* R is not in the scene yet, so w
  brainT.min.set(head.min.x+(mb.min.x-mHead.min.x)*kx,head.min.y+(mb.min.y-mHead.min.y)*ky,head.min.z+(mb.min.z-mHead.min.z)*kz);brainT.max.set(head.min.x+(mb.max.x-mHead.min.x)*kx,head.min.y+(mb.max.y-mHead.min.y)*ky,head.min.z+(mb.max.z-mHead.min.z)*kz);
  const fb=[...document.scripts].map(x=>x.textContent).join('').match(/organf-brain\.[0-9a-f]+\.glb/);
  if(fb){const g=await ld('/a/'+fb[0]);const b=new THREE.Box3().setFromObject(g.scene),bs=b.getSize(new THREE.Vector3()),ts=brainT.getSize(new THREE.Vector3()),k=Math.min(ts.x/bs.x,ts.y/bs.y,ts.z/bs.z)*.96,c=b.getCenter(new THREE.Vector3()),tc=brainT.getCenter(new THREE.Vector3());
-  const P=new THREE.Group();P.add(g.scene);g.scene.position.sub(c);P.scale.setScalar(k);P.position.copy(tc);add(P);R.userData.brain=brainT}
+  const P=new THREE.Group();P.add(g.scene);g.scene.position.sub(c);P.scale.setScalar(k);P.position.copy(tc);P.name='Brain';add(P);R.userData.brain=brainT}
  const ff=[...document.scripts].map(x=>x.textContent).join('').match(/sb-fill\.[0-9a-f]+\.glb/)||['sb-fill.519d327e.glb'];
  const fill=await ld('/a/'+ff[0]);fill.scene.updateMatrixWorld(true);
+ /* pituitary: a small gland (about 1.2 x 1.3 x 0.9 cm) with its stalk, at the base of her brain where it sits in his */
+ {const mb=bx(SBINFO.brain),pc=[(-0.0068+0.0055)/2,(1.6007+1.6136)/2,(0.0011+0.0105)/2],ms=mb.getSize(new THREE.Vector3()),ts=brainT.getSize(new THREE.Vector3()),k=new THREE.Vector3(ts.x/ms.x,ts.y/ms.y,ts.z/ms.z);
+  const c=new THREE.Vector3(brainT.min.x+(pc[0]-mb.min.x)*k.x,brainT.min.y+(pc[1]-mb.min.y)*k.y,brainT.min.z+(pc[2]-mb.min.z)*k.z),mat=new THREE.MeshStandardMaterial({color:0xC98F86,roughness:.55,envMap:env,envMapIntensity:.25});
+  const G=new THREE.Group();const gl=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),mat);gl.scale.set(.0062*k.x,.0065*k.y,.0047*k.z);G.add(gl);
+  const st=new THREE.Mesh(new THREE.CylinderGeometry(.0012*k.x,.0016*k.x,.007*k.y,12),mat);st.position.y=.0058*k.y;G.add(st);G.position.copy(c);G.name='Gland_PituitaryGland';add(G)}
  const kid=side=>boxIn(org,m=>new RegExp('Urinary.*(Kidney|Renal).*_'+side).test(nmOf(m)),inv);
  const KL=kid('Left'),KR=kid('Right');
- fill.scene.traverse(m=>{if(!m.isMesh)return;const n=nmOf(m),g=m.geometry.clone().applyMatrix4(m.matrixWorld),mesh=new THREE.Mesh(g,m.material),P=new THREE.Group();P.add(mesh);
-  if(/Pituitary/.test(n))mapInto(P,bx(SBINFO.brain),brainT);else if(/Adrenal.*Left/.test(n)&&!KL.isEmpty())mapInto(P,bx(SBINFO.kidL),KL);else if(/Adrenal.*Right/.test(n)&&!KR.isEmpty())mapInto(P,bx(SBINFO.kidR),KR);else return;add(P)});
+ fill.scene.traverse(m=>{if(!m.isMesh)return;const n=nmOf(m),g=sbFloat(m.geometry).applyMatrix4(m.matrixWorld),mesh=new THREE.Mesh(g,m.material),P=new THREE.Group();P.add(mesh);
+  if(/Pituitary/.test(n))return;else if(/Adrenal.*Left/.test(n)&&!KL.isEmpty())mapInto(P,bx(SBINFO.kidL),KL);else if(/Adrenal.*Right/.test(n)&&!KR.isEmpty())mapInto(P,bx(SBINFO.kidR),KR);else return;P.name=n;add(P)});
 }
+function sbRepin(){let n=0;document.querySelectorAll('.tag').forEach(t=>{if(!t._po)return;const c=partCenter(t._po);if(c){t._c=c;n++}});if(n&&typeof placeTags==='function')placeTags()}
 function sbHide(on){const L=[LAY[0],LAY[2],LAY[3],LAY[0]&&LAY[0].userData.pre,typeof L3RIB!=='undefined'?L3RIB:null,...GLOWS.flatMap(g=>{const a=[];g.traverse(x=>x.isMesh&&a.push(x));return a})];L.forEach(m=>{if(m)m.layers.set(on?1:0)})}
 function sbLook(on){on=!!on&&sbOk();SBON=on;if(!on){sbHide(false);if(SB)SB.visible=false;return}
  sbLoad().then(W=>{if(!W||!SBON||!sbOk())return;const fr=!(DATA&&DATA.look==='dark')&&stageOf()==='light',so=fr?.26:.16;
   W.userData.skin.forEach(m=>{m.material.color.set(fr?0xEEF2F8:0xA9C2E2)});W.visible=true;
   const t0=performance.now(),first=!W.userData.shown;W.userData.shown=1;
-  const step=()=>{if(!SBON)return;const k=first&&!U.still?Math.min(1,(performance.now()-t0)/450):1;W.userData.skin.forEach(m=>m.material.opacity=so*k);W.userData.org.forEach(m=>m.material.opacity=k);if(k>=1){sbHide(true);W.userData.org.forEach(m=>{m.material.transparent=false;m.material.needsUpdate=true})}else requestAnimationFrame(step)};step()})}
+  const step=()=>{if(!SBON)return;const k=first&&!U.still?Math.min(1,(performance.now()-t0)/450):1;W.userData.skin.forEach(m=>m.material.opacity=so*k);W.userData.org.forEach(m=>m.material.opacity=k);if(k>=1){sbHide(true);W.userData.org.forEach(m=>{m.material.transparent=false;m.material.needsUpdate=true});sbRepin()}else requestAnimationFrame(step)};step()})}
 function xbody(orgs){setLayer('organs');for(const l in LAY){const m=LAY[l];if(+l===3){m.visible=true;m.material.transparent=false;m.material.opacity=1;m.material.depthWrite=true;m.material.needsUpdate=true}else if(+l===2){m.visible=!(!(DATA&&DATA.look==='dark')&&stageOf()==='light');m.material.transparent=true;m.material.opacity=.18;m.material.depthWrite=false}else if(+l===0){m.visible=true}else m.visible=false}
  clearGlows();orgs.forEach(o=>{if(!ORGRE[o]||!onBody(o))return;const g=glow(ORGRE[o],(KID&&KIDNAT[o])||NATC[o]||0xC05050,3,1);if(g){g.userData.org=o;const mm=g.children[0].material;mm.emissiveIntensity=.08;if(KID){mm.roughness=.66;if('clearcoat' in mm)mm.clearcoat=0}}})}
 function vback(){const m=$('#modes');if(m)m.style.display=VSTACK.length?'none':'';/* the back chip takes the row; the Baby chip returns on the results screen */$('#sub').innerHTML=VSTACK.length?`<button class="chip vbk" onclick="vpop()">‹ ${esc(VSTACK[VSTACK.length-1].label)}</button>`:''}
@@ -1231,7 +1260,7 @@ function vBody(){shape();head(who()+' · BODY',bodyTitle(),(()=>{const L=latest(
  if(LAY[3]){body.position.x=0;requestAnimationFrame(()=>{if(!VIEW||VIEW.k!=='body')return;pregResults();homeFit(innerWidth>=980?.84:.9)})}else body.position.x=0;
  const SENSI=/\bhiv\b|hbsag|hepatitis|\bhcv\b|anti.?hcv|vdrl|\brpr\b|syphilis|tpha|chlamydia|gonorr|herpes|\bhsv\b|\bhpv\b|\bsti\b/i,byP=orgsWith(L.filter(f=>!SENSI.test(f.test||'')));/* infection screens stay off the headline pins */
  const pins=Object.entries(byP).filter(([o])=>onBody(o)&&o!=='testis')/* testes: listed, never pinned (below the frame, private) */.sort((a,b)=>fRank(b[1])-fRank(a[1])).slice(0,innerWidth<700?(document.body.classList.contains('tz')||KID?2:4):6);/* a child's body is narrow: the two that matter most, so the tags stay off it *//* larger text on a phone: the two that matter most, so the tags stay off the body */let side=1;
- tags(pins.map(([o,f])=>{const tr=trend(f);const lip=/ldl|hdl|chol|trigly/i.test(f.test||''),t={org:(lip?'Heart & arteries':ORGN(o))+' · '+f.test.split('(')[0].trim(),val:f.value,unit:f.unit||'',trend:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:'',flag:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o]||pinFor(o),all:!ORGRE[o],pt:partCenter(o),side,dy:0,col:FCOL(f),k:STK(f),kw:STW(f),mid:1,onTap:()=>vgo({k:o==='heart'?'heart':'organ',o})};side=-side;return t}));
+ tags(pins.map(([o,f])=>{const tr=trend(f);const lip=/ldl|hdl|chol|trigly/i.test(f.test||''),t={org:(lip?'Heart & arteries':ORGN(o))+' · '+f.test.split('(')[0].trim(),val:f.value,unit:f.unit||'',trend:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:'',flag:tr&&tr.dir!=='same'?(parseFloat(f.value)<parseFloat(tr.p.value)?'↓':'↑')+' from '+tr.p.value:T(f.flag),cls:FCLS[f.flag]||'info',re:ORGRE[o]||pinFor(o),all:!ORGRE[o],pt:partCenter(o),po:o,side,dy:0,col:FCOL(f),k:STK(f),kw:STW(f),mid:1,onTap:()=>vgo({k:o==='heart'?'heart':'organ',o})};side=-side;return t}));
  const flagged=Object.entries(by).filter(([,f])=>fRank(f)>=2).sort((a,b)=>fRank(b[1])-fRank(a[1])),ok=L.filter(f=>f.flag==='normal').length;
  if(!L.length)return sheet(`<p class="cd" style="margin-top:0">${T('noresults')}</p><button class="btn pri" style="width:100%;margin-top:12px" onclick="send('addReport')">Add a report</button>`);
  if(innerWidth>=980&&!KID)return sheet(bodyWide(L));
@@ -1387,7 +1416,7 @@ async function vExplore(sys){shape();document.body.classList.add('exv');head(who
 function vThen(which){shape();const L=latest().filter(f=>!f.screen),pd=prevDate(L),nd=L[0]&&L[0].date,useP=which==='prev';
  const fs=useP?L.map(f=>{const t=trend(f);return t&&t.p.date===pd?{...t.p,org:f.org,test:f.test,unit:f.unit}:null}).filter(Boolean):L;
  head(who()+' · THEN AND NOW','Then and now',`${fmtD(pd)} and ${fmtD(nd)}, side by side`);const by=orgsWith(fs);xbody(Object.keys(by));CAM(HOME0.z*1.22,HOME0.y+.28);let side=1;
- tags(Object.entries(by).filter(([o])=>onBody(o)).sort((a,b)=>fRank(b[1])-fRank(a[1])).slice(0,innerWidth<700?4:6).map(([o,f])=>{const t={org:(/ldl|hdl|chol|trigly/i.test(f.test||'')?'Heart & arteries':ORGN(o))+' · '+f.test.split('(')[0].trim(),val:f.value,unit:f.unit||'',flag:STW(f)||T(f.flag),cls:'st-'+STK(f),re:ORGRE[o]||pinFor(o),all:!ORGRE[o],pt:partCenter(o),side,dy:0,col:FCOL(f),k:STK(f),kw:STW(f),mid:1};side=-side;return t}));
+ tags(Object.entries(by).filter(([o])=>onBody(o)).sort((a,b)=>fRank(b[1])-fRank(a[1])).slice(0,innerWidth<700?4:6).map(([o,f])=>{const t={org:(/ldl|hdl|chol|trigly/i.test(f.test||'')?'Heart & arteries':ORGN(o))+' · '+f.test.split('(')[0].trim(),val:f.value,unit:f.unit||'',flag:STW(f)||T(f.flag),cls:'st-'+STK(f),re:ORGRE[o]||pinFor(o),all:!ORGRE[o],pt:partCenter(o),po:o,side,dy:0,col:FCOL(f),k:STK(f),kw:STW(f),mid:1};side=-side;return t}));
  const ch=L.map(f=>({f,t:trend(f)})).filter(x=>x.t&&x.t.p.date===pd&&x.t.dir!=='same').sort((a,b)=>(a.t.dir==='worse'?0:1)-(b.t.dir==='worse'?0:1)||fRank(b.f)-fRank(a.f)),bet=ch.filter(x=>x.t.dir==='better').length,wor=ch.filter(x=>x.t.dir==='worse').length;
  const verdict=x=>x.t.dir==='better'?(x.f.flag==='normal'?'Better, now in range':'Better, still '+(x.f.flag==='high'?'high':'low')):x.t.dir==='worse'?'Worse':'Changed';
  sheet(`<div class="cseg"><button class="${useP?'on':''}" onclick="vThen('prev')">${esc(fmtD(pd))}</button><button class="${useP?'':'on'}" onclick="vThen('now')">${esc(fmtD(nd))}</button></div>
@@ -1786,7 +1815,7 @@ window.EX={
 })();
 
 const EXTRA=[['lymph','Lymph system','139 node groups, vessels and the thoracic duct'],['fat','Fat and fascia','The fat under the skin and the sheath around muscles'],['chest','Chest and breast','Areola, nipple, and the gland underneath']];
-function exGo(k){EX.clear();clearGlows();tags([]);closeCard();LAYK=k;$('#sub').innerHTML='';for(const l in LAY)LAY[l].visible=false;const sk=LAY[0];body.position.x=0;
+function exGo(k){sbLook(false);EX.clear();clearGlows();tags([]);closeCard();LAYK=k;$('#sub').innerHTML='';for(const l in LAY)LAY[l].visible=false;const sk=LAY[0];body.position.x=0;
  const skinSolid=()=>{sk.visible=true;sk.material.color.set(0xD9A285).convertSRGBToLinear();sk.material.opacity=1;sk.material.transparent=false;sk.material.depthWrite=true;sk.material.onBeforeCompile=()=>{};sk.material.needsUpdate=true};
  const skinGlass=(o=.14)=>{sk.visible=true;sk.material.color.set(0xE6ECF4);sk.material.opacity=o;sk.material.transparent=true;sk.material.depthWrite=false;sk.material.onBeforeCompile=FRESNEL;sk.material.needsUpdate=true};
  let line='';
